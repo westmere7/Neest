@@ -6,21 +6,31 @@ import { getAsset } from '@/data/assets/registry';
 import { LAMP_BUDGET, resolveObjectLights, type ResolvedLight } from '@/data/assets/lights';
 import { usePackVersion } from '@/packs/events';
 
-const FOCUS_AHEAD = 2.5; // metres in front of the camera that count as "where you are looking"
+/** A candidate only takes a slot from an assigned light when it is clearly more relevant. */
+const SWAP_MARGIN = 0.7;
+/** Intensity fade rate (per second) when a light is handed to another fixture. */
+const FADE_RATE = 5;
+
+type Slot<L extends THREE.Light> = { light: L; key: string | null; target: number };
 
 /**
  * Live lights for lamp fixtures.
  *
  * A fixed pool of point and spot lights is mounted once per quality level and handed to the
- * fixtures nearest to where the camera looks. The pool never changes size while you move around,
- * because a change in the number of lights makes three.js recompile every material's shader.
- * Unused pool lights stay at zero intensity. In high quality the first spot lights cast shadows;
- * their shadow maps are redrawn only when the scene or the assignment changes, not every frame.
+ * fixtures that matter most for the current view. The pool never changes size, because a change
+ * in the number of lights makes three.js recompile every material's shader.
+ *
+ * Steadiness while orbiting: relevance is measured from the orbit target (which stays put while
+ * the view rotates), each fixture keeps its slot for as long as it stays assigned, a fixture is
+ * only replaced when another is clearly more relevant, and lights fade in and out instead of
+ * popping. In high quality the first spot slots cast shadows; their shadow maps are redrawn only
+ * when the scene or the slot's fixture changes.
  */
 export function LampLights({ project, quality }: { project: Project; quality: RenderSettings['quality'] }) {
   const budget = LAMP_BUDGET[quality];
   const camera = useThree((s) => s.camera);
   const scene = useThree((s) => s.scene);
+  const controls = useThree((s) => s.controls) as unknown as { target?: THREE.Vector3 } | null;
   const packVersion = usePackVersion();
 
   const all = useMemo(() => {
@@ -30,8 +40,11 @@ export function LampLights({ project, quality }: { project: Project; quality: Re
     return out;
   }, [project, packVersion]);
 
-  const points = useMemo(() => Array.from({ length: budget.point }, () => new THREE.PointLight('#ffffff', 0, 1, 2)), [budget.point]);
-  const spots = useMemo(
+  const points = useMemo<Slot<THREE.PointLight>[]>(
+    () => Array.from({ length: budget.point }, () => ({ light: new THREE.PointLight('#ffffff', 0, 1, 2), key: null, target: 0 })),
+    [budget.point],
+  );
+  const spots = useMemo<Slot<THREE.SpotLight>[]>(
     () =>
       Array.from({ length: budget.spot }, (_, i) => {
         const l = new THREE.SpotLight('#ffffff', 0, 1, 0.6, 0.4, 2);
@@ -42,66 +55,87 @@ export function LampLights({ project, quality }: { project: Project; quality: Re
           l.shadow.normalBias = 0.02;
           l.shadow.autoUpdate = false;
         }
-        return l;
+        return { light: l, key: null, target: 0 };
       }),
     [budget.spot, budget.shadows],
   );
 
   useEffect(() => {
-    const added: THREE.Object3D[] = [...points, ...spots.flatMap((s) => [s, s.target])];
+    const added: THREE.Object3D[] = [...points.map((s) => s.light), ...spots.flatMap((s) => [s.light, s.light.target])];
     if (added.length) scene.add(...added);
     return () => {
       for (const o of added) scene.remove(o);
-      for (const p of points) p.dispose();
-      for (const s of spots) s.dispose();
+      for (const s of points) s.light.dispose();
+      for (const s of spots) s.light.dispose();
     };
   }, [scene, points, spots]);
 
-  const applied = useRef<{ sig: string; lights: unknown; pool: unknown }>({ sig: '', lights: null, pool: null });
+  const lastLights = useRef<ResolvedLight[] | null>(null);
   const focus = useMemo(() => new THREE.Vector3(), []);
   const fwd = useMemo(() => new THREE.Vector3(), []);
 
-  // Runs before each rendered frame: cheap ranking, and the pool is only touched when the set changes.
-  useFrame(() => {
+  useFrame((state, delta) => {
     if (!points.length && !spots.length) return;
-    camera.getWorldDirection(fwd);
-    focus.copy(camera.position).addScaledVector(fwd, FOCUS_AHEAD);
-    const score = new Map<ResolvedLight, number>();
-    for (const l of all) {
-      const d = Math.hypot(l.position[0] - focus.x, l.position[1] - focus.y, l.position[2] - focus.z);
-      // Brighter, longer-reaching lights win ties.
-      score.set(l, d / Math.max(0.3, l.distance * Math.sqrt(l.intensity)));
-    }
-    const pick = (kind: ResolvedLight['kind'], n: number) =>
-      n ? all.filter((l) => l.kind === kind).sort((a, b) => score.get(a)! - score.get(b)!).slice(0, n) : [];
-    const ps = pick('point', points.length);
-    const ss = pick('spot', spots.length);
-    const sig = [...ps, ...ss].map((l) => l.key).join('|');
-    const a = applied.current;
-    if (sig === a.sig && a.lights === all && a.pool === spots) return;
-    applied.current = { sig, lights: all, pool: spots };
-    points.forEach((p, i) => {
-      const l = ps[i];
-      p.intensity = l ? l.intensity : 0;
-      if (!l) return;
-      p.color.set(l.color);
-      p.distance = l.distance;
-      p.position.set(...l.position);
-    });
-    spots.forEach((s, i) => {
-      const l = ss[i];
-      s.intensity = l ? l.intensity : 0;
-      // Shadow maps redraw once per change; idle casters skip their shadow pass.
-      if (s.castShadow) s.shadow.needsUpdate = Boolean(l);
-      if (!l) return;
-      s.color.set(l.color);
-      s.distance = l.distance;
-      s.angle = l.angle;
-      s.penumbra = l.penumbra;
-      s.position.set(...l.position);
-      s.target.position.set(l.position[0] + l.dir[0], l.position[1] + l.dir[1], l.position[2] + l.dir[2]);
-      s.target.updateMatrixWorld();
-    });
+    // Orbit target when available (steady while rotating); else a point ahead of the camera (walkthrough).
+    if (controls?.target) focus.copy(controls.target);
+    else focus.copy(camera.position).addScaledVector(camera.getWorldDirection(fwd), 2.5);
+    const byKey = new Map(all.map((l) => [l.key, l]));
+    const score = (l: ResolvedLight) =>
+      Math.hypot(l.position[0] - focus.x, l.position[1] - focus.y, l.position[2] - focus.z) / Math.max(0.3, l.distance * Math.sqrt(l.intensity));
+    const sceneChanged = lastLights.current !== all;
+    lastLights.current = all;
+    let fading = false;
+
+    const assign = <L extends THREE.PointLight | THREE.SpotLight>(slots: Slot<L>[], kind: ResolvedLight['kind']) => {
+      if (!slots.length) return;
+      // Drop fixtures that no longer exist; then rank candidates by relevance.
+      for (const s of slots) if (s.key && !byKey.has(s.key)) s.key = null;
+      const held = new Set(slots.map((s) => s.key).filter(Boolean) as string[]);
+      const candidates = all.filter((l) => l.kind === kind && !held.has(l.key)).sort((a, b) => score(a) - score(b));
+      for (const c of candidates) {
+        const free = slots.find((s) => !s.key);
+        if (free) {
+          free.key = c.key;
+          continue;
+        }
+        // Replace the least relevant assigned fixture only with a clear margin (hysteresis).
+        let worst: Slot<L> | null = null;
+        for (const s of slots) if (!worst || score(byKey.get(s.key!)!) > score(byKey.get(worst.key!)!)) worst = s;
+        if (worst && score(c) < score(byKey.get(worst.key!)!) * SWAP_MARGIN) worst.key = c.key;
+        else break; // candidates are sorted; nobody further down can win either
+      }
+      for (const s of slots) {
+        const l = s.key ? byKey.get(s.key) : undefined;
+        const moved = !l || s.light.userData.key !== l.key || sceneChanged;
+        if (l && moved) {
+          s.light.userData.key = l.key;
+          s.light.color.set(l.color);
+          s.light.distance = l.distance;
+          s.light.position.set(...l.position);
+          if ((s.light as THREE.SpotLight).isSpotLight) {
+            const sp = s.light as THREE.SpotLight;
+            sp.angle = l.angle;
+            sp.penumbra = l.penumbra;
+            sp.target.position.set(l.position[0] + l.dir[0], l.position[1] + l.dir[1], l.position[2] + l.dir[2]);
+            sp.target.updateMatrixWorld();
+            if (sp.castShadow) sp.shadow.needsUpdate = true;
+          }
+          // A slot handed to a new fixture starts dark and fades up.
+          if (s.light.userData.key !== s.light.userData.lit) s.light.intensity = 0;
+          s.light.userData.lit = l.key;
+        }
+        s.target = l ? l.intensity : 0;
+        const d = s.target - s.light.intensity;
+        if (Math.abs(d) > 0.01) {
+          s.light.intensity += d * Math.min(1, delta * FADE_RATE);
+          fading = true;
+        } else s.light.intensity = s.target;
+      }
+    };
+    assign(points, 'point');
+    assign(spots, 'spot');
+    // The canvas renders on demand: keep frames coming until fades finish.
+    if (fading) state.invalidate();
   });
 
   return null;
