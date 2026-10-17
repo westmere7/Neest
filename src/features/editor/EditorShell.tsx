@@ -243,61 +243,68 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
     else ed.set({ workspace: v as Workspace });
   };
   return (
-    <header className="topbar floating" data-testid="topbar">
+    <header className="topbar" data-testid="topbar">
       <div className="topbar-left">
-        <IconButton label="All projects" onClick={() => navigate('/')} tooltipSide="bottom">
-          <ArrowLeft size={17} />
-        </IconButton>
-        {!isMobile && <Logo size={22} />}
-        <ProjectName />
-        <SaveIndicator />
+        <div className="topbar-island floating">
+          <IconButton label="All projects" onClick={() => navigate('/')} tooltipSide="bottom">
+            <ArrowLeft size={17} />
+          </IconButton>
+          {!isMobile && <Logo size={22} />}
+          <ProjectName />
+          <SaveIndicator />
+        </div>
       </div>
       <div className="topbar-center">
-        <Segmented
-          label="View"
-          value={current}
-          onChange={setView}
-          size="sm"
-          options={VIEW_OPTIONS.filter((o) => !isMobile || o.mobile).map((o) => ({
-            value: o.value,
-            label: o.label,
-            title: o.title,
-            testId: `view-${o.value.replace(':', '-')}`,
-          }))}
-        />
+        <div className="topbar-island floating">
+          <Segmented
+            label="View"
+            value={current}
+            onChange={setView}
+            size="sm"
+            options={VIEW_OPTIONS.filter((o) => !isMobile || o.mobile).map((o) => ({
+              value: o.value,
+              label: o.label,
+              title: o.title,
+              testId: `view-${o.value.replace(':', '-')}`,
+            }))}
+          />
+        </div>
       </div>
       <div className="topbar-right">
-        <IconButton label={undoLabel ? `Undo ${undoLabel.toLowerCase()}` : 'Undo'} shortcut="Ctrl+Z" disabled={!canUndo} onClick={() => useProjectStore.getState().undo()} data-testid="undo">
-          <Undo2 size={17} />
-        </IconButton>
-        <IconButton label={redoLabel ? `Redo ${redoLabel.toLowerCase()}` : 'Redo'} shortcut="Ctrl+Shift+Z" disabled={!canRedo} onClick={() => useProjectStore.getState().redo()} data-testid="redo">
-          <Redo2 size={17} />
-        </IconButton>
-        <span className="tb-sep" />
-        {!isMobile && (
-          <IconButton label="Project settings" onClick={() => open('settings')}>
-            <Settings2 size={17} />
+        <div className="topbar-island floating">
+          <IconButton label={undoLabel ? `Undo ${undoLabel.toLowerCase()}` : 'Undo'} shortcut="Ctrl+Z" disabled={!canUndo} onClick={() => useProjectStore.getState().undo()} data-testid="undo">
+            <Undo2 size={17} />
           </IconButton>
-        )}
-        <IconButton
-          label="Export"
-          shortcut="Ctrl+E"
-          onClick={() => open('export')}
-          onPointerEnter={preloadExport}
-          onFocus={preloadExport}
-          data-testid="open-export"
-        >
-          <Download size={17} />
-        </IconButton>
-        <IconButton label="Guest view" onClick={() => navigate(`/guest/${projectId}`)}>
-          <Footprints size={17} />
-        </IconButton>
-        {!isMobile && (
-          <IconButton label="Hide interface" shortcut="\" onClick={() => useEditorStore.getState().set({ chromeHidden: true })}>
-            <EyeOff size={17} />
+          <IconButton label={redoLabel ? `Redo ${redoLabel.toLowerCase()}` : 'Redo'} shortcut="Ctrl+Shift+Z" disabled={!canRedo} onClick={() => useProjectStore.getState().redo()} data-testid="redo">
+            <Redo2 size={17} />
           </IconButton>
-        )}
-        {!isMobile && <ThemeSwitch />}
+        </div>
+        <div className="topbar-island floating">
+          {!isMobile && (
+            <IconButton label="Project settings" onClick={() => open('settings')}>
+              <Settings2 size={17} />
+            </IconButton>
+          )}
+          <IconButton
+            label="Export"
+            shortcut="Ctrl+E"
+            onClick={() => open('export')}
+            onPointerEnter={preloadExport}
+            onFocus={preloadExport}
+            data-testid="open-export"
+          >
+            <Download size={17} />
+          </IconButton>
+          <IconButton label="Guest view" onClick={() => navigate(`/guest/${projectId}`)}>
+            <Footprints size={17} />
+          </IconButton>
+          {!isMobile && (
+            <IconButton label="Hide interface" shortcut="\" onClick={() => useEditorStore.getState().set({ chromeHidden: true })}>
+              <EyeOff size={17} />
+            </IconButton>
+          )}
+          {!isMobile && <ThemeSwitch />}
+        </div>
       </div>
     </header>
   );
