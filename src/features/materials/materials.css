@@ -162,7 +162,8 @@
 .material-panel {
   top: calc(10px + var(--topbar-h) + 10px);
   right: calc(10px + var(--inspector-w) + 8px);
-  width: min(340px, calc(100% - var(--inspector-w) - 140px));
+  /* Same width as the Inspector: a standard panel. */
+  width: min(var(--inspector-w), calc(100% - var(--inspector-w) - 140px));
   height: calc(100% - var(--topbar-h) - var(--status-h) - 90px);
   display: flex;
   flex-direction: column;
@@ -246,7 +247,7 @@
   padding: 6px 12px 12px;
 }
 .material-panel .mat-grid {
-  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
   gap: 8px;
   padding: 12px;
 }
