@@ -177,3 +177,12 @@
   border: 1px solid var(--border-strong);
   padding: 0;
 }
+.mat-photo-missing {
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+}
+.mat-photo-missing code {
+  font-size: 11px;
+}

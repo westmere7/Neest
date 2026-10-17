@@ -21,6 +21,7 @@ import {
 } from './builders';
 import type { MaterialRegistry } from './materialRegistry';
 import { loadProjectModels } from './customModels';
+import { usePackVersion } from '@/packs/events';
 
 export interface SceneOptions {
   wallDisplay: WallDisplay;
@@ -162,9 +163,8 @@ function WallMesh({
       fade
         ? mats.map((m) => {
             const c = (m as THREE.MeshStandardMaterial).clone();
-            c.transparent = true;
-            c.opacity = 0.14;
-            c.depthWrite = false;
+            fadeCopy(c);
+            c.userData.srcOpacity = (m as THREE.MeshStandardMaterial).opacity;
             return c;
           })
         : null,
@@ -184,6 +184,7 @@ function WallMesh({
       if (mesh.material !== mats) mesh.material = mats;
       return;
     }
+    faded.forEach((c, i) => followSource(c, mats[i], fadeCopy));
     // Fade walls that stand between the camera and the plan centre.
     const toCam = new THREE.Vector3(camera.position.x - mid.p.x, 0, camera.position.z - mid.p.z);
     const toCenter = new THREE.Vector3(center.x - mid.p.x, 0, center.z - mid.p.z);
@@ -233,8 +234,9 @@ function ObjectNode({ obj, ctx, modelsVersion, onPick, onPointerDown }: {
   onPick?: SceneOptions['onPick'];
   onPointerDown?: SceneOptions['onObjectPointerDown'];
 }) {
+  const packs = usePackVersion();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const group = useMemo(() => buildObject(obj, ctx), [obj, modelsVersion, ctx.shadows, ctx.project.customAssets]);
+  const group = useMemo(() => buildObject(obj, ctx), [obj, modelsVersion, ctx.shadows, ctx.project.customAssets, packs]);
   return (
     <primitive
       object={group}
@@ -252,18 +254,64 @@ function ObjectNode({ obj, ctx, modelsVersion, onPick, onPointerDown }: {
   );
 }
 
+const fadeCopy = (c: THREE.Material) => {
+  c.transparent = true;
+  c.opacity = 0.14;
+  c.depthWrite = false;
+};
+
+/**
+ * Keeps a derived copy (cutaway-clipped or faded) in step with its source
+ * material after in-place updates: linked edits and photo maps that finish
+ * loading after the copy was made. `keep` re-applies the copy's own overrides.
+ */
+function followSource(copy: THREE.Material, src: THREE.Material, keep: (c: THREE.Material) => void): void {
+  const a = copy as THREE.MeshStandardMaterial;
+  const b = src as THREE.MeshStandardMaterial;
+  if (!a.isMeshStandardMaterial || !b.isMeshStandardMaterial) return;
+  if (
+    a.map === b.map &&
+    a.normalMap === b.normalMap &&
+    a.roughnessMap === b.roughnessMap &&
+    a.color.equals(b.color) &&
+    a.roughness === b.roughness &&
+    a.metalness === b.metalness &&
+    a.emissive.equals(b.emissive) &&
+    a.emissiveIntensity === b.emissiveIntensity &&
+    a.userData.srcOpacity === b.opacity
+  )
+    return;
+  const maps = `${!!a.map}${!!a.normalMap}${!!a.roughnessMap}${a.transparent}`;
+  a.copy(b);
+  keep(a);
+  a.userData.srcOpacity = b.opacity;
+  if (maps !== `${!!a.map}${!!a.normalMap}${!!a.roughnessMap}${a.transparent}`) a.needsUpdate = true;
+}
+
 /** Clipped copies of materials for cutaway views (cached per source material and cut height). */
-const clippedMaterials = new Map<string, THREE.Material>();
+const clippedMaterials = new Map<string, { src: THREE.Material; copy: THREE.Material; cut: number }>();
+const clipTo = (cut: number) => (c: THREE.Material) => {
+  c.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, -1, 0), cut)];
+  c.clipShadows = true;
+};
 function clippedMaterial(m: THREE.Material, cut: number): THREE.Material {
   const key = `${m.uuid}|${cut.toFixed(3)}`;
   let c = clippedMaterials.get(key);
   if (!c) {
-    c = m.clone();
-    c.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, -1, 0), cut)];
-    c.clipShadows = true;
+    const copy = m.clone();
+    clipTo(cut)(copy);
+    copy.userData.srcOpacity = (m as THREE.MeshStandardMaterial).opacity;
+    c = { src: m, copy, cut };
     clippedMaterials.set(key, c);
   }
-  return c;
+  return c.copy;
+}
+/** Per frame: clipped copies follow their source materials (cheap reference/colour checks). */
+function ClippedMaterialSync() {
+  useFrame(() => {
+    for (const c of clippedMaterials.values()) followSource(c.copy, c.src, clipTo(c.cut));
+  });
+  return null;
 }
 
 function OpeningNode({ g, spanId, project, ctx, cut, onPick }: { g: WallGeometry; spanId: string; project: Project; ctx: BuildContext; cut?: number; onPick?: SceneOptions['onPick'] }) {
@@ -442,7 +490,8 @@ export function SceneContent({ project, derived, registry, options }: { project:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customKey]);
 
-  useEffect(() => registry.sync(project), [registry, project.materials, project]);
+  const packs = usePackVersion();
+  useEffect(() => registry.sync(project), [registry, project.materials, project, packs]);
 
   const shadows = options.shadows && options.quality !== 'draft';
   const ctx = useMemo<BuildContext>(
@@ -461,6 +510,7 @@ export function SceneContent({ project, derived, registry, options }: { project:
   });
   return (
     <group name="neest-plan">
+      <ClippedMaterialSync />
       {constructionVisible && options.wallDisplay !== 'hidden' && (
         <group name="walls">
           {[...derived.network.walls.values()]

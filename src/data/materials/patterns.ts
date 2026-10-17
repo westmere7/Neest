@@ -377,6 +377,14 @@ function drawPlaster(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
   }
   addNoise(L, N, 256, 256, 0.014, nextSeed(rng));
   addNoise(L, N, 512, 512, 0.01, nextSeed(rng));
+  const pits = noiseField(N, 320, 320, nextSeed(rng));
+  const craze = worley(N, 9, nextSeed(rng), 1);
+  const crazeMask = fbmField(N, 3, 3, 2, nextSeed(rng));
+  for (let i = 0; i < L.length; i++) {
+    if (pits[i] > 0.8) L[i] -= (pits[i] - 0.8) * 0.3;
+    const line = 1 - smoothstep(0, 0.012, craze.f2[i] - craze.f1[i]);
+    L[i] -= 0.03 * line * smoothstep(0.15, 0.5, crazeMask[i]);
+  }
   putGray(ctx, N, L);
 }
 
@@ -437,6 +445,8 @@ function drawBrick(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
   const edge = fbmField(N, 64, 64, 2, nextSeed(rng));
   const edgeAmp = N * 0.003;
   const bevel = N * 0.006;
+  const spall = fbmField(N, 16, 16, 3, nextSeed(rng));
+  const chips = fbmField(N, 48, 48, 2, nextSeed(rng));
   const L = field(N);
   for (let y = 0, i = 0; y < N; y++) {
     const py = y + 0.5;
@@ -449,9 +459,13 @@ function drawBrick(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
       const c = Math.floor(sx / cw);
       const lx = sx - c * cw;
       const k = r * cols + mod(c, cols);
-      const d = Math.min(lx - half, cw - half - lx, dy) + edge[i] * edgeAmp;
-      const brick = 0.86 + tone[k] + 0.05 * face[i] + 0.035 * sand[i] - 0.07 * (1 - smoothstep(0, bevel, d));
-      const mortar = 0.6 + 0.05 * sand[i] + 0.02 * face[i];
+      const d0 = Math.min(lx - half, cw - half - lx, dy) + edge[i] * edgeAmp;
+      const d = d0 - (d0 < bevel * 2 ? Math.max(0, chips[i] - 0.35) * bevel * 3 : 0);
+      const spalled = smoothstep(0.32, 0.45, spall[i]);
+      const brick =
+        0.86 + tone[k] + 0.05 * face[i] + 0.035 * sand[i] - 0.05 * spalled - 0.07 * (1 - smoothstep(0, bevel, d));
+      // Mortar sits back from the face: shaded under each brick edge.
+      const mortar = 0.6 + 0.05 * sand[i] + 0.02 * face[i] - 0.05 * smoothstep(-half, 0, d);
       L[i] = mortar + (brick - mortar) * cover(d);
     }
   }
@@ -475,6 +489,11 @@ function woodGrain(N: number, rng: Rng, rings: number, warp: number, arch: numbe
   const band = fbmField(N, 2, 40, 2, nextSeed(rng)); // broader colour streaks
   const lateVar = fbmField(N, 2, 14, 2, nextSeed(rng));
   const pores = noiseField(N, 40, 320, nextSeed(rng));
+  // Open pore channels: short dark dashes running with the grain (ring-porous woods).
+  const poreLines = noiseField(N, 22, 300, nextSeed(rng));
+  // Ray flecks: tiny pale dashes along the grain, and a faint cross-grain "figure" shimmer.
+  const fleck = noiseField(N, 120, 640, nextSeed(rng));
+  const figure = noiseField(N, 16, 3, nextSeed(rng));
   const out = field(N);
   for (let y = 0, i = 0; y < N; y++) {
     const base = (rings * (y + 0.5)) / N;
@@ -484,11 +503,16 @@ function woodGrain(N: number, rng: Rng, rings: number, warp: number, arch: numbe
       const lv = lateVar[i];
       const late = smoothstep(0.5 - 0.18 * lv, 0.8, p) * (1 - smoothstep(0.84, 0.97, p));
       const pore = pores[i] > 0.55 ? (pores[i] - 0.55) * 0.1 : 0;
+      const channel = poreLines[i] > 0.42 ? (poreLines[i] - 0.42) * 0.12 * (1 - 0.6 * late) : 0;
+      const ray = fleck[i] > 0.72 ? (fleck[i] - 0.72) * 0.09 : 0;
       out[i] =
         -0.085 * late * Math.max(0.15, 0.7 + 0.8 * lv) +
         0.028 * streak[i] +
-        0.045 * band[i] -
-        pore * (0.5 + late);
+        0.045 * band[i] +
+        0.012 * figure[i] -
+        pore * (0.5 + late) -
+        channel +
+        ray;
     }
   }
   return out;
@@ -522,11 +546,15 @@ function drawPlanks(ctx: CanvasRenderingContext2D, N: number, rng: Rng, o: Plank
   const tone = new Float32Array(P);
   const ox = new Int32Array(P);
   const oy = new Int32Array(P);
+  const contrast = new Float32Array(P);
   for (let p = 0; p < P; p++) {
     tone[p] = range(rng, -o.tone, o.tone);
     ox[p] = Math.floor(rng() * N);
     oy[p] = Math.floor(rng() * N);
+    contrast[p] = range(rng, 0.75, 1.25);
   }
+  // Traffic wear: broad, slightly lighter and flatter patches.
+  const wear = fbmField(N, 3, 6, 3, nextSeed(rng));
   const L = field(N);
   for (let y = 0, i = 0; y < N; y++) {
     const r = Math.min(o.rows - 1, Math.floor((y + 0.5) / rowH));
@@ -544,8 +572,19 @@ function drawPlanks(ctx: CanvasRenderingContext2D, N: number, rng: Rng, o: Plank
       const id = r * o.maxJoints + seg;
       const g = grain[((y + oy[id]) % N) * N + ((x + ox[id]) % N)];
       const e = Math.min(dy, dj);
+      // Micro-bevel: a thin bright lip just inside the dark joint.
+      const lip = smoothstep(gap, gap * 1.8, e) * (1 - smoothstep(gap * 1.8, gap * 3.2, e));
+      const endGrain = 1 - smoothstep(0, gap * 9, dj);
+      const worn = Math.max(0, wear[i]);
       L[i] =
-        0.86 + tone[id] + g - 0.36 * (1 - smoothstep(0, gap, e)) - 0.035 * (1 - smoothstep(0, gap * 5, e));
+        0.86 +
+        tone[id] +
+        g * contrast[id] * (1 - 0.25 * worn) +
+        0.015 * worn +
+        0.035 * lip -
+        0.025 * endGrain -
+        0.36 * (1 - smoothstep(0, gap, e)) -
+        0.035 * (1 - smoothstep(0, gap * 5, e));
     }
   }
   for (let k = 0; k < o.knots; k++) {
@@ -665,7 +704,8 @@ function drawHerringbone(ctx: CanvasRenderingContext2D, N: number, rng: Rng): vo
       L[i] =
         0.86 +
         tone[b] +
-        grain[gy * N + gx] -
+        grain[gy * N + gx] +
+        0.03 * smoothstep(gap, gap * 1.8, e) * (1 - smoothstep(gap * 1.8, gap * 3.2, e)) -
         0.34 * (1 - smoothstep(0, gap, e)) -
         0.035 * (1 - smoothstep(0, gap * 5, e));
     }
@@ -717,6 +757,12 @@ function drawTiles(ctx: CanvasRenderingContext2D, N: number, rng: Rng, o: TileOp
   const cloud = fbmField(N, o.cloudCells, o.cloudCells, 4, nextSeed(rng));
   const fine = noiseField(N, 384, 384, nextSeed(rng));
   const bevelPx = Math.max(1, minSide * 0.05);
+  // Edge wear: a slightly ragged outline plus occasional chips that bite into the glaze.
+  const ragged = fbmField(N, 96, 96, 2, nextSeed(rng));
+  const chips = fbmField(N, 40, 40, 2, nextSeed(rng));
+  const pits = noiseField(N, 256, 256, nextSeed(rng));
+  const grime = fbmField(N, 6, 6, 3, nextSeed(rng));
+  const chipDepth = Math.max(0.6, minSide * 0.035);
   const L = field(N);
   for (let y = 0, i = 0; y < N; y++) {
     const py = y + 0.5;
@@ -729,12 +775,14 @@ function drawTiles(ctx: CanvasRenderingContext2D, N: number, rng: Rng, o: TileOp
       const lx = sx - c * cw;
       const cc = mod(c, o.cols);
       const k = r * o.cols + cc;
-      const d = Math.min(
+      const d0 = Math.min(
         lx - inset[k * 4],
         cw - inset[k * 4 + 1] - lx,
         ly - inset[k * 4 + 2],
         ch - inset[k * 4 + 3] - ly,
       );
+      const chip = Math.max(0, chips[i] - 0.5) * chipDepth * 4;
+      const d = d0 + ragged[i] * 0.35 - (d0 < chipDepth * 2 ? chip : 0);
       const base = o.alt !== undefined && (r + cc) & 1 ? o.alt : o.face;
       const faceV =
         base +
@@ -743,8 +791,11 @@ function drawTiles(ctx: CanvasRenderingContext2D, N: number, rng: Rng, o: TileOp
         0.012 * fine[i] +
         tx[k] * (lx / cw - 0.5) +
         ty[k] * (ly / ch - 0.5) -
-        o.bevel * (1 - smoothstep(0, bevelPx, d));
-      const groutV = o.groutL + 0.035 * fine[i];
+        o.bevel * (1 - smoothstep(0, bevelPx, d)) -
+        (pits[i] > 0.78 ? (pits[i] - 0.78) * 0.35 : 0) -
+        0.03 * Math.min(1, chip) * (1 - smoothstep(0, chipDepth * 2, d0));
+      // Grout: patchy grime, darker where it meets the tile edge (shadowed, dirt collects).
+      const groutV = o.groutL + 0.035 * fine[i] + 0.04 * grime[i] - 0.04 * smoothstep(-g, 0, d);
       L[i] = groutV + (faceV - groutV) * cover(d);
     }
   }
@@ -1009,6 +1060,18 @@ function drawMarble(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
         0.05 * veinLine(t3, 0.018) * (0.4 + 0.6 * s1);
     }
   }
+  // Hair-thin branching veins following the main flow, and calcite sparkle.
+  const w4 = fbmField(N, 7, 7, 3, nextSeed(rng));
+  const sparkle = noiseField(N, 384, 384, nextSeed(rng));
+  for (let y = 0, i = 0; y < N; y++) {
+    const fy = (y + 0.5) / N;
+    for (let x = 0; x < N; x++, i++) {
+      const fx = (x + 0.5) / N;
+      const t4 = TAU * (3 * fx + 2 * fy) + 7 * w4[i] + 2 * w1[i];
+      L[i] -= 0.07 * veinLine(t4, 0.008) * smoothstep(-0.1, 0.5, m2[i]);
+      if (sparkle[i] > 0.75) L[i] += (sparkle[i] - 0.75) * 0.06;
+    }
+  }
   addNoise(L, N, 384, 384, 0.008, nextSeed(rng));
   putGray(ctx, N, L);
 }
@@ -1168,6 +1231,10 @@ function drawWeave(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
   }
   const fuzz = noiseField(N, 384, 384, nextSeed(rng));
   const cloud = fbmField(N, 4, 4, 3, nextSeed(rng));
+  // Fibres: fine streaks running along each thread's direction, plus a few pills.
+  const fibreV = noiseField(N, 192, 24, nextSeed(rng));
+  const fibreH = noiseField(N, 24, 192, nextSeed(rng));
+  const pills = noiseField(N, 96, 96, nextSeed(rng));
   const L = field(N);
   for (let y = 0, i = 0; y < N; y++) {
     const v = (y + 0.5) / cell;
@@ -1185,7 +1252,10 @@ function drawWeave(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
       const h = Math.sqrt(Math.max(0, 1 - c * c)) ** 0.7;
       const lift = 0.85 + 0.15 * Math.sin(Math.PI * along);
       const twist = Math.sin(TAU * (along * 3 + across * 1.5));
-      L[i] = 0.66 + 0.26 * h * lift - 0.02 * twist * h + tone + 0.035 * fuzz[i] + 0.02 * cloud[i];
+      const fibre = warpTop ? fibreV[i] : fibreH[i];
+      const pill = pills[i] > 0.8 ? (pills[i] - 0.8) * 0.25 : 0;
+      L[i] =
+        0.66 + 0.26 * h * lift - 0.02 * twist * h + tone + 0.035 * fuzz[i] + 0.02 * cloud[i] + 0.03 * fibre * h + pill;
     }
   }
   putGray(ctx, N, L);
@@ -1237,6 +1307,8 @@ function drawLeather(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
   const wr = worley(N, 7, nextSeed(rng), 0.9);
   const depth = fbmField(N, 6, 6, 2, nextSeed(rng));
   const seed = nextSeed(rng);
+  const fine = worley(N, 16, nextSeed(rng), 1);
+  const pores = noiseField(N, 320, 320, nextSeed(rng));
   const L = field(N, 0.86);
   addFbm(L, N, 3, 3, 4, 0.04, nextSeed(rng));
   addNoise(L, N, 384, 384, 0.012, nextSeed(rng));
@@ -1246,7 +1318,9 @@ function drawLeather(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
     const wrinkle = 1 - smoothstep(0, 0.07, wr.f2[i] - wr.f1[i]);
     L[i] +=
       0.1 * (plateau - 0.5) * (0.8 + 0.4 * depth[i]) -
-      0.04 * wrinkle +
+      0.04 * wrinkle -
+      0.02 * (1 - smoothstep(0, 0.04, fine.f2[i] - fine.f1[i])) * plateau -
+      (pores[i] > 0.72 ? (pores[i] - 0.72) * 0.12 : 0) +
       (hash2(peb.id[i], 3, seed) - 0.5) * 0.025;
   }
   putGray(ctx, N, L);
@@ -1684,8 +1758,26 @@ const normalCache = new Map<string, HTMLCanvasElement>();
 const urlCache = new Map<string, string>();
 let canvasUnavailable = false;
 
+/** Patterns added by content packs (ids `<pack>:<id>`), kept apart from the built-in set. */
+const PACK_PATTERNS = new Map<string, TexturePattern>();
+
 function getPattern(id: string): TexturePattern | undefined {
-  return Object.prototype.hasOwnProperty.call(TEXTURE_PATTERNS, id) ? TEXTURE_PATTERNS[id] : undefined;
+  return Object.prototype.hasOwnProperty.call(TEXTURE_PATTERNS, id) ? TEXTURE_PATTERNS[id] : PACK_PATTERNS.get(id);
+}
+
+/** Built-in or pack pattern by id. */
+export const patternInfo = (id: string): TexturePattern | undefined => getPattern(id);
+
+/** Every pattern id: built-in first, then content-pack patterns. */
+export const allPatternIds = (): string[] => [...TEXTURE_PATTERN_IDS, ...PACK_PATTERNS.keys()];
+
+/** Replaces the content-pack patterns and drops their cached canvases (packs reload live). */
+export function setPackPatterns(list: TexturePattern[]): void {
+  PACK_PATTERNS.clear();
+  for (const p of list) PACK_PATTERNS.set(p.id, p);
+  for (const cache of [baseCache, contrastCache, normalCache, urlCache] as Map<string, unknown>[]) {
+    for (const k of [...cache.keys()]) if (k.includes(':')) cache.delete(k);
+  }
 }
 
 const normSize = (size: number): number =>

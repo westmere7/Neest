@@ -1,5 +1,6 @@
 import type { MaterialDefinition } from '@/domain/model/schema';
 import { renderPattern } from '@/data/materials/patterns';
+import { photoSwatchUrl } from './photoTextures';
 
 const urlCache = new Map<string, string | null>();
 
@@ -36,10 +37,16 @@ export function tintedPatternUrl(m: Pick<MaterialDefinition, 'texture' | 'color'
   return url;
 }
 
-/** CSS background for a material swatch (texture when available, else flat colour). */
-export function swatchBackground(m: Pick<MaterialDefinition, 'texture' | 'color' | 'opacity' | 'metalness'>): string {
-  const url = tintedPatternUrl(m, 96);
+/**
+ * CSS background for a material swatch: the tinted photo texture when it is on
+ * and loaded, else the procedural texture, else a flat colour. Components that
+ * show swatches should re-render on `subscribePhotos` (photos load async).
+ */
+export function swatchBackground(m: Pick<MaterialDefinition, 'texture' | 'color' | 'opacity' | 'metalness'> & Partial<Pick<MaterialDefinition, 'photo'>>): string {
   const base = m.color;
+  const photo = m.photo ? photoSwatchUrl({ photo: m.photo, color: m.color }) : null;
+  if (photo) return `url(${photo}) center / cover, ${base}`;
+  const url = tintedPatternUrl(m, 96);
   if (url) return `url(${url}) center / 64px 64px, ${base}`;
   if (m.metalness > 0.6) return `linear-gradient(135deg, ${base} 0%, #ffffff55 45%, ${base} 60%, #00000033 100%), ${base}`;
   if (m.opacity < 0.9)

@@ -155,6 +155,25 @@ export const TextureRefSchema = z.object({
   contrast: num.min(0).max(1).default(1),
 });
 
+/**
+ * Photo texture (CC0 PBR maps in public/textures/<setId>/, fetched by
+ * `npm run textures`). Rendered on top of the base colour with the same multiply
+ * model as procedural textures; the procedural `texture` stays the fallback when
+ * the photo files are missing or `enabled` is false.
+ */
+export const PhotoTextureRefSchema = z.object({
+  /** Set id from src/data/materials/photoSets.json. */
+  setId: Id,
+  /** Size of one photo tile in metres. */
+  scale: num.min(0.01).max(20),
+  /** Rotation of the photo texture in degrees. */
+  rotation: num.default(0),
+  /** Strength of the photo's light/dark variation and relief (0..1). */
+  contrast: num.min(0).max(1).default(1),
+  /** Use the photo maps (true) or the procedural texture (false). */
+  enabled: z.boolean().default(true),
+});
+
 export const LicenseSchema = z.object({
   name: z.string(),
   license: z.string(),
@@ -172,6 +191,8 @@ export const MaterialSchema = z.object({
   emissive: HexColor.nullable().default(null),
   emissiveIntensity: num.min(0).max(20).default(0),
   texture: TextureRefSchema.nullable().default(null),
+  /** Optional photo texture; older projects get it from the catalogue on load (storage/migrations). */
+  photo: PhotoTextureRefSchema.nullable().default(null),
   /** When set, this material is an unlinked per-instance override of another material. */
   overrideOf: Id.nullable().default(null),
   /** Catalogue entry this material was created from, if any. */
@@ -308,6 +329,7 @@ export type Room = z.infer<typeof RoomSchema>;
 export type PlacedObject = z.infer<typeof PlacedObjectSchema>;
 export type MaterialCategory = z.infer<typeof MaterialCategorySchema>;
 export type TextureRef = z.infer<typeof TextureRefSchema>;
+export type PhotoTextureRef = z.infer<typeof PhotoTextureRefSchema>;
 export type MaterialDefinition = z.infer<typeof MaterialSchema>;
 export type CustomAsset = z.infer<typeof CustomAssetSchema>;
 export type WallDisplay = z.infer<typeof WallDisplaySchema>;

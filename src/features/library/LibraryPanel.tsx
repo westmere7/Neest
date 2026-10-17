@@ -3,9 +3,17 @@ import { PanelLeftClose, Search, Star, Upload } from 'lucide-react';
 import type { OpeningKind, WallRole } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { formatLength } from '@/domain/model/units';
-import { ASSET_CATALOG, ASSET_CATEGORY_LABELS, ASSET_CATEGORY_ORDER } from '@/data/assets/catalog';
+import {
+  ASSET_CATALOG,
+  ASSET_CATEGORY_LABELS,
+  ASSET_CATEGORY_ORDER,
+  ASSET_TYPE_LABELS,
+  ASSET_TYPE_ORDER,
+  groupRank,
+} from '@/data/assets/catalog';
 import { assetPlan, customAssetDefinition } from '@/data/assets/registry';
-import type { AssetCategory, AssetDefinition } from '@/data/assets/types';
+import type { AssetCategory, AssetDefinition, AssetType } from '@/data/assets/types';
+import { usePackVersion } from '@/packs/events';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type LibraryTab } from '@/state/editorStore';
 import { useDialogStore, usePrefsStore } from '@/state/uiStores';
@@ -206,32 +214,82 @@ function BuildTab() {
 
 // ───────────── Furniture tab ─────────────
 
-type CatFilter = AssetCategory | 'all' | 'favourites' | 'recent';
+type Browse = 'room' | 'type';
+type CatFilter = AssetCategory | AssetType | 'all' | 'favourites' | 'recent';
+
+interface Shelf {
+  key: string;
+  title: string;
+  items: AssetDefinition[];
+}
+
+/** Splits a listing into titled shelves, Sims buy-mode style. */
+function shelves(list: AssetDefinition[], browse: Browse, cat: CatFilter): Shelf[] {
+  if (cat === 'favourites' || cat === 'recent') return [{ key: cat, title: '', items: list }];
+  const byKey = new Map<string, Shelf & { rank: number }>();
+  const add = (key: string, title: string, rank: number, a: AssetDefinition) => {
+    const shelf = byKey.get(key) ?? { key, title, rank, items: [] };
+    shelf.items.push(a);
+    byKey.set(key, shelf);
+  };
+  for (const a of list) {
+    if (cat === 'all') {
+      // Whole catalogue: one shelf per room (or type).
+      if (browse === 'room') {
+        const i = ASSET_CATEGORY_ORDER.indexOf(a.category);
+        add(a.category, ASSET_CATEGORY_LABELS[a.category], i < 0 ? 999 : i, a);
+      } else {
+        add(a.type, ASSET_TYPE_LABELS[a.type], ASSET_TYPE_ORDER.indexOf(a.type), a);
+      }
+    } else {
+      // One room or type: shelves by group, ordered as in ASSET_GROUPS.
+      const typeRank = browse === 'room' ? ASSET_TYPE_ORDER.indexOf(a.type) * 100 : 0;
+      add(`${a.type}|${a.group}`, a.group, typeRank + groupRank(a.type, a.group), a);
+    }
+  }
+  return [...byKey.values()]
+    .sort((x, y) => x.rank - y.rank || x.title.localeCompare(y.title))
+    .map(({ key, title, items }) => ({ key, title, items }));
+}
 
 function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const project = useProjectStore((s) => s.project!);
   const favourites = usePrefsStore((s) => s.favouriteAssets);
   const recents = usePrefsStore((s) => s.recentAssets);
+  const packs = usePackVersion();
   const [query, setQuery] = useState('');
+  const [browse, setBrowse] = useState<Browse>('room');
   const [cat, setCat] = useState<CatFilter>('all');
   const custom = useMemo(() => Object.values(project.customAssets).map(customAssetDefinition), [project.customAssets]);
-  const all = useMemo(() => [...ASSET_CATALOG.filter((a) => a.category !== 'construction'), ...custom], [custom]);
+  const all = useMemo(
+    () => [...ASSET_CATALOG.filter((a) => a.category !== 'construction'), ...custom],
+    // Pack items are added to the catalogue in place, so re-read it when packs change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [custom, packs],
+  );
   const q = query.trim().toLowerCase();
   const list = all.filter((a) => {
-    if (q && !`${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]}`.toLowerCase().includes(q)) return false;
+    if (q) {
+      const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''}`;
+      if (!hay.toLowerCase().includes(q)) return false;
+    }
     if (cat === 'all') return true;
     if (cat === 'favourites') return favourites.includes(a.id);
     if (cat === 'recent') return recents.includes(a.id);
-    return a.category === cat;
+    return browse === 'room' ? a.category === cat : a.type === cat;
   });
   if (cat === 'recent') list.sort((a, b) => recents.indexOf(a.id) - recents.indexOf(b.id));
+  const present = new Set<string>(all.map((a) => (browse === 'room' ? a.category : a.type)));
   const cats: { value: CatFilter; label: string }[] = [
     { value: 'all', label: 'All' },
     { value: 'favourites', label: '★ Favourites' },
     { value: 'recent', label: 'Recent' },
-    ...ASSET_CATEGORY_ORDER.filter((c) => c !== 'construction').map((c) => ({ value: c as CatFilter, label: ASSET_CATEGORY_LABELS[c] })),
-    ...(custom.length ? [{ value: 'custom' as CatFilter, label: ASSET_CATEGORY_LABELS.custom }] : []),
+    ...(browse === 'room'
+      ? ASSET_CATEGORY_ORDER.filter((c) => c !== 'construction' && present.has(c)).map((c) => ({ value: c as CatFilter, label: ASSET_CATEGORY_LABELS[c] }))
+      : ASSET_TYPE_ORDER.filter((t) => t !== 'structure' && present.has(t)).map((t) => ({ value: t as CatFilter, label: ASSET_TYPE_LABELS[t] }))),
+    ...(browse === 'room' && custom.length ? [{ value: 'custom' as CatFilter, label: ASSET_CATEGORY_LABELS.custom }] : []),
   ];
+  const groups = shelves(list, browse, cat);
   return (
     <div className="furniture-tab">
       <div className="lib-filters">
@@ -239,7 +297,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
           <Search size={13} aria-hidden />
           <input
             className="input"
-            placeholder="Search furniture, fixtures…"
+            placeholder={`Search ${all.length} items…`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.stopPropagation()}
@@ -247,7 +305,20 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
             data-testid="library-search"
           />
         </div>
-        <div className="chips" role="group" aria-label="Categories">
+        <Segmented
+          label="Browse by"
+          size="sm"
+          value={browse}
+          onChange={(v) => {
+            setBrowse(v);
+            setCat((c) => (c === 'favourites' || c === 'recent' ? c : 'all'));
+          }}
+          options={[
+            { value: 'room', label: 'By room', testId: 'browse-room' },
+            { value: 'type', label: 'By type', testId: 'browse-type' },
+          ]}
+        />
+        <div className="chips" role="group" aria-label={browse === 'room' ? 'Rooms' : 'Types'}>
           {cats.map((c) => (
             <button key={c.value} type="button" className={`chip${cat === c.value ? ' on' : ''}`} onClick={() => setCat(c.value)} aria-pressed={cat === c.value}>
               {c.label}
@@ -255,9 +326,20 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
           ))}
         </div>
       </div>
-      <div className="asset-grid" data-testid="asset-grid">
-        {list.map((a) => (
-          <AssetCard key={a.id} asset={a} />
+      <div className="asset-shelves" data-testid="asset-grid">
+        {groups.map((g) => (
+          <section key={g.key} className="asset-shelf" aria-label={g.title || undefined}>
+            {g.title && (
+              <h3 className="lib-h shelf-h">
+                {g.title} <span className="shelf-count">{g.items.length}</span>
+              </h3>
+            )}
+            <div className="asset-grid">
+              {g.items.map((a) => (
+                <AssetCard key={a.id} asset={a} />
+              ))}
+            </div>
+          </section>
         ))}
         {list.length === 0 && (
           <p className="field-hint pad">
@@ -326,10 +408,17 @@ function AssetCard({ asset }: { asset: AssetDefinition }) {
           });
         }}
         aria-pressed={placing}
-        title={`${asset.name} — click to place, or drag onto the plan`}
+        title={`${asset.name}${asset.pack ? ` (from the ${asset.pack.name} pack)` : ''} — click to place, or drag onto the plan`}
         data-testid={`asset-${asset.id}`}
       >
-        <span className="asset-thumb">{preview}</span>
+        <span className="asset-thumb">
+          {preview}
+          {asset.pack && (
+            <span className="pack-badge" title={`From the ${asset.pack.name} pack`}>
+              {asset.pack.name}
+            </span>
+          )}
+        </span>
         <span className="asset-name">{asset.name}</span>
         <span className="asset-dims num">{dims}</span>
       </button>

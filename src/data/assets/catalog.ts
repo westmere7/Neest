@@ -4,8 +4,11 @@
  * Every asset is original, generated from primitive parts at runtime (no external models), and
  * fully parametric: `build(size)` re-lays out its parts for any size within min/max. Individual
  * categories live in sibling modules; shared authoring helpers are in ./parts.ts.
+ *
+ * Browsing follows the Sims "Buy mode" idea: shop by room (`category`) or by type (`type`), with
+ * each listing split into shelves (`group`).
  */
-import type { AssetCategory, AssetDefinition } from './types';
+import type { AssetCategory, AssetDefinition, AssetType } from './types';
 import { BATHROOM_ASSETS } from './bathroom';
 import { BEDROOM_ASSETS } from './bedroom';
 import { CONSTRUCTION_ASSETS } from './construction';
@@ -13,19 +16,27 @@ import { DECOR_ASSETS } from './decor';
 import { DINING_ASSETS } from './dining';
 import { ELECTRONICS_ASSETS } from './electronics';
 import { GENERIC_ASSETS } from './generic';
+import { HOBBIES_ASSETS } from './hobbies';
+import { KIDS_ASSETS } from './kids';
 import { KITCHEN_ASSETS } from './kitchen';
+import { LAUNDRY_ASSETS } from './laundry';
 import { LIGHTING_ASSETS } from './lighting';
 import { LIVING_ASSETS } from './living';
 import { OFFICE_ASSETS } from './office';
+import { OUTDOOR_ASSETS } from './outdoor';
 import { STORAGE_ASSETS } from './storage';
 
 export const ASSET_CATALOG: AssetDefinition[] = [
   ...LIVING_ASSETS,
   ...BEDROOM_ASSETS,
+  ...KIDS_ASSETS,
   ...DINING_ASSETS,
   ...KITCHEN_ASSETS,
   ...BATHROOM_ASSETS,
+  ...LAUNDRY_ASSETS,
   ...OFFICE_ASSETS,
+  ...HOBBIES_ASSETS,
+  ...OUTDOOR_ASSETS,
   ...STORAGE_ASSETS,
   ...LIGHTING_ASSETS,
   ...DECOR_ASSETS,
@@ -41,10 +52,14 @@ export const ASSETS_BY_ID: Record<string, AssetDefinition> = Object.fromEntries(
 export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   living: 'Living room',
   bedroom: 'Bedroom',
+  kids: 'Kids & nursery',
   dining: 'Dining',
   kitchen: 'Kitchen',
   bathroom: 'Bathroom',
-  office: 'Office',
+  laundry: 'Laundry & utility',
+  office: 'Study & office',
+  hobbies: 'Hobbies & fitness',
+  outdoor: 'Balcony & outdoor',
   storage: 'Storage',
   lighting: 'Lighting',
   decor: 'Decor',
@@ -58,10 +73,14 @@ export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
 export const ASSET_CATEGORY_ORDER: AssetCategory[] = [
   'living',
   'bedroom',
+  'kids',
   'dining',
   'kitchen',
   'bathroom',
+  'laundry',
   'office',
+  'hobbies',
+  'outdoor',
   'storage',
   'lighting',
   'decor',
@@ -69,3 +88,103 @@ export const ASSET_CATEGORY_ORDER: AssetCategory[] = [
   'construction',
   'generic',
 ];
+
+export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  seating: 'Seating',
+  beds: 'Beds',
+  surfaces: 'Tables & surfaces',
+  storage: 'Storage',
+  appliances: 'Appliances',
+  plumbing: 'Plumbing',
+  lighting: 'Lighting',
+  decor: 'Decorations',
+  plants: 'Plants',
+  electronics: 'Electronics',
+  activities: 'Hobbies & skills',
+  kids: 'Kids',
+  structure: 'Structure',
+  misc: 'Basic shapes',
+};
+
+export const ASSET_TYPE_ORDER: AssetType[] = [
+  'seating',
+  'beds',
+  'surfaces',
+  'storage',
+  'appliances',
+  'plumbing',
+  'lighting',
+  'decor',
+  'plants',
+  'electronics',
+  'activities',
+  'kids',
+  'structure',
+  'misc',
+];
+
+/**
+ * Shelves within each type, in display order. Assets name one of these as their `group`;
+ * listings show shelves in this order (unknown groups sort last, alphabetically).
+ */
+export const ASSET_GROUPS: Record<AssetType, string[]> = {
+  seating: [
+    'Sofas & loveseats',
+    'Living chairs',
+    'Ottomans & poufs',
+    'Dining chairs',
+    'Stools & benches',
+    'Desk chairs',
+    'Outdoor seating',
+  ],
+  beds: ['Beds', 'Bunk & loft beds', 'Daybeds & sofa beds', 'Cots & kids beds'],
+  surfaces: [
+    'Coffee tables',
+    'End tables',
+    'Console tables',
+    'Nightstands',
+    'Dining tables',
+    'Counters & cabinets',
+    'Desks',
+    'Vanity & dressing tables',
+    'Outdoor tables',
+  ],
+  storage: [
+    'Wardrobes',
+    'Dressers & chests',
+    'Bookcases & shelves',
+    'Sideboards & cabinets',
+    'Media units',
+    'Kitchen cabinets',
+    'Office storage',
+    'Hallway storage',
+    'Baskets & boxes',
+  ],
+  appliances: ['Cooking', 'Refrigeration', 'Cleaning', 'Laundry', 'Small appliances', 'Outdoor cooking'],
+  plumbing: ['Toilets', 'Sinks', 'Showers & tubs', 'Bathroom accessories', 'Water heating'],
+  lighting: ['Ceiling lights', 'Floor lamps', 'Table lamps', 'Wall lights', 'Outdoor & string lights'],
+  decor: [
+    'Rugs',
+    'Wall art',
+    'Mirrors',
+    'Clocks',
+    'Curtains & blinds',
+    'Cushions & throws',
+    'Ornaments',
+    'Candles & tabletop',
+    'Screens & dividers',
+    'Fireplaces',
+  ],
+  plants: ['Indoor plants', 'Succulents & cacti', 'Hanging plants', 'Trees', 'Outdoor plants'],
+  electronics: ['TV & audio', 'Computers', 'Gaming', 'Climate', 'Smart home'],
+  activities: ['Music', 'Fitness', 'Games', 'Creative', 'Knowledge'],
+  kids: ['Toys', 'Kids furniture', 'Nursery'],
+  structure: ['Columns', 'Partitions', 'Heating', 'Built-ins', 'Stairs & steps'],
+  misc: ['Basic shapes', 'Imported models'],
+};
+
+/** Sort key for a group within its type (known groups first, in ASSET_GROUPS order). */
+export function groupRank(type: AssetType, group: string): number {
+  const i = ASSET_GROUPS[type]?.indexOf(group) ?? -1;
+  return i < 0 ? 1000 : i;
+}

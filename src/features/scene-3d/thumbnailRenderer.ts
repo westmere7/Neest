@@ -1,10 +1,21 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { AssetDefinition } from '@/data/assets/types';
+import { ASSET_CATALOG } from '@/data/assets/catalog';
+import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
+import { preloadPhotoSets } from '@/features/materials/photoTextures';
 import { buildAssetPreview } from './builders';
 import { sharedRegistry } from './sceneRuntime';
 
 const SIZE = 192;
+
+// Thumbnails render synchronously, so load the photo maps used by default furniture
+// finishes before the first one (bounded wait; missing files mean procedural textures).
+await preloadPhotoSets(
+  ASSET_CATALOG.flatMap((a) => a.slots.flatMap((slot) => MATERIAL_CATALOG_BY_ID[slot.defaultMaterial]?.photo?.setId ?? [])),
+  undefined,
+  6000,
+);
 let renderer: THREE.WebGLRenderer | null = null;
 let scene: THREE.Scene | null = null;
 let failed = false;

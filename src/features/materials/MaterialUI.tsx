@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Copy, Link2, Link2Off, Search, Star, Trash2 } from 'lucide-react';
-import type { MaterialCategory, MaterialDefinition, Project } from '@/domain/model/schema';
+import type { MaterialCategory, MaterialDefinition, PhotoTextureRef, Project } from '@/domain/model/schema';
 import {
   assignMaterial,
   createOverride,
@@ -13,17 +13,33 @@ import {
   type MaterialTarget,
 } from '@/domain/commands/entities';
 import { MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID, MATERIAL_CATEGORY_LABELS } from '@/data/materials/catalog';
-import { TEXTURE_PATTERN_IDS, TEXTURE_PATTERNS } from '@/data/materials/patterns';
+import { allPatternIds, patternInfo } from '@/data/materials/patterns';
+import { PHOTO_SETS, PHOTO_SETS_BY_ID, PHOTO_SOURCE_NAMES, photoSetUrl } from '@/data/materials/photoSets';
 import { assetSlotDefault, getAsset, resolveMaterial } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { confirmAction, toast, usePrefsStore, useDialogStore } from '@/state/uiStores';
-import { Button, ColorField, IconButton, Select, Slider, TextField } from '@/components/ui';
+import { Button, ColorField, IconButton, Segmented, Select, Slider, TextField } from '@/components/ui';
 import { Dialog } from '@/components/Overlays';
 import { swatchBackground } from './textureCache';
+import { getPhotoManifest, photoEntry, photoSetFailed, photoVersion, subscribePhotos } from './photoTextures';
 import './materials.css';
 
-export function MaterialSwatch({ material, size = 28, title }: { material: Pick<MaterialDefinition, 'color' | 'texture' | 'opacity' | 'metalness'>; size?: number; title?: string }) {
+/** Re-renders when photo textures finish loading (swatches switch from procedural to photo). */
+function usePhotoVersion(): number {
+  return useSyncExternalStore(subscribePhotos, photoVersion, photoVersion);
+}
+
+export function MaterialSwatch({
+  material,
+  size = 28,
+  title,
+}: {
+  material: Pick<MaterialDefinition, 'color' | 'texture' | 'opacity' | 'metalness'> & Partial<Pick<MaterialDefinition, 'photo'>>;
+  size?: number;
+  title?: string;
+}) {
+  usePhotoVersion();
   return <span className="mat-swatch" style={{ width: size, height: size, background: swatchBackground(material) }} title={title} aria-hidden />;
 }
 
@@ -299,6 +315,7 @@ export function MaterialEditor({ material }: { material: MaterialDefinition }) {
   const commit = (patch: Partial<MaterialDefinition>) => liveCommit(id, patch);
   const preview = (patch: Partial<MaterialDefinition>) => livePreview(id, patch);
   const selection = useEditorStore((s) => s.selection);
+  usePhotoVersion();
 
   const onDelete = async () => {
     if (usage.length) {
@@ -375,15 +392,158 @@ export function MaterialEditor({ material }: { material: MaterialDefinition }) {
       <Slider label="Roughness" value={material.roughness} min={0} max={1} step={0.01} onChange={(v) => preview({ roughness: v })} onCommit={(v) => commit({ roughness: v })} />
       <Slider label="Metalness" value={material.metalness} min={0} max={1} step={0.01} onChange={(v) => preview({ metalness: v })} onCommit={(v) => commit({ metalness: v })} />
       <Slider label="Opacity" value={material.opacity} min={0.05} max={1} step={0.01} onChange={(v) => preview({ opacity: v })} onCommit={(v) => commit({ opacity: v })} />
+      <TextureControls material={material} preview={preview} commit={commit} />
+      <p className="field-hint">Source: {material.source.name} · {material.source.license}</p>
+    </div>
+  );
+}
+
+/** Photo set suggested when switching a material without one to photo. */
+const CATEGORY_PHOTO: Partial<Record<MaterialCategory, string>> = {
+  paint: 'plaster',
+  plaster: 'plaster',
+  wood: 'oak-veneer',
+  laminate: 'oak-veneer',
+  tile: 'tile-square',
+  stone: 'marble-white',
+  metal: 'brushed-metal',
+  fabric: 'cotton',
+  leather: 'leather',
+  rug: 'wool-carpet',
+  solid: 'microcement',
+};
+
+function defaultPhotoFor(m: MaterialDefinition): PhotoTextureRef | null {
+  const fromCatalog = m.catalogId ? MATERIAL_CATALOG_BY_ID[m.catalogId]?.photo : null;
+  if (fromCatalog) return { ...fromCatalog, enabled: true };
+  const set = PHOTO_SETS_BY_ID[CATEGORY_PHOTO[m.category] ?? ''] ?? PHOTO_SETS[0];
+  if (!set) return null;
+  const subtle = m.category === 'paint' || m.category === 'solid';
+  return { setId: set.id, scale: set.size, rotation: 0, contrast: subtle ? 0.4 : 1, enabled: true };
+}
+
+/** Texture source switch (photo ↔ procedural) with the controls for the active one. */
+function TextureControls({
+  material,
+  preview,
+  commit,
+}: {
+  material: MaterialDefinition;
+  preview: (patch: Partial<MaterialDefinition>) => void;
+  commit: (patch: Partial<MaterialDefinition>) => void;
+}) {
+  usePhotoVersion();
+  const photo = material.photo;
+  const mode: 'photo' | 'procedural' = photo?.enabled ? 'photo' : 'procedural';
+  const manifest = getPhotoManifest();
+  const set = photo ? PHOTO_SETS_BY_ID[photo.setId] : undefined;
+  const missing = !!photo?.enabled && ((manifest !== undefined && !photoEntry(photo.setId)) || photoSetFailed(photo.setId));
+  const fallbackName = material.texture ? (patternInfo(material.texture.patternId)?.name ?? material.texture.patternId) : null;
+  const withPhoto = (patch: Partial<PhotoTextureRef>): Partial<MaterialDefinition> => ({ photo: { ...photo!, ...patch } });
+  return (
+    <>
+      <div className="field">
+        <span className="field-label">Texture</span>
+        <Segmented
+          label="Texture source"
+          size="sm"
+          value={mode}
+          onChange={(v) => {
+            if (v === 'photo') {
+              const next = photo ? { ...photo, enabled: true } : defaultPhotoFor(material);
+              if (next) commit({ photo: next });
+            } else if (photo) commit({ photo: { ...photo, enabled: false } });
+          }}
+          options={[
+            { value: 'photo', label: 'Photo', title: 'CC0 photo texture (colour, relief and roughness maps)', testId: 'texture-photo' },
+            { value: 'procedural', label: 'Procedural', title: 'Built-in generated pattern', testId: 'texture-procedural' },
+          ]}
+        />
+      </div>
+      {mode === 'photo' && photo ? (
+        <>
+          <Select
+            label="Photo texture"
+            value={photo.setId}
+            onChange={(v) => commit(withPhoto({ setId: v, scale: PHOTO_SETS_BY_ID[v]?.size ?? photo.scale }))}
+            options={[
+              ...(set ? [] : [{ value: photo.setId, label: `${photo.setId} (unknown)` }]),
+              ...PHOTO_SETS.map((s) => ({ value: s.id, label: s.name })),
+            ]}
+          />
+          {missing && (
+            <p className="field-hint mat-photo-missing" role="status">
+              Photo files aren’t available here, so the procedural {fallbackName ? `“${fallbackName}”` : ''} texture is shown. Run{' '}
+              <code>npm run textures</code> to download them.
+            </p>
+          )}
+          {manifest === undefined && <p className="field-hint">Loading photo textures…</p>}
+          <Slider
+            label="Photo tile size"
+            value={photo.scale}
+            min={0.05}
+            max={6}
+            step={0.05}
+            format={(v) => `${v.toFixed(2)} m`}
+            onChange={(v) => preview(withPhoto({ scale: v }))}
+            onCommit={(v) => commit(withPhoto({ scale: v }))}
+          />
+          <Slider
+            label="Photo rotation"
+            value={photo.rotation}
+            min={0}
+            max={180}
+            step={5}
+            format={(v) => `${v}°`}
+            onChange={(v) => preview(withPhoto({ rotation: v }))}
+            onCommit={(v) => commit(withPhoto({ rotation: v }))}
+          />
+          <Slider
+            label="Photo strength"
+            value={photo.contrast}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={(v) => preview(withPhoto({ contrast: v }))}
+            onCommit={(v) => commit(withPhoto({ contrast: v }))}
+          />
+          {set && (
+            <p className="field-hint">
+              Photo:{' '}
+              <a href={photoSetUrl(set)} target="_blank" rel="noreferrer">
+                {PHOTO_SOURCE_NAMES[set.source]} {set.assetId}
+              </a>{' '}
+              · CC0 1.0{fallbackName ? ` · fallback: ${fallbackName}` : ''}
+            </p>
+          )}
+        </>
+      ) : (
+        <ProceduralTextureControls material={material} preview={preview} commit={commit} />
+      )}
+    </>
+  );
+}
+
+function ProceduralTextureControls({
+  material,
+  preview,
+  commit,
+}: {
+  material: MaterialDefinition;
+  preview: (patch: Partial<MaterialDefinition>) => void;
+  commit: (patch: Partial<MaterialDefinition>) => void;
+}) {
+  return (
+    <>
       <Select
-        label="Texture"
+        label="Pattern"
         value={material.texture?.patternId ?? '__none__'}
         onChange={(v) =>
           commit({
             texture: v === '__none__' ? null : { patternId: v, scale: material.texture?.scale ?? 1, rotation: material.texture?.rotation ?? 0, contrast: material.texture?.contrast ?? 1 },
           })
         }
-        options={[{ value: '__none__', label: 'None (solid)' }, ...TEXTURE_PATTERN_IDS.map((p) => ({ value: p, label: TEXTURE_PATTERNS[p]?.name ?? p }))]}
+        options={[{ value: '__none__', label: 'None (solid)' }, ...allPatternIds().map((p) => ({ value: p, label: patternInfo(p)?.name ?? p }))]}
       />
       {material.texture && (
         <>
@@ -418,8 +578,7 @@ export function MaterialEditor({ material }: { material: MaterialDefinition }) {
           />
         </>
       )}
-      <p className="field-hint">Source: {material.source.name} · {material.source.license}</p>
-    </div>
+    </>
   );
 }
 

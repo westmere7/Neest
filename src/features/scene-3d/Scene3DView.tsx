@@ -196,6 +196,56 @@ function CameraDirector({ view }: { view: { v: CameraView; nonce: number } | nul
   return null;
 }
 
+/**
+ * Makes the selected furniture the orbit pivot: when the selection changes to
+ * include objects, the orbit target eases to their centre (the camera stays
+ * where it is and turns to face them), so dragging orbits around the selection
+ * and the wheel zooms toward it. Clearing the selection leaves the pivot as is.
+ */
+function SelectionPivot() {
+  const get = useThree((s) => s.get);
+  const key = useEditorStore((s) =>
+    s.selection
+      .filter((x) => x.kind === 'object')
+      .map((x) => x.id)
+      .sort()
+      .join(','),
+  );
+  const anim = useRef<{ from: THREE.Vector3; to: THREE.Vector3; t: number } | null>(null);
+  useEffect(() => {
+    if (!key) return;
+    const project = useProjectStore.getState().project;
+    const ctrl = get().controls as unknown as OrbitControlsImpl | null;
+    if (!project || !ctrl) return;
+    const box = new THREE.Box3();
+    for (const id of key.split(',')) {
+      const o = project.objects[id];
+      if (!o || o.hidden) continue;
+      box.expandByPoint(new THREE.Vector3(o.x, o.elevation, o.y));
+      box.expandByPoint(new THREE.Vector3(o.x, o.elevation + o.height, o.y));
+    }
+    if (box.isEmpty()) return;
+    const to = box.getCenter(new THREE.Vector3());
+    if (to.distanceTo(ctrl.target) < 0.01) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      ctrl.target.copy(to);
+      ctrl.update();
+      anim.current = null;
+    } else anim.current = { from: ctrl.target.clone(), to, t: 0 };
+  }, [key, get]);
+  useFrame((_, dt) => {
+    const a = anim.current;
+    const ctrl = get().controls as unknown as OrbitControlsImpl | null;
+    if (!a || !ctrl) return;
+    a.t = Math.min(1, a.t + dt / 0.35);
+    const e = 1 - Math.pow(1 - a.t, 3);
+    ctrl.target.lerpVectors(a.from, a.to, e);
+    ctrl.update();
+    if (a.t >= 1) anim.current = null;
+  });
+  return null;
+}
+
 /** Exposes renderer/scene/camera for captures and handles helper visibility. */
 function LiveBridge({ helpersRef }: { helpersRef: React.MutableRefObject<THREE.Group | null> }) {
   const { gl, scene, camera, controls } = useThree();
@@ -415,6 +465,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
           />
         )}
         {!walk && <CameraDirector view={view} />}
+        {!walk && <SelectionPivot />}
         {!walk && <FreeAreaOffset />}
         {walk && <WalkControls project={project} derived={derived} onExit={exitWalk} />}
         <Lighting project={project} derived={derived} shadows={r.shadows && r.quality !== 'draft'} quality={r.quality} />

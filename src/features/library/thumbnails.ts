@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { AssetDefinition } from '@/data/assets/types';
+import { dropPackKeys, subscribePacks } from '@/packs/events';
 
 /**
  * Lazily rendered 3D thumbnails for library items. Rendering happens in a
@@ -8,6 +9,8 @@ import type { AssetDefinition } from '@/data/assets/types';
  * back to the 2D plan symbol, so there are never broken thumbnails.
  */
 const cache = new Map<string, string | null>();
+// Content packs reload live: re-render their thumbnails.
+subscribePacks(() => dropPackKeys(cache));
 const listeners = new Map<string, Set<() => void>>();
 const queue: AssetDefinition[] = [];
 let running = false;

@@ -20,6 +20,7 @@ import { createOpeningTool, createPlaceTool } from './tools/placeTools';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './tools/types';
 import { openContextMenu } from '@/components/ContextMenu';
 import { floatingInsets } from '@/components/layoutInsets';
+import { usePackVersion } from '@/packs/events';
 import { planContextMenuItems } from './contextMenu';
 import './plan.css';
 
@@ -349,6 +350,8 @@ export function PlanCanvas() {
   };
 
   const pal = planPalette(planMode, theme);
+  // Content packs reload live: a new options object redraws pack items.
+  const packs = usePackVersion();
   const drawOpts = useMemo<PlanDrawOptions>(
     () => ({
       mode: planMode,
@@ -370,7 +373,7 @@ export function PlanCanvas() {
     }),
     // Quantise px so tiny zoom changes reuse the memoised drawing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [planMode, pal, Math.round(Math.log(px) * 40), project.settings],
+    [planMode, pal, Math.round(Math.log(px) * 40), project.settings, packs],
   );
 
   const gridStep = useMemo(() => {

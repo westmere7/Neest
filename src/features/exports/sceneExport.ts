@@ -24,12 +24,15 @@ export interface SceneExportOptions {
 /**
  * Builds a standalone three.js scene from the project (walls with real
  * openings, floors, optional ceilings, doors/windows, furniture, imported
- * models). Uses the same builders as the live 3D view.
+ * models). Uses the same builders as the live 3D view. Photo textures are
+ * baked into canvases (embedded by the exporter, never referenced by URL);
+ * materials whose photo files are unavailable keep their procedural texture.
  */
 export async function buildExportScene(project: Project, o: SceneExportOptions): Promise<{ root: THREE.Group; registry: MaterialRegistry }> {
   const derived = derivePlan(project);
   const registry = new MaterialRegistry();
   registry.normalMaps = false;
+  registry.bakePhotoSize = 1024;
   const models = await loadProjectModels(project.customAssets);
   const ctx: BuildContext = { project, registry, customModels: models, shadows: false };
   const root = new THREE.Group();
@@ -82,6 +85,8 @@ export async function buildExportScene(project: Project, o: SceneExportOptions):
     }
     root.add(furn);
   }
+  // Materials update in place once their photo maps have loaded (or failed → procedural).
+  await registry.whenPhotosReady();
   root.updateMatrixWorld(true);
   return { root, registry };
 }

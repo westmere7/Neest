@@ -406,12 +406,24 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
   const locked = o.locked || project.layers.furniture.locked;
   return (
     <>
-      {!asset && <p className="notice">The asset “{o.assetId}” is not available in this version; a placeholder outline is shown.</p>}
+      {!asset && (
+        <p className="notice">
+          {o.assetId.includes(':')
+            ? `“${o.assetId}” comes from the content pack “${o.assetId.split(':')[0]}”, which isn't installed. Add that folder to /packs to see the item; a placeholder outline is shown.`
+            : `The asset “${o.assetId}” is not available in this version; a placeholder outline is shown.`}
+        </p>
+      )}
       <Section title="Item">
         <TextField label="Label" value={o.name ?? asset?.name ?? ''} onCommit={(name) => upd('Rename object', { name })} />
         {asset && (
           <p className="field-hint">
             {asset.name} · {ASSET_CATEGORY_LABELS[asset.category]}
+          </p>
+        )}
+        {asset?.pack && (
+          <p className="field-hint pack-source" data-testid="pack-source">
+            From the {asset.pack.name} pack{asset.pack.version ? ` v${asset.pack.version}` : ''}
+            {asset.pack.author ? ` by ${asset.pack.author}` : ''} · {asset.source.license}
           </p>
         )}
       </Section>

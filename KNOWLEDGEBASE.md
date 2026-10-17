@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-10-17.
+Last updated: 2026-10-17 (photo textures).
 
 ---
 
@@ -54,13 +54,16 @@ run it instead. Never start a Bash command with a bare `cat > file` (it waits fo
 
 ```
 _Prompt/                 Product brief (prompt.md) and its origin (InitialPrompt.txt)
+packs/                   Content packs: one <pack-id>.pack.ts file each (README.md = authoring guide)
 projects/                Shared project folder mirrored by the dev server (README.md explains it)
-public/                  favicon (PWA icon)
+public/                  favicon (PWA icon), textures/ (CC0 photo maps + manifest.json, from `npm run textures`)
 start-neest.bat          Windows launcher (Node check, npm install, dev server, browser)
 start-neest.command      macOS Finder double-click launcher (invokes start-neest.sh)
 start-neest.sh           macOS/Linux shell launcher (Node check, npm install, dev server, browser)
 tools/
   neest-workspace-plugin.ts  Vite plugin: /__neest/fs endpoints + projects/ watcher (dev & preview only)
+  neest-packs-plugin.ts      Vite plugin: hot-reloads the pack loader when /packs files are added/deleted
+  fetch-textures.mjs     `npm run textures`: downloads/re-encodes the CC0 photo texture sets (needs sharp, dev dep)
 src/
   main.tsx               React root (+ dev debug hooks)
   app/App.tsx            Hash router: #/ launcher, #/p/:id editor, #/guest/:id guest view
@@ -81,7 +84,8 @@ src/
   data/
     assets/              Parametric furniture catalogue (types.ts contract, parts.ts helpers, one file per
                          category, catalog.ts index, registry.ts lookup + plan footprints)
-    materials/           catalog.ts (≈90 materials, defaults), patterns.ts (28 procedural seamless textures)
+    materials/           catalog.ts (≈130 materials, defaults, photo mapping), patterns.ts (28 procedural seamless
+                         textures), photoSets.json/.ts (CC0 photo texture sets)
   features/
     projects/            Launcher, projectService (lifecycle, autosave, repo mirroring, thumbnails),
                          thumbnails.ts (on-demand previews), demoProject (SAMPLES, apartment, studio),
@@ -98,7 +102,8 @@ src/
     walkthrough/         WalkControls, TouchControls, GuestPage
     library/             LibraryPanel (Build / Furniture / Materials tabs), thumbnails, ImportModelDialog,
                          useDropAsset
-    materials/           MaterialUI (slot rows, picker with apply scopes, library, editor), textureCache
+    materials/           MaterialUI (slot rows, picker with apply scopes, library, editor, photo/procedural
+                         switch), textureCache (swatches), photoTextures (manifest, image loading, colour maths)
     exports/             ExportDialog (ExportPanel body, lazy), sheet (scaled vector sheets), planExports
                          (PNG/PDF), dxf, sceneExport (GLB), guestExport (single-file HTML), neestFile (.neest zip),
                          report (JSON)
@@ -175,7 +180,7 @@ Principles that must hold:
 | `Opening` | host `wallId`; `kind` (door-single/double/sliding, passage, window-single/double/fixed/sliding); **`offset` = arc length from node `a` to the opening centre**; `width`, `height`, `sillHeight`; `swingSide` left/right; `hinge` start/end; `openAngle` (3D only); `style`; frame/panel material ids |
 | `Room` | user data for a detected face: `name`, `type`, floor/ceiling materials, `showCeiling`, `ceilingHeight` (null = lowest bounding wall), label prefs; identity hints `anchor`, `boundaryWallIds` |
 | `PlacedObject` | `assetId`, `x`,`y`,`elevation`,`rotation`, `width/depth/height`, `mirrored`, `materials` (slot → material id; missing slots use asset defaults), `locked`, `hidden` |
-| `MaterialDefinition` | `color`, `roughness`, `metalness`, `opacity`, `emissive*`, `texture {patternId, scale m/tile, rotation°, contrast}`, `overrideOf` (unlinked per-surface copy), `catalogId`, `source` licence |
+| `MaterialDefinition` | `color`, `roughness`, `metalness`, `opacity`, `emissive*`, `texture {patternId, scale m/tile, rotation°, contrast}` (procedural, also the fallback), `photo {setId, scale, rotation, contrast, enabled}` (optional CC0 photo set, §12), `overrideOf` (unlinked per-surface copy), `catalogId`, `source` licence |
 | `CustomAsset` | imported GLB: `blobId` (IndexedDB), native `size`, normalised top-down `footprint` hull, licence text |
 | `CameraPreset` | projection, position, target, fov, zoom, optional `wallDisplay` |
 | `RenderSettings` | quality draft/balanced/high, exposure, timeOfDay, sunAzimuth/Intensity, envIntensity, shadows, background, wallDisplay full/cutaway/fade/hidden, cutawayHeight, showCeilings, showRoomLabels, hiddenCategories |
@@ -312,17 +317,74 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 
 ## 12. Library & materials
 
-- **Assets** (`data/assets`): 86 procedural assets across construction, living, bedroom, dining, kitchen,
-  bathroom, office, storage, lighting, decor, electronics, generic. Each has stable id, category, tags,
-  default/min/max size, resizable flags, mount (floor/wall/ceiling), default elevation, material slots with
-  catalogue defaults, `build(size) → Part[]`, optional `planDetail`, optional `light`, `wallSnap`.
-  2D footprints are **derived** from part convex hulls drawn by height. Add assets with the helpers in
-  `parts.ts` (`box`, `span`, `cyl`, `legs4`, `fronts`, `defineAsset`, …); `catalog.test.ts` validates every asset at
-  default/min/max sizes (bounds, slots, materials).
-- **Materials** (`data/materials/catalog.ts`): ≈90 materials in 12 categories; defaults in `DEFAULT_MATERIALS`.
-  Textures are **procedural** (`patterns.ts`, 28 seamless tiles drawn with wrap-around maths, deterministic seeds,
-  normal maps derived by Sobel). Texture × colour (multiply) model: tiles are near-white luminance; three tiles
-  (`art`, `books`, `rug-geometric`) are coloured. No third-party texture files → no licence obligations.
+- **Assets** (`data/assets`): ASSET_COUNT procedural assets, one module per room. Each has:
+  - a stable id
+  - **category** (room: living, bedroom, kids, dining, kitchen, bathroom, laundry, office, hobbies, outdoor, storage, lighting, decor, electronics, construction, generic)
+  - **type** (what it is: seating, beds, surfaces, storage, appliances, plumbing, lighting, decor, plants, electronics, activities, kids, structure, misc)
+  - **group** (shelf name; must be one of `ASSET_GROUPS[type]` in catalog.ts)
+  - tags, default/min/max size, resizable flags, mount (floor/wall/ceiling) and default elevation
+  - material slots with catalogue defaults
+  - `build(size) → Part[]`, plus optional `planDetail`, `light` and `wallSnap`
+
+  2D footprints are **derived** from the convex hulls of the parts with `plan !== false`, drawn by height.
+
+  Add assets with the helpers in `parts.ts`:
+  - primitives: `box`, `span`, `cyl`, `rod`, `lathe`, `prism`, `legs4`, `fronts`, `defineAsset`, …
+  - detail helpers: `cushion`, `pillow`, `tufts`, `turnedLeg`, `slats`, `shakerFront`, `barPull`, `knob`, `frame4`, `bookRow`, `leaf`, `foliage`, `blobCluster`, `pot`, `rodPath`, `arcPoints`, `drapeFolds`, `rng`
+
+  `assetChecks.ts › describeAssetChecks(list)` holds the per-asset validation. It checks bounds at default/min/max and every size corner, parts ≤ `MAX_PARTS` (160), slots, materials, light rules and type/group. `catalog.test.ts` runs it over the whole catalogue and adds catalogue-level checks plus parametric tests (bed pillows, sofa arms, table legs, wall-cabinet height).
+- **Rendering detail cheaply**: `builders.ts › assetSlotGeometries(asset, size)` bakes every part into object space and merges them into **one geometry per material slot**. The result is cached per asset+size and shared by all instances (`userData.cached`: never dispose). A 120-part sofa therefore costs 2–4 draw calls. Thumbnails use the same path.
+- **Library UI** (`features/library/LibraryPanel.tsx`): Sims buy-mode browsing.
+  - **By room** (categories) or **By type** (types), with chips per room or type.
+  - Listings are split into shelves: per room or type in "All", otherwise per group, ordered by `ASSET_GROUPS` and `groupRank`.
+  - Search matches name, tags, room, type, group and pack name.
+
+### Content packs (`/packs`)
+- **One file per pack**: `packs/<pack-id>.pack.ts` must `export default definePack({ name, version?, author?, description?, license?, items, materials?, patterns?, textures? })`. It imports everything it needs from `@/packs/kit`, which re-exports the asset helpers and types.
+  - `packs/README.md` is the authoring guide.
+  - `packs/_template.pack.ts` is a starting point. Files starting with `_` are ignored.
+  - `packs/halloween.pack.ts` is a full example: 10 items, its own pattern, embedded bitmaps and glowing items.
+- **Namespacing**: the pack id is the file name. Items become `<pack>:<id>`, and so do materials, patterns and photo sets. A pack's slot defaults and material patterns may name its own local ids, which `runtime.ts` rewrites. Built-ins never contain `:`, so `isPackId`/`dropPackKeys` (packs/events.ts) can find pack entries in any cache.
+- **Textures**:
+  - `materials[].pattern` uses a built-in pattern or the pack's own `patterns` (`draw(ctx, size, rand)`, seamless, near-white unless `colored`). These are registered via `setPackPatterns` in a map separate from the 28 built-ins; use `patternInfo` / `allPatternIds` rather than `TEXTURE_PATTERNS`.
+  - `materials[].image` names entries of the pack's `textures` map (data URLs, so the pack stays one file). These register as photo sets via `setPackPhotoSets` with a neutral mean (gain 1: a white base colour shows the bitmap as painted).
+- **Runtime** (`src/packs/runtime.ts › applyPacks`): removes everything a previous run added, then validates and merges packs into `ASSET_CATALOG`/`ASSETS_BY_ID` and `MATERIAL_CATALOG`/`_BY_ID`, **in place**. Problems are collected per pack (`installedPacks()[i].errors`) and logged; they are never fatal. A throwing `build()` renders as a plain box. Pack items carry `pack: { id, name, version, author }` and `source` "<Name> pack by <author>".
+- **Live loading**:
+  - `src/packs/loader.ts` (imported first in `main.tsx`) globs `/packs/*.pack.ts` eagerly and self-accepts HMR, so editing a pack re-runs it.
+  - Vite does not re-run an eager glob when a matching file is *added or deleted*. `tools/neest-packs-plugin.ts` watches `/packs` and calls `server.reloadModule(loader)` for that case.
+  - Each run calls `notifyPacksChanged()`. Caches drop pack entries: builders, plan footprints, thumbnails, `MaterialRegistry` textures, pattern canvases and photo images. `usePackVersion()` re-renders the library, `PlanCanvas` (drawOpts), `SceneContent` and each `ObjectNode`.
+  - Verified in the browser: adding, editing and deleting pack files updates the open editor without a page reload.
+- **Provenance**: library cards show a pack badge **only on hover** (plus the tooltip). The inspector of a placed item shows "From the <pack> pack v<version> by <author> · <licence>". A project item whose pack is missing renders as a placeholder, with a notice naming the pack.
+- **Tests**: `src/packs/packs.test.ts` loads the real `/packs`, runs `describeAssetChecks` on every pack item, and checks namespacing, textures, reload replacement and the build fallback. Run it with `npx vitest run src/packs`.
+- **Materials** (`data/materials/catalog.ts`): ≈130 materials in 12 categories; defaults in `DEFAULT_MATERIALS`.
+  Two texture sources per material, same **texture × colour (multiply) model**:
+  - **Procedural** (`texture`, `patterns.ts`): 28 seamless tiles drawn with wrap-around maths, deterministic seeds,
+    normal maps derived by Sobel. Tiles are near-white luminance; `art`, `books`, `rug-geometric` are coloured.
+    Detail layers: wood pore channels, ray flecks and figure, plank micro-bevels/end grain/wear, tile edge chips,
+    pinholes and grout grime, brick spalls and recessed mortar, plaster pits and crazing, marble hair veins and
+    sparkle, fabric fibres and pills, leather pores and creases. Always kept as the **fallback**.
+  - **Photo** (`photo`, optional): CC0 PBR sets from ambientCG / Poly Haven listed in `photoSets.json` (39 sets,
+    ≈26 MB in `public/textures/<set>/`: `color.webp` sRGB, `normal.webp` OpenGL, `roughness.webp`, `swatch.webp`
+    256 px). `PHOTOS` in catalog.ts maps ~60 catalogue materials to sets (several share one set; the base colour
+    tints it). `photo = { setId, scale m/tile, rotation°, contrast, enabled }`; `enabled: false` = use procedural.
+  - **Colour normalisation**: `tools/fetch-textures.mjs` stores colour maps as near-neutral *variation* maps
+    (luminance + a little of the photo's own chroma, less for saturated photos, scaled toward linear 0.6). At
+    render time `MaterialRegistry` multiplies the base colour by `0.6 / meanLinear` per channel (manifest) and
+    divides roughness by `meanRoughness`, so base colour and roughness mean the same with either source.
+    (Per-channel normalisation of a raw saturated photo amplified its dim channels into streaks — fixed this way.)
+  - **Loading / fallback** (`features/materials/photoTextures.ts`): the manifest (`textures/manifest.json`) is
+    fetched once; images load lazily per set (`subscribePhotos` notifies). Until a set's maps have loaded or
+    failed, and whenever the manifest/files are missing (static host without the folder, tests: MODE=test, jsdom),
+    materials show the procedural texture. `MaterialRegistry` swaps maps **in place** on the shared material, so
+    linked edits keep working; cutaway-clipped and faded wall copies follow their source via `followSource`
+    (SceneContent). Library thumbnails await the photo sets used by furniture defaults (top-level await in
+    `thumbnailRenderer.ts`, max 6 s; needs `esbuild.supported['top-level-await']` in vite.config).
+  - **Older projects**: `migrateProject` gives catalogue copies with `photo` missing/null the catalogue's photo
+    when their procedural pattern is unchanged (no schema bump). Switching to procedural stores `enabled: false`.
+  - PWA: textures are not precached; Workbox runtime-caches `*.webp` (CacheFirst) and the manifest (NetworkFirst).
+  - Refresh/extend: edit `photoSets.json` (+ `PHOTOS`), run `npm run textures` (`--force` re-encodes from the
+    download cache in the OS temp dir, `--only a,b`, `--prune`). Bump `PIPELINE` in the script when processing
+    changes. Tests (`photoTextures.test.ts`) check the mapping, manifest consistency and the < 60 MB budget.
 - Imported models: GLB or self-contained glTF ≤ 60 MB; stored as GLB blobs in IndexedDB; included in `.neest`,
   GLB and guest exports, and uploaded to `projects/assets/` when the project is mirrored to the repo.
 
@@ -370,8 +432,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 | DXF | `dxf.ts`: AutoCAD R12 ASCII, 1:1 in mm/cm/m/in, Y flipped, layers A-WALL, A-DOOR, A-GLAZ, A-AREA, A-ANNO-TEXT, A-ANNO-DIMS (exploded lines + text), A-FURN |
 | 3D render PNG (real-time) | `sceneRuntime.captureView`: renders the live scene with a clone of the live camera at the requested size (same position/orientation/vertical FOV, view offset cleared) |
 | 3D render PNG (path traced) | Render dialog → engine "Path traced": `renderPathTraced` with samples 32/128/512/1024, bounces 3/5/8, optional transparent background (§11) |
-| GLB | `sceneExport.ts`: standalone scene from the same builders → GLTFExporter (binary) |
-| Guest walkthrough | `guestExport.ts`: one HTML file = inline viewer runtime (three.js included) + base64 GLB + cameras, spawn, colliders. No external URLs, blob URLs or storage access |
+| GLB | `sceneExport.ts`: standalone scene from the same builders → GLTFExporter (binary). The export registry bakes photo colour maps into canvases (1K for 2K floor sets, 512 px otherwise, JPEG in the GLB, colour gain folded in so glTF factors stay ≤ 1), skips normal/roughness maps, and awaits loads (`whenPhotosReady`); unavailable photos fall back to procedural |
+| Guest walkthrough | `guestExport.ts`: one HTML file = inline viewer runtime (three.js included) + base64 GLB + cameras, spawn, colliders. No external URLs, blob URLs or storage access (photo textures are embedded in the GLB as above) |
 | `.neest`, JSON summary | `neestFile.ts`, `report.ts` |
 
 The Export dialog opens instantly: `EditorDialogs` renders the dialog frame at once with a `<Suspense>` fallback
@@ -389,7 +451,7 @@ construction documents.
   history (undo/redo, gesture collapsing), schema, sample projects (three samples; studio is exactly
   9 × 4.5 m with no colliding furniture), the **loft stress sample** (`loft.test.ts`: schema, curved walls,
   unclamped openings, four rooms ≈ 100 m², no error diagnostics, derive < 60 ms, DXF/sheet/report, mass
-  edits with undo/redo), asset catalogue (1224 checks), texture patterns (123 checks). Canvas 2D is unavailable
+  edits with undo/redo), asset catalogue (1224 checks), texture patterns (123 checks), photo textures (set list, catalogue mapping, manifest/files/size budget, load-time photo fill, registry fallback). Canvas 2D is unavailable
   in jsdom — texture functions return `null` there by design.
 - `npm run test:e2e` (Playwright, Chromium): smoke flows in `e2e/` against the dev server.
 - Browser checks: use the dev hooks. For synthetic pointer events, compute coordinates with
@@ -436,6 +498,16 @@ construction documents.
     "changed on disk" round trip. `applyExternal` must not bump `revision`, or autosave writes the file back.
 15. **Circular imports between samples**: sample builders share helpers via `sampleHelpers.ts`. Importing
     `demoProject.ts` from another sample file creates a cycle (`SAMPLES` references every builder).
+16. **Cloned textures created before their image loads never upload** (three uploads only when
+    `texture.version > 0`). Photo textures are therefore created only after the image has decoded, and
+    materials switch over in `refreshPhotos`. Likewise any material *clone* (cutaway, fade) is a snapshot; keep
+    it in step with `followSource` or it shows stale maps/colours.
+17. **Global shader patches freeze the tab**: drei `SoftShadows` (PCSS) bakes its size into
+    `ShaderChunk`, so every change recompiles every program. A "sun size" setting built on it (and a VSM
+    variant) was reverted at the user's request; revisit soft sun shadows later with a uniform-driven approach.
+18. **Shared repo files get rewritten by every open browser**: a browser running an older build saved
+    `photo: null` into a repo project during development, which is why the load-time photo fill treats
+    `null` like "not set".
 
 ## 17. Recipes
 
@@ -469,6 +541,10 @@ Done and verified in the browser:
   opens instantly.
 - Autosave, plus **repo `projects/` sync** with live on-disk updates.
 - `start-neest.bat` (Windows), `start-neest.command` (macOS Finder) and `start-neest.sh` (macOS/Linux).
+- **CC0 photo textures** with procedural fallback, photo/procedural switch in the material editor, richer
+  procedural patterns, self-contained GLB/guest exports with embedded photo maps.
+- **Orbit around the selection** in 3D: selecting furniture eases the orbit pivot to its centre
+  (`SelectionPivot` in Scene3DView; camera stays put and turns to face it).
 - Teal/brass palette.
 - Three samples: a two-bedroom apartment, a 9 × 4.5 m studio, and a 100 m² loft stress test.
 
@@ -504,3 +580,12 @@ Known limitations (also in README):
 13. "Fit view to canvas at start" → inset-aware 2D fit and 3D framing with view offset (done).
 14. "Analyze this repo and create a file to start the server quickly" → `start-neest.sh` + `start-neest.command` (macOS/Linux).
 15. "Remove Present view" → removed `Present` (`plan:presentation`) tab from `EditorShell.tsx` and shortcut `3` from `useShortcuts.ts`.
+16. "Textures look fake: real photo textures from a free library, plus richer procedural ones" → CC0 photo sets
+    (`npm run textures`), photo/procedural switch, procedural detail pass (done).
+17. "Some of the shading looks very off" (streaky tinted velvet) → neutral variation maps in the fetch script (done).
+18. "When an object is selected it should be the anchor point for orbit" → `SelectionPivot` (done).
+19. "Allow sun diameter / diffuse light" → tried PCSS then VSM; "buggy, revert, revisit later" → reverted.
+20. "Improve the furniture library: a lot more, more detailed, like the Sims" → room/type taxonomy and shelves,
+    detail helpers, merged per-slot meshes, new rooms (kids, laundry, hobbies, outdoor) and ASSET_COUNT assets (done).
+21. "Load external furniture packs (own procedural/bitmap textures), additional files, e.g. Halloween; dynamically
+    loaded without refresh; one file per pack; show the source only on hover and in the item's info" → /packs (done).

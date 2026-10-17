@@ -3,6 +3,7 @@ import { convexHull } from '@/domain/geometry/polygon';
 import { FALLBACK_MATERIAL, MATERIAL_CATALOG_BY_ID } from '../materials/catalog';
 import { ASSETS_BY_ID } from './catalog';
 import type { AssetDefinition, Part, PlanStroke, Size3 } from './types';
+import { dropPackKeys, subscribePacks } from '@/packs/events';
 
 /** Asset lookup across the built-in catalogue and the project's imported models. */
 export function getAsset(project: Pick<Project, 'customAssets'> | null, assetId: string): AssetDefinition | null {
@@ -22,6 +23,8 @@ export function customAssetDefinition(c: CustomAsset): AssetDefinition {
     id: c.id,
     name: c.name,
     category: 'custom',
+    type: 'misc',
+    group: 'Imported models',
     tags: ['imported', c.fileName],
     defaultSize: { ...c.size },
     minSize: { w: 0.02, d: 0.02, h: 0.02 },
@@ -158,6 +161,7 @@ export function partFootprint(part: Part): PlanShape {
 }
 
 const planCache = new Map<string, AssetPlan>();
+subscribePacks(() => dropPackKeys(planCache));
 
 /** Derived 2D plan symbol for an asset at a given size (cached). Local coords: x = width, y = depth (front +y). */
 export function assetPlan(asset: AssetDefinition, size: Size3, custom?: CustomAsset): AssetPlan {

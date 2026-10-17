@@ -1,4 +1,5 @@
 import { PROJECT_FORMAT, ProjectSchema, SCHEMA_VERSION, type Project } from '@/domain/model/schema';
+import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 
 export class ProjectImportError extends Error {
   constructor(
@@ -48,12 +49,43 @@ export function migrateProject(input: unknown): MigrationResult {
     version += 1;
     raw.schemaVersion = version;
   }
+  attachCatalogPhotos(raw);
   const parsed = ProjectSchema.safeParse(raw);
   if (!parsed.success) {
     const details = parsed.error.issues.slice(0, 8).map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`);
     throw new ProjectImportError('The project data is invalid or corrupted.', details);
   }
   return repairProject(parsed.data);
+}
+
+/**
+ * Materials saved before photo textures existed have no photo (missing or
+ * null). Give catalogue copies (and overrides of them) the catalogue's photo
+ * texture when their procedural pattern is still the catalogue one, so older
+ * projects pick up photo textures without a schema bump. Switching a material
+ * to procedural keeps its photo with `enabled: false`, which is preserved.
+ */
+function attachCatalogPhotos(raw: RawProject): void {
+  const mats = raw.materials;
+  if (!mats || typeof mats !== 'object' || Array.isArray(mats)) return;
+  const all = mats as Record<string, unknown>;
+  const catalogOf = (m: Record<string, unknown>, depth = 0): string | null => {
+    if (typeof m.catalogId === 'string') return m.catalogId;
+    const parent = typeof m.overrideOf === 'string' ? all[m.overrideOf] : undefined;
+    if (typeof m.overrideOf === 'string' && MATERIAL_CATALOG_BY_ID[m.overrideOf] && !parent) return m.overrideOf;
+    return parent && typeof parent === 'object' && depth < 4 ? catalogOf(parent as Record<string, unknown>, depth + 1) : null;
+  };
+  for (const value of Object.values(all)) {
+    if (!value || typeof value !== 'object') continue;
+    const m = value as Record<string, unknown>;
+    if (m.photo !== undefined && m.photo !== null) continue;
+    const id = catalogOf(m);
+    const cat = id ? MATERIAL_CATALOG_BY_ID[id] : undefined;
+    if (!cat?.photo) continue;
+    const pattern = (m.texture as { patternId?: unknown } | null | undefined)?.patternId ?? null;
+    if (pattern !== (cat.texture?.patternId ?? null)) continue;
+    m.photo = { ...cat.photo };
+  }
 }
 
 /** Removes dangling references so the editor never renders broken geometry. */

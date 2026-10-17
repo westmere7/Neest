@@ -451,7 +451,8 @@ export function updateMaterial(d: D, id: string, patch: Partial<Omit<MaterialDef
   const m = d.materials[id];
   if (!m) return;
   if (patch.texture !== undefined) m.texture = patch.texture ? { ...patch.texture } : null;
-  const { texture: _t, ...rest } = patch;
+  if (patch.photo !== undefined) m.photo = patch.photo ? { ...patch.photo } : null;
+  const { texture: _t, photo: _p, ...rest } = patch;
   Object.assign(m, rest);
 }
 

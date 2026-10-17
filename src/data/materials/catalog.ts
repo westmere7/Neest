@@ -1,10 +1,13 @@
-import type { MaterialCategory, MaterialDefinition, TextureRef } from '@/domain/model/schema';
+import type { MaterialCategory, MaterialDefinition, PhotoTextureRef, TextureRef } from '@/domain/model/schema';
+import { PHOTO_SETS_BY_ID, PHOTO_SOURCE_NAMES, photoSetUrl } from './photoSets';
 
 /**
- * Starter material catalogue. All textures are procedural patterns generated
- * in-browser by src/data/materials/patterns.ts — original work with no
- * third-party licence requirements. Entries are copied into a project when
- * first used, so every project stays self-contained.
+ * Starter material catalogue. Every textured material has a procedural pattern
+ * generated in-browser by src/data/materials/patterns.ts (original work), and
+ * many also map to a CC0 photo texture set (`PHOTOS` below, files fetched by
+ * `npm run textures`). The procedural pattern is the fallback whenever the photo
+ * files are missing. Entries are copied into a project when first used, so
+ * every project stays self-contained.
  */
 
 const SRC = { name: 'Neest starter library', license: 'Original (procedural, CC0-compatible)' };
@@ -143,7 +146,142 @@ const DEFS: Def[] = [
   { id: 'light-warm', name: 'Warm light diffuser', category: 'solid', color: '#fff4e0', roughness: 0.6, emissive: '#ffe2b0', emissiveIntensity: 2.5 },
   { id: 'paper-art', name: 'Art print', category: 'solid', color: '#d9c9a8', roughness: 0.8, texture: tex('art', 0.8, 1) },
   { id: 'book-mix', name: 'Book spines', category: 'solid', color: '#c9b8a0', roughness: 0.8, texture: tex('books', 0.4, 1) },
+
+  // Furniture library extras (kids, outdoor, hobbies, soft furnishings)
+  { id: 'fabric-blush', name: 'Blush weave', category: 'fabric', color: '#d9a9a0', roughness: 0.92, texture: tex('weave', 0.12, 0.55) },
+  { id: 'fabric-charcoal', name: 'Charcoal weave', category: 'fabric', color: '#3c3d40', roughness: 0.92, texture: tex('weave', 0.12, 0.6) },
+  { id: 'fabric-cream', name: 'Cream twill', category: 'fabric', color: '#ece4d4', roughness: 0.95, texture: tex('weave', 0.1, 0.45) },
+  { id: 'fabric-sky', name: 'Sky blue cotton', category: 'fabric', color: '#9cbfd6', roughness: 0.92, texture: tex('weave', 0.1, 0.45) },
+  { id: 'fabric-velvet-blush', name: 'Blush velvet', category: 'fabric', color: '#c98f8a', roughness: 0.78, texture: tex('weave', 0.08, 0.3) },
+  { id: 'fabric-velvet-navy', name: 'Navy velvet', category: 'fabric', color: '#283453', roughness: 0.78, texture: tex('weave', 0.08, 0.3) },
+  { id: 'fabric-velvet-teal', name: 'Teal velvet', category: 'fabric', color: '#1f5a52', roughness: 0.78, texture: tex('weave', 0.08, 0.3) },
+  { id: 'mattress-white', name: 'Mattress ticking', category: 'fabric', color: '#f3f1ec', roughness: 0.95, texture: tex('weave', 0.06, 0.3) },
+  { id: 'felt-grey', name: 'Grey felt', category: 'fabric', color: '#9a9a96', roughness: 1 },
+  { id: 'rattan-natural', name: 'Natural rattan', category: 'wood', color: '#c9a26b', roughness: 0.85, texture: tex('jute', 0.08, 0.9) },
+  { id: 'wood-cherry', name: 'Cherry', category: 'wood', color: '#8a4b2d', roughness: 0.5, texture: tex('wood-grain', 0.8, 0.7) },
+  { id: 'wood-teak', name: 'Teak', category: 'wood', color: '#9a6a3c', roughness: 0.6, texture: tex('wood-grain', 0.8, 0.75) },
+  { id: 'wood-pine', name: 'Pine', category: 'wood', color: '#d9b88a', roughness: 0.6, texture: tex('wood-grain', 0.8, 0.8) },
+  { id: 'wood-ebony', name: 'Ebonised wood', category: 'wood', color: '#2a211c', roughness: 0.45, texture: tex('wood-grain', 0.8, 0.4) },
+  { id: 'wood-painted-white', name: 'White painted wood', category: 'wood', color: '#efece6', roughness: 0.5, texture: tex('wood-grain', 0.8, 0.15) },
+  { id: 'cork', name: 'Cork', category: 'solid', color: '#b88a5a', roughness: 0.95, texture: tex('granite', 0.15, 0.8) },
+  { id: 'plastic-white', name: 'White plastic', category: 'solid', color: '#f2f2ef', roughness: 0.35 },
+  { id: 'plastic-black', name: 'Black plastic', category: 'solid', color: '#222224', roughness: 0.4 },
+  { id: 'plastic-red', name: 'Red plastic', category: 'solid', color: '#d0473c', roughness: 0.35 },
+  { id: 'plastic-yellow', name: 'Yellow plastic', category: 'solid', color: '#f0c040', roughness: 0.35 },
+  { id: 'plastic-blue', name: 'Blue plastic', category: 'solid', color: '#3d74c6', roughness: 0.35 },
+  { id: 'plastic-green', name: 'Green plastic', category: 'solid', color: '#58a35e', roughness: 0.35 },
+  { id: 'plastic-pink', name: 'Pink plastic', category: 'solid', color: '#f0a6b8', roughness: 0.35 },
+  { id: 'plastic-mint', name: 'Mint plastic', category: 'solid', color: '#9fd8c4', roughness: 0.35 },
+  { id: 'rubber-black', name: 'Black rubber', category: 'solid', color: '#1d1d1d', roughness: 0.9 },
+  { id: 'chalkboard', name: 'Chalkboard', category: 'solid', color: '#2f3a35', roughness: 0.9 },
+  { id: 'terracotta-pot', name: 'Terracotta', category: 'solid', color: '#b8643f', roughness: 0.85 },
+  { id: 'ceramic-sage', name: 'Sage glaze', category: 'solid', color: '#9fb39c', roughness: 0.2 },
+  { id: 'ceramic-black', name: 'Black glaze', category: 'solid', color: '#2a2a2a', roughness: 0.2 },
+  { id: 'ceramic-blue', name: 'Blue glaze', category: 'solid', color: '#3e5f8a', roughness: 0.15 },
+  { id: 'paper-shade', name: 'Paper shade', category: 'solid', color: '#f3ead8', roughness: 0.9 },
+  { id: 'plant-leaf-dark', name: 'Dark foliage', category: 'solid', color: '#2f5a33', roughness: 0.7 },
+  { id: 'plant-leaf-light', name: 'Fresh foliage', category: 'solid', color: '#7ea34f', roughness: 0.7 },
+  { id: 'plant-flower-pink', name: 'Pink blossom', category: 'solid', color: '#e58aa5', roughness: 0.7 },
+  { id: 'plant-flower-yellow', name: 'Yellow blossom', category: 'solid', color: '#f2c84b', roughness: 0.7 },
+  { id: 'water', name: 'Water', category: 'glass', color: '#6fb5d6', roughness: 0.05, opacity: 0.55 },
+  { id: 'screen-glow', name: 'Lit screen', category: 'solid', color: '#1b2a3a', roughness: 0.1, emissive: '#4a7ab0', emissiveIntensity: 0.6 },
+  { id: 'light-cool', name: 'Cool light diffuser', category: 'solid', color: '#f4f8ff', roughness: 0.6, emissive: '#dfe9ff', emissiveIntensity: 2.5 },
+  { id: 'light-candle', name: 'Candle flame', category: 'solid', color: '#ffd9a0', roughness: 0.6, emissive: '#ffb060', emissiveIntensity: 3 },
 ];
+
+/**
+ * Catalogue material → photo texture set. `scale` = metres per photo tile
+ * (defaults to the set's real-world size); `contrast` softens busy photos.
+ * Several materials share a set: the base colour tints it (multiply model).
+ */
+const PHOTOS: Record<string, { set: string; scale?: number; contrast?: number; rotation?: number }> = {
+  // Plaster, concrete, masonry
+  'plaster-light': { set: 'plaster', contrast: 0.8 },
+  'plaster-white': { set: 'plaster', contrast: 0.6 },
+  'concrete-grey': { set: 'board-concrete' },
+  microcement: { set: 'microcement' },
+  'brick-white': { set: 'brick-painted' },
+  'brick-red': { set: 'brick-red' },
+  // Wood & veneer
+  'wood-oak-natural': { set: 'oak-planks' },
+  'wood-oak-light': { set: 'oak-veneer', scale: 1.2 },
+  'wood-walnut': { set: 'walnut-veneer', scale: 1.2 },
+  'wood-ash-white': { set: 'ash-wood' },
+  'wood-herringbone': { set: 'oak-herringbone' },
+  'wood-dark-stain': { set: 'walnut-veneer', scale: 1.2 },
+  'wood-plywood': { set: 'birch-wood' },
+  'wood-oak-wide': { set: 'oak-wide-boards' },
+  'wood-cherry': { set: 'cherry-wood' },
+  'wood-teak': { set: 'cherry-wood' },
+  'wood-pine': { set: 'pine-wood' },
+  'wood-ebony': { set: 'walnut-veneer', scale: 1.2, contrast: 0.6 },
+  'wood-painted-white': { set: 'painted-wood', contrast: 0.6 },
+  'laminate-oak': { set: 'oak-veneer', scale: 1.2, contrast: 0.8 },
+  'rattan-natural': { set: 'rattan' },
+  // Tile & mosaic
+  'tile-white-square': { set: 'tile-square' },
+  'tile-subway-white': { set: 'tile-glazed-subway', scale: 0.7 },
+  'tile-hex-terracotta': { set: 'tile-hex', scale: 1.2 },
+  'tile-large-grey': { set: 'porcelain-large', scale: 4.8 },
+  'tile-checker': { set: 'checker-marble' },
+  'tile-terrazzo': { set: 'terrazzo' },
+  'tile-mosaic-blue': { set: 'tile-mosaic', scale: 0.4 },
+  'tile-zellige-green': { set: 'tile-glazed-subway', scale: 0.7 },
+  // Natural stone
+  'stone-marble-carrara': { set: 'marble-white' },
+  'stone-marble-nero': { set: 'marble-black' },
+  'stone-travertine': { set: 'travertine' },
+  'stone-slate': { set: 'slate-floor' },
+  'stone-granite': { set: 'granite' },
+  // Metal
+  'metal-brushed-steel': { set: 'brushed-metal', contrast: 0.7 },
+  'metal-brass': { set: 'brushed-metal', contrast: 0.6 },
+  // Fabric & upholstery
+  'fabric-linen': { set: 'linen' },
+  'fabric-boucle': { set: 'boucle', scale: 0.35 },
+  'fabric-velvet-green': { set: 'velvet' },
+  'fabric-velvet-blush': { set: 'velvet' },
+  'fabric-velvet-navy': { set: 'velvet' },
+  'fabric-velvet-teal': { set: 'velvet' },
+  'fabric-wool-grey': { set: 'upholstery-weave' },
+  'fabric-navy': { set: 'upholstery-weave' },
+  'fabric-mustard': { set: 'upholstery-weave' },
+  'fabric-terracotta': { set: 'upholstery-weave' },
+  'fabric-olive': { set: 'upholstery-weave' },
+  'fabric-blush': { set: 'upholstery-weave' },
+  'fabric-charcoal': { set: 'upholstery-weave' },
+  'fabric-white-cotton': { set: 'cotton' },
+  'fabric-cream': { set: 'cotton' },
+  'fabric-sky': { set: 'cotton' },
+  'mattress-white': { set: 'cotton', contrast: 0.6 },
+  'felt-grey': { set: 'felt' },
+  // Leather
+  'leather-cognac': { set: 'leather' },
+  'leather-black': { set: 'leather' },
+  'leather-tan': { set: 'leather' },
+  // Rugs & woven
+  'rug-jute': { set: 'jute-weave' },
+  'rug-wool-cream': { set: 'wool-carpet' },
+  // Other
+  cork: { set: 'cork' },
+};
+
+function photoFor(id: string): PhotoTextureRef | null {
+  const p = PHOTOS[id];
+  const set = p && PHOTO_SETS_BY_ID[p.set];
+  if (!p || !set) return null;
+  return { setId: set.id, scale: p.scale ?? set.size, rotation: p.rotation ?? 0, contrast: p.contrast ?? 1, enabled: true };
+}
+
+function sourceFor(id: string): MaterialDefinition['source'] {
+  const set = PHOTOS[id] && PHOTO_SETS_BY_ID[PHOTOS[id].set];
+  if (!set) return SRC;
+  return {
+    name: `Neest starter library · photo: ${PHOTO_SOURCE_NAMES[set.source]} ${set.assetId}`,
+    license: 'CC0 1.0 (photo texture); procedural fallback original',
+    url: photoSetUrl(set),
+  };
+}
 
 export const MATERIAL_CATALOG: MaterialDefinition[] = DEFS.map((d) => ({
   id: d.id,
@@ -156,10 +294,14 @@ export const MATERIAL_CATALOG: MaterialDefinition[] = DEFS.map((d) => ({
   emissive: d.emissive ?? null,
   emissiveIntensity: d.emissiveIntensity ?? 0,
   texture: d.texture ? { rotation: 0, contrast: 1, ...d.texture } : null,
+  photo: photoFor(d.id),
   overrideOf: null,
   catalogId: d.id,
-  source: SRC,
+  source: sourceFor(d.id),
 }));
+
+/** Material ids mapped to photo sets (exported for tests). */
+export const CATALOG_PHOTO_IDS: string[] = Object.keys(PHOTOS);
 
 export const MATERIAL_CATALOG_BY_ID: Record<string, MaterialDefinition> = Object.fromEntries(
   MATERIAL_CATALOG.map((m) => [m.id, m]),

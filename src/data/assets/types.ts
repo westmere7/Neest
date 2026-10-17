@@ -10,20 +10,42 @@
  * Parts are positioned by their centre. All values are metres / radians.
  */
 
+/** The room an asset is sold for ("shop by room"). */
 export type AssetCategory =
   | 'construction'
   | 'living'
   | 'bedroom'
+  | 'kids'
   | 'dining'
   | 'kitchen'
   | 'bathroom'
+  | 'laundry'
   | 'office'
+  | 'hobbies'
+  | 'outdoor'
   | 'storage'
   | 'lighting'
   | 'decor'
   | 'electronics'
   | 'generic'
   | 'custom';
+
+/** What an asset is ("shop by type"), independent of the room. */
+export type AssetType =
+  | 'seating'
+  | 'beds'
+  | 'surfaces'
+  | 'storage'
+  | 'appliances'
+  | 'plumbing'
+  | 'lighting'
+  | 'decor'
+  | 'plants'
+  | 'electronics'
+  | 'activities'
+  | 'kids'
+  | 'structure'
+  | 'misc';
 
 export interface Size3 {
   w: number;
@@ -74,6 +96,10 @@ export interface AssetDefinition {
   id: string;
   name: string;
   category: AssetCategory;
+  /** Function type for "shop by type" browsing. */
+  type: AssetType;
+  /** Shelf within the type/room listing, e.g. "Sofas & loveseats" (see ASSET_GROUPS). */
+  group: string;
   tags: string[];
   defaultSize: Size3;
   minSize?: Size3;
@@ -90,4 +116,14 @@ export interface AssetDefinition {
   /** Placement behaviour: snap the back (-z) against walls when placed nearby. */
   wallSnap?: boolean;
   source: { name: string; license: string };
+  /** Set for items that come from a content pack in /packs (shown in the item's info). */
+  pack?: AssetPackInfo;
+}
+
+export interface AssetPackInfo {
+  /** Pack folder name (item ids are `<id>:<local id>`). */
+  id: string;
+  name: string;
+  version?: string;
+  author?: string;
 }

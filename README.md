@@ -63,8 +63,9 @@ Then open <http://localhost:5173>. Edits to the source code reload in the browse
 - First-person walkthrough with collisions (mouse and keyboard, or touch joystick). Guest View is a view-only presentation mode.
 
 ### Library and materials
-- 86 parametric furniture and fixture assets in 12 categories, with search, favourites and recents. Each asset has size limits, material slots, and a 2D footprint derived from its 3D shape. You can also import GLB/glTF models (up to 60 MB).
-- About 90 materials with procedural, seamless textures. Assignments are linked: editing a material updates every surface that uses it. You can apply to similar surfaces, rooms or instances, or unlink a single surface as an override.
+- ASSET_COUNT detailed, parametric furniture and fixture assets. Browse Sims-style **by room** (living, bedroom, kids, dining, kitchen, bathroom, laundry, study, hobbies, balcony, …) or **by type** (seating, beds, surfaces, appliances, plumbing, lighting, decorations, plants, …), on themed shelves, with search, favourites and recents. Each asset has size limits, material slots, and a 2D footprint derived from its 3D shape. You can also import GLB/glTF models (up to 60 MB).
+- **Content packs:** drop a single `packs/<name>.pack.ts` file into the repo to add items, materials, procedural patterns and embedded bitmap textures, such as a team pack or a seasonal Halloween pack. Packs load into the running app without a refresh, and appear in the normal library shelves. Hover a card, or check a placed item's info, to see which pack it came from. See [packs/README.md](packs/README.md).
+- About 130 materials. Woods, floors, tiles, stone, plaster, brick, fabrics, leather, rugs, rattan, cork and brushed metal use CC0 photo textures (colour, relief and roughness maps); every textured material also has a procedural, seamless texture that is used when the photo files are missing. The material editor switches each material between **Photo** and **Procedural**. Assignments are linked: editing a material updates every surface that uses it. You can apply to similar surfaces, rooms or instances, or unlink a single surface as an override.
 
 ### Exports
 | Output | Notes |
@@ -125,6 +126,7 @@ Contributors and coding agents should read [KNOWLEDGEBASE.md](KNOWLEDGEBASE.md).
 ## Licences and asset sources
 
 - **Furniture and fixtures:** all built-in assets are procedural geometry written for this project (`src/data/assets`). No third-party models are bundled.
-- **Materials and textures:** all textures are generated procedurally at runtime (`src/data/materials/patterns.ts`). No third-party image files are bundled.
+- **Content packs** (`packs/`): each pack declares its own licence, which is shown in each of its items' and materials' info. The included Halloween pack is original work (CC0).
+- **Materials and textures:** photo textures in `public/textures/` come from [ambientCG](https://ambientcg.com) and [Poly Haven](https://polyhaven.com) and are **CC0 1.0** (public domain, no attribution required; credits are kept anyway in `public/textures/manifest.json` and `public/textures/CREDITS.md`). They are downloaded, resized and re-encoded as WebP by `npm run textures` (`tools/fetch-textures.mjs`, set list in `src/data/materials/photoSets.json`); the script skips sets already present. Procedural textures are generated at runtime (`src/data/materials/patterns.ts`, original work) and are the fallback whenever the photo files are absent, so deleting `public/textures/` is safe.
 - **Imported models:** you supply these. Neest stores the licence text you enter with each model in the project. Make sure you have the right to use and share them.
 - **Libraries:** React, React DOM, three.js, React Three Fiber, drei, zustand, immer, Zod, fflate, jsPDF, svg2pdf.js, three-gpu-pathtracer, three-mesh-bvh and vite-plugin-pwa are MIT-licensed. Dexie is Apache-2.0 and lucide-react is ISC. The guest export inlines three.js (MIT) in the generated HTML.

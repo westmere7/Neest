@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Opening, PlacedObject, Project, Room, Vec2 } from '@/domain/model/schema';
 import { isWindowKind } from '@/domain/model/schema';
 import type { RoomFace } from '@/domain/geometry/rooms';
@@ -8,7 +9,8 @@ import { triangulate } from '@/domain/geometry/polygon';
 import { pointAt } from '@/domain/geometry/wallPath';
 import { angleOf, dist, leftNormal, normalize, sub } from '@/domain/geometry/vec';
 import { getAsset, objectSlotMaterialId } from '@/data/assets/registry';
-import type { AssetDefinition, Part } from '@/data/assets/types';
+import { dropPackKeys, subscribePacks } from '@/packs/events';
+import type { AssetDefinition, Part, Size3 } from '@/data/assets/types';
 import type { MaterialRegistry } from './materialRegistry';
 
 // ───────────────────────── Geometry accumulation ─────────────────────────
@@ -302,6 +304,67 @@ export function partGeometry(part: Part): THREE.BufferGeometry {
 
 // ───────────────────────── Objects ─────────────────────────
 
+const MERGE_ATTRS = new Set(['position', 'normal', 'uv']);
+const slotGeoCache = new Map<string, { slot: string; geometry: THREE.BufferGeometry }[]>();
+// Content packs reload live: rebuild their items from the new definitions.
+subscribePacks(() => dropPackKeys(slotGeoCache));
+
+/** A part's geometry baked into object space, non-indexed with position/normal/uv only (merge-compatible). */
+function bakedPart(part: Part): THREE.BufferGeometry {
+  const src = partGeometry(part);
+  const g = src.index ? src.toNonIndexed() : src.clone();
+  g.userData = {};
+  for (const name of Object.keys(g.attributes)) if (!MERGE_ATTRS.has(name)) g.deleteAttribute(name);
+  if (!g.getAttribute('normal')) g.computeVertexNormals();
+  if (!g.getAttribute('uv')) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.getAttribute('position').count * 2), 2));
+  g.morphAttributes = {};
+  g.clearGroups();
+  const m = new THREE.Matrix4().compose(
+    new THREE.Vector3(...part.position),
+    new THREE.Quaternion().setFromEuler(new THREE.Euler(...(part.rotation ?? [0, 0, 0]))),
+    new THREE.Vector3(...(part.scale ?? [1, 1, 1])),
+  );
+  g.applyMatrix4(m);
+  return g;
+}
+
+/**
+ * One geometry per material slot for an asset at a size: every part baked in and merged, so a
+ * detailed asset costs one draw call per slot instead of one per part. Cached and shared by all
+ * objects with the same asset and size (flagged `userData.cached`: never dispose them).
+ */
+export function assetSlotGeometries(asset: AssetDefinition, size: Size3): { slot: string; geometry: THREE.BufferGeometry }[] {
+  const key = `${asset.id}|${r4(size.w)}|${r4(size.d)}|${r4(size.h)}`;
+  const hit = slotGeoCache.get(key);
+  if (hit) return hit;
+  const bySlot = new Map<string, THREE.BufferGeometry[]>();
+  for (const part of asset.build(size)) {
+    const list = bySlot.get(part.slot) ?? [];
+    list.push(bakedPart(part));
+    bySlot.set(part.slot, list);
+  }
+  const out: { slot: string; geometry: THREE.BufferGeometry }[] = [];
+  for (const [slot, list] of bySlot) {
+    const merged = list.length === 1 ? list[0] : mergeGeometries(list, false);
+    if (list.length > 1) for (const g of list) g.dispose();
+    if (!merged) continue;
+    merged.computeBoundingBox();
+    merged.computeBoundingSphere();
+    merged.userData.cached = true;
+    out.push({ slot, geometry: merged });
+  }
+  if (slotGeoCache.size > 600) slotGeoCache.clear();
+  slotGeoCache.set(key, out);
+  return out;
+}
+
+function slotMesh(geometry: THREE.BufferGeometry, material: THREE.Material, shadows: boolean): THREE.Mesh {
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.castShadow = shadows;
+  mesh.receiveShadow = shadows;
+  return mesh;
+}
+
 export interface BuildContext {
   project: Project;
   registry: MaterialRegistry;
@@ -357,9 +420,9 @@ export function buildObject(obj: PlacedObject, ctx: BuildContext): THREE.Group {
     group.add(holder);
     return group;
   }
-  for (const part of asset.build({ w: obj.width, d: obj.depth, h: obj.height })) {
-    const mat = ctx.registry.get(ctx.project, objectSlotMaterialId(obj, asset, part.slot));
-    group.add(meshFor(part, mat, shadows));
+  for (const { slot, geometry } of assetSlotGeometries(asset, { w: obj.width, d: obj.depth, h: obj.height })) {
+    const mat = ctx.registry.get(ctx.project, objectSlotMaterialId(obj, asset, slot));
+    group.add(slotMesh(geometry, mat, shadows));
   }
   return group;
 }
@@ -375,9 +438,9 @@ function placeholderBox(obj: PlacedObject): THREE.Mesh {
 /** Asset preview group at its default size (thumbnails). */
 export function buildAssetPreview(asset: AssetDefinition, project: Project | null, registry: MaterialRegistry): THREE.Group {
   const group = new THREE.Group();
-  for (const part of asset.build(asset.defaultSize)) {
-    const slotMat = asset.slots.find((s) => s.id === part.slot)?.defaultMaterial;
-    group.add(meshFor(part, registry.get(project, slotMat), false));
+  for (const { slot, geometry } of assetSlotGeometries(asset, asset.defaultSize)) {
+    const slotMat = asset.slots.find((s) => s.id === slot)?.defaultMaterial;
+    group.add(slotMesh(geometry, registry.get(project, slotMat), false));
   }
   return group;
 }
