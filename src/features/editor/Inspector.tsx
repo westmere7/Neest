@@ -127,7 +127,14 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
         )}
         <div className="inspector-actions">
           {!collapsed && actions}
-          <IconButton label={collapsed ? 'Expand inspector' : 'Collapse inspector'} onClick={() => setCollapsed(!collapsed)}>
+          <IconButton
+            label={collapsed ? 'Expand inspector' : 'Collapse inspector'}
+            onClick={() => {
+              // The finish panel belongs to the Inspector's content: collapsing closes it.
+              if (!collapsed) useEditorStore.getState().set({ materialPicker: null });
+              setCollapsed(!collapsed);
+            }}
+          >
             {collapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
           </IconButton>
           {selection.length > 0 && (

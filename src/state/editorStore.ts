@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { OpeningDesign, OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
+import type { MaterialTarget } from '@/domain/commands/entities';
 
 export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend';
 /** Which line of a new wall follows the drawn points: its centreline or one of its faces. */
@@ -14,6 +15,17 @@ export type BuildGroup = 'walls' | 'doors' | 'windows';
 export interface SelItem {
   kind: SelKind;
   id: string;
+}
+
+/** The finish slot being edited in the material panel docked beside the Inspector. */
+export interface MaterialPickerRequest {
+  /** Identifies the slot row (target + label), so the same row can toggle the panel and show it is active. */
+  key: string;
+  /** Slot name shown in the panel header, e.g. "Floor" or "Body". */
+  label: string;
+  target: MaterialTarget;
+  /** Material shown when the target has none of its own yet (e.g. default glazing). */
+  fallbackId: string;
 }
 
 export interface PlanCamera {
@@ -69,6 +81,8 @@ export interface EditorState {
   measurements: Measurement[];
   /** Currently focused material in the material editor. */
   activeMaterialId: string | null;
+  /** Open finish picker panel (desktop), or null. Closed when the selection changes. */
+  materialPicker: MaterialPickerRequest | null;
   /** 3D: request to move the camera to a preset id or a named view. */
   cameraRequest: { view: string; nonce: number } | null;
 
@@ -111,6 +125,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   hint: null,
   measurements: [],
   activeMaterialId: null,
+  materialPicker: null,
   cameraRequest: null,
 
   setTool: (tool) => set({ tool, hint: null, snapLabel: null }),
@@ -126,5 +141,15 @@ export const useEditorStore = create<EditorState>((set) => ({
   requestFit: () => set((s) => ({ fitRequest: s.fitRequest + 1 })),
   requestCamera: (view) => set({ cameraRequest: { view, nonce: Math.random() } }),
 }));
+
+const selectionKey = (sel: SelItem[]) => sel.map((s) => `${s.kind}:${s.id}`).join('|');
+
+// The material panel belongs to the selection shown in the Inspector: close it when the selection changes or
+// the Inspector goes away (walkthrough, hidden interface).
+useEditorStore.subscribe((s, prev) => {
+  if (!s.materialPicker) return;
+  const selChanged = s.selection !== prev.selection && selectionKey(s.selection) !== selectionKey(prev.selection);
+  if (selChanged || s.workspace === 'walk' || s.chromeHidden) s.set({ materialPicker: null });
+});
 
 export const selectionIds = (sel: SelItem[]) => sel.map((s) => s.id);

@@ -44,6 +44,7 @@ import { navigate } from '@/app/App';
 import { PlanCanvas } from '@/features/plan-2d/PlanCanvas';
 import { LibraryPanel } from '@/features/library/LibraryPanel';
 import { Inspector } from './Inspector';
+import { MaterialPanel } from '@/features/materials/MaterialPanel';
 import { EditorDialogs } from './EditorDialogs';
 import { useEditorShortcuts } from './useShortcuts';
 import { useSaveStore } from '../projects/projectService';
@@ -71,6 +72,8 @@ export function EditorShell() {
       if (!['select', 'pan', 'place'].includes(ed.tool)) ed.setTool('select');
       ed.set({ libraryOpen: false });
     }
+    // Mobile pickers open inline under their slot row; desktop uses the side panel.
+    useEditorStore.getState().set({ materialPicker: null });
   }, [isMobile]);
 
   // Warm the export code in the background so the Export panel opens fully populated.
@@ -118,6 +121,7 @@ export function EditorShell() {
           {!isMobile && (showPlan || workspace === '3d') && <ToolRail in3d={workspace === '3d'} />}
           {libraryOpen && workspace !== 'walk' && <LibraryPanel isMobile={isMobile} />}
           {workspace !== 'walk' && <Inspector isMobile={isMobile} />}
+          {workspace !== 'walk' && !isMobile && <MaterialPanel />}
           {showPlan && <CanvasControls />}
           {!isMobile && <StatusBar />}
           {isMobile && <MobileBar />}

@@ -105,8 +105,9 @@ src/
     library/             LibraryPanel (Build / Furniture / Materials tabs), thumbnails (visible cards only; shipped
                          file → IndexedDB → render, keyed by thumbFingerprint), ImportModelDialog,
                          useDropAsset
-    materials/           MaterialUI (slot rows, picker with apply scopes, library, editor, photo/procedural
-                         switch), textureCache (swatches), photoTextures (manifest, image loading, colour maths)
+    materials/           MaterialUI (slot rows, finish picker with apply scopes, library, editor, photo/procedural
+                         switch), MaterialPanel (desktop finish panel beside the Inspector), textureCache
+                         (swatches), photoTextures (manifest, image loading, colour maths)
     exports/             ExportDialog (ExportPanel body, lazy), sheet (scaled vector sheets), planExports
                          (PNG/PDF), dxf, sceneExport (GLB), guestExport (single-file HTML), neestFile (.neest zip),
                          report (JSON)
@@ -459,6 +460,12 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Refresh/extend: edit `photoSets.json` (+ `PHOTOS`), run `npm run textures` (`--force` re-encodes from the
     download cache in the OS temp dir, `--only a,b`, `--prune`). Bump `PIPELINE` in the script when processing
     changes. Tests (`photoTextures.test.ts`) check the mapping, manifest consistency and the < 60 MB budget.
+- **Finish picker** (`MaterialSlotRow` → `FinishPicker`): on desktop a slot row opens `MaterialPanel`, a
+  full-height floating panel docked left of the Inspector (`editor.materialPicker` = { key, label, target,
+  fallbackId }; width shared via `--inspector-w`; listed in `floatingInsets`). A pick applies at once and the panel
+  stays open; Esc, its close button, the same row, a selection change, collapsing the Inspector, walk mode or a
+  hidden interface close it (the selection-change rule is a subscription in `editorStore.ts`). On mobile the same
+  picker opens inline under the row and closes after a pick.
 - Imported models: GLB or self-contained glTF ≤ 60 MB; stored as GLB blobs in IndexedDB; included in `.neest`,
   GLB and guest exports, and uploaded to `projects/assets/` when the project is mirrored to the repo.
 
@@ -670,3 +677,5 @@ Known limitations (also in README):
     loaded without refresh; one file per pack; show the source only on hover and in the item's info" → /packs (done).
 26. "Doors and windows should still have designs to choose from … built in, not a pack" → `Opening.design`, 18 door
     and 12 window designs with SVG previews in the Inspector and the Door & window tool (done).
+27. "When selecting material, open a full panel" → desktop finish panel docked beside the Inspector
+    (`MaterialPanel`); picks apply and keep it open (done).

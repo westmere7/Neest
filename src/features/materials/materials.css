@@ -22,6 +22,17 @@
 .mat-slot-btn:hover {
   border-color: var(--border-strong);
 }
+/* The slot whose finishes are open in the side panel. */
+.mat-slot-btn.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mat-slot-btn.on .mat-slot-label {
+  color: var(--accent-strong);
+}
+[data-theme='dark'] .mat-slot-btn.on .mat-slot-label {
+  color: var(--accent);
+}
 .mat-slot-text {
   flex: 1;
   display: flex;
@@ -59,10 +70,19 @@
   overflow: auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  align-content: start;
   gap: 6px;
   padding: 10px;
 }
+.mat-grid-empty {
+  grid-column: 1 / -1;
+}
+.mat-cell-wrap {
+  position: relative;
+  min-width: 0;
+}
 .mat-cell {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -89,6 +109,43 @@
 [data-theme='dark'] .mat-cell.on {
   color: var(--accent);
 }
+/* Favourite toggle in a swatch cell's corner: shown on hover, or always once favourited. */
+.mat-fav {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--text-3);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+.mat-cell-wrap:hover .mat-fav,
+.mat-fav:focus-visible,
+.mat-fav.on {
+  opacity: 1;
+}
+.mat-fav:hover {
+  color: var(--text);
+}
+.mat-fav.on {
+  color: var(--accent);
+}
+.mat-fav.on svg {
+  fill: currentColor;
+}
+@media (hover: none) {
+  .mat-fav {
+    opacity: 1;
+  }
+}
 .mat-picker-foot {
   display: flex;
   flex-direction: column;
@@ -100,6 +157,127 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+/* Finish panel: a full-height picker docked to the left of the Inspector (desktop). */
+.material-panel {
+  top: calc(10px + var(--topbar-h) + 10px);
+  right: calc(10px + var(--inspector-w) + 8px);
+  width: min(340px, calc(100% - var(--inspector-w) - 140px));
+  height: calc(100% - var(--topbar-h) - var(--status-h) - 90px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.material-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 6px 8px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.material-panel-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.material-panel-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.material-panel-head h2 {
+  font-size: 15px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.material-panel-owner {
+  font-weight: 500;
+  color: var(--text-2);
+}
+.material-panel-head .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+.material-panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mat-current {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 6px;
+}
+.mat-current-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mat-current .mat-swatch {
+  border-radius: var(--radius-sm);
+}
+.mat-current-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.mat-current-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mat-current .mat-picker-actions {
+  margin-left: -6px;
+}
+.material-panel .mat-picker-head {
+  padding: 6px 12px 12px;
+}
+.material-panel .mat-grid {
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+  padding: 12px;
+}
+.material-panel .mat-cell {
+  gap: 6px;
+  padding: 6px 6px 8px;
+  border: 0;
+  font-size: 11.5px;
+}
+.material-panel .mat-cell .mat-swatch {
+  border-radius: var(--radius-sm);
+}
+.material-panel .mat-cell.on,
+[data-theme='dark'] .material-panel .mat-cell.on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.mat-cell-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.material-panel .mat-fav {
+  top: 10px;
+  right: 10px;
+}
+.material-panel .mat-picker-foot {
+  padding: 10px 12px 12px;
 }
 .mat-library {
   display: flex;

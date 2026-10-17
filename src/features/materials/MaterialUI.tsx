@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Copy, Link2, Link2Off, Search, Star, Trash2 } from 'lucide-react';
+import { Copy, Link2, Link2Off, Pencil, Search, Star, Trash2 } from 'lucide-react';
 import type { MaterialCategory, MaterialDefinition, PhotoTextureRef, Project } from '@/domain/model/schema';
 import {
   assignMaterial,
@@ -21,6 +21,7 @@ import { useEditorStore } from '@/state/editorStore';
 import { confirmAction, toast, usePrefsStore, useDialogStore } from '@/state/uiStores';
 import { Button, ColorField, IconButton, Segmented, Select, Slider, TextField } from '@/components/ui';
 import { Dialog } from '@/components/Overlays';
+import { useIsMobile } from '@/components/hooks';
 import { swatchBackground } from './textureCache';
 import { getPhotoManifest, photoEntry, photoSetFailed, photoVersion, subscribePhotos } from './photoTextures';
 import './materials.css';
@@ -33,14 +34,18 @@ function usePhotoVersion(): number {
 export function MaterialSwatch({
   material,
   size = 28,
+  fill = false,
   title,
 }: {
   material: Pick<MaterialDefinition, 'color' | 'texture' | 'opacity' | 'metalness'> & Partial<Pick<MaterialDefinition, 'photo'>>;
   size?: number;
+  /** Fill the container's width as a square instead of a fixed size. */
+  fill?: boolean;
   title?: string;
 }) {
   usePhotoVersion();
-  return <span className="mat-swatch" style={{ width: size, height: size, background: swatchBackground(material) }} title={title} aria-hidden />;
+  const box = fill ? { width: '100%', aspectRatio: '1 / 1' } : { width: size, height: size };
+  return <span className="mat-swatch" style={{ ...box, background: swatchBackground(material) }} title={title} aria-hidden />;
 }
 
 /** All materials available to pick: the project's own (incl. edited copies) plus the catalogue. */
@@ -100,6 +105,9 @@ export function scopesFor(target: MaterialTarget): MaterialScope[] {
   }
 }
 
+/** Identifies a slot row: its target plus its label (two rows may share a target, e.g. a half wall's cap). */
+export const slotKey = (target: MaterialTarget, label: string) => `${JSON.stringify(target)}#${label}`;
+
 export function MaterialSlotRow({
   label,
   target,
@@ -113,12 +121,28 @@ export function MaterialSlotRow({
 }) {
   const project = useProjectStore((s) => s.project!);
   const m = resolveMaterial(project, materialId);
-  const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const key = slotKey(target, label);
+  // Desktop: the picker opens as a panel docked beside the Inspector (MaterialPanel). Mobile: inline popover.
+  const panelOpen = useEditorStore((s) => s.materialPicker?.key === key);
+  const [inlineOpen, setInlineOpen] = useState(false);
+  const open = isMobile ? inlineOpen : panelOpen;
   const usage = useMemo(() => materialUsage(project, m.id).length, [project, m.id]);
   const isOverride = !!m.overrideOf;
+  const toggle = () => {
+    if (isMobile) return setInlineOpen(!inlineOpen);
+    useEditorStore.getState().set({ materialPicker: panelOpen ? null : { key, label, target, fallbackId: materialId } });
+  };
   return (
     <div className="mat-slot" data-testid={testId}>
-      <button type="button" className="mat-slot-btn" onClick={() => setOpen(!open)} aria-expanded={open} aria-label={`${label}: ${m.name}. Change finish`}>
+      <button
+        type="button"
+        className={`mat-slot-btn${open ? ' on' : ''}`}
+        onClick={toggle}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-label={`${label}: ${m.name}. Change finish`}
+      >
         <MaterialSwatch material={m} />
         <span className="mat-slot-text">
           <span className="mat-slot-label">{label}</span>
@@ -134,18 +158,13 @@ export function MaterialSlotRow({
           </span>
         ) : null}
       </button>
-      {open && <MaterialPicker target={target} currentId={m.id} onClose={() => setOpen(false)} />}
+      {isMobile && inlineOpen && <InlineMaterialPicker target={target} currentId={m.id} onClose={() => setInlineOpen(false)} />}
     </div>
   );
 }
 
-function MaterialPicker({ target, currentId, onClose }: { target: MaterialTarget; currentId: string; onClose: () => void }) {
-  const project = useProjectStore((s) => s.project!);
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<MaterialCategory | 'all' | 'project'>('project');
-  const [scope, setScope] = useState<MaterialScope>('this');
-  const favourites = usePrefsStore((s) => s.favouriteMaterials);
-  const recents = usePrefsStore((s) => s.recentMaterials);
+/** Mobile: the picker as a popover under its slot row; closes on an outside press and after a pick. */
+function InlineMaterialPicker({ target, currentId, onClose }: { target: MaterialTarget; currentId: string; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
@@ -154,6 +173,46 @@ function MaterialPicker({ target, currentId, onClose }: { target: MaterialTarget
     window.addEventListener('pointerdown', onDown, true);
     return () => window.removeEventListener('pointerdown', onDown, true);
   }, [onClose]);
+  return (
+    <div ref={ref} className="mat-picker popover" role="dialog" aria-label="Choose finish">
+      <FinishPicker target={target} currentId={currentId} variant="popover" onClose={onClose} />
+    </div>
+  );
+}
+
+/**
+ * Search, filter and a swatch grid of finishes for one slot, with the apply scope, favourites, edit and unlink.
+ * `popover` (mobile) closes after a pick; `panel` (the desktop side panel) applies and stays open so several
+ * finishes can be tried one after another.
+ */
+export function FinishPicker({
+  target,
+  currentId,
+  variant,
+  onClose,
+}: {
+  target: MaterialTarget;
+  currentId: string;
+  variant: 'popover' | 'panel';
+  onClose: () => void;
+}) {
+  const project = useProjectStore((s) => s.project!);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<MaterialCategory | 'all' | 'project'>('project');
+  const [scope, setScope] = useState<MaterialScope>('this');
+  const favourites = usePrefsStore((s) => s.favouriteMaterials);
+  const recents = usePrefsStore((s) => s.recentMaterials);
+  const panel = variant === 'panel';
+  const gridRef = useRef<HTMLDivElement>(null);
+  // Panel: start with the current finish in view (the panel remounts per slot).
+  useEffect(() => {
+    const grid = gridRef.current;
+    const on = grid?.querySelector<HTMLElement>('.mat-cell.on');
+    if (!panel || !grid || !on) return;
+    const g = grid.getBoundingClientRect();
+    const r = on.getBoundingClientRect();
+    if (r.top < g.top || r.bottom > g.bottom) grid.scrollTop += r.top - g.top - (grid.clientHeight - r.height) / 2;
+  }, [panel]);
   const all = useMemo(() => availableMaterials(project), [project]);
   const usedIds = useMemo(() => new Set(Object.keys(project.materials)), [project.materials]);
   const list = all.filter((m) => {
@@ -163,25 +222,62 @@ function MaterialPicker({ target, currentId, onClose }: { target: MaterialTarget
     return m.category === category;
   });
   const targets = expandScope(project, target, scope, assetSlotDefault);
+  const current = resolveMaterial(project, currentId);
+  const usage = useMemo(() => materialUsage(project, current.id).length, [project, current.id]);
+  const isFav = (id: string) => favourites.includes(id);
+  const toggleFavourite = (id: string) => usePrefsStore.getState().toggleFavouriteMaterial(id);
   const apply = (id: string) => {
     useProjectStore.getState().execute(`Apply ${resolveMaterial(project, id).name.toLowerCase()}`, (d) => assignMaterial(d, targets, id));
     usePrefsStore.getState().pushRecentMaterial(id);
-    onClose();
+    if (!panel) onClose();
   };
   const makeOverride = () => {
     useProjectStore.getState().execute('Unlink surface material', (d) => {
       const nid = createOverride(d, target, currentId);
       if (nid) useEditorStore.getState().set({ activeMaterialId: nid });
     });
+    if (!panel) onClose();
+  };
+  const editCurrent = () => {
+    useEditorStore.getState().set({ activeMaterialId: currentId, libraryOpen: true, libraryTab: 'materials' });
     onClose();
   };
-  const current = resolveMaterial(project, currentId);
+  const actions = (
+    <div className="mat-picker-actions">
+      <Button size="sm" variant="ghost" onClick={editCurrent} title="Open this material in the material editor">
+        {panel && <Pencil size={13} />} Edit “{current.name}”
+      </Button>
+      {!current.overrideOf && (
+        <Button size="sm" variant="ghost" onClick={makeOverride} title="Give this surface its own copy so edits don't affect other surfaces">
+          <Link2Off size={13} /> Unlink
+        </Button>
+      )}
+    </div>
+  );
   return (
-    <div ref={ref} className="mat-picker popover" role="dialog" aria-label="Choose finish">
+    <>
+      {panel && (
+        <div className="mat-current">
+          <div className="mat-current-row">
+            <MaterialSwatch material={current} size={44} />
+            <div className="mat-current-text">
+              <span className="mat-current-name">{current.name}</span>
+              <span className="field-hint">
+                {MATERIAL_CATEGORY_LABELS[current.category]}
+                {current.overrideOf ? ' · unlinked copy' : usage > 1 ? ` · shared by ${usage} surfaces` : ''}
+              </span>
+            </div>
+            <IconButton label={isFav(current.id) ? 'Remove from favourites' : 'Add to favourites'} active={isFav(current.id)} onClick={() => toggleFavourite(current.id)}>
+              <Star size={15} className={isFav(current.id) ? 'fav-star' : undefined} />
+            </IconButton>
+          </div>
+          {actions}
+        </div>
+      )}
       <div className="mat-picker-head">
         <div className="search-box">
           <Search size={13} aria-hidden />
-          <input className="input" placeholder="Search finishes" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus onKeyDown={(e) => e.stopPropagation()} aria-label="Search finishes" />
+          <input className="input" placeholder="Search finishes" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus={!panel} onKeyDown={(e) => e.stopPropagation()} aria-label="Search finishes" />
         </div>
         <select className="input select" value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Category">
           <option value="project">In this project & favourites</option>
@@ -193,52 +289,49 @@ function MaterialPicker({ target, currentId, onClose }: { target: MaterialTarget
           ))}
         </select>
       </div>
-      <div className="mat-grid" role="listbox" aria-label="Finishes">
-        {list.length === 0 && <p className="field-hint">No finishes match. Try “All finishes”.</p>}
+      <div ref={gridRef} className="mat-grid" role="listbox" aria-label="Finishes">
+        {list.length === 0 && <p className="field-hint mat-grid-empty">No finishes match. Try “All finishes”.</p>}
         {list.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            role="option"
-            aria-selected={m.id === currentId}
-            className={`mat-cell${m.id === currentId ? ' on' : ''}`}
-            onClick={() => apply(m.id)}
-            title={`${m.name} — ${MATERIAL_CATEGORY_LABELS[m.category]}`}
-          >
-            <MaterialSwatch material={m} size={40} />
-            <span>{m.name}</span>
-          </button>
+          <div key={m.id} className="mat-cell-wrap" role="presentation">
+            <button
+              type="button"
+              role="option"
+              aria-selected={m.id === currentId}
+              className={`mat-cell${m.id === currentId ? ' on' : ''}`}
+              onClick={() => apply(m.id)}
+              title={`${m.name} — ${MATERIAL_CATEGORY_LABELS[m.category]}`}
+            >
+              {panel ? <MaterialSwatch material={m} fill /> : <MaterialSwatch material={m} size={40} />}
+              <span className="mat-cell-name">{m.name}</span>
+            </button>
+            <button
+              type="button"
+              className={`mat-fav${isFav(m.id) ? ' on' : ''}`}
+              aria-label={isFav(m.id) ? `Remove ${m.name} from favourites` : `Add ${m.name} to favourites`}
+              aria-pressed={isFav(m.id)}
+              title={isFav(m.id) ? 'Remove from favourites' : 'Add to favourites'}
+              onClick={() => toggleFavourite(m.id)}
+            >
+              <Star size={12} />
+            </button>
+          </div>
         ))}
       </div>
       <div className="mat-picker-foot">
-        <label className="field-label" htmlFor="mat-scope">
+        <label className="field-label" htmlFor={`mat-scope-${variant}`}>
           Apply to
         </label>
-        <select id="mat-scope" className="input select" value={scope} onChange={(e) => setScope(e.target.value as MaterialScope)}>
+        <select id={`mat-scope-${variant}`} className="input select" value={scope} onChange={(e) => setScope(e.target.value as MaterialScope)}>
           {scopesFor(target).map((s) => (
             <option key={s} value={s}>
               {SCOPE_LABELS[s]}
             </option>
           ))}
         </select>
-        <span className="field-hint">
-          {targets.length === 1 ? 'Changes one surface.' : `Changes ${targets.length} surfaces.`}
-        </span>
-        <div className="mat-picker-actions">
-          <Button size="sm" variant="ghost" onClick={() => {
-            useEditorStore.getState().set({ activeMaterialId: currentId, libraryOpen: true, libraryTab: 'materials' });
-            onClose();
-          }}>
-            Edit “{current.name}”
-          </Button>
-          {!current.overrideOf && (
-            <Button size="sm" variant="ghost" onClick={makeOverride} title="Give this surface its own copy so edits don't affect other surfaces">
-              <Link2Off size={13} /> Unlink
-            </Button>
-          )}
-        </div>
+        <span className="field-hint">{targets.length === 1 ? 'Changes one surface.' : `Changes ${targets.length} surfaces.`}</span>
+        {!panel && actions}
       </div>
-    </div>
+    </>
   );
 }
 
