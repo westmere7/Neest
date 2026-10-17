@@ -9,3 +9,4 @@ test-results
 .vite
 .DS_Store
 *.log
+/_temp
