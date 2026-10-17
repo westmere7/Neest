@@ -4,8 +4,7 @@
  * Rice cooker, hot pot table, water dispenser with its big blue bottle, the shoe rack and
  * slippers by the door, a massage chair, a full karaoke set, a squat toilet and a wet bathroom
  * with stool, basin and dipper, a ceiling drying rack full of laundry, an evaporative cooler,
- * a Thai spirit house, a Buddha shrine shelf, a teak bale daybed, a tiffin carrier, a potted
- * frangipani and a Vietnamese box fan.
+ * a teak bale daybed, a tiffin carrier, a potted frangipani and a Vietnamese box fan.
  *
  * Four pack patterns give the materials their surface: textured (orange-peel) plastic,
  * speckled terrazzo floor tile, kawung batik with wax crackle, and fine teak grain.
@@ -1354,130 +1353,6 @@ const airCooler = defineItem({
 // Outdoor
 // ---------------------------------------------------------------------------
 
-const spiritHouse = defineItem({
-  id: 'spirit-house',
-  name: 'Thai spirit house',
-  category: 'outdoor',
-  type: 'decor',
-  group: 'Ornaments',
-  tags: ['spirit house', 'san phra phum', 'shrine', 'thai', 'offerings', 'garden', 'marigold', 'asian'],
-  defaultSize: { w: 0.7, d: 0.7, h: 1.9 },
-  minSize: { w: 0.5, d: 0.5, h: 1.4 },
-  maxSize: { w: 1.0, d: 1.0, h: 2.4 },
-  slots: [
-    matSlot('house', 'House & deck', 'lacquer-red'),
-    matSlot('gold', 'Gilding', 'gold-leaf'),
-    matSlot('pillar', 'Pillar', 'terrazzo-speckled'),
-    matSlot('offerings', 'Garlands & offerings', 'marigold'),
-  ],
-  build: ({ w, d, h }) => {
-    const s = Math.min(w, d);
-    const postW = clamp(s * 0.2, 0.1, 0.18);
-    const deckY = h * 0.55;
-    const deckT = 0.04;
-    const dx = w / 2 - 0.01;
-    const dz = d / 2 - 0.01;
-    const hw = w * 0.3;
-    const hd = d * 0.28;
-    const hb = deckY + 0.03;
-    const wallTop = hb + (h - hb) * 0.42;
-    const rp = h - 0.1;
-    const rise = rp - wallTop;
-    const run = hw * 1.18;
-    const o = { plan: false };
-    const rand = rng(9);
-    const parts: Part[] = [
-      // Pillar on a stepped plinth, with brackets under the deck.
-      span('pillar', [-postW * 0.9, postW * 0.9], [0, 0.08], [-postW * 0.9, postW * 0.9], { bevel: 0.01 }),
-      span('pillar', [-postW / 2, postW / 2], [0.08, deckY - 0.12], [-postW / 2, postW / 2], { bevel: 0.005, plan: false }),
-      span('pillar', [-postW * 0.75, postW * 0.75], [deckY - 0.12, deckY - deckT], [-postW * 0.75, postW * 0.75], { bevel: 0.01, plan: false }),
-      span('house', [-dx, dx], [deckY - deckT, deckY], [-dz, dz], { bevel: 0.006 }),
-      span('gold', [-dx + 0.005, dx - 0.005], [deckY - deckT - 0.012, deckY - deckT], [-dz + 0.005, dz - 0.005], o),
-      // House: stepped base, walls, columns and a gilded doorway.
-      span('gold', [-hw - 0.03, hw + 0.03], [deckY, deckY + 0.015], [-hd - 0.03, hd + 0.05], o),
-      span('house', [-hw - 0.015, hw + 0.015], [deckY + 0.015, hb], [-hd - 0.015, hd + 0.03], o),
-      span('house', [-hw * 0.85, hw * 0.85], [hb, wallTop], [-hd * 0.85, hd * 0.55], o),
-      facePlate('gold', [
-        [-hw * 0.28, hb],
-        [hw * 0.28, hb],
-        [hw * 0.28, hb + (wallTop - hb) * 0.62],
-        [0, hb + (wallTop - hb) * 0.86],
-        [-hw * 0.28, hb + (wallTop - hb) * 0.62],
-      ], hd * 0.55, 0.006),
-      facePlate('house', [
-        [-hw * 0.2, hb],
-        [hw * 0.2, hb],
-        [hw * 0.2, hb + (wallTop - hb) * 0.58],
-        [0, hb + (wallTop - hb) * 0.76],
-        [-hw * 0.2, hb + (wallTop - hb) * 0.58],
-      ], hd * 0.55 + 0.006, 0.004),
-    ];
-    for (const [x, z] of [[-hw, hd], [hw, hd], [-hw, -hd], [hw, -hd], [-hw * 0.45, hd], [hw * 0.45, hd]] as V2[]) {
-      parts.push(vcyl('gold', x, z, hb, wallTop, 0.012, o));
-    }
-    // Brackets from pillar to deck.
-    for (const [ax, az] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as V2[]) {
-      parts.push(rod('house', [(ax * postW) / 2, deckY - 0.3, (az * postW) / 2], [ax * dx * 0.75, deckY - deckT, az * dz * 0.75], 0.012, o));
-    }
-    // Railing round the deck, open at the front.
-    const ry = deckY + 0.06;
-    parts.push(rodX('gold', -dx + 0.02, dx - 0.02, ry, -dz + 0.02, 0.006, o));
-    parts.push(rodZ('gold', -dx + 0.02, ry, -dz + 0.02, dz - 0.02, 0.006, o));
-    parts.push(rodZ('gold', dx - 0.02, ry, -dz + 0.02, dz - 0.02, 0.006, o));
-    parts.push(rodX('gold', -dx + 0.02, -hw * 0.5, ry, dz - 0.02, 0.006, o));
-    parts.push(rodX('gold', hw * 0.5, dx - 0.02, ry, dz - 0.02, 0.006, o));
-    for (const t of spaced(5, -1, 1)) {
-      parts.push(vcyl('gold', t * (dx - 0.02), -dz + 0.02, deckY, ry, 0.005, o));
-      parts.push(vcyl('gold', -dx + 0.02, t * (dz - 0.02), deckY, ry, 0.005, o));
-      parts.push(vcyl('gold', dx - 0.02, t * (dz - 0.02), deckY, ry, 0.005, o));
-    }
-    // Tiered Thai gable roofs, ridges running front to back.
-    const roof = (r0: number, peak: number, half: number, z0: number, z1: number) => {
-      const ri = peak - r0;
-      const len = Math.hypot(ri, half);
-      const th = Math.atan2(ri, half);
-      const zc = (z0 + z1) / 2;
-      const zd = z1 - z0;
-      parts.push(box('house', [-half / 2, r0 + ri / 2, zc], [len, 0.016, zd], { rotation: [0, 0, th], plan: false }));
-      parts.push(box('house', [half / 2, r0 + ri / 2, zc], [len, 0.016, zd], { rotation: [0, 0, -th], plan: false }));
-      parts.push(facePlate('gold', [[-half * 0.92, r0 + 0.004], [half * 0.92, r0 + 0.004], [0, peak - 0.012]], z1 - 0.012, 0.008));
-      for (const z of [z0 + 0.004, z1 - 0.004]) {
-        parts.push(rod('gold', [-half - 0.012, r0 - 0.006, z], [0, peak + 0.006, z], 0.006, o));
-        parts.push(rod('gold', [half + 0.012, r0 - 0.006, z], [0, peak + 0.006, z], 0.006, o));
-        parts.push(rod('gold', [-half - 0.012, r0 - 0.006, z], [-half - 0.03, r0 + 0.035, z], 0.005, o));
-        parts.push(rod('gold', [half + 0.012, r0 - 0.006, z], [half + 0.03, r0 + 0.035, z], 0.005, o));
-      }
-      // Chofa finials curling up at the ridge ends.
-      for (const z of [z0 + 0.004, z1 - 0.004]) {
-        parts.push(...rodPath('gold', [[0, peak, z], [0, Math.min(h - 0.01, peak + 0.06), z + (z > zc ? 0.012 : -0.012)], [0, Math.min(h - 0.005, peak + 0.085), z - (z > zc ? 0.02 : -0.02)]], 0.005));
-      }
-    };
-    roof(wallTop - 0.02, rp, run, -hd * 1.12, hd * 0.7);
-    roof(wallTop - 0.06, wallTop + rise * 0.62, run * 0.82, hd * 0.25, hd * 1.18);
-    // Offerings on the porch: dancers, elephants, red soda with straws, incense and garlands.
-    const zO = Math.min(hd + 0.09, dz - 0.04);
-    for (const sx of [-1, 1]) {
-      const x = sx * hw * 0.65;
-      parts.push(sphere('gold', [x, deckY + 0.03, zO], 0.022, { scale: [1.4, 1, 1], plan: false }));
-      parts.push(sphere('gold', [x + sx * 0.03, deckY + 0.045, zO], 0.015, o));
-      parts.push(vcyl('house', x + sx * 0.06, zO - 0.02, deckY, deckY + 0.09, 0.016, o));
-      parts.push(rod('pillar', [x + sx * 0.06, deckY + 0.08, zO - 0.02], [x + sx * 0.07, deckY + 0.14, zO - 0.025], 0.003, o));
-      parts.push(vcyl('gold', x - sx * 0.05, zO + 0.01, deckY, deckY + 0.08, 0.008, { rTop: 0.004, plan: false }));
-      parts.push(sphere('gold', [x - sx * 0.05, deckY + 0.09, zO + 0.01], 0.012, o));
-    }
-    parts.push(pot('gold', [0, deckY, zO], 0.03, 0.035, 'bowl', o));
-    for (const k of range(3)) parts.push(rod('house', [(k - 1) * 0.008, deckY + 0.03, zO], [(k - 1) * 0.02, deckY + 0.13, zO + 0.01], 0.0015, o));
-    // Marigold garland swagged across the front columns, jasmine garland at the door.
-    for (const t of spaced(9, -1, 1)) {
-      const x = t * hw;
-      const y = wallTop - 0.03 - (1 - t * t) * (wallTop - hb) * 0.22;
-      parts.push(sphere('offerings', [x, y, hd + 0.02], 0.014 + rand() * 0.004, o));
-    }
-    parts.push(torus('offerings', [0, hb + (wallTop - hb) * 0.5, hd * 0.55 + 0.02], 0.035, 0.008, { rotation: [0.2, 0, 0], plan: false }));
-    return parts;
-  },
-  planDetail: ({ w, d }) => [rectPoly(-w * 0.3, -d * 0.28, w * 0.3, d * 0.28), line([0, -d * 0.31], [0, d * 0.33])],
-});
 
 const frangipani = defineItem({
   id: 'potted-frangipani',
@@ -1551,117 +1426,13 @@ const frangipani = defineItem({
 // Decor
 // ---------------------------------------------------------------------------
 
-const shrineShelf = defineItem({
-  id: 'buddha-shrine-shelf',
-  name: 'Buddha shrine shelf',
-  category: 'decor',
-  type: 'decor',
-  group: 'Ornaments',
-  tags: ['shrine', 'altar', 'buddha', 'ban tho', 'butsudan', 'offerings', 'incense', 'red lamp', 'wall shelf', 'asian'],
-  mount: 'wall',
-  defaultElevation: 1.55,
-  defaultSize: { w: 0.6, d: 0.32, h: 0.55 },
-  minSize: { w: 0.42, d: 0.24, h: 0.42 },
-  maxSize: { w: 1.0, d: 0.45, h: 0.8 },
-  slots: [
-    matSlot('wood', 'Lacquered shelf', 'lacquer-red'),
-    matSlot('gold', 'Statue & gilding', 'gold-leaf'),
-    matSlot('china', 'Cups & vases', 'ceramic-white'),
-    matSlot('light', 'Red lamps', 'shrine-red-glow'),
-  ],
-  light: { color: '#ff3a2a', intensity: 0.5, distance: 1.6, y: 0.14 },
-  build: ({ w, d, h }) => {
-    const sy = 0.075;
-    const zBack = -d / 2 + 0.015;
-    const Hs = Math.min(h - sy - 0.07, 0.34, w * 0.6);
-    const zs = zBack + Math.max(0.07, Hs * 0.22);
-    const o = { plan: false };
-    const r0 = Math.min(Hs * 0.24, w * 0.14);
-    const hp = Hs * 0.16;
-    const yb = sy + hp;
-    const parts: Part[] = [
-      span('wood', [-w / 2, w / 2], [0.05, sy], [-d / 2, d / 2], { bevel: 0.004 }),
-      span('wood', [-w / 2 + 0.01, w / 2 - 0.01], [0, 0.05], [d / 2 - 0.025, d / 2 - 0.005], o),
-      span('gold', [-w / 2 + 0.03, w / 2 - 0.03], [0.018, 0.032], [d / 2 - 0.006, d / 2], o),
-      span('wood', [-w / 2 + 0.01, w / 2 - 0.01], [sy, h - 0.03], [-d / 2, zBack], o),
-      span('gold', [-w / 2 + 0.03, w / 2 - 0.03], [sy + 0.02, h - 0.05], [zBack, zBack + 0.003], o),
-      span('wood', [-w / 2 + 0.035, w / 2 - 0.035], [sy + 0.025, h - 0.055], [zBack + 0.001, zBack + 0.005], o),
-      span('wood', [-w / 2, w / 2], [h - 0.04, h - 0.015], [-d / 2, -d / 2 + 0.06], { bevel: 0.004, plan: false }),
-      facePlate('gold', [
-        [-0.06, h - 0.015],
-        [-0.03, h - 0.008],
-        [0, h - 0.001],
-        [0.03, h - 0.008],
-        [0.06, h - 0.015],
-      ], -d / 2 + 0.03, 0.005),
-      // Lotus pedestal and the seated Buddha with a halo.
-      lathe('gold', [0, sy, zs], [
-        [0, 0],
-        [r0, 0],
-        [r0, hp * 0.25],
-        [r0 * 0.75, hp * 0.45],
-        [r0 * 1.05, hp],
-        [0, hp],
-      ], { segments: 28, plan: false }),
-      sphere('gold', [0, yb + Hs * 0.07, zs + 0.004], 0.5, { scale: [Math.min(Hs * 0.52, r0 * 2), Hs * 0.16, Math.min(Hs * 0.3, r0 * 1.6)], plan: false }),
-      lathe('gold', [0, yb + Hs * 0.1, zs], [
-        [Hs * 0.13, 0],
-        [Hs * 0.15, Hs * 0.12],
-        [Hs * 0.12, Hs * 0.32],
-        [Hs * 0.06, Hs * 0.4],
-        [0, Hs * 0.42],
-      ], { segments: 24, scale: [1, 1, 0.75], plan: false }),
-      sphere('gold', [0, yb + Hs * 0.6, zs], Hs * 0.1, { scale: [1, 1.1, 1], plan: false }),
-      sphere('gold', [0, yb + Hs * 0.72, zs], Hs * 0.04, { scale: [1, 1.5, 1], plan: false }),
-      sphere('gold', [0, yb + Hs * 0.12, zs + Hs * 0.13], Hs * 0.04, { scale: [1.4, 0.6, 1], plan: false }),
-      torus('gold', [0, yb + Hs * 0.6, zBack + 0.008], Hs * 0.17, Math.max(0.003, Hs * 0.012), o),
-      discZ('gold', [0, yb + Hs * 0.6, zBack + 0.004], Hs * 0.15, 0.004, o),
-    ];
-    // Lotus petals round the pedestal.
-    for (const k of range(8)) {
-      const a = (k / 8) * Math.PI * 2;
-      parts.push(sphere('gold', [Math.cos(a) * r0 * 0.9, sy + hp * 0.75, zs + Math.sin(a) * r0 * 0.9], r0 * 0.25, { scale: [1, 1.2, 1], plan: false }));
-    }
-    // Side pillars.
-    for (const sx of [-1, 1]) parts.push(vcyl('gold', sx * (w / 2 - 0.02), -d / 2 + 0.03, sy, h - 0.04, 0.01, o));
-    // Water cups and incense urn.
-    const zc = Math.min(zs + r0 + 0.04, d / 2 - 0.08);
-    for (const x of spaced(3, -0.06, 0.06)) {
-      parts.push(lathe('china', [x, sy, zc], [[0, 0], [0.012, 0], [0.02, 0.03], [0.018, 0.03], [0, 0.026]], { segments: 18, plan: false }));
-    }
-    const zu = d / 2 - 0.045;
-    parts.push(pot('gold', [0, sy, zu], 0.034, 0.045, 'urn', o));
-    for (const k of range(3)) parts.push(rod('wood', [(k - 1) * 0.008, sy + 0.04, zu], [(k - 1) * 0.022, Math.min(h - 0.02, sy + 0.17), zu + 0.01], 0.0018, o));
-    // Vases with gilded lotus buds.
-    for (const sx of [-1, 1]) {
-      const x = sx * w * 0.26;
-      const z = zs;
-      parts.push(pot('china', [x, sy, z], 0.025, 0.075, 'urn', o));
-      parts.push(rod('gold', [x, sy + 0.07, z], [x + sx * 0.01, sy + 0.14, z], 0.002, o));
-      parts.push(sphere('gold', [x + sx * 0.01, sy + 0.15, z], 0.012, { scale: [1, 1.6, 1], plan: false }));
-    }
-    // Two red lotus lamps.
-    for (const sx of [-1, 1]) {
-      const x = sx * (w / 2 - 0.06);
-      const z = zc;
-      parts.push(lathe('gold', [x, sy, z], [[0, 0], [0.022, 0], [0.008, 0.02], [0.008, 0.04], [0.026, 0.055], [0, 0.05]], { segments: 18, plan: false }));
-      parts.push(sphere('light', [x, sy + 0.075, z], 0.018, { scale: [1, 1.5, 1], plan: false }));
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2, d / 2 - 0.025], [w / 2, d / 2 - 0.025])],
-});
-
-// ---------------------------------------------------------------------------
-// Pack
-// ---------------------------------------------------------------------------
 
 export default definePack({
   name: 'Asian everyday',
   version: '1.0.0',
   author: 'Neest team',
   description:
-    'Everyday objects from homes across East and Southeast Asia: rice cooker, hot pot table, water dispenser, shoe rack and slippers, massage chair, karaoke set, squat toilet, wet bathroom, drying rack, air cooler, spirit house, shrine shelf, teak daybed, tiffin carrier, frangipani and box fan.',
+    'Everyday objects from homes across East and Southeast Asia: rice cooker, hot pot table, water dispenser, shoe rack and slippers, massage chair, karaoke set, squat toilet, wet bathroom, drying rack, air cooler, teak daybed, tiffin carrier, frangipani and box fan.',
   license: 'CC0 (made for Neest)',
   items: [
     riceCooker,
@@ -1674,8 +1445,6 @@ export default definePack({
     wetBathSet,
     dryingRack,
     airCooler,
-    spiritHouse,
-    shrineShelf,
     teakDaybed,
     tiffinCarrier,
     frangipani,

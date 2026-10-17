@@ -1,14 +1,13 @@
 /**
- * Chinese home — classical and everyday furniture and decorations from a Chinese household.
+ * Chinese home — everyday furniture and decorations from a modern Chinese household.
  *
- * Ming-style rosewood furniture (horseshoe armchair, luohan daybed, altar table), a family round
- * table with a lazy susan, a mahjong table, blue-and-white porcelain, red silk lanterns, a lacquer
- * screen, calligraphy and the lucky plants found in many homes. Four pack patterns give the
+ * A gongfu tea table, a family round table with a lazy susan, a mahjong table, a bamboo steamer
+ * stack, a blue-and-white floor vase, red silk lanterns, a goldfish bowl and the lucky plants found
+ * in many homes. Four pack patterns give the
  * surfaces their character: blue-and-white porcelain painting, red lacquer with gold clouds,
  * fine hongmu rosewood grain and silk brocade with gold roundels.
  */
 import {
-  blobCluster,
   box,
   cells,
   circle,
@@ -17,11 +16,9 @@ import {
   defineItem,
   definePack,
   ellipsePoints,
-  frame4,
   lathe,
   leaf,
   lerp,
-  line,
   matSlot,
   poly,
   pot,
@@ -31,8 +28,6 @@ import {
   rng,
   rod,
   rodPath,
-  rodX,
-  rodZ,
   slats,
   span,
   sphere,
@@ -49,51 +44,8 @@ const HALF_PI = Math.PI / 2;
 /** [min, max] of two numbers, for spans mirrored with a sign. */
 const ordered = (a: number, b: number): V2 => (a < b ? [a, b] : [b, a]);
 
-/** A flat shape facing the front (+z): `pts` are [x, y] in metres, spanning depth z0..z1. */
-function frontPlate(slot: string, pts: V2[], z0: number, z1: number): Part {
-  const ys = pts.map((p) => p[1]);
-  const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
-  const xs = pts.map((p) => p[0]);
-  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-  // Prism outline lies in X/Z and extrudes along Y; rotating +90° about X turns it to face +z.
-  return {
-    shape: 'prism',
-    outline: pts.map(([x, y]) => [x - cx, -(y - mid)] as V2),
-    height: Math.max(0.002, z1 - z0),
-    position: [cx, mid, z0],
-    rotation: [HALF_PI, 0, 0],
-    slot,
-    plan: false,
-  };
-}
 
-/** A flat shape facing the sides (±x): `pts` are [z, y] in metres, spanning x0..x1. */
-function sidePlate(slot: string, pts: V2[], x0: number, x1: number): Part {
-  const ys = pts.map((p) => p[1]);
-  const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
-  const zs = pts.map((p) => p[0]);
-  const cz = (Math.min(...zs) + Math.max(...zs)) / 2;
-  // Rotating -90° about Z sends the prism's extrusion (local y) along +x and local -x up.
-  return {
-    shape: 'prism',
-    outline: pts.map(([z, y]) => [-(y - mid), z - cz] as V2),
-    height: Math.max(0.002, x1 - x0),
-    position: [x0, mid, cz],
-    rotation: [0, 0, -HALF_PI],
-    slot,
-    plan: false,
-  };
-}
 
-/** One straight brush stroke on a wall-facing surface: a thin box from a to b ([x, y]). */
-function brush(slot: string, a: V2, b: V2, wd: number, z0: number, z1: number): Part {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  return box(slot, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (z0 + z1) / 2], [Math.hypot(dx, dy) + wd * 0.6, wd, z1 - z0], {
-    rotation: [0, 0, Math.atan2(dy, dx)],
-    plan: false,
-  });
-}
 
 /** Rotate [x, y, z] about the X axis (three.js convention). */
 const rotX = ([x, y, z]: V3, a: number): V3 => [x, y * Math.cos(a) - z * Math.sin(a), y * Math.sin(a) + z * Math.cos(a)];
@@ -471,360 +423,8 @@ function drawBrocade(ctx: CanvasRenderingContext2D, size: number, rand: () => nu
 // Living room
 // ---------------------------------------------------------------------------
 
-const horseshoeArmchair = defineItem({
-  id: 'horseshoe-armchair',
-  name: 'Ming horseshoe armchair',
-  category: 'living',
-  type: 'seating',
-  group: 'Living chairs',
-  tags: ['quanyi', 'horseshoe', 'ming', 'chinese', 'armchair', 'rosewood', 'classical', 'round-back'],
-  defaultSize: { w: 0.6, d: 0.5, h: 0.98 },
-  minSize: { w: 0.5, d: 0.42, h: 0.85 },
-  maxSize: { w: 0.75, d: 0.62, h: 1.1 },
-  slots: [
-    matSlot('wood', 'Frame', 'hongmu'),
-    matSlot('seat', 'Woven seat', 'rattan-natural'),
-    matSlot('cushion', 'Seat cushion', 'silk-brocade'),
-  ],
-  build: ({ w, d, h }) => {
-    const o = { plan: false };
-    const seatY = clamp(h * 0.5, 0.42, 0.52);
-    const st = 0.035;
-    const lr = 0.017;
-    const rr = 0.016;
-    const sx = w / 2 - 0.04;
-    // Horseshoe rail: straight arms sweeping round an elliptical back, ending in flared hand grips.
-    const rx = w / 2 - 0.05;
-    const zf = d / 2 - 0.05;
-    const zb = -d / 2 + rr + 0.01;
-    const rz = (zf - zb) * 0.4;
-    const zc = zb + rz;
-    const yArm = seatY + (h - seatY) * 0.42;
-    const yTop = h - rr - 0.005;
-    const railAt = (phi: number): V3 => [rx * Math.sin(phi), yArm + (yTop - yArm) * Math.cos(phi) ** 2, zc - rz * Math.cos(phi)];
-    const arcPts = range(13).map((i) => railAt(-HALF_PI + (i * Math.PI) / 12));
-    const grip = (sg: number): V3[] => [
-      [sg * (rx + 0.022), yArm - 0.02, zf],
-      [sg * rx, yArm - 0.01, zf - 0.05],
-    ];
-    const railPts: V3[] = [...grip(-1), ...arcPts, ...grip(1).reverse()];
-    const parts: Part[] = [...rodPath('wood', railPts, rr)];
-    for (const p of railPts.slice(1, -1)) parts.push(sphere('wood', p, rr, o));
-    for (const p of [railPts[0], railPts[railPts.length - 1]]) parts.push(sphere('wood', p, rr * 1.2, { scale: [1, 0.85, 1], plan: false }));
 
-    // Legs: the back legs run straight up through the seat into the rail.
-    const legX = sx - lr - 0.006;
-    const phiB = Math.asin(Math.min(0.97, legX / rx));
-    const postTop = railAt(phiB);
-    const backZ = Math.max(-d / 2 + lr + 0.02, postTop[2]);
-    const frontZ = d / 2 - 0.06;
-    const seatBack = backZ - lr - 0.006;
-    const seatFront = d / 2 - 0.04;
-    for (const sg of [-1, 1]) {
-      parts.push(vcyl('wood', sg * legX, backZ, 0, postTop[1], lr, o));
-      parts.push(vcyl('wood', sg * legX, frontZ, 0, seatY, lr, o));
-      // Goose-neck arm support from the front leg up to the rail.
-      parts.push(
-        ...rodPath(
-          'wood',
-          [
-            [sg * legX, seatY, frontZ],
-            [sg * legX, seatY + (yArm - seatY) * 0.55, frontZ + 0.012],
-            [sg * rx, yArm - 0.012, zf - 0.05],
-          ],
-          0.014,
-        ),
-      );
-      // Slender baluster between seat and arm.
-      const zm = (zc + zf - 0.05) / 2;
-      parts.push(rod('wood', [sg * (sx - 0.02), seatY, zm], [sg * rx, yArm - 0.006, zm], 0.008, o));
-      parts.push(sphere('wood', [sg * ((sx - 0.02 + rx) / 2), seatY + (yArm - seatY) * 0.4, zm], 0.013, { scale: [1, 1.6, 1], plan: false }));
-      // Side stretchers, stepping up from front to back.
-      parts.push(rodZ('wood', sg * legX, 0.16, backZ, frontZ, 0.01, o));
-    }
-    parts.push(rodX('wood', -legX, legX, 0.24, backZ, 0.01, o));
-    parts.push(span('wood', [-legX, legX], [0.05, 0.075], [frontZ - 0.018, frontZ + 0.018], { bevel: 0.004, plan: false }));
 
-    // Seat frame with a woven panel.
-    const sy0 = seatY - st;
-    parts.push(
-      span('wood', [-sx, sx], [sy0, seatY - 0.006], [seatBack, seatFront], { bevel: 0.004 }),
-      span('seat', [-sx + 0.045, sx - 0.045], [seatY - 0.012, seatY - 0.002], [seatBack + 0.045, seatFront - 0.045], o),
-      span('wood', [-sx, sx], [seatY - 0.006, seatY], [seatFront - 0.045, seatFront], o),
-      span('wood', [-sx, sx], [seatY - 0.006, seatY], [seatBack, seatBack + 0.045], o),
-      span('wood', [-sx, -sx + 0.045], [seatY - 0.006, seatY], [seatBack + 0.045, seatFront - 0.045], o),
-      span('wood', [sx - 0.045, sx], [seatY - 0.006, seatY], [seatBack + 0.045, seatFront - 0.045], o),
-      span('cushion', [-sx + 0.05, sx - 0.05], [seatY, seatY + 0.03], [seatBack + 0.05, seatFront - 0.03], { bevel: 0.012, plan: false }),
-    );
-
-    // Front apron with a cusped "kunmen" arch, plain side and back aprons.
-    const ax = legX;
-    const yt = sy0;
-    const arch: V2[] = range(11).map((i) => {
-      const x = ax - 0.035 - (i * (2 * ax - 0.07)) / 10;
-      const f = Math.abs(x) / ax;
-      return [x, yt - 0.03 - 0.035 * f ** 3 - 0.012 * Math.max(0, 1 - f / 0.14)];
-    });
-    parts.push(frontPlate('wood', [[-ax, yt], [ax, yt], [ax, yt - 0.075], ...arch, [-ax, yt - 0.075]], seatFront - 0.028, seatFront - 0.01));
-    for (const sg of [-1, 1]) parts.push(span('wood', ordered(sg * (sx - 0.02), sg * (sx - 0.005)), [yt - 0.04, yt], [backZ, frontZ], o));
-    parts.push(span('wood', [-ax, ax], [yt - 0.04, yt], [backZ - 0.005, backZ + 0.01], o));
-
-    // S-curved back splat with a carved medallion, rising to the back of the rail.
-    const sw = clamp(w * 0.28, 0.13, 0.19);
-    const z0 = seatBack + 0.015;
-    const z1 = zb;
-    const sp: V3[] = range(6).map((i) => {
-      const t = i / 5;
-      return [0, lerp(seatY, yTop - rr * 0.8, t), lerp(z0, z1, t) + 0.028 * Math.sin(TAU * t) * (t < 0.5 ? 1 : 0.6)];
-    });
-    for (const i of range(5)) {
-      const a = sp[i];
-      const b = sp[i + 1];
-      const ang = Math.atan2(b[2] - a[2], b[1] - a[1]);
-      parts.push(
-        box('wood', [0, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], [sw, Math.hypot(b[1] - a[1], b[2] - a[2]) + 0.006, 0.016], {
-          rotation: [ang, 0, 0],
-          plan: false,
-        }),
-      );
-      if (i === 3) {
-        const c: V3 = [0, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-        parts.push(cyl('wood', [0, c[1] - Math.sin(ang) * 0.009, c[2] + Math.cos(ang) * 0.009], sw * 0.3, 0.008, { rotation: [ang + HALF_PI, 0, 0], plan: false }));
-      }
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => {
-    const rr = 0.016;
-    const rx = w / 2 - 0.05;
-    const zf = d / 2 - 0.05;
-    const zb = -d / 2 + rr + 0.01;
-    const rz = (zf - zb) * 0.4;
-    const zc = zb + rz;
-    const pts: V2[] = [
-      [-(rx + 0.022), zf],
-      ...range(13).map((i) => {
-        const phi = -HALF_PI + (i * Math.PI) / 12;
-        return [rx * Math.sin(phi), zc - rz * Math.cos(phi)] as V2;
-      }),
-      [rx + 0.022, zf],
-    ];
-    return [poly(pts, false)];
-  },
-});
-
-const luohanDaybed = defineItem({
-  id: 'luohan-daybed',
-  name: 'Luohan daybed',
-  category: 'living',
-  type: 'beds',
-  group: 'Daybeds & sofa beds',
-  tags: ['luohan', 'kang', 'daybed', 'chinese', 'rosewood', 'lattice', 'ming', 'tea table', 'bolster'],
-  defaultSize: { w: 1.9, d: 0.95, h: 0.85 },
-  minSize: { w: 1.4, d: 0.7, h: 0.7 },
-  maxSize: { w: 2.3, d: 1.2, h: 1.0 },
-  slots: [
-    matSlot('wood', 'Frame & railings', 'hongmu'),
-    matSlot('cushion', 'Mat & bolsters', 'silk-brocade'),
-    matSlot('table', 'Kang table', 'gold-cloud-lacquer'),
-    matSlot('porcelain', 'Tea set', 'qinghua-porcelain'),
-  ],
-  build: ({ w, d, h }) => {
-    const o = { plan: false };
-    const legH = clamp(h * 0.33, 0.24, 0.34);
-    const yS = legH + 0.07;
-    const rt = 0.035;
-    const zB1 = -d / 2 + rt;
-    const xL = w / 2 - rt;
-    const outerTop = yS + (h - yS) * 0.8;
-    const sideTop = yS + (h - yS) * 0.62;
-    const parts: Part[] = [
-      span('wood', [-w / 2, w / 2], [legH + 0.025, yS], [-d / 2, d / 2], { bevel: 0.01 }),
-      span('wood', [-w / 2 + 0.03, w / 2 - 0.03], [legH, legH + 0.025], [-d / 2 + 0.03, d / 2 - 0.03], o),
-    ];
-    // Horse-hoof legs and cusped aprons.
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        parts.push(span('wood', ordered(sx * (w / 2 - 0.075), sx * (w / 2 - 0.005)), [0.035, legH], ordered(sz * (d / 2 - 0.075), sz * (d / 2 - 0.005)), o));
-        parts.push(span('wood', ordered(sx * (w / 2 - 0.09), sx * (w / 2 - 0.005)), [0, 0.04], ordered(sz * (d / 2 - 0.09), sz * (d / 2 - 0.005)), { bevel: 0.008, plan: false }));
-      }
-      parts.push(span('wood', ordered(sx * (w / 2 - 0.03), sx * (w / 2 - 0.012)), [legH - 0.07, legH], [-d / 2 + 0.075, d / 2 - 0.075], o));
-    }
-    const ax = w / 2 - 0.075;
-    const arch: V2[] = range(13).map((i) => {
-      const x = ax - 0.06 - (i * (2 * ax - 0.12)) / 12;
-      const f = Math.abs(x) / ax;
-      return [x, legH - 0.035 - 0.05 * f ** 4 - 0.015 * Math.max(0, 1 - f / 0.08)];
-    });
-    parts.push(frontPlate('wood', [[-ax, legH], [ax, legH], [ax, legH - 0.09], ...arch, [-ax, legH - 0.09]], d / 2 - 0.03, d / 2 - 0.01));
-    parts.push(span('wood', [-ax, ax], [legH - 0.07, legH], [-d / 2 + 0.01, -d / 2 + 0.03], o));
-
-    // Three-sided lattice railing: taller centre back screen, lower outer screens and sides.
-    const fb = 0.03;
-    const bar = 0.007;
-    const panelXY = (x0: number, x1: number, y0: number, y1: number): Part[] => {
-      const z: V2 = [-d / 2, zB1];
-      const zi: V2 = [z[0] + 0.008, z[1] - 0.008];
-      const out = frame4('wood', [x0, x1], [y0, y1], z, fb);
-      const ix: V2 = [x0 + fb, x1 - fb];
-      const iy: V2 = [y0 + fb, y1 - fb];
-      for (const y of cells(2, iy[0], iy[1])) out.push(span('wood', ix, [y - bar, y + bar], zi, o));
-      for (const x of cells(clamp(Math.round((ix[1] - ix[0]) / 0.11), 2, 12), ix[0], ix[1])) out.push(span('wood', [x - bar, x + bar], iy, zi, o));
-      return out;
-    };
-    const panelZY = (sx: number, z0: number, z1: number, y0: number, y1: number): Part[] => {
-      const x = ordered(sx * xL, sx * (w / 2));
-      const xi: V2 = [x[0] + 0.008, x[1] - 0.008];
-      const out: Part[] = [
-        span('wood', x, [y1 - fb, y1], [z0, z1], o),
-        span('wood', x, [y0, y0 + fb], [z0, z1], o),
-        span('wood', x, [y0 + fb, y1 - fb], [z1 - fb, z1], o),
-      ];
-      const iz: V2 = [z0, z1 - fb];
-      const iy: V2 = [y0 + fb, y1 - fb];
-      for (const y of cells(2, iy[0], iy[1])) out.push(span('wood', xi, [y - bar, y + bar], iz, o));
-      for (const z of cells(clamp(Math.round((iz[1] - iz[0]) / 0.11), 2, 12), iz[0], iz[1])) out.push(span('wood', xi, iy, [z - bar, z + bar], o));
-      return out;
-    };
-    parts.push(...panelXY(-w * 0.25, w * 0.25, yS, h));
-    parts.push(...panelXY(-w / 2, -w * 0.25, yS, outerTop));
-    parts.push(...panelXY(w * 0.25, w / 2, yS, outerTop));
-    parts.push(...panelZY(-1, zB1, d / 2 - 0.04, yS, sideTop));
-    parts.push(...panelZY(1, zB1, d / 2 - 0.04, yS, sideTop));
-
-    // Brocade mat and a bolster against each side railing.
-    const yC = yS + 0.05;
-    parts.push(span('cushion', [-xL + 0.005, xL - 0.005], [yS, yC], [zB1 + 0.005, d / 2 - 0.03], { bevel: 0.015, plan: false }));
-    const br = clamp((sideTop - yC) * 0.5, 0.06, 0.09);
-    const bl = clamp((d - rt) * 0.45, 0.3, 0.5);
-    const bz = zB1 + 0.02 + bl / 2;
-    for (const sx of [-1, 1]) {
-      const bx = sx * (xL - br - 0.005);
-      parts.push(rodZ('cushion', bx, yC + br, bz - bl / 2, bz + bl / 2, br, o));
-      for (const sz of [-1, 1]) parts.push(sphere('cushion', [bx, yC + br, bz + sz * (bl / 2)], br * 0.99, { scale: [1, 1, 0.25], plan: false }));
-    }
-
-    // Low kang table in the middle of the mat, with a little tea set.
-    const tw = clamp(w * 0.3, 0.45, 0.72);
-    const td = clamp((d - rt) * 0.5, 0.3, 0.48);
-    const tz = (zB1 + d / 2 - 0.03) / 2;
-    const th = clamp((h - yC) * 0.62, 0.18, 0.3);
-    const ty = yC + th;
-    parts.push(
-      span('table', [-tw / 2, tw / 2], [ty - 0.028, ty], [tz - td / 2, tz + td / 2], { bevel: 0.006, plan: false }),
-      span('table', [-tw / 2 + 0.02, tw / 2 - 0.02], [ty - 0.042, ty - 0.028], [tz - td / 2 + 0.02, tz + td / 2 - 0.02], o),
-    );
-    for (const sz of [-1, 1]) parts.push(span('table', [-tw / 2 + 0.012, tw / 2 - 0.012], [ty - 0.08, ty - 0.042], ordered(tz + sz * (td / 2 - 0.03), tz + sz * (td / 2 - 0.012)), o));
-    for (const sx of [-1, 1]) {
-      parts.push(span('table', ordered(sx * (tw / 2 - 0.03), sx * (tw / 2 - 0.012)), [ty - 0.08, ty - 0.042], [tz - td / 2 + 0.03, tz + td / 2 - 0.03], o));
-      for (const sz of [-1, 1]) {
-        const lx = ordered(sx * (tw / 2 - 0.045), sx * (tw / 2 - 0.012));
-        const lz = ordered(tz + sz * (td / 2 - 0.045), tz + sz * (td / 2 - 0.012));
-        parts.push(span('table', lx, [yC + 0.02, ty - 0.042], lz, o));
-        parts.push(span('table', ordered(sx * (tw / 2 - 0.055), sx * (tw / 2 - 0.012)), [yC, yC + 0.025], ordered(tz + sz * (td / 2 - 0.055), tz + sz * (td / 2 - 0.012)), { bevel: 0.005, plan: false }));
-      }
-    }
-    const f = clamp(tw / 0.6, 0.75, 1.1);
-    const tpx = tw * 0.12;
-    parts.push(
-      lathe('porcelain', [tpx, ty, tz], [[0, 0], [0.035 * f, 0], [0.055 * f, 0.03 * f], [0.05 * f, 0.055 * f], [0.025 * f, 0.068 * f], [0, 0.068 * f]], { segments: 24, plan: false }),
-      sphere('porcelain', [tpx, ty + 0.074 * f, tz], 0.01 * f, o),
-      rod('porcelain', [tpx + 0.045 * f, ty + 0.025 * f, tz], [tpx + 0.085 * f, ty + 0.06 * f, tz], 0.006 * f, o),
-      torus('porcelain', [tpx - 0.06 * f, ty + 0.035 * f, tz], 0.02 * f, 0.005 * f, { plan: false }),
-    );
-    for (const sz of [-1, 1]) {
-      parts.push(
-        lathe('porcelain', [-tw * 0.18, ty, tz + sz * td * 0.18], [[0, 0], [0.016 * f, 0], [0.026 * f, 0.032 * f], [0.023 * f, 0.032 * f], [0.014 * f, 0.006 * f], [0, 0.006 * f]], { segments: 20, plan: false }),
-      );
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => {
-    const rt = 0.035;
-    const zB1 = -d / 2 + rt;
-    const tw = clamp(w * 0.3, 0.45, 0.72);
-    const td = clamp((d - rt) * 0.5, 0.3, 0.48);
-    const tz = (zB1 + d / 2 - 0.03) / 2;
-    return [
-      line([-w / 2, zB1], [w / 2, zB1]),
-      line([-w / 2 + rt, zB1], [-w / 2 + rt, d / 2 - 0.04]),
-      line([w / 2 - rt, zB1], [w / 2 - rt, d / 2 - 0.04]),
-      rectPoly(-tw / 2, tz - td / 2, tw / 2, tz + td / 2),
-    ];
-  },
-});
-
-const altarTable = defineItem({
-  id: 'altar-table',
-  name: 'Ming altar table',
-  category: 'living',
-  type: 'surfaces',
-  group: 'Console tables',
-  tags: ['qiaotou', 'altar', 'chinese', 'console', 'rosewood', 'ming', 'everted flanges', 'ancestral'],
-  defaultSize: { w: 1.8, d: 0.42, h: 0.9 },
-  minSize: { w: 1.0, d: 0.32, h: 0.75 },
-  maxSize: { w: 2.6, d: 0.6, h: 1.0 },
-  slots: [
-    matSlot('wood', 'Frame & top', 'hongmu'),
-    matSlot('panels', 'End panels', 'gold-cloud-lacquer'),
-  ],
-  build: ({ w, d, h }) => {
-    const o = { plan: false };
-    const fh = clamp(h * 0.08, 0.05, 0.09);
-    const yT = h - fh;
-    const tt = 0.05;
-    const yA = yT - tt;
-    const li = clamp(w * 0.13, 0.12, 0.32);
-    const lx = w / 2 - li;
-    const lxw = 0.055;
-    const lzw = 0.045;
-    const lz = d / 2 - 0.045;
-    const parts: Part[] = [
-      span('wood', [-w / 2, w / 2], [yA, yT], [-d / 2, d / 2], { bevel: 0.008 }),
-      span('wood', [-w / 2 + 0.02, w / 2 - 0.02], [yA - 0.012, yA], [-d / 2 + 0.015, d / 2 - 0.015], o),
-    ];
-    // Everted flanges curling up at both ends.
-    for (const sx of [-1, 1]) {
-      const prof: V2[] = [[0.2, 0], [0.02, 0], [0, fh * 0.55], [0.004, fh], [0.03, fh * 0.82], [0.07, fh * 0.36], [0.14, fh * 0.08]];
-      parts.push(frontPlate('wood', prof.map(([a, b]) => [sx * (w / 2 - a), yT + b - 0.002] as V2), -d / 2 + 0.004, d / 2 - 0.004));
-    }
-    for (const sx of [-1, 1]) {
-      // Legs standing on shoe runners.
-      for (const sz of [-1, 1]) parts.push(span('wood', [sx * lx - lxw / 2, sx * lx + lxw / 2], [0.045, yA], [sz * lz - lzw / 2, sz * lz + lzw / 2], o));
-      parts.push(span('wood', [sx * lx - 0.045, sx * lx + 0.045], [0, 0.045], [-d / 2 + 0.004, d / 2 - 0.004], { bevel: 0.012, plan: false }));
-      // Stretchers and the lacquered end panel between the legs, with a ruyi medallion each side.
-      parts.push(span('wood', [sx * lx - 0.018, sx * lx + 0.018], [0.12, 0.155], [-lz, lz], o));
-      parts.push(span('wood', [sx * lx - 0.018, sx * lx + 0.018], [yA - 0.17, yA - 0.135], [-lz, lz], o));
-      parts.push(span('panels', [sx * lx - 0.008, sx * lx + 0.008], [0.155, yA - 0.17], [-lz + lzw / 2, lz - lzw / 2], o));
-      const pc = (0.155 + yA - 0.17) / 2;
-      const mr = Math.min(yA - 0.325, 2 * lz - lzw) * 0.26;
-      const ruyi: V2[] = range(30).map((i) => {
-        const a = (i / 30) * TAU;
-        const r = mr * (0.72 + 0.28 * Math.cos(3 * a));
-        return [Math.cos(a) * r, pc + Math.sin(a) * r];
-      });
-      parts.push(sidePlate('wood', ruyi, sx * lx + 0.008, sx * lx + 0.016));
-      parts.push(sidePlate('wood', ruyi, sx * lx - 0.016, sx * lx - 0.008));
-    }
-    // Long aprons and cloud-headed spandrels at every leg.
-    for (const sz of [-1, 1]) {
-      const za = ordered(sz * (d / 2 - 0.04), sz * (d / 2 - 0.022));
-      parts.push(span('wood', [-(lx + 0.06), lx + 0.06], [yA - 0.05, yA], za, o));
-      for (const sx of [-1, 1]) {
-        for (const side of [-1, 1]) {
-          const x0 = sx * lx + side * (lxw / 2);
-          const sp: V2[] = [[0, 0], [0.11, 0], [0.1, -0.016], [0.065, -0.022], [0.042, -0.042], [0.016, -0.062], [0, -0.078]];
-          parts.push(frontPlate('wood', sp.map(([u, v]) => [x0 + side * u, yA - 0.05 + v] as V2), za[0], za[1]));
-        }
-      }
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => {
-    const li = clamp(w * 0.13, 0.12, 0.32);
-    return [line([-w / 2 + li, -d / 2], [-w / 2 + li, d / 2]), line([w / 2 - li, -d / 2], [w / 2 - li, d / 2]), line([-w / 2 + 0.03, -d / 2], [-w / 2 + 0.03, d / 2]), line([w / 2 - 0.03, -d / 2], [w / 2 - 0.03, d / 2])];
-  },
-});
 
 const gongfuTeaTable = defineItem({
   id: 'gongfu-tea-table',
@@ -1011,56 +611,6 @@ const roundTable = defineItem({
   planDetail: ({ w, d }) => [poly(ellipsePoints(0, 0, Math.min(w, d) * 0.26, Math.min(w, d) * 0.26, 32))],
 });
 
-const drumStool = defineItem({
-  id: 'drum-stool',
-  name: 'Porcelain drum stool',
-  category: 'dining',
-  type: 'seating',
-  group: 'Stools & benches',
-  tags: ['garden stool', 'drum stool', 'porcelain', 'blue and white', 'chinese', 'ceramic', 'side table'],
-  defaultSize: { w: 0.36, d: 0.36, h: 0.46 },
-  minSize: { w: 0.28, d: 0.28, h: 0.38 },
-  maxSize: { w: 0.5, d: 0.5, h: 0.55 },
-  slots: [
-    matSlot('body', 'Porcelain', 'qinghua-porcelain'),
-    matSlot('trim', 'Studs & bands', 'cobalt-glaze'),
-    matSlot('cutout', 'Pierced openings', 'solid-black'),
-  ],
-  build: ({ w, d, h }) => {
-    const o = { plan: false };
-    const R = Math.min(w, d) / 2 - 0.004;
-    const r = (fy: number) => R * (0.78 + 0.22 * Math.sin(Math.PI * fy));
-    const fs = [0, 0.05, 0.14, 0.3, 0.5, 0.7, 0.86, 0.95, 1];
-    const parts: Part[] = [
-      lathe('body', [0, 0, 0], [[0, 0], ...fs.map((fy) => [r(fy), fy * h] as V2), [0, h]], { segments: 40 }),
-      ring('trim', [0, h - 0.006, 0], r(1) - 0.012, 0.007, o),
-      ring('trim', [0, 0.006, 0], r(0) - 0.002, 0.006, o),
-      ring('trim', [0, h * 0.16, 0], r(0.16), 0.005, o),
-      ring('trim', [0, h * 0.84, 0], r(0.84), 0.005, o),
-    ];
-    // Rows of drum-skin studs.
-    for (const fy of [0.09, 0.91]) {
-      const rr = r(fy);
-      const n = clamp(Math.round((TAU * rr) / 0.032), 12, 32);
-      for (const i of range(n)) {
-        const a = (i * TAU) / n;
-        parts.push(sphere('trim', [Math.cos(a) * rr, fy * h, Math.sin(a) * rr], 0.0065, o));
-      }
-    }
-    // Four pierced "cash coin" openings round the waist.
-    const ro = clamp(h * 0.08, 0.025, 0.05);
-    for (const k of range(4)) {
-      const a = (k * TAU) / 4;
-      const c = Math.cos(a);
-      const s = Math.sin(a);
-      parts.push(cyl('cutout', [c * (R - 0.005), h / 2, s * (R - 0.005)], ro, 0.01, { rotation: [0, -a, HALF_PI], segments: 24, plan: false }));
-      parts.push(torus('trim', [c * (R - 0.002), h / 2, s * (R - 0.002)], ro, 0.005, { rotation: [0, HALF_PI - a, 0], plan: false }));
-      parts.push(box('body', [c * (R - 0.003), h / 2, s * (R - 0.003)], [0.01, ro * 0.6, ro * 0.6], { rotation: [0, -a, 0], plan: false }));
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => [circle([0, 0], (Math.min(w, d) / 2) * 0.78)],
-});
 
 const bambooSteamer = defineItem({
   id: 'bamboo-steamer-stack',
@@ -1253,72 +803,6 @@ const mahjongTable = defineItem({
 // Decor
 // ---------------------------------------------------------------------------
 
-const lacquerScreen = defineItem({
-  id: 'lacquer-screen',
-  name: 'Lacquer folding screen',
-  category: 'decor',
-  type: 'decor',
-  group: 'Screens & dividers',
-  tags: ['coromandel', 'folding screen', 'lacquer', 'chinese', 'room divider', 'gold clouds', 'red'],
-  defaultSize: { w: 1.8, d: 0.4, h: 1.8 },
-  minSize: { w: 0.8, d: 0.25, h: 1.2 },
-  maxSize: { w: 3.2, d: 0.6, h: 2.2 },
-  slots: [
-    matSlot('lacquer', 'Lacquer panels', 'gold-cloud-lacquer'),
-    matSlot('frame', 'Frame', 'black-lacquer'),
-    matSlot('hinge', 'Hinges', 'gilt-bronze'),
-  ],
-  build: ({ w, d, h }) => {
-    const n = clamp(Math.round(w / 0.3), 2, 10);
-    const seg = w / n;
-    const t = 0.025;
-    const dz = Math.max(0.01, d - t - 0.012);
-    const th = Math.atan2(dz, seg);
-    const L = Math.hypot(seg, dz);
-    const sw = 0.035;
-    const yk = clamp(h * 0.24, 0.25, 0.5);
-    const parts: Part[] = [];
-    for (const i of range(n)) {
-      const a = i % 2 === 0 ? th : -th;
-      const cx = -w / 2 + seg * (i + 0.5);
-      const pb = (slot: string, u: V2, y: V2, v: V2, plan = false): Part => {
-        const uc = (u[0] + u[1]) / 2;
-        const vc = (v[0] + v[1]) / 2;
-        return box(slot, [cx + uc * Math.cos(a) + vc * Math.sin(a), (y[0] + y[1]) / 2, -uc * Math.sin(a) + vc * Math.cos(a)], [u[1] - u[0], y[1] - y[0], v[1] - v[0]], {
-          rotation: [0, a, 0],
-          plan,
-        });
-      };
-      const U0 = -L / 2;
-      const U1 = L / 2;
-      const full: V2 = [-t / 2, t / 2];
-      const inner: V2 = [-t / 2 + 0.005, t / 2 - 0.005];
-      const mid: V2 = [U0 + sw, U1 - sw];
-      parts.push(
-        pb('frame', [U0, U0 + sw], [0.03, h], full),
-        pb('frame', [U1 - sw, U1], [0.03, h], full),
-        pb('frame', mid, [h - 0.05, h], full),
-        pb('frame', mid, [yk, yk + 0.035], full),
-        pb('frame', mid, [0.06, 0.095], full),
-        pb('lacquer', mid, [yk + 0.035, h - 0.05], inner, true),
-        pb('lacquer', mid, [0.095, yk], inner),
-        pb('frame', [U0, U0 + sw * 1.3], [0, 0.03], full),
-        pb('frame', [U1 - sw * 1.3, U1], [0, 0.03], full),
-      );
-    }
-    for (const j of range(n - 1)) {
-      const x = -w / 2 + seg * (j + 1);
-      const z = j % 2 === 0 ? -dz / 2 : dz / 2;
-      for (const y of [h * 0.18, h * 0.82]) parts.push(box('hinge', [x, y, z], [0.02, 0.07, t + 0.008], { plan: false }));
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => {
-    const n = clamp(Math.round(w / 0.3), 2, 10);
-    const dz = Math.max(0.01, d - 0.025 - 0.012);
-    return [poly(range(n + 1).map((i) => [-w / 2 + (w / n) * i, i % 2 === 0 ? dz / 2 : -dz / 2] as V2), false)];
-  },
-});
 
 const floorVase = defineItem({
   id: 'porcelain-floor-vase',
@@ -1431,98 +915,6 @@ const lanternPair = defineItem({
   },
 });
 
-/** Calligraphy strokes on a unit cell ([u, v], v downwards), each with a width factor. */
-const GLYPHS: Record<string, [V2[], number][]> = {
-  da: [
-    [[[0.12, 0.36], [0.88, 0.33]], 1],
-    [[[0.5, 0.06], [0.5, 0.38], [0.42, 0.62], [0.12, 0.92]], 1.1],
-    [[[0.52, 0.42], [0.68, 0.66], [0.92, 0.9]], 1.25],
-  ],
-  ji: [
-    [[[0.15, 0.18], [0.85, 0.16]], 1],
-    [[[0.5, 0.04], [0.5, 0.44]], 1.05],
-    [[[0.28, 0.44], [0.72, 0.43]], 0.9],
-    [[[0.26, 0.56], [0.28, 0.94]], 0.95],
-    [[[0.26, 0.56], [0.74, 0.55], [0.72, 0.94]], 0.95],
-    [[[0.28, 0.9], [0.72, 0.9]], 0.9],
-  ],
-  li: [
-    [[[0.44, 0.07], [0.12, 0.18]], 0.9],
-    [[[0.06, 0.36], [0.5, 0.34]], 1],
-    [[[0.29, 0.12], [0.29, 0.95]], 1.05],
-    [[[0.28, 0.4], [0.06, 0.74]], 0.9],
-    [[[0.32, 0.46], [0.47, 0.6]], 0.9],
-    [[[0.66, 0.22], [0.66, 0.68]], 0.95],
-    [[[0.88, 0.06], [0.88, 0.9], [0.8, 0.83]], 1.1],
-  ],
-};
-
-const calligraphyScroll = defineItem({
-  id: 'calligraphy-scroll',
-  name: 'Calligraphy scroll',
-  category: 'decor',
-  type: 'decor',
-  group: 'Wall art',
-  tags: ['calligraphy', 'shufa', 'hanging scroll', 'ink', 'chinese', 'daji dali', 'good fortune', 'wall art'],
-  mount: 'wall',
-  defaultElevation: 0.6,
-  defaultSize: { w: 0.5, d: 0.04, h: 1.5 },
-  minSize: { w: 0.3, d: 0.02, h: 0.8 },
-  maxSize: { w: 0.9, d: 0.08, h: 2.2 },
-  slots: [
-    matSlot('mount', 'Silk mounting', 'mount-silk'),
-    matSlot('paper', 'Xuan paper', 'xuan-paper'),
-    matSlot('ink', 'Ink & rollers', 'sumi-ink'),
-    matSlot('seal', 'Seal', 'cinnabar-lacquer'),
-  ],
-  build: ({ w, d, h }) => {
-    const o = { plan: false };
-    const zb = -d / 2;
-    const kr = Math.min(0.018, d / 2 - 0.001);
-    const rr = kr * 0.7;
-    const mx = w / 2 - 0.03;
-    const yM0 = kr;
-    const yM1 = h - 0.045;
-    const parts: Part[] = [
-      span('mount', [-mx, mx], [yM0, yM1], [zb + 0.001, zb + 0.003]),
-      // Wooden top stick, hanging cord, bottom roller with end knobs.
-      span('ink', [-mx - 0.005, mx + 0.005], [yM1, yM1 + 0.016], [zb + 0.0005, zb + Math.min(0.012, d - 0.001)], { bevel: 0.004, plan: false }),
-      rod('ink', [-mx * 0.6, yM1 + 0.012, zb + 0.004], [0, h - 0.004, zb + 0.004], 0.0015, o),
-      rod('ink', [mx * 0.6, yM1 + 0.012, zb + 0.004], [0, h - 0.004, zb + 0.004], 0.0015, o),
-      rodX('ink', -mx, mx, kr, zb + kr, rr, o),
-      rodX('ink', -w / 2 + 0.002, -mx, kr, zb + kr, kr, o),
-      rodX('ink', mx, w / 2 - 0.002, kr, zb + kr, kr, o),
-    ];
-    // Paper panel with the two "swallow" strips hanging above it.
-    const px = mx * 0.72;
-    const pY0 = yM0 + (yM1 - yM0) * 0.17;
-    const pY1 = yM1 - (yM1 - yM0) * 0.24;
-    const zP: V2 = [zb + 0.003, zb + 0.0045];
-    parts.push(span('paper', [-px, px], [pY0, pY1], zP, o));
-    for (const sx of [-1, 1]) parts.push(span('paper', [sx * mx * 0.3 - 0.007, sx * mx * 0.3 + 0.007], [pY1 + (yM1 - pY1) * 0.12, yM1], zP, o));
-    // 大吉大利 — "great luck and great profit" — in one column, signed and sealed at the left.
-    const ph = pY1 - pY0;
-    const cs = Math.min(px * 1.35, (ph * 0.86) / 4);
-    const colX = px * 0.12;
-    const top = pY1 - (ph - cs * 4) / 2;
-    const zI: V2 = [zb + 0.0045, zb + 0.0058];
-    for (const [i, g] of ['da', 'ji', 'da', 'li'].entries()) {
-      const map = ([u, v]: V2): V2 => [colX + (u - 0.5) * cs * 0.9, top - (i + 0.05 + v * 0.9) * cs];
-      for (const [pts, wf] of GLYPHS[g]) {
-        for (const k of range(pts.length - 1)) parts.push(brush('ink', map(pts[k]), map(pts[k + 1]), cs * 0.075 * wf, zI[0], zI[1]));
-      }
-    }
-    const sgX = -px * 0.72;
-    for (const k of range(5)) {
-      const y = top - cs * (1.4 + k * 0.17);
-      parts.push(brush('ink', [sgX - cs * 0.05, y], [sgX + cs * 0.05, y - cs * 0.03], cs * 0.035, zI[0], zI[1]));
-    }
-    const sealY = top - cs * 2.4;
-    parts.push(span('seal', [sgX - cs * 0.08, sgX + cs * 0.08], [sealY - cs * 0.16, sealY], zI, o));
-    parts.push(span('seal', [colX + cs * 0.46, colX + cs * 0.56], [top - cs * 0.22, top - cs * 0.02], zI, o));
-    return parts;
-  },
-});
 
 const moneyTree = defineItem({
   id: 'money-tree',
@@ -1651,180 +1043,6 @@ const luckyBamboo = defineItem({
   planDetail: ({ w, d }) => [circle([0, 0], (Math.min(w, d) / 2) * 0.58)],
 });
 
-/** One seated guardian lion on its plinth, facing the front. `male` rests a paw on a ball. */
-function guardianLion(X: number, lw: number, ld: number, h: number, male: boolean, seed: number): Part[] {
-  const o = { plan: false };
-  const ph = h * 0.16;
-  const lh = h - ph;
-  const Y = (f: number) => ph + lh * f;
-  const parts: Part[] = [
-    span('plinth', [X - lw / 2, X + lw / 2], [0, ph * 0.4], [-ld / 2, ld / 2], { bevel: 0.006 }),
-    span('plinth', [X - lw / 2 + 0.015, X + lw / 2 - 0.015], [ph * 0.4, ph * 0.7], [-ld / 2 + 0.015, ld / 2 - 0.015], o),
-    span('plinth', [X - lw / 2 + 0.005, X + lw / 2 - 0.005], [ph * 0.7, ph], [-ld / 2 + 0.005, ld / 2 - 0.005], { bevel: 0.005, plan: false }),
-    // Haunches and chest.
-    sphere('stone', [X, Y(0.25), -ld * 0.12], 0.5, { scale: [lw * 0.78, lh * 0.48, ld * 0.6], plan: false }),
-    sphere('stone', [X, Y(0.44), ld * 0.04], 0.5, { scale: [lw * 0.6, lh * 0.5, ld * 0.42], plan: false }),
-  ];
-  for (const s of [-1, 1]) {
-    const lx = X + s * lw * 0.17;
-    const onProp = male ? s === -1 : s === 1;
-    let footY = ph + lh * 0.035;
-    if (onProp && male) {
-      const br = Math.min(lw * 0.14, ld * 0.13, lh * 0.12);
-      parts.push(sphere('accent', [lx, ph + br, ld * 0.27], br, o));
-      footY = ph + br * 2;
-    } else if (onProp) {
-      // A cub lying on its back under the lioness's paw.
-      const cr = Math.min(lw * 0.09, ld * 0.1);
-      parts.push(sphere('stone', [lx, ph + cr * 0.8, ld * 0.25], 0.5, { scale: [cr * 2.2, cr * 1.6, cr * 2.4], plan: false }));
-      parts.push(sphere('stone', [lx, ph + cr * 0.9, ld * 0.36], cr * 0.8, o));
-      footY = ph + cr * 1.7;
-    }
-    parts.push(vcyl('stone', lx, ld * 0.2, footY, Y(0.42), lw * 0.075, { rTop: lw * 0.09, plan: false }));
-    parts.push(sphere('stone', [lx, footY, ld * 0.29], 0.5, { scale: [lw * 0.17, lh * 0.07, ld * 0.22], plan: false }));
-    parts.push(sphere('stone', [X + s * lw * 0.32, Y(0.05), ld * 0.02], 0.5, { scale: [lw * 0.16, lh * 0.1, ld * 0.26], plan: false }));
-  }
-  // Big head with a curly mane, bulging eyes and an open mouth.
-  const rH = Math.min(lw * 0.3, lh * 0.19, ld * 0.32);
-  const hy = Math.min(Y(0.74), h - rH * 1.3);
-  const hz = ld * 0.1;
-  parts.push(sphere('stone', [X, hy, hz], rH, o));
-  for (const k of range(9)) {
-    const a = -0.35 + (k * (Math.PI + 0.7)) / 8;
-    parts.push(sphere('stone', [X + Math.cos(a) * rH * 0.95, hy + Math.sin(a) * rH * 0.95, hz - rH * 0.35], rH * 0.3, o));
-  }
-  for (const [dx, dy] of [[-0.4, 0.6], [0.4, 0.6], [-0.4, 1.05], [0.4, 1.05], [0, 0.2]] as V2[]) {
-    parts.push(sphere('stone', [X + dx * rH, hy - dy * rH, hz - rH * 0.8], rH * 0.3, o));
-  }
-  parts.push(
-    sphere('stone', [X, hy - rH * 0.32, hz + rH * 0.72], 0.5, { scale: [rH * 1.15, rH * 0.62, rH * 0.7], plan: false }),
-    sphere('stone', [X, hy - rH * 0.12, hz + rH * 0.95], rH * 0.16, o),
-    sphere('plinth', [X, hy - rH * 0.58, hz + rH * 0.68], 0.5, { scale: [rH * 0.7, rH * 0.26, rH * 0.5], plan: false }),
-  );
-  for (const s of [-1, 1]) {
-    parts.push(
-      sphere('accent', [X + s * rH * 0.36, hy + rH * 0.22, hz + rH * 0.8], rH * 0.15, o),
-      sphere('stone', [X + s * rH * 0.38, hy + rH * 0.42, hz + rH * 0.72], 0.5, { scale: [rH * 0.42, rH * 0.18, rH * 0.3], plan: false }),
-      sphere('stone', [X + s * rH * 0.82, hy + rH * 0.55, hz - rH * 0.05], rH * 0.22, o),
-    );
-  }
-  // Collar with a bell, and a curly tail.
-  parts.push(
-    ring('accent', [X, hy - rH * 0.95, hz - rH * 0.1], rH * 0.72, rH * 0.07, o),
-    sphere('accent', [X, hy - rH * 1.1, hz + rH * 0.66], rH * 0.17, o),
-    ...blobCluster('stone', [X, Y(0.42), -ld * 0.34], Math.min(lw * 0.12, ld * 0.12), 4, seed),
-  );
-  return parts;
-}
-
-const guardianLions = defineItem({
-  id: 'guardian-lions',
-  name: 'Guardian lion pair',
-  category: 'decor',
-  type: 'decor',
-  group: 'Ornaments',
-  tags: ['foo dogs', 'shishi', 'guardian lions', 'stone lions', 'chinese', 'entrance', 'feng shui', 'statue'],
-  defaultSize: { w: 1.0, d: 0.4, h: 0.6 },
-  minSize: { w: 0.5, d: 0.2, h: 0.3 },
-  maxSize: { w: 2.4, d: 0.8, h: 1.6 },
-  slots: [
-    matSlot('stone', 'Lions', 'carved-stone'),
-    matSlot('plinth', 'Plinths', 'stone-granite'),
-    matSlot('accent', 'Ball, eyes & collars', 'gilt-bronze'),
-  ],
-  build: ({ w, d, h }) => {
-    const lw = Math.min(w * 0.4, d * 1.05);
-    const X = w / 2 - lw / 2;
-    // The male (with the ball) sits on the right as you face them, the female with her cub on the left.
-    return [...guardianLion(X, lw, d, h, true, 5), ...guardianLion(-X, lw, d, h, false, 6)];
-  },
-  planDetail: ({ w, d }) => {
-    const lw = Math.min(w * 0.4, d * 1.05);
-    const X = w / 2 - lw / 2;
-    return [circle([X, d * 0.1], lw * 0.25), circle([-X, d * 0.1], lw * 0.25)];
-  },
-});
-
-const moonGate = defineItem({
-  id: 'moon-gate-divider',
-  name: 'Moon gate divider',
-  category: 'decor',
-  type: 'decor',
-  group: 'Screens & dividers',
-  tags: ['moon gate', 'yuedong men', 'lattice', 'partition', 'room divider', 'chinese', 'round window', 'rosewood'],
-  defaultSize: { w: 1.6, d: 0.35, h: 2.2 },
-  minSize: { w: 1.0, d: 0.2, h: 1.6 },
-  maxSize: { w: 3.0, d: 0.5, h: 2.7 },
-  slots: [
-    matSlot('frame', 'Frame & moon ring', 'hongmu'),
-    matSlot('lattice', 'Lattice', 'huanghuali'),
-  ],
-  build: ({ w, d, h }) => {
-    const o = { plan: false };
-    const pt = 0.045;
-    const zP: V2 = [-pt / 2, pt / 2];
-    const fw = 0.07;
-    const yB = 0.06;
-    const parts: Part[] = [];
-    for (const sx of [-1, 1]) parts.push(span('frame', ordered(sx * (w / 2 - 0.16), sx * (w / 2)), [0, yB], [-d / 2, d / 2], { bevel: 0.012 }));
-    parts.push(
-      span('frame', [-w / 2, -w / 2 + fw], [yB, h], zP),
-      span('frame', [w / 2 - fw, w / 2], [yB, h], zP),
-      span('frame', [-w / 2 + fw, w / 2 - fw], [h - fw, h], zP),
-      span('frame', [-w / 2 + fw, w / 2 - fw], [yB, yB + 0.14], zP),
-    );
-    const x0 = -w / 2 + fw;
-    const x1 = w / 2 - fw;
-    const y0 = yB + 0.14;
-    const y1 = h - fw;
-    const R = Math.min((x1 - x0) / 2 - 0.06, (y1 - y0) / 2 - 0.06);
-    const cy = (y0 + y1) / 2;
-    parts.push(torus('frame', [0, cy, 0], R + 0.03, 0.035, o));
-    parts.push(torus('lattice', [0, cy, 0], R - 0.008, 0.012, o));
-    // Square lattice that stops at the moon ring.
-    const Ro = R + 0.06;
-    const bar = 0.009;
-    const zL: V2 = [-0.012, 0.012];
-    const nx = clamp(Math.round((x1 - x0) / 0.11), 4, 22);
-    const ny = clamp(Math.round((y1 - y0) / 0.11), 6, 24);
-    const add = (x: V2, y: V2) => {
-      if (x[1] - x[0] > 0.02 || y[1] - y[0] > 0.02) parts.push(span('lattice', x, y, zL, o));
-    };
-    for (const i of range(nx - 1)) {
-      const x = x0 + ((i + 1) * (x1 - x0)) / nx;
-      if (Math.abs(x) < Ro) {
-        const dy = Math.sqrt(Ro * Ro - x * x);
-        if (cy - dy - y0 > 0.02) add([x - bar, x + bar], [y0, cy - dy]);
-        if (y1 - cy - dy > 0.02) add([x - bar, x + bar], [cy + dy, y1]);
-      } else add([x - bar, x + bar], [y0, y1]);
-    }
-    for (const j of range(ny - 1)) {
-      const y = y0 + ((j + 1) * (y1 - y0)) / ny;
-      if (Math.abs(y - cy) < Ro) {
-        const dx = Math.sqrt(Ro * Ro - (y - cy) ** 2);
-        if (-dx - x0 > 0.02) add([x0, -dx], [y - bar, y + bar]);
-        if (x1 - dx > 0.02) add([dx, x1], [y - bar, y + bar]);
-      } else add([x0, x1], [y - bar, y + bar]);
-    }
-    // Carved corner spandrels.
-    const cr = Math.min(0.16, R * 0.3);
-    const corners: [number, number, number, number][] = [
-      [x0, y1, 1, -1],
-      [x1, y1, -1, -1],
-      [x0, y0, 1, 1],
-      [x1, y0, -1, 1],
-    ];
-    for (const [cx, cyy, sx, sy] of corners) {
-      const pts: V2[] = [[cx, cyy], [cx + sx * cr, cyy], ...range(9).map((i) => {
-        const a = (i / 8) * HALF_PI;
-        return [cx + sx * cr * (1 - Math.sin(a)), cyy + sy * cr * (1 - Math.cos(a))] as V2;
-      }).slice(1), [cx, cyy + sy * cr]];
-      parts.push(frontPlate('frame', pts, -0.016, 0.016));
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2, 0], [w / 2, 0]), rectPoly(-w / 2, -d / 2, -w / 2 + 0.16, d / 2), rectPoly(w / 2 - 0.16, -d / 2, w / 2, d / 2)],
-});
 
 const goldfishBowl = defineItem({
   id: 'goldfish-bowl',
@@ -1898,25 +1116,17 @@ export default definePack({
   version: '1.0.0',
   author: 'Neest team',
   description:
-    'Ming rosewood furniture, a family round table with a lazy susan, a mahjong table, blue-and-white porcelain, red silk lanterns, a lacquer screen, calligraphy and lucky plants.',
+    'A gongfu tea table, a family round table with a lazy susan, a mahjong table, a bamboo steamer, a blue-and-white vase, red silk lanterns, a goldfish bowl and lucky plants.',
   license: 'CC0 (made for Neest)',
   items: [
-    horseshoeArmchair,
-    luohanDaybed,
-    altarTable,
     roundTable,
-    drumStool,
     mahjongTable,
-    lacquerScreen,
     floorVase,
     lanternPair,
     gongfuTeaTable,
-    calligraphyScroll,
     moneyTree,
     luckyBamboo,
-    guardianLions,
     bambooSteamer,
-    moonGate,
     goldfishBowl,
   ],
   patterns: [

@@ -1,9 +1,8 @@
 /**
- * Japanese home — a washitsu (tatami room) and its everyday objects.
+ * Japanese home — everyday objects of a Japanese apartment.
  *
- * Tatami platform, kotatsu with a bowl of mikan, zabuton and zaisu floor seating, a chabudai,
- * shoji screen and andon lamp, a shikibuton futon, tokonoma scroll, bonsai, ikebana, a kamidana
- * shrine shelf, a getabako with slippers, noren, a hinoki ofuro and tea things.
+ * Kotatsu with a bowl of mikan, zabuton and zaisu floor seating, a chabudai, a shikibuton futon,
+ * bonsai, ikebana, a maneki-neko, a getabako with slippers, noren, a hinoki ofuro and tea things.
  *
  * Four pack patterns give the materials their surface: igusa rush weave for the tatami, fine
  * straight hinoki grain, kozo-fibre washi paper and an indigo seigaiha wave print for fabrics.
@@ -18,7 +17,6 @@ import {
   defineItem,
   definePack,
   discZ,
-  foliage,
   lathe,
   leaf,
   lerp,
@@ -30,17 +28,13 @@ import {
   ring,
   rng,
   rod,
-  rodPath,
   rodX,
   rodZ,
   slats,
-  spaced,
   span,
   sphere,
   torus,
-  vcyl,
   type Part,
-  type PlanStroke,
   type V2,
   type V3,
 } from '@/packs/kit';
@@ -51,23 +45,6 @@ const TAU = Math.PI * 2;
 // Shape helpers
 // ---------------------------------------------------------------------------
 
-/** A flat shape facing the front (+z): `pts` are [x, y] in metres, `t` thick from depth z. */
-function facePlate(slot: string, pts: V2[], z: number, t: number): Part {
-  const ys = pts.map((p) => p[1]);
-  const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
-  const xs = pts.map((p) => p[0]);
-  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-  // Prism outline lies in X/Z and extrudes along Y; rotating +90° about X turns it to face +z.
-  return {
-    shape: 'prism',
-    outline: pts.map(([x, y]) => [x - cx, -(y - mid)] as V2),
-    height: t,
-    position: [cx, mid, z],
-    rotation: [Math.PI / 2, 0, 0],
-    slot,
-    plan: false,
-  };
-}
 
 /** A flat shape in the side (z/y) plane: `pts` are [z, y] in metres, extruded `t` along +x from x0. */
 function sidePlate(slot: string, pts: V2[], x0: number, t: number): Part {
@@ -150,132 +127,9 @@ const smooth = (a: number, b: number, v: number): number => {
 
 const byte = (v: number): number => Math.round(clamp(v, 0, 1) * 255);
 
-// ---------------------------------------------------------------------------
-// Tatami platform
-// ---------------------------------------------------------------------------
 
-interface MatRect {
-  x: V2;
-  z: V2;
-  /** Full mat (2:1) or a square half mat. */
-  full: boolean;
-  /** Long axis (and rush direction) along x. */
-  longX: boolean;
-}
 
-/**
- * Lays tatami over a rectangle in a running bond so four corners never meet: full 2:1 mats in
- * rows along the longer side, alternate rows starting with a half mat. Counts follow the size.
- */
-function tatamiLayout(x: V2, z: V2): MatRect[] {
-  const cols = Math.max(1, Math.round((x[1] - x[0]) / 0.9));
-  const rows = Math.max(1, Math.round((z[1] - z[0]) / 0.9));
-  const alongX = cols >= rows;
-  const nA = alongX ? cols : rows;
-  const nB = alongX ? rows : cols;
-  const out: MatRect[] = [];
-  for (const b of range(nB)) {
-    let a = 0;
-    while (a < nA) {
-      const len = b % 2 === 1 && a === 0 && nA > 1 ? 1 : Math.min(2, nA - a);
-      const A: V2 = alongX ? [x[0] + ((x[1] - x[0]) * a) / nA, x[0] + ((x[1] - x[0]) * (a + len)) / nA] : [z[0] + ((z[1] - z[0]) * a) / nA, z[0] + ((z[1] - z[0]) * (a + len)) / nA];
-      const B: V2 = alongX ? [z[0] + ((z[1] - z[0]) * b) / nB, z[0] + ((z[1] - z[0]) * (b + 1)) / nB] : [x[0] + ((x[1] - x[0]) * b) / nB, x[0] + ((x[1] - x[0]) * (b + 1)) / nB];
-      const full = len === 2;
-      // Half mats alternate their rush direction (the chequered ichimatsu look).
-      const longX = full ? alongX : (a + b) % 2 === 0;
-      out.push(alongX ? { x: A, z: B, full, longX } : { x: B, z: A, full, longX });
-      a += len;
-    }
-  }
-  return out;
-}
 
-function tatamiMat(m: MatRect, y0: number, y1: number): Part[] {
-  const g = 0.002;
-  const x0 = m.x[0] + g;
-  const x1 = m.x[1] - g;
-  const z0 = m.z[0] + g;
-  const z1 = m.z[1] - g;
-  const c: V3 = [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2];
-  const lx = x1 - x0;
-  const lz = z1 - z0;
-  const parts: Part[] = [
-    m.longX
-      ? box('tatami', c, [lx, y1 - y0, lz], { bevel: 0.006, plan: false })
-      : box('tatami', c, [lz, y1 - y0, lx], { bevel: 0.006, rotation: [0, Math.PI / 2, 0], plan: false }),
-  ];
-  if (m.full) {
-    // Heri: cloth borders along both long edges.
-    const hw = clamp(Math.min(lx, lz) * 0.035, 0.015, 0.032);
-    const o = { bevel: 0.003, plan: false };
-    if (m.longX) {
-      parts.push(span('heri', [x0, x1], [y0 + 0.004, y1 + 0.002], [z0, z0 + hw], o));
-      parts.push(span('heri', [x0, x1], [y0 + 0.004, y1 + 0.002], [z1 - hw, z1], o));
-    } else {
-      parts.push(span('heri', [x0, x0 + hw], [y0 + 0.004, y1 + 0.002], [z0, z1], o));
-      parts.push(span('heri', [x1 - hw, x1], [y0 + 0.004, y1 + 0.002], [z0, z1], o));
-    }
-  }
-  return parts;
-}
-
-const KAMACHI = 0.035;
-
-const matArea = (w: number, d: number): { x: V2; z: V2 } => ({
-  x: [-w / 2 + 0.004, w / 2 - 0.004],
-  z: [-d / 2 + 0.004, d / 2 - KAMACHI - 0.002],
-});
-
-const tatamiPlatform = defineItem({
-  id: 'tatami-platform',
-  name: 'Tatami mat platform',
-  category: 'living',
-  type: 'structure',
-  group: 'Built-ins',
-  tags: ['tatami', 'platform', 'washitsu', 'koagari', 'japanese', 'igusa', 'mats', 'floor seating', 'storage'],
-  defaultSize: { w: 2.7, d: 1.8, h: 0.4 },
-  minSize: { w: 0.9, d: 0.9, h: 0.12 },
-  maxSize: { w: 5.4, d: 3.6, h: 0.5 },
-  slots: [
-    matSlot('tatami', 'Tatami mats', 'igusa-tatami'),
-    matSlot('heri', 'Mat borders', 'tatami-heri'),
-    matSlot('frame', 'Platform frame', 'hinoki'),
-    matSlot('drawers', 'Drawer fronts', 'sugi-cedar'),
-  ],
-  build: ({ w, d, h }) => {
-    const mt = Math.min(0.055, h * 0.35);
-    const deck = h - mt;
-    const plinth = Math.min(0.05, deck * 0.3);
-    const parts: Part[] = [
-      // Recessed plinth and the carcass.
-      span('frame', [-w / 2 + 0.02, w / 2 - 0.02], [0, plinth], [-d / 2, d / 2 - 0.06], { plan: false }),
-      span('frame', [-w / 2, w / 2], [plinth, deck], [-d / 2, d / 2 - 0.02]),
-      // Kamachi: the polished edge beam along the front, standing a little proud of the mats.
-      span('frame', [-w / 2, w / 2], [deck - Math.min(0.06, deck * 0.4), deck + 0.012], [d / 2 - KAMACHI, d / 2], { bevel: 0.004, plan: false }),
-    ];
-    // Storage drawers under the mats when the platform is tall enough.
-    const dy0 = plinth + 0.012;
-    const dy1 = deck - Math.min(0.06, deck * 0.4) - 0.008;
-    if (dy1 - dy0 >= 0.12) {
-      const n = Math.max(1, Math.round(w / 0.9));
-      for (const [x0, x1] of range(n).map((i) => [-w / 2 + (w * i) / n, -w / 2 + (w * (i + 1)) / n] as V2)) {
-        parts.push(span('drawers', [x0 + 0.008, x1 - 0.008], [dy0, dy1], [d / 2 - 0.02, d / 2 - 0.003], { bevel: 0.003, plan: false }));
-        const cx = (x0 + x1) / 2;
-        // Recessed finger pull.
-        parts.push(span('heri', [cx - Math.min(0.07, (x1 - x0) * 0.15), cx + Math.min(0.07, (x1 - x0) * 0.15)], [dy1 - 0.035, dy1 - 0.018], [d / 2 - 0.004, d / 2], { bevel: 0.004, plan: false }));
-      }
-    }
-    const area = matArea(w, d);
-    for (const m of tatamiLayout(area.x, area.z)) parts.push(...tatamiMat(m, deck, h));
-    return parts;
-  },
-  planDetail: ({ w, d }) => {
-    const area = matArea(w, d);
-    const strokes: PlanStroke[] = tatamiLayout(area.x, area.z).map((m) => rectPoly(m.x[0], m.z[0], m.x[1], m.z[1]));
-    strokes.push(line([-w / 2, d / 2 - KAMACHI], [w / 2, d / 2 - KAMACHI]));
-    return strokes;
-  },
-});
 
 // ---------------------------------------------------------------------------
 // Kotatsu
@@ -504,87 +358,6 @@ const chabudai = defineItem({
 // Shoji screen
 // ---------------------------------------------------------------------------
 
-function shojiPanel(x: V2, y: V2, zc: number, tz: number): Part[] {
-  const [x0, x1] = x;
-  const [y0, y1] = y;
-  const st = 0.03;
-  const zr: V2 = [zc - tz / 2, zc + tz / 2];
-  const koshiH = clamp((y1 - y0) * 0.12, 0.08, 0.24);
-  const o = { plan: false };
-  const py0 = y0 + 0.06 + koshiH;
-  const py1 = y1 - st;
-  const px0 = x0 + st;
-  const px1 = x1 - st;
-  const parts: Part[] = [
-    span('frame', [x0, x0 + st], y, zr, o),
-    span('frame', [x1 - st, x1], y, zr, o),
-    span('frame', [px0, px1], [y1 - st, y1], zr, o),
-    span('frame', [px0, px1], [y0, y0 + 0.03], zr, o),
-    span('koshi', [px0, px1], [y0 + 0.03, y0 + 0.03 + koshiH], [zc - 0.006, zc + 0.006], o),
-    span('frame', [px0, px1], [py0 - 0.03, py0], zr, o),
-    // Washi on the back face; the kumiko lattice shows in front of it.
-    span('paper', [px0, px1], [py0, py1], [zr[0] + 0.001, zr[0] + 0.003], o),
-  ];
-  const cols = Math.max(2, Math.round((px1 - px0) / 0.19));
-  const rows = Math.max(3, Math.round((py1 - py0) / 0.26));
-  const kz: V2 = [zr[0] + 0.003, zr[1] - 0.006];
-  for (const i of range(cols - 1)) {
-    const kx = px0 + ((i + 1) * (px1 - px0)) / cols;
-    parts.push(span('frame', [kx - 0.006, kx + 0.006], [py0, py1], kz, o));
-  }
-  for (const j of range(rows - 1)) {
-    const ky = py0 + ((j + 1) * (py1 - py0)) / rows;
-    parts.push(span('frame', [px0, px1], [ky - 0.006, ky + 0.006], kz, o));
-  }
-  // Recessed hand pull on the stile.
-  parts.push(span('koshi', [x1 - st + 0.008, x1 - 0.008], [y0 + (y1 - y0) * 0.45, y0 + (y1 - y0) * 0.45 + 0.07], [zr[1], zr[1] + 0.002], o));
-  return parts;
-}
-
-const shoji = defineItem({
-  id: 'shoji-screen',
-  name: 'Shoji sliding screen',
-  category: 'living',
-  type: 'decor',
-  group: 'Screens & dividers',
-  tags: ['shoji', 'screen', 'room divider', 'washi', 'paper', 'lattice', 'kumiko', 'japanese', 'sliding'],
-  defaultSize: { w: 1.8, d: 0.4, h: 1.75 },
-  minSize: { w: 1.0, d: 0.3, h: 1.2 },
-  maxSize: { w: 2.6, d: 0.6, h: 2.1 },
-  slots: [
-    matSlot('frame', 'Frame & lattice', 'hinoki'),
-    matSlot('paper', 'Shoji paper', 'shoji-washi'),
-    matSlot('koshi', 'Kick panels', 'sugi-cedar'),
-  ],
-  build: ({ w, d, h }) => {
-    const pw = 0.042;
-    const fz = Math.min(0.035, d / 2);
-    const feetH = 0.05;
-    const parts: Part[] = [
-      span('frame', [-w / 2 + pw, w / 2 - pw], [h - 0.045, h], [-fz, fz], { bevel: 0.003 }),
-      span('frame', [-w / 2 + pw, w / 2 - pw], [0.04, 0.08], [-fz, fz], { bevel: 0.003 }),
-    ];
-    for (const sx of [-1, 1]) {
-      const xo = sx * (w / 2 - pw / 2);
-      parts.push(span('frame', [xo - pw / 2, xo + pw / 2], [feetH, h], [-fz, fz], { bevel: 0.003 }));
-      const fx: V2 = sx < 0 ? [-w / 2, -w / 2 + 0.07] : [w / 2 - 0.07, w / 2];
-      parts.push(span('frame', fx, [0, feetH], [-d / 2, d / 2], { bevel: 0.012 }));
-    }
-    const ox0 = -w / 2 + pw;
-    const ox1 = w / 2 - pw;
-    const pwid = (ox1 - ox0) / 2 + 0.02;
-    const y: V2 = [0.08, h - 0.045];
-    parts.push(...shojiPanel([ox0, ox0 + pwid], y, 0.0125, 0.022));
-    parts.push(...shojiPanel([ox1 - pwid, ox1], y, -0.0125, 0.022));
-    return parts;
-  },
-  planDetail: ({ w }) => {
-    const ox0 = -w / 2 + 0.042;
-    const ox1 = w / 2 - 0.042;
-    const pwid = (ox1 - ox0) / 2 + 0.02;
-    return [line([ox0, 0.0125], [ox0 + pwid, 0.0125]), line([ox1 - pwid, -0.0125], [ox1, -0.0125])];
-  },
-});
 
 // ---------------------------------------------------------------------------
 // Futon
@@ -644,161 +417,11 @@ const futon = defineItem({
 // Andon lamp
 // ---------------------------------------------------------------------------
 
-const andon = defineItem({
-  id: 'andon-lamp',
-  name: 'Andon paper floor lamp',
-  category: 'lighting',
-  type: 'lighting',
-  group: 'Floor lamps',
-  tags: ['andon', 'paper lamp', 'floor lamp', 'washi', 'lantern', 'japanese', 'lattice'],
-  defaultSize: { w: 0.3, d: 0.3, h: 0.8 },
-  minSize: { w: 0.2, d: 0.2, h: 0.4 },
-  maxSize: { w: 0.5, d: 0.5, h: 1.2 },
-  slots: [
-    matSlot('frame', 'Frame', 'urushi-black'),
-    matSlot('light', 'Washi shade', 'andon-glow'),
-  ],
-  light: { color: '#ffd29a', intensity: 0.8, distance: 3, y: 0.42 },
-  build: ({ w, d, h }) => {
-    const pt = 0.022;
-    const px = w / 2 - 0.012 - pt / 2;
-    const pz = d / 2 - 0.012 - pt / 2;
-    const yBase = 0.045;
-    const yT = h - Math.min(0.07, h * 0.1);
-    const yP0 = yBase + Math.min(0.05, h * 0.06);
-    const yP1 = yT - 0.02;
-    const o = { plan: false };
-    const parts: Part[] = [span('frame', [-w / 2, w / 2], [0.018, yBase], [-d / 2, d / 2], { bevel: 0.006 })];
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        parts.push(span('frame', [sx * (w / 2 - 0.04) - 0.02, sx * (w / 2 - 0.04) + 0.02], [0, 0.018], [sz * (d / 2 - 0.04) - 0.02, sz * (d / 2 - 0.04) + 0.02], o));
-        parts.push(span('frame', [sx * px - pt / 2, sx * px + pt / 2], [yBase, yT], [sz * pz - pt / 2, sz * pz + pt / 2], o));
-      }
-    }
-    const nh = Math.max(1, Math.round((yP1 - yP0) / 0.17) - 1);
-    const bars = spaced(nh + 2, yP0, yP1).slice(1, -1);
-    for (const s of [-1, 1]) {
-      // Rails top and bottom on all four faces.
-      for (const [ya, yb] of [[yT - 0.02, yT], [yP0 - 0.018, yP0]] as V2[]) {
-        parts.push(span('frame', [-px, px], [ya, yb], [s * pz - 0.009, s * pz + 0.009], o));
-        parts.push(span('frame', [s * px - 0.009, s * px + 0.009], [ya, yb], [-pz, pz], o));
-      }
-      // Washi panels (the glowing shade).
-      parts.push(span('light', [-px + pt / 2, px - pt / 2], [yP0, yP1], [s * pz - 0.0015, s * pz + 0.0015], o));
-      parts.push(span('light', [s * px - 0.0015, s * px + 0.0015], [yP0, yP1], [-pz + pt / 2, pz - pt / 2], o));
-      // Kumiko bars on the outside of the paper.
-      const zo: V2 = s > 0 ? [pz + 0.0015, pz + 0.008] : [-pz - 0.008, -pz - 0.0015];
-      const xo: V2 = s > 0 ? [px + 0.0015, px + 0.008] : [-px - 0.008, -px - 0.0015];
-      for (const y of bars) {
-        parts.push(span('frame', [-px, px], [y - 0.004, y + 0.004], zo, o));
-        parts.push(span('frame', xo, [y - 0.004, y + 0.004], [-pz, pz], o));
-      }
-      parts.push(span('frame', [-0.004, 0.004], [yP0, yP1], zo, o));
-      parts.push(span('frame', xo, [yP0, yP1], [-0.004, 0.004], o));
-    }
-    // Carrying handle across the top.
-    const hx = w * 0.2;
-    parts.push(span('frame', [-px, px], [yT, yT + 0.016], [-0.01, 0.01], o));
-    for (const sx of [-1, 1]) parts.push(span('frame', [sx * hx - 0.007, sx * hx + 0.007], [yT + 0.016, h - 0.014], [-0.007, 0.007], o));
-    parts.push(span('frame', [-hx - 0.012, hx + 0.012], [h - 0.014, h], [-0.009, 0.009], { bevel: 0.004, plan: false }));
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2 + 0.03, -d / 2 + 0.03], [w / 2 - 0.03, d / 2 - 0.03]), line([-w / 2 + 0.03, d / 2 - 0.03], [w / 2 - 0.03, -d / 2 + 0.03])],
-});
 
 // ---------------------------------------------------------------------------
 // Kakejiku hanging scroll
 // ---------------------------------------------------------------------------
 
-const scroll = defineItem({
-  id: 'tokonoma-scroll',
-  name: 'Hanging scroll (kakejiku)',
-  category: 'decor',
-  type: 'decor',
-  group: 'Wall art',
-  tags: ['kakejiku', 'scroll', 'tokonoma', 'sumi-e', 'ink painting', 'bamboo', 'wall hanging', 'japanese'],
-  mount: 'wall',
-  defaultElevation: 0.45,
-  defaultSize: { w: 0.5, d: 0.04, h: 1.7 },
-  minSize: { w: 0.3, d: 0.025, h: 0.8 },
-  maxSize: { w: 0.8, d: 0.08, h: 2.2 },
-  slots: [
-    matSlot('mount', 'Silk mounting', 'kakejiku-silk'),
-    matSlot('paper', 'Painting paper', 'shoji-washi'),
-    matSlot('ink', 'Sumi ink', 'sumi-ink'),
-    matSlot('roller', 'Rods & trims', 'urushi-black'),
-  ],
-  build: ({ w, d, h }) => {
-    const zb = -d / 2;
-    const mw = w * 0.82;
-    const cordH = Math.min(0.12, h * 0.08);
-    const yRod = h - cordH;
-    const yRoll = 0.016;
-    const Lm = yRod - yRoll;
-    const py1 = yRod - Lm * 0.24;
-    const py0 = yRoll + Lm * 0.13;
-    const pw = mw * 0.72;
-    const zp = zb + 0.008;
-    const o = { plan: false };
-    const parts: Part[] = [
-      // Mounting silk and the painting.
-      span('mount', [-mw / 2, mw / 2], [yRoll, yRod], [zb + 0.002, zb + 0.006]),
-      span('paper', [-pw / 2, pw / 2], [py0, py1], [zb + 0.006, zp], o),
-      // Ichimonji bands above and below the painting.
-      span('roller', [-pw / 2, pw / 2], [py1, py1 + Math.min(0.025, Lm * 0.02)], [zb + 0.006, zb + 0.0075], o),
-      span('roller', [-pw / 2, pw / 2], [py0 - Math.min(0.018, Lm * 0.014), py0], [zb + 0.006, zb + 0.0075], o),
-      // Top rod (hasso) and the hanging cord.
-      rodX('roller', -mw / 2 - 0.004, mw / 2 + 0.004, yRod, zb + 0.009, 0.008, o),
-      rod('roller', [-mw * 0.3, yRod, zb + 0.009], [0, h - 0.014, zb + 0.009], 0.0018, o),
-      rod('roller', [mw * 0.3, yRod, zb + 0.009], [0, h - 0.014, zb + 0.009], 0.0018, o),
-      torus('roller', [0, h - 0.009, zb + 0.009], 0.006, 0.0018, o),
-      // Bottom roller (jiku) with its end knobs (jikusaki).
-      rodX('roller', -mw / 2, mw / 2, yRoll, zb + 0.014, 0.011, o),
-      rodX('roller', -w / 2, -mw / 2, yRoll, zb + 0.014, 0.014, o),
-      rodX('roller', mw / 2, w / 2, yRoll, zb + 0.014, 0.014, o),
-    ];
-    // Futai: the two strips hanging from the top rod.
-    for (const sx of [-1, 1]) {
-      parts.push(span('roller', [sx * mw * 0.2 - mw * 0.03, sx * mw * 0.2 + mw * 0.03], [yRod - Lm * 0.2, yRod], [zb + 0.0065, zb + 0.008], o));
-    }
-    // Sumi-e bamboo: jointed culms with nodes and sprays of leaves.
-    const ph = py1 - py0;
-    const nNodes = Math.max(3, Math.round(ph / 0.13));
-    const culms: [number, number, number][] = [
-      [-pw * 0.16, pw * 0.05, pw * 0.022],
-      [pw * 0.12, -pw * 0.03, pw * 0.016],
-    ];
-    const rand = rng(23);
-    for (const [ci, [cx, lean, r]] of culms.entries()) {
-      const top = py1 - ph * (ci === 0 ? 0.06 : 0.22);
-      const at = (f: number): V3 => [cx + lean * f, lerp(py0 + 0.01, top, f), zp + 0.002];
-      for (const k of range(nNodes)) {
-        const a = at(k / nNodes);
-        const b = at((k + 1) / nNodes);
-        parts.push(rod('ink', [a[0], a[1] + 0.004, a[2]], [b[0], b[1] - 0.004, b[2]], r * 0.5, o));
-        if (k > 0) parts.push(span('ink', [a[0] - r * 0.7, a[0] + r * 0.7], [a[1] - 0.003, a[1] + 0.003], [zp, zp + 0.003], o));
-      }
-      // Leaf sprays at a few of the upper nodes.
-      for (const k of [nNodes - 1, nNodes - 3, Math.max(1, nNodes - 5)]) {
-        const p = at(k / nNodes);
-        const len = Math.min(0.1, pw * 0.3);
-        for (const j of range(3)) {
-          const side = (j + ci + k) % 2 === 0 ? 1 : -1;
-          const az = side > 0 ? 0 : Math.PI;
-          const tilt = 1.5 + rand() * 0.7;
-          parts.push(leaf('ink', p, len * (0.7 + rand() * 0.3), len * 0.17, az, tilt, { thick: 0.002 }));
-        }
-      }
-    }
-    // Calligraphy inscription and seal down the right-hand margin.
-    for (const k of range(5)) {
-      const y = py1 - 0.03 - k * 0.022;
-      parts.push(span('ink', [pw * 0.38 - 0.006, pw * 0.38 + 0.006], [y - 0.007, y + 0.007], [zp, zp + 0.0015], o));
-    }
-    parts.push(span('roller', [pw * 0.38 - 0.009, pw * 0.38 + 0.009], [py1 - 0.17, py1 - 0.152], [zp, zp + 0.0015], o));
-    return parts;
-  },
-});
 
 // ---------------------------------------------------------------------------
 // Bonsai and ikebana
@@ -1026,107 +649,6 @@ const manekiNeko = defineItem({
 // Kamidana
 // ---------------------------------------------------------------------------
 
-const kamidana = defineItem({
-  id: 'kamidana-shelf',
-  name: 'Kamidana shrine shelf',
-  category: 'decor',
-  type: 'decor',
-  group: 'Ornaments',
-  tags: ['kamidana', 'shrine', 'shinto', 'altar', 'shelf', 'shimenawa', 'sakaki', 'japanese'],
-  mount: 'wall',
-  defaultElevation: 1.75,
-  defaultSize: { w: 0.9, d: 0.38, h: 0.62 },
-  minSize: { w: 0.5, d: 0.25, h: 0.4 },
-  maxSize: { w: 1.5, d: 0.5, h: 0.9 },
-  slots: [
-    matSlot('wood', 'Hinoki', 'hinoki'),
-    matSlot('ceramic', 'Vessels & shide', 'maneki-porcelain'),
-    matSlot('rope', 'Shimenawa rope', 'shimenawa-straw'),
-    matSlot('leaves', 'Sakaki', 'sakaki-leaf'),
-  ],
-  build: ({ w, d, h }) => {
-    const by = Math.min(0.1, h * 0.18);
-    const ys = by + 0.028;
-    const H = h - ys;
-    const o = { plan: false };
-    const parts: Part[] = [
-      span('wood', [-w / 2, w / 2], [by, ys], [-d / 2, d / 2], { bevel: 0.004 }),
-      span('wood', [-w / 2 + 0.06, w / 2 - 0.06], [0, by], [-d / 2, -d / 2 + 0.02], o),
-    ];
-    for (const sx of [-1, 1]) {
-      parts.push(sidePlate('wood', [[-d / 2 + 0.02, by], [-d / 2 + 0.02, 0.01], [d / 2 - 0.1, by]], sx * (w / 2 - 0.12) - 0.01, 0.02));
-    }
-    // The miniature shrine (miya).
-    const sw = Math.min(w * 0.5, 0.6);
-    const sdp = clamp(d * 0.45, 0.1, 0.2);
-    const zB0 = -d / 2 + 0.035;
-    const zB1 = zB0 + sdp;
-    const yb0 = ys + H * 0.09;
-    const yE = ys + H * 0.56;
-    parts.push(span('wood', [-sw / 2, sw / 2], [ys, ys + H * 0.05], [zB0 - 0.025, zB1 + 0.02], { bevel: 0.003, plan: false }));
-    parts.push(span('wood', [-sw * 0.42, sw * 0.42], [ys + H * 0.05, yb0], [zB0 - 0.015, zB1 + 0.01], { bevel: 0.003, plan: false }));
-    parts.push(span('wood', [-sw * 0.32, sw * 0.32], [yb0, yE], [zB0, zB1], o));
-    for (const sx of [-1, 1]) {
-      // Double doors and the front pillars.
-      parts.push(span('wood', sx < 0 ? [-sw * 0.16, -0.002] : [0.002, sw * 0.16], [yb0 + H * 0.05, yE - H * 0.06], [zB1, zB1 + 0.005], o));
-      parts.push(vcyl('wood', sx * sw * 0.3, zB1 + 0.008, yb0, yE, 0.008, o));
-    }
-    // Gabled roof with ridge, katsuogi logs and crossed chigi finials.
-    const yR = ys + H * 0.84;
-    const zf = zB1 + 0.035;
-    const zbk = zB0 - 0.03;
-    const zm = (zf + zbk) / 2;
-    const run = zf - zm;
-    const rise = yR - yE;
-    const alpha = Math.atan2(rise, run);
-    const Lr = Math.hypot(run, rise);
-    const rw = sw * 0.84;
-    parts.push(box('wood', [0, (yE + yR) / 2, (zf + zm) / 2], [rw, 0.012, Lr], { rotation: [alpha, 0, 0], plan: false }));
-    parts.push(box('wood', [0, (yE + yR) / 2, (zbk + zm) / 2], [rw, 0.012, Lr], { rotation: [-alpha, 0, 0], plan: false }));
-    parts.push(rodX('wood', -rw / 2, rw / 2, yR + 0.004, zm, 0.009, o));
-    const nk = rw > 0.3 ? 5 : 3;
-    for (const x of spaced(nk, -rw * 0.32, rw * 0.32)) parts.push(rodZ('wood', x, yR + 0.016, zm - 0.022, zm + 0.022, 0.007, o));
-    for (const sx of [-1, 1]) {
-      const x = sx * (rw / 2 - 0.006);
-      parts.push(rod('wood', [x, yR - H * 0.05, zm + run * 0.35], [x, h - 0.006, zm - run * 0.22], 0.004, o));
-      parts.push(rod('wood', [x, yR - H * 0.05, zm - run * 0.35], [x, h - 0.006, zm + run * 0.22], 0.004, o));
-    }
-    // Sakaki branches in white vases either side.
-    const vh = Math.min(0.08, H * 0.25);
-    const vx = Math.min(sw / 2 + 0.07, w / 2 - 0.07);
-    for (const [i, sx] of [-1, 1].entries()) {
-      const x = sx * vx;
-      const z = zB1 - 0.03;
-      parts.push(pot('ceramic', [x, ys, z], 0.024, vh, 'urn', o));
-      parts.push(...foliage('leaves', [x, ys + vh * 0.9, z], Math.min(0.06, w / 2 - vx - 0.005), Math.min(0.18, H * 0.5), 7, 11 + i, { leafWid: 0.022, spread: 0.45 }));
-    }
-    // Offerings on a sanbo stand: rice, salt and water, flanked by sake bottles.
-    const zS = Math.min(zB1 + 0.08, d / 2 - 0.06);
-    parts.push(span('wood', [-0.045, 0.045], [ys, ys + 0.035], [zS - 0.04, zS + 0.04], o));
-    parts.push(span('wood', [-0.06, 0.06], [ys + 0.035, ys + 0.045], [zS - 0.05, zS + 0.05], { bevel: 0.002, plan: false }));
-    for (const x of [-0.032, 0, 0.032]) parts.push(cyl('ceramic', [x, ys + 0.052, zS], 0.014, 0.014, { rTop: 0.016, plan: false }));
-    for (const sx of [-1, 1]) {
-      parts.push(lathe('ceramic', [sx * 0.1, ys, zS], [[0, 0], [0.014, 0], [0.018, 0.03], [0.01, 0.055], [0.005, 0.065], [0.006, 0.072], [0, 0.072]], { segments: 16, plan: false }));
-    }
-    // Shimenawa rope sagging along the shelf front, with zigzag shide papers.
-    const sag = Math.min(0.05, by * 0.6);
-    const ropeY = (x: number) => ys - 0.005 - sag * (1 - ((2 * x) / (w - 0.08)) ** 2);
-    const rz = d / 2 - 0.002;
-    parts.push(...rodPath('rope', spaced(9, -w / 2 + 0.04, w / 2 - 0.04).map((x) => [x, ropeY(x), rz] as V3), 0.012));
-    const sh = Math.min(0.03, (ys - sag - 0.02) / 4.4);
-    for (const x of cells(4, -w / 2 + 0.04, w / 2 - 0.04)) {
-      const top = ropeY(x) - 0.008;
-      // One folded strip stepping left and right as it falls.
-      const off = (k: number) => x + (k % 2 === 0 ? -0.006 : 0.006);
-      const right: V2[] = range(4).flatMap((k) => [[off(k) + 0.011, top - k * sh], [off(k) + 0.011, top - (k + 1) * sh]] as V2[]);
-      const left: V2[] = range(4)
-        .reverse()
-        .flatMap((k) => [[off(k) - 0.011, top - (k + 1) * sh], [off(k) - 0.011, top - k * sh]] as V2[]);
-      parts.push(facePlate('ceramic', [...right, ...left], rz - 0.001, 0.003));
-    }
-    return parts;
-  },
-});
 
 // ---------------------------------------------------------------------------
 // Getabako
@@ -1450,17 +972,13 @@ const teaSet = defineItem({
   },
 });
 
-// ---------------------------------------------------------------------------
-// Pack
-// ---------------------------------------------------------------------------
-
 export default definePack({
   name: 'Japanese home',
   version: '1.0.0',
   author: 'Neest team',
-  description: 'A washitsu and its everyday things: tatami, kotatsu, shoji, futon, andon, kamidana, bonsai, ikebana, a hinoki ofuro and tea.',
+  description: 'Everyday things of a Japanese apartment: kotatsu, floor seating, chabudai, futon, bonsai, ikebana, getabako, noren, a hinoki ofuro and tea.',
   license: 'CC0 (made for Neest)',
-  items: [tatamiPlatform, kotatsu, zabuton, zaisu, chabudai, shoji, futon, andon, scroll, bonsai, ikebana, manekiNeko, kamidana, getabako, noren, ofuro, bathStool, teaSet],
+  items: [ kotatsu, zabuton, zaisu, chabudai, futon, bonsai, ikebana, manekiNeko, getabako, noren, ofuro, bathStool, teaSet],
   patterns: [
     {
       id: 'igusa',
