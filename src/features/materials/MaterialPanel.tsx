@@ -3,12 +3,12 @@ import { X } from 'lucide-react';
 import type { Project } from '@/domain/model/schema';
 import { getTargetMaterialId, type MaterialTarget } from '@/domain/commands/entities';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
-import { assetSlotDefault, getAsset } from '@/data/assets/registry';
+import { assetSlotDefault, getAsset, resolveMaterial } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { useDialogStore } from '@/state/uiStores';
 import { IconButton } from '@/components/ui';
-import { FinishPicker } from './MaterialUI';
+import { FinishPicker, MaterialEditor } from './MaterialUI';
 
 /** Name of the thing a finish slot belongs to ("Loft", "Washing machine", "Wall"), or null when it is gone. */
 function targetOwner(p: Project, t: MaterialTarget): string | null {
@@ -79,7 +79,14 @@ export function MaterialPanel() {
         </IconButton>
       </header>
       <div className="material-panel-body">
-        <FinishPicker key={req.key} target={req.target} currentId={currentId} variant="panel" onClose={close} />
+        {/* Top: pick a finish. Bottom: edit the current one. Each part scrolls on its own. */}
+        <div className="material-panel-pick">
+          <FinishPicker key={req.key} target={req.target} currentId={currentId} variant="panel" onClose={close} />
+        </div>
+        <section className="material-panel-edit" aria-label="Edit finish">
+          <h3 className="material-panel-edit-title">Edit finish</h3>
+          <MaterialEditor material={resolveMaterial(project, currentId)} compact />
+        </section>
       </div>
     </aside>
   );

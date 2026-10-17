@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Copy, Link2, Link2Off, Pencil, Search, Star, Trash2 } from 'lucide-react';
+import { Copy, Link2, Link2Off, Search, Star, Trash2 } from 'lucide-react';
 import type { MaterialCategory, MaterialDefinition, PhotoTextureRef, Project } from '@/domain/model/schema';
 import {
   assignMaterial,
@@ -244,9 +244,11 @@ export function FinishPicker({
   };
   const actions = (
     <div className="mat-picker-actions">
-      <Button size="sm" variant="ghost" onClick={editCurrent} title="Open this material in the material editor">
-        {panel && <Pencil size={13} />} Edit “{current.name}”
-      </Button>
+      {!panel && (
+        <Button size="sm" variant="ghost" onClick={editCurrent} title="Open this material in the material editor">
+          Edit “{current.name}”
+        </Button>
+      )}
       {!current.overrideOf && (
         <Button size="sm" variant="ghost" onClick={makeOverride} title="Give this surface its own copy so edits don't affect other surfaces">
           <Link2Off size={13} /> Unlink
@@ -399,7 +401,11 @@ export function MaterialLibrary() {
   );
 }
 
-export function MaterialEditor({ material }: { material: MaterialDefinition }) {
+/**
+ * Material editor. `compact` is the finish panel's version: no large preview (the panel's
+ * current-finish card shows the swatch) and no "Apply to selection" (picking applies there).
+ */
+export function MaterialEditor({ material, compact = false }: { material: MaterialDefinition; compact?: boolean }) {
   const project = useProjectStore((s) => s.project!);
   const favourites = usePrefsStore((s) => s.favouriteMaterials);
   const usage = useMemo(() => materialUsage(project, material.id), [project, material.id]);
@@ -443,10 +449,12 @@ export function MaterialEditor({ material }: { material: MaterialDefinition }) {
     useProjectStore.getState().execute('Apply material', (d) => assignMaterial(d, targets, id));
   };
   return (
-    <div className="mat-editor" data-testid="material-editor">
-      <div className="mat-preview" style={{ background: swatchBackground(material) }}>
-        <span className="mat-preview-sheen" />
-      </div>
+    <div className={`mat-editor${compact ? ' compact' : ''}`} data-testid="material-editor">
+      {!compact && (
+        <div className="mat-preview" style={{ background: swatchBackground(material) }}>
+          <span className="mat-preview-sheen" />
+        </div>
+      )}
       <div className="mat-editor-head">
         <TextField label="Name" value={material.name} onCommit={(name) => commit({ name })} />
         <div className="mat-editor-tools">
@@ -471,7 +479,7 @@ export function MaterialEditor({ material }: { material: MaterialDefinition }) {
           : `Linked to ${usage.length} surface${usage.length > 1 ? 's' : ''} — edits update all of them.`}
         {material.overrideOf && ` Unlinked copy of “${resolveMaterial(project, material.overrideOf).name}”.`}
       </p>
-      {selection.length > 0 && (
+      {!compact && selection.length > 0 && (
         <Button size="sm" onClick={applyToSelection}>
           Apply to selection
         </Button>
