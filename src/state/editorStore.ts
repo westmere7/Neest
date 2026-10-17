@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
+import type { OpeningDesign, OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
 
 export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend';
 /** Which line of a new wall follows the drawn points: its centreline or one of its faces. */
@@ -44,6 +44,9 @@ export interface EditorState {
   wallPreset: string | null;
   wallReference: WallReference;
   openingKind: OpeningKind;
+  /** Designs for newly inserted doors / windows (null = the kind's default look). */
+  doorDesign: OpeningDesign | null;
+  windowDesign: OpeningDesign | null;
   placeAssetId: string | null;
   placeRotation: number;
   selection: SelItem[];
@@ -86,6 +89,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   wallPreset: null,
   wallReference: 'center',
   openingKind: 'door-single',
+  doorDesign: null,
+  windowDesign: null,
   placeAssetId: null,
   placeRotation: 0,
   selection: [],

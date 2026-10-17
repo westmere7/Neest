@@ -96,6 +96,7 @@ const DEFS: Def[] = [
   // Glass
   { id: 'glass-clear', name: 'Clear glass', category: 'glass', color: '#dcebf0', roughness: 0.05, opacity: 0.22 },
   { id: 'glass-frosted', name: 'Frosted glass', category: 'glass', color: '#e8eef0', roughness: 0.45, opacity: 0.65 },
+  { id: 'glass-reeded', name: 'Reeded glass', category: 'glass', color: '#e2ecef', roughness: 0.3, opacity: 0.5 },
   { id: 'glass-block', name: 'Glass block', category: 'glass', color: '#cfe2e8', roughness: 0.15, opacity: 0.75, texture: tex('tile-square', 0.2, 0.9) },
   { id: 'glass-tinted', name: 'Smoked glass', category: 'glass', color: '#7d8a8c', roughness: 0.08, opacity: 0.45 },
   { id: 'glass-mirror', name: 'Mirror', category: 'glass', color: '#dfe6e9', roughness: 0.02, metalness: 1 },
@@ -135,6 +136,7 @@ const DEFS: Def[] = [
   { id: 'solid-white', name: 'White', category: 'solid', color: '#f4f4f2', roughness: 0.6 },
   { id: 'solid-black', name: 'Black', category: 'solid', color: '#1c1c1e', roughness: 0.6 },
   { id: 'solid-light-grey', name: 'Light grey', category: 'solid', color: '#d9d9d6', roughness: 0.6 },
+  { id: 'plastic-upvc-white', name: 'White uPVC', category: 'solid', color: '#f3f3f0', roughness: 0.32 },
   { id: 'solid-mid-grey', name: 'Mid grey', category: 'solid', color: '#8c8c88', roughness: 0.6 },
   { id: 'solid-red', name: 'Signal red', category: 'solid', color: '#c2453b', roughness: 0.5 },
   { id: 'solid-yellow', name: 'Sun yellow', category: 'solid', color: '#e8b84a', roughness: 0.5 },

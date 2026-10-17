@@ -7,7 +7,8 @@ import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
 import { pointAt } from '@/domain/geometry/wallPath';
 import { setWallAngle, setWallLength, splitWallAt, updateWalls, clampOpenings } from '@/domain/commands/walls';
-import { assignMaterial, normalizeRotation, suggestedFloor, updateObjects, updateOpening, updateRoom } from '@/domain/commands/entities';
+import { assignMaterial, normalizeRotation, setOpeningDesign, suggestedFloor, updateObjects, updateOpening, updateRoom } from '@/domain/commands/entities';
+import { defaultDesign, designFitsKind, OPENING_DESIGNS_BY_ID, resolveOpeningDesign } from '@/domain/model/openingDesigns';
 import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
 import { getAsset, objectSlotMaterialId } from '@/data/assets/registry';
 import { ASSET_CATEGORY_LABELS } from '@/data/assets/catalog';
@@ -19,6 +20,7 @@ import { deleteSelection, duplicateSelection, flipOpening, reverseWall, rotateSe
 import { DrawPresetSelect, WallConstruction, WallPresetPicker, WallTrims } from './WallExtras';
 import { WallMultiEdit } from './WallMultiEdit';
 import { OpeningExtras } from './OpeningExtras';
+import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
 
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
@@ -324,6 +326,8 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
           onChange={(kind) => {
             const p = OPENING_PRESETS[kind];
             const switchingFamily = isWindowKind(kind) !== win;
+            // Keep the design when it suits the new kind; otherwise fall back to the kind's default look.
+            const keep = o.design && designFitsKind(o.design, kind) ? o.design : undefined;
             upd('Change opening type', {
               kind,
               ...(switchingFamily
@@ -334,7 +338,8 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
                     frameMaterialId: isWindowKind(kind) ? DEFAULT_MATERIALS.windowFrame : DEFAULT_MATERIALS.doorFrame,
                   }
                 : {}),
-              style: p.style,
+              style: keep ? OPENING_DESIGNS_BY_ID[keep].style : p.style,
+              design: keep,
             });
           }}
           options={OPENING_KINDS}
@@ -392,19 +397,16 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
           <Slider label="Shown open in 3D" value={o.openAngle} min={0} max={90} step={5} format={(v) => `${v}°`} onCommit={(v) => upd('Set window opening', { openAngle: v })} />
         </Section>
       )}
-      <Section title="Finishes">
-        {!win && !isPassageKind(o.kind) && (
-          <Select
-            label="Style"
-            value={o.style}
-            onChange={(style) => upd('Set door style', { style })}
-            options={[
-              { value: 'flush', label: 'Flush' },
-              { value: 'panel', label: 'Panelled' },
-              { value: 'glazed', label: 'Glazed' },
-            ]}
+      {!isPassageKind(o.kind) && (
+        <Section title="Design">
+          <OpeningDesignGrid
+            kind={o.kind}
+            value={resolveOpeningDesign(o)}
+            onPick={(design) => exec(win ? 'Set window design' : 'Set door design', (d) => setOpeningDesign(d, [openingId], design))}
           />
-        )}
+        </Section>
+      )}
+      <Section title="Finishes">
         <MaterialSlotRow label="Frame" target={{ kind: 'opening-frame', openingId }} materialId={o.frameMaterialId} />
         {!isPassageKind(o.kind) && (
           <MaterialSlotRow label={win ? 'Glazing' : 'Door leaf'} target={{ kind: 'opening-panel', openingId }} materialId={o.panelMaterialId} />
@@ -665,23 +667,35 @@ function WallToolOptions({ project }: { project: Project }) {
 
 function OpeningToolOptions() {
   const kind = useEditorStore((s) => s.openingKind);
+  const doorDesign = useEditorStore((s) => s.doorDesign);
+  const windowDesign = useEditorStore((s) => s.windowDesign);
+  const win = isWindowKind(kind);
+  const chosen = win ? windowDesign : doorDesign;
+  const design = chosen && designFitsKind(chosen, kind) ? chosen : defaultDesign(kind, OPENING_PRESETS[kind].style);
   return (
-    <Section title="Insert">
-      <div className="opening-kinds">
-        {Object.values(OPENING_PRESETS).map((p) => (
-          <button
-            key={p.kind}
-            type="button"
-            className={`chip${kind === p.kind ? ' on' : ''}`}
-            onClick={() => useEditorStore.getState().set({ openingKind: p.kind })}
-            aria-pressed={kind === p.kind}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-      <p className="field-hint">Hover a wall and click. Doors swing toward the side of the wall you point at; flip later in the inspector.</p>
-    </Section>
+    <>
+      <Section title="Insert">
+        <div className="opening-kinds">
+          {Object.values(OPENING_PRESETS).map((p) => (
+            <button
+              key={p.kind}
+              type="button"
+              className={`chip${kind === p.kind ? ' on' : ''}`}
+              onClick={() => useEditorStore.getState().set({ openingKind: p.kind })}
+              aria-pressed={kind === p.kind}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <p className="field-hint">Hover a wall and click. Doors swing toward the side of the wall you point at; flip later in the inspector.</p>
+      </Section>
+      {!isPassageKind(kind) && (
+        <Section title={win ? 'Window design' : 'Door design'}>
+          <OpeningDesignGrid kind={kind} value={design} onPick={(d) => useEditorStore.getState().set(win ? { windowDesign: d } : { doorDesign: d })} />
+        </Section>
+      )}
+    </>
   );
 }
 

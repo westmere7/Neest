@@ -1,6 +1,19 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Opening, OpeningKind } from '@/domain/model/schema';
 import { isPassageKind, isWindowKind } from '@/domain/model/schema';
+import {
+  ASYM_VENT_SHARE,
+  doorLeafLayout,
+  LEAF_GROOVE,
+  LEAF_RECESS,
+  leafCells,
+  REED_PITCH,
+  resolveOpeningDesign,
+  sashGlazing,
+  topLightHeight,
+  windowSpec,
+} from '@/domain/model/openingDesigns';
 import type { OpeningSpan, WallGeometry } from '@/domain/geometry/walls';
 import { pointAt } from '@/domain/geometry/wallPath';
 import { angleOf } from '@/domain/geometry/vec';
@@ -101,6 +114,84 @@ function arcBand(
     const len = Math.hypot(x1 - x0, y1 - y0) + band * Math.abs(dth);
     out.add(boxR(len, band, depth, (x0 + x1) / 2, (y0 + y1) / 2, z, [0, 0, Math.atan2(y1 - y0, x1 - x0)], mat, shadows));
   }
+}
+
+// ───────────────────────── Design geometry (cached, never dispose) ─────────────────────────
+
+const designGeoCache = new Map<string, THREE.BufferGeometry>();
+
+function cachedGeo(key: string, make: () => THREE.BufferGeometry): THREE.BufferGeometry {
+  const hit = designGeoCache.get(key);
+  if (hit) return hit;
+  const geo = make();
+  geo.computeBoundingBox();
+  geo.computeBoundingSphere();
+  geo.userData.cached = true;
+  if (designGeoCache.size > 600) designGeoCache.clear();
+  designGeoCache.set(key, geo);
+  return geo;
+}
+
+/**
+ * Fluted (reeded) surface `w` × `h` centred on the origin: vertical half-round reeds about `pitch`
+ * apart, rising from z = 0 to z = `depth` and facing +z. Used for reeded timber and ribbed glass.
+ */
+export function flutedGeometry(w: number, h: number, pitch: number, depth: number): THREE.BufferGeometry {
+  return cachedGeo(`flute|${r4(w)}|${r4(h)}|${r4(pitch)}|${r4(depth)}`, () => {
+    const n = Math.max(1, Math.round(w / pitch));
+    const p = w / n;
+    const k = 6;
+    const pos: number[] = [];
+    const nrm: number[] = [];
+    const uv: number[] = [];
+    const idx: number[] = [];
+    for (let r = 0; r < n; r++) {
+      const base = pos.length / 3;
+      for (let i = 0; i <= k; i++) {
+        const th = (Math.PI * i) / k;
+        const x = -w / 2 + p * (r + (1 - Math.cos(th)) / 2);
+        const z = depth * Math.sin(th);
+        const nx = -depth * Math.cos(th);
+        const nz = (p / 2) * Math.sin(th) + 1e-4;
+        const l = Math.hypot(nx, nz);
+        for (const y of [-h / 2, h / 2]) {
+          pos.push(x, y, z);
+          nrm.push(nx / l, 0, nz / l);
+          uv.push(x + w / 2, y + h / 2);
+        }
+      }
+      for (let i = 0; i < k; i++) {
+        const a = base + i * 2;
+        idx.push(a, a + 2, a + 3, a, a + 3, a + 1);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx);
+    return geo;
+  });
+}
+
+/** Angled louvre slats filling a bay `w` × `h` (centred on the origin), no deeper than `lt`. */
+function louvreGeometry(w: number, h: number, lt: number): THREE.BufferGeometry {
+  return cachedGeo(`louvre|${r4(w)}|${r4(h)}|${r4(lt)}`, () => {
+    const a = 0.6;
+    const th = 0.008;
+    const sh = clamp((lt - 0.003 - th * Math.cos(a)) / Math.sin(a), 0.02, 0.055);
+    const n = Math.max(1, Math.round(h / (sh * Math.cos(a) * 0.9)));
+    const parts: THREE.BufferGeometry[] = [];
+    for (let i = 0; i < n; i++) {
+      const g = partGeometry({ shape: 'box', size: [w, sh, th], position: [0, 0, 0], slot: '' }).clone();
+      g.rotateX(a);
+      g.translate(0, -h / 2 + ((i + 0.5) * h) / n, 0);
+      parts.push(g);
+    }
+    const merged = parts.length === 1 ? parts[0] : mergeGeometries(parts, false);
+    if (merged !== parts[0]) for (const g of parts) g.dispose();
+    return merged;
+  });
 }
 
 // ───────────────────────── Opening outline ─────────────────────────
@@ -279,13 +370,17 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
   const panelMat = ctx.registry.get(ctx.project, opening.panelMaterialId);
   const glassMat = ctx.registry.get(ctx.project, win ? opening.panelMaterialId : 'glass-clear');
   const metalMat = ctx.registry.get(ctx.project, 'metal-brushed-steel');
+  const frostedMat = ctx.registry.get(ctx.project, 'glass-frosted');
+  const reededMat = ctx.registry.get(ctx.project, 'glass-reeded');
+  const design = resolveOpeningDesign(opening);
+  const spec = windowSpec(win ? design : null);
   const w = span.s1 - span.s0;
   const t = g.h * 2;
   const face = t / 2;
   const sill = span.sill;
   const head = span.head;
   const H = head - sill;
-  const f = win ? 0.06 : 0.05;
+  const f = win ? spec.frame : 0.05;
   const casingDepth = t + (win ? 0.0 : 0.02);
   const shape = openingShape(kind, w, sill, head);
   const swing = opening.swingSide === 'left' ? -1 : 1; // local z sign of the swing side
@@ -295,8 +390,6 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
   const innerW = w - 2 * f;
   const innerH = H - f - (win ? f : 0);
   const bottom = sill + (win ? f : 0);
-  const glazed = opening.style === 'glazed';
-  const panelled = opening.style === 'panel';
   const casing = !!opening.casing;
   const cw = 0.07; // casing (architrave) width
   const cd = 0.018; // casing depth off the wall face
@@ -351,56 +444,74 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
     if (gh > 0.01) add(box(innerW, gh, 0.008, 0, bottom + leafH + f + gh / 2, 0, glassMat, false));
   }
 
-  const leaf = (width: number, glazedLeaf: boolean, panelledLeaf: boolean, withHandle = false, lh = leafH, lt = 0.04): THREE.Group => {
-    const lg = new THREE.Group();
-    if (withHandle) {
-      for (const side of [-1, 1]) {
-        lg.add(box(0.025, 0.06, 0.012, width - 0.07, 1.0 - bottom, side * (lt / 2 + 0.006), metalMat, false));
-        lg.add(box(0.13, 0.018, 0.018, width - 0.12, 1.0 - bottom, side * (lt / 2 + 0.03), metalMat, false));
-      }
-    }
-    if (glazedLeaf) {
-      const rail = 0.09;
-      lg.add(box(rail, lh, lt, rail / 2, lh / 2, 0, panelMat, shadows));
-      lg.add(box(rail, lh, lt, width - rail / 2, lh / 2, 0, panelMat, shadows));
-      lg.add(box(width - 2 * rail, rail, lt, width / 2, lh - rail / 2, 0, panelMat, shadows));
-      lg.add(box(width - 2 * rail, rail * 1.6, lt, width / 2, rail * 0.8, 0, panelMat, shadows));
-      lg.add(box(width - 2 * rail, lh - rail * 2.6, 0.008, width / 2, rail * 1.6 + (lh - rail * 2.6) / 2, 0, glassMat, false));
-    } else {
-      lg.add(box(width, lh, lt, width / 2, lh / 2, 0, panelMat, shadows));
-      if (panelledLeaf) {
-        const pw = width * 0.62;
-        for (const side of [-1, 1]) {
-          lg.add(box(pw, lh * 0.36, 0.012, width / 2, lh * 0.72, side * (lt / 2 + 0.004), panelMat, shadows));
-          lg.add(box(pw, lh * 0.36, 0.012, width / 2, lh * 0.28, side * (lt / 2 + 0.004), panelMat, shadows));
-        }
-      }
-    }
-    return lg;
-  };
+  const doorGlass = (kind: 'clear' | 'frosted' | 'reeded') => (kind === 'frosted' ? frostedMat : kind === 'reeded' ? reededMat : glassMat);
 
-  /** Fully glazed French leaf: narrow stiles, deep bottom rail, a grid of 3–5 lites, lever handles. */
-  const frenchLeaf = (width: number): THREE.Group => {
+  /**
+   * One door leaf in its design (domain/model/openingDesigns.ts): solid, recessed and grooved
+   * strips at their depths, glass in the lites, glazing bars, reeds, louvres and ledges. Local
+   * frame: x from the hinge edge (0) to the closing edge (width), y up from the leaf bottom, z = 0
+   * at mid-thickness. `outer` is the face that carries ledges (and the barn brace).
+   */
+  const leaf = (width: number, withHandle = false, lh = leafH, lt = 0.04, opts: { outer?: 1 | -1; brace?: boolean } = {}): THREE.Group => {
     const lg = new THREE.Group();
-    const lt = 0.045;
-    const stile = Math.min(0.08, width * 0.15);
-    const topRail = 0.08;
-    const botRail = Math.min(0.2, leafH * 0.1);
-    for (const x of [stile / 2, width - stile / 2]) lg.add(box(stile, leafH, lt, x, leafH / 2, 0, panelMat, shadows));
-    lg.add(box(width - 2 * stile, topRail, lt, width / 2, leafH - topRail / 2, 0, panelMat, shadows));
-    lg.add(box(width - 2 * stile, botRail, lt, width / 2, botRail / 2, 0, panelMat, shadows));
-    const gw = width - 2 * stile;
-    const gh = leafH - topRail - botRail;
-    lg.add(box(gw, gh, 0.008, width / 2, botRail + gh / 2, 0, glassMat, false));
-    const rows = clamp(Math.round(gh / 0.42), 3, 5);
-    const cols = gw > 0.45 ? 2 : 1;
-    const bar = 0.024;
-    for (let i = 1; i < rows; i++) lg.add(box(gw, bar, lt * 0.7, width / 2, botRail + (gh * i) / rows, 0, panelMat, shadows));
-    for (let j = 1; j < cols; j++) lg.add(box(bar, gh, lt * 0.7, stile + (gw * j) / cols, botRail + gh / 2, 0, panelMat, shadows));
-    const hy = clamp(1.0 - bottom, 0.1, leafH - 0.1);
-    for (const side of [-1, 1]) {
-      lg.add(box(0.025, 0.06, 0.012, width - stile / 2, hy, side * (lt / 2 + 0.006), metalMat, false));
-      lg.add(box(0.12, 0.018, 0.018, width - stile / 2 - 0.05, hy, side * (lt / 2 + 0.03), metalMat, false));
+    const outer = opts.outer ?? 1;
+    const layout = doorLeafLayout(design ?? 'flush', width, lh, { brace: opts.brace });
+    const gm = doorGlass(layout.glass);
+    for (const c of leafCells(layout, width, lh)) {
+      const cw = c.x1 - c.x0;
+      const ch = c.y1 - c.y0;
+      const cx = (c.x0 + c.x1) / 2;
+      const cy = (c.y0 + c.y1) / 2;
+      if (c.type === 'solid') lg.add(box(cw, ch, lt, cx, cy, 0, panelMat, shadows));
+      else if (c.type === 'recess') lg.add(box(cw, ch, Math.max(0.006, lt - 2 * LEAF_RECESS), cx, cy, 0, panelMat, shadows));
+      else if (c.type === 'groove') lg.add(box(cw, ch, Math.max(0.006, lt - 2 * LEAF_GROOVE), cx, cy, 0, panelMat, shadows));
+      else if (c.type === 'lite') {
+        // Slightly oversized so the glass edge hides inside the surrounding stiles and rails.
+        if (layout.glass === 'reeded') {
+          const m = new THREE.Mesh(flutedGeometry(cw + 0.01, ch + 0.01, REED_PITCH * 0.8, 0.004), gm);
+          m.position.set(cx, cy, -0.002);
+          lg.add(m);
+        } else lg.add(box(cw + 0.01, ch + 0.01, 0.008, cx, cy, 0, gm, false));
+      }
+    }
+    for (const b of layout.bars) lg.add(box(b.x1 - b.x0, b.y1 - b.y0, lt * 0.7, (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, 0, panelMat, false));
+    for (const r of layout.flutes) {
+      for (const side of [1, -1]) {
+        const m = new THREE.Mesh(flutedGeometry(r.x1 - r.x0, r.y1 - r.y0, REED_PITCH, LEAF_RECESS), panelMat);
+        m.position.set((r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2, side * (lt / 2 - LEAF_RECESS));
+        if (side < 0) m.rotation.y = Math.PI;
+        m.castShadow = shadows;
+        m.receiveShadow = shadows;
+        lg.add(m);
+      }
+    }
+    for (const r of layout.louvres) {
+      const m = new THREE.Mesh(louvreGeometry(r.x1 - r.x0, r.y1 - r.y0, lt), panelMat);
+      m.position.set((r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2, 0);
+      m.castShadow = shadows;
+      m.receiveShadow = shadows;
+      lg.add(m);
+    }
+    const bd = 0.018;
+    const bz = outer * (lt / 2 + bd / 2);
+    for (const r of layout.battens) lg.add(box(r.x1 - r.x0, r.y1 - r.y0, bd, (r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2, bz, panelMat, shadows));
+    if (layout.brace && layout.battens.length >= 2) {
+      // Diagonal brace between the ledges, slightly shallower so it reads as tucked under them.
+      const [lo, hi] = layout.battens;
+      const x0 = 0.12;
+      const x1 = width - 0.12;
+      const dy = hi.y0 - lo.y1;
+      if (x1 > x0 && dy > 0.2) {
+        const ang = Math.atan2(dy, x1 - x0);
+        lg.add(boxR(Math.hypot(x1 - x0, dy), 0.11, bd * 0.9, width / 2, (lo.y1 + hi.y0) / 2, outer * (lt / 2 + (bd * 0.9) / 2), [0, 0, ang], panelMat, shadows));
+      }
+    }
+    if (withHandle) {
+      const hy = clamp(1.0 - bottom, 0.1, lh - 0.1);
+      for (const side of [-1, 1]) {
+        lg.add(box(0.025, 0.06, 0.012, width - 0.07, hy, side * (lt / 2 + 0.006), metalMat, false));
+        lg.add(box(0.13, 0.018, 0.018, width - 0.12, hy, side * (lt / 2 + 0.03), metalMat, false));
+      }
     }
     return lg;
   };
@@ -425,15 +536,15 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
   ];
 
   if (!win) {
-    if (kind === 'door-single') swingLeaves([{ hingeAtStart, width: innerW }], (width) => leaf(width, glazed, panelled, true));
-    else if (kind === 'door-double') swingLeaves(pair, (width) => leaf(width, glazed, panelled, true));
-    else if (kind === 'door-french') swingLeaves(pair, frenchLeaf);
+    if (kind === 'door-single') swingLeaves([{ hingeAtStart, width: innerW }], (width) => leaf(width, true));
+    else if (kind === 'door-double') swingLeaves(pair, (width) => leaf(width, true));
+    else if (kind === 'door-french') swingLeaves(pair, (width) => leaf(width, true, leafH, 0.045));
     else if (kind === 'door-sliding') {
       const pw = innerW * 0.55;
       const slide = (opening.openAngle / 90) * innerW * 0.45;
-      const p1 = leaf(pw, opening.style !== 'flush', false, true);
+      const p1 = leaf(pw, true);
       p1.position.set(-innerW / 2 + slide, bottom, t * 0.18);
-      const p2 = leaf(pw, opening.style !== 'flush', false);
+      const p2 = leaf(pw);
       p2.position.set(innerW / 2 - pw, bottom, -t * 0.18);
       add(p1, p2);
     } else if (kind === 'door-pocket') {
@@ -442,7 +553,7 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       const dir = hingeAtStart ? -1 : 1;
       const avail = hingeAtStart ? span.s0 - g.clearStart : g.clearEnd - span.s1;
       const slide = frac * clamp(avail + f, 0, innerW);
-      const lf = leaf(innerW, glazed, panelled, false, leafH, lt);
+      const lf = leaf(innerW, false, leafH, lt);
       lf.position.set(-innerW / 2 + dir * slide, bottom, 0);
       // Leading edge (away from the pocket): an edge pull plus flush cup pulls on both faces.
       const lead = dir < 0 ? innerW : 0;
@@ -468,7 +579,7 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
         const pv = new THREE.Group();
         pv.position.set(px, bottom, pz);
         pv.rotation.y = phi;
-        const panel = leaf(pw - gap, glazed, panelled, false, ph, lt);
+        const panel = leaf(pw - gap, false, ph, lt);
         panel.position.x = gap / 2;
         pv.add(panel);
         if (k === n - 1) {
@@ -496,17 +607,8 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       const shift = sgn * frac * leafW;
       const leafZ = swing * (face + stand + 0.012 + lt / 2);
       const railZ = swing * (face + stand + 0.03);
-      const lf = leaf(leafW, glazed, false, false, lh, lt);
+      const lf = leaf(leafW, false, lh, lt, { outer: swing, brace: true });
       lf.position.set(-leafW / 2 + shift, bot, leafZ);
-      const outZ = swing * (lt / 2 + 0.009);
-      if (panelled) {
-        // Z-brace on the outer face.
-        lf.add(box(leafW - 0.06, 0.14, 0.018, leafW / 2, 0.25, outZ, panelMat, shadows));
-        lf.add(box(leafW - 0.06, 0.14, 0.018, leafW / 2, lh - 0.25, outZ, panelMat, shadows));
-        const dx = leafW - 0.2;
-        const dy = lh - 0.64;
-        lf.add(boxR(Math.hypot(dx, dy), 0.12, 0.016, leafW / 2, lh / 2, outZ, [0, 0, -sgn * Math.atan2(dy, dx)], panelMat, shadows));
-      }
       // Hangers: straps on the outer face up to rollers riding on the rail.
       const wheelR = 0.045;
       const wheelY = railY + 0.02 + wheelR - bot;
@@ -544,7 +646,7 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       const pivot = new THREE.Group();
       pivot.position.set(hingeAtStart ? -innerW / 2 + pOff : innerW / 2 - pOff, bottom, 0);
       const holder = new THREE.Group();
-      const lf = leaf(innerW, glazed, panelled, false, leafH, lt);
+      const lf = leaf(innerW, false, leafH, lt);
       lf.position.x = -pOff;
       const pl = Math.min(1.4, leafH * 0.6);
       const py = clamp(1.05 - bottom, pl / 2, leafH - pl / 2);
@@ -566,29 +668,63 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
     if (opening.threshold) add(box(w, 0.018, t + 0.04, 0, sill + 0.009, 0, frameMat, shadows));
   } else {
     const tall = kind === 'window-tall';
-    const grid = opening.grille === 'grid';
+    // The design's own glazing bars replace the "Muntin grid" grille.
+    const grid = opening.grille === 'grid' && !spec.ownBars;
+    const designGrid = design === 'win-grid-2x2' || design === 'win-grid-3x2';
+    const paneMat = spec.glass === 'reeded' ? reededMat : glassMat;
     if (shape.kind !== 'circle') {
       // Frame bottom, and the sill board on the side opposite the swing (none for floor-to-ceiling windows).
       add(box(w, f, t, 0, sill + f / 2, 0, frameMat, shadows));
       if (!tall) add(box(w + 0.06, 0.025, 0.06, 0, sill - 0.0125, -swing * (t / 2 + 0.01), frameMat, shadows));
     }
-    const sash = (x0: number, width: number, sashHingeAtStart: boolean, z: number, openable: boolean, sh = innerH) => {
+    /** A glass pane `pw` × `ph` centred at (x, y) in `parent`, reeded when the design says so. */
+    const pane = (parent: THREE.Object3D, pw: number, ph: number, x: number, y: number, mat = paneMat) => {
+      if (pw < 0.005 || ph < 0.005) return;
+      if (mat === reededMat) {
+        const m = new THREE.Mesh(flutedGeometry(pw, ph, REED_PITCH, 0.004), reededMat);
+        m.position.set(x, y, -0.002);
+        parent.add(m);
+      } else parent.add(box(pw, ph, 0.01, x, y, 0, mat, false));
+    };
+    // Fixed top light above a transom bar (rectangular windows).
+    const tl = spec.topLight && shape.kind === 'rect' ? topLightHeight(innerH) : 0;
+    const sashH = tl > 0 ? innerH - tl - f : innerH;
+    if (tl > 0) {
+      add(box(innerW, f, t, 0, bottom + sashH + f / 2, 0, frameMat, shadows));
+      pane(group, innerW + 0.01, tl + 0.01, 0, bottom + sashH + f + tl / 2);
+    }
+    const sash = (x0: number, width: number, sashHingeAtStart: boolean, z: number, openable: boolean, sh = sashH) => {
       const sg = new THREE.Group();
-      const sf = 0.045;
-      const sd = 0.05;
+      const sf = Math.min(spec.sash, width / 4, sh / 4);
+      const sd = spec.sashDepth;
       sg.add(box(sf, sh, sd, sf / 2, sh / 2, 0, frameMat, shadows));
       sg.add(box(sf, sh, sd, width - sf / 2, sh / 2, 0, frameMat, shadows));
       sg.add(box(width - 2 * sf, sf, sd, width / 2, sf / 2, 0, frameMat, shadows));
       sg.add(box(width - 2 * sf, sf, sd, width / 2, sh - sf / 2, 0, frameMat, shadows));
-      sg.add(box(width - 2 * sf, sh - 2 * sf, 0.01, width / 2, sh / 2, 0, glassMat, false));
+      const gw = width - 2 * sf;
+      const gh = sh - 2 * sf;
+      const glaze = sashGlazing(design, gw, gh, width / Math.max(innerW, 1e-3));
+      if (glaze.frosted) {
+        const fr = glaze.frosted;
+        pane(sg, fr.x1 - fr.x0 + 0.01, fr.y1 - fr.y0 + 0.005, sf + (fr.x0 + fr.x1) / 2, sf + (fr.y0 + fr.y1) / 2, frostedMat);
+        if (gh - fr.y1 > 0.005) pane(sg, gw + 0.01, gh - fr.y1, width / 2, sf + (fr.y1 + gh) / 2);
+      } else pane(sg, gw + 0.01, gh + 0.01, width / 2, sh / 2);
+      for (const b of glaze.bars) {
+        sg.add(box(b.x1 - b.x0, b.y1 - b.y0, spec.barDepth, sf + (b.x0 + b.x1) / 2, sf + (b.y0 + b.y1) / 2, 0, frameMat, false));
+      }
       if (grid) {
-        // Colonial muntins dividing the glass into lites of roughly 0.3 m.
-        const gw = width - 2 * sf;
-        const gh = sh - 2 * sf;
+        // Muntins dividing the glass into lites of roughly 0.3 m.
         const cols = Math.max(1, Math.round(gw / 0.3));
         const rows = Math.max(1, Math.round(gh / 0.34));
         for (let j = 1; j < cols; j++) sg.add(box(0.018, gh, 0.03, sf + (gw * j) / cols, sh / 2, 0, frameMat, false));
         for (let i = 1; i < rows; i++) sg.add(box(gw, 0.018, 0.03, width / 2, sf + (gh * i) / rows, 0, frameMat, false));
+      }
+      if (spec.handle && openable) {
+        // Lever handle on the closing stile, interior face (opposite the swing side).
+        const hx = sashHingeAtStart ? width - sf / 2 : sf / 2;
+        const hy = clamp(sh / 2, 0.1, sh - 0.1);
+        sg.add(box(0.03, 0.07, 0.012, hx, hy, -swing * (sd / 2 + 0.006), frameMat, false));
+        sg.add(box(0.018, 0.11, 0.016, hx, hy - 0.045, -swing * (sd / 2 + 0.02), metalMat, false));
       }
       const pivot = new THREE.Group();
       pivot.position.set(sashHingeAtStart ? x0 : x0 + width, bottom, z);
@@ -604,7 +740,15 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
         sash(0, innerW / 2, false, swing * 0.01, true, sh);
       } else sash(-innerW / 2, innerW, hingeAtStart, swing * 0.01, true, sh);
     };
-    if (kind === 'window-fixed') sash(-innerW / 2, innerW, true, 0, false);
+    if (spec.mullion && shape.kind === 'rect' && innerW > 0.45) {
+      // Asymmetric: a narrow vent on the hinge side, a mullion, and a wide fixed pane.
+      const vw = innerW * ASYM_VENT_SHARE;
+      const atStart = hingeAtStart;
+      const fixedKind = kind === 'window-fixed';
+      add(box(f, sashH, t, atStart ? -innerW / 2 + vw + f / 2 : innerW / 2 - vw - f / 2, bottom + sashH / 2, 0, frameMat, shadows));
+      sash(atStart ? -innerW / 2 : innerW / 2 - vw, vw, atStart, fixedKind ? 0 : swing * 0.01, !fixedKind);
+      sash(atStart ? -innerW / 2 + vw + f : -innerW / 2, innerW - vw - f, true, 0, false);
+    } else if (kind === 'window-fixed') sash(-innerW / 2, innerW, true, 0, false);
     else if (kind === 'window-single') sash(-innerW / 2, innerW, hingeAtStart, swing * 0.01, true);
     else if (kind === 'window-double') {
       sash(-innerW / 2, innerW / 2, true, swing * 0.01, true);
@@ -616,7 +760,7 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       sash(innerW / 2 - sw, sw, true, -0.03, false);
     } else if (kind === 'window-tall') {
       // Floor-to-ceiling: one casement, or a pair when wide (fixed-looking when shown closed).
-      if (innerW >= 1.4) casements(innerH);
+      if (innerW >= 1.4) casements(sashH);
       else sash(-innerW / 2, innerW, hingeAtStart, swing * 0.01, true);
     } else if (kind === 'window-arched' && shape.kind === 'arch') {
       // Casement(s) below the spring line, a transom bar, and a fixed arched fanlight above.
@@ -632,13 +776,13 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
           const th = (Math.PI * i) / 24;
           outline.push([ga * Math.cos(th), ys + gb * Math.sin(th)]);
         }
-        add(plate(outline, 0.01, 0, glassMat, false));
-        if (grid) {
+        add(plate(outline, 0.01, 0, spec.glass === 'reeded' ? frostedMat : glassMat, false));
+        if (grid || designGrid || design === 'win-steel') {
           // Sunburst glazing bars.
           for (const th of [Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4]) {
             const ex = ga * Math.cos(th);
             const ey = gb * Math.sin(th);
-            add(boxR(Math.hypot(ex, ey), 0.018, 0.03, ex / 2, ys + ey / 2, 0, [0, 0, Math.atan2(ey, ex)], frameMat, false));
+            add(boxR(Math.hypot(ex, ey), spec.bar, spec.barDepth, ex / 2, ys + ey / 2, 0, [0, 0, Math.atan2(ey, ex)], frameMat, false));
           }
         }
       }
@@ -647,11 +791,12 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       const { cy, r } = shape;
       const gr = r - f + 0.005;
       if (gr > 0.02) {
-        add(cyl(gr, 0.01, 0, cy, 0, 'z', glassMat, false));
-        arcBand(group, 0, cy, gr - 0.012, gr - 0.012, 0, Math.PI * 2, 40, 0.025, 0.045, 0, frameMat, shadows);
-        if (grid) {
-          add(box(2 * gr, 0.018, 0.03, 0, cy, 0, frameMat, false));
-          add(box(0.018, 2 * gr, 0.03, 0, cy, 0, frameMat, false));
+        add(cyl(gr, 0.01, 0, cy, 0, 'z', spec.glass === 'reeded' ? frostedMat : glassMat, false));
+        const bead = Math.min(0.025, spec.sash * 0.6);
+        arcBand(group, 0, cy, gr - bead / 2, gr - bead / 2, 0, Math.PI * 2, 40, bead, Math.min(0.045, spec.sashDepth), 0, frameMat, shadows);
+        if (grid || designGrid) {
+          add(box(2 * gr, spec.bar, spec.barDepth, 0, cy, 0, frameMat, false));
+          add(box(spec.bar, 2 * gr, spec.barDepth, 0, cy, 0, frameMat, false));
         }
       }
     }

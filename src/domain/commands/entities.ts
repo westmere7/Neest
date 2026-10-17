@@ -2,10 +2,12 @@ import { current, isDraft } from 'immer';
 import { DEFAULT_MATERIALS, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { newId } from '../model/ids';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '../model/defaults';
+import { designFitsKind, designPatch } from '../model/openingDesigns';
 import type {
   CameraPreset,
   MaterialDefinition,
   Opening,
+  OpeningDesign,
   OpeningKind,
   PlacedObject,
   Project,
@@ -34,6 +36,8 @@ export interface AddOpeningArgs {
   sillHeight?: number;
   swingSide?: 'left' | 'right';
   hinge?: 'start' | 'end';
+  /** Design to apply (ignored when it does not fit the kind); absent = the kind's default look. */
+  design?: OpeningDesign | null;
 }
 
 export function addOpening(d: D, args: AddOpeningArgs): string | null {
@@ -57,6 +61,7 @@ export function addOpening(d: D, args: AddOpeningArgs): string | null {
     frameMaterialId: isWindow ? DEFAULT_MATERIALS.windowFrame : DEFAULT_MATERIALS.doorFrame,
     panelMaterialId: isWindow ? DEFAULT_MATERIALS.glass : DEFAULT_MATERIALS.doorPanel,
   };
+  if (args.design && designFitsKind(args.design, args.kind)) applyDesign(d, opening, args.design);
   d.openings[id] = opening;
   clampOpening(d, id);
   return id;
@@ -75,6 +80,21 @@ export function clampOpening(d: D, id: string): void {
   o.offset = Math.min(Math.max(o.offset, lo), hi);
   const maxH = g.z1 - o.sillHeight - 0.02;
   if (o.height > maxH) o.height = Math.max(0.2, maxH);
+}
+
+/** Applies a design and its suggested material (copied into the project like any assigned material). */
+function applyDesign(d: D, o: Opening, design: OpeningDesign): void {
+  const patch = designPatch(o, design);
+  Object.assign(o, patch);
+  for (const id of [patch.panelMaterialId, patch.frameMaterialId]) if (id) ensureMaterial(d, id);
+}
+
+/** Sets the design of openings whose kind it fits (others are left alone). */
+export function setOpeningDesign(d: D, ids: string[], design: OpeningDesign): void {
+  for (const id of ids) {
+    const o = d.openings[id];
+    if (o && designFitsKind(design, o.kind)) applyDesign(d, o, design);
+  }
 }
 
 export function updateOpening(d: D, id: string, patch: Partial<Omit<Opening, 'id'>>): void {

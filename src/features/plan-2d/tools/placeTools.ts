@@ -96,11 +96,13 @@ export function createOpeningTool(): Tool {
     onPointerDown(e, env) {
       if (e.button !== 0 || !target) return;
       const t = target;
-      const kind = env.editor().openingKind;
+      const ed = env.editor();
+      const kind = ed.openingKind;
+      const design = kind.startsWith('window') ? ed.windowDesign : ed.doorDesign;
       const id = useProjectStore
         .getState()
         .execute(`Add ${OPENING_PRESETS[kind].label.toLowerCase()}`, (d) =>
-          addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side }),
+          addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, design }),
         );
       if (id && !e.shift) {
         useEditorStore.getState().setSelection([{ kind: 'opening', id }]);

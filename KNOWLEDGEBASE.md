@@ -180,7 +180,7 @@ Principles that must hold:
 | `Project` | `format`, `schemaVersion` (1), `id`, `name`, timestamps, `settings`, records `nodes/walls/openings/rooms/objects/materials/customAssets`, `cameras[]`, `render`, `layers`, `guest` |
 | `WallNode` | shared endpoint; moving it moves every attached wall end |
 | `WallSegment` | `a`,`b` node ids; `thickness`, `height`, `baseElevation`; `role` exterior/interior/partition; `curve` = quadratic Bézier control point or null; `materials {left,right,top}`; `locked`, `hidden` |
-| `Opening` | host `wallId`; `kind` (door-single/double/sliding, passage, window-single/double/fixed/sliding); **`offset` = arc length from node `a` to the opening centre**; `width`, `height`, `sillHeight`; `swingSide` left/right; `hinge` start/end; `openAngle` (3D only); `style`; frame/panel material ids |
+| `Opening` | host `wallId`; `kind` (door-single/double/sliding, passage, window-single/double/fixed/sliding); **`offset` = arc length from node `a` to the opening centre**; `width`, `height`, `sillHeight`; `swingSide` left/right; `hinge` start/end; `openAngle` (3D only); `style`; optional `design` (§10); frame/panel material ids |
 | `Room` | user data for a detected face: `name`, `type`, floor/ceiling materials, `showCeiling`, `ceilingHeight` (null = lowest bounding wall), label prefs; identity hints `anchor`, `boundaryWallIds` |
 | `PlacedObject` | `assetId`, `x`,`y`,`elevation`,`rotation`, `width/depth/height`, `mirrored`, `materials` (slot → material id; missing slots use asset defaults), `locked`, `hidden` |
 | `MaterialDefinition` | `color`, `roughness`, `metalness`, `opacity`, `emissive*`, `texture {patternId, scale m/tile, rotation°, contrast}` (procedural, also the fallback), `photo {setId, scale, rotation, contrast, enabled}` (optional CC0 photo set, §12), `overrideOf` (unlinked per-surface copy), `catalogId`, `source` licence |
@@ -309,6 +309,28 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 ### Doors, windows & passages
 - **Kinds:** door-single, door-double, door-french, door-sliding, door-pocket, door-bifold, door-barn and door-pivot; passage, passage-arched and passage-moon; window-single, window-double, window-fixed, window-sliding, window-tall, window-arched and window-round. `isPassageKind()` and `isDoorKind` cover the passages.
 - **Options:** `transom`, `threshold`, `casing`, `grille` ('none' | 'bars' | 'grid') and `shutters`.
+- **Designs** (`domain/model/openingDesigns.ts`): the kind says how an opening works, the optional `Opening.design` says
+  what it looks like. 18 door designs (flush, shaker, two/five panels, V-groove, lined, reeded, plank, louvred,
+  half/side/three/full lite, divided lites, ribbed glass, slim aluminium clear/frosted, steel grid) and 12 window
+  designs (`win-*`: plain, slim, black steel, tilt & turn, top light, asymmetric, 2×2 / 3×2 grid, vertical/horizontal
+  bars, frosted lower, reeded glass).
+  - `designFitsKind`/`designsForKind` decide what is offered: door designs for door kinds, window designs for windows,
+    nothing for passages; French doors take glazed designs only; arched/round windows skip layouts that need a
+    rectangle (top light, asymmetric, bars…).
+  - No design = `defaultDesign(kind, style)`, which reproduces the pre-design looks ('panel' → two panels, barn +
+    'panel' → braced plank, 'glazed' → full lite, French → divided lites, sliding non-flush → full lite). So old
+    projects load and look the same; `style` stays and is kept in step with the design (`designPatch`).
+  - Unknown design values load as "no design" (`.catch(undefined)`), so a newer file never fails in an older build.
+  - Door leaves: `doorLeafLayout` gives regions (recess, groove, lite, void) plus bars, flutes, louvres and ledges;
+    `leafCells` tiles the leaf into same-type rectangles, which the builder turns into boxes at full/recessed/
+    grooved depth or glass. Window designs: `windowSpec` (frame/sash profile, top light, mullion, handle) and
+    `sashGlazing` (bars, frosted pane per sash). Reeds and louvres are cached merged geometries.
+  - Choosing a design applies its suggested material (`metal-anthracite`, `metal-black-matte`, `plastic-upvc-white`)
+    to the leaf (doors) or frame (windows) and restores the default when leaving it (`setOpeningDesign`). Door glass
+    is `glass-clear` / `glass-frosted` / `glass-reeded`; windows glaze with their panel material.
+  - UI: `editor/OpeningDesignPicker.tsx` draws each design as a small SVG elevation from the same layout data. It is
+    used in the Inspector's "Design" section and the Door & window tool panel (`editor.doorDesign` / `windowDesign`
+    are applied on insert).
 - **Exterior convention:** sashes open outward, so the exterior is the **swing side**. Shutters and bars go there, and the interior sill board is on the other side.
 - **3D** (`scene-3d/openingBuilder.ts`):
   - The wall gap stays rectangular. Arched and round shapes fill the corners with **infill** prisms in the wall's own materials, named `opening-infill`, but only in solid or half walls. Wall materials are part of `OpeningNode`'s key, so repainting a wall updates the infill.
@@ -646,3 +668,5 @@ Known limitations (also in README):
     detail helpers, merged per-slot meshes, new rooms (kids, laundry, hobbies, outdoor) and 270 assets (done).
 25. "Load external furniture packs (own procedural/bitmap textures), additional files, e.g. Halloween; dynamically
     loaded without refresh; one file per pack; show the source only on hover and in the item's info" → /packs (done).
+26. "Doors and windows should still have designs to choose from … built in, not a pack" → `Opening.design`, 18 door
+    and 12 window designs with SVG previews in the Inspector and the Door & window tool (done).

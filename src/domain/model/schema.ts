@@ -120,6 +120,50 @@ export const WindowGrilleSchema = z.enum(['none', 'bars', 'grid']);
 
 export const OpeningStyleSchema = z.enum(['flush', 'panel', 'glazed']);
 
+/** Door leaf designs (see domain/model/openingDesigns.ts for what each looks like and where it applies). */
+export const DOOR_DESIGN_IDS = [
+  'flush',
+  'shaker',
+  'panel-2',
+  'panel-5',
+  'groove-v',
+  'groove-h',
+  'reeded',
+  'ledged',
+  'louvred',
+  'lite-half',
+  'lite-side',
+  'lite-3h',
+  'lite-full',
+  'lites-divided',
+  'ribbed-glass',
+  'alu-clear',
+  'alu-frosted',
+  'steel-grid',
+] as const;
+
+/** Window designs: frame profile plus glazing layout. */
+export const WINDOW_DESIGN_IDS = [
+  'win-plain',
+  'win-slim',
+  'win-steel',
+  'win-tilt-turn',
+  'win-transom',
+  'win-asym',
+  'win-grid-2x2',
+  'win-grid-3x2',
+  'win-bars-v',
+  'win-bars-h',
+  'win-frosted-low',
+  'win-reeded',
+] as const;
+
+/**
+ * The visual design of a door or window, separate from its kind (how it opens). Values are only
+ * ever added. An unknown value (from a newer build) loads as "no design" instead of failing.
+ */
+export const OpeningDesignSchema = z.enum([...DOOR_DESIGN_IDS, ...WINDOW_DESIGN_IDS]);
+
 export const OpeningSchema = z.object({
   id: Id,
   wallId: Id,
@@ -135,7 +179,10 @@ export const OpeningSchema = z.object({
   hinge: z.enum(['start', 'end']).default('start'),
   /** 3D presentation only: how far doors/casements are opened, in degrees. */
   openAngle: num.min(0).max(100).default(0),
+  /** Coarse look (flush/panel/glazed). Kept in step with `design` when one is set. */
   style: OpeningStyleSchema.default('flush'),
+  /** Leaf / sash design; absent = derived from `style` and the kind (`resolveOpeningDesign`). */
+  design: OpeningDesignSchema.optional().catch(undefined),
   frameMaterialId: Id,
   panelMaterialId: Id,
   /** Doors: glazed fanlight above the door (inside the opening height). */
@@ -308,6 +355,8 @@ export const RenderSettingsSchema = z.object({
   timeOfDay: num.min(5).max(21).default(14),
   sunAzimuth: num.min(0).max(360).default(135),
   sunIntensity: num.min(0).max(10).default(2.2),
+  /** Sun colour on top of the time-of-day tint: -1 cool (overcast blue) … 0 natural … 1 warm (golden). */
+  sunWarmth: num.min(-1).max(1).default(0),
   envIntensity: num.min(0).max(4).default(0.9),
   shadows: z.boolean().default(true),
   background: HexColor.default('#dfe3e6'),
@@ -355,8 +404,6 @@ export const LayersSchema = z
     furniture: { visible: true, locked: false },
     annotations: { visible: true, locked: false },
   });
-  /** Sun colour on top of the time-of-day tint: -1 cool (overcast blue) … 0 natural … 1 warm (golden). */
-  sunWarmth: num.min(-1).max(1).default(0),
 
 export const GuestSettingsSchema = z
   .object({
@@ -397,6 +444,9 @@ export type WallSegment = z.infer<typeof WallSegmentSchema>;
 export type WallSide = 'left' | 'right';
 export type OpeningKind = z.infer<typeof OpeningKindSchema>;
 export type OpeningStyle = z.infer<typeof OpeningStyleSchema>;
+export type OpeningDesign = z.infer<typeof OpeningDesignSchema>;
+export type DoorDesign = (typeof DOOR_DESIGN_IDS)[number];
+export type WindowDesign = (typeof WINDOW_DESIGN_IDS)[number];
 export type Opening = z.infer<typeof OpeningSchema>;
 export type RoomType = z.infer<typeof RoomTypeSchema>;
 export type Room = z.infer<typeof RoomSchema>;
