@@ -10,9 +10,15 @@ There are no accounts and no server. Projects are stored in your browser and wor
 
 Requirements: Node.js 20 or newer (developed on Node 22) and a WebGL2-capable browser (current Chrome, Edge, Firefox or Safari).
 
-**Windows:** double-click `start-neest.bat`. It checks Node, installs dependencies on first run, starts the dev server on <http://localhost:5173> and opens your browser. Run `start-neest.bat --lan` to reach it from other devices on your network.
+**macOS:** double-click `start-neest.command` in Finder (or run `./start-neest.sh` in Terminal).
 
-**Any platform:**
+**Windows:** double-click `start-neest.bat`.
+
+**Linux:** run `./start-neest.sh`.
+
+Each launcher checks Node ≥ 20, installs dependencies on first run, starts the dev server on <http://localhost:5173> and opens your browser. Pass `--lan` (e.g. `./start-neest.sh --lan` or `start-neest.bat --lan`) to reach it from other devices on your network.
+
+**Manual start (any platform):**
 
 ```bash
 npm install
@@ -46,7 +52,7 @@ Then open <http://localhost:5173>. Edits to the source code reload in the browse
 - Snapping to endpoints, midpoints, wall faces, 45° angles, alignment guides and the grid. Hold Alt to disable snapping, Shift to lock the angle.
 - Exact input while drawing: type `3.5`, `350cm` or `11'6"` then Enter; room sizes as `4x3`.
 - Junction mitres, T-junctions and crossings are resolved automatically. Rooms are detected from the walls, with clear-floor area and perimeter.
-- Dimensions, room labels, and three plan modes: draft, furnished and presentation. Diagnostics flag crossing walls, openings that don't fit, and rooms that can't be inset.
+- Dimensions, room labels, and two editor plan modes: draft and furnished (plus presentation style in exports). Diagnostics flag crossing walls, openings that don't fit, and rooms that can't be inset.
 - The plan fits itself between the floating panels when a project opens.
 - Undo/redo for every operation; a drag is one step.
 
@@ -79,7 +85,7 @@ Exported filenames follow `<project>_<yyyy-mm-dd>_<output>.<ext>`.
 - On phones you can open projects, inspect, view in 3D and walk through. Drafting tools, split view, scaled sheets and DXF are desktop-only.
 
 ### Keyboard shortcuts
-`V` select · `H`/Space-drag pan · `W` walls · `C` curved wall · `R` room · `D` door/window · `S` split · `M` measure · `Ctrl+Z`/`Ctrl+Shift+Z` undo/redo · `Delete` · `Ctrl+D` duplicate · `Q` rotate 90° · arrows nudge (Shift ×10) · `Ctrl+L` lock · `F` fit · `G` grid · `1`/`2`/`3` plan modes · `4`/`5` 3D/split view · `\` hide interface · `?` all shortcuts.
+`V` select · `H`/Space-drag pan · `W` walls · `C` curved wall · `R` room · `D` door/window · `S` split · `M` measure · `Ctrl+Z`/`Ctrl+Shift+Z` undo/redo · `Delete` · `Ctrl+D` duplicate · `Q` rotate 90° · arrows nudge (Shift ×10) · `Ctrl+L` lock · `F` fit · `G` grid · `1`/`2` plan modes · `4`/`5` 3D/split view · `\` hide interface · `?` all shortcuts.
 
 ## Where your projects live
 

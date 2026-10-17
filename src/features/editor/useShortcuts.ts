@@ -38,7 +38,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'Ctrl+L', action: 'Lock / unlock selection' },
   { keys: 'F', action: 'Fit plan' },
   { keys: 'G', action: 'Toggle grid' },
-  { keys: '1 / 2 / 3', action: 'Draft / furnished / presentation plan' },
+  { keys: '1 / 2', action: 'Draft / furnished plan' },
   { keys: '4 / 5', action: '3D view / split view' },
   { keys: '\\', action: 'Hide / show interface' },
   { keys: 'Esc', action: 'Cancel, back to select, clear selection, show interface' },
@@ -135,7 +135,6 @@ export function useEditorShortcuts(isMobile: boolean) {
       if (key === 'g') return ed.set({ gridVisible: !ed.gridVisible });
       if (key === '1') return ed.set({ workspace: 'plan', planMode: 'draft' });
       if (key === '2') return ed.set({ workspace: 'plan', planMode: 'furnished' });
-      if (key === '3') return ed.set({ workspace: 'plan', planMode: 'presentation' });
       if (key === '4') return ed.set({ workspace: '3d' });
       if (key === '5' && !isMobile) return ed.set({ workspace: 'split' });
       const tool = TOOL_SHORTCUTS[key];

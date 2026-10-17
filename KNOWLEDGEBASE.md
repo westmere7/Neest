@@ -35,9 +35,10 @@ npm run build        # guest runtime + typecheck + production build (PWA, offlin
 npm run test:e2e     # Playwright (needs `npx playwright install chromium` once)
 ```
 
-On Windows, double-click **`start-neest.bat`**. It checks for Node ≥ 20, runs `npm install` when `node_modules` is
-missing or broken, then starts the dev server on port 5173 and opens the browser. Use `start-neest.bat --lan` to
-expose it on the local network.
+On Windows, double-click **`start-neest.bat`**. On macOS, double-click **`start-neest.command`** in Finder (or run
+**`./start-neest.sh`** on macOS/Linux). Each script checks for Node ≥ 20, runs `npm install` when `node_modules` is
+missing or outdated, then starts the dev server on port 5173 and opens the browser. Pass `--lan` (`./start-neest.sh --lan`
+or `start-neest.bat --lan`) to expose it on the local network, or `--no-open` to skip opening the browser tab.
 
 Changes to source files hot-reload in the open browser (Vite HMR). Changes to project files in `projects/` are
 pushed to open editors and the launcher as well (§13).
@@ -56,6 +57,8 @@ _Prompt/                 Product brief (prompt.md) and its origin (InitialPrompt
 projects/                Shared project folder mirrored by the dev server (README.md explains it)
 public/                  favicon (PWA icon)
 start-neest.bat          Windows launcher (Node check, npm install, dev server, browser)
+start-neest.command      macOS Finder double-click launcher (invokes start-neest.sh)
+start-neest.sh           macOS/Linux shell launcher (Node check, npm install, dev server, browser)
 tools/
   neest-workspace-plugin.ts  Vite plugin: /__neest/fs endpoints + projects/ watcher (dev & preview only)
 src/
@@ -454,8 +457,8 @@ construction documents.
 Done and verified in the browser:
 - Launcher: create, rename, duplicate, delete, import and export; three samples; repo-folder section; plan
   thumbnails for every card.
-- 2D drafting: walls, curved walls, rooms, openings, split, measure, snapping, typed lengths, dimensions, three
-  plan modes, no-interface mode, and a start-up fit to the free canvas area.
+- 2D drafting: walls, curved walls, rooms, openings, split, measure, snapping, typed lengths, dimensions, two
+  editor plan modes (`draft`, `furnished`), no-interface mode, and a start-up fit to the free canvas area.
 - Inspector editing with validation.
 - Materials with linked/override semantics.
 - Furniture library: 86 assets, favourites, recents, search, drag and drop.
@@ -465,7 +468,7 @@ Done and verified in the browser:
 - Exports: sheets, DXF, PNG, GLB, guest HTML, .neest and JSON, plus **path-traced renders**. The Export dialog
   opens instantly.
 - Autosave, plus **repo `projects/` sync** with live on-disk updates.
-- `start-neest.bat`.
+- `start-neest.bat` (Windows), `start-neest.command` (macOS Finder) and `start-neest.sh` (macOS/Linux).
 - Teal/brass palette.
 - Three samples: a two-bedroom apartment, a 9 × 4.5 m studio, and a 100 m² loft stress test.
 
@@ -499,3 +502,5 @@ Known limitations (also in README):
 11. "Generate a very complex studio, 100 m², to test stability" → `loftProject.ts` + `loft.test.ts` (done).
 12. "Each project, even the repo ones, should have thumbnails" → on-demand thumbnails (done).
 13. "Fit view to canvas at start" → inset-aware 2D fit and 3D framing with view offset (done).
+14. "Analyze this repo and create a file to start the server quickly" → `start-neest.sh` + `start-neest.command` (macOS/Linux).
+15. "Remove Present view" → removed `Present` (`plan:presentation`) tab from `EditorShell.tsx` and shortcut `3` from `useShortcuts.ts`.

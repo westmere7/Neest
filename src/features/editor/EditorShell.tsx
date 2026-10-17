@@ -219,7 +219,6 @@ function ProjectName() {
 const VIEW_OPTIONS: { value: string; label: string; title: string; mobile: boolean }[] = [
   { value: 'plan:draft', label: 'Draft', title: 'Technical draft plan (1)', mobile: true },
   { value: 'plan:furnished', label: 'Furnished', title: 'Furnished colour plan (2)', mobile: true },
-  { value: 'plan:presentation', label: 'Present', title: 'Presentation plan (3)', mobile: false },
   { value: '3d', label: '3D', title: '3D view (4)', mobile: true },
   { value: 'split', label: 'Split', title: '2D + 3D side by side (5)', mobile: false },
   { value: 'walk', label: 'Walk', title: 'First-person walkthrough', mobile: true },
