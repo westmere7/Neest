@@ -1,0 +1,24 @@
+Give me a detailed prompt for claude to build this app called Neest
+
+"
+
+alright, i wanna build a web-based, desktop-first, mobile-compatible (with complex features only avaialble on desktop) floorplanner app for my apartment, this will support both technical 2D design (like traditional top-down only apps) and 3D, with a rendering engine in place as well. 
+
+Refer to the following websites for reference.
+
+https://planner5d.com/
+https://floorplanner.com/
+https://home-design.ai
+https://3d.homestyler.com
+
+The app must support a wide variety of build-in library with clear categories like the sims or the listed web apps, this is just a floor planner, not a house modeler so no need to go full build mode like the sims (so no multi-storey build, no roofing, basement etc). Use a free texture library or generate your own to include an deep texture /color library as well.
+
+The build mode should be solid and allow wide range of customization: walls thickness, heigh, flexible and easy wall edit (adding line, curve walls, cut walls etc).
+
+There should be a global material / color system that allows managing them all globally. 
+
+Allow multiple view modes, refering from the sims, and allow a wide variety of exporting features: industrial-standard techical floor plan with dimensions / 3d view with selected angle, or guest-only 3d walkthrough.
+
+I will use cloudflare as backend but build it fully local for now, we will add auth and server later. 
+
+Choose a framework that you think will best fit this app. For interface, use MIRO-like floating interface that minimize cluttering and allow no-interface view. Make it sleek, professional, dark-light support. "
