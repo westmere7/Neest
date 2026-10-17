@@ -352,6 +352,74 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Named selections (objects, rooms): a small kind label beside the actions, the name on its own line. */
+.inspector-head.stacked {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  row-gap: 1px;
+  padding: 4px 6px 10px 14px;
+}
+.inspector.collapsed .inspector-head.stacked {
+  padding-bottom: 8px;
+}
+.inspector-eyebrow {
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.inspector-head h2.inspector-title {
+  grid-column: 1 / -1;
+  padding-right: 8px;
+  font-size: 15px;
+  line-height: 1.3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+/* Live 3D preview of the selected item (Inspector, Item section). */
+.object-preview {
+  position: relative;
+  height: 150px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  background: radial-gradient(ellipse at 50% 38%, var(--surface-solid), var(--surface-2) 75%);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.object-preview.dragging {
+  cursor: grabbing;
+}
+.object-preview.is-fallback {
+  cursor: default;
+}
+.object-preview-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.object-preview.is-fallback .object-preview-canvas {
+  display: none;
+}
+.object-preview .asset-plan-thumb {
+  width: auto;
+  height: 78%;
+}
 .inspector-actions {
   display: flex;
   align-items: center;

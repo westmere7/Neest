@@ -22,6 +22,7 @@ import { WallMultiEdit } from './WallMultiEdit';
 import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
+import { ObjectPreview } from './ObjectPreview';
 
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
   useProjectStore.getState().execute(label, fn);
@@ -37,6 +38,8 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
   let title = describeSelection(project, selection);
   let body: ReactNode = null;
   let actions: ReactNode = null;
+  /** Small label above a user-given name (objects, rooms), which then gets its own line below the actions. */
+  let eyebrow: string | null = null;
 
   if (selection.length === 1) {
     const s = selection[0];
@@ -67,7 +70,9 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
       );
     } else if (s.kind === 'object' && project.objects[s.id]) {
       const o = project.objects[s.id];
-      title = o.name ?? getAsset(project, o.assetId)?.name ?? 'Object';
+      const asset = getAsset(project, o.assetId);
+      title = o.name ?? asset?.name ?? 'Object';
+      eyebrow = asset ? ASSET_CATEGORY_LABELS[asset.category] : 'Item';
       body = <ObjectInspector project={project} objectId={s.id} isMobile={isMobile} />;
       actions = (
         <>
@@ -87,6 +92,7 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
       );
     } else if (s.kind === 'room' && project.rooms[s.id]) {
       body = <RoomInspector project={project} roomId={s.id} />;
+      eyebrow = 'Room';
     } else if (s.kind === 'node') {
       body = <p className="field-hint pad">Drag the endpoint to move it. Connected walls stay attached.</p>;
     }
@@ -113,8 +119,12 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
 
   return (
     <aside className={`inspector floating${collapsed ? ' collapsed' : ''}${isMobile ? ' sheet' : ''}`} aria-label="Inspector" data-testid="inspector">
-      <header className="inspector-head">
-        <h2 title={title}>{title}</h2>
+      <header className={`inspector-head${eyebrow ? ' stacked' : ''}`}>
+        {eyebrow ? (
+          <span className="inspector-eyebrow">{eyebrow}</span>
+        ) : (
+          <h2 title={title}>{title}</h2>
+        )}
         <div className="inspector-actions">
           {!collapsed && actions}
           <IconButton label={collapsed ? 'Expand inspector' : 'Collapse inspector'} onClick={() => setCollapsed(!collapsed)}>
@@ -126,6 +136,11 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
             </IconButton>
           )}
         </div>
+        {eyebrow && (
+          <h2 className="inspector-title" title={title}>
+            {title}
+          </h2>
+        )}
       </header>
       {!collapsed && <div className="inspector-body">{body}</div>}
     </aside>
@@ -437,6 +452,7 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
         </p>
       )}
       <Section title="Item">
+        {asset && <ObjectPreview project={project} objectId={objectId} />}
         <TextField label="Label" value={o.name ?? asset?.name ?? ''} onCommit={(name) => upd('Rename object', { name })} />
         {asset && (
           <p className="field-hint">
