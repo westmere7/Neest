@@ -573,6 +573,60 @@ export function knob(slot: string, c: V3, r = 0.014): Part[] {
   ];
 }
 
+/** Seven-segment layout (a b c d e f g) per digit. */
+const SEGMENTS: Record<string, string> = {
+  '0': 'abcdef',
+  '1': 'bc',
+  '2': 'abdeg',
+  '3': 'abcdg',
+  '4': 'bcfg',
+  '5': 'acdfg',
+  '6': 'acdefg',
+  '7': 'abc',
+  '8': 'abcdefg',
+  '9': 'abcdfg',
+  '-': 'g',
+  ' ': '',
+};
+
+/**
+ * Seven-segment readout (appliance display, clock) such as "1:25" or "-18", centred at (cx, cy) on
+ * a front-facing surface at depth z, digits `H` tall. Hidden from the plan.
+ */
+export function segmentText(slot: string, text: string, cx: number, cy: number, z: number, H: number): Part[] {
+  const W = H * 0.55;
+  const t = H * 0.14;
+  const adv = (c: string) => (c === ':' || c === '.' ? H * 0.32 : W + H * 0.28);
+  const total = [...text].reduce((s, c) => s + adv(c), 0) - H * 0.28;
+  const zz: V2 = [z, z + 0.0008];
+  const o = { plan: false };
+  const parts: Part[] = [];
+  let x = cx - total / 2;
+  for (const c of text) {
+    if (c === ':') {
+      parts.push(span(slot, [x, x + t], [cy + H * 0.12, cy + H * 0.12 + t], zz, o));
+      parts.push(span(slot, [x, x + t], [cy - H * 0.12 - t, cy - H * 0.12], zz, o));
+    } else if (c === '.') {
+      parts.push(span(slot, [x, x + t], [cy - H / 2, cy - H / 2 + t], zz, o));
+    } else {
+      const top = cy + H / 2;
+      const bot = cy - H / 2;
+      const S: Record<string, [V2, V2]> = {
+        a: [[x, x + W], [top - t, top]],
+        d: [[x, x + W], [bot, bot + t]],
+        g: [[x, x + W], [cy - t / 2, cy + t / 2]],
+        f: [[x, x + t], [cy, top]],
+        b: [[x + W - t, x + W], [cy, top]],
+        e: [[x, x + t], [bot, cy]],
+        c: [[x + W - t, x + W], [bot, cy]],
+      };
+      for (const k of SEGMENTS[c] ?? '') parts.push(span(slot, S[k][0], S[k][1], zz, o));
+    }
+    x += adv(c);
+  }
+  return parts;
+}
+
 /** Four-bar frame (picture, mirror, window) around an opening in the XY plane, over depth range z. */
 export function frame4(slot: string, x: V2, y: V2, z: V2, t: number, opts?: PartOpts): Part[] {
   const o = { plan: opts?.plan ?? false };

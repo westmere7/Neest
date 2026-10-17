@@ -690,3 +690,7 @@ Known limitations (also in README):
     that holds its place; adds the card thumbnail (`renderThumbnail`, redrawn 400 ms after changes), doors,
     windows, wall length, overall wall size and items by category (done).
 30. "Middle mouse should drag in 3D" → middle-drag pans in select mode (was dolly; the wheel zooms) (done).
+31. "More branded assets: TVs, washing machines and fridges" → packs `branded-tvs` (Samsung S95D/The Frame, LG C4/G4,
+    Sony BRAVIA 8/9; screens show pack-pattern pictures), `branded-washers` (Bosch, Miele, LG, Samsung, LG WashTower) and
+    `branded-fridges` (Samsung/LG side-by-side and French door, Bosch, Liebherr), 6 items each at published sizes with
+    `brand` specs; shared `segmentText` seven-segment helper in parts.ts (done).
