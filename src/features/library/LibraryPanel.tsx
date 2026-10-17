@@ -428,13 +428,13 @@ function AssetCard({ asset }: { asset: AssetDefinition }) {
   const fav = usePrefsStore((s) => s.favouriteAssets.includes(asset.id));
   const placing = useEditorStore((s) => s.tool === 'place' && s.placeAssetId === asset.id);
   const units = useProjectStore((s) => s.project!.settings.units);
-  const thumb = useAssetThumbnail(asset);
+  const [thumbRef, thumb] = useAssetThumbnail<HTMLDivElement>(asset);
   const size = asset.defaultSize;
   const dims = `${formatLength(size.w, units, 0, { suffix: false })} × ${formatLength(size.d, units, 0)}`;
   let preview: ReactNode = <AssetPlanThumb asset={asset} />;
   if (thumb) preview = <img src={thumb} alt="" draggable={false} />;
   return (
-    <div className={`asset-card${placing ? ' on' : ''}`}>
+    <div ref={thumbRef} className={`asset-card${placing ? ' on' : ''}`}>
       <button
         type="button"
         className="asset-main"

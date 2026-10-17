@@ -1,0 +1,2221 @@
+{
+ "version": 1,
+ "items": {
+  "air-conditioner": {
+   "file": "air-conditioner.webp",
+   "fp": "5b31b44cf73e6269"
+  },
+  "air-purifier": {
+   "file": "air-purifier.webp",
+   "fp": "10f31dfd7dec3a80"
+  },
+  "appliances:air-fryer": {
+   "file": "appliances_air-fryer.webp",
+   "fp": "62236c6e3575efb9"
+  },
+  "appliances:blender": {
+   "file": "appliances_blender.webp",
+   "fp": "aefd80d7ead97266"
+  },
+  "appliances:bread-maker": {
+   "file": "appliances_bread-maker.webp",
+   "fp": "9fbd5738f21ce23b"
+  },
+  "appliances:chest-freezer": {
+   "file": "appliances_chest-freezer.webp",
+   "fp": "5e6a7778c8d32e83"
+  },
+  "appliances:coffee-grinder": {
+   "file": "appliances_coffee-grinder.webp",
+   "fp": "c44658a31544e609"
+  },
+  "appliances:dehumidifier": {
+   "file": "appliances_dehumidifier.webp",
+   "fp": "d4be81eaaed9ba36"
+  },
+  "appliances:dish-drawer": {
+   "file": "appliances_dish-drawer.webp",
+   "fp": "8507924653692aad"
+  },
+  "appliances:drip-coffee": {
+   "file": "appliances_drip-coffee.webp",
+   "fp": "28423fd14a6b4aa0"
+  },
+  "appliances:food-processor": {
+   "file": "appliances_food-processor.webp",
+   "fp": "f2c698925bac073e"
+  },
+  "appliances:fridge-retro": {
+   "file": "appliances_fridge-retro.webp",
+   "fp": "12510da76469afe8"
+  },
+  "appliances:fridge-side-by-side": {
+   "file": "appliances_fridge-side-by-side.webp",
+   "fp": "f1b58bfd45786a4c"
+  },
+  "appliances:garment-steamer": {
+   "file": "appliances_garment-steamer.webp",
+   "fp": "5dfadbf78b7699a8"
+  },
+  "appliances:hair-dryer-wall": {
+   "file": "appliances_hair-dryer-wall.webp",
+   "fp": "2f5280983c7aa6d7"
+  },
+  "appliances:juicer": {
+   "file": "appliances_juicer.webp",
+   "fp": "985d84794bd48259"
+  },
+  "appliances:mini-fridge": {
+   "file": "appliances_mini-fridge.webp",
+   "fp": "e40feb137885fcd0"
+  },
+  "appliances:pressure-cooker": {
+   "file": "appliances_pressure-cooker.webp",
+   "fp": "cf5ecf632b219565"
+  },
+  "appliances:sandwich-press": {
+   "file": "appliances_sandwich-press.webp",
+   "fp": "e64e70ee4ea188d0"
+  },
+  "appliances:slow-cooker": {
+   "file": "appliances_slow-cooker.webp",
+   "fp": "3fa9f857ac072d31"
+  },
+  "appliances:soda-maker": {
+   "file": "appliances_soda-maker.webp",
+   "fp": "f1fee91b3f0f7cfa"
+  },
+  "appliances:space-heater": {
+   "file": "appliances_space-heater.webp",
+   "fp": "a7a6ae18ce283fb9"
+  },
+  "appliances:steam-mop": {
+   "file": "appliances_steam-mop.webp",
+   "fp": "e662b1a385dce688"
+  },
+  "appliances:toaster-oven": {
+   "file": "appliances_toaster-oven.webp",
+   "fp": "9db7af78511b823c"
+  },
+  "appliances:tower-fan": {
+   "file": "appliances_tower-fan.webp",
+   "fp": "1e5f5b4e78da605c"
+  },
+  "appliances:trash-bins": {
+   "file": "appliances_trash-bins.webp",
+   "fp": "f117272144eb2092"
+  },
+  "appliances:undercounter-fridge": {
+   "file": "appliances_undercounter-fridge.webp",
+   "fp": "434d5207312041e9"
+  },
+  "appliances:upright-vacuum": {
+   "file": "appliances_upright-vacuum.webp",
+   "fp": "649f4ad25fbb6c21"
+  },
+  "appliances:waffle-maker": {
+   "file": "appliances_waffle-maker.webp",
+   "fp": "a4e7f8272cf14540"
+  },
+  "appliances:water-filter-jug": {
+   "file": "appliances_water-filter-jug.webp",
+   "fp": "1854e39fad5289d2"
+  },
+  "aquarium": {
+   "file": "aquarium.webp",
+   "fp": "3af275a9bd886f28"
+  },
+  "arcade-cabinet": {
+   "file": "arcade-cabinet.webp",
+   "fp": "58330ab86346d55d"
+  },
+  "armchair": {
+   "file": "armchair.webp",
+   "fp": "f3d58c417f52767f"
+  },
+  "armchair-wingback": {
+   "file": "armchair-wingback.webp",
+   "fp": "89beeca638b32dbe"
+  },
+  "armoire": {
+   "file": "armoire.webp",
+   "fp": "cb7afc023741d757"
+  },
+  "art-canvas-large": {
+   "file": "art-canvas-large.webp",
+   "fp": "8d9f43e6207c55fc"
+  },
+  "art-gallery-wall": {
+   "file": "art-gallery-wall.webp",
+   "fp": "aa5779a0f07d83f3"
+  },
+  "artwork-framed": {
+   "file": "artwork-framed.webp",
+   "fp": "6f67ef0b2ab5abf8"
+  },
+  "asian-everyday:air-cooler": {
+   "file": "asian-everyday_air-cooler.webp",
+   "fp": "74dfb12734b16151"
+  },
+  "asian-everyday:ceiling-drying-rack": {
+   "file": "asian-everyday_ceiling-drying-rack.webp",
+   "fp": "649011aac12a9a5c"
+  },
+  "asian-everyday:entry-shoe-rack": {
+   "file": "asian-everyday_entry-shoe-rack.webp",
+   "fp": "2a960160a4964aae"
+  },
+  "asian-everyday:floor-fan-box": {
+   "file": "asian-everyday_floor-fan-box.webp",
+   "fp": "a772d6a551e20b1e"
+  },
+  "asian-everyday:hotpot-table": {
+   "file": "asian-everyday_hotpot-table.webp",
+   "fp": "6d53693738ffaa8b"
+  },
+  "asian-everyday:karaoke-set": {
+   "file": "asian-everyday_karaoke-set.webp",
+   "fp": "9109ecad9e6443a9"
+  },
+  "asian-everyday:massage-chair": {
+   "file": "asian-everyday_massage-chair.webp",
+   "fp": "2e6494e9a253656c"
+  },
+  "asian-everyday:potted-frangipani": {
+   "file": "asian-everyday_potted-frangipani.webp",
+   "fp": "0c27d546cf3b6c01"
+  },
+  "asian-everyday:rice-cooker": {
+   "file": "asian-everyday_rice-cooker.webp",
+   "fp": "7af0d3ad0bc68afa"
+  },
+  "asian-everyday:squat-toilet": {
+   "file": "asian-everyday_squat-toilet.webp",
+   "fp": "2f317608894f882e"
+  },
+  "asian-everyday:teak-daybed": {
+   "file": "asian-everyday_teak-daybed.webp",
+   "fp": "8803b5152e7b3756"
+  },
+  "asian-everyday:tiffin-carrier": {
+   "file": "asian-everyday_tiffin-carrier.webp",
+   "fp": "6237542d4e9d9f07"
+  },
+  "asian-everyday:water-dispenser": {
+   "file": "asian-everyday_water-dispenser.webp",
+   "fp": "245cd9446ef5c654"
+  },
+  "asian-everyday:wet-bath-set": {
+   "file": "asian-everyday_wet-bath-set.webp",
+   "fp": "80f928b112d5ecbe"
+  },
+  "banquette-corner": {
+   "file": "banquette-corner.webp",
+   "fp": "a78a0d640f5b22d8"
+  },
+  "bar-cart": {
+   "file": "bar-cart.webp",
+   "fp": "2403f774685b0689"
+  },
+  "bar-stool": {
+   "file": "bar-stool.webp",
+   "fp": "fbb22fa8d938b2c2"
+  },
+  "bar-table": {
+   "file": "bar-table.webp",
+   "fp": "7d46fe07b553c0c2"
+  },
+  "basin-pedestal": {
+   "file": "basin-pedestal.webp",
+   "fp": "9d65b1b23a2d4b00"
+  },
+  "baskets-wicker": {
+   "file": "baskets-wicker.webp",
+   "fp": "abd1e64ad52d2587"
+  },
+  "bath-mat": {
+   "file": "bath-mat.webp",
+   "fp": "52e41eddd9b8e2cf"
+  },
+  "bathroom-mirror": {
+   "file": "bathroom-mirror.webp",
+   "fp": "60acb70e9c083287"
+  },
+  "bathroom-tall-cabinet": {
+   "file": "bathroom-tall-cabinet.webp",
+   "fp": "273037f79d5cd83c"
+  },
+  "bathtub": {
+   "file": "bathtub.webp",
+   "fp": "6a4dadf512382b3d"
+  },
+  "bathtub-clawfoot": {
+   "file": "bathtub-clawfoot.webp",
+   "fp": "8ab563a93a669353"
+  },
+  "bbq-gas": {
+   "file": "bbq-gas.webp",
+   "fp": "7f064532e02e837a"
+  },
+  "bbq-kettle": {
+   "file": "bbq-kettle.webp",
+   "fp": "af05ffa6796b91aa"
+  },
+  "bean-bag": {
+   "file": "bean-bag.webp",
+   "fp": "7974c4de20748f0d"
+  },
+  "bed-bunk": {
+   "file": "bed-bunk.webp",
+   "fp": "c22dc1b7955115b0"
+  },
+  "bed-canopy": {
+   "file": "bed-canopy.webp",
+   "fp": "eabfca291d3531ff"
+  },
+  "bed-double": {
+   "file": "bed-double.webp",
+   "fp": "d2f06cb45e75e70a"
+  },
+  "bed-king": {
+   "file": "bed-king.webp",
+   "fp": "347dac23f1a22586"
+  },
+  "bed-loft-desk": {
+   "file": "bed-loft-desk.webp",
+   "fp": "58c7eb8980d0e439"
+  },
+  "bed-platform": {
+   "file": "bed-platform.webp",
+   "fp": "97ddb1fc66d5d4a3"
+  },
+  "bed-queen": {
+   "file": "bed-queen.webp",
+   "fp": "7e85d33e83bf99fa"
+  },
+  "bed-race-car": {
+   "file": "bed-race-car.webp",
+   "fp": "dd7ef088f6292d24"
+  },
+  "bed-single": {
+   "file": "bed-single.webp",
+   "fp": "d2ad567ebf0e246b"
+  },
+  "bed-toddler": {
+   "file": "bed-toddler.webp",
+   "fp": "215d67923dffe50d"
+  },
+  "bedroom-collection:bedside-cart": {
+   "file": "bedroom-collection_bedside-cart.webp",
+   "fp": "1198b62c74587e60"
+  },
+  "bedroom-collection:boucle-chaise-longue": {
+   "file": "bedroom-collection_boucle-chaise-longue.webp",
+   "fp": "770b73cb2cf0a022"
+  },
+  "bedroom-collection:cane-nightstand": {
+   "file": "bedroom-collection_cane-nightstand.webp",
+   "fp": "1f2901ee26b30b74"
+  },
+  "bedroom-collection:closet-island": {
+   "file": "bedroom-collection_closet-island.webp",
+   "fp": "4b6afe70c8b58389"
+  },
+  "bedroom-collection:drawer-storage-bed": {
+   "file": "bedroom-collection_drawer-storage-bed.webp",
+   "fp": "0e01f2a1a2622a0f"
+  },
+  "bedroom-collection:floating-nightstand": {
+   "file": "bedroom-collection_floating-nightstand.webp",
+   "fp": "d3350eb0006595fc"
+  },
+  "bedroom-collection:fluted-dresser": {
+   "file": "bedroom-collection_fluted-dresser.webp",
+   "fp": "b6b332f3b1aa323b"
+  },
+  "bedroom-collection:hollywood-vanity": {
+   "file": "bedroom-collection_hollywood-vanity.webp",
+   "fp": "6ee728cbc47c0ee2"
+  },
+  "bedroom-collection:hotel-headboard-bed": {
+   "file": "bedroom-collection_hotel-headboard-bed.webp",
+   "fp": "30cebc6aa06cb2ad"
+  },
+  "bedroom-collection:house-frame-bed": {
+   "file": "bedroom-collection_house-frame-bed.webp",
+   "fp": "fd40a7df67def897"
+  },
+  "bedroom-collection:japandi-glow-bed": {
+   "file": "bedroom-collection_japandi-glow-bed.webp",
+   "fp": "1c61f2470c16e1ce"
+  },
+  "bedroom-collection:layered-blackout-curtains": {
+   "file": "bedroom-collection_layered-blackout-curtains.webp",
+   "fp": "74cf9e163e374161"
+  },
+  "bedroom-collection:lidded-hamper": {
+   "file": "bedroom-collection_lidded-hamper.webp",
+   "fp": "f36d3c361c7b94f8"
+  },
+  "bedroom-collection:lived-in-king-bed": {
+   "file": "bedroom-collection_lived-in-king-bed.webp",
+   "fp": "0f2d50f54927a317"
+  },
+  "bedroom-collection:luggage-rack": {
+   "file": "bedroom-collection_luggage-rack.webp",
+   "fp": "b70cc4b34e570eac"
+  },
+  "bedroom-collection:ottoman-storage-bed": {
+   "file": "bedroom-collection_ottoman-storage-bed.webp",
+   "fp": "00732905a368f156"
+  },
+  "bedroom-collection:sheepskin-rug": {
+   "file": "bedroom-collection_sheepskin-rug.webp",
+   "fp": "5a092ff90552048b"
+  },
+  "bedroom-collection:wingback-channel-bed": {
+   "file": "bedroom-collection_wingback-channel-bed.webp",
+   "fp": "6e1e5666efd793bf"
+  },
+  "bedside-table": {
+   "file": "bedside-table.webp",
+   "fp": "dbc06ddce9b253a4"
+  },
+  "bench": {
+   "file": "bench.webp",
+   "fp": "95dbd6f9b75f62ba"
+  },
+  "bench-bed-end": {
+   "file": "bench-bed-end.webp",
+   "fp": "274d823ab3f4f594"
+  },
+  "bicycle": {
+   "file": "bicycle.webp",
+   "fp": "488f339d328c3c95"
+  },
+  "bidet": {
+   "file": "bidet.webp",
+   "fp": "d1f8b44a886b884f"
+  },
+  "bistro-set": {
+   "file": "bistro-set.webp",
+   "fp": "6b1265cfe5388e15"
+  },
+  "blanket-chest": {
+   "file": "blanket-chest.webp",
+   "fp": "46adb31307978c9d"
+  },
+  "blind-roller": {
+   "file": "blind-roller.webp",
+   "fp": "bda25d0e04606871"
+  },
+  "bookcase": {
+   "file": "bookcase.webp",
+   "fp": "d6082985f15e0904"
+  },
+  "books-stack": {
+   "file": "books-stack.webp",
+   "fp": "877731c9d5d4e3af"
+  },
+  "broom-cupboard": {
+   "file": "broom-cupboard.webp",
+   "fp": "09badc7c5c2486a1"
+  },
+  "cabinets-wardrobes:apothecary-cabinet": {
+   "file": "cabinets-wardrobes_apothecary-cabinet.webp",
+   "fp": "2ed1f9e6177454a3"
+  },
+  "cabinets-wardrobes:bar-cabinet": {
+   "file": "cabinets-wardrobes_bar-cabinet.webp",
+   "fp": "3a3e2bbe5047b11e"
+  },
+  "cabinets-wardrobes:buffet-hutch": {
+   "file": "cabinets-wardrobes_buffet-hutch.webp",
+   "fp": "ad15486f47d73d8b"
+  },
+  "cabinets-wardrobes:cane-sideboard": {
+   "file": "cabinets-wardrobes_cane-sideboard.webp",
+   "fp": "6483cccd8bb3678d"
+  },
+  "cabinets-wardrobes:curio-cabinet-corner": {
+   "file": "cabinets-wardrobes_curio-cabinet-corner.webp",
+   "fp": "c141bce147e31710"
+  },
+  "cabinets-wardrobes:filing-credenza": {
+   "file": "cabinets-wardrobes_filing-credenza.webp",
+   "fp": "1eb82ec3cce0cdbb"
+  },
+  "cabinets-wardrobes:jewelry-armoire": {
+   "file": "cabinets-wardrobes_jewelry-armoire.webp",
+   "fp": "a964bd6f2f890f82"
+  },
+  "cabinets-wardrobes:lingerie-chest": {
+   "file": "cabinets-wardrobes_lingerie-chest.webp",
+   "fp": "f422a0b7c84e4051"
+  },
+  "cabinets-wardrobes:locker-cabinet": {
+   "file": "cabinets-wardrobes_locker-cabinet.webp",
+   "fp": "b0f96434b91016a2"
+  },
+  "cabinets-wardrobes:shoe-cabinet-tall": {
+   "file": "cabinets-wardrobes_shoe-cabinet-tall.webp",
+   "fp": "4578e9cc1b5ac8f8"
+  },
+  "cabinets-wardrobes:storage-cabinet-tall": {
+   "file": "cabinets-wardrobes_storage-cabinet-tall.webp",
+   "fp": "94f3efaa4d1b5ee0"
+  },
+  "cabinets-wardrobes:tallboy": {
+   "file": "cabinets-wardrobes_tallboy.webp",
+   "fp": "2b3b94280392cc64"
+  },
+  "cabinets-wardrobes:vanity-cabinet-wall": {
+   "file": "cabinets-wardrobes_vanity-cabinet-wall.webp",
+   "fp": "b3333cfd9b5a2ab9"
+  },
+  "cabinets-wardrobes:vitrine": {
+   "file": "cabinets-wardrobes_vitrine.webp",
+   "fp": "15487d40ff5e53b7"
+  },
+  "cabinets-wardrobes:walk-in-closet": {
+   "file": "cabinets-wardrobes_walk-in-closet.webp",
+   "fp": "10886f8ee7f883d2"
+  },
+  "cabinets-wardrobes:wall-media-cabinet": {
+   "file": "cabinets-wardrobes_wall-media-cabinet.webp",
+   "fp": "8020e9d78c5a7340"
+  },
+  "cabinets-wardrobes:wardrobe-builtin": {
+   "file": "cabinets-wardrobes_wardrobe-builtin.webp",
+   "fp": "7a610e84cf6cb14c"
+  },
+  "cabinets-wardrobes:wardrobe-corner": {
+   "file": "cabinets-wardrobes_wardrobe-corner.webp",
+   "fp": "4f12e08f7134bbcc"
+  },
+  "cabinets-wardrobes:wardrobe-kids": {
+   "file": "cabinets-wardrobes_wardrobe-kids.webp",
+   "fp": "02d8ddb68af1dd23"
+  },
+  "cabinets-wardrobes:wardrobe-mirrored": {
+   "file": "cabinets-wardrobes_wardrobe-mirrored.webp",
+   "fp": "8a6381d956a37ad9"
+  },
+  "cabinets-wardrobes:wardrobe-open": {
+   "file": "cabinets-wardrobes_wardrobe-open.webp",
+   "fp": "f0d9a84fb57495ee"
+  },
+  "cabinets-wardrobes:wardrobe-sliding": {
+   "file": "cabinets-wardrobes_wardrobe-sliding.webp",
+   "fp": "76752eb32b4a0d6f"
+  },
+  "cafe-dining:cafe-dining-set": {
+   "file": "cafe-dining_cafe-dining-set.webp",
+   "fp": "3a30d1f2b53579dd"
+  },
+  "cafe-dining:cafe-monstera": {
+   "file": "cafe-dining_cafe-monstera.webp",
+   "fp": "7570bda0a265057e"
+  },
+  "cafe-dining:table-caddy": {
+   "file": "cafe-dining_table-caddy.webp",
+   "fp": "807fa3d5ac4a2945"
+  },
+  "candle-set": {
+   "file": "candle-set.webp",
+   "fp": "ba18c7b83f141134"
+  },
+  "ceiling-fan-light": {
+   "file": "ceiling-fan-light.webp",
+   "fp": "830e111ea1978c15"
+  },
+  "ceiling-light": {
+   "file": "ceiling-light.webp",
+   "fp": "eb7f0c0f0ab12559"
+  },
+  "chair-egg": {
+   "file": "chair-egg.webp",
+   "fp": "662e2ca6bbd3667c"
+  },
+  "chair-gaming": {
+   "file": "chair-gaming.webp",
+   "fp": "e460ffe2f8e6f834"
+  },
+  "chair-nursing-glider": {
+   "file": "chair-nursing-glider.webp",
+   "fp": "29b917f0beedd055"
+  },
+  "chair-papasan": {
+   "file": "chair-papasan.webp",
+   "fp": "9b675852cab75051"
+  },
+  "chair-recliner": {
+   "file": "chair-recliner.webp",
+   "fp": "ea364a30ebe8412d"
+  },
+  "chair-rocking": {
+   "file": "chair-rocking.webp",
+   "fp": "d4d0aa44c6c1dbc7"
+  },
+  "chair-slipper": {
+   "file": "chair-slipper.webp",
+   "fp": "dac4bd589205b4fb"
+  },
+  "chandelier": {
+   "file": "chandelier.webp",
+   "fp": "c4aa52718d3d7b5f"
+  },
+  "changing-table": {
+   "file": "changing-table.webp",
+   "fp": "31fde46b0c026c79"
+  },
+  "chess-table": {
+   "file": "chess-table.webp",
+   "fp": "52f4bd92a0621b81"
+  },
+  "china-cabinet": {
+   "file": "china-cabinet.webp",
+   "fp": "51f1d9633d00933d"
+  },
+  "chinese-home:bamboo-steamer-stack": {
+   "file": "chinese-home_bamboo-steamer-stack.webp",
+   "fp": "d89d91c65a04ef7e"
+  },
+  "chinese-home:goldfish-bowl": {
+   "file": "chinese-home_goldfish-bowl.webp",
+   "fp": "a025f05b2f77e135"
+  },
+  "chinese-home:gongfu-tea-table": {
+   "file": "chinese-home_gongfu-tea-table.webp",
+   "fp": "a2b2a445f7ec90ef"
+  },
+  "chinese-home:lucky-bamboo": {
+   "file": "chinese-home_lucky-bamboo.webp",
+   "fp": "122d27486de1a9c6"
+  },
+  "chinese-home:mahjong-table": {
+   "file": "chinese-home_mahjong-table.webp",
+   "fp": "b7cbc7d390e4aac1"
+  },
+  "chinese-home:money-tree": {
+   "file": "chinese-home_money-tree.webp",
+   "fp": "960a8e9ce20ca9c9"
+  },
+  "chinese-home:porcelain-floor-vase": {
+   "file": "chinese-home_porcelain-floor-vase.webp",
+   "fp": "7c3002de02a835bd"
+  },
+  "chinese-home:red-lantern-pair": {
+   "file": "chinese-home_red-lantern-pair.webp",
+   "fp": "70a06ae6b630f9e3"
+  },
+  "chinese-home:round-table-lazy-susan": {
+   "file": "chinese-home_round-table-lazy-susan.webp",
+   "fp": "d65cf460a8fff25b"
+  },
+  "clock-grandfather": {
+   "file": "clock-grandfather.webp",
+   "fp": "b86516d7c16116da"
+  },
+  "clock-wall": {
+   "file": "clock-wall.webp",
+   "fp": "27c923c13b206d2f"
+  },
+  "clothes-rail": {
+   "file": "clothes-rail.webp",
+   "fp": "9e42261409e70587"
+  },
+  "coat-stand": {
+   "file": "coat-stand.webp",
+   "fp": "81f4b1ac4bcc7286"
+  },
+  "coffee-machine": {
+   "file": "coffee-machine.webp",
+   "fp": "dd19a8d2af775be2"
+  },
+  "coffee-table": {
+   "file": "coffee-table.webp",
+   "fp": "0aafade0f0ed766e"
+  },
+  "coffee-table-glass": {
+   "file": "coffee-table-glass.webp",
+   "fp": "3dba87afc84a2eb6"
+  },
+  "coffee-table-round": {
+   "file": "coffee-table-round.webp",
+   "fp": "b82a1ab34ad9ffbc"
+  },
+  "coffee-table-trunk": {
+   "file": "coffee-table-trunk.webp",
+   "fp": "fd71b9ab6f7cd8b2"
+  },
+  "column-round": {
+   "file": "column-round.webp",
+   "fp": "9174d55d6c84eb76"
+  },
+  "column-square": {
+   "file": "column-square.webp",
+   "fp": "d8239f5b3973cbe5"
+  },
+  "computer-tower": {
+   "file": "computer-tower.webp",
+   "fp": "273e5a714791b1c8"
+  },
+  "console-table": {
+   "file": "console-table.webp",
+   "fp": "33cebb9b6413a7e4"
+  },
+  "counter-stool-backed": {
+   "file": "counter-stool-backed.webp",
+   "fp": "3e517b12663d8b7f"
+  },
+  "crib": {
+   "file": "crib.webp",
+   "fp": "763a936609db6dce"
+  },
+  "cube-storage": {
+   "file": "cube-storage.webp",
+   "fp": "e6f70d57bfc8dd3e"
+  },
+  "curtains": {
+   "file": "curtains.webp",
+   "fp": "59869af9fa404922"
+  },
+  "cushion": {
+   "file": "cushion.webp",
+   "fp": "3142b9f28164b200"
+  },
+  "dartboard": {
+   "file": "dartboard.webp",
+   "fp": "98bd04eafd8014b7"
+  },
+  "daybed-trundle": {
+   "file": "daybed-trundle.webp",
+   "fp": "36c1539fd7056635"
+  },
+  "deck-box": {
+   "file": "deck-box.webp",
+   "fp": "35d95ac77b93aa9c"
+  },
+  "decorative-plants:flowers-cherry-blossom": {
+   "file": "decorative-plants_flowers-cherry-blossom.webp",
+   "fp": "f24ae0003b192004"
+  },
+  "decorative-plants:flowers-eucalyptus": {
+   "file": "decorative-plants_flowers-eucalyptus.webp",
+   "fp": "c1d944ff946d2d08"
+  },
+  "decorative-plants:flowers-hyacinth": {
+   "file": "decorative-plants_flowers-hyacinth.webp",
+   "fp": "a079772b77382f3b"
+  },
+  "decorative-plants:flowers-hydrangea": {
+   "file": "decorative-plants_flowers-hydrangea.webp",
+   "fp": "296ab20d1dba092a"
+  },
+  "decorative-plants:flowers-lilies": {
+   "file": "decorative-plants_flowers-lilies.webp",
+   "fp": "04f13fd46e7334bf"
+  },
+  "decorative-plants:flowers-pampas": {
+   "file": "decorative-plants_flowers-pampas.webp",
+   "fp": "805bec1ca6bc55f0"
+  },
+  "decorative-plants:flowers-roses": {
+   "file": "decorative-plants_flowers-roses.webp",
+   "fp": "525437a46fee1254"
+  },
+  "decorative-plants:flowers-sunflowers": {
+   "file": "decorative-plants_flowers-sunflowers.webp",
+   "fp": "bfacf2e9aeec91fa"
+  },
+  "decorative-plants:flowers-tulips": {
+   "file": "decorative-plants_flowers-tulips.webp",
+   "fp": "766339fb58092dc3"
+  },
+  "decorative-plants:flowers-wildflowers": {
+   "file": "decorative-plants_flowers-wildflowers.webp",
+   "fp": "770479711279a587"
+  },
+  "decorative-plants:plant-air-plants-hanging": {
+   "file": "decorative-plants_plant-air-plants-hanging.webp",
+   "fp": "7acb7d5eef5743c1"
+  },
+  "decorative-plants:plant-boston-fern-hanging": {
+   "file": "decorative-plants_plant-boston-fern-hanging.webp",
+   "fp": "78a393eed12fbf75"
+  },
+  "decorative-plants:plant-bottle-garden": {
+   "file": "decorative-plants_plant-bottle-garden.webp",
+   "fp": "106d609113f487f3"
+  },
+  "decorative-plants:plant-hoya-hanging": {
+   "file": "decorative-plants_plant-hoya-hanging.webp",
+   "fp": "521f7de96ec9ee27"
+  },
+  "decorative-plants:plant-ivy-hanging": {
+   "file": "decorative-plants_plant-ivy-hanging.webp",
+   "fp": "13f5919d0fa9f08e"
+  },
+  "decorative-plants:plant-kokedama": {
+   "file": "decorative-plants_plant-kokedama.webp",
+   "fp": "f497a368291bd7cf"
+  },
+  "decorative-plants:plant-living-wall": {
+   "file": "decorative-plants_plant-living-wall.webp",
+   "fp": "29487235d541a851"
+  },
+  "decorative-plants:plant-macrame-hanger": {
+   "file": "decorative-plants_plant-macrame-hanger.webp",
+   "fp": "ccbe8c2270d8a676"
+  },
+  "decorative-plants:plant-moss-frame": {
+   "file": "decorative-plants_plant-moss-frame.webp",
+   "fp": "863ca28bc1105ef7"
+  },
+  "decorative-plants:plant-spider-hanging": {
+   "file": "decorative-plants_plant-spider-hanging.webp",
+   "fp": "b2eb8fe5ac235744"
+  },
+  "decorative-plants:plant-staghorn-fern": {
+   "file": "decorative-plants_plant-staghorn-fern.webp",
+   "fp": "37b10902b750d35b"
+  },
+  "decorative-plants:plant-string-of-pearls": {
+   "file": "decorative-plants_plant-string-of-pearls.webp",
+   "fp": "fa9c02489b0ec829"
+  },
+  "decorative-plants:plant-terrarium-geometric": {
+   "file": "decorative-plants_plant-terrarium-geometric.webp",
+   "fp": "86c05e3815951dd7"
+  },
+  "decorative-plants:plant-terrarium-globe": {
+   "file": "decorative-plants_plant-terrarium-globe.webp",
+   "fp": "b5013d07e32dddc6"
+  },
+  "decorative-plants:plant-wall-planters": {
+   "file": "decorative-plants_plant-wall-planters.webp",
+   "fp": "e3d82d14beffe04a"
+  },
+  "decorative-plants:plant-window-box": {
+   "file": "decorative-plants_plant-window-box.webp",
+   "fp": "e56330bd53ada4ce"
+  },
+  "desk": {
+   "file": "desk.webp",
+   "fp": "852e947f7866d674"
+  },
+  "desk-executive": {
+   "file": "desk-executive.webp",
+   "fp": "16806822ea935334"
+  },
+  "desk-hutch": {
+   "file": "desk-hutch.webp",
+   "fp": "f5dcaa3e6dae238e"
+  },
+  "desk-l-shaped": {
+   "file": "desk-l-shaped.webp",
+   "fp": "09ce5ab087988a45"
+  },
+  "desk-standing": {
+   "file": "desk-standing.webp",
+   "fp": "1bd1dc2cb2a47c74"
+  },
+  "dining-chair": {
+   "file": "dining-chair.webp",
+   "fp": "a15c2e4a20cd8236"
+  },
+  "dining-chair-bentwood": {
+   "file": "dining-chair-bentwood.webp",
+   "fp": "fe89bd0589631dfb"
+  },
+  "dining-chair-shell": {
+   "file": "dining-chair-shell.webp",
+   "fp": "f7b4b30dbf4ae4ee"
+  },
+  "dining-chair-upholstered": {
+   "file": "dining-chair-upholstered.webp",
+   "fp": "5ff549951e68cbfe"
+  },
+  "dining-chair-windsor": {
+   "file": "dining-chair-windsor.webp",
+   "fp": "0cb7009deb8e7a8b"
+  },
+  "dining-table-pedestal": {
+   "file": "dining-table-pedestal.webp",
+   "fp": "a08eb43f93484690"
+  },
+  "dining-table-rect": {
+   "file": "dining-table-rect.webp",
+   "fp": "13666ac772f88875"
+  },
+  "dining-table-round": {
+   "file": "dining-table-round.webp",
+   "fp": "93fb3ab4809d12c0"
+  },
+  "dining-table-trestle": {
+   "file": "dining-table-trestle.webp",
+   "fp": "0d855e3bf3dfbeb0"
+  },
+  "dishwasher": {
+   "file": "dishwasher.webp",
+   "fp": "f153eab044e392b1"
+  },
+  "display-cabinet": {
+   "file": "display-cabinet.webp",
+   "fp": "28e8ea727941e289"
+  },
+  "dollhouse": {
+   "file": "dollhouse.webp",
+   "fp": "2a89897037b05894"
+  },
+  "drawer-unit": {
+   "file": "drawer-unit.webp",
+   "fp": "d3e4f1a8f2326146"
+  },
+  "dresser": {
+   "file": "dresser.webp",
+   "fp": "d118e12892fb3550"
+  },
+  "drum-kit": {
+   "file": "drum-kit.webp",
+   "fp": "65900824d312aae4"
+  },
+  "drying-rack": {
+   "file": "drying-rack.webp",
+   "fp": "8479e6407f8fc2c9"
+  },
+  "easel-painting": {
+   "file": "easel-painting.webp",
+   "fp": "7342a61bf00672cf"
+  },
+  "exercise-bike": {
+   "file": "exercise-bike.webp",
+   "fp": "56985bff591951d1"
+  },
+  "filing-cabinet": {
+   "file": "filing-cabinet.webp",
+   "fp": "1cab7b8886cd8a72"
+  },
+  "fire-pit": {
+   "file": "fire-pit.webp",
+   "fp": "932089671af4a618"
+  },
+  "fireplace": {
+   "file": "fireplace.webp",
+   "fp": "ead76cab5b0f47b2"
+  },
+  "floor-cushion": {
+   "file": "floor-cushion.webp",
+   "fp": "7011869316e088c8"
+  },
+  "floor-fan": {
+   "file": "floor-fan.webp",
+   "fp": "64a36e12fcf58c9e"
+  },
+  "floor-lamp": {
+   "file": "floor-lamp.webp",
+   "fp": "993419eac4344596"
+  },
+  "floor-lamp-arc": {
+   "file": "floor-lamp-arc.webp",
+   "fp": "9f9803410878d6db"
+  },
+  "floor-lamp-tripod": {
+   "file": "floor-lamp-tripod.webp",
+   "fp": "2e5cd8f3373195a6"
+  },
+  "foosball-table": {
+   "file": "foosball-table.webp",
+   "fp": "2a09777697346c63"
+  },
+  "fridge": {
+   "file": "fridge.webp",
+   "fp": "8af099b1d01e0cea"
+  },
+  "fridge-french-door": {
+   "file": "fridge-french-door.webp",
+   "fp": "8f5ee773b0b851b8"
+  },
+  "fruit-bowl": {
+   "file": "fruit-bowl.webp",
+   "fp": "692ca59e8107b1d0"
+  },
+  "game-console": {
+   "file": "game-console.webp",
+   "fp": "cbba4813e5ce28d8"
+  },
+  "garden-bench": {
+   "file": "garden-bench.webp",
+   "fp": "c924aa31d2834da5"
+  },
+  "generic-box": {
+   "file": "generic-box.webp",
+   "fp": "8cb3358d04c432a4"
+  },
+  "generic-cylinder": {
+   "file": "generic-cylinder.webp",
+   "fp": "0fe8c8d441ab456d"
+  },
+  "generic-plinth": {
+   "file": "generic-plinth.webp",
+   "fp": "81d931515ac09bae"
+  },
+  "generic-wall-cabinet": {
+   "file": "generic-wall-cabinet.webp",
+   "fp": "dd7c260bcd8572f9"
+  },
+  "globe-desk": {
+   "file": "globe-desk.webp",
+   "fp": "f2eb965619a8362d"
+  },
+  "guitar-stand": {
+   "file": "guitar-stand.webp",
+   "fp": "5afd9604749703fc"
+  },
+  "hall-tree": {
+   "file": "hall-tree.webp",
+   "fp": "a49cd6f5711b68fb"
+  },
+  "halloween:bat-garland": {
+   "file": "halloween_bat-garland.webp",
+   "fp": "e65b4426e7e5a680"
+  },
+  "halloween:candy-bowl": {
+   "file": "halloween_candy-bowl.webp",
+   "fp": "fb3e8181b8244138"
+  },
+  "halloween:gravestone": {
+   "file": "halloween_gravestone.webp",
+   "fp": "35a581212bc374ae"
+  },
+  "halloween:haunted-candelabra": {
+   "file": "halloween_haunted-candelabra.webp",
+   "fp": "9e79e7c77240c7eb"
+  },
+  "halloween:jack-o-lantern": {
+   "file": "halloween_jack-o-lantern.webp",
+   "fp": "5ded06b856b39b4a"
+  },
+  "halloween:pumpkin-trio": {
+   "file": "halloween_pumpkin-trio.webp",
+   "fp": "a6531d525c18586c"
+  },
+  "halloween:sheet-ghost": {
+   "file": "halloween_sheet-ghost.webp",
+   "fp": "5d509ff1cbeb5139"
+  },
+  "halloween:spider-web": {
+   "file": "halloween_spider-web.webp",
+   "fp": "cc9eccbec6c85d3a"
+  },
+  "halloween:witch-cauldron": {
+   "file": "halloween_witch-cauldron.webp",
+   "fp": "53f407ea8053bea5"
+  },
+  "halloween:witch-hat": {
+   "file": "halloween_witch-hat.webp",
+   "fp": "5a2900b014c6ba66"
+  },
+  "hammock-stand": {
+   "file": "hammock-stand.webp",
+   "fp": "76ad350dc01010e7"
+  },
+  "hanging-egg-chair": {
+   "file": "hanging-egg-chair.webp",
+   "fp": "914fdd8a3ced9760"
+  },
+  "hot-tub": {
+   "file": "hot-tub.webp",
+   "fp": "4612a1dd97a06bd6"
+  },
+  "indoor-plants:plant-african-violet": {
+   "file": "indoor-plants_plant-african-violet.webp",
+   "fp": "0a8495a5a9d053fe"
+  },
+  "indoor-plants:plant-agave": {
+   "file": "indoor-plants_plant-agave.webp",
+   "fp": "136b1dca4a5c2f68"
+  },
+  "indoor-plants:plant-alocasia": {
+   "file": "indoor-plants_plant-alocasia.webp",
+   "fp": "11204beacdbf76bd"
+  },
+  "indoor-plants:plant-aloe": {
+   "file": "indoor-plants_plant-aloe.webp",
+   "fp": "fcde922031ac6e4c"
+  },
+  "indoor-plants:plant-areca-palm": {
+   "file": "indoor-plants_plant-areca-palm.webp",
+   "fp": "16477e64f7151fdd"
+  },
+  "indoor-plants:plant-banana": {
+   "file": "indoor-plants_plant-banana.webp",
+   "fp": "44e8c7a7be9fe768"
+  },
+  "indoor-plants:plant-basil": {
+   "file": "indoor-plants_plant-basil.webp",
+   "fp": "f6c6d235b35dc5b9"
+  },
+  "indoor-plants:plant-bird-of-paradise": {
+   "file": "indoor-plants_plant-bird-of-paradise.webp",
+   "fp": "13aee0f5121a2294"
+  },
+  "indoor-plants:plant-calathea": {
+   "file": "indoor-plants_plant-calathea.webp",
+   "fp": "a763af55cf40ca54"
+  },
+  "indoor-plants:plant-cereus": {
+   "file": "indoor-plants_plant-cereus.webp",
+   "fp": "c283ffc0b65a013e"
+  },
+  "indoor-plants:plant-croton": {
+   "file": "indoor-plants_plant-croton.webp",
+   "fp": "b48155d984b1e429"
+  },
+  "indoor-plants:plant-dracaena": {
+   "file": "indoor-plants_plant-dracaena.webp",
+   "fp": "a06d3e5215c902a1"
+  },
+  "indoor-plants:plant-echeveria-bowl": {
+   "file": "indoor-plants_plant-echeveria-bowl.webp",
+   "fp": "db66842630923991"
+  },
+  "indoor-plants:plant-haworthia": {
+   "file": "indoor-plants_plant-haworthia.webp",
+   "fp": "7cbe534da018119e"
+  },
+  "indoor-plants:plant-jade": {
+   "file": "indoor-plants_plant-jade.webp",
+   "fp": "9ffbcd0868f660d4"
+  },
+  "indoor-plants:plant-lavender": {
+   "file": "indoor-plants_plant-lavender.webp",
+   "fp": "e2d3792f71f7858a"
+  },
+  "indoor-plants:plant-lemon-tree": {
+   "file": "indoor-plants_plant-lemon-tree.webp",
+   "fp": "71bb5a927c740985"
+  },
+  "indoor-plants:plant-mini-cactus": {
+   "file": "indoor-plants_plant-mini-cactus.webp",
+   "fp": "07d0904bce77a33d"
+  },
+  "indoor-plants:plant-peace-lily": {
+   "file": "indoor-plants_plant-peace-lily.webp",
+   "fp": "fb450856ef86d40e"
+  },
+  "indoor-plants:plant-peperomia": {
+   "file": "indoor-plants_plant-peperomia.webp",
+   "fp": "9456000535bc2063"
+  },
+  "indoor-plants:plant-philodendron": {
+   "file": "indoor-plants_plant-philodendron.webp",
+   "fp": "c9d566126f2851ff"
+  },
+  "indoor-plants:plant-pilea": {
+   "file": "indoor-plants_plant-pilea.webp",
+   "fp": "190466832573b034"
+  },
+  "indoor-plants:plant-rubber": {
+   "file": "indoor-plants_plant-rubber.webp",
+   "fp": "6735281ec071f4a1"
+  },
+  "indoor-plants:plant-schefflera": {
+   "file": "indoor-plants_plant-schefflera.webp",
+   "fp": "df31a96c22e8ceae"
+  },
+  "indoor-plants:plant-weeping-fig": {
+   "file": "indoor-plants_plant-weeping-fig.webp",
+   "fp": "9a147ae6297b92bb"
+  },
+  "indoor-plants:plant-yucca": {
+   "file": "indoor-plants_plant-yucca.webp",
+   "fp": "dda25e017c7d7d1d"
+  },
+  "indoor-plants:plant-zz": {
+   "file": "indoor-plants_plant-zz.webp",
+   "fp": "4ddc375cf1f7e8fc"
+  },
+  "ironing-board": {
+   "file": "ironing-board.webp",
+   "fp": "18d6207885bdcce7"
+  },
+  "japanese-home:bath-stool-set": {
+   "file": "japanese-home_bath-stool-set.webp",
+   "fp": "b15de21ae59fc550"
+  },
+  "japanese-home:bonsai-tree": {
+   "file": "japanese-home_bonsai-tree.webp",
+   "fp": "e64afd2bc98a74ac"
+  },
+  "japanese-home:chabudai": {
+   "file": "japanese-home_chabudai.webp",
+   "fp": "47f3527eac0aed70"
+  },
+  "japanese-home:futon-shikibuton": {
+   "file": "japanese-home_futon-shikibuton.webp",
+   "fp": "062cf2a3c3d246cd"
+  },
+  "japanese-home:getabako": {
+   "file": "japanese-home_getabako.webp",
+   "fp": "c813c6c6106c0b61"
+  },
+  "japanese-home:ikebana": {
+   "file": "japanese-home_ikebana.webp",
+   "fp": "54208efdea9856b0"
+  },
+  "japanese-home:japanese-tea-set": {
+   "file": "japanese-home_japanese-tea-set.webp",
+   "fp": "dfe5cdb84d1704de"
+  },
+  "japanese-home:kotatsu": {
+   "file": "japanese-home_kotatsu.webp",
+   "fp": "b211385213a5b4ef"
+  },
+  "japanese-home:maneki-neko": {
+   "file": "japanese-home_maneki-neko.webp",
+   "fp": "869ca7eec15c67d2"
+  },
+  "japanese-home:noren-curtain": {
+   "file": "japanese-home_noren-curtain.webp",
+   "fp": "673a01af8b11dbdc"
+  },
+  "japanese-home:ofuro-tub": {
+   "file": "japanese-home_ofuro-tub.webp",
+   "fp": "e1e167a8d838feb8"
+  },
+  "japanese-home:zabuton-cushion": {
+   "file": "japanese-home_zabuton-cushion.webp",
+   "fp": "532b10e19eaeacba"
+  },
+  "japanese-home:zaisu-chair": {
+   "file": "japanese-home_zaisu-chair.webp",
+   "fp": "20db8d7479940c45"
+  },
+  "kettle": {
+   "file": "kettle.webp",
+   "fp": "7b151c7bb5371fc7"
+  },
+  "keyboard-stand": {
+   "file": "keyboard-stand.webp",
+   "fp": "f2b28be36a0292b6"
+  },
+  "kids-book-display": {
+   "file": "kids-book-display.webp",
+   "fp": "0acf3b32af84ef6c"
+  },
+  "kids-easel": {
+   "file": "kids-easel.webp",
+   "fp": "6ccb36e435a07ecd"
+  },
+  "kids-table-set": {
+   "file": "kids-table-set.webp",
+   "fp": "735af31fc650c67b"
+  },
+  "kitchen-base-cabinet": {
+   "file": "kitchen-base-cabinet.webp",
+   "fp": "72a89fa25a8f953d"
+  },
+  "kitchen-collection:appliance-garage": {
+   "file": "kitchen-collection_appliance-garage.webp",
+   "fp": "09c4365c30a25221"
+  },
+  "kitchen-collection:base-drawer-unit": {
+   "file": "kitchen-collection_base-drawer-unit.webp",
+   "fp": "d25d8baadfebc83c"
+  },
+  "kitchen-collection:base-glass-wall-unit": {
+   "file": "kitchen-collection_base-glass-wall-unit.webp",
+   "fp": "5c299423647df85f"
+  },
+  "kitchen-collection:base-handleless": {
+   "file": "kitchen-collection_base-handleless.webp",
+   "fp": "7fdf06a78bd83165"
+  },
+  "kitchen-collection:breakfast-nook-table": {
+   "file": "kitchen-collection_breakfast-nook-table.webp",
+   "fp": "0d31b3249285a914"
+  },
+  "kitchen-collection:butcher-block-cart": {
+   "file": "kitchen-collection_butcher-block-cart.webp",
+   "fp": "39042f0edd0b4d73"
+  },
+  "kitchen-collection:dish-drying-rack": {
+   "file": "kitchen-collection_dish-drying-rack.webp",
+   "fp": "15a37d050786b2a2"
+  },
+  "kitchen-collection:hob-gas": {
+   "file": "kitchen-collection_hob-gas.webp",
+   "fp": "506522465fb56c77"
+  },
+  "kitchen-collection:hob-induction": {
+   "file": "kitchen-collection_hob-induction.webp",
+   "fp": "a955d156e1cde56e"
+  },
+  "kitchen-collection:hood-island": {
+   "file": "kitchen-collection_hood-island.webp",
+   "fp": "c36cbfad6d96b136"
+  },
+  "kitchen-collection:island-breakfast": {
+   "file": "kitchen-collection_island-breakfast.webp",
+   "fp": "7c80287b741d42cf"
+  },
+  "kitchen-collection:kitchen-bin": {
+   "file": "kitchen-collection_kitchen-bin.webp",
+   "fp": "dbd3e096b3ba85ec"
+  },
+  "kitchen-collection:knife-strip": {
+   "file": "kitchen-collection_knife-strip.webp",
+   "fp": "767ccb85cde974bf"
+  },
+  "kitchen-collection:open-corner-shelves": {
+   "file": "kitchen-collection_open-corner-shelves.webp",
+   "fp": "fb99fdd4cbe03b96"
+  },
+  "kitchen-collection:oven-microwave-tower": {
+   "file": "kitchen-collection_oven-microwave-tower.webp",
+   "fp": "0b76994fedb274c8"
+  },
+  "kitchen-collection:pantry-pullout": {
+   "file": "kitchen-collection_pantry-pullout.webp",
+   "fp": "e6f29541d95036d7"
+  },
+  "kitchen-collection:pantry-shelving": {
+   "file": "kitchen-collection_pantry-shelving.webp",
+   "fp": "23456dd515a52b49"
+  },
+  "kitchen-collection:plate-rack": {
+   "file": "kitchen-collection_plate-rack.webp",
+   "fp": "e9729fd8ffed089f"
+  },
+  "kitchen-collection:pot-rail": {
+   "file": "kitchen-collection_pot-rail.webp",
+   "fp": "76dbf63f91a71c7a"
+  },
+  "kitchen-collection:sink-base-farmhouse": {
+   "file": "kitchen-collection_sink-base-farmhouse.webp",
+   "fp": "07f2d25e121c2b12"
+  },
+  "kitchen-collection:sink-double": {
+   "file": "kitchen-collection_sink-double.webp",
+   "fp": "d08eebbaa4379733"
+  },
+  "kitchen-collection:spice-rack": {
+   "file": "kitchen-collection_spice-rack.webp",
+   "fp": "92adf5d86dcf559e"
+  },
+  "kitchen-collection:wall-corner-unit": {
+   "file": "kitchen-collection_wall-corner-unit.webp",
+   "fp": "f450e93cd401db2e"
+  },
+  "kitchen-cooktop": {
+   "file": "kitchen-cooktop.webp",
+   "fp": "c5b591af0d7ca942"
+  },
+  "kitchen-corner-cabinet": {
+   "file": "kitchen-corner-cabinet.webp",
+   "fp": "3fd0cb7e118fb437"
+  },
+  "kitchen-island": {
+   "file": "kitchen-island.webp",
+   "fp": "39c4ed7be2f53889"
+  },
+  "kitchen-open-shelf": {
+   "file": "kitchen-open-shelf.webp",
+   "fp": "5eb51d3862b675b1"
+  },
+  "kitchen-oven-tower": {
+   "file": "kitchen-oven-tower.webp",
+   "fp": "addcc26cb787d262"
+  },
+  "kitchen-sink-unit": {
+   "file": "kitchen-sink-unit.webp",
+   "fp": "3e3e79ec3bf27438"
+  },
+  "kitchen-tall-cabinet": {
+   "file": "kitchen-tall-cabinet.webp",
+   "fp": "ae482a1b2ddab0b7"
+  },
+  "kitchen-trolley": {
+   "file": "kitchen-trolley.webp",
+   "fp": "b7e9766f1176fc9e"
+  },
+  "kitchen-wall-cabinet": {
+   "file": "kitchen-wall-cabinet.webp",
+   "fp": "e2ae5431d6eea766"
+  },
+  "korean-home:hanji-lamp": {
+   "file": "korean-home_hanji-lamp.webp",
+   "fp": "f57b022e19c8f5e0"
+  },
+  "korean-home:kbbq-table": {
+   "file": "korean-home_kbbq-table.webp",
+   "fp": "2b9f22fc5e8b88c3"
+  },
+  "korean-home:kimchi-fridge": {
+   "file": "korean-home_kimchi-fridge.webp",
+   "fp": "16ccc72a3fe5c26c"
+  },
+  "lantern-outdoor": {
+   "file": "lantern-outdoor.webp",
+   "fp": "0be28c0e20ee359f"
+  },
+  "laptop": {
+   "file": "laptop.webp",
+   "fp": "3db72fe13114211b"
+  },
+  "laundry-basket": {
+   "file": "laundry-basket.webp",
+   "fp": "9821339b2a3450ed"
+  },
+  "lava-lamp": {
+   "file": "lava-lamp.webp",
+   "fp": "b71ea44827caddb0"
+  },
+  "lighting-collection:bankers-lamp": {
+   "file": "lighting-collection_bankers-lamp.webp",
+   "fp": "438dc41c803a47cd"
+  },
+  "lighting-collection:bubble-cluster-pendant": {
+   "file": "lighting-collection_bubble-cluster-pendant.webp",
+   "fp": "441f40ca1099e20b"
+  },
+  "lighting-collection:cage-pendant": {
+   "file": "lighting-collection_cage-pendant.webp",
+   "fp": "b7a850a9bbff0667"
+  },
+  "lighting-collection:downlight-set-4": {
+   "file": "lighting-collection_downlight-set-4.webp",
+   "fp": "4f283553e9721279"
+  },
+  "lighting-collection:fabric-drum-flush": {
+   "file": "lighting-collection_fabric-drum-flush.webp",
+   "fp": "6dc1dad164c3e037"
+  },
+  "lighting-collection:festoon-posts": {
+   "file": "lighting-collection_festoon-posts.webp",
+   "fp": "28bd94847b8f8111"
+  },
+  "lighting-collection:globe-floor-lamp": {
+   "file": "lighting-collection_globe-floor-lamp.webp",
+   "fp": "b9fff720c05863c8"
+  },
+  "lighting-collection:halo-ring-pendant": {
+   "file": "lighting-collection_halo-ring-pendant.webp",
+   "fp": "cf21cefe8a5405db"
+  },
+  "lighting-collection:hurricane-lamp": {
+   "file": "lighting-collection_hurricane-lamp.webp",
+   "fp": "e2c694f1007817b8"
+  },
+  "lighting-collection:island-pendant-trio": {
+   "file": "lighting-collection_island-pendant-trio.webp",
+   "fp": "423f0c35a7d2e560"
+  },
+  "lighting-collection:led-panel": {
+   "file": "lighting-collection_led-panel.webp",
+   "fp": "9c286e210f2acb74"
+  },
+  "lighting-collection:linear-wall-washer": {
+   "file": "lighting-collection_linear-wall-washer.webp",
+   "fp": "772c8439c317288d"
+  },
+  "lighting-collection:monorail-spots": {
+   "file": "lighting-collection_monorail-spots.webp",
+   "fp": "3ae580a4a88e0a07"
+  },
+  "lighting-collection:reading-floor-lamp": {
+   "file": "lighting-collection_reading-floor-lamp.webp",
+   "fp": "8d4c4adb86b635f1"
+  },
+  "lighting-collection:recessed-downlight": {
+   "file": "lighting-collection_recessed-downlight.webp",
+   "fp": "e57127ac11f3f76a"
+  },
+  "lighting-collection:sputnik-chandelier": {
+   "file": "lighting-collection_sputnik-chandelier.webp",
+   "fp": "d47f20cf7c6beee3"
+  },
+  "lighting-collection:torchiere": {
+   "file": "lighting-collection_torchiere.webp",
+   "fp": "ee79dd24e8a0145a"
+  },
+  "lighting-collection:under-cabinet-led": {
+   "file": "lighting-collection_under-cabinet-led.webp",
+   "fp": "a8653d2464f78236"
+  },
+  "lighting-collection:up-down-sconce": {
+   "file": "lighting-collection_up-down-sconce.webp",
+   "fp": "f20150c3b04ad90e"
+  },
+  "lighting-collection:vanity-light-bar": {
+   "file": "lighting-collection_vanity-light-bar.webp",
+   "fp": "d83096d85483e805"
+  },
+  "media-console": {
+   "file": "media-console.webp",
+   "fp": "cf76ca3b1c7b686e"
+  },
+  "medicine-cabinet": {
+   "file": "medicine-cabinet.webp",
+   "fp": "89f6d5f1894e1702"
+  },
+  "microwave": {
+   "file": "microwave.webp",
+   "fp": "161c283f2c2fa104"
+  },
+  "mirror-arched": {
+   "file": "mirror-arched.webp",
+   "fp": "729c724d5b9e1f04"
+  },
+  "mirror-floor": {
+   "file": "mirror-floor.webp",
+   "fp": "dadceec3ba859f4e"
+  },
+  "mirror-round": {
+   "file": "mirror-round.webp",
+   "fp": "2b3a8698b6744fcc"
+  },
+  "mirror-sunburst": {
+   "file": "mirror-sunburst.webp",
+   "fp": "69beebf7197edc57"
+  },
+  "monitor": {
+   "file": "monitor.webp",
+   "fp": "cc875c758a83cfca"
+  },
+  "niche-shelf": {
+   "file": "niche-shelf.webp",
+   "fp": "990d6c000b907efb"
+  },
+  "office-chair": {
+   "file": "office-chair.webp",
+   "fp": "842359e397f28195"
+  },
+  "oil-heater": {
+   "file": "oil-heater.webp",
+   "fp": "a70162f4ed3f9024"
+  },
+  "ottoman": {
+   "file": "ottoman.webp",
+   "fp": "a37a0a6db2b6a82e"
+  },
+  "outdoor-sofa": {
+   "file": "outdoor-sofa.webp",
+   "fp": "478aa1848f08003c"
+  },
+  "parasol": {
+   "file": "parasol.webp",
+   "fp": "0c557ef936c460e3"
+  },
+  "partition-glass": {
+   "file": "partition-glass.webp",
+   "fp": "55f99ea2ba30a309"
+  },
+  "partition-slatted": {
+   "file": "partition-slatted.webp",
+   "fp": "e0226869b4ef103a"
+  },
+  "patio-chair": {
+   "file": "patio-chair.webp",
+   "fp": "dbd2e30ceceb59cb"
+  },
+  "patio-table": {
+   "file": "patio-table.webp",
+   "fp": "297d1f9d54d004b7"
+  },
+  "pendant-globe-cluster": {
+   "file": "pendant-globe-cluster.webp",
+   "fp": "c4a30cd99eec2fe0"
+  },
+  "pendant-lamp": {
+   "file": "pendant-lamp.webp",
+   "fp": "c3257aa669998ca3"
+  },
+  "pendant-linear": {
+   "file": "pendant-linear.webp",
+   "fp": "60fd8e6688109952"
+  },
+  "pendant-rattan": {
+   "file": "pendant-rattan.webp",
+   "fp": "d3a3ee96335cf394"
+  },
+  "piano-grand": {
+   "file": "piano-grand.webp",
+   "fp": "0cf6e8230a2cacf1"
+  },
+  "piano-upright": {
+   "file": "piano-upright.webp",
+   "fp": "4a8103900dc592b1"
+  },
+  "picnic-table": {
+   "file": "picnic-table.webp",
+   "fp": "e21285712886d39b"
+  },
+  "picture-light": {
+   "file": "picture-light.webp",
+   "fp": "b83fb864c8b7ee92"
+  },
+  "pinboard": {
+   "file": "pinboard.webp",
+   "fp": "b4bd5682afb10215"
+  },
+  "plant-cactus": {
+   "file": "plant-cactus.webp",
+   "fp": "882c6387355794b7"
+  },
+  "plant-fiddle-leaf": {
+   "file": "plant-fiddle-leaf.webp",
+   "fp": "e694bec38f682569"
+  },
+  "plant-hanging-pothos": {
+   "file": "plant-hanging-pothos.webp",
+   "fp": "00fe2b494349d37c"
+  },
+  "plant-kentia-palm": {
+   "file": "plant-kentia-palm.webp",
+   "fp": "3a18b58496064504"
+  },
+  "plant-large": {
+   "file": "plant-large.webp",
+   "fp": "bca29238ff92f7e3"
+  },
+  "plant-monstera": {
+   "file": "plant-monstera.webp",
+   "fp": "6753095e8719a58d"
+  },
+  "plant-olive-tree": {
+   "file": "plant-olive-tree.webp",
+   "fp": "3839a7b75903f11c"
+  },
+  "plant-orchid": {
+   "file": "plant-orchid.webp",
+   "fp": "f34587ab9469fe9c"
+  },
+  "plant-potted": {
+   "file": "plant-potted.webp",
+   "fp": "ff6e3971bc07f209"
+  },
+  "plant-snake": {
+   "file": "plant-snake.webp",
+   "fp": "3a5524f1c7c7c747"
+  },
+  "plant-succulents": {
+   "file": "plant-succulents.webp",
+   "fp": "566507b265669b2f"
+  },
+  "planter-herbs": {
+   "file": "planter-herbs.webp",
+   "fp": "e06250a595cd771d"
+  },
+  "play-kitchen": {
+   "file": "play-kitchen.webp",
+   "fp": "9d311c7b4874e6c0"
+  },
+  "play-mat": {
+   "file": "play-mat.webp",
+   "fp": "5c34ee5a8f6dc9c6"
+  },
+  "play-teepee": {
+   "file": "play-teepee.webp",
+   "fp": "4f8083ef1527d23f"
+  },
+  "pool-table": {
+   "file": "pool-table.webp",
+   "fp": "e3fc8f7f32648e02"
+  },
+  "potted-bay-tree": {
+   "file": "potted-bay-tree.webp",
+   "fp": "31f7a7e67da1983e"
+  },
+  "pouf-round": {
+   "file": "pouf-round.webp",
+   "fp": "1f4df10533fe29be"
+  },
+  "printer": {
+   "file": "printer.webp",
+   "fp": "77f5a43847c9e174"
+  },
+  "projection-screen": {
+   "file": "projection-screen.webp",
+   "fp": "7dc269582671982d"
+  },
+  "projector-ceiling": {
+   "file": "projector-ceiling.webp",
+   "fp": "e8748c9528deb197"
+  },
+  "punching-bag": {
+   "file": "punching-bag.webp",
+   "fp": "92330cb893cb4cbd"
+  },
+  "radiator": {
+   "file": "radiator.webp",
+   "fp": "d415873823247a8e"
+  },
+  "radio-retro": {
+   "file": "radio-retro.webp",
+   "fp": "56369c0ceadaaafa"
+  },
+  "range-cooker": {
+   "file": "range-cooker.webp",
+   "fp": "bda74d0b0eb6ffa4"
+  },
+  "range-hood": {
+   "file": "range-hood.webp",
+   "fp": "de2835c0008523dc"
+  },
+  "robot-vacuum": {
+   "file": "robot-vacuum.webp",
+   "fp": "175d172b533a1281"
+  },
+  "rocking-horse": {
+   "file": "rocking-horse.webp",
+   "fp": "30700147f0046c5b"
+  },
+  "rug-rect": {
+   "file": "rug-rect.webp",
+   "fp": "0dbb5fdd4fa00e6e"
+  },
+  "rug-round": {
+   "file": "rug-round.webp",
+   "fp": "e34437ac51429ad0"
+  },
+  "rug-runner": {
+   "file": "rug-runner.webp",
+   "fp": "a93103fafbb00d7b"
+  },
+  "screen-folding": {
+   "file": "screen-folding.webp",
+   "fp": "9f6d0b2fe0525c89"
+  },
+  "sculpture-abstract": {
+   "file": "sculpture-abstract.webp",
+   "fp": "d5f27b4c3055b75a"
+  },
+  "sewing-table": {
+   "file": "sewing-table.webp",
+   "fp": "1d510be24cf8b3b1"
+  },
+  "shelf-ladder": {
+   "file": "shelf-ladder.webp",
+   "fp": "463ae36615ca9479"
+  },
+  "shelving-unit": {
+   "file": "shelving-unit.webp",
+   "fp": "3c253ede0c5b78b0"
+  },
+  "shelving:bath-wall-shelf": {
+   "file": "shelving_bath-wall-shelf.webp",
+   "fp": "c200a581c9cea3ff"
+  },
+  "shelving:book-ladder-library": {
+   "file": "shelving_book-ladder-library.webp",
+   "fp": "b77e65f4c4be5382"
+  },
+  "shelving:bookcase-barrister": {
+   "file": "shelving_bookcase-barrister.webp",
+   "fp": "ea5096a187b43eff"
+  },
+  "shelving:bookcase-low": {
+   "file": "shelving_bookcase-low.webp",
+   "fp": "55b8ecfb8b286666"
+  },
+  "shelving:bookcase-revolving": {
+   "file": "shelving_bookcase-revolving.webp",
+   "fp": "dabf7a3c82c9aab6"
+  },
+  "shelving:bookcase-wall": {
+   "file": "shelving_bookcase-wall.webp",
+   "fp": "25349ff264b9d362"
+  },
+  "shelving:corner-shelf": {
+   "file": "shelving_corner-shelf.webp",
+   "fp": "e8b3bf65d94e0278"
+  },
+  "shelving:display-ledges": {
+   "file": "shelving_display-ledges.webp",
+   "fp": "533f44ab24d4dac2"
+  },
+  "shelving:floating-shelf-set": {
+   "file": "shelving_floating-shelf-set.webp",
+   "fp": "b42672fd49ed755d"
+  },
+  "shelving:grid-wall-shelving": {
+   "file": "shelving_grid-wall-shelving.webp",
+   "fp": "bae4a452cd052677"
+  },
+  "shelving:hat-shelf": {
+   "file": "shelving_hat-shelf.webp",
+   "fp": "6b6f953b56754f13"
+  },
+  "shelving:kids-cubby-shelf": {
+   "file": "shelving_kids-cubby-shelf.webp",
+   "fp": "d64eda6946719cd5"
+  },
+  "shelving:laundry-shelf": {
+   "file": "shelving_laundry-shelf.webp",
+   "fp": "e92c127959f0d9b6"
+  },
+  "shelving:metal-utility-shelving": {
+   "file": "shelving_metal-utility-shelving.webp",
+   "fp": "71a767ec701573c8"
+  },
+  "shelving:office-shelving": {
+   "file": "shelving_office-shelving.webp",
+   "fp": "6cb69fae0723d1d3"
+  },
+  "shelving:over-toilet-shelf": {
+   "file": "shelving_over-toilet-shelf.webp",
+   "fp": "eec61c475f7e4e35"
+  },
+  "shelving:pegboard": {
+   "file": "shelving_pegboard.webp",
+   "fp": "052f22bb657347aa"
+  },
+  "shelving:pipe-shelf": {
+   "file": "shelving_pipe-shelf.webp",
+   "fp": "90d99e2faafdf0a1"
+  },
+  "shelving:plant-stand-tiered": {
+   "file": "shelving_plant-stand-tiered.webp",
+   "fp": "cff7abebe9b38cc2"
+  },
+  "shelving:shower-caddy": {
+   "file": "shelving_shower-caddy.webp",
+   "fp": "f4efbbe5137fca6f"
+  },
+  "shelving:wall-cubbies": {
+   "file": "shelving_wall-cubbies.webp",
+   "fp": "ac2cbd17b57d09e6"
+  },
+  "shelving:wine-shelf-wall": {
+   "file": "shelving_wine-shelf-wall.webp",
+   "fp": "e7b91ff349054efa"
+  },
+  "shoe-cabinet": {
+   "file": "shoe-cabinet.webp",
+   "fp": "f28f2481061c91fe"
+  },
+  "shower-tray": {
+   "file": "shower-tray.webp",
+   "fp": "080cd9430394eeed"
+  },
+  "shower-walk-in": {
+   "file": "shower-walk-in.webp",
+   "fp": "8ebffc4194bb23e6"
+  },
+  "side-table": {
+   "file": "side-table.webp",
+   "fp": "1824387f93596fa4"
+  },
+  "sideboard": {
+   "file": "sideboard.webp",
+   "fp": "8a3b55dd14043334"
+  },
+  "smart-speaker": {
+   "file": "smart-speaker.webp",
+   "fp": "a1257507c378ee28"
+  },
+  "sofa-3-seat": {
+   "file": "sofa-3-seat.webp",
+   "fp": "79145f52d5b85665"
+  },
+  "sofa-bed-futon": {
+   "file": "sofa-bed-futon.webp",
+   "fp": "e6072c4d9fe103ba"
+  },
+  "sofa-chesterfield": {
+   "file": "sofa-chesterfield.webp",
+   "fp": "50929a8f79d7f46d"
+  },
+  "sofa-corner-l": {
+   "file": "sofa-corner-l.webp",
+   "fp": "4cc6afe24717be73"
+  },
+  "sofa-loveseat": {
+   "file": "sofa-loveseat.webp",
+   "fp": "6804bd91246a79a2"
+  },
+  "sofa-mid-century": {
+   "file": "sofa-mid-century.webp",
+   "fp": "2cfa89cdef4b7898"
+  },
+  "soffit-box": {
+   "file": "soffit-box.webp",
+   "fp": "4eb22833da11227c"
+  },
+  "soundbar": {
+   "file": "soundbar.webp",
+   "fp": "af51df3655de4229"
+  },
+  "speaker-floor": {
+   "file": "speaker-floor.webp",
+   "fp": "b4e6164ad2453197"
+  },
+  "stand-mixer": {
+   "file": "stand-mixer.webp",
+   "fp": "b7db189d92a5800c"
+  },
+  "stick-vacuum": {
+   "file": "stick-vacuum.webp",
+   "fp": "8cd10a37af3f0f9f"
+  },
+  "storage-trunk": {
+   "file": "storage-trunk.webp",
+   "fp": "f00aec600b07aa86"
+  },
+  "sun-lounger": {
+   "file": "sun-lounger.webp",
+   "fp": "4c6e755e2111cbeb"
+  },
+  "table-lamp": {
+   "file": "table-lamp.webp",
+   "fp": "cb1892ea6f9e3c51"
+  },
+  "table-lamp-mushroom": {
+   "file": "table-lamp-mushroom.webp",
+   "fp": "088f4f9e763e470c"
+  },
+  "tables-nesting": {
+   "file": "tables-nesting.webp",
+   "fp": "2a6a3bf822a99482"
+  },
+  "task-lamp": {
+   "file": "task-lamp.webp",
+   "fp": "0448a3ae498b92a3"
+  },
+  "telescope": {
+   "file": "telescope.webp",
+   "fp": "871ea422cf1d38be"
+  },
+  "throw-blanket": {
+   "file": "throw-blanket.webp",
+   "fp": "89a7857d4301ce5a"
+  },
+  "toaster": {
+   "file": "toaster.webp",
+   "fp": "85a759bc3ebf0da8"
+  },
+  "toilet": {
+   "file": "toilet.webp",
+   "fp": "8f393f5e7639e199"
+  },
+  "toilet-roll-stand": {
+   "file": "toilet-roll-stand.webp",
+   "fp": "b17bc21e88d4a39c"
+  },
+  "toilet-wall-hung": {
+   "file": "toilet-wall-hung.webp",
+   "fp": "856ec6cf8ceff689"
+  },
+  "towel-ladder": {
+   "file": "towel-ladder.webp",
+   "fp": "69e84a1d9cf7b24d"
+  },
+  "towel-rail": {
+   "file": "towel-rail.webp",
+   "fp": "bfb7ce6f80a9ee8f"
+  },
+  "toy-blocks": {
+   "file": "toy-blocks.webp",
+   "fp": "0f3e20ad8be04f88"
+  },
+  "toy-chest": {
+   "file": "toy-chest.webp",
+   "fp": "2c29b14e91a35cd2"
+  },
+  "track-spotlights": {
+   "file": "track-spotlights.webp",
+   "fp": "2bc83e7fda004df3"
+  },
+  "tray-decor": {
+   "file": "tray-decor.webp",
+   "fp": "7b09d9ed257d0e36"
+  },
+  "treadmill": {
+   "file": "treadmill.webp",
+   "fp": "3cd000ae3f6c07c7"
+  },
+  "tumble-dryer": {
+   "file": "tumble-dryer.webp",
+   "fp": "c584df617ae1d01f"
+  },
+  "turntable": {
+   "file": "turntable.webp",
+   "fp": "f9a874e7e4b96ed6"
+  },
+  "tv-stand": {
+   "file": "tv-stand.webp",
+   "fp": "48c47d15a8ae510e"
+  },
+  "tv-wall": {
+   "file": "tv-wall.webp",
+   "fp": "93a90f23d002500a"
+  },
+  "umbrella-stand": {
+   "file": "umbrella-stand.webp",
+   "fp": "92d412450cc5af8c"
+  },
+  "utility-sink": {
+   "file": "utility-sink.webp",
+   "fp": "f2aa76a33e46cd67"
+  },
+  "valet-stand": {
+   "file": "valet-stand.webp",
+   "fp": "4fc3c9a6dbbb7e4f"
+  },
+  "vanity-basin": {
+   "file": "vanity-basin.webp",
+   "fp": "6cca63305ca101da"
+  },
+  "vanity-double": {
+   "file": "vanity-double.webp",
+   "fp": "5aec4db3078439ee"
+  },
+  "vanity-dressing-table": {
+   "file": "vanity-dressing-table.webp",
+   "fp": "d9fddaa10e81139f"
+  },
+  "vase": {
+   "file": "vase.webp",
+   "fp": "066949f85a71f633"
+  },
+  "vietnamese-home:bamboo-blind": {
+   "file": "vietnamese-home_bamboo-blind.webp",
+   "fp": "99bd5c800a684c40"
+  },
+  "vietnamese-home:folding-hammock": {
+   "file": "vietnamese-home_folding-hammock.webp",
+   "fp": "090c4ca6a3e2ca96"
+  },
+  "vietnamese-home:honda-scooter": {
+   "file": "vietnamese-home_honda-scooter.webp",
+   "fp": "035fc47d7a8acf9e"
+  },
+  "vietnamese-home:kumquat-tree": {
+   "file": "vietnamese-home_kumquat-tree.webp",
+   "fp": "c800ccb5ca9e7e3d"
+  },
+  "vietnamese-home:lacquer-painting": {
+   "file": "vietnamese-home_lacquer-painting.webp",
+   "fp": "f0ca49b4f1b898ce"
+  },
+  "vietnamese-home:lotus-pond-bowl": {
+   "file": "vietnamese-home_lotus-pond-bowl.webp",
+   "fp": "b140af24d938836d"
+  },
+  "vietnamese-home:low-plastic-table": {
+   "file": "vietnamese-home_low-plastic-table.webp",
+   "fp": "f1fe43bcb6271713"
+  },
+  "vietnamese-home:non-la-wall": {
+   "file": "vietnamese-home_non-la-wall.webp",
+   "fp": "cc4bd2b35ef880b1"
+  },
+  "vietnamese-home:peach-blossom": {
+   "file": "vietnamese-home_peach-blossom.webp",
+   "fp": "71ae3d0548d29020"
+  },
+  "vietnamese-home:phin-coffee-set": {
+   "file": "vietnamese-home_phin-coffee-set.webp",
+   "fp": "24ddb7d62d8b251b"
+  },
+  "vietnamese-home:plastic-stool-stack": {
+   "file": "vietnamese-home_plastic-stool-stack.webp",
+   "fp": "3fb3c5029008cafa"
+  },
+  "vietnamese-home:thermos-tea-set": {
+   "file": "vietnamese-home_thermos-tea-set.webp",
+   "fp": "e9f679eb050df929"
+  },
+  "wall-hooks": {
+   "file": "wall-hooks.webp",
+   "fp": "f7ff38fd412ec778"
+  },
+  "wall-lamp-swing-arm": {
+   "file": "wall-lamp-swing-arm.webp",
+   "fp": "bce9e98956212e90"
+  },
+  "wall-sconce": {
+   "file": "wall-sconce.webp",
+   "fp": "d00d73da7bf3e27a"
+  },
+  "wall-shelf": {
+   "file": "wall-shelf.webp",
+   "fp": "9c7941d6483ee4c4"
+  },
+  "wardrobe": {
+   "file": "wardrobe.webp",
+   "fp": "3ae063f5c9d0d11e"
+  },
+  "wardrobe-study:wardrobe-study-wall": {
+   "file": "wardrobe-study_wardrobe-study-wall.webp",
+   "fp": "52aaf2a7a5c668a8"
+  },
+  "washer-dryer-stack": {
+   "file": "washer-dryer-stack.webp",
+   "fp": "44be46f05041365c"
+  },
+  "washing-machine": {
+   "file": "washing-machine.webp",
+   "fp": "70e4795de2f60294"
+  },
+  "water-heater": {
+   "file": "water-heater.webp",
+   "fp": "b36dc47e87e04eb4"
+  },
+  "weight-bench": {
+   "file": "weight-bench.webp",
+   "fp": "79ebc91908516905"
+  },
+  "wifi-router": {
+   "file": "wifi-router.webp",
+   "fp": "cf0c67c2bc6f5d74"
+  },
+  "wine-cooler": {
+   "file": "wine-cooler.webp",
+   "fp": "c7c6b7ecf1a36a1e"
+  },
+  "wine-rack": {
+   "file": "wine-rack.webp",
+   "fp": "b2859be31163a079"
+  },
+  "wooden-seating:adirondack-chair": {
+   "file": "wooden-seating_adirondack-chair.webp",
+   "fp": "1c6fdfc8413c1822"
+  },
+  "wooden-seating:cafe-stool-low": {
+   "file": "wooden-seating_cafe-stool-low.webp",
+   "fp": "087b758955e82929"
+  },
+  "wooden-seating:cafe-stool-tall": {
+   "file": "wooden-seating_cafe-stool-tall.webp",
+   "fp": "9e8514f74d7a7010"
+  },
+  "wooden-seating:ladder-back-rush-chair": {
+   "file": "wooden-seating_ladder-back-rush-chair.webp",
+   "fp": "15e7c5b87a23ebc4"
+  },
+  "wooden-seating:mid-century-teak-armchair": {
+   "file": "wooden-seating_mid-century-teak-armchair.webp",
+   "fp": "ae9dd7a7ea6e3cc4"
+  },
+  "wooden-seating:piano-bench-lift-top": {
+   "file": "wooden-seating_piano-bench-lift-top.webp",
+   "fp": "c99680c50571abd0"
+  },
+  "wooden-seating:porch-swing-a-frame": {
+   "file": "wooden-seating_porch-swing-a-frame.webp",
+   "fp": "3f8ab63228b8591a"
+  },
+  "wooden-seating:saddle-seat-bar-stool": {
+   "file": "wooden-seating_saddle-seat-bar-stool.webp",
+   "fp": "aa27fa456f40e2b3"
+  },
+  "wooden-seating:slatted-folding-chair": {
+   "file": "wooden-seating_slatted-folding-chair.webp",
+   "fp": "927a1863fe5ed81a"
+  },
+  "wooden-seating:two-step-stool": {
+   "file": "wooden-seating_two-step-stool.webp",
+   "fp": "de88bcac451c45c8"
+  },
+  "wooden-seating:wooden-high-chair": {
+   "file": "wooden-seating_wooden-high-chair.webp",
+   "fp": "370d25dc8e0f299e"
+  },
+  "wooden-storage:cheval-mirror": {
+   "file": "wooden-storage_cheval-mirror.webp",
+   "fp": "faca2d63946d00ef"
+  },
+  "wooden-storage:crate-shelving": {
+   "file": "wooden-storage_crate-shelving.webp",
+   "fp": "bedaf360a5c71aff"
+  },
+  "wooden-storage:kaidan-dansu": {
+   "file": "wooden-storage_kaidan-dansu.webp",
+   "fp": "b1f47faece932ab8"
+  },
+  "wooden-storage:quilt-rack": {
+   "file": "wooden-storage_quilt-rack.webp",
+   "fp": "1744aa361860fece"
+  },
+  "wooden-storage:rocking-cradle": {
+   "file": "wooden-storage_rocking-cradle.webp",
+   "fp": "d3e65f6784f71284"
+  },
+  "wooden-storage:slat-divider-planter": {
+   "file": "wooden-storage_slat-divider-planter.webp",
+   "fp": "b286b564c3c84802"
+  },
+  "wooden-storage:slatted-shoe-bench": {
+   "file": "wooden-storage_slatted-shoe-bench.webp",
+   "fp": "31f494991d33a3e9"
+  },
+  "wooden-storage:sleigh-bed": {
+   "file": "wooden-storage_sleigh-bed.webp",
+   "fp": "8bc0bb7c338f7d9c"
+  },
+  "wooden-storage:tu-che": {
+   "file": "wooden-storage_tu-che.webp",
+   "fp": "a69551bd6be14c39"
+  },
+  "wooden-storage:wedding-armoire": {
+   "file": "wooden-storage_wedding-armoire.webp",
+   "fp": "09078ffdc819188d"
+  },
+  "wooden-storage:welsh-dresser": {
+   "file": "wooden-storage_welsh-dresser.webp",
+   "fp": "d752b71c317533d3"
+  },
+  "wooden-tables:carpenters-workbench": {
+   "file": "wooden-tables_carpenters-workbench.webp",
+   "fp": "ce37cf038fc1d2ae"
+  },
+  "wooden-tables:extendable-oak-dining-table": {
+   "file": "wooden-tables_extendable-oak-dining-table.webp",
+   "fp": "f32fd2d90619d9a0"
+  },
+  "wooden-tables:gateleg-drop-leaf-table": {
+   "file": "wooden-tables_gateleg-drop-leaf-table.webp",
+   "fp": "2832025fd4031090"
+  },
+  "wooden-tables:indochine-tea-table": {
+   "file": "wooden-tables_indochine-tea-table.webp",
+   "fp": "b4cef26513156888"
+  },
+  "wooden-tables:monkey-pod-slab-coffee-table": {
+   "file": "wooden-tables_monkey-pod-slab-coffee-table.webp",
+   "fp": "8f8265ff9b798465"
+  },
+  "wooden-tables:sawhorse-trestle-desk": {
+   "file": "wooden-tables_sawhorse-trestle-desk.webp",
+   "fp": "8cdf518d5d1dd8e8"
+  },
+  "wooden-tables:teak-tea-trolley": {
+   "file": "wooden-tables_teak-tea-trolley.webp",
+   "fp": "0d830084809c1a15"
+  },
+  "wooden-tables:tripod-tray-table": {
+   "file": "wooden-tables_tripod-tray-table.webp",
+   "fp": "12f5ca2ec15bcc7a"
+  },
+  "wooden-tables:walnut-slab-dining-table": {
+   "file": "wooden-tables_walnut-slab-dining-table.webp",
+   "fp": "739ab859ebf43825"
+  },
+  "wooden-tables:wine-barrel-side-table": {
+   "file": "wooden-tables_wine-barrel-side-table.webp",
+   "fp": "c7c1c4c985109609"
+  },
+  "wooden-tables:writing-bureau": {
+   "file": "wooden-tables_writing-bureau.webp",
+   "fp": "d5e5338c683cdf2f"
+  },
+  "yoga-mat": {
+   "file": "yoga-mat.webp",
+   "fp": "6888e6a6bb73d676"
+  }
+ }
+}

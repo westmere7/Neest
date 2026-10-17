@@ -39,6 +39,7 @@ Then open <http://localhost:5173>. Edits to the source code reload in the browse
 | `npm run build` | Guest runtime, type check and production build into `dist/` (installable PWA, works offline). |
 | `npm run preview` | Serves the production build locally (repo-folder sync works here too). |
 | `npm run format` | Prettier. |
+| `npm run thumbs` | Pre-renders library thumbnails into `public/thumbs/` (headless Chromium). Re-run after adding or changing items; unchanged items are skipped. |
 
 ## Features
 

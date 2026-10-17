@@ -19,11 +19,20 @@ interface PrefRecord {
   value: unknown;
 }
 
+/** A rendered library thumbnail, reused while the asset's fingerprint is unchanged. */
+export interface ThumbRecord {
+  id: string;
+  fp: string;
+  image: Blob;
+  createdAt: number;
+}
+
 class NeestDatabase extends Dexie {
   projectMeta!: Table<ProjectSummary, string>;
   projectDocs!: Table<ProjectDocRecord, string>;
   blobs!: Table<StoredBlob, string>;
   prefs!: Table<PrefRecord, string>;
+  thumbs!: Table<ThumbRecord, string>;
 
   constructor(name = 'neest') {
     super(name);
@@ -33,6 +42,8 @@ class NeestDatabase extends Dexie {
       blobs: 'id, createdAt',
       prefs: 'key',
     });
+    // v2: library thumbnail cache.
+    this.version(2).stores({ thumbs: 'id' });
   }
 }
 

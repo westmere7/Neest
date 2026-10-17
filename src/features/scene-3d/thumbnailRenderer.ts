@@ -45,7 +45,7 @@ function setup(): boolean {
   }
 }
 
-/** Renders a three-quarter view of an asset at its default size. Returns a PNG data URL or null. */
+/** Renders a three-quarter view of an asset at its default size. Returns a WebP (or PNG) data URL or null. */
 export function renderAssetThumbnail(asset: AssetDefinition): string | null {
   if (!setup() || !renderer || !scene) return null;
   const group = buildAssetPreview(asset, null, sharedRegistry);
@@ -62,7 +62,8 @@ export function renderAssetThumbnail(asset: AssetDefinition): string | null {
   scene.add(group);
   renderer.setClearColor(0x000000, 0);
   renderer.render(scene, camera);
-  const url = renderer.domElement.toDataURL('image/png');
+  // WebP keeps stored and shipped thumbnails small; browsers without a WebP encoder return PNG.
+  const url = renderer.domElement.toDataURL('image/webp', 0.86);
   scene.remove(group);
   return url;
 }

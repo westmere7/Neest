@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "textures": "node tools/fetch-textures.mjs"
+    "textures": "node tools/fetch-textures.mjs",
+    "thumbs": "node tools/generate-thumbs.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.5.0",

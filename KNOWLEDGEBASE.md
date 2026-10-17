@@ -56,7 +56,8 @@ run it instead. Never start a Bash command with a bare `cat > file` (it waits fo
 _Prompt/                 Product brief (prompt.md) and its origin (InitialPrompt.txt)
 packs/                   Content packs: one <pack-id>.pack.ts file each (README.md = authoring guide)
 projects/                Shared project folder mirrored by the dev server (README.md explains it)
-public/                  favicon (PWA icon), textures/ (CC0 photo maps + manifest.json, from `npm run textures`)
+public/                  favicon (PWA icon), textures/ (CC0 photo maps + manifest.json, from `npm run textures`),
+                         thumbs/ (pre-rendered library thumbnails + manifest.json, from `npm run thumbs`)
 start-neest.bat          Windows launcher (Node check, npm install, dev server, browser)
 start-neest.command      macOS Finder double-click launcher (invokes start-neest.sh)
 start-neest.sh           macOS/Linux shell launcher (Node check, npm install, dev server, browser)
@@ -64,6 +65,7 @@ tools/
   neest-workspace-plugin.ts  Vite plugin: /__neest/fs endpoints + projects/ watcher (dev & preview only)
   neest-packs-plugin.ts      Vite plugin: hot-reloads the pack loader when /packs files are added/deleted
   fetch-textures.mjs     `npm run textures`: downloads/re-encodes the CC0 photo texture sets (needs sharp, dev dep)
+  generate-thumbs.mjs    `npm run thumbs`: renders every library item in headless Chromium into public/thumbs
 src/
   main.tsx               React root (+ dev debug hooks)
   app/App.tsx            Hash router: #/ launcher, #/p/:id editor, #/guest/:id guest view
@@ -100,7 +102,8 @@ src/
                          sceneRuntime (shared registry, live-scene handle, PNG capture), pathTrace (path-traced
                          renders), customModels (GLB), thumbnailRenderer, useCanvasMeasureFix (R3F workarounds)
     walkthrough/         WalkControls, TouchControls, GuestPage
-    library/             LibraryPanel (Build / Furniture / Materials tabs), thumbnails, ImportModelDialog,
+    library/             LibraryPanel (Build / Furniture / Materials tabs), thumbnails (visible cards only; shipped
+                         file → IndexedDB → render, keyed by thumbFingerprint), ImportModelDialog,
                          useDropAsset
     materials/           MaterialUI (slot rows, picker with apply scopes, library, editor, photo/procedural
                          switch), textureCache (swatches), photoTextures (manifest, image loading, colour maths)

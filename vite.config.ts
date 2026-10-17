@@ -48,6 +48,17 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: { cacheName: 'neest-textures', expiration: { maxEntries: 200 } },
           },
+          // Pre-generated library thumbnails (public/thumbs): cached as cards scroll into view.
+          {
+            urlPattern: ({ url }) => url.pathname.endsWith('/thumbs/manifest.json'),
+            handler: 'NetworkFirst',
+            options: { cacheName: 'neest-thumb-manifest' },
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/thumbs/') && url.pathname.endsWith('.webp'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'neest-thumbs', expiration: { maxEntries: 1500 } },
+          },
         ],
       },
     }),
