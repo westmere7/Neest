@@ -26,8 +26,14 @@ import { pointInPolygon } from '@/domain/geometry/polygon';
 const CELL = 0.4;
 const MAX_CELLS = 96;
 const PROBE_HEIGHT = 1.3;
-/** Bounce added on top of the environment light (which the captures also contain). */
-export const GI_STRENGTH = 0.75;
+/** Bounce added on top of the environment light. */
+export const GI_STRENGTH = 1;
+/**
+ * Colour of the bounce is pushed away from grey by this factor. A probe averages a whole room,
+ * so even a saturated floor only tints it a little; real colour bleeding is strongest next to
+ * the coloured surface, which one probe per room cannot resolve, so the tint is exaggerated.
+ */
+const GI_CHROMA = 1.8;
 
 const TEX_W = MAX_CELLS;
 const TEX_H = 3 * MAX_CELLS + 1;
@@ -72,7 +78,10 @@ vec3 neestGIIrradiance( vec3 viewPos, vec3 viewNormal ) {
 	vec3 c3 = t2.gba;
 	vec3 n = inverseTransformDirection( viewNormal, viewMatrix );
 	vec3 e = c0 * 0.886227 + 1.023328 * ( c1 * n.y + c2 * n.z + c3 * n.x );
-	return max( e, vec3( 0.0 ) ) * strength;
+	e = max( e, vec3( 0.0 ) );
+	float luma = dot( e, vec3( 0.2126, 0.7152, 0.0722 ) );
+	e = max( vec3( luma ) + ( e - vec3( luma ) ) * ${GI_CHROMA.toFixed(2)}, vec3( 0.0 ) );
+	return e * strength;
 }
 #endif
 `;
@@ -83,12 +92,14 @@ vec3 neestGIIrradiance( vec3 viewPos, vec3 viewNormal ) {
  * function in the shader fails to compile. The uniform always points at this module's texture.
  */
 function patchShaders() {
-  if (!THREE.ShaderChunk.lights_pars_begin.includes('neestGIIrradiance')) {
-    THREE.ShaderChunk.lights_pars_begin += GLSL;
-    THREE.ShaderChunk.lights_fragment_maps =
-      `#if defined( RE_IndirectDiffuse ) && defined( STANDARD )\n\tirradiance += neestGIIrradiance( - vViewPosition, geometryNormal );\n#endif\n` +
-      THREE.ShaderChunk.lights_fragment_maps;
-  }
+  // Always rebuilt from three's original chunks (kept on first patch), so a reload of this module
+  // replaces the GI code instead of adding a second copy (which would not compile).
+  const chunks = THREE.ShaderChunk as typeof THREE.ShaderChunk & { __neestOriginal?: { pars: string; maps: string } };
+  chunks.__neestOriginal ??= { pars: chunks.lights_pars_begin, maps: chunks.lights_fragment_maps };
+  chunks.lights_pars_begin = chunks.__neestOriginal.pars + GLSL;
+  chunks.lights_fragment_maps =
+    `#if defined( RE_IndirectDiffuse ) && defined( STANDARD )\n\tirradiance += neestGIIrradiance( - vViewPosition, geometryNormal );\n#endif\n` +
+    chunks.__neestOriginal.maps;
   for (const lib of [THREE.ShaderLib.standard, THREE.ShaderLib.physical]) lib.uniforms.neestGI = { value: GI_TEX };
 }
 patchShaders();
@@ -183,6 +194,11 @@ async function bake(gl: THREE.WebGLRenderer, scene: THREE.Scene, derived: Derive
   });
   hidden.forEach((o) => (o.visible = false));
   const shadowAuto = gl.shadowMap.autoUpdate;
+  // Black background: the probes measure only light bouncing off real surfaces. Ceilings are
+  // usually hidden, and the grey background showing through the open top of every room would
+  // otherwise make up half of each capture and wash the room's colours out.
+  const background = scene.background;
+  scene.background = new THREE.Color(0x000000);
   gl.shadowMap.autoUpdate = false;
   const prevTex = lastData;
   upload(emptyData());
@@ -200,6 +216,7 @@ async function bake(gl: THREE.WebGLRenderer, scene: THREE.Scene, derived: Derive
   } finally {
     rt.dispose();
     gl.shadowMap.autoUpdate = shadowAuto;
+    scene.background = background;
     hidden.forEach((o) => (o.visible = true));
     if (prevTex) upload(prevTex);
   }
