@@ -110,6 +110,11 @@ test('opens the studio sample fitted to the free canvas, shows it in 3D, and exp
   await expect(page.getByTestId('scene-3d').locator('canvas')).toBeVisible();
   await expect.poll(async () => (await snapshot(page))?.workspace).toBe('3d');
 
+  // Back to the plan: headless Chromium renders 3D with software WebGL, which is slow
+  // enough to starve the page while the export panel loads.
+  await page.keyboard.press('1');
+  await expect.poll(async () => (await snapshot(page))?.workspace).toBe('plan');
+
   // The export dialog frame appears at once; the panel loads into it.
   await page.getByTestId('open-export').click();
   await expect(page.getByTestId('export-dialog')).toBeVisible({ timeout: 1000 });
