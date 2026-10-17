@@ -75,6 +75,28 @@ function topButtons(slot: string, x: V2, z: V2, y: number, nx: number, nz: numbe
   return parts;
 }
 
+/**
+ * Horizontal ring at height y with an opening of `gap` radians facing the front. Built from torus
+ * arcs that start on the X/Z axes so their (box) bounds stay tight.
+ */
+function openRing(slot: string, y: number, r: number, tube: number, gap: number): Part[] {
+  const q = Math.PI / 2;
+  const pieces: V3[] =
+    gap <= Math.PI
+      ? [
+          [1, Math.PI, Math.PI],
+          [-1, Math.PI, q - gap / 2],
+          [1, 0, q - gap / 2],
+        ]
+      : [
+          [1, 3 * q, Math.PI - gap / 2],
+          [-1, q, Math.PI - gap / 2],
+        ];
+  return pieces
+    .filter((p) => p[2] > 0.03)
+    .map(([s, c, arc]) => torus(slot, [0, y, 0], r, tube, { rotation: [s * q, 0, c], arc, plan: false }));
+}
+
 /** Small vase / bottle profile (closed lathe) of radius r and height hh. */
 function vaseProfile(r: number, hh: number): V2[] {
   return [
@@ -101,7 +123,7 @@ function bowlProfile(r: number, hh: number): V2[] {
   ];
 }
 
-/** Stack of flat books lying on a surface at y0, centred on (x, z). Returns parts and top height. */
+/** Stack of  flat books lying on a surface at y0, centred on (x, z). */
 function bookStack(slot: string, x: number, z: number, y0: number, w: number, d: number, n: number, seed: number): Part[] {
   const rand = rng(seed);
   const parts: Part[] = [];
@@ -606,10 +628,11 @@ const futon = defineAsset({
       const y = cy + f * L;
       parts.push(...tufts('mattress', [x0 + 0.05, x1 - 0.05], [y, y], faceZ(y) - 0.004, nx, 1, { r: 0.013 }));
     }
+    const ps = clamp(h - (deckY + mt) - 0.08, 0.26, 0.4);
     for (const side of [-1, 1]) {
-      const y = deckY + mt + 0.17;
+      const y = deckY + mt + ps * 0.45;
       parts.push(
-        pillow('mattress', [side * (x1 - 0.26), y, faceZ(y) + 0.07], 0.4, 0.38, 0.14, { lean: 0.35, turn: side * 0.18 }),
+        pillow('mattress', [side * (x1 - ps * 0.65), y, faceZ(y) + 0.07], ps, ps * 0.95, 0.14, { lean: 0.35, turn: side * 0.18 }),
       );
     }
     return parts;
@@ -939,21 +962,14 @@ const eggChair = defineAsset({
       ),
     );
     // Egg shell built from stacked open rings; the opening faces the front and widens upwards.
-    const N = 12;
+    const N = 11;
     for (const i of range(N)) {
       const t = i / (N - 1);
       const y = lerp(y0, y1, t);
       const r = (R - tube) * Math.sqrt(Math.max(0.06, 1 - ((t - 0.35) / 0.7) ** 2));
-      const gap = lerp(2.5, 4.2, t);
-      const rot: V3 = [Math.PI / 2, 0, Math.PI / 2 + gap / 2];
-      parts.push(torus('shell', [0, y, 0], r, tube, { rotation: rot, arc: 2 * Math.PI - gap, plan: false }));
-      parts.push(
-        torus('lining', [0, y, 0], Math.max(0.05, r - tube * 1.3), tube * 0.7, {
-          rotation: rot,
-          arc: 2 * Math.PI - gap,
-          plan: false,
-        }),
-      );
+      const gap = lerp(2.3, 4.2, t);
+      parts.push(...openRing('shell', y, r, tube, gap));
+      parts.push(...openRing('lining', y, Math.max(0.05, r - tube * 1.3), tube * 0.7, gap));
     }
     // Seat cushion with a soft rim and a leaning back cushion.
     parts.push(cyl('lining', [0, seatY + 0.03, 0.02], R * 0.68, 0.07, { segments: 32, plan: false }));
@@ -1502,7 +1518,7 @@ const coffeeTrunk = defineAsset({
         const x: V2 = fx < 0 ? [-w / 2 - 0.002, -w / 2 + 0.045] : [w / 2 - 0.045, w / 2 + 0.002];
         const z: V2 = fz < 0 ? [-zf - 0.002, -zf + 0.045] : [zf - 0.045, zf + 0.002];
         parts.push(span('metal', x, [h - 0.045, h - 0.002], z, { bevel: 0.004, plan: false }));
-        parts.push(span('metal', [x[0] + fx * 0.0, x[1]], [feetH, feetH + 0.045], [z[0], z[1]], { bevel: 0.004, plan: false }));
+        parts.push(span('metal', x, [feetH, feetH + 0.045], z, { bevel: 0.004, plan: false }));
         parts.push(turnedLeg('metal', fx * (w / 2 - 0.05), fz * (zf - 0.05), 0, feetH, 0.03, { style: 'bun' }));
       }
       parts.push(
