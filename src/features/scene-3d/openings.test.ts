@@ -7,8 +7,7 @@ import { isWindowKind, OpeningKindSchema } from '@/domain/model/schema';
 import { addWallChain } from '@/domain/commands/walls';
 import { addOpening } from '@/domain/commands/entities';
 import { computeWallNetwork } from '@/domain/geometry/walls';
-import { buildOpening } from './builders';
-import { infillOutlines, openingShape } from './openingBuilder';
+import { buildOpening, infillOutlines, openingShape } from './openingBuilder';
 import type { MaterialRegistry } from './materialRegistry';
 
 const KINDS = OpeningKindSchema.options as OpeningKind[];

@@ -8,12 +8,12 @@ import {
   buildFloor,
   buildHubGeometry,
   buildObject,
-  buildOpening,
   buildWallGeometry,
   wallMaterials,
   type BuildContext,
 } from '@/features/scene-3d/builders';
 import { buildWallExtras } from '@/features/scene-3d/wallExtras';
+import { buildOpening } from '@/features/scene-3d/openingBuilder';
 import { MaterialRegistry } from '@/features/scene-3d/materialRegistry';
 import { loadProjectModels } from '@/features/scene-3d/customModels';
 

@@ -552,7 +552,7 @@ export function buildAssetPreview(asset: AssetDefinition, project: Project | nul
 
 // ───────────────────────── Openings ─────────────────────────
 
-export { buildOpening } from './openingBuilder';
+// Door/window assemblies live in ./openingBuilder (imported directly by callers, so the two modules don't form an import cycle).
 
 // ───────────────────────── Floors & ceilings ─────────────────────────
 

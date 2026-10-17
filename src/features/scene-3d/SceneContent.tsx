@@ -13,7 +13,6 @@ import {
   buildFloor,
   buildHubGeometry,
   buildObject,
-  buildOpening,
   buildWallGeometry,
   wallGeometryKey,
   wallMaterials,
@@ -22,6 +21,7 @@ import {
 import type { MaterialRegistry } from './materialRegistry';
 import { loadProjectModels } from './customModels';
 import { buildWallExtras, disposeWallExtras, wallExtrasKey, wallHasExtras } from './wallExtras';
+import { buildOpening } from './openingBuilder';
 import { usePackVersion } from '@/packs/events';
 
 export interface SceneOptions {
