@@ -32,6 +32,7 @@ import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
 import { PostEffects } from './PostEffects';
 import { InfiniteGrid } from './InfiniteGrid';
+import { GlobalIllumination } from './globalIllumination';
 import { namedView, presetView, type CameraView, type NamedView } from './cameraViews';
 import { liveScene, sharedRegistry } from './sceneRuntime';
 import { hitsGizmo, TransformGizmo, ToolBridge3D } from './edit3d';
@@ -473,6 +474,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         <color attach="background" args={[r.background]} />
         {!ready && <FirstFrames key={r.quality} onCompiled={onCompiled} onReady={onReady} />}
         <PostEffects quality={r.quality} selectedIds={options.selectedIds} paused={!compiled} />
+        <GlobalIllumination enabled={r.quality === 'ultra' && ready} project={project} derived={derived} />
         {walk || projection === 'perspective' ? (
           <PerspectiveCamera makeDefault position={view?.v.position ?? [10, 10, 10]} fov={walk ? 70 : (view?.v.fov ?? 45)} near={0.05} far={600} />
         ) : (

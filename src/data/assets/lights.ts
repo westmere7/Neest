@@ -74,5 +74,5 @@ export const LAMP_BUDGET = {
   draft: { point: 0, spot: 0, shadows: 0, pointShadows: 0, fullRange: false },
   balanced: { point: 4, spot: 3, shadows: 0, pointShadows: 0, fullRange: false },
   high: { point: 8, spot: 6, shadows: 2, pointShadows: 0, fullRange: false },
-  ultra: { point: 16, spot: 12, shadows: 4, pointShadows: 2, fullRange: true },
+  ultra: { point: 48, spot: 32, shadows: 4, pointShadows: 2, fullRange: true },
 } as const;

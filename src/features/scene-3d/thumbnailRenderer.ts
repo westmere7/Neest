@@ -6,6 +6,7 @@ import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { preloadPhotoSets } from '@/features/materials/photoTextures';
 import { buildAssetPreview } from './builders';
 import { sharedRegistry } from './sceneRuntime';
+import { GI_OFF_Y } from './globalIllumination';
 
 const SIZE = 192;
 
@@ -49,6 +50,9 @@ function setup(): boolean {
 export function renderAssetThumbnail(asset: AssetDefinition): string | null {
   if (!setup() || !renderer || !scene) return null;
   const group = buildAssetPreview(asset, null, sharedRegistry);
+  // Drawn far below the floor, where global illumination never applies.
+  group.position.y += GI_OFF_Y;
+  group.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(group);
   if (box.isEmpty()) return null;
   const center = box.getCenter(new THREE.Vector3());

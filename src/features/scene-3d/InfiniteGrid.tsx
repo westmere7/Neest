@@ -86,7 +86,7 @@ export function InfiniteGrid({ background }: { background: string }) {
     material.uniforms.uFade.value = Math.max(25, camera.position.distanceTo(c) * 2.2);
   });
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, -0.02, 0]} material={material} raycast={() => null} renderOrder={-1}>
+    <mesh name="neest-grid" rotation-x={-Math.PI / 2} position={[0, -0.02, 0]} material={material} raycast={() => null} renderOrder={-1}>
       <planeGeometry args={[2000, 2000]} />
     </mesh>
   );
