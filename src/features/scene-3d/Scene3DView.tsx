@@ -10,6 +10,7 @@ import {
   Footprints,
   Home,
   ImageDown,
+  PanelLeftClose,
   Pencil,
   RefreshCw,
   Save,
@@ -356,6 +357,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
   const chromeHidden = useEditorStore((s) => s.chromeHidden);
   const workspace = useEditorStore((s) => s.workspace);
   const tool = useEditorStore((s) => s.tool);
+  const viewPanelOpen = useEditorStore((s) => s.viewPanelOpen);
   const isMobile = useIsMobile();
   useCanvasMeasureFix();
   const [projection, setProjection] = useState<Projection>('perspective');
@@ -492,7 +494,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
             mouseButtons={
               drawing
                 ? { LEFT: -1 as THREE.MOUSE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.ROTATE }
-                : { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN }
+                : { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN }
             }
           />
         )}
@@ -522,7 +524,8 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
           <div className="pane-loading scene3d-loading">Loading 3D view…</div>
         ))}
       {walk && <WalkHud onExit={exitWalk} isMobile={isMobile} />}
-      {!walk && !chromeHidden && workspace !== 'split' && (
+      {/* Mobile has no tool rail to bring a stashed panel back, so it only collapses there. */}
+      {!walk && !chromeHidden && workspace !== 'split' && (viewPanelOpen || isMobile) && (
         <ViewPanel
           project={project}
           isMobile={isMobile}
@@ -655,7 +658,8 @@ function ViewPanel({
   showHelpers: boolean;
   setShowHelpers: (v: boolean) => void;
 }) {
-  const [open, setOpen] = useState(!isMobile);
+  const [collapsed, setCollapsed] = useState(true);
+  const open = !isMobile || !collapsed;
   const [renaming, setRenaming] = useState<string | null>(null);
   const derived = useMemo(() => derivePlan(project), [project]);
   const r = project.render;
@@ -702,9 +706,21 @@ function ViewPanel({
     <aside className={`view-panel floating${open ? '' : ' collapsed'}${isMobile ? ' mobile' : ''}`} aria-label="3D view settings" data-testid="view-panel">
       <header>
         <h2>3D view</h2>
-        <IconButton label={open ? 'Collapse' : 'Expand'} onClick={() => setOpen(!open)}>
-          {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-        </IconButton>
+        {/* Desktop stashes the whole panel instead; mobile has no rail button to bring it back, so it collapses. */}
+        {isMobile ? (
+          <IconButton label={open ? 'Collapse' : 'Expand'} onClick={() => setCollapsed(open)}>
+            {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          </IconButton>
+        ) : (
+          <IconButton
+            label="Hide panel"
+            shortcut="P"
+            onClick={() => useEditorStore.getState().set({ viewPanelOpen: false })}
+            data-testid="stash-view-panel"
+          >
+            <PanelLeftClose size={15} />
+          </IconButton>
+        )}
       </header>
       <div className="view-quick">
         <IconButton label="Home view" onClick={() => goTo(namedView('home', derived.bounds))} data-testid="view-home">

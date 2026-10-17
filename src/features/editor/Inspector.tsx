@@ -1,10 +1,11 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Lock, RotateCw, Trash2, Unlock, X } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Lock, PanelRightClose, RotateCw, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
 import { isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
 import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
+import { boundsOf, unionBounds, type Bounds } from '@/domain/geometry/vec';
 import { pointAt } from '@/domain/geometry/wallPath';
 import { setWallAngle, setWallLength, splitWallAt, updateWalls, clampOpenings } from '@/domain/commands/walls';
 import { assignMaterial, normalizeRotation, setOpeningDesign, suggestedFloor, updateObjects, updateOpening, updateRoom } from '@/domain/commands/entities';
@@ -13,7 +14,9 @@ import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
 import { getAsset, objectSlotMaterialId } from '@/data/assets/registry';
 import { ASSET_CATEGORY_LABELS } from '@/data/assets/catalog';
 import { useProjectStore } from '@/state/projectStore';
-import { useEditorStore } from '@/state/editorStore';
+import { useEditorStore, type EditorState, type ToolId } from '@/state/editorStore';
+import { renderThumbnail } from '@/features/projects/projectService';
+import { thumbnailSrc } from '@/features/projects/thumbnails';
 import { Button, IconButton, LengthField, NumberField, Section, Select, Slider, TextField, Toggle, Segmented } from '@/components/ui';
 import { MaterialSlotRow } from '@/features/materials/MaterialUI';
 import { deleteSelection, duplicateSelection, flipOpening, reverseWall, rotateSelection, toggleLockSelection, describeSelection } from './actions';
@@ -27,11 +30,19 @@ import { ObjectPreview } from './ObjectPreview';
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
   useProjectStore.getState().execute(label, fn);
 
+/** Drawing tools whose options take the Inspector's place. */
+const TOOLS_WITH_OPTIONS: ToolId[] = ['wall', 'curve', 'room', 'opening'];
+
+/** The Project panel is on screen: switched on, and nothing else claims the Inspector (the walkthrough has no selection). */
+export const projectPanelShown = (s: Pick<EditorState, 'projectPanelOpen' | 'selection' | 'tool' | 'workspace'>) =>
+  s.projectPanelOpen && (s.workspace === 'walk' || (s.selection.length === 0 && !TOOLS_WITH_OPTIONS.includes(s.tool)));
+
 export function Inspector({ isMobile }: { isMobile: boolean }) {
   const project = useProjectStore((s) => s.project!);
   const selection = useEditorStore((s) => s.selection);
   const tool = useEditorStore((s) => s.tool);
   const workspace = useEditorStore((s) => s.workspace);
+  const projectOpen = useEditorStore((s) => s.projectPanelOpen);
   const [collapsed, setCollapsed] = useState(false);
   const derived = useMemo(() => derivePlan(project), [project]);
 
@@ -40,8 +51,12 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
   let actions: ReactNode = null;
   /** Small label above a user-given name (objects, rooms), which then gets its own line below the actions. */
   let eyebrow: string | null = null;
+  // The walkthrough has no selection or tools: only the Project panel can show there.
+  const walk = workspace === 'walk';
 
-  if (selection.length === 1) {
+  if (walk) {
+    // nothing to inspect
+  } else if (selection.length === 1) {
     const s = selection[0];
     if (s.kind === 'wall' && project.walls[s.id]) {
       body = <WallInspector project={project} wallId={s.id} />;
@@ -109,16 +124,20 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
   } else if (tool === 'opening') {
     title = 'Door & window tool';
     body = <OpeningToolOptions />;
-  } else if (!isMobile && workspace !== '3d') {
+  }
+  const isProject = !body && !isMobile && projectOpen;
+  if (isProject) {
     title = 'Project';
     body = <ProjectSummary project={project} derived={derived} />;
   }
 
   if (!body) return null;
   if (isMobile && selection.length === 0) return null;
+  // The Project panel is hidden as a whole (top-bar toggle), never collapsed.
+  const folded = collapsed && !isProject;
 
   return (
-    <aside className={`inspector floating${collapsed ? ' collapsed' : ''}${isMobile ? ' sheet' : ''}`} aria-label="Inspector" data-testid="inspector">
+    <aside className={`inspector floating${folded ? ' collapsed' : ''}${isMobile ? ' sheet' : ''}`} aria-label={isProject ? 'Project overview' : 'Inspector'} data-testid="inspector">
       <header className={`inspector-head${eyebrow ? ' stacked' : ''}`}>
         {eyebrow ? (
           <span className="inspector-eyebrow">{eyebrow}</span>
@@ -126,18 +145,24 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
           <h2 title={title}>{title}</h2>
         )}
         <div className="inspector-actions">
-          {!collapsed && actions}
-          <IconButton
-            label={collapsed ? 'Expand inspector' : 'Collapse inspector'}
-            onClick={() => {
-              // The finish panel belongs to the Inspector's content: collapsing closes it.
-              if (!collapsed) useEditorStore.getState().set({ materialPicker: null });
-              setCollapsed(!collapsed);
-            }}
-          >
-            {collapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
-          </IconButton>
-          {selection.length > 0 && (
+          {!folded && actions}
+          {isProject ? (
+            <IconButton label="Hide project panel" onClick={() => useEditorStore.getState().set({ projectPanelOpen: false })} data-testid="stash-project-panel">
+              <PanelRightClose size={15} />
+            </IconButton>
+          ) : (
+            <IconButton
+              label={collapsed ? 'Expand inspector' : 'Collapse inspector'}
+              onClick={() => {
+                // The finish panel belongs to the Inspector's content: collapsing closes it.
+                if (!collapsed) useEditorStore.getState().set({ materialPicker: null });
+                setCollapsed(!collapsed);
+              }}
+            >
+              {collapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+            </IconButton>
+          )}
+          {!isProject && selection.length > 0 && (
             <IconButton label="Clear selection" shortcut="Esc" onClick={() => useEditorStore.getState().clearSelection()}>
               <X size={15} />
             </IconButton>
@@ -149,7 +174,7 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
           </h2>
         )}
       </header>
-      {!collapsed && <div className="inspector-body">{body}</div>}
+      {!folded && <div className="inspector-body">{body}</div>}
     </aside>
   );
 }
@@ -725,6 +750,20 @@ function OpeningToolOptions() {
 function ProjectSummary({ project, derived }: { project: Project; derived: ReturnType<typeof derivePlan> }) {
   const u = project.settings;
   const total = derived.faces.reduce((s, f) => s + f.area, 0);
+  const walls = [...derived.network.walls.values()];
+  const wallLength = walls.reduce((s, g) => s + g.path.length, 0);
+  // Outer size of the walls only (furniture outside, e.g. on a terrace, does not count).
+  const shell = walls.reduce<Bounds | null>((b, g) => unionBounds(b, boundsOf(g.footprint)), null);
+  const openings = Object.values(project.openings);
+  const windows = openings.filter((o) => isWindowKind(o.kind)).length;
+  const doors = openings.filter((o) => !isWindowKind(o.kind) && !isPassageKind(o.kind)).length;
+  const byCategory = new Map<string, number>();
+  for (const o of Object.values(project.objects)) {
+    const a = getAsset(project, o.assetId);
+    const label = a ? ASSET_CATEGORY_LABELS[a.category] : 'Other';
+    byCategory.set(label, (byCategory.get(label) ?? 0) + 1);
+  }
+  const categories = [...byCategory].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   const setLayer = (layer: keyof Project['layers'], patch: Partial<Project['layers']['construction']>) =>
     exec('Change layer', (d) => {
       Object.assign(d.layers[layer], patch);
@@ -732,6 +771,7 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
   return (
     <>
       <Section title="Overview">
+        <PlanThumb project={project} />
         <dl className="stats num">
           <div>
             <dt>Rooms</dt>
@@ -745,7 +785,27 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
             <dt>Items</dt>
             <dd>{Object.keys(project.objects).length}</dd>
           </div>
+          <div>
+            <dt>Doors</dt>
+            <dd>{doors}</dd>
+          </div>
+          <div>
+            <dt>Windows</dt>
+            <dd>{windows}</dd>
+          </div>
+          <div>
+            <dt>Wall length</dt>
+            <dd>{formatLength(wallLength, u.units, 1)}</dd>
+          </div>
         </dl>
+        {shell && (
+          <div className="list-row static">
+            <span>Overall size</span>
+            <span className="num">
+              {formatLength(shell.maxX - shell.minX, u.units, 2)} × {formatLength(shell.maxY - shell.minY, u.units, 2)}
+            </span>
+          </div>
+        )}
         {derived.faces.length === 0 && Object.keys(project.walls).length === 0 && (
           <div className="empty-hint">
             <strong>Start your plan</strong>
@@ -773,6 +833,18 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
           })}
         </div>
       </Section>
+      {categories.length > 0 && (
+        <Section title="Items by category">
+          <div className="room-list">
+            {categories.map(([label, count]) => (
+              <div key={label} className="list-row static">
+                <span>{label}</span>
+                <span className="num">{count}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
       <Section title="Layers">
         {(
           [
@@ -807,5 +879,21 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
         <Toggle label="Room dimensions" checked={u.dimensions.rooms} onChange={(v) => exec('Toggle dimensions', (d) => void (d.settings.dimensions.rooms = v))} />
       </Section>
     </>
+  );
+}
+
+/** The plan picture from the project card, redrawn shortly after the plan stops changing (drags update it every frame). */
+function PlanThumb({ project }: { project: Project }) {
+  const [thumb, setThumb] = useState(() => ({ project, svg: renderThumbnail(project) }));
+  useEffect(() => {
+    if (thumb.project === project) return;
+    const t = window.setTimeout(() => setThumb({ project, svg: renderThumbnail(project) }), 400);
+    return () => window.clearTimeout(t);
+  }, [project, thumb.project]);
+  if (!thumb.svg) return null;
+  return (
+    <div className="project-thumb">
+      <img src={thumbnailSrc(thumb.svg)} alt="Plan overview" draggable={false} />
+    </div>
   );
 }

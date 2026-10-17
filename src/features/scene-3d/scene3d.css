@@ -25,6 +25,7 @@
 }
 .view-panel h2 {
   font-size: 13.5px;
+  margin-right: auto;
 }
 .view-quick {
   display: flex;

@@ -257,7 +257,7 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   `Save failed`, refreshes the launcher thumbnail lazily (presentation-style SVG, 4 s after the last save).
 - `editorStore`: tool, selection/hover, workspace (`plan | 3d | split | walk`), planMode
   (`draft | furnished | presentation`), snap settings, plan camera, `requestFit()`, measurements, library panel
-  state, `cameraRequest` for 3D views.
+  state, `viewPanelOpen` (desktop 3D view panel shown or stashed), `cameraRequest` for 3D views.
 - After undo/redo `EditorPage` prunes selections pointing at deleted entities.
 
 ## 10. 2D editor (src/features/plan-2d)
@@ -355,7 +355,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   `gl.localClippingEnabled = true` in `Lighting`) so frames and glass never poke above the cut walls.
 - `Scene3DView`: R3F `Canvas`, perspective/orthographic camera switch, OrbitControls, lighting (RoomEnvironment
   PMREM + hemisphere + time-of-day sun with shadows; lamp lights from `LampLights`), view panel (saved views,
-  walls, quality & light, categories).
+  walls, quality & light, categories). On desktop the panel can be stashed (header button or `P`) and brought
+  back with the **View** button the tool rail shows in 3D; mobile only collapses it (there is no rail there).
 - **Lamp lights** (`LampLights.tsx`, `data/assets/lights.ts`): `resolveObjectLights` turns an asset's `light`
   (point/spot, x/y/z offset, `heads`) into world-space lights that scale, mirror and turn with the object. The
   scene mounts a pool per quality, no bigger than the number of fixtures (`LAMP_BUDGET`: Balanced 4 point + 3
@@ -377,7 +378,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **3D editing** (`edit3d.tsx`): `ToolBridge3D` runs the 2D tools in 3D by projecting the pointer onto the floor
   (or wall surfaces for openings/splits) — same snapping, typed input, commands, undo. Previews are 3D
   (translucent wall prisms, the real furniture model as a ghost, opening boxes, split planes, Html labels).
-  While a drafting tool is active, left button belongs to the tool; orbit is right-drag, pan middle-drag.
+  Selecting: left-drag orbits, middle- or right-drag pans, the wheel zooms. While a drafting tool is active, left
+  button belongs to the tool; orbit is right-drag, pan middle-drag.
   `TransformGizmo`: X/Z arrows (slide), Y arrow (elevation, 5 cm steps), centre disc (free floor move), ring
   (rotate, 15° steps; Alt = free). Grid-snapped, live readouts, one undo step per drag. Furniture body drag also
   works (with wall hugging). Library drag-and-drop works onto the 3D canvas.
@@ -679,3 +681,12 @@ Known limitations (also in README):
     and 12 window designs with SVG previews in the Inspector and the Door & window tool (done).
 27. "When selecting material, open a full panel" → desktop finish panel docked beside the Inspector
     (`MaterialPanel`); picks apply and keep it open (done).
+28. "The 3D view panel gets in the way; stash it somewhere easy to reopen" → hide button in the panel header,
+    **View** toggle at the bottom of the 3D tool rail, `P` shortcut (`editorStore.viewPanelOpen`) (done). Follow-up
+    "remove the chevron, the stash is enough" → desktop panel is always expanded; mobile keeps its collapse.
+29. "Project panel toggle in the top bar, for all views, with more info and the plan thumbnail" → the Inspector's
+    empty-selection **Project** panel (`ProjectSummary`) now shows in every workspace incl. Walk while
+    `editorStore.projectPanelOpen`; top-bar toggle (`projectPanelShown`) also clears a selection / drawing tool
+    that holds its place; adds the card thumbnail (`renderThumbnail`, redrawn 400 ms after changes), doors,
+    windows, wall length, overall wall size and items by category (done).
+30. "Middle mouse should drag in 3D" → middle-drag pans in select mode (was dolly; the wheel zooms) (done).

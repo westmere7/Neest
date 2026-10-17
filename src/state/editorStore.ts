@@ -70,6 +70,10 @@ export interface EditorState {
   libraryTab: LibraryTab;
   buildGroup: BuildGroup;
   libraryWidth: number;
+  /** Desktop 3D view settings panel shown; when false it is stashed behind the rail's View button (P). */
+  viewPanelOpen: boolean;
+  /** Project overview in the Inspector's place whenever nothing is selected, in every view (top-bar toggle). */
+  projectPanelOpen: boolean;
   snap: SnapSettings;
   gridVisible: boolean;
   planCamera: PlanCamera;
@@ -116,6 +120,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   libraryTab: 'furniture',
   buildGroup: 'walls',
   libraryWidth: 300,
+  viewPanelOpen: true,
+  projectPanelOpen: true,
   snap: { grid: true, geometry: true, angle: true, guides: true },
   gridVisible: true,
   planCamera: { cx: 0, cy: 0, zoom: 60 },

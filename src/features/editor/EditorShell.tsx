@@ -14,6 +14,7 @@ import {
   Grid2x2,
   Grid3x3,
   Hand,
+  LayoutDashboard,
   LibraryBig,
   Loader2,
   Magnet,
@@ -25,6 +26,7 @@ import {
   Ruler,
   Scissors,
   Settings2,
+  SlidersHorizontal,
   Sofa,
   Spline,
   Square,
@@ -43,7 +45,7 @@ import { Logo } from '@/components/Logo';
 import { navigate } from '@/app/App';
 import { PlanCanvas } from '@/features/plan-2d/PlanCanvas';
 import { LibraryPanel } from '@/features/library/LibraryPanel';
-import { Inspector } from './Inspector';
+import { Inspector, projectPanelShown } from './Inspector';
 import { MaterialPanel } from '@/features/materials/MaterialPanel';
 import { EditorDialogs } from './EditorDialogs';
 import { useEditorShortcuts } from './useShortcuts';
@@ -120,7 +122,8 @@ export function EditorShell() {
           <TopBar isMobile={isMobile} />
           {!isMobile && (showPlan || workspace === '3d') && <ToolRail in3d={workspace === '3d'} />}
           {libraryOpen && workspace !== 'walk' && <LibraryPanel isMobile={isMobile} />}
-          {workspace !== 'walk' && <Inspector isMobile={isMobile} />}
+          {/* In the walkthrough it only shows the Project panel. */}
+          <Inspector isMobile={isMobile} />
           {workspace !== 'walk' && !isMobile && <MaterialPanel />}
           {showPlan && <CanvasControls />}
           {!isMobile && <StatusBar />}
@@ -238,6 +241,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
   const workspace = useEditorStore((s) => s.workspace);
   const planMode = useEditorStore((s) => s.planMode);
   const projectId = useProjectStore((s) => s.project!.id);
+  const projectShown = useEditorStore(projectPanelShown);
   const open = useDialogStore((s) => s.open);
   const current = workspace === 'plan' ? `plan:${planMode}` : workspace;
   const setView = (v: string) => {
@@ -283,6 +287,22 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
           </IconButton>
         </div>
         <div className="topbar-island floating">
+          {!isMobile && (
+            <IconButton
+              label="Project overview"
+              active={projectShown}
+              onClick={() => {
+                const ed = useEditorStore.getState();
+                if (projectShown) return ed.set({ projectPanelOpen: false });
+                // Bring it up even when a selection or a drawing tool's options hold its place.
+                ed.set({ projectPanelOpen: true, selection: [] });
+                if (ed.workspace !== 'walk' && !projectPanelShown(useEditorStore.getState())) ed.setTool('select');
+              }}
+              data-testid="toggle-project-panel"
+            >
+              <LayoutDashboard size={17} />
+            </IconButton>
+          )}
           {!isMobile && (
             <IconButton label="Project settings" onClick={() => open('settings')}>
               <Settings2 size={17} />
@@ -337,6 +357,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
   const libraryTab = useEditorStore((s) => s.libraryTab);
   const buildGroup = useEditorStore((s) => s.buildGroup);
   const openingKind = useEditorStore((s) => s.openingKind);
+  const viewPanelOpen = useEditorStore((s) => s.viewPanelOpen);
   const set = useEditorStore((s) => s.set);
 
   const inFurnitureLib = libraryOpen && (libraryTab === 'furniture' || libraryTab === 'materials');
@@ -477,6 +498,24 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           <span className="rail-btn-label">Measure</span>
         </IconButton>
       </div>
+
+      {/* 3D only: shows or stashes the 3D view settings panel */}
+      {in3d && (
+        <div className="tool-rail-group floating" role="group" aria-label="3D view">
+          <IconButton
+            label="3D view panel"
+            shortcut="P"
+            active={viewPanelOpen}
+            tooltipSide="right"
+            className="rail-labeled-btn"
+            onClick={() => set({ viewPanelOpen: !viewPanelOpen })}
+            data-testid="toggle-view-panel"
+          >
+            <SlidersHorizontal size={18} />
+            <span className="rail-btn-label">View</span>
+          </IconButton>
+        </div>
+      )}
     </nav>
   );
 }

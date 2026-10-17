@@ -498,6 +498,27 @@
 .list-row .num {
   color: var(--text-2);
 }
+/* Project panel: plan picture as on the project card (light paper in both themes), and read-only rows. */
+.project-thumb {
+  height: 150px;
+  border-radius: var(--radius-sm);
+  background: #f6f7f8;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.project-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;
+}
+.list-row.static {
+  cursor: default;
+}
+.list-row.static:hover {
+  background: none;
+}
 .room-list {
   display: flex;
   flex-direction: column;

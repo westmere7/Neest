@@ -44,6 +44,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'G', action: 'Toggle grid' },
   { keys: '1 / 2', action: 'Outline / 2D plan' },
   { keys: '4 / 5', action: '3D view / split view' },
+  { keys: 'P (3D view)', action: 'Show / hide the 3D view panel' },
   { keys: 'Tab or \\', action: 'Hide / show interface' },
   { keys: 'Esc', action: 'Cancel, back to select, clear selection, show interface' },
   { keys: '?', action: 'Show shortcuts' },
@@ -145,6 +146,7 @@ export function useEditorShortcuts(isMobile: boolean) {
       if (key === '2') return ed.set({ workspace: 'plan', planMode: 'furnished' });
       if (key === '4') return ed.set({ workspace: '3d' });
       if (key === '5' && !isMobile) return ed.set({ workspace: 'split' });
+      if (key === 'p' && ed.workspace === '3d' && !isMobile) return ed.set({ viewPanelOpen: !ed.viewPanelOpen });
       const tool = TOOL_SHORTCUTS[key];
       if (tool && editActive) {
         if (isMobile && tool !== 'select' && tool !== 'pan') return;
