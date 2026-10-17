@@ -2,14 +2,17 @@
  * Café dining set — modelled on a Vietnamese café corner: a rustic pine plank table on splayed
  * trestle legs with honey-coloured cross-back bentwood chairs and woven taupe seats, plus the
  * condiment caddy that sits on it (chopstick cup, spoons, napkin box, stacked bowls, brown glazed
- * jars and pottery bottles).
+ * jars and pottery bottles) — and the split-leaf monstera in a weathered terracotta pot that stands
+ * beside it on a cream saucer.
  */
 import {
+  circle,
   clamp,
   cushion,
   defineItem,
   definePack,
   lathe,
+  lerp,
   line,
   matSlot,
   range,
@@ -21,6 +24,7 @@ import {
   sphere,
   vcyl,
   type Part,
+  type V2,
   type V3,
 } from '@/packs/kit';
 
@@ -303,6 +307,189 @@ const caddy = defineItem({
 // ── Textures ─────────────────────────────────────────────────────────────────
 
 /** Fills a seamless near-white tile from a value function of tile coordinates in [0, 1). */
+// ── Monstera in a weathered terracotta pot ───────────────────────────────────
+
+type M3 = number[]; // row-major 3 × 3
+
+const mat3 = (a: M3, b: M3): M3 =>
+  range(9).map((i) => {
+    const r = Math.floor(i / 3);
+    const c = i % 3;
+    return a[r * 3] * b[c] + a[r * 3 + 1] * b[3 + c] + a[r * 3 + 2] * b[6 + c];
+  });
+const rotX = (t: number): M3 => [1, 0, 0, 0, Math.cos(t), -Math.sin(t), 0, Math.sin(t), Math.cos(t)];
+const rotY = (t: number): M3 => [Math.cos(t), 0, Math.sin(t), 0, 1, 0, -Math.sin(t), 0, Math.cos(t)];
+const rotZ = (t: number): M3 => [Math.cos(t), -Math.sin(t), 0, Math.sin(t), Math.cos(t), 0, 0, 0, 1];
+const apply = (m: M3, v: V3): V3 => [
+  m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+  m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+  m[6] * v[0] + m[7] * v[1] + m[8] * v[2],
+];
+/** Euler angles (three.js 'XYZ' order, the order parts use) for a rotation matrix. */
+function eulerXYZ(m: M3): V3 {
+  const y = Math.asin(clamp(m[2], -1, 1));
+  if (Math.abs(m[2]) < 0.9999999) return [Math.atan2(-m[5], m[8]), y, Math.atan2(-m[1], m[0])];
+  return [Math.atan2(m[7], m[4]), y, 0];
+}
+
+/**
+ * One half of a monstera blade in leaf space: u runs along the midrib from the petiole (0) to the
+ * tip, v across (≥ 0). A heart-shaped margin with a cordate base, and `splits` slits that run in
+ * from the margin along the side veins.
+ */
+function halfBlade(L: number, splits: number): V2[] {
+  const c = 0.38 * L;
+  const a = 0.58 * L;
+  const bw = 0.5 * L;
+  const margin = (phi: number): V2 => {
+    const tipPinch = 1 - 0.35 * Math.pow(Math.max(0, Math.cos(phi)), 3);
+    return [c + a * Math.cos(phi), bw * Math.sin(phi) * tipPinch];
+  };
+  const cuts = range(splits).map((k) => lerp(0.74, 0.22, splits === 1 ? 0.5 : k / (splits - 1)) * Math.PI);
+  const pts: V2[] = [[0, 0]];
+  const steps = 22;
+  const p0 = 0.93 * Math.PI;
+  for (const i of range(steps + 1)) {
+    const phi = p0 * (1 - i / steps);
+    const next = p0 * (1 - (i + 1) / steps);
+    pts.push(margin(phi));
+    for (const cut of cuts) {
+      if (cut <= phi && cut > next) {
+        const d = 0.035;
+        const m = margin(cut);
+        const va = m[1] * 0.2;
+        pts.push(margin(cut + d), [m[0] - (m[1] - va) * 0.45, va], margin(cut - d));
+      }
+    }
+  }
+  return pts;
+}
+
+interface LeafSpec {
+  /** Petiole attachment, as azimuth / radius (× plant radius) / height fraction above the soil. */
+  az: number;
+  r: number;
+  y: number;
+  /** Blade length (× plant radius), droop of the midrib below horizontal, roll about it. */
+  len: number;
+  droop: number;
+  roll: number;
+  splits: number;
+}
+
+const MONSTERA_LEAVES: LeafSpec[] = [
+  { az: 1.65, r: 0.04, y: 0.97, len: 0.9, droop: 0.75, roll: 0.15, splits: 3 },
+  { az: 2.9, r: 0.28, y: 0.9, len: 0.78, droop: 0.55, roll: -0.35, splits: 3 },
+  { az: 0.3, r: 0.3, y: 0.82, len: 0.78, droop: 0.35, roll: 0.3, splits: 0 },
+  { az: 2.35, r: 0.3, y: 0.66, len: 0.9, droop: 0.85, roll: 0.25, splits: 0 },
+  { az: -0.7, r: 0.22, y: 0.6, len: 0.6, droop: 0.45, roll: -0.2, splits: 2 },
+  { az: 0.95, r: 0.34, y: 0.54, len: 0.55, droop: 0.4, roll: 0.35, splits: 0 },
+  { az: -2.2, r: 0.2, y: 0.76, len: 0.72, droop: 0.6, roll: -0.3, splits: 3 },
+];
+
+const monstera = defineItem({
+  id: 'cafe-monstera',
+  name: 'Monstera in terracotta pot',
+  category: 'decor',
+  type: 'plants',
+  group: 'Indoor plants',
+  tags: ['monstera', 'swiss cheese plant', 'split leaf', 'terracotta', 'saucer', 'houseplant', 'café', 'cây trầu bà', 'vietnamese'],
+  defaultSize: { w: 0.95, d: 0.85, h: 1.15 },
+  minSize: { w: 0.5, d: 0.45, h: 0.7 },
+  maxSize: { w: 1.3, d: 1.2, h: 1.9 },
+  slots: [
+    matSlot('pot', 'Pot', 'terracotta-weathered'),
+    matSlot('saucer', 'Saucer', 'ceramic-cream'),
+    matSlot('leaf', 'Leaves & stems', 'monstera-green'),
+    matSlot('soil', 'Soil', 'plant-soil'),
+  ],
+  build: ({ w, d, h }) => {
+    const m = Math.min(w, d) / 2;
+    const saucerR = Math.min(m * 0.5, 0.22);
+    const potR = saucerR * 0.74;
+    const potH = clamp(h * 0.28, 0.2, 0.42);
+    const sy = 0.012; // the pot stands in the saucer
+    const soilY = sy + potH * 0.93;
+    const parts: Part[] = [
+      lathe(
+        'saucer',
+        [0, 0, 0],
+        [
+          [0, 0],
+          [saucerR * 0.9, 0],
+          [saucerR, 0.022],
+          [saucerR * 0.97, 0.026],
+          [saucerR * 0.9, 0.01],
+          [0, 0.01],
+        ],
+        { segments: 36 },
+      ),
+      // Tapered terracotta pot with a thin rolled rim.
+      lathe(
+        'pot',
+        [0, sy, 0],
+        [
+          [0, 0],
+          [potR * 0.8, 0],
+          [potR * 0.82, potH * 0.02],
+          [potR * 0.97, potH * 0.94],
+          [potR, potH * 0.95],
+          [potR, potH],
+          [potR * 0.93, potH],
+          [potR * 0.92, potH * 0.93],
+          [0, potH * 0.93],
+        ],
+        { segments: 36 },
+      ),
+      vcyl('soil', 0, 0, soilY - 0.01, soilY + 0.004, potR * 0.92, { plan: false }),
+    ];
+
+    // Leaves: a petiole from the crown to the blade, then a blade folded slightly along its midrib.
+    const crownY = soilY + 0.01;
+    const inside = (v: V3): boolean => Math.abs(v[0]) <= w / 2 - 0.005 && Math.abs(v[2]) <= d / 2 - 0.005 && v[1] >= 0 && v[1] <= h - 0.005;
+    const rand = rng(53);
+    for (const s of MONSTERA_LEAVES) {
+      const P: V3 = [Math.cos(s.az) * s.r * m, crownY + (h - crownY) * s.y * 0.86, Math.sin(s.az) * s.r * m];
+      let L = s.len * m;
+      let halves: Part[] = [];
+      // Shrink the blade until every corner of both halves stays inside the item's box.
+      for (const _try of range(16)) {
+        halves = [];
+        let ok = true;
+        const half = halfBlade(L, s.splits);
+        for (const side of [1, -1]) {
+          const R = mat3(mat3(rotY(-s.az), rotZ(-s.droop)), rotX(s.roll - side * 0.2));
+          const outline = side === 1 ? half : half.map(([u, v]) => [u, -v] as V2).reverse();
+          const us = outline.map((q) => q[0]);
+          const vs = outline.map((q) => q[1]);
+          for (const u of [Math.min(...us), Math.max(...us)]) {
+            for (const v of [Math.min(...vs), Math.max(...vs)]) {
+              for (const y of [0, 0.004]) {
+                const c = apply(R, [u, y, v]);
+                if (!inside([P[0] + c[0], P[1] + c[1], P[2] + c[2]])) ok = false;
+              }
+            }
+          }
+          halves.push({ shape: 'prism', outline, height: 0.004, position: P, rotation: eulerXYZ(R), slot: 'leaf', plan: false });
+        }
+        if (ok) break;
+        L *= 0.9;
+      }
+      // The petiole leaves the crown near the centre and bows outward on its way up.
+      const base: V3 = [Math.cos(s.az) * 0.015, crownY - 0.02, Math.sin(s.az) * 0.015];
+      const bow = 0.35 + rand() * 0.2;
+      const mid: V3 = [lerp(base[0], P[0], bow), lerp(base[1], P[1], 0.55), lerp(base[2], P[2], bow)];
+      parts.push(...rodPath('leaf', [base, mid, P], 0.0055), ...halves);
+    }
+    return parts;
+  },
+  planDetail: ({ w, d }) => {
+    const m = Math.min(w, d) / 2;
+    const potR = Math.min(m * 0.5, 0.22) * 0.74;
+    return [circle([0, 0], potR), circle([0, 0], Math.min(m * 0.5, 0.22))];
+  },
+});
+
 function paint(ctx: CanvasRenderingContext2D, size: number, value: (u: number, v: number, x: number, y: number) => number) {
   const img = ctx.createImageData(size, size);
   for (let y = 0; y < size; y++) {
@@ -322,10 +509,66 @@ export default definePack({
   name: 'Café dining set',
   version: '1.0.0',
   author: 'Neest team',
-  description: 'Vietnamese café table set: rustic plank table with four cross-back bentwood chairs, and its table caddy.',
+  description: 'Vietnamese café table set: rustic plank table with four cross-back bentwood chairs, its table caddy, and a monstera in a weathered terracotta pot.',
   license: 'CC0 (made for Neest)',
-  items: [diningSet, caddy],
+  items: [diningSet, caddy, monstera],
   patterns: [
+    {
+      id: 'terracotta-aged',
+      name: 'Weathered terracotta',
+      colored: true,
+      normalStrength: 0.35,
+      draw(ctx, size, rand) {
+        // Fired clay with chalky white mineral bloom and darker damp stains; tileable value noise.
+        const noise = (n: number) => {
+          const g = new Float32Array(n * n).map(() => rand());
+          const at = (i: number, j: number) => g[(((j % n) + n) % n) * n + (((i % n) + n) % n)];
+          return (u: number, v: number) => {
+            const x = u * n;
+            const y = v * n;
+            const x0 = Math.floor(x);
+            const y0 = Math.floor(y);
+            const sx = (x - x0) * (x - x0) * (3 - 2 * (x - x0));
+            const sy = (y - y0) * (y - y0) * (3 - 2 * (y - y0));
+            const top = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * sx;
+            const bot = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * sx;
+            return top + (bot - top) * sy;
+          };
+        };
+        const n1 = noise(3);
+        const n2 = noise(7);
+        const n3 = noise(23);
+        const s1 = noise(5);
+        const grain = new Float32Array(size * size).map(() => rand());
+        const img = ctx.createImageData(size, size);
+        const smooth = (a: number, b: number, x: number) => {
+          const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+          return t * t * (3 - 2 * t);
+        };
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            const u = x / size;
+            const v = y / size;
+            const f = n1(u, v) * 0.55 + n2(u, v) * 0.3 + n3(u, v) * 0.15;
+            const bloom = smooth(0.46, 0.7, f) * (0.7 + n3(u, v) * 0.3);
+            const stain = smooth(0.55, 0.75, s1(u, v)) * 0.25;
+            const g = (grain[y * size + x] - 0.5) * 0.06;
+            let r = 0.69 + g - stain * 0.35;
+            let gg = 0.44 + g * 0.8 - stain * 0.3;
+            let b = 0.33 + g * 0.6 - stain * 0.2;
+            r += (0.86 - r) * bloom;
+            gg += (0.82 - gg) * bloom;
+            b += (0.76 - b) * bloom;
+            const i = (y * size + x) * 4;
+            img.data[i] = Math.round(Math.min(1, Math.max(0, r)) * 255);
+            img.data[i + 1] = Math.round(Math.min(1, Math.max(0, gg)) * 255);
+            img.data[i + 2] = Math.round(Math.min(1, Math.max(0, b)) * 255);
+            img.data[i + 3] = 255;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+      },
+    },
     {
       id: 'pine-planks',
       name: 'Weathered pine',
@@ -412,6 +655,8 @@ export default definePack({
     },
   ],
   materials: [
+    { id: 'terracotta-weathered', name: 'Weathered terracotta', color: '#ffffff', roughness: 0.92, pattern: { id: 'terracotta-aged', scale: 0.35 } },
+    { id: 'monstera-green', name: 'Monstera leaf', color: '#1f5a2a', roughness: 0.32 },
     { id: 'pine-weathered', name: 'Weathered pine planks', category: 'wood', color: '#c9975a', roughness: 0.72, pattern: { id: 'pine-planks', scale: 0.9, contrast: 0.9 } },
     { id: 'pine-frame', name: 'Aged pine', category: 'wood', color: '#b07a40', roughness: 0.75, pattern: { id: 'pine-planks', scale: 0.6, contrast: 0.8 } },
     { id: 'bentwood-honey', name: 'Honey bentwood', category: 'wood', color: '#d9a13c', roughness: 0.42, pattern: { id: 'beech-grain', scale: 0.45, contrast: 0.7 } },
