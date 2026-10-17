@@ -2,9 +2,9 @@
   "format": "neest-project",
   "schemaVersion": 1,
   "id": "prj_81iyuc3b9b",
-  "name": "Sample apartment",
+  "name": "Ngan's",
   "createdAt": 1792224950095,
-  "updatedAt": 1792235717726,
+  "updatedAt": 1792236401150,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -1870,7 +1870,7 @@
     }
   ],
   "render": {
-    "quality": "draft",
+    "quality": "balanced",
     "exposure": 1,
     "timeOfDay": 14,
     "sunAzimuth": 135,
