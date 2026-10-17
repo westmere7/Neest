@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { PanelLeftClose, Search, Star, Upload } from 'lucide-react';
 import type { OpeningKind, WallRole } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
@@ -21,6 +21,7 @@ import { IconButton, Segmented } from '@/components/ui';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
 import { MaterialLibrary } from '@/features/materials/MaterialUI';
 import { useAssetThumbnail } from './thumbnails';
+import { AssetInfoCard, InfoCardControl } from './AssetInfoCard';
 import { DOOR_KINDS, WINDOW_KINDS, WallPresetCards, extraOpeningIcon } from './BuildExtras';
 import './library.css';
 
@@ -277,6 +278,8 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const [browse, setBrowse] = useState<Browse>('room');
   const [favOnly, setFavOnly] = useState(false);
   const [cat, setCat] = useState<CatFilter>('all');
+  // One hover/focus info card for the whole listing (desktop only: touch has no hover).
+  const info = useMemo(() => (isMobile ? null : new InfoCardControl()), [isMobile]);
   const custom = useMemo(() => Object.values(project.customAssets).map(customAssetDefinition), [project.customAssets]);
   const all = useMemo(
     () => [...ASSET_CATALOG, ...custom],
@@ -369,7 +372,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
             )}
             <div className="asset-grid">
               {g.items.map((a) => (
-                <AssetCard key={a.id} asset={a} />
+                <AssetCard key={a.id} asset={a} info={info} />
               ))}
             </div>
           </section>
@@ -380,6 +383,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
           </p>
         )}
       </div>
+      {info && <AssetInfoCard control={info} />}
       {!isMobile && (
         <button type="button" className="import-model" onClick={() => useDialogStore.getState().open('import-model')}>
           <Upload size={14} /> Import GLB / glTF model
@@ -412,7 +416,7 @@ export function AssetPlanThumb({ asset }: { asset: AssetDefinition }) {
   );
 }
 
-function AssetCard({ asset }: { asset: AssetDefinition }) {
+function AssetCard({ asset, info }: { asset: AssetDefinition; info: InfoCardControl | null }) {
   const fav = usePrefsStore((s) => s.favouriteAssets.includes(asset.id));
   const placing = useEditorStore((s) => s.tool === 'place' && s.placeAssetId === asset.id);
   const units = useProjectStore((s) => s.project!.settings.units);
@@ -421,17 +425,43 @@ function AssetCard({ asset }: { asset: AssetDefinition }) {
   const dims = `${formatLength(size.w, units, 0, { suffix: false })} × ${formatLength(size.d, units, 0)}`;
   let preview: ReactNode = <AssetPlanThumb asset={asset} />;
   if (thumb) preview = <img src={thumb} alt="" draggable={false} />;
+  useEffect(() => {
+    const el = thumbRef.current;
+    return () => {
+      if (el) info?.release(el);
+    };
+  }, [info, thumbRef]);
   return (
-    <div ref={thumbRef} className={`asset-card${placing ? ' on' : ''}`}>
+    <div
+      ref={thumbRef}
+      className={`asset-card${placing ? ' on' : ''}`}
+      onPointerEnter={info ? (e) => e.pointerType !== 'touch' && info.enter(asset, e.currentTarget) : undefined}
+      onPointerLeave={info ? () => info.leave() : undefined}
+      onPointerDown={info ? () => info.dismiss() : undefined}
+    >
       <button
         type="button"
         className="asset-main"
         draggable
         onDragStart={(e) => {
+          info?.dismiss();
           e.dataTransfer.setData('application/x-neest-asset', asset.id);
           e.dataTransfer.effectAllowed = 'copy';
         }}
+        onFocus={(e) => {
+          if (!info) return;
+          let keyboard = false;
+          try {
+            keyboard = e.currentTarget.matches(':focus-visible');
+          } catch {
+            // Selector unsupported: no card on focus.
+          }
+          const card = e.currentTarget.closest<HTMLElement>('.asset-card');
+          if (keyboard && card) info.enter(asset, card);
+        }}
+        onBlur={info ? () => info.leave() : undefined}
         onClick={() => {
+          info?.dismiss();
           const ed = useEditorStore.getState();
           ed.set({
             tool: 'place',
@@ -441,12 +471,18 @@ function AssetCard({ asset }: { asset: AssetDefinition }) {
           });
         }}
         aria-pressed={placing}
-        title={`${asset.name}${asset.pack ? ` (from the ${asset.pack.name} pack)` : ''} — click to place, or drag onto the plan`}
+        // Desktop: name, source and the place/drag hint are in the info card instead.
+        title={info ? undefined : `${asset.name}${asset.pack ? ` (from the ${asset.pack.name} pack)` : ''} — click to place, or drag onto the plan`}
         data-testid={`asset-${asset.id}`}
       >
         <span className="asset-thumb">
           {preview}
-          {asset.pack && (
+          {asset.brand && (
+            <span className="brand-tag" title={`${asset.brand.name} ${asset.brand.model}`}>
+              {asset.brand.name}
+            </span>
+          )}
+          {asset.pack && !info && (
             <span className="pack-badge" title={`From the ${asset.pack.name} pack`}>
               {asset.pack.name}
             </span>

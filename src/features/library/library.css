@@ -304,3 +304,188 @@
 .asset-main:focus-visible .pack-badge {
   opacity: 1;
 }
+
+/* Branded items: the maker's name on the thumbnail, always visible. */
+.brand-tag {
+  position: absolute;
+  left: 5px;
+  top: 5px;
+  max-width: calc(100% - 40px);
+  padding: 0 5px;
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* Hover/focus info card beside the library (AssetInfoCard.tsx). */
+.asset-info-card {
+  position: fixed;
+  z-index: 40;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  animation: fade-in var(--dur) var(--ease);
+}
+.asset-info-card.passive {
+  pointer-events: none;
+}
+.aic-preview {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 176px;
+  margin: 6px 6px 0;
+  border-radius: var(--radius-sm);
+  background: radial-gradient(ellipse at 50% 38%, var(--surface-solid), var(--surface-2) 75%);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.aic-preview.dragging {
+  cursor: grabbing;
+}
+.aic-preview .object-preview-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+.aic-preview.is-ok .object-preview-canvas {
+  opacity: 1;
+}
+.aic-preview img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+.aic-preview .asset-plan-thumb {
+  width: auto;
+  height: 70%;
+}
+.aic-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 9px 12px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.aic-head {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.aic-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.aic-meta,
+.aic-sub,
+.aic-hint {
+  color: var(--text-3);
+  font-size: 11px;
+}
+.aic-desc {
+  margin: 0;
+  color: var(--text-2);
+}
+.aic-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+.aic-brand-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: var(--accent-strong);
+}
+[data-theme='dark'] .aic-brand-head {
+  color: var(--accent);
+}
+.aic-brand-head strong {
+  font-weight: 650;
+}
+.aic-sep {
+  opacity: 0.6;
+}
+.aic-model {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.aic-brand-line {
+  margin-top: -3px;
+  color: var(--text-2);
+  font-size: 11px;
+}
+.aic-specs,
+.aic-rows {
+  display: grid;
+  grid-template-columns: fit-content(52%) 1fr;
+  gap: 2px 10px;
+  margin: 0;
+}
+.aic-specs {
+  margin-top: 2px;
+  font-size: 11px;
+}
+.aic-specs dt,
+.aic-rows dt {
+  color: var(--text-3);
+}
+.aic-specs dd,
+.aic-rows dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.aic-specs dd {
+  font-variant-numeric: tabular-nums;
+}
+.aic-rows dd {
+  display: flex;
+  flex-direction: column;
+}
+.aic-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.aic-link:hover {
+  text-decoration: underline;
+}
+.aic-hint {
+  margin: 0;
+}

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { PlacedObject, Project } from '@/domain/model/schema';
 import { getAsset } from '@/data/assets/registry';
+import type { AssetDefinition } from '@/data/assets/types';
 import { subscribePhotos } from '@/features/materials/photoTextures';
 import { buildObject } from './builders';
 import { loadCustomModel } from './customModels';
@@ -22,6 +23,10 @@ import { sharedRegistry } from './sceneRuntime';
  * arriving). Dragging pauses auto-rotation, which resumes a few seconds after release.
  * With prefers-reduced-motion there is no auto-rotation at all. The model is drawn at GI_OFF_Y
  * (far below the floor), so the preview never shows the open apartment's bounce light.
+ *
+ * The library's hover card borrows the same canvas: attaching a second host suspends the current
+ * one (it keeps a still snapshot of its last frame and its model) and detaching the borrower
+ * hands the canvas back, so the Inspector preview comes back as it was.
  */
 
 const HEIGHT = 150;
@@ -44,6 +49,8 @@ const pivot = new THREE.Group();
 pivot.position.y = GI_OFF_Y;
 let failed = false;
 let active: Controller | null = null;
+/** Hosts that lent the canvas to a newer one, most recent last; the top one resumes when the borrower detaches. */
+const suspended: Controller[] = [];
 
 function setup(): boolean {
   if (gl) return true;
@@ -68,7 +75,9 @@ function setup(): boolean {
       e.preventDefault();
       failed = true;
       gl = null;
-      active?.fail();
+      const all = [...suspended, ...(active ? [active] : [])];
+      suspended.length = 0;
+      for (const c of all) c.fail();
     });
     // Photo maps load asynchronously; the registry swaps them into the shared materials.
     subscribePhotos(() => active?.invalidate());
@@ -85,6 +94,8 @@ export type PreviewResult = 'ok' | 'fallback' | 'stale';
 export interface PreviewHandle {
   /** Builds and shows an object (rebuild after size/material edits). Resolves 'fallback' when it can't be shown in 3D. */
   show(obj: PlacedObject, project: Project): Promise<PreviewResult>;
+  /** Shows a library asset at its default size with its default materials. */
+  showAsset(asset: AssetDefinition, project: Project): Promise<PreviewResult>;
   /** Stops rendering and releases the canvas (the renderer itself is kept for the next preview). */
   detach(): void;
 }
@@ -112,14 +123,16 @@ class Controller implements PreviewHandle {
   private raf = 0;
   private lastFrame = 0;
   private resumeTimer = 0;
+  /** This host's built model, kept while another host borrows the canvas. */
+  private model: THREE.Object3D | null = null;
+  /** Still of the last frame shown in this host while it is suspended. */
+  private snapshot: HTMLCanvasElement | null = null;
   private readonly cleanups: (() => void)[] = [];
 
   constructor(
     private readonly host: HTMLElement,
     private readonly opts: Options,
   ) {
-    host.appendChild(gl!.domElement);
-    this.resize();
     const ro = new ResizeObserver(() => this.resize());
     ro.observe(host);
     const io = new IntersectionObserver((entries) => {
@@ -177,8 +190,11 @@ class Controller implements PreviewHandle {
       // Compiles on first render instead.
     }
     if (token !== this.token || !this.attached || !gl) return 'stale';
-    pivot.clear();
-    pivot.add(model);
+    this.model = model;
+    if (active === this) {
+      pivot.clear();
+      pivot.add(model);
+    }
     if (obj.id !== this.objectId) {
       this.objectId = obj.id;
       this.yaw = DEFAULT_YAW;
@@ -192,10 +208,67 @@ class Controller implements PreviewHandle {
 
   /** Nothing to show in 3D for this object: clear the stage and let the caller draw a fallback. */
   private noModel(): PreviewResult {
-    pivot.clear();
+    if (active === this) pivot.clear();
+    this.model = null;
     this.hasModel = false;
     this.objectId = null;
     return 'fallback';
+  }
+
+  showAsset(asset: AssetDefinition, project: Project): Promise<PreviewResult> {
+    const s = asset.defaultSize;
+    return this.show(
+      {
+        id: `asset:${asset.id}`,
+        assetId: asset.id,
+        name: null,
+        x: 0,
+        y: 0,
+        elevation: 0,
+        rotation: 0,
+        width: s.w,
+        depth: s.d,
+        height: s.h,
+        mirrored: false,
+        materials: {},
+        locked: false,
+        hidden: false,
+      },
+      project,
+    );
+  }
+
+  /** Takes the shared canvas (first attach, or back from a borrower) and shows this host's model. */
+  activate() {
+    if (!gl) return;
+    this.snapshot?.remove();
+    this.snapshot = null;
+    this.host.appendChild(gl.domElement);
+    pivot.clear();
+    if (this.model) pivot.add(this.model);
+    this.resize();
+  }
+
+  /** Lends the canvas to another host: stop drawing and leave a still of the current frame behind. */
+  suspend() {
+    cancelAnimationFrame(this.raf);
+    clearTimeout(this.resumeTimer);
+    this.raf = 0;
+    if (!gl || gl.domElement.parentElement !== this.host) return;
+    try {
+      // Redraw, then copy in the same task (the drawing buffer is not preserved after compositing).
+      this.draw();
+      const src = gl.domElement;
+      const still = document.createElement('canvas');
+      still.width = src.width;
+      still.height = src.height;
+      still.className = src.className;
+      still.getContext('2d')?.drawImage(src, 0, 0);
+      this.host.appendChild(still);
+      this.snapshot = still;
+    } catch {
+      // No still: the host shows its empty background until it gets the canvas back.
+    }
   }
 
   detach() {
@@ -206,10 +279,21 @@ class Controller implements PreviewHandle {
     clearTimeout(this.resumeTimer);
     this.raf = 0;
     for (const fn of this.cleanups) fn();
+    this.snapshot?.remove();
+    this.snapshot = null;
+    this.model = null;
     if (gl && gl.domElement.parentElement === this.host) this.host.removeChild(gl.domElement);
+    const i = suspended.indexOf(this);
+    if (i >= 0) suspended.splice(i, 1);
     if (active === this) {
       active = null;
       pivot.clear();
+      // Hand the canvas back to the host this one borrowed it from.
+      const prev = suspended.pop();
+      if (prev && gl) {
+        active = prev;
+        prev.activate();
+      }
     }
   }
 
@@ -277,7 +361,7 @@ class Controller implements PreviewHandle {
   }
 
   private resize() {
-    if (!gl) return;
+    if (!gl || active !== this) return;
     const w = Math.max(1, Math.round(this.host.clientWidth));
     const h = Math.max(1, Math.round(this.host.clientHeight || HEIGHT));
     const cur = gl.getSize(new THREE.Vector2());
@@ -319,11 +403,16 @@ class Controller implements PreviewHandle {
 
 /**
  * Puts the shared preview canvas into `host` and returns its controller, or null when WebGL is
- * unavailable. Attaching another host detaches the previous one.
+ * unavailable. Attaching another host suspends the current one until the new one detaches.
  */
 export function attachPreview(host: HTMLElement, opts: Options): PreviewHandle | null {
   if (!setup()) return null;
-  active?.detach();
-  active = new Controller(host, opts);
-  return active;
+  if (active) {
+    active.suspend();
+    suspended.push(active);
+  }
+  const c = new Controller(host, opts);
+  active = c;
+  c.activate();
+  return c;
 }
