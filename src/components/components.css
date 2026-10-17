@@ -224,12 +224,24 @@
 .color-field input[type='color'] {
   width: 34px;
   height: 30px;
-  padding: 2px;
-  border: 1px solid var(--border);
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  background: none;
   cursor: pointer;
   flex: none;
+}
+/* Colour inputs show just the colour: no native swatch frame or inner padding. */
+input[type='color']::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type='color']::-webkit-color-swatch {
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+input[type='color']::-moz-color-swatch {
+  border: 0;
+  border-radius: var(--radius-sm);
 }
 .slider-field .slider-head {
   display: flex;
@@ -247,13 +259,13 @@
   height: 6px;
   margin: 5px 0;
   border-radius: 999px;
-  border: 1px solid var(--border);
+  border: 0;
   background: linear-gradient(
     to right,
     var(--accent) 0%,
     var(--accent) var(--slider-pct, 50%),
-    var(--surface-2) var(--slider-pct, 50%),
-    var(--surface-2) 100%
+    var(--surface-3) var(--slider-pct, 50%),
+    var(--surface-3) 100%
   );
   outline: none;
   cursor: pointer;
@@ -289,7 +301,6 @@
   padding: 2px;
   gap: 2px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
 .segmented button {
@@ -343,15 +354,16 @@
   width: 32px;
   height: 18px;
   border-radius: 9px;
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface-3);
   padding: 0;
   transition: background var(--dur-fast) var(--ease);
 }
+/* 18 px track, 12 px knob: 3 px inset on every side (on: 32 - 12 - 3 - 3 = 14 px travel). */
 .switch .knob {
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 3px;
+  left: 3px;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -362,7 +374,6 @@
 }
 .switch.on {
   background: var(--accent);
-  border-color: transparent;
 }
 .switch.on .knob {
   transform: translateX(14px);

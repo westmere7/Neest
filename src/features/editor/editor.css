@@ -464,7 +464,7 @@
   height: 26px;
   padding: 0 10px;
   border-radius: 13px;
-  border: 1px solid var(--border);
+  border: 0;
   background: var(--surface-2);
   font-size: 12px;
   color: var(--text-2);
@@ -472,11 +472,10 @@
 }
 .chip:hover {
   color: var(--text);
-  border-color: var(--border-strong);
+  background: var(--surface-3);
 }
 .chip.on {
   background: var(--accent-soft);
-  border-color: var(--accent-ring);
   color: var(--accent-strong);
   font-weight: 600;
 }
