@@ -403,7 +403,8 @@ export function partGeometry(part: Part): THREE.BufferGeometry {
         const a = outline[i];
         const b = outline[(i + 1) % n];
         const ln = leftNormal(normalize(sub(b, a)));
-        addEnd(acc, a, b, 0, part.height, area > 0 ? { x: -ln.x, y: -ln.y } : ln);
+        // leftNormal is (d.y, -d.x): it points out of a counter-clockwise (area > 0) outline.
+        addEnd(acc, a, b, 0, part.height, area > 0 ? ln : { x: -ln.x, y: -ln.y });
       }
       geo = mergeGroups([acc]);
       geo.clearGroups();
