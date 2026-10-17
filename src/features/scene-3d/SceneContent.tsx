@@ -23,6 +23,7 @@ import { loadProjectModels } from './customModels';
 import { buildWallExtras, disposeWallExtras, wallExtrasKey, wallHasExtras } from './wallExtras';
 import { buildOpening } from './openingBuilder';
 import { usePackVersion } from '@/packs/events';
+import { LampLights } from './LampLights';
 
 export interface SceneOptions {
   wallDisplay: WallDisplay;
@@ -109,25 +110,7 @@ export function Lighting({ project, derived, shadows, quality }: { project: Proj
     <>
       <hemisphereLight args={['#f7f9fb', '#888c90', 0.35 * r.envIntensity]} />
       <directionalLight ref={lightRef} position={pos} color={sun.color} intensity={sun.intensity} castShadow={shadows} />
-      <LampLights project={project} enabled={quality === 'high'} />
-    </>
-  );
-}
-
-/** Point lights for lamp assets (high quality only, capped for performance). */
-function LampLights({ project, enabled }: { project: Project; enabled: boolean }) {
-  if (!enabled) return null;
-  const lamps: { o: PlacedObject; light: NonNullable<ReturnType<typeof getAsset>>['light'] }[] = [];
-  for (const o of Object.values(project.objects)) {
-    if (o.hidden) continue;
-    const a = getAsset(project, o.assetId);
-    if (a?.light && lamps.length < 8) lamps.push({ o, light: a.light });
-  }
-  return (
-    <>
-      {lamps.map(({ o, light }) => (
-        <pointLight key={o.id} position={[o.x, o.elevation + light!.y, o.y]} color={light!.color} intensity={light!.intensity} distance={light!.distance} decay={2} />
-      ))}
+      <LampLights project={project} quality={quality} />
     </>
   );
 }

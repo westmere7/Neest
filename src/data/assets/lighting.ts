@@ -541,7 +541,17 @@ const trackSpotlights = defineAsset({
   mount: 'ceiling',
   defaultElevation: ceilingElevation(0.25),
   slots: [matSlot('metal', 'Track & heads', 'metal-black-matte'), matSlot('light', 'Lenses', 'light-warm')],
-  light: { color: WARM, intensity: 1.4, distance: 5, y: 0.1 },
+  // Four heads tilted forward (as built at the default size), each a narrow spot.
+  light: {
+    color: WARM,
+    intensity: 1.1,
+    distance: 5,
+    y: 0.082,
+    kind: 'spot',
+    angle: 0.38,
+    penumbra: 0.5,
+    heads: cells(4, -0.75, 0.75).map((x) => ({ x, y: 0.082, z: 0.024, dir: [0, -Math.cos(0.5), Math.sin(0.5)] as [number, number, number] })),
+  },
   build: ({ w, d, h }) => {
     const n = clamp(Math.round(w / 0.42), 2, 8);
     const headR = Math.min(0.035, d * 0.3, h * 0.15);
@@ -685,7 +695,7 @@ const floorLampArc = defineAsset({
   ],
   light: (() => {
     const g = arcLampGeom(ARC_DEFAULT);
-    return { color: WARM, intensity: 1.4, distance: 5, y: g.yS0 + g.sh * 0.3 };
+    return { color: WARM, intensity: 1.4, distance: 5, x: g.xe, y: g.yS0 + g.sh * 0.3, kind: 'spot' as const, angle: 0.85, penumbra: 0.5 };
   })(),
   build: (size) => {
     const g = arcLampGeom(size);
@@ -1093,7 +1103,8 @@ const pictureLight = defineAsset({
   mount: 'wall',
   defaultElevation: 1.82,
   slots: [matSlot('metal', 'Brass', 'metal-brass'), matSlot('light', 'Lamp strip', 'light-warm')],
-  light: { color: WARM, intensity: 0.6, distance: 2, y: 0.05 },
+  // Shines down and back onto the picture below it.
+  light: { color: WARM, intensity: 0.6, distance: 2, y: 0.056, z: 0.04, kind: 'spot', dir: [0, -1, -0.3], angle: 0.75, penumbra: 0.6 },
   build: ({ w, d, h }) => {
     const z0 = -d / 2;
     const pr = Math.min(0.035, h * 0.3);
@@ -1156,7 +1167,7 @@ const wallLampSwingArm = defineAsset({
   ],
   light: (() => {
     const g = swingGeom(SWING_DEFAULT);
-    return { color: WARM, intensity: 0.8, distance: 3, y: g.yS0 + g.sh * 0.45 };
+    return { color: WARM, intensity: 0.8, distance: 3, y: g.yS0 + g.sh * 0.45, z: g.zs };
   })(),
   build: (size) => {
     const { w, d, h } = size;

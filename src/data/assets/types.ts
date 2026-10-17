@@ -111,13 +111,40 @@ export interface AssetDefinition {
   slots: MaterialSlot[];
   build: (size: Size3) => Part[];
   planDetail?: (size: Size3) => PlanStroke[];
-  /** Optional emitted light, used in higher render quality. */
-  light?: { color: string; intensity: number; distance: number; y: number };
+  /** Optional emitted light (balanced and high render quality, and the path tracer). */
+  light?: AssetLight;
   /** Placement behaviour: snap the back (-z) against walls when placed nearby. */
   wallSnap?: boolean;
   source: { name: string; license: string };
   /** Set for items that come from a content pack in /packs (shown in the item's info). */
   pack?: AssetPackInfo;
+}
+
+/**
+ * Light emitted by a fixture. Positions are in object space at the asset's default size (x right,
+ * y up from the base, z to the front) and scale with the placed item, so a taller lamp keeps its
+ * bulb in the shade. They turn and mirror with the item.
+ */
+export interface AssetLight {
+  color: string;
+  /** Luminous intensity per bulb/head (candela-like scene units; ~0.5 table lamp … ~2 chandelier). */
+  intensity: number;
+  /** Range in metres (the light fades to nothing at this distance). */
+  distance: number;
+  /** Bulb height above the item's base. */
+  y: number;
+  /** Bulb offset across (x) and to the front (z) of the item's centre; default 0. */
+  x?: number;
+  z?: number;
+  /** 'point' (default) glows all round; 'spot' shines a cone along `dir` (downlights, track and reading lights). */
+  kind?: 'point' | 'spot';
+  /** Spot direction in object space; default straight down. */
+  dir?: [number, number, number];
+  /** Spot cone half-angle in radians (default 0.6) and soft edge 0–1 (default 0.4). */
+  angle?: number;
+  penumbra?: number;
+  /** Several bulbs or heads (track heads, chandelier arms, up/down sconces): each is its own light and replaces x/y/z/dir. */
+  heads?: { x?: number; y: number; z?: number; dir?: [number, number, number] }[];
 }
 
 export interface AssetPackInfo {

@@ -1046,7 +1046,8 @@ const rangeHood = defineAsset({
     matSlot('filter', 'Filters & buttons', 'metal-anthracite'),
     matSlot('light', 'Lights', 'light-warm'),
   ],
-  light: { color: '#ffe8c2', intensity: 0.7, distance: 2, y: 0.01 },
+  // Lamps in the canopy's underside, lighting the hob.
+  light: { color: '#ffe8c2', intensity: 0.7, distance: 2, y: 0.01, z: 0.08, kind: 'spot', angle: 0.9, penumbra: 0.6 },
   build: ({ w, d, h }) => {
     const baseH = 0.06;
     const slopeH = clamp(h * 0.22, 0.12, 0.22);

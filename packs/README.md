@@ -24,7 +24,12 @@ Files starting with `_` are ignored. Delete a pack file to remove the pack. Proj
   - `build(size)` returns parts that stay inside the size box at every size between `minSize` and `maxSize`.
   - 1–4 material `slots`. A slot's default material is a built-in id or one of the pack's material ids.
   - `category` (room), `type` (what it is) and `group` (shelf) decide where it shows up. Groups are listed in `ASSET_GROUPS` (`src/data/assets/catalog.ts`).
-  - Items that glow need a slot with id `light` whose material has `emissive`, plus a `light: { color, intensity, distance, y }`.
+  - Items that glow need a slot with id `light` whose material has `emissive`, plus a `light` (`AssetLight` in `src/data/assets/types.ts`):
+    - `{ color, intensity, distance, y }` is a point light at the item's centre line, `y` above its base. Add `x`/`z` to move the bulb to where the glowing part is (an arc lamp's shade, a swing arm's head).
+    - `kind: 'spot'` makes a cone along `dir` (default straight down), with `angle` (half-angle in radians) and `penumbra`. Use it for downlights, track heads, reading, desk and picture lights.
+    - `heads: [{ x?, y, z?, dir? }, …]` gives a fixture several bulbs (track heads, up/down sconces). Keep it to a few: each head is a separate light.
+    - Positions are at the default size and scale, turn and mirror with the placed item. The checks require every head to sit inside the item.
+    - The live view lights the fixtures nearest to the camera from a fixed pool (Balanced: 4 point + 3 spot, High: 8 + 6, with shadows from the 2 nearest spots), so many lamps in a project cost no more than a few.
   - Mark detail parts `plan: false` so the 2D symbol stays clean, and add `planDetail` strokes if useful.
 - **Materials:**
   - `pattern: { id, scale }` uses a built-in procedural pattern (such as `weave`, `wood-grain`, `marble`, `leather`, `jute`) or one of the pack's own `patterns`.

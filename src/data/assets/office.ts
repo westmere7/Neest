@@ -710,7 +710,10 @@ const taskLamp = defineAsset({
   // Sits on a desk top by default.
   defaultElevation: 0.75,
   slots: [matSlot('base', 'Body', 'metal-black-matte'), matSlot('light', 'Diffuser', 'light-warm')],
-  light: { color: '#ffd9a8', intensity: 0.8, distance: 2.5, y: 0.39 },
+  light: (() => {
+    const L = taskLampLayout(0.18, 0.45, 0.55);
+    return { color: '#ffd9a8', intensity: 0.8, distance: 2.5, y: L.shadeBottom, z: L.zh, kind: 'spot' as const, angle: 0.6, penumbra: 0.5 };
+  })(),
   build: ({ w, d, h }) => {
     const L = taskLampLayout(w, d, h);
     const pivot: V3 = [0, 0.05, L.zb];

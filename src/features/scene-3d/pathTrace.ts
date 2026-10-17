@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GradientEquirectTexture, WebGLPathTracer } from 'three-gpu-pathtracer';
 import type { Project } from '@/domain/model/schema';
 import { getAsset } from '@/data/assets/registry';
+import { resolveObjectLights } from '@/data/assets/lights';
 import { liveScene } from './sceneRuntime';
 import { sunFromSettings } from './SceneContent';
 
@@ -75,14 +76,23 @@ export async function renderPathTraced(project: Project, o: PathTraceOptions): P
   sunLight.position.copy(sun.dir.clone().multiplyScalar(50));
   sunLight.target.position.set(0, 0, 0);
   scene.add(sunLight, sunLight.target);
-  let lamps = 0;
-  for (const obj of Object.values(project.objects)) {
-    const asset = getAsset(project, obj.assetId);
-    if (!asset?.light || obj.hidden || lamps >= 16) continue;
-    const pl = new THREE.PointLight(asset.light.color, asset.light.intensity * 0.6, asset.light.distance, 2);
-    pl.position.set(obj.x, obj.elevation + asset.light.y, obj.y);
-    scene.add(pl);
-    lamps++;
+  // Lamp fixtures: point and spot lights as in the live view, nearest to the camera first.
+  const cam = live.camera.position;
+  const lamps = Object.values(project.objects)
+    .flatMap((obj) => resolveObjectLights(obj, getAsset(project, obj.assetId)))
+    .sort((a, b) => cam.distanceTo(new THREE.Vector3(...a.position)) - cam.distanceTo(new THREE.Vector3(...b.position)))
+    .slice(0, 24);
+  for (const l of lamps) {
+    if (l.kind === 'spot') {
+      const sl = new THREE.SpotLight(l.color, l.intensity * 0.6, l.distance, l.angle, l.penumbra, 2);
+      sl.position.set(...l.position);
+      sl.target.position.set(l.position[0] + l.dir[0], l.position[1] + l.dir[1], l.position[2] + l.dir[2]);
+      scene.add(sl, sl.target);
+    } else {
+      const pl = new THREE.PointLight(l.color, l.intensity * 0.6, l.distance, 2);
+      pl.position.set(...l.position);
+      scene.add(pl);
+    }
   }
   scene.updateMatrixWorld(true);
 

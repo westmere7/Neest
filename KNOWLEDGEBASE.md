@@ -328,8 +328,14 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   cutaway, door/window assemblies use cached **clipped material copies** (`clippingPlanes` at the cut height,
   `gl.localClippingEnabled = true` in `Lighting`) so frames and glass never poke above the cut walls.
 - `Scene3DView`: R3F `Canvas`, perspective/orthographic camera switch, OrbitControls, lighting (RoomEnvironment
-  PMREM + hemisphere + time-of-day sun with shadows; lamp point lights in High), view panel (saved views,
+  PMREM + hemisphere + time-of-day sun with shadows; lamp lights from `LampLights`), view panel (saved views,
   walls, quality & light, categories).
+- **Lamp lights** (`LampLights.tsx`, `data/assets/lights.ts`): `resolveObjectLights` turns an asset's `light`
+  (point/spot, x/y/z offset, `heads`) into world-space lights that scale, mirror and turn with the object. The
+  scene mounts a fixed pool per quality (`LAMP_BUDGET`: Balanced 4 point + 3 spot, High 8 + 6, 2 spot shadows)
+  and hands it to the fixtures nearest the camera's focus each frame. Never mount or unmount lights per lamp:
+  a change in light count recompiles every shader. Idle pool lights sit at intensity 0. Spot shadow maps use
+  `autoUpdate = false` and redraw only when the scene or the assignment changes.
 - **Camera framing**:
   - `cameraViews.namedView` builds home/perspective (with `fitSphere`: plan bounding sphere + view direction),
     top/iso (with `fitOrtho`) and front views.
@@ -349,7 +355,7 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   (rotate, 15° steps; Alt = free). Grid-snapped, live readouts, one undo step per drag. Furniture body drag also
   works (with wall hugging). Library drag-and-drop works onto the 3D canvas.
 - **Path tracing** (`pathTrace.ts › renderPathTraced`): clones the `neest-plan` group without helpers/sprites,
-  adds a ground disc, a gradient sky (`GradientEquirectTexture`), the sun and up to 16 lamp point lights, and
+  adds a ground disc, a gradient sky (`GradientEquirectTexture`), the sun and up to 24 lamp lights (point and spot, nearest the camera), and
   renders with `WebGLPathTracer` (three-gpu-pathtracer 0.0.23, tiles 2×2) from a clone of the live camera.
   Progressive samples with progress/ETA, a live preview canvas, Stop & keep, and Cancel (`AbortSignal`).
   Frames are yielded with `MessageChannel`, not rAF, so rendering continues in background tabs. BVH is built

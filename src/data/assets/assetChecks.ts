@@ -213,6 +213,21 @@ export function describeAssetChecks(assets: AssetDefinition[]): void {
         expect(asset.light.intensity).toBeGreaterThan(0);
         expect(asset.light.distance).toBeGreaterThan(0);
         expect(asset.light.color).toMatch(/^#[0-9a-f]{6}$/i);
+        const L = asset.light;
+        expect(['point', 'spot', undefined]).toContain(L.kind);
+        if (L.angle !== undefined) expect(L.angle > 0 && L.angle <= Math.PI / 2).toBe(true);
+        if (L.penumbra !== undefined) expect(L.penumbra >= 0 && L.penumbra <= 1).toBe(true);
+        const { w, d, h } = asset.defaultSize;
+        const heads = L.heads?.length ? L.heads : [{ x: L.x, y: L.y, z: L.z, dir: L.dir }];
+        for (const head of heads) {
+          // Each bulb sits within the item (2 cm tolerance) and a spot has a real direction.
+          expect(Math.abs(head.x ?? 0)).toBeLessThanOrEqual(w / 2 + 0.02);
+          expect(Math.abs(head.z ?? 0)).toBeLessThanOrEqual(d / 2 + 0.02);
+          expect(head.y).toBeGreaterThanOrEqual(-0.02);
+          expect(head.y).toBeLessThanOrEqual(h + 0.02);
+          const dir = head.dir ?? L.dir;
+          if (dir) expect(Math.hypot(...dir)).toBeGreaterThan(0.01);
+        }
       }
     });
 
