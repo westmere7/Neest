@@ -25,6 +25,10 @@
 .export-format.on {
   background: var(--accent-soft);
   border-color: var(--accent-ring);
+  color: var(--accent-strong);
+}
+[data-theme='dark'] .export-format.on {
+  color: var(--accent);
 }
 .ef-icon {
   display: grid;
@@ -38,7 +42,7 @@
 }
 .export-format.on .ef-icon {
   background: var(--surface-solid);
-  color: var(--text);
+  color: var(--accent);
 }
 .ef-text {
   display: flex;

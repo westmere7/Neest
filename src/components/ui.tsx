@@ -7,6 +7,7 @@ import {
   type ButtonHTMLAttributes,
   type ReactNode,
 } from 'react';
+import { ChevronRight } from 'lucide-react';
 import type { LengthUnit } from '@/domain/model/schema';
 import { formatLengthValue, parseLength } from '@/domain/model/units';
 import './components.css';
@@ -516,9 +517,7 @@ export function Section({ title, children, actions, defaultOpen = true }: { titl
     <section className={`section${open ? ' open' : ''}`}>
       <header className="section-head">
         <button type="button" className="section-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
-          <span className="chev" aria-hidden>
-            ▸
-          </span>
+          <ChevronRight size={13} className="chev" aria-hidden />
           {title}
         </button>
         {actions}

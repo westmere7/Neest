@@ -46,7 +46,7 @@ export function sunFromSettings(r: Pick<RenderSettings, 'timeOfDay' | 'sunAzimut
   const az = (r.sunAzimuth * Math.PI) / 180;
   const dir = new THREE.Vector3(Math.sin(az) * Math.cos(elevation), Math.sin(elevation), -Math.cos(az) * Math.cos(elevation));
   const warm = new THREE.Color('#ffc58f');
-  const noon = new THREE.Color('#fff6ea');
+  const noon = new THREE.Color('#fffcf7');
   const color = warm.lerp(noon, Math.min(1, Math.sin(elevation) * 1.6));
   const intensity = r.sunIntensity * (0.35 + 0.65 * Math.sin(elevation));
   return { dir, color, intensity, elevation };
@@ -80,7 +80,7 @@ export function Lighting({ project, derived, shadows, quality }: { project: Proj
   const b = derived.bounds ?? { minX: -5, minY: -5, maxX: 5, maxY: 5 };
   const cx = (b.minX + b.maxX) / 2;
   const cz = (b.minY + b.maxY) / 2;
-  const radius = Math.max(4, Math.hypot(b.maxX - b.minX, b.maxY - b.minY) / 2 + 1.5);
+  const radius = Math.max(4, Math.hypot(b.maxX - b.minX, b.maxY - b.maxY) / 2 + 1.5);
   const sun = sunFromSettings(r);
   const pos = sun.dir.clone().multiplyScalar(radius * 2.5).add(new THREE.Vector3(cx, 0, cz));
   const mapSize = quality === 'high' ? 4096 : quality === 'balanced' ? 2048 : 1024;
@@ -106,7 +106,7 @@ export function Lighting({ project, derived, shadows, quality }: { project: Proj
   }, [cx, cz, radius, mapSize, quality]);
   return (
     <>
-      <hemisphereLight args={['#f4f1ea', '#8a8378', 0.35 * r.envIntensity]} />
+      <hemisphereLight args={['#f7f9fb', '#888c90', 0.35 * r.envIntensity]} />
       <directionalLight ref={lightRef} position={pos} color={sun.color} intensity={sun.intensity} castShadow={shadows} />
       <LampLights project={project} enabled={quality === 'high'} />
     </>

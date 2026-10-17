@@ -176,13 +176,13 @@
   height: 160px;
   flex: none;
   overflow: hidden;
-  background: #f4f2ed;
+  background: #f6f7f8;
   display: grid;
   place-items: center;
   border-bottom: 1px solid var(--border);
 }
 [data-theme='dark'] .thumb {
-  background: #e9e6df;
+  background: #eef0f2;
 }
 .thumb img {
   position: absolute;
@@ -197,7 +197,7 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  color: #8a867f;
+  color: #7d848d;
   font-size: 12px;
 }
 .card-meta {

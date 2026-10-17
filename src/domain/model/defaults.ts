@@ -68,7 +68,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       sunIntensity: 2.2,
       envIntensity: 0.9,
       shadows: true,
-      background: '#d9d6cf',
+      background: '#dfe3e6',
       wallDisplay: 'full',
       cutawayHeight: 1.2,
       showCeilings: false,

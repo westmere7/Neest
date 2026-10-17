@@ -3422,8 +3422,13 @@
     "sunIntensity": 1.8,
     "envIntensity": 0.7,
     "shadows": true,
+<<<<<<< Updated upstream
     "background": "#969696",
     "wallDisplay": "full",
+=======
+    "background": "#dfe3e6",
+    "wallDisplay": "cutaway",
+>>>>>>> Stashed changes
     "cutawayHeight": 0.3,
     "showCeilings": false,
     "showRoomLabels": false,

@@ -38,7 +38,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'Ctrl+L', action: 'Lock / unlock selection' },
   { keys: 'F', action: 'Fit plan' },
   { keys: 'G', action: 'Toggle grid' },
-  { keys: '1 / 2', action: 'Draft / furnished plan' },
+  { keys: '1 / 2', action: 'Outline / 2D plan' },
   { keys: '4 / 5', action: '3D view / split view' },
   { keys: '\\', action: 'Hide / show interface' },
   { keys: 'Esc', action: 'Cancel, back to select, clear selection, show interface' },

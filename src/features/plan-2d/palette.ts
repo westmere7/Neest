@@ -24,25 +24,25 @@ export interface PlanPalette {
 }
 
 const LIGHT_DRAFT: PlanPalette = {
-  paper: '#f4f2ed',
-  grid: 'rgba(40,38,34,0.06)',
-  gridMajor: 'rgba(40,38,34,0.13)',
-  wallFill: '#26251f',
-  wallStroke: '#1a1915',
-  hubFill: '#26251f',
-  line: '#2b2a26',
-  lineThin: '#6f6b64',
-  opening: '#2b2a26',
+  paper: '#f6f7f8',
+  grid: 'rgba(24,30,36,0.055)',
+  gridMajor: 'rgba(24,30,36,0.11)',
+  wallFill: '#222528',
+  wallStroke: '#16181a',
+  hubFill: '#222528',
+  line: '#26292c',
+  lineThin: '#686e75',
+  opening: '#26292c',
   glass: '#6f8fa8',
-  floorFallback: '#e9e5dc',
+  floorFallback: '#eceef0',
   roomFillDraft: 'rgba(0,0,0,0)',
-  furnitureFill: '#f4f2ed',
-  furnitureStroke: '#7a766f',
-  label: '#24231f',
-  labelMuted: '#6c6862',
+  furnitureFill: '#f6f7f8',
+  furnitureStroke: '#727880',
+  label: '#1e2124',
+  labelMuted: '#646a72',
   dim: '#2f62a0',
-  halo: '#f4f2ed',
-  shadow: 'rgba(30,25,15,0.18)',
+  halo: '#f6f7f8',
+  shadow: 'rgba(15,23,32,0.15)',
 };
 
 const DARK_DRAFT: PlanPalette = {
@@ -69,13 +69,13 @@ const DARK_DRAFT: PlanPalette = {
 
 const LIGHT_FURNISHED: PlanPalette = {
   ...LIGHT_DRAFT,
-  labelMuted: '#3f3c36',
-  halo: 'rgba(250,248,243,0.9)',
-  paper: '#ebe8e1',
-  wallFill: '#3b3a36',
-  wallStroke: '#22211e',
-  hubFill: '#3b3a36',
-  furnitureStroke: 'rgba(30,28,24,0.55)',
+  labelMuted: '#3a3f45',
+  halo: 'rgba(255,255,255,0.9)',
+  paper: '#eef0f2',
+  wallFill: '#36393d',
+  wallStroke: '#1e2023',
+  hubFill: '#36393d',
+  furnitureStroke: 'rgba(24,28,32,0.55)',
 };
 
 const DARK_FURNISHED: PlanPalette = {
@@ -83,7 +83,7 @@ const DARK_FURNISHED: PlanPalette = {
   // Floors are mostly light finishes: use dark labels with a light halo for legibility.
   label: '#211f1b',
   labelMuted: '#3f3c36',
-  halo: 'rgba(250,248,243,0.9)',
+  halo: 'rgba(255,255,255,0.9)',
   paper: '#17191b',
   wallFill: '#4a4b4e',
   wallStroke: '#c9c5bc',
@@ -93,12 +93,12 @@ const DARK_FURNISHED: PlanPalette = {
 
 const LIGHT_PRESENTATION: PlanPalette = {
   ...LIGHT_FURNISHED,
-  paper: '#f7f5f1',
-  wallFill: '#2e2d2a',
-  wallStroke: '#2e2d2a',
-  hubFill: '#2e2d2a',
-  label: '#3a3833',
-  labelMuted: '#8a857c',
+  paper: '#f8f9fa',
+  wallFill: '#2a2d30',
+  wallStroke: '#2a2d30',
+  hubFill: '#2a2d30',
+  label: '#32363a',
+  labelMuted: '#7d848d',
 };
 
 const DARK_PRESENTATION: PlanPalette = {

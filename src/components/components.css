@@ -88,7 +88,7 @@
 }
 .icon-btn.active {
   background: var(--accent-soft);
-  color: var(--accent-strong);
+  color: var(--accent);
   border-color: var(--accent-ring);
 }
 [data-theme='dark'] .icon-btn.active {
@@ -286,12 +286,14 @@
   color: var(--text);
 }
 .segmented button.on {
-  background: var(--surface-solid);
-  color: var(--text);
-  box-shadow: var(--shadow-sm);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--accent-ring);
 }
 [data-theme='dark'] .segmented button.on {
-  background: var(--surface-3);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .toggle-row {
@@ -367,8 +369,7 @@
   text-align: left;
 }
 .section-toggle .chev {
-  display: inline-block;
-  font-size: 9px;
+  flex: none;
   transition: transform var(--dur-fast) var(--ease);
 }
 .section.open .chev {

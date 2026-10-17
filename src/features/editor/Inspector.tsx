@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp, Copy, FlipHorizontal2, Lock, RotateCw, Trash2, Unlock, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Lock, RotateCw, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
 import { isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
@@ -752,7 +752,7 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
           <div key={key} className="layer-row">
             <span>{label}</span>
             <IconButton label={project.layers[key].visible ? `Hide ${label}` : `Show ${label}`} active={project.layers[key].visible} onClick={() => setLayer(key, { visible: !project.layers[key].visible })}>
-              {project.layers[key].visible ? '👁' : '—'}
+              {project.layers[key].visible ? <Eye size={14} /> : <EyeOff size={14} />}
             </IconButton>
             {key !== 'annotations' && (
               <IconButton

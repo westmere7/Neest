@@ -238,7 +238,7 @@ export const RenderSettingsSchema = z.object({
   sunIntensity: num.min(0).max(10).default(2.2),
   envIntensity: num.min(0).max(4).default(0.9),
   shadows: z.boolean().default(true),
-  background: HexColor.default('#d9d6cf'),
+  background: HexColor.default('#dfe3e6'),
   wallDisplay: WallDisplaySchema.default('full'),
   cutawayHeight: num.min(0.3).max(5).default(1.2),
   showCeilings: z.boolean().default(false),

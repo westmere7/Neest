@@ -279,10 +279,14 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     return browse === 'room' ? a.category === cat : a.type === cat;
   });
   if (cat === 'recent') list.sort((a, b) => recents.indexOf(a.id) - recents.indexOf(b.id));
+<<<<<<< Updated upstream
   const present = new Set<string>(all.map((a) => (browse === 'room' ? a.category : a.type)));
   const cats: { value: CatFilter; label: string }[] = [
+=======
+  const cats: { value: CatFilter; label: ReactNode }[] = [
+>>>>>>> Stashed changes
     { value: 'all', label: 'All' },
-    { value: 'favourites', label: '★ Favourites' },
+    { value: 'favourites', label: <><Star size={11} /> Favourites</> },
     { value: 'recent', label: 'Recent' },
     ...(browse === 'room'
       ? ASSET_CATEGORY_ORDER.filter((c) => c !== 'construction' && present.has(c)).map((c) => ({ value: c as CatFilter, label: ASSET_CATEGORY_LABELS[c] }))

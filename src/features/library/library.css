@@ -79,7 +79,14 @@
 .build-card.on {
   border-color: var(--accent);
   background: var(--accent-soft);
-  color: var(--text);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.build-card.on svg {
+  color: var(--accent);
+}
+[data-theme='dark'] .build-card.on {
+  color: var(--accent);
 }
 .lib-filters {
   position: sticky;
@@ -126,7 +133,15 @@
 }
 .asset-card.on {
   border-color: var(--accent);
+  background: var(--accent-soft);
   box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.asset-card.on .asset-name {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+[data-theme='dark'] .asset-card.on .asset-name {
+  color: var(--accent);
 }
 .asset-main {
   display: flex;

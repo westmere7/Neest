@@ -82,7 +82,12 @@
 }
 .mat-cell.on {
   border-color: var(--accent);
-  color: var(--text);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+[data-theme='dark'] .mat-cell.on {
+  color: var(--accent);
 }
 .mat-picker-foot {
   display: flex;
@@ -123,6 +128,10 @@
 }
 .mat-row.on {
   background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+[data-theme='dark'] .mat-row.on {
+  color: var(--accent);
 }
 .mat-row-text {
   flex: 1;

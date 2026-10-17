@@ -393,6 +393,9 @@
   color: var(--text-2);
 }
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   height: 26px;
   padding: 0 10px;
   border-radius: 13px;
@@ -409,7 +412,11 @@
 .chip.on {
   background: var(--accent-soft);
   border-color: var(--accent-ring);
-  color: var(--text);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+[data-theme='dark'] .chip.on {
+  color: var(--accent);
 }
 .chips {
   display: flex;
