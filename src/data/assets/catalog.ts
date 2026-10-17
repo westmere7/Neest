@@ -64,7 +64,7 @@ export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   lighting: 'Lighting',
   decor: 'Decor',
   electronics: 'Electronics',
-  construction: 'Construction',
+  construction: 'Structure',
   generic: 'Basic shapes',
   custom: 'Imported models',
 };

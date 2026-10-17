@@ -7,7 +7,6 @@ import {
   Check,
   Cloud,
   Columns2,
-  Columns3,
   DoorOpen,
   Download,
   EyeOff,
@@ -337,7 +336,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
   const set = useEditorStore((s) => s.set);
 
   const inFurnitureLib = libraryOpen && (libraryTab === 'furniture' || libraryTab === 'materials');
-  const inBuildGroup = (g: 'walls' | 'doors' | 'windows' | 'structure') =>
+  const inBuildGroup = (g: 'walls' | 'doors' | 'windows') =>
     libraryOpen && libraryTab === 'build' && buildGroup === g;
 
   return (
@@ -435,23 +434,6 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         >
           <Grid2x2 size={18} />
           <span className="rail-btn-label">Windows</span>
-        </IconButton>
-        <IconButton
-          label="Structure & partitions"
-          active={inBuildGroup('structure')}
-          tooltipSide="right"
-          className="rail-labeled-btn"
-          onClick={() =>
-            set({
-              libraryOpen: !inBuildGroup('structure'),
-              libraryTab: 'build',
-              buildGroup: 'structure',
-            })
-          }
-          data-testid="tool-structure"
-        >
-          <Columns3 size={18} />
-          <span className="rail-btn-label">Structure</span>
         </IconButton>
         <span className="rail-sep" />
         <IconButton

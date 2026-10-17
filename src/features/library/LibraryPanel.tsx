@@ -28,7 +28,6 @@ const BUILD_GROUP_TITLES = {
   walls: 'Walls',
   doors: 'Doors',
   windows: 'Windows',
-  structure: 'Structure & partitions',
 } as const;
 
 export function LibraryPanel({ isMobile }: { isMobile: boolean }) {
@@ -161,7 +160,6 @@ function BuildTab() {
       </button>
     );
   };
-  const structure = ASSET_CATALOG.filter((a) => a.category === 'construction');
   return (
     <div className="build-tab">
       {buildGroup === 'walls' && (
@@ -226,16 +224,6 @@ function BuildTab() {
           </div>
         </>
       )}
-      {buildGroup === 'structure' && structure.length > 0 && (
-        <>
-          <h3 className="lib-h">Structure & partitions</h3>
-          <div className="asset-grid">
-            {structure.map((a) => (
-              <AssetCard key={a.id} asset={a} />
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }
@@ -291,7 +279,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const [cat, setCat] = useState<CatFilter>('all');
   const custom = useMemo(() => Object.values(project.customAssets).map(customAssetDefinition), [project.customAssets]);
   const all = useMemo(
-    () => [...ASSET_CATALOG.filter((a) => a.category !== 'construction'), ...custom],
+    () => [...ASSET_CATALOG, ...custom],
     // Pack items are added to the catalogue in place, so re-read it when packs change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [custom, packs],
@@ -313,8 +301,8 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     { value: 'all', label: 'All' },
     { value: 'recent', label: 'Recent' },
     ...(browse === 'room'
-      ? ASSET_CATEGORY_ORDER.filter((c) => c !== 'construction' && present.has(c)).map((c) => ({ value: c as CatFilter, label: ASSET_CATEGORY_LABELS[c] }))
-      : ASSET_TYPE_ORDER.filter((t) => t !== 'structure' && present.has(t)).map((t) => ({ value: t as CatFilter, label: ASSET_TYPE_LABELS[t] }))),
+      ? ASSET_CATEGORY_ORDER.filter((c) => present.has(c)).map((c) => ({ value: c as CatFilter, label: ASSET_CATEGORY_LABELS[c] }))
+      : ASSET_TYPE_ORDER.filter((t) => present.has(t)).map((t) => ({ value: t as CatFilter, label: ASSET_TYPE_LABELS[t] }))),
     ...(browse === 'room' && custom.length ? [{ value: 'custom' as CatFilter, label: ASSET_CATEGORY_LABELS.custom }] : []),
   ];
   const groups = shelves(list, browse, cat);
