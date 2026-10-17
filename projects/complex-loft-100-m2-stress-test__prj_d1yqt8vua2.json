@@ -4,7 +4,7 @@
   "id": "prj_d1yqt8vua2",
   "name": "Complex loft 100 m² (stress test)",
   "createdAt": 1792222586472,
-  "updatedAt": 1792230667004,
+  "updatedAt": 1792231834936,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -1672,7 +1672,7 @@
       "x": 4.8,
       "y": 4.1,
       "elevation": 0.42,
-      "rotation": 3.141592653589793,
+      "rotation": 2.8797932657906435,
       "width": 0.45,
       "depth": 0.16,
       "height": 0.45,
@@ -1725,7 +1725,9 @@
       "depth": 0.35,
       "height": 0.08,
       "mirrored": false,
-      "materials": {},
+      "materials": {
+        "fabric": "paint-deep-teal"
+      },
       "locked": false,
       "hidden": false
     },
@@ -3422,13 +3424,8 @@
     "sunIntensity": 1.8,
     "envIntensity": 0.7,
     "shadows": true,
-<<<<<<< Updated upstream
     "background": "#969696",
     "wallDisplay": "full",
-=======
-    "background": "#dfe3e6",
-    "wallDisplay": "cutaway",
->>>>>>> Stashed changes
     "cutawayHeight": 0.3,
     "showCeilings": false,
     "showRoomLabels": false,
