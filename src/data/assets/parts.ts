@@ -859,6 +859,8 @@ export interface AssetSpec {
   build: (size: Size3) => Part[];
   planDetail?: (size: Size3) => PlanStroke[];
   light?: AssetDefinition['light'];
+  description?: string;
+  brand?: AssetDefinition['brand'];
 }
 
 export function defineAsset(spec: AssetSpec): AssetDefinition {

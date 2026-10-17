@@ -11,7 +11,7 @@ import type { MaterialCategory } from '@/domain/model/schema';
 import type { AssetSpec } from '@/data/assets/parts';
 
 export * from '@/data/assets/parts';
-export type { AssetCategory, AssetType, Part, PlanStroke, Size3, MaterialSlot } from '@/data/assets/types';
+export type { AssetBrand, AssetCategory, AssetType, Part, PlanStroke, Size3, MaterialSlot } from '@/data/assets/types';
 
 /** An item (furniture/object) in a pack: the same fields as a built-in asset. */
 export type PackItem = AssetSpec;

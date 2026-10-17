@@ -113,6 +113,10 @@ export interface AssetDefinition {
   planDetail?: (size: Size3) => PlanStroke[];
   /** Optional emitted light (balanced and high render quality, and the path tracer). */
   light?: AssetLight;
+  /** Optional one- or two-sentence description shown in the library's info card. */
+  description?: string;
+  /** Set for models of a real, branded product (shown in the library's info card). */
+  brand?: AssetBrand;
   /** Placement behaviour: snap the back (-z) against walls when placed nearby. */
   wallSnap?: boolean;
   source: { name: string; license: string };
@@ -145,6 +149,20 @@ export interface AssetLight {
   penumbra?: number;
   /** Several bulbs or heads (track heads, chandelier arms, up/down sconces): each is its own light and replaces x/y/z/dir. */
   heads?: { x?: number; y: number; z?: number; dir?: [number, number, number] }[];
+}
+
+/** A real product an asset models: maker, model number and its published specs. */
+export interface AssetBrand {
+  /** Maker, e.g. "Bosch". */
+  name: string;
+  /** Exact model number, e.g. "SMS4HVI33E". */
+  model: string;
+  /** Product line or series, e.g. "Serie 4". */
+  line?: string;
+  /** Where the specs come from (manufacturer page or spec sheet). */
+  url?: string;
+  /** Published specs as label/value pairs, e.g. ["Place settings", "13"]. */
+  specs?: [string, string][];
 }
 
 export interface AssetPackInfo {
