@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 import type { LengthUnit } from '@/domain/model/schema';
 import { formatLengthValue, parseLength } from '@/domain/model/units';
 import './components.css';
@@ -198,6 +198,60 @@ export function Field({ label, children, hint, inline }: { label: string; childr
   );
 }
 
+// ───────────── Number stepper ─────────────
+
+/**
+ * Up/down arrows at the end of a numeric input. A click steps once, holding repeats, Shift steps
+ * ten times as far. The buttons are skipped by Tab (the arrow keys do the same in the field).
+ */
+function Stepper({ onStep, disabled }: { onStep: (dir: 1 | -1, big: boolean) => void; disabled?: boolean }) {
+  const timer = useRef<number | null>(null);
+  const stop = () => {
+    if (timer.current != null) window.clearTimeout(timer.current);
+    timer.current = null;
+  };
+  useEffect(() => stop, []);
+  const start = (dir: 1 | -1, big: boolean) => {
+    onStep(dir, big);
+    let delay = 380;
+    const tick = () => {
+      onStep(dir, big);
+      delay = Math.max(50, delay * 0.8);
+      timer.current = window.setTimeout(tick, delay);
+    };
+    timer.current = window.setTimeout(tick, delay);
+  };
+  const btn = (dir: 1 | -1, label: string, icon: ReactNode) => (
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label={label}
+      disabled={disabled}
+      // Keep focus (and any typed text) in the input while stepping.
+      onMouseDown={(e) => e.preventDefault()}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        start(dir, e.shiftKey);
+      }}
+      onPointerUp={stop}
+      onPointerCancel={stop}
+      onLostPointerCapture={stop}
+    >
+      {icon}
+    </button>
+  );
+  return (
+    <span className="stepper">
+      {btn(1, 'Increase', <ChevronUp size={11} strokeWidth={2.4} />)}
+      {btn(-1, 'Decrease', <ChevronDown size={11} strokeWidth={2.4} />)}
+    </span>
+  );
+}
+
+/** Step for length fields, in metres: 1 cm in metric units, 1 inch in imperial ones. */
+const lengthStep = (unit: LengthUnit): number => (unit === 'in' || unit === 'ft' ? 0.0254 : 0.01);
+
 interface LengthFieldProps {
   label: string;
   value: number;
@@ -241,12 +295,20 @@ export function LengthField({ label, value, unit, precision, min = 0, max = 1000
     if (Math.abs(v - value) > 1e-7) onCommit(v);
     else setText(formatLengthValue(value, unit, precision));
   };
+  // Steps from what is typed (when it parses) so a half-typed value isn't lost.
+  const step = (dir: 1 | -1, big: boolean) => {
+    const base = parseLength(text, unit) ?? value;
+    const nv = Math.min(max, Math.max(min, Math.round((base + dir * lengthStep(unit) * (big ? 10 : 1)) * 1e6) / 1e6));
+    setText(formatLengthValue(nv, unit, precision));
+    setError(null);
+    if (Math.abs(nv - value) > 1e-7) onCommit(nv);
+  };
   return (
     <div className={`field${error ? ' has-error' : ''}`}>
       <label className="field-label" htmlFor={id}>
         {label}
       </label>
-      <div className="input-wrap">
+      <div className="input-wrap has-stepper">
         <input
           id={id}
           className="input num"
@@ -276,9 +338,14 @@ export function LengthField({ label, value, unit, precision, min = 0, max = 1000
               setError(null);
               (e.target as HTMLInputElement).blur();
             }
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              step(e.key === 'ArrowUp' ? 1 : -1, e.shiftKey);
+            }
           }}
         />
         {unit !== 'ft' && <span className="input-suffix">{unit}</span>}
+        <Stepper onStep={step} disabled={disabled} />
       </div>
       {error ? (
         <span className="field-error" id={`${id}-err`} role="alert">
@@ -303,7 +370,7 @@ interface NumberFieldProps {
   onCommit: (v: number) => void;
 }
 
-export function NumberField({ label, value, min = -Infinity, max = Infinity, step = 1, suffix, decimals = 1, disabled, onCommit }: NumberFieldProps) {
+export function NumberField({ label, value, min = -Infinity, max = Infinity, step: step0 = 1, suffix, decimals = 1, disabled, onCommit }: NumberFieldProps) {
   const fmt = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(decimals));
   const [text, setText] = useState(fmt(value));
   const [error, setError] = useState<string | null>(null);
@@ -320,12 +387,20 @@ export function NumberField({ label, value, min = -Infinity, max = Infinity, ste
     setError(null);
     if (v !== value) onCommit(v);
   };
+  const step = (dir: 1 | -1, big: boolean) => {
+    const typed = parseFloat(text.replace(',', '.'));
+    const base = Number.isFinite(typed) ? typed : value;
+    const nv = Number(Math.min(max, Math.max(min, base + dir * step0 * (big ? 10 : 1))).toFixed(4));
+    setText(fmt(nv));
+    setError(null);
+    if (nv !== value) onCommit(nv);
+  };
   return (
     <div className={`field${error ? ' has-error' : ''}`}>
       <label className="field-label" htmlFor={id}>
         {label}
       </label>
-      <div className="input-wrap">
+      <div className="input-wrap has-stepper">
         <input
           id={id}
           className="input num"
@@ -350,12 +425,12 @@ export function NumberField({ label, value, min = -Infinity, max = Infinity, ste
             }
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
               e.preventDefault();
-              const nv = Math.min(max, Math.max(min, value + (e.key === 'ArrowUp' ? step : -step)));
-              onCommit(Number(nv.toFixed(4)));
+              step(e.key === 'ArrowUp' ? 1 : -1, e.shiftKey);
             }
           }}
         />
         {suffix && <span className="input-suffix">{suffix}</span>}
+        <Stepper onStep={step} disabled={disabled} />
       </div>
       {error && (
         <span className="field-error" role="alert">

@@ -326,14 +326,13 @@ input[type='color']::-moz-color-swatch {
   color: var(--text);
 }
 .segmented button.on {
-  background: var(--surface-solid);
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
   font-weight: 600;
   box-shadow: var(--shadow-sm);
 }
-[data-theme='dark'] .segmented button.on {
-  background: var(--surface-3);
-  color: var(--accent);
+.segmented button.on:hover {
+  color: var(--on-accent);
 }
 
 .toggle-row {
@@ -618,4 +617,45 @@ kbd {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Number stepper: up/down arrows at the end of numeric inputs. */
+.input-wrap.has-stepper .input {
+  padding-right: 46px;
+}
+.input-wrap.has-stepper .input-suffix {
+  right: 24px;
+}
+.stepper {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  bottom: 3px;
+  width: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.stepper button {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  touch-action: none;
+}
+.stepper button:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.stepper button:active:not(:disabled) {
+  color: var(--accent);
+}
+.stepper button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
