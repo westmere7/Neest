@@ -1,0 +1,313 @@
+{
+  "format": "neest-project",
+  "schemaVersion": 1,
+  "id": "prj_su3t3ie6iw",
+  "name": "My apartment",
+  "createdAt": 1792231422218,
+  "updatedAt": 1792231422218,
+  "settings": {
+    "units": "m",
+    "precision": 2,
+    "areaUnit": "m2",
+    "gridSize": 0.1,
+    "defaultWall": {
+      "thickness": 0.12,
+      "height": 2.7,
+      "role": "interior"
+    },
+    "exteriorThickness": 0.3,
+    "showRoomLabels": true,
+    "showRoomAreas": true,
+    "dimensions": {
+      "overall": true,
+      "walls": false,
+      "rooms": true
+    }
+  },
+  "nodes": {},
+  "walls": {},
+  "openings": {},
+  "rooms": {},
+  "objects": {},
+  "materials": {
+    "paint-warm-white": {
+      "id": "paint-warm-white",
+      "name": "Warm white paint",
+      "category": "paint",
+      "color": "#eeebe4",
+      "roughness": 0.9,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 0.35,
+        "patternId": "paint",
+        "scale": 1.2
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-warm-white",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "plaster-light": {
+      "id": "plaster-light",
+      "name": "Light plaster",
+      "category": "plaster",
+      "color": "#e4dfd6",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 0.8,
+        "patternId": "plaster",
+        "scale": 2
+      },
+      "photo": {
+        "setId": "plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.8,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "plaster-light",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Plaster001",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Plaster001"
+      }
+    },
+    "plaster-white": {
+      "id": "plaster-white",
+      "name": "White plaster",
+      "category": "plaster",
+      "color": "#efece6",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 0.5,
+        "patternId": "plaster",
+        "scale": 2
+      },
+      "photo": {
+        "setId": "plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.6,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "plaster-white",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Plaster001",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Plaster001"
+      }
+    },
+    "wood-oak-natural": {
+      "id": "wood-oak-natural",
+      "name": "Natural oak planks",
+      "category": "wood",
+      "color": "#c49a6c",
+      "roughness": 0.6,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 1,
+        "patternId": "wood-planks",
+        "scale": 1.6
+      },
+      "photo": {
+        "setId": "oak-planks",
+        "scale": 1.8,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-oak-natural",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG WoodFloor051",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/WoodFloor051"
+      }
+    },
+    "tile-large-grey": {
+      "id": "tile-large-grey",
+      "name": "Large grey porcelain",
+      "category": "tile",
+      "color": "#a9a9a5",
+      "roughness": 0.4,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 1,
+        "patternId": "tile-large",
+        "scale": 1.2
+      },
+      "photo": {
+        "setId": "porcelain-large",
+        "scale": 4.8,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "tile-large-grey",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Tiles052",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Tiles052"
+      }
+    },
+    "paint-ceiling-white": {
+      "id": "paint-ceiling-white",
+      "name": "Ceiling white",
+      "category": "paint",
+      "color": "#f3f2ee",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-ceiling-white",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "paint-satin-white": {
+      "id": "paint-satin-white",
+      "name": "Satin white trim",
+      "category": "paint",
+      "color": "#f1f0ec",
+      "roughness": 0.45,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-satin-white",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "metal-anthracite": {
+      "id": "metal-anthracite",
+      "name": "Anthracite metal",
+      "category": "metal",
+      "color": "#3a3d40",
+      "roughness": 0.45,
+      "metalness": 0.7,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "metal-anthracite",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "glass-clear": {
+      "id": "glass-clear",
+      "name": "Clear glass",
+      "category": "glass",
+      "color": "#dcebf0",
+      "roughness": 0.05,
+      "metalness": 0,
+      "opacity": 0.22,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "glass-clear",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "solid-light-grey": {
+      "id": "solid-light-grey",
+      "name": "Light grey",
+      "category": "solid",
+      "color": "#d9d9d6",
+      "roughness": 0.6,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "solid-light-grey",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    }
+  },
+  "customAssets": {},
+  "cameras": [],
+  "render": {
+    "quality": "balanced",
+    "exposure": 1,
+    "timeOfDay": 14,
+    "sunAzimuth": 135,
+    "sunIntensity": 2.2,
+    "envIntensity": 0.9,
+    "shadows": true,
+    "background": "#dfe3e6",
+    "wallDisplay": "full",
+    "cutawayHeight": 1.2,
+    "showCeilings": false,
+    "showRoomLabels": false,
+    "hiddenCategories": []
+  },
+  "layers": {
+    "construction": {
+      "visible": true,
+      "locked": false
+    },
+    "furniture": {
+      "visible": true,
+      "locked": false
+    },
+    "annotations": {
+      "visible": true,
+      "locked": false
+    }
+  },
+  "guest": {
+    "startCameraId": null,
+    "spawn": null,
+    "spawnAngle": 0
+  }
+}
