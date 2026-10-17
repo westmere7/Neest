@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
@@ -31,6 +31,7 @@ import { WalkControls } from '@/features/walkthrough/WalkControls';
 import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
 import { PostEffects } from './PostEffects';
+import { InfiniteGrid } from './InfiniteGrid';
 import { namedView, presetView, type CameraView, type NamedView } from './cameraViews';
 import { liveScene, sharedRegistry } from './sceneRuntime';
 import { hitsGizmo, TransformGizmo, ToolBridge3D } from './edit3d';
@@ -199,9 +200,10 @@ function CameraDirector({ view }: { view: { v: CameraView; nonce: number } | nul
 
 /**
  * Makes the selected furniture the orbit pivot: when the selection changes to
- * include objects, the orbit target eases to their centre (the camera stays
- * where it is and turns to face them), so dragging orbits around the selection
- * and the wheel zooms toward it. Clearing the selection leaves the pivot as is.
+ * include objects, the orbit target eases to their centre and the camera pans
+ * along with it (same offset, so the view direction never changes), so dragging
+ * orbits around the selection and the wheel zooms toward it. Clearing the
+ * selection leaves the pivot as is.
  */
 function SelectionPivot() {
   const get = useThree((s) => s.get);
@@ -229,6 +231,7 @@ function SelectionPivot() {
     const to = box.getCenter(new THREE.Vector3());
     if (to.distanceTo(ctrl.target) < 0.01) return;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      get().camera.position.add(to.clone().sub(ctrl.target));
       ctrl.target.copy(to);
       ctrl.update();
       anim.current = null;
@@ -240,7 +243,10 @@ function SelectionPivot() {
     if (!a || !ctrl) return;
     a.t = Math.min(1, a.t + dt / 0.35);
     const e = 1 - Math.pow(1 - a.t, 3);
+    const before = ctrl.target.clone();
     ctrl.target.lerpVectors(a.from, a.to, e);
+    // Pan, don't turn: the camera moves by exactly what the pivot moved.
+    get().camera.position.add(ctrl.target.clone().sub(before));
     ctrl.update();
     if (a.t >= 1) anim.current = null;
   });
@@ -414,6 +420,22 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
   const [compiled, setCompiled] = useState(false);
   const onReady = useCallback(() => setReady(true), []);
   const onCompiled = useCallback(() => setCompiled(true), []);
+  // Switching quality changes lights, shadows and effects, so shaders recompile. The switch shows
+  // at once; drawing pauses (last frame stays) under a light overlay until they compile in the
+  // background, instead of freezing the page on the next frame. A layout effect runs before that
+  // frame can be drawn.
+  const [switching, setSwitching] = useState<RenderSettings['quality'] | null>(null);
+  const lastQuality = useRef(r.quality);
+  useLayoutEffect(() => {
+    if (lastQuality.current === r.quality) return;
+    lastQuality.current = r.quality;
+    setSwitching(r.quality);
+    setCompiled(false);
+    setReady(false);
+  }, [r.quality]);
+  useEffect(() => {
+    if (ready) setSwitching(null);
+  }, [ready]);
   const exitWalk = useCallback(() => useEditorStore.getState().set({ workspace: '3d' }), []);
 
   return (
@@ -449,7 +471,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         }}
       >
         <color attach="background" args={[r.background]} />
-        {!ready && <FirstFrames onCompiled={onCompiled} onReady={onReady} />}
+        {!ready && <FirstFrames key={r.quality} onCompiled={onCompiled} onReady={onReady} />}
         <PostEffects quality={r.quality} selectedIds={options.selectedIds} paused={!compiled} />
         {walk || projection === 'perspective' ? (
           <PerspectiveCamera makeDefault position={view?.v.position ?? [10, 10, 10]} fov={walk ? 70 : (view?.v.fov ?? 45)} near={0.05} far={600} />
@@ -480,7 +502,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         <SceneContent project={project} derived={derived} registry={sharedRegistry} options={options} />
         {!walk && (
           <group ref={helpersRef} visible={showHelpers}>
-            <gridHelper args={[60, 60, '#9a958c', '#c9c4ba']} position={[0, -0.005, 0]} />
+            <InfiniteGrid background={r.background} />
           </group>
         )}
         <mesh rotation-x={-Math.PI / 2} position={[0, -0.01, 0]} receiveShadow raycast={() => null}>
@@ -491,7 +513,12 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         {!walk && <ToolBridge3D enabled={workspace === '3d'} />}
         {!walk && !drawing && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
       </Canvas>
-      {!ready && <div className="pane-loading scene3d-loading">Loading 3D view…</div>}
+      {!ready &&
+        (switching ? (
+          <div className="pane-loading scene3d-loading switching">Applying {QUALITY_LABELS[switching]} quality…</div>
+        ) : (
+          <div className="pane-loading scene3d-loading">Loading 3D view…</div>
+        ))}
       {walk && <WalkHud onExit={exitWalk} isMobile={isMobile} />}
       {!walk && !chromeHidden && workspace !== 'split' && (
         <ViewPanel
@@ -518,6 +545,8 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
     </div>
   );
 }
+
+const QUALITY_LABELS: Record<RenderSettings['quality'], string> = { draft: 'Draft', balanced: 'Balanced', high: 'High', ultra: 'Ultra' };
 
 /**
  * The ground only shows the sun's shadow. Lamp lights inside the building cast shadows too
