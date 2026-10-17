@@ -317,7 +317,7 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 
 ## 12. Library & materials
 
-- **Assets** (`data/assets`): ASSET_COUNT procedural assets, one module per room. Each has:
+- **Assets** (`data/assets`): 270 procedural assets, one module per room. Each has:
   - a stable id
   - **category** (room: living, bedroom, kids, dining, kitchen, bathroom, laundry, office, hobbies, outdoor, storage, lighting, decor, electronics, construction, generic)
   - **type** (what it is: seating, beds, surfaces, storage, appliances, plumbing, lighting, decor, plants, electronics, activities, kids, structure, misc)
@@ -533,7 +533,8 @@ Done and verified in the browser:
   editor plan modes (`draft`, `furnished`), no-interface mode, and a start-up fit to the free canvas area.
 - Inspector editing with validation.
 - Materials with linked/override semantics.
-- Furniture library: 86 assets, favourites, recents, search, drag and drop.
+- Furniture library: 270 built-in assets in 16 rooms (Sims-style room/type shelves), content packs in /packs
+  (Halloween example), favourites, recents, search, drag and drop.
 - 3D view: lighting, quality presets, wall display modes with clipped cutaway openings, saved views,
   walkthrough, guest view, and fitted framing beside panels.
 - **3D editing**: drafting tools in 3D, ghost placement, transform gizmo.
@@ -590,6 +591,6 @@ Known limitations (also in README):
 22. "When an object is selected it should be the anchor point for orbit" → `SelectionPivot` (done).
 23. "Allow sun diameter / diffuse light" → tried PCSS then VSM; "buggy, revert, revisit later" → reverted.
 24. "Improve the furniture library: a lot more, more detailed, like the Sims" → room/type taxonomy and shelves,
-    detail helpers, merged per-slot meshes, new rooms (kids, laundry, hobbies, outdoor) and ASSET_COUNT assets (done).
+    detail helpers, merged per-slot meshes, new rooms (kids, laundry, hobbies, outdoor) and 270 assets (done).
 25. "Load external furniture packs (own procedural/bitmap textures), additional files, e.g. Halloween; dynamically
     loaded without refresh; one file per pack; show the source only on hover and in the item's info" → /packs (done).

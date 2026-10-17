@@ -357,11 +357,11 @@ const utilitySink = defineAsset({
     const sy = 0.16;
     const o = { plan: false };
     const parts: Part[] = [
-      span('tub', [-w / 2, w / 2], [yb, yb + 0.03], [-d / 2, d / 2], { bevel: 0.01 }),
-      span('tub', [-w / 2, -w / 2 + wt], [yb, rim], [-d / 2, d / 2], { bevel: 0.012 }),
-      span('tub', [w / 2 - wt, w / 2], [yb, rim], [-d / 2, d / 2], { bevel: 0.012 }),
-      span('tub', [-w / 2 + wt - 0.005, w / 2 - wt + 0.005], [yb, rim], [d / 2 - wt, d / 2], { bevel: 0.012 }),
-      span('tub', [-w / 2 + wt - 0.005, w / 2 - wt + 0.005], [yb, rim], [-d / 2, -d / 2 + deck], { bevel: 0.012 }),
+      span('tub', [-w / 2, w / 2], [yb, yb + 0.03], [-d / 2, d / 2], { bevel: 0.005 }),
+      span('tub', [-w / 2, -w / 2 + wt], [yb, rim], [-d / 2, d / 2], { bevel: 0.006 }),
+      span('tub', [w / 2 - wt, w / 2], [yb, rim], [-d / 2, d / 2], { bevel: 0.006 }),
+      span('tub', [-w / 2 + wt - 0.005, w / 2 - wt + 0.005], [yb, rim], [d / 2 - wt, d / 2], { bevel: 0.006 }),
+      span('tub', [-w / 2 + wt - 0.005, w / 2 - wt + 0.005], [yb, rim], [-d / 2, -d / 2 + deck], { bevel: 0.006 }),
       // Washboard ribs moulded into the front inner wall.
       ...slats('tub', [-w / 2 + wt + 0.05, w / 2 - wt - 0.05], [yb + 0.1, rim - 0.04], [zi[1] - 0.008, zi[1]], 7, { axis: 'y', gap: 0.5, bevel: 0.002, plan: false }),
       cyl('tap', [0, yb + 0.032, (zi[0] + zi[1]) / 2], 0.03, 0.004, o),
@@ -391,7 +391,7 @@ const utilitySink = defineAsset({
     );
     const dx = lx - 0.08;
     parts.push(
-      span('items', [dx - 0.05, dx + 0.05], [sy + 0.004, sy + 0.24], [-0.07, 0.07], { bevel: 0.02, plan: false }),
+      span('items', [dx - 0.05, dx + 0.05], [sy + 0.004, sy + 0.24], [-0.07, 0.07], { bevel: 0.012, plan: false }),
       cyl('legs', [dx, sy + 0.26, 0], 0.025, 0.04, o),
     );
     return parts;
@@ -497,7 +497,7 @@ const stickVacuum = defineAsset({
       span('dock', [-0.025, 0.025], [0.015, h - 0.03], [-d / 2, -d / 2 + 0.04], { bevel: 0.008, plan: false }),
       span('dock', [-0.02, 0.02], [ym + 0.21, ym + 0.235], [-d / 2 + 0.04, zw - 0.055], { bevel: 0.004, plan: false }),
       // Floor head with its brush bar, resting on the dock.
-      span('body', [-hw / 2, hw / 2], [0.015, 0.07], [zw - 0.05, zh1], { bevel: 0.015, plan: false }),
+      span('body', [-hw / 2, hw / 2], [0.015, 0.07], [zw - 0.05, zh1], { bevel: 0.008, plan: false }),
       rodX('accent', -hw / 2 + 0.012, hw / 2 - 0.012, 0.045, zh1 - 0.028, 0.024, o),
       sphere('body', [0, 0.08, zw], 0.026, o),
       // Wand, cyclone bin, motor, battery and handle.
@@ -510,7 +510,7 @@ const stickVacuum = defineAsset({
         [0.03, 0.05],
         [0, 0.05],
       ], { segments: 24, plan: false }),
-      span('body', [-0.04, 0.04], [ym + 0.17, ym + 0.27], [zw - 0.06, zw + 0.03], { bevel: 0.025, plan: false }),
+      span('body', [-0.04, 0.04], [ym + 0.17, ym + 0.27], [zw - 0.06, zw + 0.03], { bevel: 0.012, plan: false }),
       span('body', [-0.03, 0.03], [ym + 0.12, ym + 0.2], [zw - 0.095, zw - 0.045], { bevel: 0.01, plan: false }),
       span('accent', [-0.02, 0.02], [ym + 0.13, ym + 0.135], [zw - 0.096, zw - 0.094], o),
       ...rodPath('accent', [

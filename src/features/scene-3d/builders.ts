@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Opening, PlacedObject, Project, Room, Vec2 } from '@/domain/model/schema';
 import { isWindowKind } from '@/domain/model/schema';
@@ -187,6 +186,74 @@ export function buildSlabGeometry(outer: Vec2[], holes: Vec2[][], y: number, fac
 
 // ───────────────────────── Part geometries ─────────────────────────
 
+/**
+ * Box with rounded edges and corners of radius `r` (`seg` steps per quarter arc). Each face is a
+ * grid whose rows/columns crowd into the edge bands; every vertex is projected onto the rounded
+ * surface (clamp to the inner box, push out by r), so flat faces keep exact face normals and only
+ * the bands curve. (three's RoundedBoxGeometry spreads the curvature over the whole face at
+ * non-unit sizes, which shades large bevels as if melted.)
+ */
+function roundedBoxGeometry(w: number, h: number, d: number, r: number, seg: number): THREE.BufferGeometry {
+  const half = [w / 2, h / 2, d / 2];
+  const inner = half.map((v) => Math.max(0, v - r));
+  // Coordinates along one axis: arc band, flat span, arc band.
+  const axis = (i: number): number[] => {
+    const out: number[] = [];
+    for (let k = 0; k <= seg; k++) out.push(-inner[i] - r * Math.cos((Math.PI / 2) * (k / seg)));
+    for (let k = 0; k <= seg; k++) out.push(inner[i] + r * Math.sin((Math.PI / 2) * (k / seg)));
+    return out;
+  };
+  const coords = [axis(0), axis(1), axis(2)];
+  const pos: number[] = [];
+  const nrm: number[] = [];
+  const idx: number[] = [];
+  const p = [0, 0, 0];
+  // Each face: normal axis n, sign, tangent axes (u, v) with u × v pointing outward.
+  const faces: [number, number, number, number][] = [
+    [0, 1, 1, 2],
+    [0, -1, 2, 1],
+    [1, 1, 2, 0],
+    [1, -1, 0, 2],
+    [2, 1, 0, 1],
+    [2, -1, 1, 0],
+  ];
+  for (const [n, sign, u, v] of faces) {
+    const base = pos.length / 3;
+    const cu = coords[u];
+    const cv = coords[v];
+    for (const b of cv) {
+      for (const a of cu) {
+        p[n] = sign * half[n];
+        p[u] = a;
+        p[v] = b;
+        // Project onto the rounded surface.
+        const c = p.map((x, i) => Math.max(-inner[i], Math.min(inner[i], x)));
+        const dx = p[0] - c[0];
+        const dy = p[1] - c[1];
+        const dz = p[2] - c[2];
+        const len = Math.hypot(dx, dy, dz) || 1;
+        pos.push(c[0] + (dx / len) * r, c[1] + (dy / len) * r, c[2] + (dz / len) * r);
+        nrm.push(dx / len, dy / len, dz / len);
+      }
+    }
+    const cols = cu.length;
+    for (let j = 0; j < cv.length - 1; j++) {
+      for (let i = 0; i < cols - 1; i++) {
+        const a = base + j * cols + i;
+        const b = a + 1;
+        const c = a + cols;
+        const e = c + 1;
+        idx.push(a, b, e, a, e, c);
+      }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+  geo.setIndex(idx);
+  return geo;
+}
+
 const geoCache = new Map<string, THREE.BufferGeometry>();
 const r4 = (n: number) => Math.round(n * 10000) / 10000;
 
@@ -250,7 +317,7 @@ export function partGeometry(part: Part): THREE.BufferGeometry {
     case 'box': {
       const [w, h, d] = part.size.map((s) => Math.max(s, 0.001));
       const bevel = Math.min(part.bevel ?? 0, Math.min(w, h, d) / 2 - 0.0005);
-      geo = bevel > 0.002 ? new RoundedBoxGeometry(w, h, d, 2, bevel) : new THREE.BoxGeometry(w, h, d);
+      geo = bevel > 0.002 ? roundedBoxGeometry(w, h, d, bevel, 4) : new THREE.BoxGeometry(w, h, d);
       boxProjectUVs(geo);
       break;
     }

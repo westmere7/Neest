@@ -121,7 +121,7 @@ const toilet = defineAsset({
     const vx = -w / 2 + 0.05;
     return [
       // Cistern, lid and dual flush button.
-      span('ceramic', [-w / 2 + 0.012, w / 2 - 0.012], [L.seatY - 0.06, h - 0.03], [-d / 2, L.zb], { bevel: 0.02 }),
+      span('ceramic', [-w / 2 + 0.012, w / 2 - 0.012], [L.seatY - 0.06, h - 0.03], [-d / 2, L.zb], { bevel: 0.015 }),
       span('ceramic', [-w / 2, w / 2], [h - 0.03, h - 0.006], [-d / 2, L.zb + 0.012], { bevel: 0.01 }),
       cyl('flush', [0, h - 0.004, bx], 0.034, 0.004, o),
       span('flush', [-0.028, -0.002], [h - 0.006, h], [bx - 0.022, bx + 0.022], { bevel: 0.003, plan: false }),
@@ -189,7 +189,7 @@ const wallToilet = defineAsset({
     const px = Math.min(0.12, w / 2 - 0.02);
     const zp = -d / 2 + 0.008;
     return [
-      span('ceramic', [-L.rx * 0.62, L.rx * 0.62], [y0 + 0.06, sy - 0.01], [-d / 2, L.bz - L.rz * 0.3], { bevel: 0.04 }),
+      span('ceramic', [-L.rx * 0.62, L.rx * 0.62], [y0 + 0.06, sy - 0.01], [-d / 2, L.bz - L.rz * 0.3], { bevel: 0.015 }),
       lathe('ceramic', [0, y0, L.bz], [
         [0, 0],
         [0.45, 0],
@@ -249,7 +249,7 @@ const bidet = defineAsset({
         [0.5, rim - 0.16],
         [0, rim - 0.18],
       ], { scale: [rx, 1, rz], segments: 36 }),
-      span('ceramic', [-rx * 0.55, rx * 0.55], [rim - 0.1, rim + 0.012], [-d / 2, -d / 2 + 0.12], { bevel: 0.02 }),
+      span('ceramic', [-rx * 0.55, rx * 0.55], [rim - 0.1, rim + 0.012], [-d / 2, -d / 2 + 0.12], { bevel: 0.012 }),
       ...mixerTap('tap', 0, zt, rim + 0.012, h, 0.08),
       vcyl('tap', 0.035, zt, rim + 0.012, rim + 0.05, 0.004, o),
       sphere('tap', [0.035, rim + 0.05, zt], 0.007, o),
@@ -663,13 +663,13 @@ const bathtub = defineAsset({
     return [
       span('tub', [-w / 2, w / 2], [0.05, base], [-d / 2, d / 2]),
       span('tub', [-w / 2 + 0.01, w / 2 - 0.01], [0, 0.05], [-d / 2, d / 2 - 0.04], o),
-      span('tub', [-w / 2, -w / 2 + te], [base, h], [-d / 2, d / 2], { bevel: 0.015 }),
-      span('tub', [w / 2 - te, w / 2], [base, h], [-d / 2, d / 2], { bevel: 0.015 }),
-      span('tub', xi, [base, h], [-d / 2, -d / 2 + ts], { bevel: 0.015 }),
-      span('tub', xi, [base, h], [d / 2 - ts, d / 2], { bevel: 0.015 }),
+      span('tub', [-w / 2, -w / 2 + te], [base, h], [-d / 2, d / 2], { bevel: 0.01 }),
+      span('tub', [w / 2 - te, w / 2], [base, h], [-d / 2, d / 2], { bevel: 0.01 }),
+      span('tub', xi, [base, h], [-d / 2, -d / 2 + ts], { bevel: 0.01 }),
+      span('tub', xi, [base, h], [d / 2 - ts, d / 2], { bevel: 0.01 }),
       // Apron panel and rounded inner floor with a sloped backrest.
       span('tub', [-w / 2 + 0.03, w / 2 - 0.03], [0.07, h - 0.05], [d / 2 - 0.003, d / 2 + 0.004], { bevel: 0.003, plan: false }),
-      span('tub', xi, [base, base + 0.03], zi, { bevel: 0.02, plan: false }),
+      span('tub', xi, [base, base + 0.03], zi, { bevel: 0.008, plan: false }),
       box3('tub', [xi[0] + 0.12, base + (h - base) * 0.47, 0], [0.035, (h - base) * 0.95, zi[1] - zi[0] - 0.01], [0, 0, 0.45]),
       // Drain, overflow, wall spout and two handles on the tap end.
       cyl('metal', [xe - 0.12, base + 0.032, 0], 0.025, 0.004, o),

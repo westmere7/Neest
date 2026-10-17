@@ -651,7 +651,7 @@ function fridgeParts({ w, d, h }: Size3, frenchMin: number, drawers: number, dis
   const door = (x: V2, y: V2) =>
     parts.push(
       span('seal', [x[0] + 0.002, x[1] - 0.002], [y[0] + 0.002, y[1] - 0.002], [zf, zf + 0.014], o),
-      span('body', [x[0] + 0.006, x[1] - 0.006], [y[0] + 0.006, y[1] - 0.004], [zf + 0.005, zs], { bevel: 0.012, plan: false }),
+      span('body', [x[0] + 0.006, x[1] - 0.006], [y[0] + 0.006, y[1] - 0.004], [zf + 0.005, zs], { bevel: 0.008, plan: false }),
     );
   const french = w >= frenchMin;
   const upper: V2[] = french ? cellSpans(2, -w / 2, w / 2) : [[-w / 2, w / 2]];
@@ -1153,7 +1153,7 @@ const coffeeMachine = defineAsset({
       span('body', [-w / 2, w / 2], [0, headY0 + 0.01], [-d / 2, zt], { bevel: 0.015 }),
       span('body', [-w / 2, w / 2], [headY0, headTop], [-d / 2, zh], { bevel: 0.014 }),
       // Drip tray and grate.
-      span('body', [-w / 2 + 0.012, w / 2 - 0.012], [0, 0.03], [zt - 0.01, d / 2 - 0.008], { bevel: 0.006, plan: false }),
+      span('body', [-w / 2 + 0.012, w / 2 - 0.012], [0, 0.03], [zt - 0.01, d / 2 - 0.008], { bevel: 0.004, plan: false }),
       ...slats('accent', [-w / 2 + 0.025, w / 2 - 0.025], [0.03, 0.034], [zt + 0.01, d / 2 - 0.02], Math.round((w - 0.05) / 0.016), {
         axis: 'x',
         gap: 0.45,
@@ -1201,7 +1201,7 @@ const toaster = defineAsset({
   maxSize: { w: 0.42, d: 0.22, h: 0.22 },
   wallSnap: true,
   slots: [
-    matSlot('body', 'Body', 'plastic-mint'),
+    matSlot('body', 'Body', 'paint-sage'),
     matSlot('trim', 'Chrome trim', 'metal-chrome'),
     matSlot('toast', 'Toast', 'wood-pine'),
     matSlot('dark', 'Slots & buttons', 'plastic-black'),
@@ -1214,7 +1214,7 @@ const toaster = defineAsset({
     const o = { plan: false };
     const parts: Part[] = [
       span('trim', [-w / 2 + 0.015, w / 2 - 0.015], [0.006, 0.024], [-d / 2 + 0.008, d / 2 - 0.008], { bevel: 0.006 }),
-      span('body', xb, [0.02, bodyTop], [-d / 2 + 0.005, zf], { bevel: Math.min(0.035, d * 0.2) }),
+      span('body', xb, [0.02, bodyTop], [-d / 2 + 0.005, zf], { bevel: 0.015 }),
       span('trim', [-w * 0.3, w * 0.3], [0.024, 0.032], [zf - 0.008, zf + 0.002], o),
       // Lever in its track on the right end, browning dial and buttons on the front.
       span('dark', [w / 2 - 0.0215, w / 2 - 0.0185], [0.05, bodyTop - 0.03], [-0.008, 0.008], o),
@@ -1305,10 +1305,13 @@ const standMixer = defineAsset({
     const bowlH = Math.min(hy0 - baseH - 0.03, 0.17);
     const o = { plan: false };
     return [
-      span('body', [-w / 2 + 0.02, w / 2 - 0.02], [0, baseH], [-d / 2, d / 2 - 0.01], { bevel: 0.02 }),
-      span('body', [-cx, cx], [baseH - 0.005, hy0 + 0.02], colZ, { bevel: 0.035, plan: false }),
-      span('body', [-hw / 2, hw / 2], [hy0, h], [-d / 2, d / 2 - 0.015], { bevel: 0.045, plan: false }),
-      span('metal', [-hw / 2 - 0.002, hw / 2 + 0.002], [hy0 + 0.012, h - 0.012], [colZ[1] + 0.03, colZ[1] + 0.042], { bevel: 0.03, plan: false }),
+      span('body', [-w / 2 + 0.02, w / 2 - 0.02], [0, baseH], [-d / 2, d / 2 - 0.01], { bevel: 0.006 }),
+      span('body', [-cx, cx], [baseH - 0.005, hy0 + 0.02], colZ, { bevel: 0.012, plan: false }),
+      // Motor head: an elliptical capsule along z.
+      rodZ('body', 0, hy0 + headH / 2, -d / 2 + headH / 2, d / 2 - 0.015 - headH / 2, headH / 2, { scale: [hw / headH, 1, 1], segments: 28, plan: false }),
+      sphere('body', [0, hy0 + headH / 2, d / 2 - 0.015 - headH / 2], headH / 2, { scale: [hw / headH, 1, 1], plan: false }),
+      sphere('body', [0, hy0 + headH / 2, -d / 2 + headH / 2], headH / 2, { scale: [hw / headH, 1, 1], plan: false }),
+      rodZ('metal', 0, hy0 + headH / 2, colZ[1] + 0.03, colZ[1] + 0.042, headH / 2 + 0.002, { scale: [(hw + 0.004) / (headH + 0.004), 1, 1], segments: 28, plan: false }),
       discZ('metal', [0, hy0 + headH / 2, d / 2 - 0.011], 0.025, 0.008, o),
       span('metal', [-rb * 0.7, rb * 0.7], [baseH, baseH + 0.01], [zb - rb * 0.7, zb + rb * 0.7], o),
       lathe('metal', [0, baseH + 0.01, zb], [
