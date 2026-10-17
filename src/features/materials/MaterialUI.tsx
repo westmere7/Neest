@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Copy, Link2, Link2Off, Search, Star, Trash2 } from 'lucide-react';
-import type { MaterialCategory, MaterialDefinition, PhotoTextureRef, Project } from '@/domain/model/schema';
+import { Copy, Link2, Link2Off, Pencil, Search, Star, Trash2 } from 'lucide-react';
+import { MaterialSchema, type MaterialCategory, type MaterialDefinition, type PhotoTextureRef, type Project } from '@/domain/model/schema';
 import {
   assignMaterial,
   createOverride,
@@ -190,11 +190,14 @@ export function FinishPicker({
   currentId,
   variant,
   onClose,
+  onEdit,
 }: {
   target: MaterialTarget;
   currentId: string;
   variant: 'popover' | 'panel';
   onClose: () => void;
+  /** Panel: opens a material in the panel's edit mode (shows pencil buttons). */
+  onEdit?: (materialId: string) => void;
 }) {
   const project = useProjectStore((s) => s.project!);
   const [query, setQuery] = useState('');
@@ -269,6 +272,11 @@ export function FinishPicker({
                 {current.overrideOf ? ' · unlinked copy' : usage > 1 ? ` · shared by ${usage} surfaces` : ''}
               </span>
             </div>
+            {onEdit && (
+              <IconButton label={`Edit “${current.name}”`} onClick={() => onEdit(current.id)}>
+                <Pencil size={14} />
+              </IconButton>
+            )}
             <IconButton label={isFav(current.id) ? 'Remove from favourites' : 'Add to favourites'} active={isFav(current.id)} onClick={() => toggleFavourite(current.id)}>
               <Star size={15} className={isFav(current.id) ? 'fav-star' : undefined} />
             </IconButton>
@@ -316,6 +324,11 @@ export function FinishPicker({
             >
               <Star size={12} />
             </button>
+            {onEdit && (
+              <button type="button" className="mat-edit" aria-label={`Edit ${m.name}`} title="Edit this finish" onClick={() => onEdit(m.id)}>
+                <Pencil size={11} />
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -402,10 +415,10 @@ export function MaterialLibrary() {
 }
 
 /**
- * Material editor. `compact` is the finish panel's version: no large preview (the panel's
- * current-finish card shows the swatch) and no "Apply to selection" (picking applies there).
+ * Material editor. `inPanel` is the finish panel's edit mode: no "Apply to selection" (the
+ * panel applies finishes to its own slot).
  */
-export function MaterialEditor({ material, compact = false }: { material: MaterialDefinition; compact?: boolean }) {
+export function MaterialEditor({ material, inPanel = false }: { material: MaterialDefinition; inPanel?: boolean }) {
   const project = useProjectStore((s) => s.project!);
   const favourites = usePrefsStore((s) => s.favouriteMaterials);
   const usage = useMemo(() => materialUsage(project, material.id), [project, material.id]);
@@ -449,12 +462,10 @@ export function MaterialEditor({ material, compact = false }: { material: Materi
     useProjectStore.getState().execute('Apply material', (d) => assignMaterial(d, targets, id));
   };
   return (
-    <div className={`mat-editor${compact ? ' compact' : ''}`} data-testid="material-editor">
-      {!compact && (
-        <div className="mat-preview" style={{ background: swatchBackground(material) }}>
-          <span className="mat-preview-sheen" />
-        </div>
-      )}
+    <div className={`mat-editor${inPanel ? ' in-panel' : ''}`} data-testid="material-editor">
+      <div className="mat-preview" style={{ background: swatchBackground(material) }}>
+        <span className="mat-preview-sheen" />
+      </div>
       <div className="mat-editor-head">
         <TextField label="Name" value={material.name} onCommit={(name) => commit({ name })} />
         <div className="mat-editor-tools">
@@ -479,7 +490,7 @@ export function MaterialEditor({ material, compact = false }: { material: Materi
           : `Linked to ${usage.length} surface${usage.length > 1 ? 's' : ''} — edits update all of them.`}
         {material.overrideOf && ` Unlinked copy of “${resolveMaterial(project, material.overrideOf).name}”.`}
       </p>
-      {!compact && selection.length > 0 && (
+      {!inPanel && selection.length > 0 && (
         <Button size="sm" onClick={applyToSelection}>
           Apply to selection
         </Button>
@@ -497,6 +508,39 @@ export function MaterialEditor({ material, compact = false }: { material: Materi
       <p className="field-hint">Source: {material.source.name} · {material.source.license}</p>
     </div>
   );
+}
+
+/**
+ * What "Reset to default" restores a material to: the material an unlinked copy was made from,
+ * or the catalogue entry it came from. Null for materials made from scratch.
+ */
+export function defaultMaterialFor(project: Project, m: MaterialDefinition): MaterialDefinition | null {
+  const base = m.overrideOf ? resolveMaterial(project, m.overrideOf) : MATERIAL_CATALOG_BY_ID[m.catalogId ?? m.id];
+  if (!base) return null;
+  // Catalogue entries leave schema defaults out; fill them in so they compare like project copies.
+  const parsed = MaterialSchema.safeParse({ ...base, metalness: base.metalness ?? 0 });
+  return parsed.success ? parsed.data : base;
+}
+
+const LOOK_KEYS = ['color', 'roughness', 'metalness', 'opacity', 'emissive', 'emissiveIntensity', 'texture', 'photo'] as const;
+
+/** True when the material looks different from its default (so a reset would change something). */
+export function differsFromDefault(project: Project, m: MaterialDefinition): boolean {
+  const base = defaultMaterialFor(project, m);
+  if (!base) return false;
+  return LOOK_KEYS.some((k) => JSON.stringify(m[k] ?? null) !== JSON.stringify(base[k] ?? null));
+}
+
+/** Restores a material's look (colour, surface values, textures) to its default; keeps its name and links. */
+export function resetMaterialToDefault(id: string) {
+  const store = useProjectStore.getState();
+  const p = store.project!;
+  const m = resolveMaterial(p, id);
+  const base = defaultMaterialFor(p, m);
+  if (!base) return;
+  const patch: Partial<MaterialDefinition> = {};
+  for (const k of LOOK_KEYS) (patch as Record<string, unknown>)[k] = structuredClone(base[k] ?? null);
+  store.execute(`Reset ${m.name.toLowerCase()}`, (d) => updateMaterial(d, id, patch));
 }
 
 /** Photo set suggested when switching a material without one to photo. */

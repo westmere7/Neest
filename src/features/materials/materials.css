@@ -375,37 +375,69 @@
   font-size: 11px;
 }
 
-/* Finish panel: picker on top, editor for the current finish below; each scrolls on its own. */
-.material-panel-pick {
-  flex: 1 1 62%;
-  min-height: 340px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.material-panel-pick .mat-grid {
-  min-height: 0;
-}
+/* Finish panel edit mode: back/reset bar, big preview, then the full editor (scrolls). */
 .material-panel-edit {
-  flex: 1 1 38%;
-  min-height: 140px;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
-  border-top: 1px solid var(--border);
-  background: var(--surface-2);
 }
-.material-panel-edit-title {
+.material-panel-edit-bar {
   position: sticky;
   top: 0;
   z-index: 1;
-  margin: 0;
-  padding: 9px 12px 7px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-3);
-  background: var(--surface-2);
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 8px 6px;
+  background: var(--surface-solid);
 }
-.material-panel-edit .mat-editor.compact {
-  padding: 2px 12px 14px;
+/* Sticky footer: apply the edited finish to this slot when it isn't the current one. */
+.material-panel-use {
+  position: sticky;
+  bottom: 0;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-solid);
+}
+.material-panel-use .btn {
+  width: 100%;
+}
+.material-panel-edit .mat-editor.in-panel .mat-preview {
+  height: 150px;
+}
+
+/* Swatch pencil: next to the favourite star, shown on hover (always on touch). */
+.mat-edit {
+  position: absolute;
+  top: 4px;
+  right: 30px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--text-2);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.mat-cell-wrap:hover .mat-edit,
+.mat-edit:focus-visible {
+  opacity: 1;
+}
+.mat-edit:hover {
+  color: var(--accent);
+}
+.material-panel .mat-edit {
+  top: 10px;
+  right: 36px;
+}
+@media (hover: none) {
+  .mat-edit {
+    opacity: 1;
+  }
 }

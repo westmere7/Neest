@@ -1,14 +1,15 @@
-import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, RotateCcw, X } from 'lucide-react';
 import type { Project } from '@/domain/model/schema';
-import { getTargetMaterialId, type MaterialTarget } from '@/domain/commands/entities';
+import { assignMaterial, expandScope, getTargetMaterialId, type MaterialTarget } from '@/domain/commands/entities';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { assetSlotDefault, getAsset, resolveMaterial } from '@/data/assets/registry';
+import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
-import { useDialogStore } from '@/state/uiStores';
-import { IconButton } from '@/components/ui';
-import { FinishPicker, MaterialEditor } from './MaterialUI';
+import { useDialogStore, usePrefsStore } from '@/state/uiStores';
+import { Button, IconButton } from '@/components/ui';
+import { differsFromDefault, defaultMaterialFor, FinishPicker, MaterialEditor, resetMaterialToDefault } from './MaterialUI';
 
 /** Name of the thing a finish slot belongs to ("Loft", "Washing machine", "Wall"), or null when it is gone. */
 function targetOwner(p: Project, t: MaterialTarget): string | null {
@@ -62,8 +63,13 @@ export function MaterialPanel() {
     return () => window.removeEventListener('keydown', onKey, true);
   }, [req]);
 
+  // Edit mode: which material is open in the editor (null = browsing). Reset per slot.
+  const [editing, setEditing] = useState<{ key: string; id: string } | null>(null);
   if (!req || owner === null) return null;
   const currentId = getTargetMaterialId(project, req.target, assetSlotDefault) ?? req.fallbackId;
+  // Back to browsing when the slot changes or the edited material is deleted.
+  const editId = editing && editing.key === req.key && (project.materials[editing.id] || MATERIAL_CATALOG_BY_ID[editing.id]) ? editing.id : null;
+  const editMat = editId ? resolveMaterial(project, editId) : null;
   const title = `${req.label} · ${owner}`;
   return (
     <aside className="material-panel floating" role="dialog" aria-label={`Choose finish: ${title}`} data-testid="material-panel">
@@ -79,14 +85,42 @@ export function MaterialPanel() {
         </IconButton>
       </header>
       <div className="material-panel-body">
-        {/* Top: pick a finish. Bottom: edit the current one. Each part scrolls on its own. */}
-        <div className="material-panel-pick">
-          <FinishPicker key={req.key} target={req.target} currentId={currentId} variant="panel" onClose={close} />
-        </div>
-        <section className="material-panel-edit" aria-label="Edit finish">
-          <h3 className="material-panel-edit-title">Edit finish</h3>
-          <MaterialEditor material={resolveMaterial(project, currentId)} compact />
-        </section>
+        {editMat ? (
+          <section className="material-panel-edit" aria-label={`Edit ${editMat.name}`}>
+            <div className="material-panel-edit-bar">
+              <Button size="sm" variant="ghost" onClick={() => setEditing(null)} data-testid="material-edit-back">
+                <ArrowLeft size={14} /> Finishes
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => resetMaterialToDefault(editMat.id)}
+                disabled={!differsFromDefault(project, editMat)}
+                title={defaultMaterialFor(project, editMat) ? 'Restore the default colour, surface and texture' : 'This finish was made from scratch: it has no default'}
+              >
+                <RotateCcw size={13} /> Reset to default
+              </Button>
+            </div>
+            <MaterialEditor material={editMat} inPanel />
+            {editMat.id !== currentId && (
+              <div className="material-panel-use">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => {
+                    const targets = expandScope(project, req.target, 'this', assetSlotDefault);
+                    useProjectStore.getState().execute(`Apply ${editMat.name.toLowerCase()}`, (d) => assignMaterial(d, targets, editMat.id));
+                    usePrefsStore.getState().pushRecentMaterial(editMat.id);
+                  }}
+                >
+                  Use for this surface
+                </Button>
+              </div>
+            )}
+          </section>
+        ) : (
+          <FinishPicker key={req.key} target={req.target} currentId={currentId} variant="panel" onClose={close} onEdit={(id) => setEditing({ key: req.key, id })} />
+        )}
       </div>
     </aside>
   );
