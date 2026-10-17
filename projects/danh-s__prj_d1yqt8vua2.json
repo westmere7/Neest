@@ -4,7 +4,7 @@
   "id": "prj_d1yqt8vua2",
   "name": "Danh's",
   "createdAt": 1792222586472,
-  "updatedAt": 1792236577175,
+  "updatedAt": 1792255483814,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -617,7 +617,15 @@
         "top": "plaster-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "finishes": {
+        "left": {
+          "skirting": null,
+          "cornice": null,
+          "rail": null,
+          "band": null
+        }
+      }
     },
     "w_h0uje4k7t9": {
       "id": "w_h0uje4k7t9",
@@ -628,8 +636,8 @@
       "baseElevation": 0,
       "role": "partition",
       "curve": {
-        "x": 9,
-        "y": 4.6
+        "x": 7.926030752881163,
+        "y": 4.787098154202737
       },
       "materials": {
         "left": "glass-frosted",
@@ -652,7 +660,8 @@
       "swingSide": "left",
       "hinge": "end",
       "openAngle": 55,
-      "style": "flush",
+      "style": "glazed",
+      "design": "lites-divided",
       "frameMaterialId": "paint-satin-white",
       "panelMaterialId": "paint-satin-white"
     },
@@ -855,13 +864,13 @@
       "id": "win_mqj6rf8bz1",
       "wallId": "w_yuvoavlhsi",
       "kind": "window-double",
-      "offset": 0.6499999999999994,
+      "offset": 0.6917333347836089,
       "width": 1.2,
       "height": 1.5,
       "sillHeight": 0.9,
       "swingSide": "left",
       "hinge": "start",
-      "openAngle": 0,
+      "openAngle": 65,
       "style": "glazed",
       "frameMaterialId": "metal-anthracite",
       "panelMaterialId": "glass-clear"
@@ -924,7 +933,7 @@
         "w_yuvoavlhsi",
         "w_z2tkhf5e3f"
       ],
-      "floorMaterialId": "wood-oak-natural",
+      "floorMaterialId": "tile-zellige-green",
       "ceilingMaterialId": "paint-ceiling-white",
       "showCeiling": true,
       "ceilingHeight": null,
@@ -1415,7 +1424,9 @@
       "depth": 1.6,
       "height": 0.82,
       "mirrored": false,
-      "materials": {},
+      "materials": {
+        "upholstery": "leather-cognac"
+      },
       "locked": false,
       "hidden": false
     },
@@ -1489,8 +1500,8 @@
       "id": "obj_0effg391i1",
       "assetId": "armchair",
       "name": null,
-      "x": 6.75,
-      "y": 2,
+      "x": 6.5,
+      "y": 1.4500000000000002,
       "elevation": 0,
       "rotation": 1.9207963267948962,
       "width": 0.82,
@@ -2120,7 +2131,7 @@
       "assetId": "bar-stool",
       "name": null,
       "x": 9.7,
-      "y": 4.1,
+      "y": 4.162718256034147,
       "elevation": 0,
       "rotation": 4.71238898038469,
       "width": 0.42,
@@ -2311,7 +2322,7 @@
       "id": "obj_a2yyepfw1l",
       "assetId": "filing-cabinet",
       "name": null,
-      "x": 10.4,
+      "x": 10.05,
       "y": 6.9,
       "elevation": 0,
       "rotation": 0,
@@ -2728,7 +2739,7 @@
       "assetId": "ceiling-light",
       "name": null,
       "x": 3.8,
-      "y": 4.4,
+      "y": 4.25,
       "elevation": 2.5900000000000003,
       "rotation": 0,
       "width": 0.4,
@@ -2846,6 +2857,86 @@
       "width": 0.36,
       "depth": 0.34,
       "height": 0.36,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_a42oxmfj1r": {
+      "id": "obj_a42oxmfj1r",
+      "assetId": "plant-fiddle-leaf",
+      "name": null,
+      "x": 3.75,
+      "y": -0.1,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 0.6,
+      "depth": 0.6,
+      "height": 1.7,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_0o6d2yekbr": {
+      "id": "obj_0o6d2yekbr",
+      "assetId": "plant-hanging-pothos",
+      "name": null,
+      "x": 3,
+      "y": 0.2,
+      "elevation": 1.69,
+      "rotation": 0,
+      "width": 0.45,
+      "depth": 0.45,
+      "height": 1,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_o9ddco4hn4": {
+      "id": "obj_o9ddco4hn4",
+      "assetId": "japanese-home:bath-stool-set",
+      "name": null,
+      "x": 11.5,
+      "y": 1.35,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 0.62,
+      "depth": 0.34,
+      "height": 0.26,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_3hfuq15fl5": {
+      "id": "obj_3hfuq15fl5",
+      "assetId": "cafe-dining:cafe-dining-set",
+      "name": null,
+      "x": 8.6,
+      "y": 4.25,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 1.5,
+      "depth": 1.4,
+      "height": 0.88,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_36y6cvd4k2": {
+      "id": "obj_36y6cvd4k2",
+      "assetId": "pendant-globe-cluster",
+      "name": null,
+      "x": 5.15,
+      "y": -0.45,
+      "elevation": 1.6900000000000002,
+      "rotation": 0,
+      "width": 0.6,
+      "depth": 0.6,
+      "height": 1,
       "mirrored": false,
       "materials": {},
       "locked": false,
@@ -3319,6 +3410,99 @@
         "name": "Neest starter library",
         "license": "Original (procedural, CC0-compatible)"
       }
+    },
+    "wood-painted-white": {
+      "id": "wood-painted-white",
+      "name": "White painted wood",
+      "category": "wood",
+      "color": "#efece6",
+      "roughness": 0.5,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "wood-grain",
+        "scale": 0.8,
+        "rotation": 0,
+        "contrast": 0.15
+      },
+      "photo": {
+        "setId": "painted-wood",
+        "scale": 1,
+        "rotation": 0,
+        "contrast": 0.6,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-painted-white",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG PaintedWood009C",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/PaintedWood009C"
+      }
+    },
+    "leather-cognac": {
+      "id": "leather-cognac",
+      "name": "Cognac leather",
+      "category": "leather",
+      "color": "#8e5530",
+      "roughness": 0.55,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "leather",
+        "scale": 0.25,
+        "rotation": 0,
+        "contrast": 0.8
+      },
+      "photo": {
+        "setId": "leather",
+        "scale": 0.4,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "leather-cognac",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven brown_leather",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/brown_leather"
+      }
+    },
+    "fabric-olive": {
+      "id": "fabric-olive",
+      "name": "Olive weave",
+      "category": "fabric",
+      "color": "#6b7a2e",
+      "roughness": 0.92,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.12,
+        "rotation": 0,
+        "contrast": 0.55
+      },
+      "photo": {
+        "setId": "upholstery-weave",
+        "scale": 0.5,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "fabric-olive",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Fabric030",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Fabric030"
+      }
     }
   },
   "customAssets": {},
@@ -3416,15 +3600,16 @@
   ],
   "render": {
     "quality": "high",
-    "exposure": 0.8,
-    "timeOfDay": 10.75,
-    "sunAzimuth": 160,
-    "sunIntensity": 1.8,
-    "envIntensity": 0.7,
+    "exposure": 0.7,
+    "timeOfDay": 13.25,
+    "sunAzimuth": 80,
+    "sunIntensity": 1.5,
+    "sunWarmth": -1,
+    "envIntensity": 0.55,
     "shadows": true,
-    "background": "#dfe3e6",
-    "wallDisplay": "full",
-    "cutawayHeight": 0.3,
+    "background": "#797979",
+    "wallDisplay": "cutaway",
+    "cutawayHeight": 0.4,
     "showCeilings": false,
     "showRoomLabels": false,
     "hiddenCategories": []
