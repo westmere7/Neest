@@ -283,7 +283,13 @@ export type MaterialTarget =
   | { kind: 'room-ceiling'; roomId: string }
   | { kind: 'object-slot'; objectId: string; slot: string }
   | { kind: 'opening-frame'; openingId: string }
-  | { kind: 'opening-panel'; openingId: string };
+  | { kind: 'opening-panel'; openingId: string }
+  | { kind: 'wall-trim'; wallId: string; side: WallSide; part: WallTrimPart }
+  | { kind: 'wall-style'; wallId: string };
+
+/** Finish layers on a wall face that carry their own material. */
+export type WallTrimPart = 'skirting' | 'cornice' | 'rail' | 'band';
+export const WALL_TRIM_PARTS: WallTrimPart[] = ['skirting', 'cornice', 'rail', 'band'];
 
 export type MaterialScope =
   | 'this'
@@ -325,6 +331,10 @@ export function getTargetMaterialId(p: Project, t: MaterialTarget, assetDefault?
       return p.openings[t.openingId]?.frameMaterialId ?? null;
     case 'opening-panel':
       return p.openings[t.openingId]?.panelMaterialId ?? null;
+    case 'wall-trim':
+      return p.walls[t.wallId]?.finishes?.[t.side]?.[t.part]?.materialId ?? null;
+    case 'wall-style':
+      return p.walls[t.wallId]?.styleMaterialId ?? null;
   }
 }
 
@@ -346,6 +356,13 @@ export function materialUsage(p: Project, materialId: string): MaterialTarget[] 
   for (const o of Object.values(p.openings)) {
     if (o.frameMaterialId === materialId) out.push({ kind: 'opening-frame', openingId: o.id });
     if (o.panelMaterialId === materialId) out.push({ kind: 'opening-panel', openingId: o.id });
+  }
+  for (const w of Object.values(p.walls)) {
+    if (w.styleMaterialId === materialId) out.push({ kind: 'wall-style', wallId: w.id });
+    for (const side of ['left', 'right'] as const) {
+      const fin = w.finishes?.[side];
+      for (const part of WALL_TRIM_PARTS) if (fin?.[part]?.materialId === materialId) out.push({ kind: 'wall-trim', wallId: w.id, side, part });
+    }
   }
   return out;
 }
@@ -388,6 +405,16 @@ function setTarget(d: D, t: MaterialTarget, materialId: string) {
     case 'opening-panel': {
       const o = d.openings[t.openingId];
       if (o) o.panelMaterialId = materialId;
+      break;
+    }
+    case 'wall-trim': {
+      const layer = d.walls[t.wallId]?.finishes?.[t.side]?.[t.part];
+      if (layer) layer.materialId = materialId;
+      break;
+    }
+    case 'wall-style': {
+      const w = d.walls[t.wallId];
+      if (w) w.styleMaterialId = materialId;
       break;
     }
   }

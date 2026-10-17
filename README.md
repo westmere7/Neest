@@ -55,6 +55,21 @@ Then open <http://localhost:5173>. Edits to the source code reload in the browse
 - Dimensions, room labels, and two editor plan modes: draft and furnished (plus presentation style in exports). Diagnostics flag crossing walls, openings that don't fit, and rooms that can't be inset.
 - The plan fits itself between the floating panels when a project opens.
 - Undo/redo for every operation; a drag is one step.
+- **Walls:**
+  - Draw along the centreline or along either face, so you can copy measurements from a real plan.
+  - Three-point curved walls.
+  - An **Extend / trim / join** tool (`E`).
+  - Edit several walls at once.
+  - Measure the clear distance between faces with `F` in the measure tool.
+  - Walls can have a sloped top.
+  - **Construction styles:** solid, half wall with cap, framed glass wall, and glass or bar railings.
+  - **Trims per face:** skirting, cornice, dado or picture rail, and a lower band (wainscot panelling or tiles).
+  - **Wall types** in the Build tab apply all of this in one click, for example "Brick outside, plaster inside", "Panelled wainscot wall", "Glass balcony railing" or "Glass block wall".
+- **Doors and windows:**
+  - **Doors:** single, double, French, sliding, pocket, bi-fold, barn and pivot doors.
+  - **Passages:** open, arched and moon-gate.
+  - **Windows:** casement, double, picture, sliding, floor-to-ceiling, arched and round.
+  - **Options:** transom, threshold, casing trim, security bars or a muntin grid, and louvred shutters.
 
 ### 3D
 - The same model in 3D. Doors and windows are real openings. Lighting has a time-of-day sun and soft shadows; quality presets are draft, balanced and high.

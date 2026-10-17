@@ -96,6 +96,7 @@ const DEFS: Def[] = [
   // Glass
   { id: 'glass-clear', name: 'Clear glass', category: 'glass', color: '#dcebf0', roughness: 0.05, opacity: 0.22 },
   { id: 'glass-frosted', name: 'Frosted glass', category: 'glass', color: '#e8eef0', roughness: 0.45, opacity: 0.65 },
+  { id: 'glass-block', name: 'Glass block', category: 'glass', color: '#cfe2e8', roughness: 0.15, opacity: 0.75, texture: tex('tile-square', 0.2, 0.9) },
   { id: 'glass-tinted', name: 'Smoked glass', category: 'glass', color: '#7d8a8c', roughness: 0.08, opacity: 0.45 },
   { id: 'glass-mirror', name: 'Mirror', category: 'glass', color: '#dfe6e9', roughness: 0.02, metalness: 1 },
 

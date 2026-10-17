@@ -273,6 +273,48 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   3D bridge. Keyboard: the active tool gets first refusal via `planKeyRouter`, then `useShortcuts`.
 - Typed lengths while drawing walls (`3.5`, `350cm`, `11'6"` + Enter) and room sizes (`4x3`).
 
+### Walls: styles, trims, slopes and drawing tools
+- **Schema** (all optional, so old projects are unchanged):
+  - `WallSegment.style`: 'solid' | 'half' | 'glass' | 'railing-glass' | 'railing-bars'.
+  - `heightEnd`: the height at node b; `height` applies at node a, which makes a sloped top.
+  - `styleMaterialId`: the glazing or infill material; frames, posts and the half-wall cap use `materials.top`.
+  - `finishes.{left,right}`: `{ skirting, cornice, rail, band }` (`WallTrim` / `WallRail` / `WallBand`).
+- **Geometry** (`walls.ts`):
+  - `WallGeometry.topAt(s)` gives the top height along the wall; `sloped` is true for sloped walls.
+  - `edge(s0, s1, side)` returns a face polyline with mitred end corners.
+  - Opening heads are kept below a sloped top.
+  - `splitWallAt` keeps the slope line, and `flipWall` swaps the end heights and the finishes.
+- **3D:**
+  - `buildWallGeometry` follows sloped tops and returns null for glass walls and railings, which have no solid body.
+  - `scene-3d/wallExtras.ts` builds everything else: face layers run between lo(s) and hi(s) and are interrupted where an opening's gap overlaps their height. It also builds the half-wall cap, the glass wall (rails, posts, mullions about every 1.2 m, glazing) and the railings (posts about every 1.4 m, handrail, glass panels or 11 cm bars). The output is one mesh per material, keyed by `wallExtrasKey`, and `SceneContent` › `WallExtrasNode` and the GLB export both use it.
+- **2D:** glass walls and railings draw as a thin outline, a centre line and post/mullion ticks; half walls are drawn lighter.
+- **Materials:** `MaterialTarget` gains `wall-trim` {wallId, side, part} and `wall-style` {wallId}, so trims and infill take part in linked edits and usage.
+- **Presets:** `domain/model/wallPresets.ts` (`WALL_PRESETS`):
+  - Build-tab "Wall types" cards set `editor.wallPreset`.
+  - `drawingWallOptions()` in drawTools applies the preset.
+  - The Inspector can apply a preset to selected walls (`WallPresetPicker`) or draw with one (`DrawPresetSelect`).
+- **Inspector:**
+  - `WallExtras.tsx`: `WallConstruction` (style, infill, sloped top) and `WallTrims` (per-face toggles and sizes).
+  - `WallMultiEdit.tsx`: edits several walls at once.
+  - `WallToolExtras.tsx` › `WallReferencePicker`: draw along the centreline or a face.
+- **Drawing tools:**
+  - **Draw by face:** `wallReference` 'left' | 'right' offsets the drawn polyline by half the thickness (`domain/geometry/drafting.ts` › `offsetPolyline`). Already-joined nodes never move.
+  - **Curves:** the curve tool defaults to three-point arcs (control `2P − (A+B)/2`); `A` switches to free bend, and typed input sets the chord and the bulge.
+  - **Extend/trim/join tool** (`E`, `tools/extendTool.ts`, commands in `domain/commands/wallTools.ts`): extend a free end to the next wall, trim an overhang, or join two collinear walls.
+  - **Clear distance:** `F` in the measure tool measures from a wall face to the opposite parallel face.
+
+### Doors, windows & passages
+- **Kinds:** door-single, door-double, door-french, door-sliding, door-pocket, door-bifold, door-barn and door-pivot; passage, passage-arched and passage-moon; window-single, window-double, window-fixed, window-sliding, window-tall, window-arched and window-round. `isPassageKind()` and `isDoorKind` cover the passages.
+- **Options:** `transom`, `threshold`, `casing`, `grille` ('none' | 'bars' | 'grid') and `shutters`.
+- **Exterior convention:** sashes open outward, so the exterior is the **swing side**. Shutters and bars go there, and the interior sill board is on the other side.
+- **3D** (`scene-3d/openingBuilder.ts`):
+  - The wall gap stays rectangular. Arched and round shapes fill the corners with **infill** prisms in the wall's own materials, named `opening-infill`, but only in solid or half walls. Wall materials are part of `OpeningNode`'s key, so repainting a wall updates the infill.
+  - Pocket doors slide into the wall, and barn doors hang on a face-mounted rail.
+  - For sliding kinds, `openAngle` 0–90 means 0–100 % open; the Inspector shows a percentage.
+- **2D:** `symbols.ts` draws every kind.
+- **Inspector:** `OpeningExtras.tsx` adds a "Details" section with the options.
+- **Build tab:** `features/library/BuildExtras.tsx` provides `DOOR_KINDS`, `WINDOW_KINDS`, the icons and `WallPresetCards`.
+
 ## 11. 3D (src/features/scene-3d, walkthrough)
 
 - `builders.ts` is the only place that turns the model into three.js objects: wall geometry with 3 material

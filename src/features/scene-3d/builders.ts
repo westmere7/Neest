@@ -1,12 +1,11 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import type { Opening, PlacedObject, Project, Room, Vec2 } from '@/domain/model/schema';
-import { isWindowKind } from '@/domain/model/schema';
+import type { PlacedObject, Project, Room, Vec2 } from '@/domain/model/schema';
 import type { RoomFace } from '@/domain/geometry/rooms';
-import type { JunctionHub, OpeningSpan, WallGeometry, WallPiece } from '@/domain/geometry/walls';
+import type { JunctionHub, WallGeometry, WallPiece } from '@/domain/geometry/walls';
 import { triangulate } from '@/domain/geometry/polygon';
 import { pointAt } from '@/domain/geometry/wallPath';
-import { angleOf, dist, leftNormal, normalize, sub } from '@/domain/geometry/vec';
+import { dist, leftNormal, normalize, sub } from '@/domain/geometry/vec';
 import { getAsset, objectSlotMaterialId } from '@/data/assets/registry';
 import { dropPackKeys, subscribePacks } from '@/packs/events';
 import type { AssetDefinition, Part, Size3 } from '@/data/assets/types';
@@ -77,9 +76,21 @@ function polylineLengths(pts: Vec2[]): number[] {
   return out;
 }
 
-/** Vertical strip along a polyline with outward normals on `side` (+1 left, -1 right). */
-function addSide(acc: Acc, pts: Vec2[], z0: number, z1: number, side: 1 | -1, uOffset: number) {
+/** Top height per polyline vertex: a constant, or a function of the vertex's arc-length position along the wall. */
+type TopFn = number | ((s: number) => number);
+
+/** Arc-length position along the wall of each vertex of a face polyline covering [s0, s1]. */
+function vertexS(pts: Vec2[], s0: number, s1: number): number[] {
   const L = polylineLengths(pts);
+  const total = L[L.length - 1] || 1;
+  return L.map((l) => s0 + ((s1 - s0) * l) / total);
+}
+
+/** Vertical strip along a polyline with outward normals on `side` (+1 left, -1 right). */
+function addSide(acc: Acc, pts: Vec2[], z0: number, z1: TopFn, side: 1 | -1, uOffset: number, s1 = uOffset + polylineLengths(pts)[pts.length - 1]) {
+  const L = polylineLengths(pts);
+  const S = typeof z1 === 'number' ? null : vertexS(pts, uOffset, s1);
+  const top = (i: number) => (typeof z1 === 'number' ? z1 : z1(S![i]));
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i];
     const b = pts[i + 1];
@@ -88,11 +99,13 @@ function addSide(acc: Acc, pts: Vec2[], z0: number, z1: number, side: 1 | -1, uO
     const normal = new THREE.Vector3(n.x * side, 0, n.y * side);
     const u0 = uOffset + L[i];
     const u1 = uOffset + L[i + 1];
-    acc.face([V(a, z0), V(b, z0), V(b, z1), V(a, z1)], normal, [
+    const ta = top(i);
+    const tb = top(i + 1);
+    acc.face([V(a, z0), V(b, z0), V(b, tb), V(a, ta)], normal, [
       [u0, z0],
       [u1, z0],
-      [u1, z1],
-      [u0, z1],
+      [u1, tb],
+      [u0, ta],
     ]);
   }
 }
@@ -125,30 +138,65 @@ function addEnd(acc: Acc, l: Vec2, r: Vec2, z0: number, z1: number, outward: Vec
  * from solid pieces plus below-sill and above-head pieces around each opening.
  */
 export function buildWallGeometry(g: WallGeometry, cutHeight?: number): THREE.BufferGeometry | null {
+  // Glass walls and railings have no solid body; wallExtras.ts builds their frames and infill.
+  if (!hasSolidBody(g.wall.style)) return null;
   const left = new Acc();
   const right = new Acc();
   const other = new Acc();
   let any = false;
   for (const piece of g.pieces) {
     const z0 = piece.z0;
-    const z1 = cutHeight !== undefined ? Math.min(piece.z1, cutHeight) : piece.z1;
-    if (z1 - z0 < 1e-4) continue;
+    // Below-sill pieces end at the sill; others follow the (possibly sloped) wall top.
+    const rawTop = (s: number) => (piece.kind === 'below' ? piece.z1 : g.sloped ? g.topAt(s) : piece.z1);
+    const top = (s: number) => (cutHeight !== undefined ? Math.min(rawTop(s), cutHeight) : rawTop(s));
+    if (Math.max(top(piece.s0), top(piece.s1)) - z0 < 1e-4) continue;
     any = true;
-    addPiece(piece, z0, z1, g, left, right, other);
+    addPiece(piece, z0, g.sloped || cutHeight !== undefined ? top : top(piece.s0), g, left, right, other);
   }
   return any ? mergeGroups([left, right, other]) : null;
 }
 
-function addPiece(piece: WallPiece, z0: number, z1: number, g: WallGeometry, left: Acc, right: Acc, other: Acc) {
-  addSide(left, piece.left, z0, z1, 1, piece.s0);
-  addSide(right, piece.right, z0, z1, -1, piece.s0);
+/** Wall styles built as a solid body (the others are frames/infill from wallExtras.ts). */
+export const hasSolidBody = (style: WallGeometry['wall']['style']): boolean => !style || style === 'solid' || style === 'half';
+
+function addPiece(piece: WallPiece, z0: number, z1: TopFn, g: WallGeometry, left: Acc, right: Acc, other: Acc) {
+  const topAt = (s: number) => (typeof z1 === 'number' ? z1 : z1(s));
+  addSide(left, piece.left, z0, z1, 1, piece.s0, piece.s1);
+  addSide(right, piece.right, z0, z1, -1, piece.s0, piece.s1);
   const poly = [...piece.left, ...[...piece.right].reverse()];
-  addCap(other, poly, z1, true);
+  if (typeof z1 === 'number') addCap(other, poly, z1, true);
+  else {
+    // Sloped top: each outline vertex at the height of its position along the wall.
+    const sl = vertexS(piece.left, piece.s0, piece.s1);
+    const sr = vertexS(piece.right, piece.s0, piece.s1).reverse();
+    const heights = [...sl, ...sr].map(topAt);
+    const tris = triangulate(poly);
+    acc3(other, poly, heights, tris);
+  }
   if (z0 > 0.001) addCap(other, poly, z0, false);
   const t0 = pointAt(g.path, piece.s0).tangent;
   const t1 = pointAt(g.path, piece.s1).tangent;
-  addEnd(other, piece.left[0], piece.right[0], z0, z1, { x: -t0.x, y: -t0.y });
-  addEnd(other, piece.left[piece.left.length - 1], piece.right[piece.right.length - 1], z0, z1, t1);
+  addEnd(other, piece.left[0], piece.right[0], z0, topAt(piece.s0), { x: -t0.x, y: -t0.y });
+  addEnd(other, piece.left[piece.left.length - 1], piece.right[piece.right.length - 1], z0, topAt(piece.s1), t1);
+}
+
+/** Top face with per-vertex heights (sloped wall tops); normal from the first triangle. */
+function acc3(acc: Acc, poly: Vec2[], heights: number[], tris: number[][]) {
+  const verts = poly.map((p, i) => V(p, heights[i]));
+  const n = new THREE.Vector3(0, 1, 0);
+  if (tris.length) {
+    const [a, b, c] = tris[0];
+    const e1 = new THREE.Vector3().subVectors(verts[b], verts[a]);
+    const e2 = new THREE.Vector3().subVectors(verts[c], verts[a]);
+    const cn = e1.cross(e2).normalize();
+    if (cn.lengthSq() > 0) n.copy(cn.y < 0 ? cn.negate() : cn);
+  }
+  acc.face(
+    verts,
+    n,
+    poly.map((p) => [p.x, p.y]),
+    tris,
+  );
 }
 
 export function buildHubGeometry(hub: JunctionHub, cutHeight?: number): THREE.BufferGeometry | null {
@@ -440,16 +488,6 @@ export interface BuildContext {
   shadows?: boolean;
 }
 
-function meshFor(part: Part, material: THREE.Material, shadows: boolean): THREE.Mesh {
-  const mesh = new THREE.Mesh(partGeometry(part), material);
-  mesh.position.set(...part.position);
-  if (part.rotation) mesh.rotation.set(...part.rotation);
-  if (part.scale) mesh.scale.set(...part.scale);
-  mesh.castShadow = shadows;
-  mesh.receiveShadow = shadows;
-  return mesh;
-}
-
 /** Group for a placed object: procedural parts, or an imported model normalised to the object's size. */
 export function buildObject(obj: PlacedObject, ctx: BuildContext): THREE.Group {
   const group = new THREE.Group();
@@ -514,138 +552,7 @@ export function buildAssetPreview(asset: AssetDefinition, project: Project | nul
 
 // ───────────────────────── Openings ─────────────────────────
 
-function box(w: number, h: number, d: number, x: number, y: number, z: number, mat: THREE.Material, shadows: boolean): THREE.Mesh {
-  return meshFor({ shape: 'box', size: [w, h, d], position: [x, y, z], slot: '' }, mat, shadows);
-}
-
-/**
- * Door/window assembly placed in the wall gap: frame/casing, leaves or
- * sashes, glazing, and handles. Local frame: x along the wall, y up, z toward
- * the wall's right side.
- */
-export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpan, ctx: BuildContext): THREE.Group {
-  const group = new THREE.Group();
-  group.userData = { kind: 'opening', id: opening.id };
-  const { p, tangent } = pointAt(g.path, span.center);
-  group.position.set(p.x, 0, p.y);
-  group.rotation.y = -angleOf(tangent);
-  const shadows = ctx.shadows ?? true;
-  const frameMat = ctx.registry.get(ctx.project, opening.frameMaterialId);
-  const panelMat = ctx.registry.get(ctx.project, opening.panelMaterialId);
-  const glassMat = ctx.registry.get(ctx.project, isWindowKind(opening.kind) ? opening.panelMaterialId : 'glass-clear');
-  const metalMat = ctx.registry.get(ctx.project, 'metal-brushed-steel');
-  const w = span.s1 - span.s0;
-  const t = g.h * 2;
-  const sill = span.sill;
-  const head = span.head;
-  const H = head - sill;
-  const win = isWindowKind(opening.kind);
-  const f = win ? 0.06 : 0.05;
-  const casingDepth = t + (win ? 0.0 : 0.02);
-  // Frame: jambs + head (+ sill for windows).
-  group.add(box(f, H, casingDepth, -w / 2 + f / 2, sill + H / 2, 0, frameMat, shadows));
-  group.add(box(f, H, casingDepth, w / 2 - f / 2, sill + H / 2, 0, frameMat, shadows));
-  group.add(box(w, f, casingDepth, 0, head - f / 2, 0, frameMat, shadows));
-  const swing = opening.swingSide === 'left' ? -1 : 1; // local z sign of the swing side
-  const open = (opening.openAngle * Math.PI) / 180;
-  const innerW = w - 2 * f;
-  const innerH = H - f - (win ? f : 0);
-  const bottom = sill + (win ? f : 0);
-
-  const leaf = (width: number, glazed: boolean, panelled: boolean, withHandle = false): THREE.Group => {
-    const lg = new THREE.Group();
-    const lt = 0.04;
-    if (withHandle) {
-      for (const side of [-1, 1]) {
-        lg.add(box(0.025, 0.06, 0.012, width - 0.07, 1.0 - bottom, side * (lt / 2 + 0.006), metalMat, false));
-        lg.add(box(0.13, 0.018, 0.018, width - 0.12, 1.0 - bottom, side * (lt / 2 + 0.03), metalMat, false));
-      }
-    }
-    if (glazed) {
-      const rail = 0.09;
-      lg.add(box(rail, innerH, lt, rail / 2, innerH / 2, 0, panelMat, shadows));
-      lg.add(box(rail, innerH, lt, width - rail / 2, innerH / 2, 0, panelMat, shadows));
-      lg.add(box(width - 2 * rail, rail, lt, width / 2, innerH - rail / 2, 0, panelMat, shadows));
-      lg.add(box(width - 2 * rail, rail * 1.6, lt, width / 2, rail * 0.8, 0, panelMat, shadows));
-      lg.add(box(width - 2 * rail, innerH - rail * 2.6, 0.008, width / 2, rail * 1.6 + (innerH - rail * 2.6) / 2, 0, glassMat, false));
-    } else {
-      lg.add(box(width, innerH, lt, width / 2, innerH / 2, 0, panelMat, shadows));
-      if (panelled) {
-        const pw = width * 0.62;
-        for (const side of [-1, 1]) {
-          lg.add(box(pw, innerH * 0.36, 0.012, width / 2, innerH * 0.72, side * (lt / 2 + 0.004), panelMat, shadows));
-          lg.add(box(pw, innerH * 0.36, 0.012, width / 2, innerH * 0.28, side * (lt / 2 + 0.004), panelMat, shadows));
-        }
-      }
-    }
-    return lg;
-  };
-
-  if (!win) {
-    if (opening.kind === 'door-single' || opening.kind === 'door-double') {
-      const glazed = opening.style === 'glazed';
-      const panelled = opening.style === 'panel';
-      const leaves =
-        opening.kind === 'door-single'
-          ? [{ hingeAtStart: opening.hinge === 'start', width: innerW }]
-          : [
-              { hingeAtStart: true, width: innerW / 2 },
-              { hingeAtStart: false, width: innerW / 2 },
-            ];
-      for (const l of leaves) {
-        const pivot = new THREE.Group();
-        const hx = l.hingeAtStart ? -innerW / 2 : innerW / 2;
-        pivot.position.set(hx, bottom, swing * (t / 2 - 0.03));
-        const lf = leaf(l.width, glazed, panelled, true);
-        if (!l.hingeAtStart) lf.scale.x = -1;
-        pivot.add(lf);
-        // Rotate toward the swing side.
-        pivot.rotation.y = (l.hingeAtStart ? -swing : swing) * open;
-        group.add(pivot);
-      }
-    } else if (opening.kind === 'door-sliding') {
-      const pw = innerW * 0.55;
-      const slide = (opening.openAngle / 90) * innerW * 0.45;
-      const p1 = leaf(pw, opening.style !== 'flush', false, true);
-      p1.position.set(-innerW / 2 + slide, bottom, t * 0.18);
-      const p2 = leaf(pw, opening.style !== 'flush', false);
-      p2.position.set(innerW / 2 - pw, bottom, -t * 0.18);
-      group.add(p1, p2);
-    }
-  } else {
-    // Window sill board (interior side = opposite of the swing side) and frame bottom.
-    group.add(box(w, f, t, 0, sill + f / 2, 0, frameMat, shadows));
-    group.add(box(w + 0.06, 0.025, 0.06, 0, sill - 0.0125, -swing * (t / 2 + 0.01), frameMat, shadows));
-    const sash = (x0: number, width: number, hingeAtStart: boolean, z: number, openable: boolean) => {
-      const sg = new THREE.Group();
-      const sf = 0.045;
-      const sd = 0.05;
-      sg.add(box(sf, innerH, sd, sf / 2, innerH / 2, 0, frameMat, shadows));
-      sg.add(box(sf, innerH, sd, width - sf / 2, innerH / 2, 0, frameMat, shadows));
-      sg.add(box(width - 2 * sf, sf, sd, width / 2, sf / 2, 0, frameMat, shadows));
-      sg.add(box(width - 2 * sf, sf, sd, width / 2, innerH - sf / 2, 0, frameMat, shadows));
-      sg.add(box(width - 2 * sf, innerH - 2 * sf, 0.01, width / 2, innerH / 2, 0, glassMat, false));
-      const pivot = new THREE.Group();
-      pivot.position.set(hingeAtStart ? x0 : x0 + width, bottom, z);
-      if (!hingeAtStart) sg.position.x = -width;
-      pivot.add(sg);
-      if (openable) pivot.rotation.y = (hingeAtStart ? -swing : swing) * open;
-      group.add(pivot);
-    };
-    if (opening.kind === 'window-fixed') sash(-innerW / 2, innerW, true, 0, false);
-    else if (opening.kind === 'window-single') sash(-innerW / 2, innerW, opening.hinge === 'start', swing * 0.01, true);
-    else if (opening.kind === 'window-double') {
-      sash(-innerW / 2, innerW / 2, true, swing * 0.01, true);
-      sash(0, innerW / 2, false, swing * 0.01, true);
-    } else if (opening.kind === 'window-sliding') {
-      const sw = innerW * 0.52;
-      const slide = (opening.openAngle / 90) * innerW * 0.45;
-      sash(-innerW / 2 + slide, sw, true, 0.03, false);
-      sash(innerW / 2 - sw, sw, true, -0.03, false);
-    }
-  }
-  return group;
-}
+export { buildOpening } from './openingBuilder';
 
 // ───────────────────────── Floors & ceilings ─────────────────────────
 
@@ -676,7 +583,7 @@ export function buildCeiling(face: RoomFace, room: Room | null, ctx: BuildContex
 /** Stable key describing a wall's geometry so meshes rebuild only when it changes. */
 export function wallGeometryKey(g: WallGeometry, cut?: number): string {
   const r = (n: number) => Math.round(n * 10000);
-  let s = `${cut ?? ''}|`;
+  let s = `${cut ?? ''}|${g.wall.style ?? 'solid'}|${g.wall.heightEnd ?? ''}|`;
   for (const pc of g.pieces) {
     s += `${pc.kind}:${r(pc.z0)}:${r(pc.z1)}:`;
     for (const p of pc.left) s += `${r(p.x)},${r(p.y)};`;

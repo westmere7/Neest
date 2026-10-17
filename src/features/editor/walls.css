@@ -1,0 +1,11 @@
+/* Wall construction & trim controls (WallExtras.tsx). */
+.trim-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+.trim-row:first-of-type {
+  border-top: 0;
+}

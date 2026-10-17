@@ -16,6 +16,7 @@ export const TOOL_SHORTCUTS: Record<string, ToolId> = {
   d: 'opening',
   m: 'measure',
   s: 'split',
+  e: 'extend',
 };
 
 export const SHORTCUT_LIST: { keys: string; action: string }[] = [
@@ -26,10 +27,13 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'R', action: 'Draw rectangular room' },
   { keys: 'D', action: 'Insert door / window' },
   { keys: 'S', action: 'Split wall' },
+  { keys: 'E', action: 'Extend / trim / join walls' },
   { keys: 'M', action: 'Measure' },
   { keys: 'Shift (while drawing)', action: 'Lock angle to 45° steps' },
   { keys: 'Alt (while dragging)', action: 'Disable snapping' },
   { keys: 'Digits + Enter', action: 'Exact length while drawing' },
+  { keys: 'A (curved wall)', action: 'Switch 3-point arc / free bend' },
+  { keys: 'F (measuring on a wall face)', action: 'Clear distance to the opposite face' },
   { keys: 'Ctrl+Z / Ctrl+Shift+Z', action: 'Undo / redo' },
   { keys: 'Delete', action: 'Delete selection' },
   { keys: 'Ctrl+D', action: 'Duplicate' },

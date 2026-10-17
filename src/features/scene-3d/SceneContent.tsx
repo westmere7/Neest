@@ -21,6 +21,7 @@ import {
 } from './builders';
 import type { MaterialRegistry } from './materialRegistry';
 import { loadProjectModels } from './customModels';
+import { buildWallExtras, disposeWallExtras, wallExtrasKey, wallHasExtras } from './wallExtras';
 import { usePackVersion } from '@/packs/events';
 
 export interface SceneOptions {
@@ -216,6 +217,44 @@ function WallMesh({
   );
 }
 
+/** Mouldings, half-wall caps, glass walls and railings (see wallExtras.ts). */
+function WallExtrasNode({
+  g,
+  project,
+  registry,
+  cut,
+  shadows,
+  onPick,
+}: {
+  g: WallGeometry;
+  project: Project;
+  registry: MaterialRegistry;
+  cut?: number;
+  shadows: boolean;
+  onPick?: SceneOptions['onPick'];
+}) {
+  const key = wallExtrasKey(g, cut);
+  // Rebuild when the wall's extras change or materials are edited (materials resolve at build time).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const group = useMemo(() => buildWallExtras(g, { project, registry, shadows }, cut), [key, shadows, project.materials]);
+  useEffect(() => () => disposeWallExtras(group), [group]);
+  if (!group) return null;
+  return (
+    <primitive
+      object={group}
+      onClick={
+        onPick
+          ? (e: ThreeEvent<MouseEvent>) => {
+              if (e.delta > 4) return;
+              e.stopPropagation();
+              onPick('wall', g.wall.id, e);
+            }
+          : undefined
+      }
+    />
+  );
+}
+
 function HubMesh({ hub, material, cut, shadows }: { hub: JunctionHub; material: THREE.Material; cut?: number; shadows: boolean }) {
   const key = `${hub.polygon.map((p) => `${p.x.toFixed(4)},${p.y.toFixed(4)}`).join(';')}|${hub.z0}|${hub.z1}|${cut}`;
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -317,7 +356,8 @@ function ClippedMaterialSync() {
 function OpeningNode({ g, spanId, project, ctx, cut, onPick }: { g: WallGeometry; spanId: string; project: Project; ctx: BuildContext; cut?: number; onPick?: SceneOptions['onPick'] }) {
   const o = project.openings[spanId];
   const span = g.spans.find((s) => s.id === spanId)!;
-  const key = `${wallGeometryKey(g)}|${span.s0}|${span.s1}`;
+  // Arched/round openings fill their corners with the wall's own finishes, so wall materials are part of the key.
+  const key = `${wallGeometryKey(g)}|${span.s0}|${span.s1}|${g.wall.materials.left}|${g.wall.materials.right}|${g.wall.materials.top}`;
   const group = useMemo(() => {
     const grp = buildOpening(o, g, span, ctx);
     // Cutaway: frames, leaves and glass are cut at the same height as the walls.
@@ -527,6 +567,11 @@ export function SceneContent({ project, derived, registry, options }: { project:
                 shadows={shadows}
                 onPick={options.onPick}
               />
+            ))}
+          {[...derived.network.walls.values()]
+            .filter((g) => !g.wall.hidden && wallHasExtras(g))
+            .map((g) => (
+              <WallExtrasNode key={`x-${g.wall.id}`} g={g} project={project} registry={registry} cut={cut} shadows={shadows} onPick={options.onPick} />
             ))}
           {derived.network.hubs.map((h) => (
             <HubMesh key={h.nodeId} hub={h} material={hubMat} cut={cut} shadows={shadows} />

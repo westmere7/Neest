@@ -13,6 +13,7 @@ import {
   wallMaterials,
   type BuildContext,
 } from '@/features/scene-3d/builders';
+import { buildWallExtras } from '@/features/scene-3d/wallExtras';
 import { MaterialRegistry } from '@/features/scene-3d/materialRegistry';
 import { loadProjectModels } from '@/features/scene-3d/customModels';
 
@@ -42,10 +43,17 @@ export async function buildExportScene(project: Project, o: SceneExportOptions):
   for (const g of derived.network.walls.values()) {
     if (g.wall.hidden) continue;
     const geo = buildWallGeometry(g);
-    if (!geo) continue;
-    const mesh = new THREE.Mesh(geo, wallMaterials(project, g, registry));
-    mesh.name = `Wall ${g.wall.id}`;
-    walls.add(mesh);
+    if (geo) {
+      const mesh = new THREE.Mesh(geo, wallMaterials(project, g, registry));
+      mesh.name = `Wall ${g.wall.id}`;
+      walls.add(mesh);
+    }
+    // Trims, half-wall caps, glass walls and railings.
+    const extras = buildWallExtras(g, { project, registry, shadows: false });
+    if (extras) {
+      extras.name = `Wall details ${g.wall.id}`;
+      walls.add(extras);
+    }
   }
   for (const h of derived.network.hubs) {
     const geo = buildHubGeometry(h);

@@ -17,6 +17,7 @@ import { hitTest, selectionHandles } from './hitTest';
 import { createSelectTool } from './tools/selectTool';
 import { createCurveTool, createMeasureTool, createRoomTool, createSplitTool, createWallTool } from './tools/drawTools';
 import { createOpeningTool, createPlaceTool } from './tools/placeTools';
+import { createExtendTool } from './tools/extendTool';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './tools/types';
 import { openContextMenu } from '@/components/ContextMenu';
 import { floatingInsets } from '@/components/layoutInsets';
@@ -70,6 +71,7 @@ export function PlanCanvas() {
       place: createPlaceTool(),
       measure: createMeasureTool(),
       split: createSplitTool(),
+      extend: createExtendTool(),
     }),
     [],
   );

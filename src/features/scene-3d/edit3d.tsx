@@ -16,12 +16,13 @@ import { useEditorStore, type ToolId } from '@/state/editorStore';
 import { planKeyRouter } from '@/features/plan-2d/PlanCanvas';
 import { createCurveTool, createMeasureTool, createRoomTool, createSplitTool, createWallTool } from '@/features/plan-2d/tools/drawTools';
 import { createOpeningTool, createPlaceTool } from '@/features/plan-2d/tools/placeTools';
+import { createExtendTool } from '@/features/plan-2d/tools/extendTool';
 import type { GhostObject, PointerInfo, Tool, ToolEnv, ToolOverlay } from '@/features/plan-2d/tools/types';
 import { buildObject, partGeometry } from './builders';
 import { sharedRegistry } from './sceneRuntime';
 
 /** Tools available directly in the 3D view (selection uses mesh picking instead). */
-export const TOOLS_3D: ToolId[] = ['select', 'wall', 'curve', 'room', 'opening', 'split', 'measure', 'place'];
+export const TOOLS_3D: ToolId[] = ['select', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place'];
 
 const ACCENT = '#2a8a78'; // brand teal, bright enough to read over floors
 const SNAP = '#d0a650'; // brass
@@ -58,6 +59,7 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
       place: createPlaceTool(),
       measure: createMeasureTool(),
       split: createSplitTool(),
+      extend: createExtendTool(),
     }),
     [],
   );
@@ -123,7 +125,7 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
       const { camera, scene, size } = get();
       raycaster.setFromCamera(ndc, camera);
       let hit: THREE.Vector3 | null = null;
-      if (tool === 'opening' || tool === 'split') {
+      if (tool === 'opening' || tool === 'split' || tool === 'extend') {
         const walls = scene.getObjectByName('walls');
         const hits = walls ? raycaster.intersectObject(walls, true) : [];
         if (hits.length) hit = hits[0].point.clone();

@@ -21,6 +21,7 @@ import { IconButton, Segmented } from '@/components/ui';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
 import { MaterialLibrary } from '@/features/materials/MaterialUI';
 import { useAssetThumbnail } from './thumbnails';
+import { DOOR_KINDS, WINDOW_KINDS, WallPresetCards, extraOpeningIcon } from './BuildExtras';
 import './library.css';
 
 const BUILD_GROUP_TITLES = {
@@ -142,16 +143,17 @@ function BuildTab() {
   const role = useEditorStore((s) => s.wallRole);
   const kind = useEditorStore((s) => s.openingKind);
   const buildGroup = useEditorStore((s) => s.buildGroup);
+  const wallPreset = useEditorStore((s) => s.wallPreset);
   const settings = useProjectStore((s) => s.project!.settings);
   const set = useEditorStore((s) => s.set);
   const wallCard = (r: WallRole, label: string, t: number, toolId: 'wall' | 'room' | 'curve' = 'wall') => {
-    const active = tool === toolId && role === r;
+    const active = tool === toolId && role === r && !wallPreset;
     return (
       <button
         key={`${toolId}-${r}`}
         type="button"
         className={`build-card${active ? ' on' : ''}`}
-        onClick={() => set({ tool: toolId, wallRole: r, wallThickness: null })}
+        onClick={() => set({ tool: toolId, wallRole: r, wallThickness: null, wallPreset: null })}
         aria-pressed={active}
       >
         <WallIcon t={Math.max(1.5, t * 14)} />
@@ -182,13 +184,14 @@ function BuildTab() {
               <span>Room</span>
             </button>
           </div>
+          <WallPresetCards />
         </>
       )}
       {buildGroup === 'doors' && (
         <>
           <h3 className="lib-h">Doors</h3>
           <div className="build-grid">
-            {(['door-single', 'door-double', 'door-sliding', 'passage'] as OpeningKind[]).map((k) => (
+            {DOOR_KINDS.map((k) => (
               <button
                 key={k}
                 type="button"
@@ -197,7 +200,7 @@ function BuildTab() {
                 aria-pressed={tool === 'opening' && kind === k}
                 data-testid={`build-${k}`}
               >
-                <OpeningIcon kind={k} />
+                {extraOpeningIcon(k) ?? <OpeningIcon kind={k} />}
                 <span>{OPENING_PRESETS[k].label}</span>
               </button>
             ))}
@@ -208,7 +211,7 @@ function BuildTab() {
         <>
           <h3 className="lib-h">Windows</h3>
           <div className="build-grid">
-            {(['window-single', 'window-double', 'window-fixed', 'window-sliding'] as OpeningKind[]).map((k) => (
+            {WINDOW_KINDS.map((k) => (
               <button
                 key={k}
                 type="button"
@@ -216,7 +219,7 @@ function BuildTab() {
                 onClick={() => set({ tool: 'opening', openingKind: k })}
                 aria-pressed={tool === 'opening' && kind === k}
               >
-                <OpeningIcon kind={k} />
+                {extraOpeningIcon(k) ?? <OpeningIcon kind={k} />}
                 <span>{OPENING_PRESETS[k].label}</span>
               </button>
             ))}

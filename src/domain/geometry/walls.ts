@@ -57,7 +57,13 @@ export interface WallGeometry {
   startFree: boolean;
   endFree: boolean;
   z0: number;
+  /** Top height at the wall start (node a). For level walls this is the top everywhere. */
   z1: number;
+  /** Top height at arc length s (differs from z1 only for sloped walls). */
+  topAt: (s: number) => number;
+  sloped: boolean;
+  /** One face of the wall (+1 left, -1 right) between arc lengths s0 and s1, using mitred end corners. */
+  edge: (s0: number, s1: number, side: 1 | -1) => Vec2[];
 }
 
 export interface JunctionHub {
@@ -229,8 +235,11 @@ function buildWallGeometry(
   const clearEnd = Math.max(L / 2, L - endExt - OPENING_END_MARGIN);
   const z0 = wall.baseElevation;
   const z1 = wall.baseElevation + wall.height;
+  const zEnd = wall.baseElevation + (wall.heightEnd ?? wall.height);
+  const sloped = Math.abs(zEnd - z1) > 1e-6;
+  const topAt = (s: number) => (sloped ? z1 + ((zEnd - z1) * Math.min(Math.max(s, 0), L)) / L : z1);
 
-  const spans = computeOpeningSpans(openings, clearStart, clearEnd, z0, z1);
+  const spans = computeOpeningSpans(openings, clearStart, clearEnd, z0, z1, sloped ? topAt : undefined);
 
   const edgeAt = (s: number, side: 1 | -1): Vec2 => {
     if (s <= 1e-9) return side === 1 ? cs.left : cs.right;
@@ -284,7 +293,7 @@ function buildWallGeometry(
     const gapBottom = Math.min(...covering.map((c) => c.sill));
     const gapTop = Math.max(...covering.map((c) => c.head));
     if (gapBottom > z0 + 1e-4) pieces.push(makePiece(s0, s1, z0, gapBottom, 'below'));
-    if (gapTop < z1 - 1e-4) pieces.push(makePiece(s0, s1, gapTop, z1, 'above'));
+    if (gapTop < Math.max(topAt(s0), topAt(s1)) - 1e-4) pieces.push(makePiece(s0, s1, gapTop, z1, 'above'));
   }
   if (solidStart !== null) {
     pieces.push(makePiece(solidStart, L, z0, z1, 'solid'));
@@ -313,6 +322,9 @@ function buildWallGeometry(
     endFree: ce.free,
     z0,
     z1,
+    topAt,
+    sloped,
+    edge: edgeSlice,
   };
 }
 
@@ -323,6 +335,8 @@ export function computeOpeningSpans(
   clearEnd: number,
   z0: number,
   z1: number,
+  /** Top height along the wall for sloped walls (the opening head stays below it). */
+  topAt?: (s: number) => number,
 ): OpeningSpan[] {
   const avail = Math.max(0, clearEnd - clearStart);
   return openings
@@ -331,8 +345,9 @@ export function computeOpeningSpans(
       const lo = clearStart + width / 2;
       const hi = clearEnd - width / 2;
       const center = Math.min(Math.max(o.offset, lo), Math.max(lo, hi));
-      const sill = Math.max(z0, Math.min(o.sillHeight, z1 - 0.05));
-      const head = Math.min(z1, sill + o.height);
+      const top = topAt ? Math.min(topAt(center - width / 2), topAt(center + width / 2)) : z1;
+      const sill = Math.max(z0, Math.min(o.sillHeight, top - 0.05));
+      const head = Math.min(top, sill + o.height);
       return {
         id: o.id,
         s0: center - width / 2,

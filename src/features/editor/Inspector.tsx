@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Lock, RotateCw, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
-import { isWindowKind } from '@/domain/model/schema';
+import { isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
 import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
@@ -16,6 +16,10 @@ import { useEditorStore } from '@/state/editorStore';
 import { Button, IconButton, LengthField, NumberField, Section, Select, Slider, TextField, Toggle, Segmented } from '@/components/ui';
 import { MaterialSlotRow } from '@/features/materials/MaterialUI';
 import { deleteSelection, duplicateSelection, flipOpening, reverseWall, rotateSelection, toggleLockSelection, describeSelection } from './actions';
+import { DrawPresetSelect, WallConstruction, WallPresetPicker, WallTrims } from './WallExtras';
+import { WallMultiEdit } from './WallMultiEdit';
+import { OpeningExtras } from './OpeningExtras';
+import { WallReferencePicker } from './WallToolExtras';
 
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
   useProjectStore.getState().execute(label, fn);
@@ -263,7 +267,9 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
           </Button>
         </div>
       </Section>
+      <WallConstruction project={project} wallId={wallId} locked={locked} />
       <Section title="Finishes">
+        <WallPresetPicker wallIds={[wallId]} />
         <MaterialSlotRow label="Left side" target={{ kind: 'wall-side', wallId, side: 'left' }} materialId={w.materials.left} testId="wall-mat-left" />
         <MaterialSlotRow label="Right side" target={{ kind: 'wall-side', wallId, side: 'right' }} materialId={w.materials.right} />
         <MaterialSlotRow label="Top & ends" target={{ kind: 'wall-side', wallId, side: 'top' }} materialId={w.materials.top} />
@@ -271,6 +277,7 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
           Use left finish on both sides
         </Button>
       </Section>
+      <WallTrims project={project} wallId={wallId} />
       {openings.length > 0 && (
         <Section title={`Openings (${openings.length})`}>
           {openings.map((o) => (
@@ -293,6 +300,9 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
 
 const OPENING_KINDS = Object.values(OPENING_PRESETS).map((p) => ({ value: p.kind, label: p.label }));
 
+/** Door kinds whose hinge (or slide/pivot direction) can be flipped. */
+const HINGED_KINDS = new Set<OpeningKind>(['door-single', 'door-pocket', 'door-bifold', 'door-barn', 'door-pivot']);
+
 function OpeningInspector({ project, openingId }: { project: Project; openingId: string }) {
   const o = project.openings[openingId];
   const u = project.settings;
@@ -303,6 +313,8 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
   const fromStart = span ? span.s0 : o.offset - o.width / 2;
   const fromEnd = span && g ? g.path.length - span.s1 : 0;
   const upd = (label: string, patch: Parameters<typeof updateOpening>[2]) => exec(label, (d) => updateOpening(d, openingId, patch));
+  // Sliding kinds show "open" as a percentage (the 0–90 value maps to 0–100%).
+  const slides = o.kind === 'door-sliding' || o.kind === 'door-pocket' || o.kind === 'door-barn';
   return (
     <>
       <Section title="Type & size">
@@ -349,19 +361,27 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
           {span?.clamped ? ' · clamped to fit the wall' : ''}
         </p>
       </Section>
-      {!win && o.kind !== 'passage' && (
-        <Section title="Swing">
+      {!win && !isPassageKind(o.kind) && (
+        <Section title={slides ? 'Slide' : 'Swing'}>
           <div className="btn-row">
             <Button size="sm" onClick={() => flipOpening(openingId, 'side')}>
               Flip side ({o.swingSide})
             </Button>
-            {o.kind === 'door-single' && (
+            {HINGED_KINDS.has(o.kind) && (
               <Button size="sm" onClick={() => flipOpening(openingId, 'hinge')}>
                 Flip hinge ({o.hinge})
               </Button>
             )}
           </div>
-          <Slider label="Shown open in 3D" value={o.openAngle} min={0} max={90} step={5} format={(v) => `${v}°`} onCommit={(v) => upd('Set door opening', { openAngle: v })} />
+          <Slider
+            label="Shown open in 3D"
+            value={o.openAngle}
+            min={0}
+            max={90}
+            step={5}
+            format={(v) => (slides ? `${Math.round((v / 90) * 100)}%` : `${v}°`)}
+            onCommit={(v) => upd('Set door opening', { openAngle: v })}
+          />
         </Section>
       )}
       {win && o.kind !== 'window-fixed' && (
@@ -373,7 +393,7 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
         </Section>
       )}
       <Section title="Finishes">
-        {!win && o.kind !== 'passage' && (
+        {!win && !isPassageKind(o.kind) && (
           <Select
             label="Style"
             value={o.style}
@@ -386,10 +406,11 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
           />
         )}
         <MaterialSlotRow label="Frame" target={{ kind: 'opening-frame', openingId }} materialId={o.frameMaterialId} />
-        {o.kind !== 'passage' && (
+        {!isPassageKind(o.kind) && (
           <MaterialSlotRow label={win ? 'Glazing' : 'Door leaf'} target={{ kind: 'opening-panel', openingId }} materialId={o.panelMaterialId} />
         )}
       </Section>
+      <OpeningExtras project={project} openingId={openingId} />
     </>
   );
 }
@@ -560,7 +581,6 @@ function MultiInspector({ project }: { project: Project }) {
   const selection = useEditorStore((s) => s.selection);
   const walls = selection.filter((s) => s.kind === 'wall' && project.walls[s.id]).map((s) => s.id);
   const objects = selection.filter((s) => s.kind === 'object').map((s) => s.id);
-  const u = project.settings;
   const counts = selection.reduce<Record<string, number>>((acc, s) => ({ ...acc, [s.kind]: (acc[s.kind] ?? 0) + 1 }), {});
   return (
     <>
@@ -587,39 +607,12 @@ function MultiInspector({ project }: { project: Project }) {
         </div>
       </Section>
       {walls.length > 0 && (
-        <Section title={`Walls (${walls.length})`}>
-          <div className="grid-2">
-            <LengthField
-              label="Thickness"
-              value={project.walls[walls[0]].thickness}
-              unit={u.units}
-              precision={u.precision}
-              min={0.02}
-              max={2}
-              onCommit={(v) =>
-                exec('Set wall thickness', (d) => {
-                  updateWalls(d, walls, { thickness: v });
-                  clampOpenings(d);
-                })
-              }
-            />
-            <LengthField
-              label="Height"
-              value={project.walls[walls[0]].height}
-              unit={u.units}
-              precision={u.precision}
-              min={0.2}
-              max={12}
-              onCommit={(v) => exec('Set wall height', (d) => updateWalls(d, walls, { height: v }))}
-            />
-          </div>
-          <Select
-            label="Wall type"
-            value={project.walls[walls[0]].role}
-            onChange={(role) => exec('Set wall type', (d) => updateWalls(d, walls, { role }))}
-            options={ROLE_OPTIONS}
-          />
-        </Section>
+        <>
+          <WallMultiEdit project={project} wallIds={walls} />
+          <Section title="Wall type" defaultOpen={false}>
+            <WallPresetPicker wallIds={walls} />
+          </Section>
+        </>
       )}
     </>
   );
@@ -660,6 +653,8 @@ function WallToolOptions({ project }: { project: Project }) {
           }
         />
       </div>
+      <DrawPresetSelect />
+      <WallReferencePicker />
       <p className="field-hint">
         Click to place corners; walls snap to endpoints, wall lines, alignment guides and 45° angles. Type a number and press Enter for an exact
         length. Hold Shift to lock the angle.

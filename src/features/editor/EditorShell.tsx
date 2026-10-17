@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRightToLine,
   Box,
   Check,
   Cloud,
@@ -313,6 +314,7 @@ const ACTION_TOOLS: { id: ToolId; label: string; key: string; icon: React.ReactN
   { id: 'room', label: 'Room (rectangle)', key: 'R', icon: <Square size={18} /> },
   { id: 'opening', label: 'Door & window', key: 'D', icon: <DoorOpen size={18} /> },
   { id: 'split', label: 'Split wall', key: 'S', icon: <Scissors size={18} /> },
+  { id: 'extend', label: 'Extend / trim / join', key: 'E', icon: <ArrowRightToLine size={18} /> },
   { id: 'measure', label: 'Measure', key: 'M', icon: <Ruler size={18} /> },
 ];
 
@@ -456,6 +458,18 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         >
           <Scissors size={18} />
           <span className="rail-btn-label">Split</span>
+        </IconButton>
+        <IconButton
+          label="Extend / trim / join walls"
+          shortcut="E"
+          active={tool === 'extend'}
+          tooltipSide="right"
+          className="rail-labeled-btn"
+          onClick={() => setTool('extend')}
+          data-testid="tool-extend"
+        >
+          <ArrowRightToLine size={18} />
+          <span className="rail-btn-label">Extend</span>
         </IconButton>
         <IconButton
           label="Measure"

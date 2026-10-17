@@ -2,7 +2,7 @@ import { memo, type ReactNode } from 'react';
 import type { AreaUnit, LengthUnit, Project, Vec2 } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { piecePolygon } from '@/domain/geometry/walls';
-import { pointAt } from '@/domain/geometry/wallPath';
+import { pointAt, slicePath } from '@/domain/geometry/wallPath';
 import { add, dot, leftNormal, sub } from '@/domain/geometry/vec';
 import { convexHull, polygonCentroid } from '@/domain/geometry/polygon';
 import { formatArea, formatLength } from '@/domain/model/units';
@@ -189,12 +189,48 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
   if (project.layers.construction.visible) {
     for (const g of derived.network.walls.values()) {
       if (g.wall.hidden) continue;
+      const style = g.wall.style ?? 'solid';
+      if (style === 'glass' || style === 'railing-glass' || style === 'railing-bars') {
+        // Light-weight walls: thin outline, a centre line (glass) and post/mullion ticks.
+        g.planPieces.forEach((piece, k) => {
+          const centre = slicePath(g.path, piece.s0, piece.s1, 0);
+          wallFills.push(
+            <g key={`${g.wall.id}-${k}`} data-wall={g.wall.id}>
+              <path d={polyPath(piecePolygon(piece))} fill={pal.paper} fillOpacity={0.6} stroke={pal.wallFill} strokeWidth={f(0.9 * px)} />
+              <path
+                d={polyPath(centre, false)}
+                fill="none"
+                stroke={style === 'railing-bars' ? pal.wallFill : pal.glass}
+                strokeWidth={f((style === 'glass' ? 1.4 : 1.1) * px)}
+                strokeDasharray={style === 'railing-bars' ? `${f(2 * px)} ${f(2 * px)}` : undefined}
+              />
+              {wallTicks(g, piece.s0, piece.s1, style === 'glass' ? 1.2 : 1.4).map((s, i) => {
+                const a = pointAt(g.path, s);
+                const n = leftNormal(a.tangent);
+                return (
+                  <line
+                    key={i}
+                    x1={f(a.p.x + n.x * g.h)}
+                    y1={f(a.p.y + n.y * g.h)}
+                    x2={f(a.p.x - n.x * g.h)}
+                    y2={f(a.p.y - n.y * g.h)}
+                    stroke={pal.wallFill}
+                    strokeWidth={f(1.6 * px)}
+                  />
+                );
+              })}
+            </g>,
+          );
+        });
+        continue;
+      }
       g.planPieces.forEach((piece, k) => {
         wallFills.push(
           <path
             key={`${g.wall.id}-${k}`}
             d={polyPath(piecePolygon(piece))}
             fill={pal.wallFill}
+            fillOpacity={style === 'half' ? 0.55 : undefined}
             stroke={pal.wallFill}
             strokeWidth={f(0.6 * px)}
             data-wall={g.wall.id}
@@ -437,3 +473,11 @@ export function Dimension({
   );
 }
 
+/** Positions of posts/mullions along [s0, s1]: both ends plus even divisions at most `max` apart. */
+function wallTicks(g: { path: { length: number } }, s0: number, s1: number, max: number): number[] {
+  const a = Math.max(0, s0 + 0.03);
+  const b = Math.min(g.path.length, s1 - 0.03);
+  if (b <= a) return [];
+  const n = Math.max(1, Math.ceil((b - a) / max));
+  return Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n);
+}

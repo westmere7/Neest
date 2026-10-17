@@ -97,11 +97,21 @@ export const OPENING_PRESETS: Record<OpeningKind, OpeningPreset> = {
   'door-single': { kind: 'door-single', label: 'Single door', width: 0.9, height: 2.1, sill: 0, style: 'flush' },
   'door-double': { kind: 'door-double', label: 'Double door', width: 1.4, height: 2.1, sill: 0, style: 'panel' },
   'door-sliding': { kind: 'door-sliding', label: 'Sliding door', width: 1.6, height: 2.1, sill: 0, style: 'glazed' },
+  'door-pocket': { kind: 'door-pocket', label: 'Pocket door', width: 0.8, height: 2.1, sill: 0, style: 'flush' },
+  'door-bifold': { kind: 'door-bifold', label: 'Bi-fold door', width: 1.2, height: 2.1, sill: 0, style: 'panel' },
+  'door-barn': { kind: 'door-barn', label: 'Barn door', width: 0.9, height: 2.1, sill: 0, style: 'panel' },
+  'door-french': { kind: 'door-french', label: 'French doors', width: 1.4, height: 2.2, sill: 0, style: 'glazed' },
+  'door-pivot': { kind: 'door-pivot', label: 'Pivot door', width: 1.1, height: 2.3, sill: 0, style: 'flush' },
   passage: { kind: 'passage', label: 'Open passage', width: 0.9, height: 2.1, sill: 0, style: 'flush' },
+  'passage-arched': { kind: 'passage-arched', label: 'Arched passage', width: 1.0, height: 2.3, sill: 0, style: 'flush' },
+  'passage-moon': { kind: 'passage-moon', label: 'Moon gate', width: 1.8, height: 1.8, sill: 0.2, style: 'flush' },
   'window-single': { kind: 'window-single', label: 'Casement window', width: 0.7, height: 1.2, sill: 0.9, style: 'glazed' },
   'window-double': { kind: 'window-double', label: 'Double casement', width: 1.2, height: 1.3, sill: 0.9, style: 'glazed' },
   'window-fixed': { kind: 'window-fixed', label: 'Picture window', width: 1.6, height: 1.5, sill: 0.6, style: 'glazed' },
   'window-sliding': { kind: 'window-sliding', label: 'Sliding window', width: 1.4, height: 1.3, sill: 0.9, style: 'glazed' },
+  'window-arched': { kind: 'window-arched', label: 'Arched window', width: 0.9, height: 1.5, sill: 0.8, style: 'glazed' },
+  'window-round': { kind: 'window-round', label: 'Round window', width: 0.7, height: 0.7, sill: 1.3, style: 'glazed' },
+  'window-tall': { kind: 'window-tall', label: 'Floor-to-ceiling window', width: 1.2, height: 2.4, sill: 0.05, style: 'glazed' },
 };
 
 export const ROOM_TYPE_LABELS: Record<RoomType, string> = {

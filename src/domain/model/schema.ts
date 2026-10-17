@@ -30,6 +30,45 @@ export const WallNodeSchema = z.object({ id: Id, x: num, y: num });
 
 export const WallMaterialsSchema = z.object({ left: Id, right: Id, top: Id });
 
+/**
+ * How a wall is built. 'solid' (default) and 'half' (solid with an overhanging cap) are
+ * masonry/drywall; 'glass' is a framed glass wall with mullions; the railings are balustrades.
+ */
+export const WallStyleSchema = z.enum(['solid', 'half', 'glass', 'railing-glass', 'railing-bars']);
+
+/** A moulding running along a wall face (skirting at the floor, cornice at the top). */
+export const WallTrimSchema = z.object({
+  height: num.min(0.005).max(1),
+  /** How far it stands proud of the wall face. */
+  depth: num.min(0.002).max(0.2),
+  materialId: Id,
+});
+
+/** A rail (dado or picture rail) at a height above the wall base. */
+export const WallRailSchema = WallTrimSchema.extend({
+  /** Height of the rail's centre above the wall base. */
+  y: num.min(0).max(12),
+});
+
+/** A lower band in another finish: wainscoting, panelling or a tiled dado. */
+export const WallBandSchema = z.object({
+  /** Top of the band above the wall base. */
+  height: num.min(0.05).max(12),
+  /** 0.002 ≈ paint/tile, 0.015+ ≈ timber panelling. */
+  depth: num.min(0.001).max(0.1),
+  materialId: Id,
+  /** Adds a small capping rail along the top of the band. */
+  cap: z.boolean().default(false),
+});
+
+/** Trim and finish layers on one face of a wall. */
+export const WallSideFinishSchema = z.object({
+  skirting: WallTrimSchema.nullable().default(null),
+  cornice: WallTrimSchema.nullable().default(null),
+  rail: WallRailSchema.nullable().default(null),
+  band: WallBandSchema.nullable().default(null),
+});
+
 export const WallSegmentSchema = z.object({
   id: Id,
   a: Id,
@@ -43,18 +82,41 @@ export const WallSegmentSchema = z.object({
   materials: WallMaterialsSchema,
   locked: z.boolean().default(false),
   hidden: z.boolean().default(false),
+  /** Construction style; absent = 'solid'. */
+  style: WallStyleSchema.optional(),
+  /** Height at node b for a sloped top (height applies at node a); absent/null = level. */
+  heightEnd: num.min(0.2).max(12).nullable().optional(),
+  /** Glazing / railing infill material for glass and railing styles (frames use materials.top). */
+  styleMaterialId: Id.optional(),
+  /** Mouldings and finish bands per face. */
+  finishes: z
+    .object({ left: WallSideFinishSchema.optional(), right: WallSideFinishSchema.optional() })
+    .optional(),
 });
 
 export const OpeningKindSchema = z.enum([
   'door-single',
   'door-double',
   'door-sliding',
+  'door-pocket',
+  'door-bifold',
+  'door-barn',
+  'door-french',
+  'door-pivot',
   'passage',
+  'passage-arched',
+  'passage-moon',
   'window-single',
   'window-double',
   'window-fixed',
   'window-sliding',
+  'window-arched',
+  'window-round',
+  'window-tall',
 ]);
+
+/** Decorative/security bars in front of a window. */
+export const WindowGrilleSchema = z.enum(['none', 'bars', 'grid']);
 
 export const OpeningStyleSchema = z.enum(['flush', 'panel', 'glazed']);
 
@@ -76,6 +138,16 @@ export const OpeningSchema = z.object({
   style: OpeningStyleSchema.default('flush'),
   frameMaterialId: Id,
   panelMaterialId: Id,
+  /** Doors: glazed fanlight above the door (inside the opening height). */
+  transom: z.boolean().optional(),
+  /** Windows: bars or a grid in front of the glass. */
+  grille: WindowGrilleSchema.optional(),
+  /** Windows: louvred shutters on the outside (opposite the swing side). */
+  shutters: z.boolean().optional(),
+  /** Architrave/casing trim around the opening on both faces. */
+  casing: z.boolean().optional(),
+  /** Doors: a threshold strip on the floor. */
+  threshold: z.boolean().optional(),
 });
 
 export const RoomTypeSchema = z.enum([
@@ -332,6 +404,12 @@ export type TextureRef = z.infer<typeof TextureRefSchema>;
 export type PhotoTextureRef = z.infer<typeof PhotoTextureRefSchema>;
 export type MaterialDefinition = z.infer<typeof MaterialSchema>;
 export type CustomAsset = z.infer<typeof CustomAssetSchema>;
+export type WallStyle = z.infer<typeof WallStyleSchema>;
+export type WallTrim = z.infer<typeof WallTrimSchema>;
+export type WallRail = z.infer<typeof WallRailSchema>;
+export type WallBand = z.infer<typeof WallBandSchema>;
+export type WallSideFinish = z.infer<typeof WallSideFinishSchema>;
+export type WindowGrille = z.infer<typeof WindowGrilleSchema>;
 export type WallDisplay = z.infer<typeof WallDisplaySchema>;
 export type CameraPreset = z.infer<typeof CameraPresetSchema>;
 export type RenderSettings = z.infer<typeof RenderSettingsSchema>;
@@ -339,5 +417,6 @@ export type ProjectSettings = z.infer<typeof ProjectSettingsSchema>;
 export type Layers = z.infer<typeof LayersSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
 
-export const isDoorKind = (k: OpeningKind) => k.startsWith('door') || k === 'passage';
+export const isDoorKind = (k: OpeningKind) => k.startsWith('door') || k.startsWith('passage');
+export const isPassageKind = (k: OpeningKind) => k.startsWith('passage');
 export const isWindowKind = (k: OpeningKind) => k.startsWith('window');

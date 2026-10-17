@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import type { OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
 
-export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split';
+export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend';
+/** Which line of a new wall follows the drawn points: its centreline or one of its faces. */
+export type WallReference = 'center' | 'left' | 'right';
 export type Workspace = 'plan' | '3d' | 'split' | 'walk';
 export type PlanMode = 'draft' | 'furnished' | 'presentation';
 export type SelKind = 'wall' | 'node' | 'opening' | 'object' | 'room';
@@ -37,6 +39,9 @@ export interface EditorState {
   tool: ToolId;
   wallRole: WallRole;
   wallThickness: number | null;
+  /** Wall preset applied to newly drawn walls (see domain/model/wallPresets), or null for plain walls. */
+  wallPreset: string | null;
+  wallReference: WallReference;
   openingKind: OpeningKind;
   placeAssetId: string | null;
   placeRotation: number;
@@ -77,6 +82,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   tool: 'select',
   wallRole: 'interior',
   wallThickness: null,
+  wallPreset: null,
+  wallReference: 'center',
   openingKind: 'door-single',
   placeAssetId: null,
   placeRotation: 0,

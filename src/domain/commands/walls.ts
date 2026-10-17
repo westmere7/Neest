@@ -19,6 +19,10 @@ export interface WallOptions {
   role: WallRole;
   baseElevation?: number;
   materials?: WallSegment['materials'];
+  /** From a wall preset: construction style, infill material and trims. */
+  style?: WallSegment['style'];
+  styleMaterialId?: string;
+  finishes?: WallSegment['finishes'];
 }
 
 export function defaultWallMaterials(role: WallRole): WallSegment['materials'] {
@@ -127,6 +131,12 @@ export function splitWallAt(d: D, wallId: string, sRequested: number): string {
   };
   w.b = mid;
   w.curve = firstCurve;
+  if (w.heightEnd != null) {
+    // Sloped top: both parts keep the same slope line.
+    const hMid = w.height + ((w.heightEnd - w.height) * s) / path.length;
+    d.walls[newWallId].height = hMid;
+    w.heightEnd = hMid;
+  }
   for (const o of openings) {
     if (o.offset >= s) {
       o.wallId = newWallId;
@@ -381,6 +391,9 @@ export function addWallChain(
       materials: opts.materials ? { ...opts.materials } : defaultWallMaterials(opts.role),
       locked: false,
       hidden: false,
+      ...(opts.style && opts.style !== 'solid' ? { style: opts.style } : {}),
+      ...(opts.styleMaterialId ? { styleMaterialId: opts.styleMaterialId } : {}),
+      ...(opts.finishes ? { finishes: structuredClone(opts.finishes) } : {}),
     };
     created.push(id);
     if (!d.walls[id].curve) insertJunctions(d, [id]);
@@ -568,6 +581,12 @@ export function flipWall(d: D, wallId: string): void {
   const { left, right } = w.materials;
   w.materials.left = right;
   w.materials.right = left;
+  if (w.finishes) w.finishes = { left: w.finishes.right, right: w.finishes.left };
+  if (w.heightEnd != null) {
+    const h = w.height;
+    w.height = w.heightEnd;
+    w.heightEnd = h;
+  }
   for (const o of Object.values(d.openings)) {
     if (o.wallId !== wallId) continue;
     o.offset = L - o.offset;
