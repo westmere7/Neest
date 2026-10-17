@@ -21,7 +21,7 @@
   --dur: 180ms;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-  --rail-w: 52px;
+  --rail-w: 58px;
 
   /* Brand palette: vibrant emerald/forest green and its shades, with brass as the complementary cue colour. */
   --teal-950: #0a261c;
@@ -51,8 +51,8 @@
   --surface-2: #f1f3f5;
   --surface-3: #e6e9ec;
   --surface-inverse: #1e2022;
-  --border: rgba(24, 28, 32, 0.1);
-  --border-strong: rgba(24, 28, 32, 0.2);
+  --border: rgba(24, 28, 32, 0.08);
+  --border-strong: rgba(24, 28, 32, 0.15);
   --text: #181a1c;
   --text-2: #525860;
   --text-3: #7d848d;

@@ -4,7 +4,7 @@
   "id": "prj_81iyuc3b9b",
   "name": "Sample apartment",
   "createdAt": 1792224950095,
-  "updatedAt": 1792230534597,
+  "updatedAt": 1792235717726,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -1419,6 +1419,7 @@
         "rotation": 0,
         "contrast": 0.35
       },
+      "photo": null,
       "overrideOf": null,
       "catalogId": "paint-warm-white",
       "source": {
@@ -1441,6 +1442,13 @@
         "scale": 2,
         "rotation": 0,
         "contrast": 0.8
+      },
+      "photo": {
+        "setId": "plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.8,
+        "enabled": true
       },
       "overrideOf": null,
       "catalogId": "plaster-light",
@@ -1465,6 +1473,13 @@
         "rotation": 0,
         "contrast": 0.5
       },
+      "photo": {
+        "setId": "plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.6,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "plaster-white",
       "source": {
@@ -1487,6 +1502,13 @@
         "scale": 1.6,
         "rotation": 0,
         "contrast": 1
+      },
+      "photo": {
+        "setId": "oak-planks",
+        "scale": 1.8,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
       },
       "overrideOf": null,
       "catalogId": "wood-oak-natural",
@@ -1511,6 +1533,13 @@
         "rotation": 0,
         "contrast": 1
       },
+      "photo": {
+        "setId": "porcelain-large",
+        "scale": 4.8,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "tile-large-grey",
       "source": {
@@ -1529,6 +1558,7 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": null,
+      "photo": null,
       "overrideOf": null,
       "catalogId": "paint-ceiling-white",
       "source": {
@@ -1547,6 +1577,7 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": null,
+      "photo": null,
       "overrideOf": null,
       "catalogId": "paint-satin-white",
       "source": {
@@ -1565,6 +1596,7 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": null,
+      "photo": null,
       "overrideOf": null,
       "catalogId": "metal-anthracite",
       "source": {
@@ -1583,6 +1615,7 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": null,
+      "photo": null,
       "overrideOf": null,
       "catalogId": "glass-clear",
       "source": {
@@ -1601,6 +1634,7 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": null,
+      "photo": null,
       "overrideOf": null,
       "catalogId": "solid-light-grey",
       "source": {
@@ -1623,6 +1657,13 @@
         "scale": 2.4,
         "rotation": 0,
         "contrast": 1
+      },
+      "photo": {
+        "setId": "oak-wide-boards",
+        "scale": 1.9,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
       },
       "overrideOf": null,
       "catalogId": "wood-oak-wide",
@@ -1647,6 +1688,7 @@
         "rotation": 0,
         "contrast": 0.35
       },
+      "photo": null,
       "overrideOf": null,
       "catalogId": "paint-sage",
       "source": {
@@ -1669,6 +1711,13 @@
         "scale": 1.2,
         "rotation": 0,
         "contrast": 1
+      },
+      "photo": {
+        "setId": "oak-herringbone",
+        "scale": 1.8,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
       },
       "overrideOf": null,
       "catalogId": "wood-herringbone",
@@ -1693,6 +1742,13 @@
         "rotation": 0,
         "contrast": 1
       },
+      "photo": {
+        "setId": "terrazzo",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "tile-terrazzo",
       "source": {
@@ -1716,6 +1772,13 @@
         "rotation": 0,
         "contrast": 1
       },
+      "photo": {
+        "setId": "tile-glazed-subway",
+        "scale": 0.7,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "tile-subway-white",
       "source": {
@@ -1734,6 +1797,7 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": null,
+      "photo": null,
       "overrideOf": null,
       "catalogId": "laminate-grey",
       "source": {
@@ -1757,6 +1821,7 @@
         "rotation": 0,
         "contrast": 0.35
       },
+      "photo": null,
       "overrideOf": null,
       "catalogId": "paint-dusty-blue",
       "source": {
@@ -1805,7 +1870,7 @@
     }
   ],
   "render": {
-    "quality": "balanced",
+    "quality": "draft",
     "exposure": 1,
     "timeOfDay": 14,
     "sunAzimuth": 135,

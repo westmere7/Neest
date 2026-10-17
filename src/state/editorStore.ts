@@ -6,6 +6,7 @@ export type Workspace = 'plan' | '3d' | 'split' | 'walk';
 export type PlanMode = 'draft' | 'furnished' | 'presentation';
 export type SelKind = 'wall' | 'node' | 'opening' | 'object' | 'room';
 export type LibraryTab = 'build' | 'furniture' | 'materials';
+export type BuildGroup = 'walls' | 'doors' | 'windows' | 'structure';
 
 export interface SelItem {
   kind: SelKind;
@@ -46,6 +47,7 @@ export interface EditorState {
   chromeHidden: boolean;
   libraryOpen: boolean;
   libraryTab: LibraryTab;
+  buildGroup: BuildGroup;
   libraryWidth: number;
   snap: SnapSettings;
   gridVisible: boolean;
@@ -84,7 +86,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   planMode: 'draft',
   chromeHidden: false,
   libraryOpen: true,
-  libraryTab: 'build',
+  libraryTab: 'furniture',
+  buildGroup: 'walls',
   libraryWidth: 300,
   snap: { grid: true, geometry: true, angle: true, guides: true },
   gridVisible: true,

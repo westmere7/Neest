@@ -4,13 +4,14 @@ import {
   ArrowLeft,
   Box,
   Check,
-  CircleDashed,
   Cloud,
   Columns2,
+  Columns3,
   DoorOpen,
   Download,
   EyeOff,
   Footprints,
+  Grid2x2,
   Grid3x3,
   Hand,
   LibraryBig,
@@ -24,6 +25,7 @@ import {
   Ruler,
   Scissors,
   Settings2,
+  Sofa,
   Spline,
   Square,
   Undo2,
@@ -231,7 +233,6 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
   const redoLabel = useProjectStore((s) => s.future[0]?.label);
   const workspace = useEditorStore((s) => s.workspace);
   const planMode = useEditorStore((s) => s.planMode);
-  const libraryOpen = useEditorStore((s) => s.libraryOpen);
   const projectId = useProjectStore((s) => s.project!.id);
   const open = useDialogStore((s) => s.open);
   const current = workspace === 'plan' ? `plan:${planMode}` : workspace;
@@ -272,9 +273,6 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
           <Redo2 size={17} />
         </IconButton>
         <span className="tb-sep" />
-        <IconButton label="Library" active={libraryOpen} onClick={() => useEditorStore.getState().set({ libraryOpen: !libraryOpen })}>
-          <LibraryBig size={17} />
-        </IconButton>
         {!isMobile && (
           <IconButton label="Project settings" onClick={() => open('settings')}>
             <Settings2 size={17} />
@@ -304,9 +302,12 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
   );
 }
 
-const TOOLS: { id: ToolId; label: string; key: string; icon: React.ReactNode }[] = [
+const NAV_TOOLS: { id: ToolId; label: string; key: string; icon: React.ReactNode }[] = [
   { id: 'select', label: 'Select & move', key: 'V', icon: <MousePointer2 size={18} /> },
   { id: 'pan', label: 'Pan', key: 'H', icon: <Hand size={18} /> },
+];
+
+const ACTION_TOOLS: { id: ToolId; label: string; key: string; icon: React.ReactNode }[] = [
   { id: 'wall', label: 'Wall', key: 'W', icon: <Waypoints size={18} /> },
   { id: 'curve', label: 'Curved wall', key: 'C', icon: <Spline size={18} /> },
   { id: 'room', label: 'Room (rectangle)', key: 'R', icon: <Square size={18} /> },
@@ -315,48 +316,160 @@ const TOOLS: { id: ToolId; label: string; key: string; icon: React.ReactNode }[]
   { id: 'measure', label: 'Measure', key: 'M', icon: <Ruler size={18} /> },
 ];
 
+const TOOLS = [...NAV_TOOLS, ...ACTION_TOOLS];
+
 function ToolRail({ in3d }: { in3d: boolean }) {
   const tool = useEditorStore((s) => s.tool);
   const setTool = useEditorStore((s) => s.setTool);
   const libraryOpen = useEditorStore((s) => s.libraryOpen);
   const libraryTab = useEditorStore((s) => s.libraryTab);
+  const buildGroup = useEditorStore((s) => s.buildGroup);
+  const openingKind = useEditorStore((s) => s.openingKind);
+  const set = useEditorStore((s) => s.set);
+
+  const inFurnitureLib = libraryOpen && (libraryTab === 'furniture' || libraryTab === 'materials');
+  const inBuildGroup = (g: 'walls' | 'doors' | 'windows' | 'structure') =>
+    libraryOpen && libraryTab === 'build' && buildGroup === g;
+
   return (
-    <nav className="tool-rail floating" aria-label="Tools" data-testid="tool-rail">
-      {TOOLS.filter((t) => !in3d || t.id !== 'pan').map((t, i) => (
-        <span key={t.id} className="tool-slot">
-          {(i === (in3d ? 1 : 2) || i === (in3d ? 5 : 6)) && <span className="rail-sep" />}
+    <nav className="tool-rail" aria-label="Tools" data-testid="tool-rail">
+      {/* Top hero: Library (Furniture & Materials) */}
+      <div className="tool-rail-group floating tool-rail-hero" role="group" aria-label="Library">
+        <IconButton
+          label="Library"
+          active={inFurnitureLib}
+          tooltipSide="right"
+          className="library-hero-btn"
+          onClick={() => {
+            if (inFurnitureLib) set({ libraryOpen: false });
+            else set({ libraryOpen: true, libraryTab: 'furniture' });
+          }}
+        >
+          <Sofa size={19} />
+        </IconButton>
+      </div>
+
+      {/* Group 2: Select & Pan */}
+      <div className="tool-rail-group floating" role="group" aria-label="Selection and navigation">
+        {NAV_TOOLS.filter((t) => !in3d || t.id !== 'pan').map((t) => (
           <IconButton
+            key={t.id}
             label={t.label}
             shortcut={t.key}
             active={tool === t.id}
             tooltipSide="right"
-            onClick={() => {
-              setTool(t.id);
-              if (t.id === 'opening') useEditorStore.getState().set({ libraryOpen: true, libraryTab: 'build' });
-            }}
+            onClick={() => setTool(t.id)}
             data-testid={`tool-${t.id}`}
           >
             {t.icon}
           </IconButton>
-        </span>
-      ))}
-      <span className="rail-sep" />
-      <IconButton
-        label="Furniture library"
-        active={libraryOpen && libraryTab === 'furniture'}
-        tooltipSide="right"
-        onClick={() => useEditorStore.getState().set({ libraryOpen: true, libraryTab: 'furniture' })}
-      >
-        <Box size={18} />
-      </IconButton>
-      <IconButton
-        label="Materials"
-        active={libraryOpen && libraryTab === 'materials'}
-        tooltipSide="right"
-        onClick={() => useEditorStore.getState().set({ libraryOpen: true, libraryTab: 'materials' })}
-      >
-        <CircleDashed size={18} />
-      </IconButton>
+        ))}
+      </div>
+
+      {/* Group 3: Build groups & Action tools */}
+      <div className="tool-rail-group floating" role="group" aria-label="Build and action tools">
+        <IconButton
+          label="Walls"
+          shortcut="W"
+          active={inBuildGroup('walls') || tool === 'wall' || tool === 'curve' || tool === 'room'}
+          tooltipSide="right"
+          className="rail-labeled-btn"
+          onClick={() => {
+            const nextTool = tool === 'wall' || tool === 'curve' || tool === 'room' ? tool : 'wall';
+            setTool(nextTool);
+            set({
+              libraryOpen: !inBuildGroup('walls'),
+              libraryTab: 'build',
+              buildGroup: 'walls',
+            });
+          }}
+          data-testid="tool-wall"
+        >
+          <Waypoints size={18} />
+          <span className="rail-btn-label">Walls</span>
+        </IconButton>
+        <IconButton
+          label="Doors"
+          shortcut="D"
+          active={inBuildGroup('doors') || (tool === 'opening' && !openingKind.startsWith('window'))}
+          tooltipSide="right"
+          className="rail-labeled-btn"
+          onClick={() => {
+            setTool('opening');
+            set({
+              openingKind: openingKind.startsWith('window') ? 'door-single' : openingKind,
+              libraryOpen: !inBuildGroup('doors'),
+              libraryTab: 'build',
+              buildGroup: 'doors',
+            });
+          }}
+          data-testid="tool-opening"
+        >
+          <DoorOpen size={18} />
+          <span className="rail-btn-label">Doors</span>
+        </IconButton>
+        <IconButton
+          label="Windows"
+          active={inBuildGroup('windows') || (tool === 'opening' && openingKind.startsWith('window'))}
+          tooltipSide="right"
+          className="rail-labeled-btn"
+          onClick={() => {
+            setTool('opening');
+            set({
+              openingKind: openingKind.startsWith('window') ? openingKind : 'window-single',
+              libraryOpen: !inBuildGroup('windows'),
+              libraryTab: 'build',
+              buildGroup: 'windows',
+            });
+          }}
+          data-testid="tool-windows"
+        >
+          <Grid2x2 size={18} />
+          <span className="rail-btn-label">Windows</span>
+        </IconButton>
+        <IconButton
+          label="Structure & partitions"
+          active={inBuildGroup('structure')}
+          tooltipSide="right"
+          className="rail-labeled-btn"
+          onClick={() =>
+            set({
+              libraryOpen: !inBuildGroup('structure'),
+              libraryTab: 'build',
+              buildGroup: 'structure',
+            })
+          }
+          data-testid="tool-structure"
+        >
+          <Columns3 size={18} />
+          <span className="rail-btn-label">Structure</span>
+        </IconButton>
+        <span className="rail-sep" />
+        <IconButton
+          label="Split wall"
+          shortcut="S"
+          active={tool === 'split'}
+          tooltipSide="right"
+          className="rail-labeled-btn"
+          onClick={() => setTool('split')}
+          data-testid="tool-split"
+        >
+          <Scissors size={18} />
+          <span className="rail-btn-label">Split</span>
+        </IconButton>
+        <IconButton
+          label="Measure"
+          shortcut="M"
+          active={tool === 'measure'}
+          tooltipSide="right"
+          className="rail-labeled-btn"
+          onClick={() => setTool('measure')}
+          data-testid="tool-measure"
+        >
+          <Ruler size={18} />
+          <span className="rail-btn-label">Measure</span>
+        </IconButton>
+      </div>
     </nav>
   );
 }

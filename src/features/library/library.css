@@ -22,10 +22,18 @@
   padding: 8px 6px 8px 10px;
   border-bottom: 1px solid var(--border);
 }
+.library-group-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  padding-left: 2px;
+}
 .library-body {
   flex: 1;
   overflow: auto;
   min-height: 0;
+}
+.build-tab {
+  padding-bottom: 12px;
 }
 .resize-handle {
   position: absolute;
@@ -254,8 +262,19 @@
   color: var(--text-3);
   opacity: 0.8;
 }
-.lib-filters .segmented {
-  align-self: flex-start;
+.lib-browse-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fav-filter-btn {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+.fav-filter-btn.active svg {
+  fill: currentColor;
 }
 /* Content-pack provenance */
 .asset-thumb {

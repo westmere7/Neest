@@ -2,11 +2,14 @@ import {
   forwardRef,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ButtonHTMLAttributes,
+  type CSSProperties,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronRight } from 'lucide-react';
 import type { LengthUnit } from '@/domain/model/schema';
 import { formatLengthValue, parseLength } from '@/domain/model/units';
@@ -34,24 +37,152 @@ type IconBtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
 };
 
-/** Icon-only button with an accessible name and a tooltip showing name + shortcut. */
+/** Icon-only button with an accessible name and a portal tooltip showing name + shortcut above all panels. */
 export const IconButton = forwardRef<HTMLButtonElement, IconBtnProps>(function IconButton(
-  { label, shortcut, active, tooltipSide = 'bottom', className = '', children, type = 'button', ...rest },
+  {
+    label,
+    shortcut,
+    active,
+    tooltipSide = 'bottom',
+    className = '',
+    children,
+    type = 'button',
+    onMouseEnter,
+    onMouseLeave,
+    onFocus,
+    onBlur,
+    onPointerDown,
+    ...rest
+  },
   ref,
 ) {
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const tipRef = useRef<HTMLDivElement | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+
+  const clearTimer = () => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const show = () => {
+    clearTimer();
+    timerRef.current = window.setTimeout(() => {
+      setOpen(true);
+    }, 220);
+  };
+
+  const hide = () => {
+    clearTimer();
+    setOpen(false);
+    setCoords(null);
+  };
+
+  useEffect(() => () => clearTimer(), []);
+
+  useEffect(() => {
+    if (rest.disabled && open) hide();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rest.disabled, open]);
+
+  useLayoutEffect(() => {
+    if (!open || !btnRef.current || !tipRef.current) return;
+    const r = btnRef.current.getBoundingClientRect();
+    const tr = tipRef.current.getBoundingClientRect();
+    const tw = tr.width;
+    const th = tr.height;
+    const gap = 7;
+    const pad = 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let top = 0;
+    let left = 0;
+
+    if (tooltipSide === 'bottom') {
+      top = r.bottom + gap;
+      if (top + th > vh - pad) top = r.top - gap - th;
+      left = Math.min(vw - pad - tw, Math.max(pad, r.left + r.width / 2 - tw / 2));
+    } else if (tooltipSide === 'top') {
+      top = r.top - gap - th;
+      if (top < pad) top = r.bottom + gap;
+      left = Math.min(vw - pad - tw, Math.max(pad, r.left + r.width / 2 - tw / 2));
+    } else if (tooltipSide === 'right') {
+      left = r.right + gap;
+      if (left + tw > vw - pad) left = r.left - gap - tw;
+      top = Math.min(vh - pad - th, Math.max(pad, r.top + r.height / 2 - th / 2));
+    } else {
+      left = r.left - gap - tw;
+      if (left < pad) left = r.right + gap;
+      top = Math.min(vh - pad - th, Math.max(pad, r.top + r.height / 2 - th / 2));
+    }
+
+    setCoords({ top, left });
+  }, [open, label, shortcut, tooltipSide]);
+
+  const tipText = shortcut ? `${label}  ${shortcut}` : label;
+
   return (
-    <button
-      ref={ref}
-      type={type}
-      aria-label={shortcut ? `${label} (${shortcut})` : label}
-      aria-pressed={active === undefined ? undefined : active}
-      className={`icon-btn${active ? ' active' : ''} ${className}`}
-      data-tooltip={shortcut ? `${label}  ${shortcut}` : label}
-      data-tooltip-side={tooltipSide}
-      {...rest}
-    >
-      {children}
-    </button>
+    <>
+      <button
+        ref={(node) => {
+          btnRef.current = node;
+          if (typeof ref === 'function') ref(node);
+          else if (ref) ref.current = node;
+        }}
+        type={type}
+        aria-label={shortcut ? `${label} (${shortcut})` : label}
+        aria-pressed={active === undefined ? undefined : active}
+        className={`icon-btn${active ? ' active' : ''} ${className}`}
+        data-tooltip={tipText}
+        data-tooltip-side={tooltipSide}
+        onMouseEnter={(e) => {
+          show();
+          onMouseEnter?.(e);
+        }}
+        onMouseLeave={(e) => {
+          hide();
+          onMouseLeave?.(e);
+        }}
+        onFocus={(e) => {
+          if (e.currentTarget.matches(':focus-visible')) show();
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          hide();
+          onBlur?.(e);
+        }}
+        onPointerDown={(e) => {
+          hide();
+          onPointerDown?.(e);
+        }}
+        {...rest}
+      >
+        {children}
+      </button>
+      {open &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={tipRef}
+            role="tooltip"
+            className="ui-tooltip"
+            style={{
+              top: coords ? `${coords.top}px` : '-9999px',
+              left: coords ? `${coords.left}px` : '-9999px',
+              opacity: coords ? 1 : 0,
+            }}
+          >
+            <span>{label}</span>
+            {shortcut && <kbd className="ui-tooltip-kbd">{shortcut}</kbd>}
+          </div>,
+          document.body,
+        )}
+    </>
   );
 });
 
@@ -354,6 +485,7 @@ export function Slider({
   useEffect(() => {
     if (!dragging.current) setLocal(value);
   }, [value]);
+  const pct = max > min ? Math.min(100, Math.max(0, ((local - min) / (max - min)) * 100)) : 0;
   return (
     <div className="field slider-field">
       <div className="slider-head">
@@ -370,6 +502,7 @@ export function Slider({
         max={max}
         step={step}
         value={local}
+        style={{ '--slider-pct': `${pct}%` } as CSSProperties}
         onPointerDown={() => (dragging.current = true)}
         onChange={(e) => {
           const v = parseFloat(e.target.value);
