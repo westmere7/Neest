@@ -408,6 +408,9 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
   };
 
   const dpr: [number, number] = r.quality === 'high' ? [1, 2] : r.quality === 'balanced' ? [1, 1.5] : [0.75, 1];
+  // The canvas stays covered by the loading screen until the scene has compiled and drawn.
+  const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => setReady(true), []);
   const exitWalk = useCallback(() => useEditorStore.getState().set({ workspace: '3d' }), []);
 
   return (
@@ -443,6 +446,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         }}
       >
         <color attach="background" args={[r.background]} />
+        {!ready && <FirstFrames onReady={onReady} />}
         {walk || projection === 'perspective' ? (
           <PerspectiveCamera makeDefault position={view?.v.position ?? [10, 10, 10]} fov={walk ? 70 : (view?.v.fov ?? 45)} near={0.05} far={600} />
         ) : (
@@ -483,6 +487,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         {!walk && <ToolBridge3D enabled={workspace === '3d'} />}
         {!walk && !drawing && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
       </Canvas>
+      {!ready && <div className="pane-loading scene3d-loading">Loading 3D view…</div>}
       {walk && <WalkHud onExit={exitWalk} isMobile={isMobile} />}
       {!walk && !chromeHidden && workspace !== 'split' && (
         <ViewPanel
@@ -508,6 +513,45 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
       )}
     </div>
   );
+}
+
+/**
+ * Reports when the 3D view is really showing something: the plan group has been built, every
+ * material's shader is compiled (compileAsync, so the page stays responsive meanwhile) and a
+ * couple of frames have been drawn. Until then the loading screen stays over the canvas, so the
+ * user never sees the blank canvas that used to appear for a few seconds after the view loaded.
+ * A time limit makes sure the loading screen can never get stuck.
+ */
+function FirstFrames({ onReady }: { onReady: () => void }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  const invalidate = useThree((s) => s.invalidate);
+  const stage = useRef<'build' | 'compile' | number>('build');
+  useEffect(() => {
+    const t = window.setTimeout(onReady, 20000);
+    return () => window.clearTimeout(t);
+  }, [onReady]);
+  useFrame(() => {
+    const s = stage.current;
+    if (s === 'build') {
+      // SceneContent adds its geometry after mount; wait until the plan group is populated.
+      if (!scene.getObjectByName('neest-plan')?.children.length) return invalidate();
+      stage.current = 'compile';
+      gl.compileAsync(scene, camera)
+        .catch(() => undefined)
+        .finally(() => {
+          stage.current = 0;
+          invalidate();
+        });
+      return;
+    }
+    if (s === 'compile') return;
+    stage.current = s + 1;
+    if (s + 1 >= 3) onReady();
+    else invalidate();
+  });
+  return null;
 }
 
 /** The editor always opens on a view fitted to the visible canvas; Guest View uses the project's start camera. */

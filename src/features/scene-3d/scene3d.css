@@ -234,3 +234,9 @@
   background: #1d5a51;
   color: #f2f7f5;
 }
+
+/* Covers the canvas until the scene has compiled and drawn (same look as the lazy-load fallback). */
+.scene3d-loading {
+  z-index: 5;
+  background: var(--bg);
+}
