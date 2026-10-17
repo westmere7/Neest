@@ -19,15 +19,18 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.png', 'logo.png'],
       manifest: {
         name: 'Neest — Apartment Planner',
         short_name: 'Neest',
         description: 'Local-first 2D/3D apartment floor planner',
-        theme_color: '#143c37',
+        theme_color: '#000000',
         background_color: '#1d1f22',
         display: 'standalone',
-        icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        icons: [
+          { src: 'favicon.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'logo.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
