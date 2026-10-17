@@ -1,0 +1,225 @@
+.library {
+  top: calc(10px + var(--topbar-h) + 10px);
+  left: calc(10px + var(--rail-w) + 18px);
+  bottom: calc(10px + var(--status-h) + 10px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.library.sheet {
+  left: 10px;
+  right: 10px;
+  top: auto;
+  bottom: 74px;
+  height: 52vh;
+  width: auto;
+}
+.library-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 6px 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.library-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+.resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 7px;
+  height: 100%;
+  cursor: ew-resize;
+}
+.resize-handle:hover,
+.resize-handle:focus-visible {
+  background: var(--accent-soft);
+}
+.lib-h {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  margin: 14px 12px 8px;
+}
+.build-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 6px;
+  padding: 0 10px;
+}
+.build-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 11.5px;
+  text-align: center;
+  line-height: 1.2;
+}
+.build-card svg {
+  width: 34px;
+  height: 34px;
+  color: var(--text);
+}
+.build-card:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.build-card.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.lib-filters {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--surface-solid);
+  border-bottom: 1px solid var(--border);
+}
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-box svg {
+  position: absolute;
+  left: 9px;
+  color: var(--text-3);
+}
+.search-box .input {
+  padding-left: 28px;
+}
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 8px;
+  padding: 10px;
+}
+.asset-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+.asset-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+.asset-card.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.asset-main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0 0 7px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: grab;
+}
+.asset-thumb {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1.25;
+  margin: 4px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-3));
+  overflow: hidden;
+}
+.asset-thumb img {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+}
+.asset-plan-thumb {
+  width: 80%;
+  height: 80%;
+}
+.asset-plan-thumb path,
+.asset-plan-thumb line,
+.asset-plan-thumb circle {
+  fill: var(--surface-solid);
+  stroke: var(--text-2);
+}
+.asset-plan-thumb line,
+.asset-plan-thumb circle {
+  fill: none;
+}
+.asset-name {
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.asset-dims {
+  padding: 0 8px;
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+.fav-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--surface);
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.asset-card:hover .fav-btn,
+.fav-btn:focus-visible,
+.fav-btn.on {
+  opacity: 1;
+}
+.fav-btn.on {
+  color: var(--accent);
+}
+.fav-btn.on svg {
+  fill: currentColor;
+}
+.import-model {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px 10px 12px;
+  width: calc(100% - 20px);
+  height: 34px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-2);
+  font-size: 12px;
+}
+.import-model:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}

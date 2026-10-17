@@ -1,0 +1,321 @@
+import { z } from 'zod';
+
+/**
+ * Neest project schema.
+ *
+ * Coordinate convention (documented in README):
+ * - Canonical unit is the metre. All lengths, positions, and sizes are metres.
+ * - Plan space is 2D (x, y) with +x to the right (east) and +y downward (south)
+ *   on screen, matching SVG. Angles are radians measured from +x toward +y
+ *   (clockwise as seen on screen).
+ * - World 3D space maps plan (x, y) to three.js (x, z) with +Y up. Elevations are
+ *   3D Y values. A plan rotation θ becomes a three.js Y rotation of -θ.
+ */
+
+export const SCHEMA_VERSION = 1;
+export const PROJECT_FORMAT = 'neest-project';
+
+const num = z.number().finite();
+const Id = z.string().min(1).max(80);
+const HexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+
+export const Vec2Schema = z.object({ x: num, y: num });
+export const Vec3TupleSchema = z.tuple([num, num, num]);
+
+export const LengthUnitSchema = z.enum(['mm', 'cm', 'm', 'in', 'ft']);
+export const AreaUnitSchema = z.enum(['m2', 'ft2']);
+export const WallRoleSchema = z.enum(['exterior', 'interior', 'partition']);
+
+export const WallNodeSchema = z.object({ id: Id, x: num, y: num });
+
+export const WallMaterialsSchema = z.object({ left: Id, right: Id, top: Id });
+
+export const WallSegmentSchema = z.object({
+  id: Id,
+  a: Id,
+  b: Id,
+  thickness: num.min(0.02).max(2),
+  height: num.min(0.2).max(12),
+  baseElevation: num.min(-2).max(12).default(0),
+  role: WallRoleSchema.default('interior'),
+  /** Quadratic Bézier control point for curved walls, or null for straight walls. */
+  curve: Vec2Schema.nullable().default(null),
+  materials: WallMaterialsSchema,
+  locked: z.boolean().default(false),
+  hidden: z.boolean().default(false),
+});
+
+export const OpeningKindSchema = z.enum([
+  'door-single',
+  'door-double',
+  'door-sliding',
+  'passage',
+  'window-single',
+  'window-double',
+  'window-fixed',
+  'window-sliding',
+]);
+
+export const OpeningStyleSchema = z.enum(['flush', 'panel', 'glazed']);
+
+export const OpeningSchema = z.object({
+  id: Id,
+  wallId: Id,
+  kind: OpeningKindSchema,
+  /** Distance from the wall's start node (a) along its centreline to the opening centre. */
+  offset: num.min(0),
+  width: num.min(0.2).max(6),
+  height: num.min(0.2).max(6),
+  sillHeight: num.min(0).max(4),
+  /** Side of the wall the leaf swings toward (relative to a→b direction). */
+  swingSide: z.enum(['left', 'right']).default('left'),
+  /** Which end of the opening carries the hinge (lower or higher offset). */
+  hinge: z.enum(['start', 'end']).default('start'),
+  /** 3D presentation only: how far doors/casements are opened, in degrees. */
+  openAngle: num.min(0).max(100).default(0),
+  style: OpeningStyleSchema.default('flush'),
+  frameMaterialId: Id,
+  panelMaterialId: Id,
+});
+
+export const RoomTypeSchema = z.enum([
+  'living',
+  'bedroom',
+  'kitchen',
+  'dining',
+  'bathroom',
+  'wc',
+  'hall',
+  'office',
+  'storage',
+  'laundry',
+  'balcony',
+  'other',
+]);
+
+export const RoomSchema = z.object({
+  id: Id,
+  name: z.string().max(80),
+  type: RoomTypeSchema.default('other'),
+  /** Identity hint: a point inside the room's face at last reconciliation. */
+  anchor: Vec2Schema,
+  /** Identity hint: wall ids bounding the room at last reconciliation (derived, disposable). */
+  boundaryWallIds: z.array(Id).default([]),
+  floorMaterialId: Id,
+  ceilingMaterialId: Id,
+  showCeiling: z.boolean().default(true),
+  /** Ceiling height override in metres; null = derived from bounding walls. */
+  ceilingHeight: num.min(1).max(12).nullable().default(null),
+  showLabel: z.boolean().default(true),
+  /** Offset of the label from the derived room label point. */
+  labelOffset: Vec2Schema.default({ x: 0, y: 0 }),
+});
+
+export const PlacedObjectSchema = z.object({
+  id: Id,
+  assetId: Id,
+  name: z.string().max(80).nullable().default(null),
+  x: num,
+  y: num,
+  elevation: num.min(-1).max(12).default(0),
+  rotation: num.default(0),
+  width: num.min(0.01).max(30),
+  depth: num.min(0.01).max(30),
+  height: num.min(0.005).max(12),
+  mirrored: z.boolean().default(false),
+  /** Material slot → material id. Slots missing here fall back to the asset default. */
+  materials: z.record(z.string(), Id).default({}),
+  locked: z.boolean().default(false),
+  hidden: z.boolean().default(false),
+});
+
+export const MaterialCategorySchema = z.enum([
+  'paint',
+  'plaster',
+  'wood',
+  'tile',
+  'stone',
+  'metal',
+  'glass',
+  'fabric',
+  'leather',
+  'rug',
+  'laminate',
+  'solid',
+]);
+
+export const TextureRefSchema = z.object({
+  /** Procedural pattern id from the built-in texture library. */
+  patternId: Id,
+  /** Size of one texture tile in metres. */
+  scale: num.min(0.01).max(20),
+  /** Rotation of the texture in degrees. */
+  rotation: num.default(0),
+  /** Strength of the pattern's light/dark variation (0..1). */
+  contrast: num.min(0).max(1).default(1),
+});
+
+export const LicenseSchema = z.object({
+  name: z.string(),
+  license: z.string(),
+  url: z.string().optional(),
+});
+
+export const MaterialSchema = z.object({
+  id: Id,
+  name: z.string().min(1).max(80),
+  category: MaterialCategorySchema,
+  color: HexColor,
+  roughness: num.min(0).max(1),
+  metalness: num.min(0).max(1),
+  opacity: num.min(0.05).max(1).default(1),
+  emissive: HexColor.nullable().default(null),
+  emissiveIntensity: num.min(0).max(20).default(0),
+  texture: TextureRefSchema.nullable().default(null),
+  /** When set, this material is an unlinked per-instance override of another material. */
+  overrideOf: Id.nullable().default(null),
+  /** Catalogue entry this material was created from, if any. */
+  catalogId: Id.nullable().default(null),
+  source: LicenseSchema.default({ name: 'Neest', license: 'Original (procedural)' }),
+});
+
+export const CustomAssetSchema = z.object({
+  id: Id,
+  name: z.string().min(1).max(80),
+  category: z.literal('custom').default('custom'),
+  /** Key of the binary GLB blob in local asset storage. */
+  blobId: Id,
+  fileName: z.string().max(200),
+  byteSize: num.min(0),
+  /** Native bounding-box size of the imported model in metres. */
+  size: z.object({ w: num.min(0.001), d: num.min(0.001), h: num.min(0.001) }),
+  /** Convex hull of the top-down footprint in normalised (-0.5..0.5) coordinates. */
+  footprint: z.array(Vec2Schema).default([]),
+  importedAt: num,
+  license: z.string().max(200).nullable().default(null),
+});
+
+export const WallDisplaySchema = z.enum(['full', 'cutaway', 'fade', 'hidden']);
+
+export const CameraPresetSchema = z.object({
+  id: Id,
+  name: z.string().min(1).max(80),
+  projection: z.enum(['perspective', 'orthographic']).default('perspective'),
+  position: Vec3TupleSchema,
+  target: Vec3TupleSchema,
+  fov: num.min(10).max(120).default(50),
+  zoom: num.min(0.01).max(1000).default(1),
+  wallDisplay: WallDisplaySchema.nullable().default(null),
+});
+
+export const RenderSettingsSchema = z.object({
+  quality: z.enum(['draft', 'balanced', 'high']).default('balanced'),
+  exposure: num.min(0.1).max(4).default(1),
+  /** Hours (6–20) used to derive sun elevation and warmth. */
+  timeOfDay: num.min(5).max(21).default(14),
+  sunAzimuth: num.min(0).max(360).default(135),
+  sunIntensity: num.min(0).max(10).default(2.2),
+  envIntensity: num.min(0).max(4).default(0.9),
+  shadows: z.boolean().default(true),
+  background: HexColor.default('#d9d6cf'),
+  wallDisplay: WallDisplaySchema.default('full'),
+  cutawayHeight: num.min(0.3).max(5).default(1.2),
+  showCeilings: z.boolean().default(false),
+  showRoomLabels: z.boolean().default(false),
+  hiddenCategories: z.array(z.string()).default([]),
+});
+
+export const ProjectSettingsSchema = z.object({
+  units: LengthUnitSchema.default('m'),
+  precision: z.number().int().min(0).max(3).default(2),
+  areaUnit: AreaUnitSchema.default('m2'),
+  gridSize: num.min(0.01).max(5).default(0.1),
+  defaultWall: z
+    .object({
+      thickness: num.min(0.02).max(2),
+      height: num.min(0.2).max(12),
+      role: WallRoleSchema,
+    })
+    .default({ thickness: 0.12, height: 2.7, role: 'interior' }),
+  exteriorThickness: num.min(0.02).max(2).default(0.3),
+  showRoomLabels: z.boolean().default(true),
+  showRoomAreas: z.boolean().default(true),
+  dimensions: z
+    .object({
+      overall: z.boolean(),
+      walls: z.boolean(),
+      rooms: z.boolean(),
+    })
+    .default({ overall: true, walls: false, rooms: true }),
+});
+
+export const LayerStateSchema = z.object({ visible: z.boolean(), locked: z.boolean() });
+
+export const LayersSchema = z
+  .object({
+    construction: LayerStateSchema,
+    furniture: LayerStateSchema,
+    annotations: LayerStateSchema,
+  })
+  .default({
+    construction: { visible: true, locked: false },
+    furniture: { visible: true, locked: false },
+    annotations: { visible: true, locked: false },
+  });
+
+export const GuestSettingsSchema = z
+  .object({
+    startCameraId: Id.nullable(),
+    spawn: Vec2Schema.nullable(),
+    spawnAngle: num,
+  })
+  .default({ startCameraId: null, spawn: null, spawnAngle: 0 });
+
+export const ProjectSchema = z.object({
+  format: z.literal(PROJECT_FORMAT).default(PROJECT_FORMAT),
+  schemaVersion: z.literal(SCHEMA_VERSION),
+  id: Id,
+  name: z.string().min(1).max(120),
+  createdAt: num,
+  updatedAt: num,
+  settings: ProjectSettingsSchema,
+  nodes: z.record(Id, WallNodeSchema).default({}),
+  walls: z.record(Id, WallSegmentSchema).default({}),
+  openings: z.record(Id, OpeningSchema).default({}),
+  rooms: z.record(Id, RoomSchema).default({}),
+  objects: z.record(Id, PlacedObjectSchema).default({}),
+  materials: z.record(Id, MaterialSchema).default({}),
+  customAssets: z.record(Id, CustomAssetSchema).default({}),
+  cameras: z.array(CameraPresetSchema).default([]),
+  render: RenderSettingsSchema.default({}),
+  layers: LayersSchema,
+  guest: GuestSettingsSchema,
+});
+
+export type Vec2 = z.infer<typeof Vec2Schema>;
+export type Vec3Tuple = z.infer<typeof Vec3TupleSchema>;
+export type LengthUnit = z.infer<typeof LengthUnitSchema>;
+export type AreaUnit = z.infer<typeof AreaUnitSchema>;
+export type WallRole = z.infer<typeof WallRoleSchema>;
+export type WallNode = z.infer<typeof WallNodeSchema>;
+export type WallSegment = z.infer<typeof WallSegmentSchema>;
+export type WallSide = 'left' | 'right';
+export type OpeningKind = z.infer<typeof OpeningKindSchema>;
+export type OpeningStyle = z.infer<typeof OpeningStyleSchema>;
+export type Opening = z.infer<typeof OpeningSchema>;
+export type RoomType = z.infer<typeof RoomTypeSchema>;
+export type Room = z.infer<typeof RoomSchema>;
+export type PlacedObject = z.infer<typeof PlacedObjectSchema>;
+export type MaterialCategory = z.infer<typeof MaterialCategorySchema>;
+export type TextureRef = z.infer<typeof TextureRefSchema>;
+export type MaterialDefinition = z.infer<typeof MaterialSchema>;
+export type CustomAsset = z.infer<typeof CustomAssetSchema>;
+export type WallDisplay = z.infer<typeof WallDisplaySchema>;
+export type CameraPreset = z.infer<typeof CameraPresetSchema>;
+export type RenderSettings = z.infer<typeof RenderSettingsSchema>;
+export type ProjectSettings = z.infer<typeof ProjectSettingsSchema>;
+export type Layers = z.infer<typeof LayersSchema>;
+export type Project = z.infer<typeof ProjectSchema>;
+
+export const isDoorKind = (k: OpeningKind) => k.startsWith('door') || k === 'passage';
+export const isWindowKind = (k: OpeningKind) => k.startsWith('window');

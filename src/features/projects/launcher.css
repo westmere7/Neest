@@ -1,0 +1,326 @@
+.launcher {
+  height: 100%;
+  overflow: auto;
+  background:
+    radial-gradient(1200px 500px at 85% -10%, var(--accent-soft), transparent 60%),
+    var(--bg);
+}
+.launcher-top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px clamp(16px, 4vw, 48px);
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand h1 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.brand-sub {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.launcher-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.launcher-main {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 28px clamp(16px, 4vw, 48px) 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.welcome {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: clamp(20px, 4vw, 36px);
+  box-shadow: var(--shadow-sm);
+}
+.welcome-text {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.welcome h2 {
+  font-size: clamp(22px, 3vw, 28px);
+  letter-spacing: -0.025em;
+}
+.welcome p {
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.welcome-steps {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-2);
+}
+.welcome-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-title-row h2 {
+  font-size: 15px;
+}
+.launcher-error {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  margin-bottom: 12px;
+}
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.project-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  overflow: hidden;
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+  min-height: 248px;
+}
+.project-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+.project-card.new {
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-style: dashed;
+  background: transparent;
+  color: var(--text-2);
+}
+.project-card.new:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.new-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+[data-theme='dark'] .new-icon {
+  color: var(--accent);
+}
+.new-label {
+  font-weight: 600;
+  font-size: 14px;
+}
+.new-sub {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.project-card.skeleton {
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite linear;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.card-open {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.thumb {
+  position: relative;
+  height: 160px;
+  flex: none;
+  overflow: hidden;
+  background: #f4f2ed;
+  display: grid;
+  place-items: center;
+  border-bottom: 1px solid var(--border);
+}
+[data-theme='dark'] .thumb {
+  background: #e9e6df;
+}
+.thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 10px;
+}
+.thumb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #8a867f;
+  font-size: 12px;
+}
+.card-meta {
+  padding: 12px 14px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.card-meta h3 {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.card-meta p {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.card-time {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-3) !important;
+}
+.card-tools {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 6px;
+  display: flex;
+  gap: 2px;
+  opacity: 0.75;
+  transition: opacity var(--dur) var(--ease);
+}
+.project-card:hover .card-tools,
+.card-tools:focus-within {
+  opacity: 1;
+}
+.danger-hover:hover {
+  color: var(--danger) !important;
+}
+.launcher-foot {
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 720px;
+}
+.launcher-foot code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.form-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 560px) {
+  .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.repo-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+}
+.repo-toggle .toggle-row {
+  min-height: 0;
+  gap: 8px;
+}
+.repo-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent) !important;
+  font-size: 11.5px !important;
+}
+.repo-badge.newer {
+  color: var(--warning) !important;
+}
+.project-card.repo-only .thumb.empty {
+  background: var(--surface-2);
+}
+.project-card.repo-only .thumb-empty {
+  color: var(--text-3);
+  text-align: center;
+  padding: 0 12px;
+  word-break: break-all;
+}
+
+/* Thumbnail being rendered on demand (repo copies, older saves). */
+.thumb.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.6) 50%, transparent 70%);
+  background-size: 220% 100%;
+  animation: thumb-shimmer 1.1s linear infinite;
+}
+@keyframes thumb-shimmer {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thumb.loading::after {
+    animation: none;
+  }
+}

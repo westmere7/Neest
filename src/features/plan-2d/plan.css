@@ -1,0 +1,136 @@
+.plan-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.plan-svg {
+  display: block;
+}
+
+.sel-outline {
+  fill: var(--selection-fill);
+  stroke: var(--selection);
+}
+.hover-outline {
+  fill: none;
+  stroke: var(--selection);
+  stroke-opacity: 0.55;
+}
+.sel-room {
+  fill: var(--selection-fill);
+  stroke: var(--selection);
+}
+.hover-room {
+  fill: none;
+  stroke: var(--selection);
+  stroke-opacity: 0.4;
+}
+.handle {
+  fill: var(--surface-solid);
+  stroke: var(--selection);
+}
+.handle.rotate,
+.handle.curve {
+  fill: var(--selection);
+  stroke: var(--surface-solid);
+}
+.handle.room-label {
+  fill: var(--surface-solid);
+  stroke: var(--selection);
+  stroke-dasharray: 2 1;
+}
+.handle-line {
+  stroke: var(--selection);
+}
+.lock-badge {
+  fill: var(--surface-inverse);
+  opacity: 0.9;
+}
+.lock-icon {
+  fill: none;
+  stroke: var(--text-inverse);
+}
+
+.ov-wall {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+.ov-line.preview {
+  stroke: var(--accent);
+}
+.ov-line.guide {
+  stroke: var(--snap);
+}
+.ov-line.ghost {
+  stroke: var(--text-3);
+}
+.ov-marquee {
+  fill: var(--selection-fill);
+  stroke: var(--selection);
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+.ov-ghost-opening {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+.ov-ghost-opening.invalid {
+  fill: var(--danger-soft);
+  stroke: var(--danger);
+}
+.ov-ghost-object path {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  fill-opacity: 0.8;
+}
+.ov-ghost-object .ov-front {
+  stroke: var(--accent);
+  stroke-dasharray: 2 2;
+}
+.ov-split {
+  stroke: var(--danger);
+  stroke-linecap: round;
+}
+.ov-snap {
+  fill: none;
+  stroke: var(--snap);
+}
+.ov-snap.kind-node rect,
+.ov-snap.kind-midpoint path {
+  fill: color-mix(in srgb, var(--snap) 18%, transparent);
+}
+.ov-label text {
+  fill: var(--text);
+  stroke: var(--canvas);
+  paint-order: stroke;
+  stroke-linejoin: round;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.numeric-badge {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  border: 1px solid var(--accent);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+.numeric-label {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.numeric-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+}

@@ -1,0 +1,459 @@
+import type { PlacedObject, Vec2 } from '@/domain/model/schema';
+import { clampOpenings, insertJunctions, setNodePositions, settleNode, updateWalls } from '@/domain/commands/walls';
+import { clampOpening, normalizeRotation, updateObjects, updateOpening } from '@/domain/commands/entities';
+import { projectOnPath } from '@/domain/geometry/wallPath';
+import { add, angleOf, dist, dot, leftNormal, rotate, round, scale, sub } from '@/domain/geometry/vec';
+import { formatAngle, formatLength } from '@/domain/model/units';
+import { getAsset } from '@/data/assets/registry';
+import { useProjectStore } from '@/state/projectStore';
+import { useEditorStore, type SelItem } from '@/state/editorStore';
+import { hitHandle, hitTest, marqueeSelect, selectionHandles, type Handle } from '../hitTest';
+import { hugWall } from './placeTools';
+import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './types';
+
+type Gesture =
+  | { type: 'pending'; start: Vec2; startScreen: Vec2; hit: SelItem | null; shift: boolean; wasSelected: boolean }
+  | { type: 'marquee'; a: Vec2; b: Vec2; additive: boolean }
+  | {
+      type: 'move';
+      start: Vec2;
+      nodes: Record<string, Vec2>;
+      objects: Record<string, Vec2>;
+      perp: { normal: Vec2 } | null;
+      primaryObject: string | null;
+    }
+  | { type: 'slide-opening'; openingId: string }
+  | { type: 'node'; nodeId: string; anchor: Vec2 | null; excludeWalls: Set<string> }
+  | { type: 'curve'; wallId: string }
+  | { type: 'opening-end'; openingId: string; end: 'start' | 'end' }
+  | { type: 'rotate'; objectId: string; base: PlacedObject }
+  | { type: 'resize'; objectId: string; sx: -1 | 0 | 1; sy: -1 | 0 | 1; base: PlacedObject }
+  | { type: 'label'; roomId: string; start: Vec2; base: Vec2 };
+
+const DRAG_THRESHOLD_PX = 4;
+
+function isLockedItem(env: ToolEnv, item: SelItem): boolean {
+  const p = env.project();
+  if (item.kind === 'wall') return !!p.walls[item.id]?.locked || p.layers.construction.locked;
+  if (item.kind === 'node') return p.layers.construction.locked;
+  if (item.kind === 'opening') return p.layers.construction.locked;
+  if (item.kind === 'object') return !!p.objects[item.id]?.locked || p.layers.furniture.locked;
+  return false;
+}
+
+export function createSelectTool(): Tool {
+  let gesture: Gesture | null = null;
+  const store = () => useProjectStore.getState();
+  const editor = () => useEditorStore.getState();
+
+  const fmt = (env: ToolEnv, m: number) => {
+    const s = env.project().settings;
+    return formatLength(m, s.units, s.precision);
+  };
+
+  const startDrag = (env: ToolEnv, g: Extract<Gesture, { type: 'pending' }>, e: PointerInfo) => {
+    const project = env.project();
+    const sel = editor().selection;
+    const hit = g.hit;
+    if (!hit || hit.kind === 'room' || !sel.some((s) => s.id === hit.id)) {
+      gesture = { type: 'marquee', a: g.start, b: e.world, additive: g.shift };
+      return;
+    }
+    const movable = sel.filter((s) => !isLockedItem(env, s));
+    if (!movable.length) {
+      env.setHint('Selection is locked. Unlock it in the inspector to move it.');
+      gesture = null;
+      return;
+    }
+    if (movable.length === 1 && movable[0].kind === 'opening') {
+      store().begin('Move opening');
+      gesture = { type: 'slide-opening', openingId: movable[0].id };
+      return;
+    }
+    const nodes: Record<string, Vec2> = {};
+    const objects: Record<string, Vec2> = {};
+    for (const s of movable) {
+      if (s.kind === 'wall') {
+        const w = project.walls[s.id];
+        if (!w) continue;
+        nodes[w.a] = { ...project.nodes[w.a] };
+        nodes[w.b] = { ...project.nodes[w.b] };
+      } else if (s.kind === 'node') {
+        const n = project.nodes[s.id];
+        if (n) nodes[n.id] = { x: n.x, y: n.y };
+      } else if (s.kind === 'object') {
+        const o = project.objects[s.id];
+        if (o) objects[o.id] = { x: o.x, y: o.y };
+      }
+    }
+    let perp: { normal: Vec2 } | null = null;
+    if (movable.length === 1 && movable[0].kind === 'wall' && !e.alt) {
+      const w = project.walls[movable[0].id];
+      if (w && !w.curve) {
+        const a = project.nodes[w.a];
+        const b = project.nodes[w.b];
+        const d = sub(b, a);
+        const l = Math.hypot(d.x, d.y);
+        if (l > 1e-6) perp = { normal: leftNormal({ x: d.x / l, y: d.y / l }) };
+      }
+    }
+    const objIds = Object.keys(objects);
+    store().begin(Object.keys(nodes).length ? 'Move walls' : objIds.length > 1 ? 'Move objects' : 'Move object');
+    gesture = {
+      type: 'move',
+      start: g.start,
+      nodes,
+      objects,
+      perp,
+      primaryObject: objIds.length === 1 && !Object.keys(nodes).length ? objIds[0] : null,
+    };
+  };
+
+  const updateHover = (e: PointerInfo, env: ToolEnv) => {
+    const project = env.project();
+    const derived = env.derived();
+    const handles = selectionHandles(project, derived, editor().selection, env.px());
+    const h = hitHandle(handles, e.world, env.tol() * 1.2);
+    if (h) {
+      env.setCursor(h.type === 'object-rotate' ? 'grab' : h.type === 'object-resize' ? 'nwse-resize' : 'move');
+      editor().setHover(null);
+      return;
+    }
+    const hit = hitTest(project, derived, e.world, env.tol());
+    editor().setHover(hit && hit.kind !== 'room' ? hit : null);
+    env.setCursor(hit && hit.kind !== 'room' ? 'pointer' : 'default');
+  };
+
+  const overlayFor = (o: ToolOverlay) => o;
+
+  return {
+    id: 'select',
+    cursor: 'default',
+    hint: 'Click to select, drag to move, drag on empty space to box-select. Shift adds to the selection.',
+    busy: () => gesture !== null,
+
+    onPointerDown(e, env) {
+      if (e.button !== 0) return;
+      const project = env.project();
+      const derived = env.derived();
+      const sel = editor().selection;
+      const handles = selectionHandles(project, derived, sel, env.px());
+      const h: Handle | null = hitHandle(handles, e.world, env.tol() * 1.2);
+      if (h) {
+        if (h.type === 'node') {
+          if (project.layers.construction.locked) return;
+          const walls = Object.values(project.walls).filter((w) => w.a === h.nodeId || w.b === h.nodeId);
+          let anchor: Vec2 | null = null;
+          if (walls.length === 1) {
+            const w = walls[0];
+            anchor = project.nodes[w.a === h.nodeId ? w.b : w.a];
+          }
+          store().begin('Move endpoint');
+          gesture = { type: 'node', nodeId: h.nodeId, anchor, excludeWalls: new Set(walls.map((w) => w.id)) };
+        } else if (h.type === 'curve') {
+          store().begin('Bend wall');
+          gesture = { type: 'curve', wallId: h.wallId };
+        } else if (h.type === 'opening-end') {
+          store().begin('Resize opening');
+          gesture = { type: 'opening-end', openingId: h.openingId, end: h.end };
+        } else if (h.type === 'object-rotate') {
+          store().begin('Rotate object');
+          gesture = { type: 'rotate', objectId: h.objectId, base: { ...project.objects[h.objectId] } };
+        } else if (h.type === 'object-resize') {
+          store().begin('Resize object');
+          gesture = { type: 'resize', objectId: h.objectId, sx: h.sx, sy: h.sy, base: { ...project.objects[h.objectId] } };
+        } else if (h.type === 'room-label') {
+          const r = project.rooms[h.roomId];
+          store().begin('Move room label');
+          gesture = { type: 'label', roomId: h.roomId, start: e.world, base: { ...r.labelOffset } };
+        }
+        return;
+      }
+      const hit = hitTest(project, derived, e.world, env.tol());
+      const wasSelected = !!hit && sel.some((s) => s.id === hit.id);
+      if (hit) {
+        if (e.shift) editor().toggleSelection(hit);
+        else if (!wasSelected) editor().setSelection([hit]);
+      }
+      gesture = { type: 'pending', start: e.world, startScreen: e.screen, hit, shift: e.shift, wasSelected };
+    },
+
+    onPointerMove(e, env) {
+      if (!gesture) {
+        updateHover(e, env);
+        return;
+      }
+      const project = env.project();
+      switch (gesture.type) {
+        case 'pending': {
+          if (dist(gesture.startScreen, e.screen) < DRAG_THRESHOLD_PX) return;
+          startDrag(env, gesture, e);
+          if (gesture && gesture.type !== 'pending') this.onPointerMove!(e, env);
+          return;
+        }
+        case 'marquee': {
+          gesture.b = e.world;
+          env.setOverlay(overlayFor({ marquee: { a: gesture.a, b: gesture.b } }));
+          return;
+        }
+        case 'move': {
+          const g = gesture;
+          let delta = sub(e.world, g.start);
+          const grid = project.settings.gridSize;
+          const snapOn = editor().snap.grid && !e.alt;
+          if (g.perp) {
+            let dd = dot(delta, g.perp.normal);
+            if (snapOn) dd = round(dd, grid);
+            delta = scale(g.perp.normal, dd);
+          } else if (Object.keys(g.nodes).length && snapOn) {
+            delta = { x: round(delta.x, grid), y: round(delta.y, grid) };
+          }
+          let hugged: ReturnType<typeof hugWall> = null;
+          if (g.primaryObject) {
+            const o = project.objects[g.primaryObject];
+            const base = g.objects[g.primaryObject];
+            const asset = o ? getAsset(project, o.assetId) : null;
+            let target = add(base, delta);
+            if (snapOn) target = { x: round(target.x, grid / 2), y: round(target.y, grid / 2) };
+            if (asset && o && (asset.wallSnap || asset.mount === 'wall') && !e.alt) {
+              hugged = hugWall(env.derived(), add(base, sub(e.world, g.start)), o.depth, asset.mount === 'wall' ? 0.6 : 0.25);
+              if (hugged) target = { x: hugged.x, y: hugged.y };
+            }
+            delta = sub(target, base);
+          }
+          const nodes = Object.fromEntries(Object.entries(g.nodes).map(([id, p]) => [id, add(p, delta)]));
+          const hugRot = hugged?.rotation;
+          store().preview((d) => {
+            setNodePositions(d, nodes);
+            for (const [id, p] of Object.entries(g.objects)) {
+              const o = d.objects[id];
+              if (!o) continue;
+              o.x = p.x + delta.x;
+              o.y = p.y + delta.y;
+              if (hugRot !== undefined && id === g.primaryObject) o.rotation = normalizeRotation(hugRot);
+            }
+          });
+          env.setSnapLabel(hugged ? 'Against wall' : null);
+          env.setOverlay({
+            labels: [{ p: e.world, text: `Δ ${fmt(env, Math.hypot(delta.x, delta.y))}`, offset: { x: 14, y: 22 } }],
+          });
+          return;
+        }
+        case 'slide-opening': {
+          const o = project.openings[gesture.openingId];
+          if (!o) return;
+          const derived = env.derived();
+          let wallId = o.wallId;
+          let g = derived.network.walls.get(wallId);
+          if (!g) return;
+          let proj = projectOnPath(g.path, e.world);
+          // Re-host onto another wall when the pointer moves onto it.
+          if (proj.dist > g.h + env.tol() * 2) {
+            for (const other of derived.network.walls.values()) {
+              if (other.wall.id === wallId) continue;
+              const pr = projectOnPath(other.path, e.world);
+              if (pr.dist <= other.h + env.tol()) {
+                wallId = other.wall.id;
+                g = other;
+                proj = pr;
+                break;
+              }
+            }
+          }
+          let s = proj.s;
+          if (editor().snap.grid && !e.alt) s = round(s, project.settings.gridSize / 2);
+          const newWall = wallId;
+          store().preview((d) => {
+            const op = d.openings[o.id];
+            op.wallId = newWall;
+            op.offset = s;
+            clampOpening(d, o.id);
+          });
+          const updated = env.project().openings[o.id];
+          const g2 = env.derived().network.walls.get(updated.wallId);
+          if (g2) {
+            const s0 = updated.offset - updated.width / 2;
+            const s1 = g2.path.length - (updated.offset + updated.width / 2);
+            env.setOverlay({
+              labels: [{ p: e.world, text: `${fmt(env, s0)} ← → ${fmt(env, s1)}`, offset: { x: 14, y: 24 } }],
+            });
+          }
+          return;
+        }
+        case 'node': {
+          const r = env.snap(e.world, {
+            anchor: gesture.anchor,
+            forceAngle: e.shift,
+            excludeNodes: new Set([gesture.nodeId]),
+            excludeWalls: gesture.excludeWalls,
+          });
+          const id = gesture.nodeId;
+          store().preview((d) => setNodePositions(d, { [id]: r.point }));
+          env.setSnapLabel(r.label || null);
+          const o: ToolOverlay = {
+            snap: r.kind !== 'none' ? { p: r.point, kind: r.kind, label: r.label } : null,
+            lines: r.guides.map((gd) => ({ ...gd, kind: 'guide' as const })),
+          };
+          if (gesture.anchor) {
+            o.dims = [{ a: gesture.anchor, b: r.point, offset: 18 * env.px(), text: fmt(env, dist(gesture.anchor, r.point)) }];
+          }
+          env.setOverlay(o);
+          return;
+        }
+        case 'curve': {
+          const w = project.walls[gesture.wallId];
+          if (!w) return;
+          const a = project.nodes[w.a];
+          const b = project.nodes[w.b];
+          const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+          // Handle sits at the curve's midpoint; derive the Bézier control point.
+          const c = { x: 2 * e.world.x - mid.x, y: 2 * e.world.y - mid.y };
+          const wid = gesture.wallId;
+          store().preview((d) => updateWalls(d, [wid], { curve: c }));
+          return;
+        }
+        case 'opening-end': {
+          const o = project.openings[gesture.openingId];
+          const g = o && env.derived().network.walls.get(o.wallId);
+          if (!o || !g) return;
+          const proj = projectOnPath(g.path, e.world);
+          let s = proj.s;
+          if (editor().snap.grid && !e.alt) s = round(s, project.settings.gridSize / 2);
+          const fixed = gesture.end === 'start' ? o.offset + o.width / 2 : o.offset - o.width / 2;
+          const width = Math.max(0.3, Math.abs(fixed - s));
+          const offset = gesture.end === 'start' ? fixed - width / 2 : fixed + width / 2;
+          const id = o.id;
+          store().preview((d) => updateOpening(d, id, { width, offset }));
+          env.setOverlay({ labels: [{ p: e.world, text: `Width ${fmt(env, width)}`, offset: { x: 14, y: 22 } }] });
+          return;
+        }
+        case 'rotate': {
+          const b = gesture.base;
+          let ang = angleOf(sub(e.world, { x: b.x, y: b.y })) + Math.PI / 2;
+          if (!e.alt) ang = Math.round(ang / (Math.PI / 12)) * (Math.PI / 12);
+          const rot = normalizeRotation(ang);
+          const id = gesture.objectId;
+          store().preview((d) => updateObjects(d, [id], { rotation: rot }));
+          env.setOverlay({ labels: [{ p: e.world, text: formatAngle(rot), offset: { x: 14, y: 22 } }] });
+          return;
+        }
+        case 'resize': {
+          const b = gesture.base;
+          const asset = getAsset(project, b.assetId);
+          const local = rotate(sub(e.world, { x: b.x, y: b.y }), -b.rotation);
+          const grid = project.settings.gridSize;
+          const snapOn = editor().snap.grid && !e.alt;
+          let w = b.width;
+          let dpt = b.depth;
+          let cx = 0;
+          let cy = 0;
+          const min = asset?.minSize ?? { w: 0.05, d: 0.05, h: 0.05 };
+          const max = asset?.maxSize ?? { w: 20, d: 20, h: 10 };
+          if (gesture.sx !== 0 && (asset?.resizable.w ?? true)) {
+            const fixedX = (-gesture.sx * b.width) / 2;
+            let nw = Math.abs(local.x - fixedX);
+            if (snapOn) nw = Math.max(grid / 2, round(nw, grid / 2));
+            nw = Math.min(max.w, Math.max(min.w, nw));
+            w = nw;
+            cx = fixedX + (gesture.sx * nw) / 2;
+          }
+          if (gesture.sy !== 0 && (asset?.resizable.d ?? true)) {
+            const fixedY = (-gesture.sy * b.depth) / 2;
+            let nd = Math.abs(local.y - fixedY);
+            if (snapOn) nd = Math.max(grid / 2, round(nd, grid / 2));
+            nd = Math.min(max.d, Math.max(min.d, nd));
+            dpt = nd;
+            cy = fixedY + (gesture.sy * nd) / 2;
+          }
+          const c = add({ x: b.x, y: b.y }, rotate({ x: cx, y: cy }, b.rotation));
+          const id = gesture.objectId;
+          store().preview((d) => updateObjects(d, [id], { width: w, depth: dpt, x: c.x, y: c.y }));
+          env.setOverlay({
+            labels: [{ p: e.world, text: `${fmt(env, w)} × ${fmt(env, dpt)}`, offset: { x: 14, y: 22 } }],
+          });
+          return;
+        }
+        case 'label': {
+          const off = add(gesture.base, sub(e.world, gesture.start));
+          const id = gesture.roomId;
+          store().preview((d) => {
+            d.rooms[id].labelOffset = off;
+          });
+          return;
+        }
+      }
+    },
+
+    onPointerUp(e, env) {
+      const g = gesture;
+      gesture = null;
+      if (!g) return;
+      const project = env.project();
+      switch (g.type) {
+        case 'pending': {
+          if (!g.hit && !g.shift) editor().clearSelection();
+          else if (g.hit && g.wasSelected && !g.shift) editor().setSelection([g.hit]);
+          if (!g.hit) {
+            const room = hitTest(project, env.derived(), e.world, env.tol(), { rooms: true });
+            if (room) editor().setSelection(g.shift ? [...editor().selection, room] : [room]);
+          }
+          break;
+        }
+        case 'marquee': {
+          const items = marqueeSelect(project, env.derived(), g.a, g.b);
+          editor().setSelection(g.additive ? [...editor().selection, ...items.filter((i) => !editor().selection.some((s) => s.id === i.id))] : items);
+          break;
+        }
+        case 'move': {
+          const nodeIds = Object.keys(g.nodes);
+          store().commit((d) => {
+            for (const id of nodeIds) if (d.nodes[id]) settleNode(d, id);
+            const affected = Object.values(d.walls)
+              .filter((w) => nodeIds.includes(w.a) || nodeIds.includes(w.b))
+              .map((w) => w.id);
+            if (affected.length) {
+              insertJunctions(d, affected);
+              clampOpenings(d);
+            }
+          });
+          break;
+        }
+        case 'node': {
+          const id = g.nodeId;
+          store().commit((d) => {
+            settleNode(d, id);
+            clampOpenings(d);
+          });
+          break;
+        }
+        case 'curve':
+        case 'opening-end':
+        case 'rotate':
+        case 'resize':
+        case 'label':
+        case 'slide-opening':
+          store().commit();
+          break;
+      }
+      env.setOverlay(null);
+      env.setSnapLabel(null);
+    },
+
+    onDoubleClick(e, env) {
+      const hit = hitTest(env.project(), env.derived(), e.world, env.tol(), { rooms: true, walls: false, objects: false, openings: false });
+      if (hit) {
+        editor().setSelection([hit]);
+        window.dispatchEvent(new CustomEvent('neest:focus-name'));
+      }
+    },
+
+    cancel(env) {
+      if (!gesture) return false;
+      if (gesture.type !== 'pending' && gesture.type !== 'marquee') store().cancel();
+      gesture = null;
+      env.setOverlay(null);
+      return true;
+    },
+  };
+}
+

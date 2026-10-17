@@ -1,0 +1,5 @@
+dist
+dist-guest
+src/generated
+node_modules
+_Prompt

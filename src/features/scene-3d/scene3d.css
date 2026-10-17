@@ -1,0 +1,236 @@
+.scene3d,
+.guest-page {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+.guest-page {
+  position: fixed;
+  background: #1d1f22;
+}
+.view-panel {
+  top: calc(10px + var(--topbar-h) + 10px);
+  left: calc(10px + var(--rail-offset, 0px) + var(--lib-offset, 0px));
+  width: 286px;
+  max-height: calc(100% - var(--topbar-h) - var(--status-h) - 60px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.view-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px 2px 14px;
+}
+.view-panel h2 {
+  font-size: 13.5px;
+}
+.view-quick {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.view-body {
+  overflow: auto;
+  padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.view-body section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.view-body h3 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+.vp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cam-row {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+.cam-row .icon-btn {
+  width: 26px;
+  height: 26px;
+}
+.cam-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 5px 6px;
+  border-radius: var(--radius-xs);
+  text-align: left;
+  font-size: 12.5px;
+  min-width: 0;
+}
+.cam-name:hover {
+  background: var(--surface-3);
+}
+.bg-color {
+  width: 100%;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
+  padding: 2px;
+}
+.view-panel.mobile {
+  top: auto;
+  bottom: 74px;
+  left: 10px;
+  right: 10px;
+  width: auto;
+  max-height: 50vh;
+}
+.split-3d-tools {
+  top: calc(10px + var(--topbar-h) + 10px);
+  right: 10px;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+}
+.ws-split .inspector {
+  right: 10px;
+}
+.walk-hud {
+  left: 50%;
+  bottom: calc(10px + var(--status-h) + 14px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 14px;
+  font-size: 12.5px;
+  white-space: nowrap;
+  max-width: calc(100vw - 20px);
+}
+.walk-hud kbd {
+  margin: 0 1px;
+}
+.guest-hint {
+  bottom: 20px;
+  pointer-events: none;
+  padding: 8px 14px;
+  background: rgba(29, 31, 34, 0.72);
+  color: #e6e3dc;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.guest-head {
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 14px;
+  background: rgba(29, 31, 34, 0.82);
+  color: #f2efe9;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.guest-head div {
+  display: flex;
+  flex-direction: column;
+}
+.guest-head span {
+  font-size: 11.5px;
+  color: #b0ada7;
+}
+.guest-head .btn {
+  color: #f2efe9;
+}
+.guest-views {
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 5px;
+  max-width: 60vw;
+  background: rgba(29, 31, 34, 0.82);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.guest-views .btn-ghost {
+  color: #f2efe9;
+}
+.guest-views .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.touch-stick {
+  position: fixed;
+  z-index: 15;
+  left: 24px;
+  bottom: 110px;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  touch-action: none;
+  backdrop-filter: blur(6px);
+}
+.touch-knob {
+  position: absolute;
+  left: 42px;
+  top: 42px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+.touch-look {
+  position: fixed;
+  z-index: 14;
+  right: 0;
+  top: 120px;
+  bottom: 120px;
+  width: 55%;
+  touch-action: none;
+}
+@media (max-width: 640px) {
+  .guest-views {
+    top: auto;
+    bottom: 64px;
+    left: 12px;
+    right: 12px;
+    max-width: none;
+    justify-content: center;
+  }
+  .walk-hud {
+    white-space: normal;
+    font-size: 12px;
+  }
+}
+
+.label3d {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(29, 31, 34, 0.86);
+  color: #f2efe9;
+  font: 600 11.5px/1.3 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+.label3d.accent {
+  background: #1d5a51;
+  color: #f2f7f5;
+}

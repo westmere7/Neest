@@ -1,0 +1,151 @@
+import { useEffect } from 'react';
+import { useProjectStore } from '@/state/projectStore';
+import { useEditorStore, type ToolId } from '@/state/editorStore';
+import { useDialogStore, toast } from '@/state/uiStores';
+import { isEditableTarget } from '@/components/hooks';
+import { planKeyRouter } from '@/features/plan-2d/PlanCanvas';
+import { flushSave } from '../projects/projectService';
+import { deleteSelection, duplicateSelection, nudgeSelection, rotateSelection, selectAll, toggleLockSelection } from './actions';
+
+export const TOOL_SHORTCUTS: Record<string, ToolId> = {
+  v: 'select',
+  h: 'pan',
+  w: 'wall',
+  c: 'curve',
+  r: 'room',
+  d: 'opening',
+  m: 'measure',
+  s: 'split',
+};
+
+export const SHORTCUT_LIST: { keys: string; action: string }[] = [
+  { keys: 'V', action: 'Select / move' },
+  { keys: 'H or Space-drag', action: 'Pan' },
+  { keys: 'W', action: 'Draw walls (chain)' },
+  { keys: 'C', action: 'Draw curved wall' },
+  { keys: 'R', action: 'Draw rectangular room' },
+  { keys: 'D', action: 'Insert door / window' },
+  { keys: 'S', action: 'Split wall' },
+  { keys: 'M', action: 'Measure' },
+  { keys: 'Shift (while drawing)', action: 'Lock angle to 45° steps' },
+  { keys: 'Alt (while dragging)', action: 'Disable snapping' },
+  { keys: 'Digits + Enter', action: 'Exact length while drawing' },
+  { keys: 'Ctrl+Z / Ctrl+Shift+Z', action: 'Undo / redo' },
+  { keys: 'Delete', action: 'Delete selection' },
+  { keys: 'Ctrl+D', action: 'Duplicate' },
+  { keys: 'Q', action: 'Rotate selection 90°' },
+  { keys: 'Arrows (Shift ×10)', action: 'Nudge selection' },
+  { keys: 'Ctrl+L', action: 'Lock / unlock selection' },
+  { keys: 'F', action: 'Fit plan' },
+  { keys: 'G', action: 'Toggle grid' },
+  { keys: '1 / 2 / 3', action: 'Draft / furnished / presentation plan' },
+  { keys: '4 / 5', action: '3D view / split view' },
+  { keys: '\\', action: 'Hide / show interface' },
+  { keys: 'Esc', action: 'Cancel, back to select, clear selection, show interface' },
+  { keys: '?', action: 'Show shortcuts' },
+];
+
+/** Global editor keyboard handling; the active plan tool gets first refusal. */
+export function useEditorShortcuts(isMobile: boolean) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || isEditableTarget(e.target)) return;
+      if (useDialogStore.getState().openDialog || useDialogStore.getState().confirm) return;
+      const ed = useEditorStore.getState();
+      const ps = useProjectStore.getState();
+      const planActive = ed.workspace === 'plan' || ed.workspace === 'split';
+      // Editing (tools, nudge, rotate) also works in the 3D view.
+      const editActive = planActive || ed.workspace === '3d';
+      const mod = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
+
+      if (editActive && planKeyRouter.current?.(e)) {
+        e.preventDefault();
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        if (planKeyRouter.cancel?.()) return;
+        if (ed.tool !== 'select') return ed.setTool('select');
+        if (ed.selection.length) return ed.clearSelection();
+        if (ed.chromeHidden) return ed.set({ chromeHidden: false });
+        if (ed.workspace === 'walk') return ed.set({ workspace: '3d' });
+        return;
+      }
+      if (mod && key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) ps.redo();
+        else ps.undo();
+        return;
+      }
+      if (mod && key === 'y') {
+        e.preventDefault();
+        ps.redo();
+        return;
+      }
+      if (mod && key === 's') {
+        e.preventDefault();
+        void flushSave().then(() => toast.success('Saved locally'));
+        return;
+      }
+      if (mod && key === 'e') {
+        e.preventDefault();
+        useDialogStore.getState().open('export');
+        return;
+      }
+      if (mod && key === 'd') {
+        e.preventDefault();
+        duplicateSelection();
+        return;
+      }
+      if (mod && key === 'a') {
+        e.preventDefault();
+        selectAll();
+        return;
+      }
+      if (mod && key === 'l') {
+        e.preventDefault();
+        toggleLockSelection();
+        return;
+      }
+      if (mod) return;
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        void deleteSelection();
+        return;
+      }
+      if (e.key === '\\') {
+        ed.set({ chromeHidden: !ed.chromeHidden });
+        return;
+      }
+      if (e.key === '?') {
+        useDialogStore.getState().open('shortcuts');
+        return;
+      }
+      if (e.key.startsWith('Arrow') && ed.selection.length && editActive) {
+        e.preventDefault();
+        const step = (ps.project?.settings.gridSize ?? 0.1) * (e.shiftKey ? 10 : 1);
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+        nudgeSelection(dx, dy);
+        return;
+      }
+      if (key === 'q') return rotateSelection(e.shiftKey ? -Math.PI / 2 : Math.PI / 2);
+      if (key === 'f') return ed.requestFit();
+      if (key === 'g') return ed.set({ gridVisible: !ed.gridVisible });
+      if (key === '1') return ed.set({ workspace: 'plan', planMode: 'draft' });
+      if (key === '2') return ed.set({ workspace: 'plan', planMode: 'furnished' });
+      if (key === '3') return ed.set({ workspace: 'plan', planMode: 'presentation' });
+      if (key === '4') return ed.set({ workspace: '3d' });
+      if (key === '5' && !isMobile) return ed.set({ workspace: 'split' });
+      const tool = TOOL_SHORTCUTS[key];
+      if (tool && editActive) {
+        if (isMobile && tool !== 'select' && tool !== 'pan') return;
+        if (ed.workspace === '3d' && tool === 'pan') return;
+        ed.setTool(tool);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isMobile]);
+}

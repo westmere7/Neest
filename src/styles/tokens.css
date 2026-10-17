@@ -1,0 +1,122 @@
+/*
+ * Neest design tokens. Semantic colours are redefined per theme; components
+ * only reference these variables.
+ */
+:root {
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 7px;
+  --radius: 10px;
+  --radius-lg: 14px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --rail-w: 52px;
+
+  /* Brand palette: deep teal wall green and its shades, with brass as the complementary cue colour. */
+  --teal-950: #0f2a26;
+  --teal-900: #143c37;
+  --teal-800: #1a4d46;
+  --teal-700: #1d5a51;
+  --teal-600: #256f63;
+  --teal-500: #2f8574;
+  --teal-400: #4f9e8b;
+  --teal-300: #6fb3a0;
+  --teal-200: #a3cfc1;
+  --teal-100: #d3e8e0;
+  --teal-50: #ebf4f0;
+  --brass-600: #a87a28;
+  --brass-400: #d0a650;
+  --topbar-h: 48px;
+  --status-h: 28px;
+}
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #e6e3dd;
+  --canvas: #f4f2ed;
+  --surface: rgba(250, 249, 246, 0.94);
+  --surface-solid: #f9f8f5;
+  --surface-2: #efede8;
+  --surface-3: #e5e2dc;
+  --surface-inverse: #23221f;
+  --border: rgba(35, 32, 26, 0.11);
+  --border-strong: rgba(35, 32, 26, 0.22);
+  --text: #1f1e1b;
+  --text-2: #57534d;
+  --text-3: #85817a;
+  --text-inverse: #f4f2ed;
+  --accent: var(--teal-700);
+  --accent-strong: var(--teal-800);
+  --accent-soft: rgba(29, 90, 81, 0.12);
+  --accent-ring: rgba(29, 90, 81, 0.4);
+  --on-accent: #ffffff;
+  --selection: var(--teal-600);
+  --selection-fill: rgba(37, 111, 99, 0.12);
+  --snap: var(--brass-600);
+  --dim: #2f62a0;
+  --warning: #b9770b;
+  --warning-soft: rgba(201, 138, 28, 0.14);
+  --danger: #c0392f;
+  --danger-soft: rgba(192, 57, 47, 0.1);
+  --success: #2f7d4f;
+  --success-soft: rgba(47, 125, 79, 0.12);
+  --shadow-sm: 0 1px 2px rgba(30, 25, 15, 0.08);
+  --shadow: 0 1px 2px rgba(30, 25, 15, 0.06), 0 6px 22px rgba(30, 25, 15, 0.1);
+  --shadow-lg: 0 2px 6px rgba(30, 25, 15, 0.08), 0 18px 48px rgba(30, 25, 15, 0.18);
+  --backdrop: rgba(30, 28, 24, 0.32);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #141516;
+  --canvas: #1c1e20;
+  --surface: rgba(34, 36, 39, 0.94);
+  --surface-solid: #222427;
+  --surface-2: #2b2d31;
+  --surface-3: #35383d;
+  --surface-inverse: #ecebe8;
+  --border: rgba(255, 255, 255, 0.075);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #ecebe8;
+  --text-2: #b0ada7;
+  --text-3: #7f7c77;
+  --text-inverse: #1d1f22;
+  --accent: var(--teal-300);
+  --accent-strong: var(--teal-200);
+  --accent-soft: rgba(111, 179, 160, 0.16);
+  --accent-ring: rgba(111, 179, 160, 0.5);
+  --on-accent: var(--teal-950);
+  --selection: #7cc0ad;
+  --selection-fill: rgba(124, 192, 173, 0.14);
+  --snap: var(--brass-400);
+  --dim: #86b6ea;
+  --warning: #e9b04a;
+  --warning-soft: rgba(233, 176, 74, 0.14);
+  --danger: #ec6b5f;
+  --danger-soft: rgba(236, 107, 95, 0.13);
+  --success: #5fbf86;
+  --success-soft: rgba(95, 191, 134, 0.13);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 26px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 2px 8px rgba(0, 0, 0, 0.35), 0 20px 56px rgba(0, 0, 0, 0.5);
+  --backdrop: rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+  }
+}
