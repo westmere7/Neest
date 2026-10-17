@@ -23,11 +23,11 @@ type Slot<L extends THREE.Light> = { light: L; key: string | null; target: numbe
  * Steadiness while orbiting: relevance is measured from the orbit target (which stays put while
  * the view rotates), each fixture keeps its slot for as long as it stays assigned, a fixture is
  * only replaced when another is clearly more relevant, and lights fade in and out instead of
- * popping. In high quality the first spot slots cast shadows; their shadow maps are redrawn only
- * when the scene or the slot's fixture changes.
+ * popping. In high quality the first spot slots cast shadows (ultra: more spots and some points,
+ * with no range cut-off); shadow maps are redrawn only when the scene or the slot's fixture changes.
  */
 export function LampLights({ project, quality }: { project: Project; quality: RenderSettings['quality'] }) {
-  const budget = LAMP_BUDGET[quality];
+  const full = LAMP_BUDGET[quality];
   const camera = useThree((s) => s.camera);
   const scene = useThree((s) => s.scene);
   const controls = useThree((s) => s.controls) as unknown as { target?: THREE.Vector3 } | null;
@@ -40,9 +40,31 @@ export function LampLights({ project, quality }: { project: Project; quality: Re
     return out;
   }, [project, packVersion]);
 
+  // Every light in the scene is compiled into every material's shader, so the pool is no bigger
+  // than the number of fixtures (capped by the quality budget). It only changes size, and the
+  // shaders recompile, when the fixture count crosses a size, never while moving around.
+  const nPoint = all.filter((l) => l.kind === 'point').length;
+  const nSpot = all.length - nPoint;
+  const budget = {
+    ...full,
+    point: Math.min(full.point, nPoint),
+    spot: Math.min(full.spot, nSpot),
+  };
+
   const points = useMemo<Slot<THREE.PointLight>[]>(
-    () => Array.from({ length: budget.point }, () => ({ light: new THREE.PointLight('#ffffff', 0, 1, 2), key: null, target: 0 })),
-    [budget.point],
+    () =>
+      Array.from({ length: budget.point }, (_, i) => {
+        const l = new THREE.PointLight('#ffffff', 0, 1, 2);
+        if (i < budget.pointShadows) {
+          l.castShadow = true;
+          l.shadow.mapSize.set(512, 512);
+          l.shadow.bias = -0.002;
+          l.shadow.normalBias = 0.03;
+          l.shadow.autoUpdate = false;
+        }
+        return { light: l, key: null, target: 0 };
+      }),
+    [budget.point, budget.pointShadows],
   );
   const spots = useMemo<Slot<THREE.SpotLight>[]>(
     () =>
@@ -110,15 +132,16 @@ export function LampLights({ project, quality }: { project: Project; quality: Re
         if (l && moved) {
           s.light.userData.key = l.key;
           s.light.color.set(l.color);
-          s.light.distance = l.distance;
+          // Ultra: no cut-off, light falls off naturally over the whole view.
+          s.light.distance = budget.fullRange ? 0 : l.distance;
           s.light.position.set(...l.position);
+          if (s.light.castShadow) s.light.shadow.needsUpdate = true;
           if ((s.light as THREE.SpotLight).isSpotLight) {
             const sp = s.light as THREE.SpotLight;
             sp.angle = l.angle;
             sp.penumbra = l.penumbra;
             sp.target.position.set(l.position[0] + l.dir[0], l.position[1] + l.dir[1], l.position[2] + l.dir[2]);
             sp.target.updateMatrixWorld();
-            if (sp.castShadow) sp.shadow.needsUpdate = true;
           }
           // A slot handed to a new fixture starts dark and fades up.
           if (s.light.userData.key !== s.light.userData.lit) s.light.intensity = 0;

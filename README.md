@@ -73,7 +73,7 @@ Then open <http://localhost:5173>. Edits to the source code reload in the browse
   - **Options:** transom, threshold, casing trim, security bars or a muntin grid, and louvred shutters.
 
 ### 3D
-- The same model in 3D. Doors and windows are real openings. Lighting has a time-of-day sun and soft shadows; quality presets are draft, balanced and high.
+- The same model in 3D. Doors and windows are real openings. Lighting has a time-of-day sun and soft shadows; quality presets are draft, balanced, high and ultra (ambient occlusion, a lamp for every fixture with no range cut-off, more lamp shadows). Selected objects, doors, windows and walls get an outline that stays visible through walls.
 - Wall display: full, cutaway at a chosen height, fade near the camera, or hidden. Saved camera views, top, isometric and front views, and a home view that frames the plan beside the panels.
 - **Edit in 3D:** draw walls and rooms, insert openings, place furniture with a live ghost preview, and move objects with the transform gizmo (arrows, height, free move, rotation ring), all snapped and undoable.
 - First-person walkthrough with collisions (mouse and keyboard, or touch joystick). Guest View is a view-only presentation mode.
@@ -98,11 +98,11 @@ Then open <http://localhost:5173>. Edits to the source code reload in the browse
 Exported filenames follow `<project>_<yyyy-mm-dd>_<output>.<ext>`.
 
 ### Interface
-- Floating panels, light and dark themes, and a deep teal accent. Press `\` to hide the interface for review or screenshots.
+- Floating panels, light and dark themes, and a deep teal accent. Press `Tab` (or `\`) to hide the interface for review or screenshots.
 - On phones you can open projects, inspect, view in 3D and walk through. Drafting tools, split view, scaled sheets and DXF are desktop-only.
 
 ### Keyboard shortcuts
-`V` select · `H`/Space-drag pan · `W` walls · `C` curved wall · `R` room · `D` door/window · `S` split · `M` measure · `Ctrl+Z`/`Ctrl+Shift+Z` undo/redo · `Delete` · `Ctrl+D` duplicate · `Q` rotate 90° · arrows nudge (Shift ×10) · `Ctrl+L` lock · `F` fit · `G` grid · `1`/`2` plan modes · `4`/`5` 3D/split view · `\` hide interface · `?` all shortcuts.
+`V` select · `H`/Space-drag pan · `W` walls · `C` curved wall · `R` room · `D` door/window · `S` split · `M` measure · `Ctrl+Z`/`Ctrl+Shift+Z` undo/redo · `Delete` · `Ctrl+D` duplicate · `Q` rotate 90° · arrows nudge (Shift ×10) · `Ctrl+L` lock · `F` fit · `G` grid · `1`/`2` plan modes · `4`/`5` 3D/split view · `Tab` hide interface · `?` all shortcuts.
 
 ## Where your projects live
 

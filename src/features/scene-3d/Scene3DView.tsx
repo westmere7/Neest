@@ -30,6 +30,7 @@ import { hugWall } from '@/features/plan-2d/tools/placeTools';
 import { WalkControls } from '@/features/walkthrough/WalkControls';
 import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
+import { PostEffects } from './PostEffects';
 import { namedView, presetView, type CameraView, type NamedView } from './cameraViews';
 import { liveScene, sharedRegistry } from './sceneRuntime';
 import { hitsGizmo, TransformGizmo, ToolBridge3D } from './edit3d';
@@ -407,10 +408,12 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
     onObjectPointerDown: walk || drawing ? undefined : drag.onObjectPointerDown,
   };
 
-  const dpr: [number, number] = r.quality === 'high' ? [1, 2] : r.quality === 'balanced' ? [1, 1.5] : [0.75, 1];
+  const dpr: [number, number] = r.quality === 'ultra' ? [1.5, 2] : r.quality === 'high' ? [1, 2] : r.quality === 'balanced' ? [1, 1.5] : [0.75, 1];
   // The canvas stays covered by the loading screen until the scene has compiled and drawn.
   const [ready, setReady] = useState(false);
+  const [compiled, setCompiled] = useState(false);
   const onReady = useCallback(() => setReady(true), []);
+  const onCompiled = useCallback(() => setCompiled(true), []);
   const exitWalk = useCallback(() => useEditorStore.getState().set({ workspace: '3d' }), []);
 
   return (
@@ -446,7 +449,8 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         }}
       >
         <color attach="background" args={[r.background]} />
-        {!ready && <FirstFrames onReady={onReady} />}
+        {!ready && <FirstFrames onCompiled={onCompiled} onReady={onReady} />}
+        <PostEffects quality={r.quality} selectedIds={options.selectedIds} paused={!compiled} />
         {walk || projection === 'perspective' ? (
           <PerspectiveCamera makeDefault position={view?.v.position ?? [10, 10, 10]} fov={walk ? 70 : (view?.v.fov ?? 45)} near={0.05} far={600} />
         ) : (
@@ -481,7 +485,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         )}
         <mesh rotation-x={-Math.PI / 2} position={[0, -0.01, 0]} receiveShadow raycast={() => null}>
           <planeGeometry args={[400, 400]} />
-          <shadowMaterial transparent opacity={0.18} />
+          <shadowMaterial transparent opacity={0.18} onBeforeCompile={sunShadowOnly} customProgramCacheKey={sunShadowKey} />
         </mesh>
         <LiveBridge helpersRef={helpersRef} />
         {!walk && <ToolBridge3D enabled={workspace === '3d'} />}
@@ -516,22 +520,40 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
 }
 
 /**
+ * The ground only shows the sun's shadow. Lamp lights inside the building cast shadows too
+ * (High/Ultra), and from them the whole outside ground is "behind a wall": without this the
+ * building's sun shadow drowned in that and light leaking out of windows drew bright bands.
+ */
+const SUN_SHADOW_MASK = THREE.ShaderChunk.shadowmask_pars_fragment
+  .replace('#if NUM_SPOT_LIGHT_SHADOWS > 0', '#if 0')
+  .replace('#if NUM_POINT_LIGHT_SHADOWS > 0', '#if 0');
+function sunShadowOnly(shader: THREE.WebGLProgramParametersWithUniforms) {
+  shader.fragmentShader = shader.fragmentShader.replace('#include <shadowmask_pars_fragment>', SUN_SHADOW_MASK);
+}
+const sunShadowKey = () => 'neest-sun-shadow-only';
+
+/**
  * Reports when the 3D view is really showing something: the plan group has been built, every
- * material's shader is compiled (compileAsync, so the page stays responsive meanwhile) and a
- * couple of frames have been drawn. Until then the loading screen stays over the canvas, so the
+ * material's shader is compiled and a couple of frames have been drawn. Nothing is drawn before
+ * the compile finishes (PostEffects is paused): a first frame would compile every shader
+ * synchronously and freeze the page, while compileAsync uses the browser's parallel shader
+ * compilation and keeps the page responsive. Until then the loading screen stays over the canvas, so the
  * user never sees the blank canvas that used to appear for a few seconds after the view loaded.
  * A time limit makes sure the loading screen can never get stuck.
  */
-function FirstFrames({ onReady }: { onReady: () => void }) {
+function FirstFrames({ onCompiled, onReady }: { onCompiled: () => void; onReady: () => void }) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const invalidate = useThree((s) => s.invalidate);
   const stage = useRef<'build' | 'compile' | number>('build');
   useEffect(() => {
-    const t = window.setTimeout(onReady, 20000);
+    const t = window.setTimeout(() => {
+      onCompiled();
+      onReady();
+    }, 20000);
     return () => window.clearTimeout(t);
-  }, [onReady]);
+  }, [onCompiled, onReady]);
   useFrame(() => {
     const s = stage.current;
     if (s === 'build') {
@@ -542,6 +564,7 @@ function FirstFrames({ onReady }: { onReady: () => void }) {
         .catch(() => undefined)
         .finally(() => {
           stage.current = 0;
+          onCompiled();
           invalidate();
         });
       return;
@@ -752,11 +775,21 @@ function ViewPanel({
                 { value: 'draft', label: 'Draft' },
                 { value: 'balanced', label: 'Balanced' },
                 { value: 'high', label: 'High' },
+                { value: 'ultra', label: 'Ultra' },
               ]}
             />
             <Slider label="Time of day" value={r.timeOfDay} min={6} max={20} step={0.25} format={(v) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`} onCommit={(v) => setRender('Change time of day', { timeOfDay: v })} />
             <Slider label="Sun direction" value={r.sunAzimuth} min={0} max={360} step={5} format={(v) => `${v}°`} onCommit={(v) => setRender('Change sun direction', { sunAzimuth: v })} />
             <Slider label="Sun strength" value={r.sunIntensity} min={0} max={6} step={0.1} onCommit={(v) => setRender('Change sun strength', { sunIntensity: v })} />
+            <Slider
+              label="Sun warmth"
+              value={r.sunWarmth}
+              min={-1}
+              max={1}
+              step={0.05}
+              format={(v) => (Math.abs(v) < 0.025 ? 'Natural' : v > 0 ? `Warm ${Math.round(v * 100)}%` : `Cool ${Math.round(-v * 100)}%`)}
+              onCommit={(v) => setRender('Change sun warmth', { sunWarmth: v })}
+            />
             <Slider label="Ambient light" value={r.envIntensity} min={0} max={2.5} step={0.05} onCommit={(v) => setRender('Change ambient light', { envIntensity: v })} />
             <Slider label="Exposure" value={r.exposure} min={0.3} max={2.5} step={0.05} onCommit={(v) => setRender('Change exposure', { exposure: v })} />
             <Toggle label="Shadows" checked={r.shadows} onChange={(v) => setRender('Toggle shadows', { shadows: v })} />

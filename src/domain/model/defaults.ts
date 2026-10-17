@@ -66,6 +66,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       timeOfDay: 14,
       sunAzimuth: 135,
       sunIntensity: 2.2,
+      sunWarmth: 0,
       envIntensity: 0.9,
       shadows: true,
       background: '#dfe3e6',

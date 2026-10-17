@@ -335,7 +335,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   walls, quality & light, categories).
 - **Lamp lights** (`LampLights.tsx`, `data/assets/lights.ts`): `resolveObjectLights` turns an asset's `light`
   (point/spot, x/y/z offset, `heads`) into world-space lights that scale, mirror and turn with the object. The
-  scene mounts a fixed pool per quality (`LAMP_BUDGET`: Balanced 4 point + 3 spot, High 8 + 6, 2 spot shadows)
+  scene mounts a pool per quality, no bigger than the number of fixtures (`LAMP_BUDGET`: Balanced 4 point + 3
+  spot, High 8 + 6 with 2 spot shadows, Ultra 16 + 12 with 4 spot + 2 point shadows and no range cut-off)
   and hands it to the fixtures nearest the camera's focus each frame. Never mount or unmount lights per lamp:
   a change in light count recompiles every shader. Idle pool lights sit at intensity 0. Spot shadow maps use
   `autoUpdate = false` and redraw only when the scene or the assignment changes.

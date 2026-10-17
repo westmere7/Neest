@@ -125,7 +125,7 @@ export function EditorShell() {
       )}
       {chromeHidden && (
         <button type="button" className="restore-ui" onClick={() => useEditorStore.getState().set({ chromeHidden: false })}>
-          Show interface <kbd>Esc</kbd>
+          Show interface <kbd>Tab</kbd>
         </button>
       )}
       <EditorDialogs />
@@ -298,7 +298,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
             <Footprints size={17} />
           </IconButton>
           {!isMobile && (
-            <IconButton label="Hide interface" shortcut="\" onClick={() => useEditorStore.getState().set({ chromeHidden: true })}>
+            <IconButton label="Hide interface" shortcut="Tab" onClick={() => useEditorStore.getState().set({ chromeHidden: true })}>
               <EyeOff size={17} />
             </IconButton>
           )}

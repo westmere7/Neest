@@ -42,7 +42,10 @@ export interface SceneOptions {
 }
 
 /** Sun direction from time of day (hours) and azimuth (degrees, 0 = north/-y, clockwise). */
-export function sunFromSettings(r: Pick<RenderSettings, 'timeOfDay' | 'sunAzimuth' | 'sunIntensity'>) {
+const WARMEST = new THREE.Color('#ff9a52');
+const COOLEST = new THREE.Color('#bcd2ff');
+
+export function sunFromSettings(r: Pick<RenderSettings, 'timeOfDay' | 'sunAzimuth' | 'sunIntensity'> & { sunWarmth?: number }) {
   const t = Math.min(1, Math.max(0, (r.timeOfDay - 6) / 14));
   const elevation = Math.max(4, 64 * Math.sin(Math.PI * t)) * (Math.PI / 180);
   const az = (r.sunAzimuth * Math.PI) / 180;
@@ -50,6 +53,10 @@ export function sunFromSettings(r: Pick<RenderSettings, 'timeOfDay' | 'sunAzimut
   const warm = new THREE.Color('#ffc58f');
   const noon = new THREE.Color('#fffcf7');
   const color = warm.lerp(noon, Math.min(1, Math.sin(elevation) * 1.6));
+  // User warmth on top of the time-of-day tint.
+  const w = Math.max(-1, Math.min(1, r.sunWarmth ?? 0));
+  if (w > 0) color.lerp(WARMEST, w * 0.75);
+  else if (w < 0) color.lerp(COOLEST, -w * 0.75);
   const intensity = r.sunIntensity * (0.35 + 0.65 * Math.sin(elevation));
   return { dir, color, intensity, elevation };
 }
@@ -82,10 +89,13 @@ export function Lighting({ project, derived, shadows, quality }: { project: Proj
   const b = derived.bounds ?? { minX: -5, minY: -5, maxX: 5, maxY: 5 };
   const cx = (b.minX + b.maxX) / 2;
   const cz = (b.minY + b.maxY) / 2;
-  const radius = Math.max(4, Math.hypot(b.maxX - b.minX, b.maxY - b.maxY) / 2 + 1.5);
   const sun = sunFromSettings(r);
+  // The shadow area covers the plan plus how far a wall-height shadow reaches at this sun
+  // elevation (long morning/evening shadows were cut off at the plan's edge).
+  const reach = Math.min(14, (2.8 * Math.sqrt(Math.max(0, 1 - sun.dir.y * sun.dir.y))) / Math.max(0.12, sun.dir.y));
+  const radius = Math.max(4, Math.hypot(b.maxX - b.minX, b.maxY - b.minY) / 2 + 1.5) + reach;
   const pos = sun.dir.clone().multiplyScalar(radius * 2.5).add(new THREE.Vector3(cx, 0, cz));
-  const mapSize = quality === 'high' ? 4096 : quality === 'balanced' ? 2048 : 1024;
+  const mapSize = quality === 'high' || quality === 'ultra' ? 4096 : quality === 'balanced' ? 2048 : 1024;
   useEffect(() => {
     const l = lightRef.current;
     if (!l) return;
@@ -104,7 +114,7 @@ export function Lighting({ project, derived, shadows, quality }: { project: Proj
     l.shadow.map = null as unknown as THREE.WebGLRenderTarget;
     l.shadow.bias = -0.0004;
     l.shadow.normalBias = 0.025;
-    l.shadow.radius = quality === 'high' ? 3 : 2;
+    l.shadow.radius = quality === 'ultra' ? 4 : quality === 'high' ? 3 : 2;
   }, [cx, cz, radius, mapSize, quality]);
   return (
     <>
@@ -577,32 +587,7 @@ export function SceneContent({ project, derived, registry, options }: { project:
         ))}
       </group>
       {(options.showRoomLabels || options.showDimensions) && <Labels project={project} derived={derived} rooms={options.showRoomLabels} dims={options.showDimensions} />}
-      {options.selectedIds && <SelectionBoxes project={project} derived={derived} ids={options.selectedIds} />}
     </group>
   );
 }
 
-function SelectionBoxes({ project, derived, ids }: { project: Project; derived: DerivedPlan; ids: Set<string> }) {
-  const boxes: THREE.Box3[] = [];
-  for (const id of ids) {
-    const o = project.objects[id];
-    if (o) {
-      const hw = Math.abs(Math.cos(o.rotation)) * o.width / 2 + Math.abs(Math.sin(o.rotation)) * o.depth / 2;
-      const hd = Math.abs(Math.sin(o.rotation)) * o.width / 2 + Math.abs(Math.cos(o.rotation)) * o.depth / 2;
-      boxes.push(new THREE.Box3(new THREE.Vector3(o.x - hw, o.elevation, o.y - hd), new THREE.Vector3(o.x + hw, o.elevation + o.height, o.y + hd)));
-    }
-    const g = derived.network.walls.get(id);
-    if (g) {
-      const xs = g.footprint.map((p) => p.x);
-      const ys = g.footprint.map((p) => p.y);
-      boxes.push(new THREE.Box3(new THREE.Vector3(Math.min(...xs), g.z0, Math.min(...ys)), new THREE.Vector3(Math.max(...xs), g.z1, Math.max(...ys))));
-    }
-  }
-  return (
-    <>
-      {boxes.map((b, i) => (
-        <box3Helper key={i} args={[b, new THREE.Color('#2a8a78')]} />
-      ))}
-    </>
-  );
-}

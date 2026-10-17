@@ -302,7 +302,7 @@ export const CameraPresetSchema = z.object({
 });
 
 export const RenderSettingsSchema = z.object({
-  quality: z.enum(['draft', 'balanced', 'high']).default('balanced'),
+  quality: z.enum(['draft', 'balanced', 'high', 'ultra']).default('balanced'),
   exposure: num.min(0.1).max(4).default(1),
   /** Hours (6–20) used to derive sun elevation and warmth. */
   timeOfDay: num.min(5).max(21).default(14),
@@ -355,6 +355,8 @@ export const LayersSchema = z
     furniture: { visible: true, locked: false },
     annotations: { visible: true, locked: false },
   });
+  /** Sun colour on top of the time-of-day tint: -1 cool (overcast blue) … 0 natural … 1 warm (golden). */
+  sunWarmth: num.min(-1).max(1).default(0),
 
 export const GuestSettingsSchema = z
   .object({

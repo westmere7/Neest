@@ -64,9 +64,15 @@ export function resolveObjectLights(obj: PlacedObject, asset: AssetDefinition | 
   });
 }
 
-/** Budget of live lights per render quality: point and spot pools, and how many spots cast shadows. */
+/**
+ * Live lights per render quality: point and spot pools, how many spot / point slots cast shadows
+ * (shadow maps redraw only when the scene changes), and whether lights keep their fixture's range
+ * or reach the whole view (natural inverse-square fall-off, no cut-off). Shadow casters are capped
+ * so sun + lamp shadow maps + material maps stay within 16 texture units.
+ */
 export const LAMP_BUDGET = {
-  draft: { point: 0, spot: 0, shadows: 0 },
-  balanced: { point: 4, spot: 3, shadows: 0 },
-  high: { point: 8, spot: 6, shadows: 2 },
+  draft: { point: 0, spot: 0, shadows: 0, pointShadows: 0, fullRange: false },
+  balanced: { point: 4, spot: 3, shadows: 0, pointShadows: 0, fullRange: false },
+  high: { point: 8, spot: 6, shadows: 2, pointShadows: 0, fullRange: false },
+  ultra: { point: 16, spot: 12, shadows: 4, pointShadows: 2, fullRange: true },
 } as const;

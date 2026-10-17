@@ -44,7 +44,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'G', action: 'Toggle grid' },
   { keys: '1 / 2', action: 'Outline / 2D plan' },
   { keys: '4 / 5', action: '3D view / split view' },
-  { keys: '\\', action: 'Hide / show interface' },
+  { keys: 'Tab or \\', action: 'Hide / show interface' },
   { keys: 'Esc', action: 'Cancel, back to select, clear selection, show interface' },
   { keys: '?', action: 'Show shortcuts' },
 ];
@@ -118,7 +118,11 @@ export function useEditorShortcuts(isMobile: boolean) {
         void deleteSelection();
         return;
       }
-      if (e.key === '\\') {
+      // Tab toggles the interface when nothing interactive has focus (on a button or in a dialog
+      // it still moves focus, so keyboard navigation keeps working); \ always toggles.
+      const focusFree = !document.activeElement?.closest('[role=dialog], [role=menu], [role=listbox], .dialog');
+      if (e.key === '\\' || (e.key === 'Tab' && !e.shiftKey && !e.altKey && focusFree)) {
+        e.preventDefault();
         ed.set({ chromeHidden: !ed.chromeHidden });
         return;
       }
