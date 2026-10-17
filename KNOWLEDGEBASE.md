@@ -580,19 +580,16 @@ Known limitations (also in README):
 13. "Fit view to canvas at start" → inset-aware 2D fit and 3D framing with view offset (done).
 14. "Analyze this repo and create a file to start the server quickly" → `start-neest.sh` + `start-neest.command` (macOS/Linux).
 15. "Remove Present view" → removed `Present` (`plan:presentation`) tab from `EditorShell.tsx` and shortcut `3` from `useShortcuts.ts`.
-<<<<<<< Updated upstream
-16. "Textures look fake: real photo textures from a free library, plus richer procedural ones" → CC0 photo sets
-    (`npm run textures`), photo/procedural switch, procedural detail pass (done).
-17. "Some of the shading looks very off" (streaky tinted velvet) → neutral variation maps in the fetch script (done).
-18. "When an object is selected it should be the anchor point for orbit" → `SelectionPivot` (done).
-19. "Allow sun diameter / diffuse light" → tried PCSS then VSM; "buggy, revert, revisit later" → reverted.
-20. "Improve the furniture library: a lot more, more detailed, like the Sims" → room/type taxonomy and shelves,
-    detail helpers, merged per-slot meshes, new rooms (kids, laundry, hobbies, outdoor) and ASSET_COUNT assets (done).
-21. "Load external furniture packs (own procedural/bitmap textures), additional files, e.g. Halloween; dynamically
-    loaded without refresh; one file per pack; show the source only on hover and in the item's info" → /packs (done).
-=======
 16. "Make light-mode panels and UI less yellowish" → updated light-mode surface/canvas tokens in `tokens.css`, 2D light palettes in `palette.ts`, thumbnail backgrounds in `launcher.css`, and 3D default background/lighting to crisp neutral white and cool-grey tones.
 17. "Rename Draft to Outline, Furnished to 2D" → updated `VIEW_OPTIONS` labels in `EditorShell.tsx` and `SHORTCUT_LIST` in `useShortcuts.ts`.
 18. "Make eye icons consistent with other modern outlined icons" → replaced emoji `'👁'`/`'—'`, `'▸'` and `'★'` with outlined `Eye`/`EyeOff`, `ChevronRight` and `Star` SVG icons in `Inspector.tsx`, `ui.tsx` and `LibraryPanel.tsx`.
 19. "Make active and selected states pop with a more vibrant green" → updated `--teal-*`/`--accent*`/`--selection*` tokens in `tokens.css` to emerald green and styled `.segmented button.on`, `.icon-btn.active`, `.chip.on`, `.build-card.on`, `.asset-card.on`, `.mat-cell.on`, `.mat-row.on`, and `.export-format.on` with mint-green soft backgrounds and emerald text/icons.
->>>>>>> Stashed changes
+20. "Textures look fake: real photo textures from a free library, plus richer procedural ones" → CC0 photo sets
+    (`npm run textures`), photo/procedural switch, procedural detail pass (done).
+21. "Some of the shading looks very off" (streaky tinted velvet) → neutral variation maps in the fetch script (done).
+22. "When an object is selected it should be the anchor point for orbit" → `SelectionPivot` (done).
+23. "Allow sun diameter / diffuse light" → tried PCSS then VSM; "buggy, revert, revisit later" → reverted.
+24. "Improve the furniture library: a lot more, more detailed, like the Sims" → room/type taxonomy and shelves,
+    detail helpers, merged per-slot meshes, new rooms (kids, laundry, hobbies, outdoor) and ASSET_COUNT assets (done).
+25. "Load external furniture packs (own procedural/bitmap textures), additional files, e.g. Halloween; dynamically
+    loaded without refresh; one file per pack; show the source only on hover and in the item's info" → /packs (done).
