@@ -4,7 +4,7 @@
   "id": "prj_d1yqt8vua2",
   "name": "Complex loft 100 m² (stress test)",
   "createdAt": 1792222586472,
-  "updatedAt": 1792231834936,
+  "updatedAt": 1792232169502,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -2473,7 +2473,7 @@
       "id": "obj_64q3yr462g",
       "assetId": "plant-large",
       "name": null,
-      "x": 7.6,
+      "x": 7.65,
       "y": 7.3,
       "elevation": 0,
       "rotation": 4.71238898038469,
