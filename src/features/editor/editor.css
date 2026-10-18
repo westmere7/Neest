@@ -16,6 +16,13 @@
   flex: 1;
   min-width: 0;
 }
+/* The 3D view kept alive behind the 2D plan: full size (so it needs no re-measure), invisible, inert. */
+.pane-hidden {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 .ws-split .pane-plan {
   border-right: 1px solid var(--border-strong);
 }

@@ -454,8 +454,18 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
   return { onObjectPointerDown, controlsRef };
 }
 
-export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
-  const project = useProjectStore((s) => s.project!);
+/**
+ * `active` false = kept mounted behind the 2D plan (see EditorShell): drawing pauses, the scene keeps
+ * the project as it was when hidden (2D edits do not rebuild it) and catches up when shown again.
+ */
+export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | 'walk'; active?: boolean }) {
+  const [hiddenProject, setHiddenProject] = useState<Project | null>(null);
+  const project = useProjectStore(useCallback((s) => (active || !hiddenProject ? s.project! : hiddenProject), [active, hiddenProject]));
+  useEffect(() => {
+    // Hiding freezes the project the scene was last built from; showing again releases it.
+    if (!active) setHiddenProject(useProjectStore.getState().project);
+    else setHiddenProject(null);
+  }, [active]);
   const derived = useMemo(() => derivePlan(project), [project]);
   const selection = useEditorStore((s) => s.selection);
   const cameraRequest = useEditorStore((s) => s.cameraRequest);
@@ -635,6 +645,8 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
           preserveDrawingBuffer: import.meta.env.DEV,
           powerPreference: 'high-performance',
         }}
+        // Hidden behind the plan: stop drawing, but let a first load finish in the background.
+        frameloop={active || !ready ? 'always' : 'never'}
         onCreated={(state) => state.setEvents({ compute: clientCompute as never })}
         onPointerMissed={(e) => {
           if (!walk && !drawing && e.button === 0) useEditorStore.getState().clearSelection();
@@ -714,7 +726,8 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
             customProgramCacheKey={sunShadowKey}
           />
         </mesh>
-        <LiveBridge helpersRef={helpersRef} />
+        {/* Captures and renders need the scene on screen (a hidden one may show an older project). */}
+        {active && <LiveBridge helpersRef={helpersRef} />}
         {!walk && <ToolBridge3D enabled={workspace === '3d'} />}
         {!walk && !drawing && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
       </Canvas>
@@ -727,8 +740,9 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
           <SceneLoading stage={stage} progress={progress} />
         ))}
       {walk && <WalkHud onExit={exitWalk} isMobile={isMobile} />}
-      {/* Mobile has no tool rail to bring a stashed panel back, so it only collapses there. */}
-      {!walk && !chromeHidden && workspace !== 'split' && (viewPanelOpen || isMobile) && (
+      {/* Mobile has no tool rail to bring a stashed panel back, so it only collapses there. Hidden
+          behind the plan, the panel must not exist at all: the 2D fit measures floating panels. */}
+      {active && !walk && !chromeHidden && workspace !== 'split' && (viewPanelOpen || isMobile) && (
         <ViewPanel
           project={project}
           isMobile={isMobile}
@@ -740,7 +754,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
           setShowHelpers={setShowHelpers}
         />
       )}
-      {!walk && !chromeHidden && workspace === 'split' && (
+      {active && !walk && !chromeHidden && workspace === 'split' && (
         <div className="split-3d-tools floating">
           <IconButton label="Home view" onClick={() => goTo(namedView('home', derived.bounds))}>
             <Home size={15} />

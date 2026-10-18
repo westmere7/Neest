@@ -95,6 +95,14 @@ export function EditorShell() {
 
   const showPlan = workspace === 'plan' || workspace === 'split';
   const show3d = workspace === '3d' || workspace === 'split' || workspace === 'walk';
+  // Once opened, the 3D view stays mounted (hidden and paused) on desktop, so coming back is instant
+  // instead of rebuilding the scene and re-uploading every texture to a new WebGL context. Phones
+  // drop it to free GPU memory.
+  const [kept3d, setKept3d] = useState(false);
+  useEffect(() => {
+    if (show3d) setKept3d(true);
+  }, [show3d]);
+  const mount3d = show3d || (kept3d && !isMobile);
 
   return (
     <div
@@ -112,10 +120,10 @@ export function EditorShell() {
             <PlanCanvas />
           </div>
         )}
-        {show3d && (
-          <div className="pane pane-3d">
+        {mount3d && (
+          <div className={`pane pane-3d${show3d ? '' : ' pane-hidden'}`} aria-hidden={show3d ? undefined : true}>
             <Suspense fallback={<SceneLoading stage="code" />}>
-              <Scene3DView mode={workspace === 'walk' ? 'walk' : 'orbit'} />
+              <Scene3DView mode={workspace === 'walk' ? 'walk' : 'orbit'} active={show3d} />
             </Suspense>
           </div>
         )}

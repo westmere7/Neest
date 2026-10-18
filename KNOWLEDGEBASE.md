@@ -471,6 +471,12 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   PMREM + hemisphere + time-of-day sun with shadows; lamp lights from `LampLights`), view panel (saved views,
   walls, quality & light, categories). On desktop the panel can be stashed (header button or `P`) and brought
   back with the **View** button the tool rail shows in 3D; mobile only collapses it (there is no rail there).
+  **Kept alive:** once opened, `EditorShell` keeps the 3D view mounted on desktop when you switch to 2D/Outline
+  (`.pane-hidden`: full size, invisible, no pointer events; `active={false}`). Hidden, it stops drawing (`frameloop
+  never`, but a first load still finishes), freezes the project it was built from so 2D edits do not rebuild it,
+  drops `liveScene` (captures need the visible scene) and renders no overlays (the 2D fit measures `.view-panel`).
+  Coming back keeps the WebGL context, so no scene rebuild, shader compile or texture re-upload; the camera stays
+  where it was. Phones unmount it as before to free GPU memory.
 - **Lamp lights** (`LampLights.tsx`, `data/assets/lights.ts`): `resolveObjectLights` turns an asset's `light`
   (point/spot, x/y/z offset, `heads`) into world-space lights that scale, mirror and turn with the object. The
   scene mounts a pool per quality, no bigger than the number of fixtures (`LAMP_BUDGET`: Balanced 4 point + 3
@@ -1215,3 +1221,5 @@ Known limitations (also in README):
      `ac-outdoor-units` (resizable 9k/12k/18k/24k, twin-fan multi, single and twin side-discharge VRF with casing and
      coil finish variants, a window AC via `windowUnit()`, `wallBracket()` and `rooftopStand()`). All in outdoor ›
      Climate; the XU9 left `legacyCoplanar.json` (done).
+106. "Why does the 3D view reload the textures each time?" → leaving 3D unmounted the canvas and its WebGL context;
+    the desktop 3D view is now kept mounted, hidden and paused (`EditorShell` `mount3d`, `Scene3DView active`) (done).
