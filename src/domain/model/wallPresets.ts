@@ -18,7 +18,7 @@ export interface WallPreset {
   styleMaterialId?: string;
   finishes?: { left?: WallSideFinish; right?: WallSideFinish };
   /** Icon hint for the Build card. */
-  icon: 'solid' | 'trim' | 'panel' | 'tile' | 'brick' | 'glass' | 'railing-glass' | 'railing-bars' | 'half' | 'block';
+  icon: 'solid' | 'trim' | 'panel' | 'tile' | 'brick' | 'glass' | 'railing-glass' | 'railing-bars' | 'half' | 'block' | 'separator';
 }
 
 const skirting = (materialId = 'paint-satin-white'): WallSideFinish['skirting'] => ({ height: 0.1, depth: 0.015, materialId });
@@ -117,6 +117,15 @@ export const WALL_PRESETS: WallPreset[] = [
     style: 'half',
     icon: 'half',
     materials: { top: 'wood-oak-light' },
+  },
+  {
+    id: 'room-divider',
+    label: 'Invisible room divider',
+    hint: 'Splits one space into two rooms, e.g. for two floor finishes. Not built; a dashed line in the plan.',
+    role: 'partition',
+    thickness: 0.02,
+    style: 'separator',
+    icon: 'separator',
   },
   {
     id: 'glass-railing',

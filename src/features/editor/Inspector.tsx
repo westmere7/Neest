@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, LibraryBig, Lock, PanelRightClose, RotateCw, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
-import { isPassageKind, isWindowKind } from '@/domain/model/schema';
+import { isDividerWall, isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
 import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
@@ -22,6 +22,7 @@ import { MaterialSlotRow } from '@/features/materials/MaterialUI';
 import { deleteSelection, duplicateSelection, flipOpening, reverseWall, rotateSelection, toggleLockSelection, describeSelection } from './actions';
 import { DrawPresetSelect, WallConstruction, WallPresetPicker, WallTrims, isLightWall, LightWallFinishes } from './WallExtras';
 import { WallMultiEdit } from './WallMultiEdit';
+import { SelectSameTypeButton, WallTypesSection } from './WallTypes';
 import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
@@ -294,6 +295,7 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
           onChange={(role) => exec('Set wall type', (d) => updateWalls(d, [wallId], { role }))}
           options={ROLE_OPTIONS}
         />
+        <SelectSameTypeButton project={project} wall={w} />
         <p className="field-hint num">
           Faces: left {formatLength(leftLen, u.units, u.precision)} · right {formatLength(rightLen, u.units, u.precision)}
         </p>
@@ -374,7 +376,7 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
         )}
       </Section>
       <WallConstruction project={project} wallId={wallId} locked={locked} />
-      {isLightWall(w.style) ? (
+      {w.style === 'separator' ? null : isLightWall(w.style) ? (
         // Glass walls and railings have no faces to finish: their glazing (or bars) and frame instead.
         <Section title="Finishes">
           <LightWallFinishes wall={w} wallId={wallId} />
@@ -828,7 +830,7 @@ function OpeningToolOptions() {
 function ProjectSummary({ project, derived }: { project: Project; derived: ReturnType<typeof derivePlan> }) {
   const u = project.settings;
   const total = derived.faces.reduce((s, f) => s + f.area, 0);
-  const walls = [...derived.network.walls.values()];
+  const walls = [...derived.network.walls.values()].filter((g) => !isDividerWall(g.wall));
   const wallLength = walls.reduce((s, g) => s + g.path.length, 0);
   // Outer size of the walls only (furniture outside, e.g. on a terrace, does not count).
   const shell = walls.reduce<Bounds | null>((b, g) => unionBounds(b, boundsOf(g.footprint)), null);
@@ -923,6 +925,7 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
           </div>
         </Section>
       )}
+      <WallTypesSection project={project} />
       <Section title="Layers">
         {(
           [

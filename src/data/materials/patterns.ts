@@ -21,6 +21,11 @@ export interface TexturePattern {
   /** Draws one seamless tile onto a size×size canvas. rng is a seeded deterministic PRNG in [0,1). */
   draw(ctx: CanvasRenderingContext2D, size: number, rng: () => number): void;
   colored?: boolean;
+  /**
+   * See-through pattern: pixels the tile leaves transparent are holes (wire mesh, perforated metal,
+   * lattice). Surfaces using it render transparent and double-sided.
+   */
+  cutout?: boolean;
   /** Relative strength for normal-map derivation (0 = flat, ~1 = pronounced relief like grout/brick). */
   normalStrength: number;
 }
@@ -2423,7 +2428,10 @@ export function renderPattern(
   ctx.drawImage(base, 0, 0);
   ctx.globalAlpha = 1 - c;
   ctx.fillStyle = fill;
+  // A see-through pattern keeps its holes: blend only over what the tile drew.
+  if (pattern.cutout) ctx.globalCompositeOperation = 'source-atop';
   ctx.fillRect(0, 0, s, s);
+  ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
   contrastCache.set(key, target.canvas);
   return target.canvas;

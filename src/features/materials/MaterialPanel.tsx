@@ -26,6 +26,8 @@ function targetOwner(p: Project, t: MaterialTarget): string | null {
       const o = p.openings[t.openingId];
       return o ? OPENING_PRESETS[o.kind].label : null;
     }
+    case 'walls-side':
+      return `${t.wallIds.length} walls`;
     default:
       return p.walls[t.wallId] ? 'Wall' : null;
   }

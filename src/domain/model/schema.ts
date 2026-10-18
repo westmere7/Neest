@@ -34,7 +34,7 @@ export const WallMaterialsSchema = z.object({ left: Id, right: Id, top: Id });
  * How a wall is built. 'solid' (default) and 'half' (solid with an overhanging cap) are
  * masonry/drywall; 'glass' is a framed glass wall with mullions; the railings are balustrades.
  */
-export const WallStyleSchema = z.enum(['solid', 'half', 'glass', 'railing-glass', 'railing-bars']);
+export const WallStyleSchema = z.enum(['solid', 'half', 'glass', 'railing-glass', 'railing-bars', 'separator']);
 
 /** A moulding running along a wall face (skirting at the floor, cornice at the top). */
 export const WallTrimSchema = z.object({
@@ -517,6 +517,13 @@ export type Layers = z.infer<typeof LayersSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
 export type OptionPlan = z.infer<typeof OptionPlanSchema>;
 export type LayoutOption = z.infer<typeof LayoutOptionSchema>;
+
+/**
+ * Invisible room divider ('separator' style): splits a space into two rooms (each with its own floor,
+ * ceiling and name) without building anything. Not drawn in 3D, no collision in the walkthrough, no
+ * finishes, no doors or windows; a thin dashed line in the plan.
+ */
+export const isDividerWall = (w: { style?: WallStyle | null }): boolean => w.style === 'separator';
 
 export const isDoorKind = (k: OpeningKind) => k.startsWith('door') || k.startsWith('passage');
 export const isPassageKind = (k: OpeningKind) => k.startsWith('passage');

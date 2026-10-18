@@ -14,6 +14,8 @@ const MIN_PER_CATEGORY: Record<Exclude<AssetCategory, 'custom'>, number> = {
   laundry: 5,
   office: 4,
   hobbies: 8,
+  // Pet items ship in the pets content pack.
+  pets: 0,
   outdoor: 8,
   storage: 3,
   lighting: 5,

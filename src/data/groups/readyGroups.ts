@@ -1124,6 +1124,101 @@ const L_KITCHEN_SPECS: ReadyGroupSpec[] = [
 ];
 READY_GROUP_SPECS.push(...L_KITCHEN_SPECS);
 
+// ───────── Desk setups ─────────
+
+READY_GROUP_SPECS.push(
+  {
+    id: 'ready-l-desk-workstation',
+    name: 'L-desk workstation with mesh chair',
+    shelf: OFFICE,
+    room: 'office',
+    description: 'An L-shaped corner desk with a monitor, keyboard and notebook, a task lamp and an ergonomic mesh chair. Fits a 1.6 × 1.4 m corner plus room to pull the chair out.',
+    items: [
+      { a: 'workspace:l-desk-corner-left', x: 0, y: 0.7 },
+      { a: 'monitor', x: 0.3, y: 0.18, e: 0.75 },
+      { a: 'workspace:desk-essentials', x: 0.3, y: 0.42, e: 0.75 },
+      { a: 'task-lamp', x: 0.68, y: 0.15, e: 0.75 },
+      { a: 'workspace:ergonomic-mesh-chair', x: 0.3, y: 1.0, r: UP },
+    ],
+  },
+  {
+    id: 'ready-gaming-corner',
+    name: 'Gaming corner with two monitors',
+    shelf: OFFICE,
+    room: 'office',
+    description: 'A black gaming L desk with two monitors on its raised shelf, an RGB strip, keyboard and mouse, and a racing-style gaming chair.',
+    items: [
+      { a: 'workspace:l-desk-gaming', x: 0, y: 0.6 },
+      { a: 'monitor', x: 0.08, y: 0.13, e: 0.87 },
+      { a: 'monitor', x: 0.56, y: 0.13, e: 0.87 },
+      { a: 'workspace:desk-essentials', x: 0.32, y: 0.42, e: 0.75, m: { device: 'workspace:nylon-black' } },
+      { a: 'chair-gaming', x: 0.32, y: 1.0, r: UP },
+    ],
+  },
+  {
+    id: 'ready-standing-desk-setup',
+    name: 'Standing desk setup',
+    shelf: OFFICE,
+    room: 'office',
+    description: 'An electric sit-stand desk with a monitor, keyboard and notebook, an ergonomic mesh chair for the sitting hours and a plant beside it.',
+    items: [
+      { a: 'workspace:standing-desk-electric', x: 0, y: 0.35 },
+      { a: 'monitor', x: 0, y: 0.15, e: 0.74 },
+      { a: 'workspace:desk-essentials', x: 0, y: 0.42, e: 0.74 },
+      { a: 'workspace:ergonomic-mesh-chair', x: 0, y: 1.0, r: UP },
+      { a: 'houseplants:zz-plant', x: 0.95, y: 0.25, w: 0.45, d: 0.45 },
+    ],
+  },
+);
+
+// ───────── Pet corners ─────────
+
+const PETS = 'Pet corners';
+
+READY_GROUP_SPECS.push(
+  {
+    id: 'ready-lovebird-corner',
+    name: 'Lovebird corner',
+    shelf: PETS,
+    room: 'pets',
+    description: 'A modular wire cage with a pair of lovebirds (green and blue) on the perch, a wooden play stand for time out of the cage and a snake plant. About 2 × 0.6 m along a wall.',
+    items: [
+      { a: 'pets:modular-bird-cage', x: 0, y: 0.185 },
+      { a: 'pets:lovebird', x: -0.23, y: 0.185, e: 0.458 },
+      { a: 'pets:lovebird', x: -0.13, y: 0.185, r: 0.4, e: 0.458, m: { body: 'pets:lovebird-blue', face: 'pets:white-plastic' } },
+      { a: 'pets:bird-play-stand', x: 0.85, y: 0.3 },
+      { a: 'houseplants:snake-plant', x: -0.65, y: 0.25, w: 0.35, d: 0.35 },
+    ],
+  },
+  {
+    id: 'ready-cat-corner',
+    name: 'Cat corner',
+    shelf: PETS,
+    room: 'pets',
+    description: 'A tall cat tree with a condo and hammock, a litter cabinet with a cat asleep on top, tilted bowls and a water fountain, and a felt cave to hide in.',
+    items: [
+      { a: 'pets:cat-tree-tall', x: 0, y: 0.25 },
+      { a: 'pets:cat-litter-cabinet', x: 1.0, y: 0.25 },
+      { a: 'pets:sleeping-cat', x: 1.05, y: 0.25, r: -0.3, e: 0.6 },
+      { a: 'pets:cat-bowls-tilted', x: -0.62, y: 0.15 },
+      { a: 'pets:pet-water-fountain', x: -0.62, y: 0.42 },
+      { a: 'pets:cat-felt-cave', x: -0.55, y: 0.95 },
+    ],
+  },
+  {
+    id: 'ready-dog-corner',
+    name: 'Dog corner',
+    shelf: PETS,
+    room: 'pets',
+    description: 'A bolster dog bed against the wall, a raised double bowl beside it and a basket of toys: everything a dog needs in about 2.4 × 0.8 m.',
+    items: [
+      { a: 'pets:dog-bed-bolster', x: 0, y: 0.36 },
+      { a: 'pets:raised-double-dog-bowl', x: 0.85, y: 0.15 },
+      { a: 'pets:dog-toy-basket', x: -0.8, y: 0.17 },
+    ],
+  },
+);
+
 /** Shelf order in the Groups tab. */
 export const READY_GROUP_SHELVES = [
   BED,
@@ -1134,6 +1229,7 @@ export const READY_GROUP_SHELVES = [
   BATH,
   KIDS,
   OFFICE,
+  PETS,
   BALCONY,
   ENTRY,
 ];

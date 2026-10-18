@@ -1,3 +1,4 @@
+import { isDividerWall } from '@/domain/model/schema';
 import * as THREE from 'three';
 import type { Project, Vec2, WallSideFinish } from '@/domain/model/schema';
 import type { WallGeometry } from '@/domain/geometry/walls';
@@ -234,6 +235,7 @@ function addHalfWallCap(q: Quads, g: WallGeometry, cut?: number) {
 /** True when a wall needs an extras group (anything beyond a plain solid body). */
 export function wallHasExtras(g: WallGeometry): boolean {
   const w = g.wall;
+  if (isDividerWall(w)) return false;
   if (w.style && w.style !== 'solid') return true;
   const f = w.finishes;
   const any = (x?: WallSideFinish) => !!x && !!(x.skirting || x.cornice || x.rail || x.band);

@@ -978,3 +978,31 @@
   line-height: 1.45;
   font: inherit;
 }
+
+/* Wall types (Project panel) */
+.wall-types {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wall-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 2px;
+  border-bottom: 1px solid var(--border);
+}
+.wall-type-row:last-child {
+  border-bottom: 0;
+}
+.wall-type-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  font-size: 12.5px;
+}
+.wall-type-text strong {
+  font-weight: 600;
+}

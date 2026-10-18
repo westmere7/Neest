@@ -1,3 +1,4 @@
+import { isDividerWall } from '@/domain/model/schema';
 import * as THREE from 'three';
 import { assetModelSlots } from './assetModels';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -579,7 +580,10 @@ export function buildAssetPreview(asset: AssetDefinition, project: Project | nul
 
 export function ceilingHeightFor(room: Room | null, face: RoomFace, project: Project): number {
   if (room?.ceilingHeight) return room.ceilingHeight;
-  const hs = face.wallIds.map((id) => project.walls[id]).filter(Boolean).map((w) => w.baseElevation + w.height);
+  const hs = face.wallIds
+    .map((id) => project.walls[id])
+    .filter((w) => w && !isDividerWall(w))
+    .map((w) => w.baseElevation + w.height);
   return hs.length ? Math.min(...hs) : project.settings.defaultWall.height;
 }
 

@@ -94,7 +94,7 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
         continue;
       }
       localPatterns.add(p.id);
-      patterns.push({ id: ns(p.id), name: p.name || p.id, normalStrength: p.normalStrength ?? 0.4, colored: p.colored, draw: p.draw });
+      patterns.push({ id: ns(p.id), name: p.name || p.id, normalStrength: p.normalStrength ?? 0.4, colored: p.colored, cutout: p.cutout, draw: p.draw });
     }
 
     // Materials

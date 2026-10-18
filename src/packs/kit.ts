@@ -55,6 +55,8 @@ export interface PackPattern {
   normalStrength?: number;
   /** true = the tile has its own colours (otherwise it is tinted by the material colour). */
   colored?: boolean;
+  /** See-through: pixels left transparent are holes (wire mesh, lattice). Draw the solid parts only. */
+  cutout?: boolean;
   /** Must tile seamlessly; use `rand` (deterministic) instead of Math.random. */
   draw(ctx: CanvasRenderingContext2D, size: number, rand: () => number): void;
 }

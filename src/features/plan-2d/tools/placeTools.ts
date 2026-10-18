@@ -1,3 +1,4 @@
+import { isDividerWall } from '@/domain/model/schema';
 import type { Vec2 } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { addOpening, placeObject } from '@/domain/commands/entities';
@@ -28,6 +29,7 @@ export function hugWall(
 ): { x: number; y: number; rotation: number; wallId: string } | null {
   let best: { x: number; y: number; rotation: number; wallId: string; d: number } | null = null;
   for (const g of derived.network.walls.values()) {
+    if (isDividerWall(g.wall)) continue;
     if (g.wall.hidden) continue;
     const proj = projectOnPath(g.path, center);
     if (proj.s <= 0.001 || proj.s >= g.path.length - 0.001) continue;
@@ -57,7 +59,7 @@ export function createOpeningTool(): Tool {
       const preset = OPENING_PRESETS[kind];
       let best: { wallId: string; s: number; d: number; side: 'left' | 'right' } | null = null;
       for (const g of derived.network.walls.values()) {
-        if (g.wall.hidden) continue;
+        if (g.wall.hidden || isDividerWall(g.wall)) continue;
         const proj = projectOnPath(g.path, e.world);
         if (proj.dist > g.h + env.tol() * 2.5) continue;
         const side = dot(sub(e.world, proj.point), leftNormal(proj.tangent)) >= 0 ? 'left' : 'right';

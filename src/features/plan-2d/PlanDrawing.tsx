@@ -1,3 +1,4 @@
+import { isDividerWall } from '@/domain/model/schema';
 import { memo, type ReactNode } from 'react';
 import { isAssetHidden } from '@/data/assets/catalog';
 import type { AreaUnit, LengthUnit, Project, Vec2 } from '@/domain/model/schema';
@@ -191,6 +192,25 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
     for (const g of derived.network.walls.values()) {
       if (g.wall.hidden) continue;
       const style = g.wall.style ?? 'solid';
+      if (style === 'separator') {
+        // Invisible room divider: a thin dashed centre line, with an invisible wide stroke so it stays easy to pick.
+        const centre = slicePath(g.path, 0, g.path.length, 0);
+        wallFills.push(
+          <g key={g.wall.id} data-wall={g.wall.id}>
+            <path d={polyPath(centre, false)} fill="none" stroke="transparent" strokeWidth={f(8 * px)} />
+            <path
+              d={polyPath(centre, false)}
+              fill="none"
+              stroke={pal.dim}
+              strokeOpacity={0.85}
+              strokeWidth={f(1.1 * px)}
+              strokeDasharray={`${f(6 * px)} ${f(4 * px)}`}
+              strokeLinecap="round"
+            />
+          </g>,
+        );
+        continue;
+      }
       if (style === 'glass' || style === 'railing-glass' || style === 'railing-bars') {
         // Light-weight walls: thin outline, a centre line (glass) and post/mullion ticks.
         g.planPieces.forEach((piece, k) => {
@@ -323,7 +343,7 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
   // ── Dimensions ──
   const dims: DimensionSpec[] = [];
   if (opts.showAnnotations && project.layers.annotations.visible) {
-    const walls = [...derived.network.walls.values()].filter((g) => !g.wall.hidden);
+    const walls = [...derived.network.walls.values()].filter((g) => !g.wall.hidden && !isDividerWall(g.wall));
     if (opts.dims.overall && walls.length) {
       let minX = Infinity,
         minY = Infinity,

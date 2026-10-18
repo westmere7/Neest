@@ -1,3 +1,4 @@
+import { isDividerWall } from '../model/schema';
 import { current, isDraft, type Draft } from 'immer';
 import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
 import { newId } from '../model/ids';
@@ -195,6 +196,11 @@ export function removeDegenerateWalls(d: D): void {
         }
       }
       kw.thickness = Math.max(kw.thickness, w.thickness);
+      // A built wall wins over an invisible divider drawn on top of it.
+      if (isDividerWall(kw) && !isDividerWall(w)) {
+        if (w.style) kw.style = w.style;
+        else delete kw.style;
+      }
       delete d.walls[w.id];
     } else seen.set(key, w.id);
   }
@@ -230,6 +236,7 @@ export function healNode(d: D, nodeId: string): void {
     Math.abs(w1.height - w2.height) < 1e-6 &&
     Math.abs(w1.baseElevation - w2.baseElevation) < 1e-6 &&
     w1.role === w2.role &&
+    (w1.style ?? 'solid') === (w2.style ?? 'solid') &&
     w1.locked === w2.locked;
   if (!same) return;
   const n = d.nodes[nodeId];
@@ -602,6 +609,11 @@ export function setWallStyle(d: D, ids: string[], style: WallStyle, lowHeight = 
     const wasLow = isLowStyle(w.style);
     if (style === 'solid') delete w.style;
     else w.style = style;
+    // A divider is not built: its doors and windows go, and it stays thin.
+    if (style === 'separator') {
+      for (const o of Object.values(d.openings)) if (o.wallId === id) delete d.openings[o.id];
+      w.thickness = Math.min(w.thickness, 0.05);
+    }
     if (isLowStyle(style)) {
       const limit = style === 'half' ? 1.6 : 1.3;
       if (w.height > limit) {

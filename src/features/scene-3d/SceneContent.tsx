@@ -1,3 +1,4 @@
+import { isDividerWall } from '@/domain/model/schema';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isAssetHidden } from '@/data/assets/catalog';
 import { useAssetModelsVersion } from './assetModels';
@@ -522,7 +523,7 @@ function Labels({ project, derived, rooms, dims }: { project: Project; derived: 
       });
     if (dims)
       for (const g of derived.network.walls.values()) {
-        if (g.path.length < 0.4) continue;
+        if (g.path.length < 0.4 || isDividerWall(g.wall)) continue;
         const { p } = pointAt(g.path, g.path.length / 2);
         const s = textSprite([{ text: formatLength(g.path.length, u.units, u.precision), size: 12, weight: 600, color: '#9cc6f2' }]);
         s.position.set(p.x, g.z1 + 0.2, p.y);

@@ -283,6 +283,26 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   the library info card and carried between placed and saved copies. New groups are named from their contents
   (`smartGroupName`, e.g. "3-seat sofa & coffee table + 2 more"); saved groups still called "Group 3" are renamed
   the same way when the Groups tab opens.
+- **Invisible room dividers** (wall style `separator`, `isDividerWall`): split one space into two rooms (own floor,
+  ceiling, name) without building anything. Room faces inset them by 0, so the two floors meet on the centre line;
+  the wall network leaves them out of junctions (built walls mitre as if they were not there, no hubs); no body or
+  extras in 3D, no 3D length labels, no walkthrough collision, no wall dimensions, not counted in wall totals; a
+  dashed centre line in the plan (DXF layer A-AREA-SEPR). `addOpening` refuses them and `setWallStyle` removes
+  their openings and keeps them ≤ 5 cm. Build panel preset "Invisible room divider"; Inspector shows no finishes.
+- **Wall types** (`WallTypes.tsx`): walls grouped by role (exterior, interior, partition) with dividers apart. The
+  Project panel lists each type with its common thickness and height and an "Edit all" button; a wall's Inspector
+  has "Edit all N … walls". Both select the walls so the multi-wall editor changes thickness, height, base, type,
+  style and, through the `walls-side` material target, each face's material for all of them.
+- **See-through patterns** (`TexturePattern.cutout`, pack `PackPattern.cutout`): the tile draws only the solid parts and
+  leaves the rest transparent (wire mesh, chair mesh, lattice). The material registry renders such materials
+  transparent, double-sided, without depth writes and with a small alpha test; contrast blending keeps the holes.
+  Use them for cage panels, crate mesh and mesh chair backs instead of hundreds of rods (MAX_PARTS is 160).
+- **Pets** room category and type (`pets` pack: modular wire bird cage with see-through panels, dome cage, play
+  stand, lovebirds, dog beds and crates, kennel, pen, gate, cat tree, litter cabinet, wall steps, fountain, carrier,
+  sleeping cat…) and the `workspace` pack (desks incl. L, U, standing, wall-mounted; desk chairs incl. mesh, task,
+  executive, drafting, kneeling; a desk set). Ready-made "Pet corners" and desk setups use them.
+- Typecheck with `npm run typecheck` (`tsc -b`): the root tsconfig is solution-style, so `tsc --noEmit -p .`
+  checks nothing.
 - Wall construction style goes through `setWallStyle` (walls.ts): railings and half walls lower a room-height wall to
   1.05 m and remember `fullHeight`; switching back to solid or glass restores it (default wall height if unknown).
 - Placing an item happens on pointer-down; `keepPlacedSelection` (placeTools) swallows the click that follows, so the
@@ -1008,3 +1028,11 @@ Known limitations (also in README):
     on 9 shelves, group descriptions and the details dialog, content-based group names (done).
 64. "A lot of L-shaped kitchen sets, including cupboards" → 14 generated L kitchens with base and wall cupboards,
     corner units, tall units, hoods and everyday items, in different finishes and both hands (done).
+65. "Invisible walls so one room can have two floor finishes" → invisible room dividers (done).
+66. "Adjust all walls of the same type together: thickness, height, other settings, materials" → Wall types (done).
+67. "Pets stuff (2 lovebirds) incl. a modular cage like the photo, and lots for dogs and cats" → Pets category and
+    pack; cage wires as a see-through texture (cutout patterns) (done).
+68. "A lot of desks incl. L shapes, and chairs for them" → workspace pack, desk-setup groups (done).
+69. "5 more 60LTN studio options with kitchen near the balcony, bed and sofa, cozy with a palette; lovebird cage,
+    washer-dryer stack with the AC unit on top on the balcony; a shared desk with laptops for two" → options C–G and
+    updates to A–G (done).

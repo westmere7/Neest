@@ -180,6 +180,8 @@ describe('wall presets', () => {
     const g = [...computeWallNetwork(p).walls.values()][0];
     const body = buildWallGeometry(g);
     const extras = buildWallExtras(g, ctx(p));
-    expect(body !== null || extras !== null).toBe(true);
+    // Invisible room dividers build nothing at all; every other preset builds a body or extras.
+    if (preset.style === 'separator') expect([body, extras]).toEqual([null, null]);
+    else expect(body !== null || extras !== null).toBe(true);
   });
 });

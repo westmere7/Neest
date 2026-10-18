@@ -230,11 +230,18 @@ export class MaterialRegistry {
     const mat = entry.mat;
     mat.name = def.name;
     mat.metalness = def.metalness;
-    const transparent = def.opacity < 0.995;
+    // See-through patterns (wire mesh…): blended through their texture's alpha, both sides visible.
+    const cutout = !!def.texture && !!patternInfo(def.texture.patternId)?.cutout;
+    const transparent = def.opacity < 0.995 || cutout;
     if (mat.transparent !== transparent) mat.needsUpdate = true;
     mat.transparent = transparent;
     mat.opacity = def.opacity;
-    mat.depthWrite = def.opacity > 0.6;
+    mat.depthWrite = cutout ? false : def.opacity > 0.6;
+    const alphaTest = cutout ? 0.02 : 0;
+    if (mat.alphaTest !== alphaTest) {
+      mat.alphaTest = alphaTest;
+      mat.needsUpdate = true;
+    }
     mat.side = transparent ? THREE.DoubleSide : THREE.FrontSide;
     if (def.emissive) {
       mat.emissive.set(def.emissive);

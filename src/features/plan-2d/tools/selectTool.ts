@@ -1,3 +1,4 @@
+import { isDividerWall } from '@/domain/model/schema';
 import type { PlacedObject, Vec2 } from '@/domain/model/schema';
 import { clampOpenings, insertJunctions, joinTangent, setNodePositions, settleNode, updateWalls } from '@/domain/commands/walls';
 import { clampOpening, normalizeRotation, updateObjects, updateOpening } from '@/domain/commands/entities';
@@ -260,7 +261,7 @@ export function createSelectTool(): Tool {
           // Re-host onto another wall when the pointer moves onto it.
           if (proj.dist > g.h + env.tol() * 2) {
             for (const other of derived.network.walls.values()) {
-              if (other.wall.id === wallId) continue;
+              if (other.wall.id === wallId || isDividerWall(other.wall)) continue;
               const pr = projectOnPath(other.path, e.world);
               if (pr.dist <= other.h + env.tol()) {
                 wallId = other.wall.id;

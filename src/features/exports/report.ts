@@ -1,3 +1,4 @@
+import { isDividerWall } from '@/domain/model/schema';
 import type { Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { materialUsage } from '@/domain/commands/entities';
@@ -44,7 +45,7 @@ export function buildReport(project: Project) {
     })
     .filter((m) => m.surfaces > 0)
     .sort((a, b) => b.surfaces - a.surfaces);
-  const walls = Object.values(project.walls);
+  const walls = Object.values(project.walls).filter((w) => !isDividerWall(w));
   return {
     generator: 'Neest',
     note: 'Planning summary — not a certified survey or construction document.',
@@ -54,7 +55,7 @@ export function buildReport(project: Project) {
     totals: {
       rooms: rooms.length,
       netFloorAreaM2: round(rooms.reduce((s, r) => s + r.areaM2, 0)),
-      wallLengthM: round([...derived.network.walls.values()].reduce((s, g) => s + g.path.length, 0)),
+      wallLengthM: round([...derived.network.walls.values()].filter((g) => !isDividerWall(g.wall)).reduce((s, g) => s + g.path.length, 0)),
       walls: walls.length,
       objects: Object.keys(project.objects).length,
     },

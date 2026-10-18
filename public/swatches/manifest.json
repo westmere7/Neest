@@ -49,6 +49,10 @@
    "file": "053a273ed12f5294.webp",
    "tile": true
   },
+  "05a6382da97ebf84": {
+   "file": "05a6382da97ebf84.webp",
+   "tile": true
+  },
   "05b1a7d663c31e82": {
    "file": "05b1a7d663c31e82.webp",
    "tile": true
@@ -385,6 +389,10 @@
    "file": "2677d1ed4cad1a2c.webp",
    "tile": true
   },
+  "26c512c8a3497fc7": {
+   "file": "26c512c8a3497fc7.webp",
+   "tile": true
+  },
   "271675a75760f309": {
    "file": "271675a75760f309.webp",
    "tile": false
@@ -435,6 +443,10 @@
   },
   "2bc58d54c4d20a3b": {
    "file": "2bc58d54c4d20a3b.webp",
+   "tile": true
+  },
+  "2c250f678de24e7f": {
+   "file": "2c250f678de24e7f.webp",
    "tile": true
   },
   "2c3dbc6cdd51ce59": {
@@ -555,6 +567,10 @@
   },
   "3a9bd2819e00422b": {
    "file": "3a9bd2819e00422b.webp",
+   "tile": true
+  },
+  "3bcd594b96b0dc46": {
+   "file": "3bcd594b96b0dc46.webp",
    "tile": true
   },
   "3be34c771e97291a": {
@@ -767,6 +783,10 @@
   },
   "5319e37085449a83": {
    "file": "5319e37085449a83.webp",
+   "tile": true
+  },
+  "53302a1f3327f3cc": {
+   "file": "53302a1f3327f3cc.webp",
    "tile": true
   },
   "5369faf3440830f1": {
@@ -1125,6 +1145,10 @@
    "file": "71542e46e40f4bf5.webp",
    "tile": true
   },
+  "71afd509bbf8c2a4": {
+   "file": "71afd509bbf8c2a4.webp",
+   "tile": true
+  },
   "72166e2324c054d4": {
    "file": "72166e2324c054d4.webp",
    "tile": true
@@ -1383,6 +1407,10 @@
   },
   "8a7b96386ea8a046": {
    "file": "8a7b96386ea8a046.webp",
+   "tile": true
+  },
+  "8ae3bd480d57365b": {
+   "file": "8ae3bd480d57365b.webp",
    "tile": true
   },
   "8aede04020c0d906": {
@@ -1785,6 +1813,10 @@
    "file": "b14da8b72278cb59.webp",
    "tile": true
   },
+  "b14f578079529593": {
+   "file": "b14f578079529593.webp",
+   "tile": true
+  },
   "b17700eb89c41577": {
    "file": "b17700eb89c41577.webp",
    "tile": false
@@ -1795,6 +1827,10 @@
   },
   "b1edd4cab95a1efd": {
    "file": "b1edd4cab95a1efd.webp",
+   "tile": true
+  },
+  "b20aacea37a34942": {
+   "file": "b20aacea37a34942.webp",
    "tile": true
   },
   "b2433e4cd123303a": {
@@ -1913,6 +1949,10 @@
    "file": "bff50e56648b79ea.webp",
    "tile": true
   },
+  "c0093e5a0c134018": {
+   "file": "c0093e5a0c134018.webp",
+   "tile": true
+  },
   "c07a2b3205bcc17e": {
    "file": "c07a2b3205bcc17e.webp",
    "tile": true
@@ -1928,6 +1968,10 @@
   "c189f346b6d03813": {
    "file": "c189f346b6d03813.webp",
    "tile": false
+  },
+  "c1c21b8a9379fc1a": {
+   "file": "c1c21b8a9379fc1a.webp",
+   "tile": true
   },
   "c1ff0e40d9ee1cee": {
    "file": "c1ff0e40d9ee1cee.webp",
@@ -2056,6 +2100,10 @@
   "cbd453a557f7e808": {
    "file": "cbd453a557f7e808.webp",
    "tile": false
+  },
+  "cbddbda4bd647c65": {
+   "file": "cbddbda4bd647c65.webp",
+   "tile": true
   },
   "cc98caa501b4ed8a": {
    "file": "cc98caa501b4ed8a.webp",
@@ -2217,8 +2265,16 @@
    "file": "ddb1855a497a0441.webp",
    "tile": false
   },
+  "de6b0020ab16d4fa": {
+   "file": "de6b0020ab16d4fa.webp",
+   "tile": true
+  },
   "de707fb36761bc56": {
    "file": "de707fb36761bc56.webp",
+   "tile": true
+  },
+  "df167e7650f9c530": {
+   "file": "df167e7650f9c530.webp",
    "tile": true
   },
   "df3b42c58320cfb0": {
@@ -2379,6 +2435,10 @@
   },
   "eb86a3a3ed6ddba2": {
    "file": "eb86a3a3ed6ddba2.webp",
+   "tile": true
+  },
+  "ebb5872748ec075e": {
+   "file": "ebb5872748ec075e.webp",
    "tile": true
   },
   "ec01637be26b3bf1": {
@@ -3074,6 +3134,15 @@
   "people:tee-sage": "5568020912896853",
   "people:tee-white": "aebc9df3f9c6d02c",
   "people:trouser-grey": "205294ae52d00a98",
+  "pets:canvas-olive": "df167e7650f9c530",
+  "pets:crate-mesh-black": "53302a1f3327f3cc",
+  "pets:nest-coconut": "c1c21b8a9379fc1a",
+  "pets:perch-wood": "71afd509bbf8c2a4",
+  "pets:plush-cream": "de6b0020ab16d4fa",
+  "pets:plush-grey": "ebb5872748ec075e",
+  "pets:sisal": "8ae3bd480d57365b",
+  "pets:wire-mesh-black": "cbddbda4bd647c65",
+  "pets:wire-mesh-white": "05a6382da97ebf84",
   "plaster-light": "441d2408d98dbd29",
   "plaster-rough-white": "1bf7bcd85385dcf2",
   "plaster-white": "16d4b193b4b30612",
@@ -3230,6 +3299,12 @@
   "wooden-tables:satinwood": "bada7eacaef6a640",
   "wooden-tables:walnut-slab": "8aede04020c0d906",
   "wooden-tables:white-oak": "bb25b0f871399c29",
-  "wooden-tables:writing-leather": "5f4c6f947e8846fe"
+  "wooden-tables:writing-leather": "5f4c6f947e8846fe",
+  "workspace:carbon-black": "26c512c8a3497fc7",
+  "workspace:leather-black": "b14f578079529593",
+  "workspace:leather-cognac": "b20aacea37a34942",
+  "workspace:mesh-black": "3bcd594b96b0dc46",
+  "workspace:mesh-grey": "2c250f678de24e7f",
+  "workspace:sisal-desk": "c0093e5a0c134018"
  }
 }

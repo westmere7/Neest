@@ -100,6 +100,14 @@ export function extraOpeningIcon(kind: OpeningKind): ReactNode | null {
 function PresetIcon({ preset }: { preset: WallPreset }) {
   const wall = <rect x="4" y="16" width="32" height="8" rx="1" fill="currentColor" opacity="0.85" />;
   switch (preset.icon) {
+    case 'separator':
+      return (
+        <svg viewBox="0 0 40 40" aria-hidden fill="none" stroke="currentColor">
+          <rect x="4" y="8" width="14" height="24" fill="currentColor" stroke="none" opacity="0.18" />
+          <rect x="22" y="8" width="14" height="24" fill="currentColor" stroke="none" opacity="0.4" />
+          <path d="M20 6v28" strokeWidth="1.6" strokeDasharray="3 2.5" />
+        </svg>
+      );
     case 'glass':
       return (
         <svg viewBox="0 0 40 40" aria-hidden fill="none" stroke="currentColor">

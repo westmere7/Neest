@@ -23,6 +23,7 @@ const STYLE_OPTIONS: { value: WallStyle; label: string }[] = [
   { value: 'glass', label: 'Glass wall' },
   { value: 'railing-glass', label: 'Glass railing' },
   { value: 'railing-bars', label: 'Metal bar railing' },
+  { value: 'separator', label: 'Invisible room divider' },
 ];
 
 const EMPTY: WallSideFinish = { skirting: null, cornice: null, rail: null, band: null };
@@ -73,7 +74,7 @@ export function WallConstruction({ project, wallId, locked }: { project: Project
             setWallStyle(d, [wallId], next);
             if ((next === 'glass' || next === 'railing-glass') && !wall.styleMaterialId) wall.styleMaterialId = 'glass-clear';
             if (next === 'railing-bars' && !wall.styleMaterialId) wall.styleMaterialId = 'metal-black-matte';
-            if (next !== 'solid' && next !== 'half') {
+            if (next !== 'solid' && next !== 'half' && next !== 'separator') {
               if (wall.materials.top === 'plaster-white') wall.materials.top = 'metal-black-matte';
               ensureMaterial(d, wall.materials.top);
             }
@@ -83,6 +84,11 @@ export function WallConstruction({ project, wallId, locked }: { project: Project
         options={STYLE_OPTIONS}
       />
       {light && <p className="field-hint">Glazing and frame finishes are under Finishes.</p>}
+      {style === 'separator' && (
+        <p className="field-hint">
+          Not built: it only splits the space into two rooms, so each side can have its own floor, ceiling and name. Hidden in 3D and the walkthrough; doors and windows cannot go in it.
+        </p>
+      )}
       <Toggle
         label="Sloped top"
         hint="Different height at each end (attic knee walls, walls under stairs)"

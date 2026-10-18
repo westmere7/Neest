@@ -1,3 +1,4 @@
+import { isDividerWall } from '@/domain/model/schema';
 import type { Project, Vec2 } from '../model/schema';
 import type { WallNetwork } from '../geometry/walls';
 import type { RoomFace } from '../geometry/rooms';
@@ -24,7 +25,7 @@ export function buildColliders(project: Project, network: WallNetwork): Collider
     for (let i = 0; i < poly.length; i++) out.push({ a: poly[i], b: poly[(i + 1) % poly.length] });
   };
   for (const g of network.walls.values()) {
-    if (g.wall.hidden) continue;
+    if (g.wall.hidden || isDividerWall(g.wall)) continue;
     for (const pc of g.pieces) {
       if (pc.z1 < BODY_MIN || pc.z0 > BODY_MAX) continue;
       addPoly([...pc.left, ...[...pc.right].reverse()]);

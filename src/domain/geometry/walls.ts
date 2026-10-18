@@ -1,4 +1,4 @@
-import type { Opening, Project, Vec2, WallNode, WallSegment } from '../model/schema';
+import { isDividerWall, type Opening, type Project, type Vec2, type WallNode, type WallSegment } from '../model/schema';
 import type { Polygon } from './polygon';
 import { signedArea } from './polygon';
 import { buildWallPath, pointAt, slicePath, type WallPath } from './wallPath';
@@ -131,6 +131,9 @@ export function computeWallNetwork(project: Pick<Project, 'walls' | 'nodes' | 'o
     const node = project.nodes[nodeId];
     if (!node) continue;
     const ends: EndInfo[] = [];
+    // Invisible room dividers take no part in the junction: the built walls mitre as if they were
+    // not there, and the dividers just get square ends (no hub, no free end cap).
+    const dividerEnds: EndInfo[] = [];
     for (const wid of wallIds) {
       const w = project.walls[wid];
       const path = paths.get(wid);
@@ -138,7 +141,13 @@ export function computeWallNetwork(project: Pick<Project, 'walls' | 'nodes' | 'o
       const atStart = w.a === nodeId;
       const smp = atStart ? path.samples[0] : path.samples[path.samples.length - 1];
       const dir = atStart ? smp.tangent : scale(smp.tangent, -1);
-      ends.push({ wallId: wid, atStart, dir, h: w.thickness / 2, angle: angleOf(dir) });
+      (isDividerWall(w) ? dividerEnds : ends).push({ wallId: wid, atStart, dir, h: w.thickness / 2, angle: angleOf(dir) });
+    }
+    for (const e of dividerEnds) {
+      const ln = leftNormal(e.dir);
+      const left = add(node, scale(ln, e.h));
+      const right = add(node, scale(ln, -e.h));
+      corners.set(`${e.wallId}:${e.atStart ? 's' : 'e'}`, { left: e.atStart ? left : right, right: e.atStart ? right : left, free: false });
     }
     if (ends.length === 0) continue;
     ends.sort((x, y) => x.angle - y.angle);

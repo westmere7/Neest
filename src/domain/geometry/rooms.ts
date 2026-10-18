@@ -1,3 +1,4 @@
+import { isDividerWall } from '../model/schema';
 import type { Project, Vec2 } from '../model/schema';
 import {
   cleanPolygon,
@@ -67,7 +68,8 @@ export function detectRoomFaces(project: Pick<Project, 'walls' | 'nodes'>): Room
     const a = project.nodes[w.a];
     const b = project.nodes[w.b];
     if (!a || !b) continue;
-    halfThickness.set(w.id, w.thickness / 2);
+    // Floors on both sides of an invisible divider meet on its centre line.
+    halfThickness.set(w.id, isDividerWall(w) ? 0 : w.thickness / 2);
     const path = buildWallPath(a, b, w.curve, w.curveEnd);
     if (path.samples.length === 2) {
       addEdge(w.a, w.b, w.id);

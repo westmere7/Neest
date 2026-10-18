@@ -2111,11 +2111,11 @@
   },
   "lived-in:coffee-mugs-pair": {
    "file": "lived-in_coffee-mugs-pair.webp",
-   "fp": "ab25f28cf64433d0"
+   "fp": "47c8147e38821d3d"
   },
   "lived-in:cooking-condiments": {
    "file": "lived-in_cooking-condiments.webp",
-   "fp": "933e97a3bb15ee8c"
+   "fp": "b01286c92421c38d"
   },
   "lived-in:dinner-place-setting": {
    "file": "lived-in_dinner-place-setting.webp",
@@ -2139,7 +2139,7 @@
   },
   "lived-in:shared-family-dishes": {
    "file": "lived-in_shared-family-dishes.webp",
-   "fp": "d70ae75bc179a1f4"
+   "fp": "8ae42e2bec1f8510"
   },
   "lived-in:sneakers-pair": {
    "file": "lived-in_sneakers-pair.webp",
@@ -2147,11 +2147,11 @@
   },
   "lived-in:toiletries-set": {
    "file": "lived-in_toiletries-set.webp",
-   "fp": "58fbd2762d550851"
+   "fp": "eb1622987c6a5616"
   },
   "lived-in:tv-remote-coasters": {
    "file": "lived-in_tv-remote-coasters.webp",
-   "fp": "c664665e5d0fe39f"
+   "fp": "3d288db04d6a597f"
   },
   "media-console": {
    "file": "media-console.webp",
@@ -2680,6 +2680,106 @@
   "people:woman-washing-dishes": {
    "file": "people_woman-washing-dishes.webp",
    "fp": "e46eb5068bb3d057"
+  },
+  "pets:bird-play-stand": {
+   "file": "pets_bird-play-stand.webp",
+   "fp": "a6e86aec2f957ed3"
+  },
+  "pets:cat-bowls-tilted": {
+   "file": "pets_cat-bowls-tilted.webp",
+   "fp": "a82ffa3079c84314"
+  },
+  "pets:cat-felt-cave": {
+   "file": "pets_cat-felt-cave.webp",
+   "fp": "bf7693269f88d0fe"
+  },
+  "pets:cat-litter-box-hooded": {
+   "file": "pets_cat-litter-box-hooded.webp",
+   "fp": "18acf8882414477a"
+  },
+  "pets:cat-litter-cabinet": {
+   "file": "pets_cat-litter-cabinet.webp",
+   "fp": "60bc1f9e36316cfe"
+  },
+  "pets:cat-scratching-post": {
+   "file": "pets_cat-scratching-post.webp",
+   "fp": "78972cb1ea890c78"
+  },
+  "pets:cat-tree-tall": {
+   "file": "pets_cat-tree-tall.webp",
+   "fp": "798244f19f3328a8"
+  },
+  "pets:cat-wall-steps": {
+   "file": "pets_cat-wall-steps.webp",
+   "fp": "47bc80cf05e95ce8"
+  },
+  "pets:cat-window-perch": {
+   "file": "pets_cat-window-perch.webp",
+   "fp": "a7382316738a49dc"
+  },
+  "pets:dog-bed-bolster": {
+   "file": "pets_dog-bed-bolster.webp",
+   "fp": "94e7fda7f384e6ab"
+  },
+  "pets:dog-bed-donut": {
+   "file": "pets_dog-bed-donut.webp",
+   "fp": "d6db90ee6437fcf7"
+  },
+  "pets:dog-crate-end-table": {
+   "file": "pets_dog-crate-end-table.webp",
+   "fp": "86d62a3923ba4b16"
+  },
+  "pets:dog-crate-wire": {
+   "file": "pets_dog-crate-wire.webp",
+   "fp": "371d09578dd16d78"
+  },
+  "pets:dog-toy-basket": {
+   "file": "pets_dog-toy-basket.webp",
+   "fp": "f597bda4d7e29cad"
+  },
+  "pets:dome-bird-cage-stand": {
+   "file": "pets_dome-bird-cage-stand.webp",
+   "fp": "2eb258e17b3d53d7"
+  },
+  "pets:lovebird": {
+   "file": "pets_lovebird.webp",
+   "fp": "fe3c1d4ba1104612"
+  },
+  "pets:modular-bird-cage": {
+   "file": "pets_modular-bird-cage.webp",
+   "fp": "9f2d21aa632b3996"
+  },
+  "pets:modular-bird-cage-wide": {
+   "file": "pets_modular-bird-cage-wide.webp",
+   "fp": "4491599cd0a23195"
+  },
+  "pets:outdoor-dog-house": {
+   "file": "pets_outdoor-dog-house.webp",
+   "fp": "2436177c4ecc7dfa"
+  },
+  "pets:pet-carrier": {
+   "file": "pets_pet-carrier.webp",
+   "fp": "2c044336b43bce43"
+  },
+  "pets:pet-gate-pressure": {
+   "file": "pets_pet-gate-pressure.webp",
+   "fp": "3849f846f20abee9"
+  },
+  "pets:pet-playpen-octagon": {
+   "file": "pets_pet-playpen-octagon.webp",
+   "fp": "fd93ad3c83f9290f"
+  },
+  "pets:pet-water-fountain": {
+   "file": "pets_pet-water-fountain.webp",
+   "fp": "de24bf7accbb07b2"
+  },
+  "pets:raised-double-dog-bowl": {
+   "file": "pets_raised-double-dog-bowl.webp",
+   "fp": "e3f4649fef365371"
+  },
+  "pets:sleeping-cat": {
+   "file": "pets_sleeping-cat.webp",
+   "fp": "3a85c9b5d65376d9"
   },
   "piano-grand": {
    "file": "piano-grand.webp",
@@ -3548,6 +3648,90 @@
   "wooden-tables:writing-bureau": {
    "file": "wooden-tables_writing-bureau.webp",
    "fp": "2e697388348cf9fc"
+  },
+  "workspace:boucle-swivel-desk-chair": {
+   "file": "workspace_boucle-swivel-desk-chair.webp",
+   "fp": "31f087530e96301b"
+  },
+  "workspace:computer-desk-hutch": {
+   "file": "workspace_computer-desk-hutch.webp",
+   "fp": "10086e48a3d6e437"
+  },
+  "workspace:desk-essentials": {
+   "file": "workspace_desk-essentials.webp",
+   "fp": "c8a131f5646b1b94"
+  },
+  "workspace:drafting-stool": {
+   "file": "workspace_drafting-stool.webp",
+   "fp": "51d6f76b84ea387b"
+  },
+  "workspace:ergonomic-mesh-chair": {
+   "file": "workspace_ergonomic-mesh-chair.webp",
+   "fp": "b543838cca87d020"
+  },
+  "workspace:fabric-task-chair": {
+   "file": "workspace_fabric-task-chair.webp",
+   "fp": "0922050bbc75f36e"
+  },
+  "workspace:kneeling-chair": {
+   "file": "workspace_kneeling-chair.webp",
+   "fp": "bd9d0ad8b8a83388"
+  },
+  "workspace:l-desk-corner-left": {
+   "file": "workspace_l-desk-corner-left.webp",
+   "fp": "7088a0c847b50513"
+  },
+  "workspace:l-desk-corner-right": {
+   "file": "workspace_l-desk-corner-right.webp",
+   "fp": "7354b7d430552be0"
+  },
+  "workspace:l-desk-drawer-pedestal": {
+   "file": "workspace_l-desk-drawer-pedestal.webp",
+   "fp": "081f6c4ad8decea9"
+  },
+  "workspace:l-desk-gaming": {
+   "file": "workspace_l-desk-gaming.webp",
+   "fp": "f03abbc58862ae26"
+  },
+  "workspace:l-desk-standing": {
+   "file": "workspace_l-desk-standing.webp",
+   "fp": "e8e8cfaa560c229b"
+  },
+  "workspace:leaning-ladder-desk": {
+   "file": "workspace_leaning-ladder-desk.webp",
+   "fp": "15f6e1bda60dd313"
+  },
+  "workspace:leather-executive-chair": {
+   "file": "workspace_leather-executive-chair.webp",
+   "fp": "0e50003facf71b8d"
+  },
+  "workspace:scandi-wooden-desk-chair": {
+   "file": "workspace_scandi-wooden-desk-chair.webp",
+   "fp": "1a3b3293b27698fc"
+  },
+  "workspace:slim-oak-desk": {
+   "file": "workspace_slim-oak-desk.webp",
+   "fp": "8363b6eda6377fe5"
+  },
+  "workspace:standing-desk-electric": {
+   "file": "workspace_standing-desk-electric.webp",
+   "fp": "fd2af22009d933b1"
+  },
+  "workspace:two-person-bench-desk": {
+   "file": "workspace_two-person-bench-desk.webp",
+   "fp": "a936191cc269542f"
+  },
+  "workspace:u-shaped-desk": {
+   "file": "workspace_u-shaped-desk.webp",
+   "fp": "3f77c54cd46633c1"
+  },
+  "workspace:wall-mounted-desk": {
+   "file": "workspace_wall-mounted-desk.webp",
+   "fp": "7e26706929bc5934"
+  },
+  "workspace:writing-desk-drawers": {
+   "file": "workspace_writing-desk-drawers.webp",
+   "fp": "82b749cc40a5c980"
   },
   "yoga-mat": {
    "file": "yoga-mat.webp",

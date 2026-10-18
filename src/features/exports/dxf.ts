@@ -1,3 +1,5 @@
+import { slicePath } from '@/domain/geometry/wallPath';
+import { isDividerWall } from '@/domain/model/schema';
 import type { LengthUnit, Project, Vec2 } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { pointAt } from '@/domain/geometry/wallPath';
@@ -143,6 +145,11 @@ export function buildDxf(project: Project, o: DxfOptions): string {
   // Walls: the same edges drawn on screen (faces, free end caps).
   for (const g of derived.network.walls.values()) {
     if (g.wall.hidden) continue;
+    // Invisible room dividers: a dashed centre line on their own layer.
+    if (isDividerWall(g.wall)) {
+      w.polyline('A-AREA-SEPR', slicePath(g.path, 0, g.path.length, 0), false);
+      continue;
+    }
     for (const piece of g.planPieces) {
       w.polyline('A-WALL', piece.left, false);
       w.polyline('A-WALL', piece.right, false);
@@ -198,7 +205,7 @@ export function buildDxf(project: Project, o: DxfOptions): string {
   }
 
   if (o.dimensions) {
-    const walls = [...derived.network.walls.values()].filter((g) => !g.wall.hidden && !g.path.control);
+    const walls = [...derived.network.walls.values()].filter((g) => !g.wall.hidden && !g.path.control && !isDividerWall(g.wall));
     const centroid = walls.length ? polygonCentroid(walls.map((g) => pointAt(g.path, g.path.length / 2).p)) : { x: 0, y: 0 };
     const px = 0.012; // ~1 drawing px at 1:50
     for (const g of walls) {

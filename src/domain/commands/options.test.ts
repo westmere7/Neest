@@ -12,7 +12,7 @@ const edit = (p: Project, fn: (d: D) => void): Project => produce(p, fn);
 function base() {
   let obj = '';
   const p = edit(createEmptyProject(), (d) => {
-    addWallChain(d, [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 3 }, { x: 0, y: 3 }], { closed: true, thickness: 0.12, height: 2.7 });
+    addWallChain(d, [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 3 }, { x: 0, y: 3 }], { closed: true, thickness: 0.12, height: 2.7, role: 'exterior' });
     obj = placeObject(d, { assetId: 'side-table', x: 1, y: 1, width: 0.5, depth: 0.5, height: 0.5 });
   });
   return { p, obj };

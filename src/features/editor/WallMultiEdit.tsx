@@ -5,6 +5,7 @@ import { clampOpenings, setWallStyle, updateWalls } from '@/domain/commands/wall
 import { matchWallFinishes } from '@/domain/commands/wallTools';
 import { useProjectStore } from '@/state/projectStore';
 import { Button, Section, Select } from '@/components/ui';
+import { MaterialSlotRow } from '@/features/materials/MaterialUI';
 
 const MIXED = '__mixed__';
 
@@ -20,6 +21,7 @@ const STYLE_OPTIONS: { value: WallStyle; label: string }[] = [
   { value: 'glass', label: 'Glass wall' },
   { value: 'railing-glass', label: 'Glass railing' },
   { value: 'railing-bars', label: 'Bar railing' },
+  { value: 'separator', label: 'Invisible room divider' },
 ];
 
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
@@ -144,6 +146,11 @@ export function WallMultiEdit({ project, wallIds }: { project: Project; wallIds:
   const role = common(walls, (w) => w.role);
   const style = common(walls, (w) => w.style ?? 'solid');
   const first = walls[0];
+  // Faces to finish: built walls only (not glass, railings or invisible dividers).
+  const builtWalls = walls.filter((w) => !w.style || w.style === 'solid' || w.style === 'half');
+  const built = builtWalls.map((w) => w.id);
+  const firstBuilt = builtWalls[0];
+  const mixedNote = (side: 'left' | 'right' | 'top') => (builtWalls.every((w) => w.materials[side] === firstBuilt?.materials[side]) ? '' : ' (mixed)');
   const finishesMatch = walls.every(
     (w) =>
       w.materials.left === first.materials.left &&
@@ -203,6 +210,13 @@ export function WallMultiEdit({ project, wallIds }: { project: Project; wallIds:
         }}
         options={style ? STYLE_OPTIONS : [{ value: MIXED, label: 'Mixed' }, ...STYLE_OPTIONS]}
       />
+      {built.length > 0 && (
+        <>
+          <MaterialSlotRow label={`Left sides${mixedNote('left')}`} target={{ kind: 'walls-side', wallIds: built, side: 'left' }} materialId={firstBuilt.materials.left} />
+          <MaterialSlotRow label={`Right sides${mixedNote('right')}`} target={{ kind: 'walls-side', wallIds: built, side: 'right' }} materialId={firstBuilt.materials.right} />
+          <MaterialSlotRow label={`Tops & ends${mixedNote('top')}`} target={{ kind: 'walls-side', wallIds: built, side: 'top' }} materialId={firstBuilt.materials.top} />
+        </>
+      )}
       <div className="btn-row">
         <Button
           size="sm"

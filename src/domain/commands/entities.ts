@@ -1,3 +1,4 @@
+import { isDividerWall } from '../model/schema';
 import { current, isDraft } from 'immer';
 import { DEFAULT_MATERIALS, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { newId } from '../model/ids';
@@ -45,7 +46,8 @@ export interface AddOpeningArgs {
 
 export function addOpening(d: D, args: AddOpeningArgs): string | null {
   const wall = d.walls[args.wallId];
-  if (!wall) return null;
+  // Invisible room dividers hold no doors or windows.
+  if (!wall || isDividerWall(wall)) return null;
   const preset = OPENING_PRESETS[args.kind];
   const isWindow = args.kind.startsWith('window');
   const id = newId(isWindow ? 'win' : 'door');
@@ -394,6 +396,8 @@ export const roomTypeLabel = (t: RoomType) => ROOM_TYPE_LABELS[t];
 
 export type MaterialTarget =
   | { kind: 'wall-side'; wallId: string; side: WallSide | 'top' }
+  /** The same face of several walls at once (multi-wall editing; shows the first wall's material). */
+  | { kind: 'walls-side'; wallIds: string[]; side: WallSide | 'top' }
   | { kind: 'wall-both'; wallId: string }
   | { kind: 'room-floor'; roomId: string }
   | { kind: 'room-ceiling'; roomId: string }
@@ -468,6 +472,8 @@ export function getTargetMaterialId(p: Project, t: MaterialTarget, assetDefault?
       const w = p.walls[t.wallId];
       return w ? w.materials[t.side] : null;
     }
+    case 'walls-side':
+      return p.walls[t.wallIds[0]]?.materials[t.side] ?? null;
     case 'wall-both':
       return p.walls[t.wallId]?.materials.left ?? null;
     case 'room-floor':
@@ -521,6 +527,13 @@ export function materialUsage(p: Project, materialId: string): MaterialTarget[] 
 
 function setTarget(d: D, t: MaterialTarget, materialId: string) {
   switch (t.kind) {
+    case 'walls-side': {
+      for (const id of t.wallIds) {
+        const w = d.walls[id];
+        if (w) w.materials[t.side] = materialId;
+      }
+      break;
+    }
     case 'wall-side': {
       const w = d.walls[t.wallId];
       if (w) w.materials[t.side] = materialId;
