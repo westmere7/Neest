@@ -1177,3 +1177,5 @@ Known limitations (also in README):
 97. "Swap the two faces of a wall" → `swapWallFaces` (⇆ beside Reverse direction): side finishes and trims trade
     places, the wall keeps its direction (done).
 98. "Revert an auto-rounded corner" → Curve → Sharp corner (`unroundCorner`) (done).
+99. "Double-click an item: centre and close in" → double-clicking furniture, a door or a window (plan and 3D) selects it
+    and focuses the camera (`requestFocus`); double-clicking a room still edits its name (done).

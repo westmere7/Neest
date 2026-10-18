@@ -533,6 +533,8 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
     }
     if (e.shiftKey) ed.toggleSelection(item);
     else ed.setSelection([item]);
+    // Double-click an item: close in on it and orbit around it.
+    if (!e.shiftKey && e.nativeEvent.detail >= 2 && (kind === 'object' || kind === 'opening')) ed.requestFocus();
   }, []);
 
   const options: SceneOptions = {

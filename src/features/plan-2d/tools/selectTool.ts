@@ -496,6 +496,13 @@ export function createSelectTool(): Tool {
     },
 
     onDoubleClick(e, env) {
+      // An item: select it and close in on it. A room: select it and edit its name.
+      const item = hitTest(env.project(), env.derived(), e.world, env.tol(), { rooms: false, walls: false, objects: true, openings: true });
+      if (item) {
+        editor().setSelection([item]);
+        editor().requestFocus();
+        return;
+      }
       const hit = hitTest(env.project(), env.derived(), e.world, env.tol(), { rooms: true, walls: false, objects: false, openings: false });
       if (hit) {
         editor().setSelection([hit]);

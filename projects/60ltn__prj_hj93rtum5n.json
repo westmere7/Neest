@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1792340697370,
+  "updatedAt": 1792341008041,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -73,14 +73,14 @@
       "x": 4.62,
       "y": 1.3599999999999999
     },
-    "n_p1phf8lwqt": {
-      "id": "n_p1phf8lwqt",
+    "n_qb5imfq3p8": {
+      "id": "n_qb5imfq3p8",
       "x": 3.21,
-      "y": 8.86
+      "y": 8.68
     },
-    "n_wh03m7za8o": {
-      "id": "n_wh03m7za8o",
-      "x": 3.71,
+    "n_2e5ns0tegz": {
+      "id": "n_2e5ns0tegz",
+      "x": 3.5300000000000002,
       "y": 8.36
     }
   },
@@ -96,11 +96,29 @@
       "curve": null,
       "materials": {
         "left": "paint-warm-white",
-        "right": "plaster-light",
+        "right": "paint-warm-white",
         "top": "plaster-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "finishes": {
+        "left": {
+          "skirting": null,
+          "cornice": null,
+          "rail": null,
+          "band": null
+        },
+        "right": {
+          "skirting": {
+            "height": 0.1,
+            "depth": 0.015,
+            "materialId": "paint-satin-white"
+          },
+          "cornice": null,
+          "rail": null,
+          "band": null
+        }
+      }
     },
     "w_dogbv452x7": {
       "id": "w_dogbv452x7",
@@ -205,7 +223,7 @@
     "w_25lple2f6s": {
       "id": "w_25lple2f6s",
       "a": "n_n1qm05nnzf",
-      "b": "n_p1phf8lwqt",
+      "b": "n_qb5imfq3p8",
       "thickness": 0.1,
       "height": 2.7,
       "baseElevation": 0,
@@ -217,7 +235,19 @@
         "top": "plaster-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "finishes": {
+        "left": {
+          "skirting": {
+            "height": 0.1,
+            "depth": 0.015,
+            "materialId": "paint-satin-white"
+          },
+          "cornice": null,
+          "rail": null,
+          "band": null
+        }
+      }
     },
     "w_d1qzodznrp": {
       "id": "w_d1qzodznrp",
@@ -239,7 +269,7 @@
     },
     "w_yh679e85vf": {
       "id": "w_yh679e85vf",
-      "a": "n_wh03m7za8o",
+      "a": "n_2e5ns0tegz",
       "b": "n_txsaoszm2o",
       "thickness": 0.1,
       "height": 2.7,
@@ -253,7 +283,19 @@
       },
       "locked": false,
       "hidden": false,
-      "glassFrame": "rails"
+      "glassFrame": "rails",
+      "finishes": {
+        "left": {
+          "skirting": {
+            "height": 0.1,
+            "depth": 0.015,
+            "materialId": "paint-satin-white"
+          },
+          "cornice": null,
+          "rail": null,
+          "band": null
+        }
+      }
     },
     "w_f2wrra87el": {
       "id": "w_f2wrra87el",
@@ -328,21 +370,17 @@
       "style": "glass",
       "styleMaterialId": "glass-clear"
     },
-    "w_3z8yopw1tv": {
-      "id": "w_3z8yopw1tv",
-      "a": "n_p1phf8lwqt",
-      "b": "n_wh03m7za8o",
+    "w_pb2plwwg9b": {
+      "id": "w_pb2plwwg9b",
+      "a": "n_qb5imfq3p8",
+      "b": "n_2e5ns0tegz",
       "thickness": 0.1,
       "height": 2.7,
       "baseElevation": 0,
       "role": "interior",
       "curve": {
-        "x": 3.2385954792089673,
-        "y": 8.55526214587563
-      },
-      "curveEnd": {
-        "x": 3.405262145875634,
-        "y": 8.388595479208965
+        "x": 3.21,
+        "y": 8.503268880054145
       },
       "materials": {
         "left": "paint-warm-white",
@@ -351,8 +389,23 @@
       },
       "locked": false,
       "hidden": false,
+      "curveEnd": {
+        "x": 3.3532688800541464,
+        "y": 8.36
+      },
       "heightEnd": null,
-      "glassFrame": "rails"
+      "finishes": {
+        "left": {
+          "skirting": {
+            "height": 0.1,
+            "depth": 0.015,
+            "materialId": "paint-satin-white"
+          },
+          "cornice": null,
+          "rail": null,
+          "band": null
+        }
+      }
     }
   },
   "openings": {
@@ -405,8 +458,8 @@
       "id": "door_d2m6n7mm7u",
       "wallId": "w_yh679e85vf",
       "kind": "door-single",
-      "offset": 0.39617038328266796,
-      "width": 0.75,
+      "offset": 0.4,
+      "width": 0.7399999999999998,
       "height": 2.2,
       "sillHeight": 0,
       "swingSide": "left",
@@ -414,23 +467,10 @@
       "openAngle": 0,
       "style": "flush",
       "frameMaterialId": "paint-satin-white",
-      "panelMaterialId": "paint-satin-white"
-    },
-    "door_6n38cs1ike": {
-      "id": "door_6n38cs1ike",
-      "wallId": "w_hs6qhzyomr",
-      "kind": "door-single",
-      "offset": 2.05,
-      "width": 0.9,
-      "height": 2.1,
-      "sillHeight": 0,
-      "swingSide": "left",
-      "hinge": "end",
-      "openAngle": 55,
-      "style": "glazed",
-      "design": "lites-divided",
-      "frameMaterialId": "paint-satin-white",
-      "panelMaterialId": "paint-satin-white"
+      "panelMaterialId": "paint-satin-white",
+      "transom": false,
+      "threshold": true,
+      "casing": false
     }
   },
   "rooms": {
@@ -439,15 +479,15 @@
       "name": "Bathroom",
       "type": "bathroom",
       "anchor": {
-        "x": 3.8793800644022833,
-        "y": 9.741094095587748
+        "x": 3.8806615234851227,
+        "y": 9.81330815147264
       },
       "boundaryWallIds": [
         "w_25lple2f6s",
-        "w_3z8yopw1tv",
         "w_4ysqvj0a3a",
         "w_d1qzodznrp",
         "w_epakab8ysj",
+        "w_pb2plwwg9b",
         "w_yh679e85vf"
       ],
       "floorMaterialId": "tile-white-square",
@@ -465,15 +505,15 @@
       "name": "Living and Dining Room",
       "type": "living",
       "anchor": {
-        "x": 2.2599731655816506,
-        "y": 3.649866973028705
+        "x": 2.269383019292179,
+        "y": 3.9659447191754342
       },
       "boundaryWallIds": [
         "w_25lple2f6s",
         "w_36njnulpwn",
-        "w_3z8yopw1tv",
         "w_dogbv452x7",
         "w_hs6qhzyomr",
+        "w_pb2plwwg9b",
         "w_r96boupwen",
         "w_yh679e85vf"
       ],
@@ -501,7 +541,7 @@
         "w_r96boupwen",
         "w_xxryuyg8se"
       ],
-      "floorMaterialId": "chinese-home:carved-stone",
+      "floorMaterialId": "concrete-grey",
       "ceilingMaterialId": "paint-ceiling-white",
       "showCeiling": true,
       "ceilingHeight": null,
@@ -2965,6 +3005,172 @@
         "name": "Neest starter library · photo: ambientCG Bricks059",
         "license": "CC0 1.0 (photo texture); procedural fallback original",
         "url": "https://ambientcg.com/a/Bricks059"
+      }
+    },
+    "stone-slate": {
+      "id": "stone-slate",
+      "name": "Slate",
+      "category": "stone",
+      "color": "#555a5e",
+      "roughness": 0.7,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 1,
+        "patternId": "slate",
+        "scale": 1
+      },
+      "photo": {
+        "setId": "slate-floor",
+        "scale": 2.29,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "stone-slate",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven slate_floor",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/slate_floor"
+      }
+    },
+    "halloween:mossy-stone": {
+      "id": "halloween:mossy-stone",
+      "name": "Mossy stone",
+      "category": "stone",
+      "color": "#ffffff",
+      "roughness": 0.92,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": {
+        "setId": "halloween:mossy-stone",
+        "scale": 0.45,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "halloween:mossy-stone",
+      "source": {
+        "name": "Halloween pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
+    },
+    "houseplants:glazed-grey": {
+      "id": "houseplants:glazed-grey",
+      "name": "Grey glazed ceramic",
+      "category": "stone",
+      "color": "#8e8f8c",
+      "roughness": 0.35,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "houseplants:glazed-speckle",
+        "scale": 0.25,
+        "rotation": 0,
+        "contrast": 0.6
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "houseplants:glazed-grey",
+      "source": {
+        "name": "Houseplants with care guides pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
+    },
+    "stone-onyx-white": {
+      "id": "stone-onyx-white",
+      "name": "White onyx",
+      "category": "stone",
+      "color": "#efeae4",
+      "roughness": 0.15,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 0.7,
+        "patternId": "marble",
+        "scale": 2
+      },
+      "photo": {
+        "setId": "onyx-white",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "stone-onyx-white",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Onyx015",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Onyx015"
+      }
+    },
+    "concrete-grey": {
+      "id": "concrete-grey",
+      "name": "Board concrete",
+      "category": "plaster",
+      "color": "#82878c",
+      "roughness": 0.92,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 1,
+        "patternId": "concrete",
+        "scale": 2
+      },
+      "photo": {
+        "setId": "board-concrete",
+        "scale": 1.8,
+        "rotation": 90,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "concrete-grey",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven wood_textured_concrete",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/wood_textured_concrete"
+      }
+    },
+    "limewash-grey": {
+      "id": "limewash-grey",
+      "name": "Grey limewash",
+      "category": "plaster",
+      "color": "#c5c2ba",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 1,
+        "patternId": "limewash",
+        "scale": 2.2
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "limewash-grey",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
       }
     }
   },
