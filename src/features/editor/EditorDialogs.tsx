@@ -8,6 +8,7 @@ import { Button, LengthField, Segmented, Select, Toggle, TextField } from '@/com
 import { ReplaceMaterialDialog } from '@/features/materials/MaterialUI';
 import { downloadBlob, exportFilename } from '@/features/exports/neestFile';
 import { SHORTCUT_LIST } from './useShortcuts';
+import { GroupDetailsDialog } from './GroupDetailsDialog';
 
 const loadExport = () => import('@/features/exports/ExportDialog');
 const ExportPanel = lazy(() => loadExport().then((m) => ({ default: m.ExportPanel })));
@@ -48,6 +49,7 @@ export function EditorDialogs() {
       )}
       {open === 'mobile-info' && <MobileInfoDialog onClose={close} />}
       {open === 'replace-material' && <ReplaceMaterialDialog materialId={props.materialId as string} onClose={close} />}
+      {open === 'group-details' && <GroupDetailsDialog kind={props.kind as 'placed' | 'saved'} id={props.id as string} onClose={close} />}
     </Suspense>
   );
 }

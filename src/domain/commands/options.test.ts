@@ -48,6 +48,30 @@ describe('layout options', () => {
     expect(ProjectSchema.safeParse(s).success).toBe(true);
   });
 
+  it('editing a new option in the same step leaves the original and history untouched', () => {
+    const { p, obj } = base();
+    const before = JSON.stringify(p);
+    const q = edit(p, (d) => {
+      addOption(d, 'duplicate');
+      d.objects[obj].x = 3;
+      placeObject(d, { assetId: 'side-table', x: 2, y: 2, width: 0.5, depth: 0.5, height: 0.5 });
+    });
+    expect(JSON.stringify(p)).toBe(before);
+    expect(Object.keys(q.objects)).toHaveLength(2);
+    const a = q.options![0].plan!;
+    expect(Object.keys(a.objects)).toEqual([obj]);
+    expect(a.objects[obj].x).toBe(1);
+    // Switching back and forth inside one step as well.
+    const r = edit(q, (d) => {
+      switchOption(d, d.options![0].id);
+      addOption(d, 'duplicate', 'C');
+      placeObject(d, { assetId: 'side-table', x: 3, y: 2, width: 0.5, depth: 0.5, height: 0.5 });
+    });
+    expect(Object.keys(r.options![0].plan!.objects)).toHaveLength(1);
+    expect(Object.keys(r.options![1].plan!.objects)).toHaveLength(2);
+    expect(Object.keys(r.objects)).toHaveLength(2);
+  });
+
   it('shell keeps the walls without furniture; blank is empty', () => {
     const { p } = base();
     const shell = edit(p, (d) => void addOption(d, 'shell'));

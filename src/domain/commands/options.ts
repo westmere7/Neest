@@ -28,13 +28,20 @@ function takePlan(d: D): OptionPlan {
   } as OptionPlan;
 }
 
+/**
+ * Puts a plan into the project's fields. A plan that is not a draft (one made earlier in the same
+ * recipe, or a snapshot that may be the previous state's own objects) is deep-copied first: immer
+ * does not draft plain values assigned into a draft, so edits later in the same recipe would
+ * otherwise write straight into objects shared with other options and with undo history.
+ */
 function putPlan(d: D, plan: OptionPlan): void {
-  d.nodes = plan.nodes;
-  d.walls = plan.walls;
-  d.openings = plan.openings;
-  d.rooms = plan.rooms;
-  d.objects = plan.objects;
-  d.groups = plan.groups;
+  const own = <T>(x: T): T => (isDraft(x) ? x : structuredClone(x));
+  d.nodes = own(plan.nodes);
+  d.walls = own(plan.walls);
+  d.openings = own(plan.openings);
+  d.rooms = own(plan.rooms);
+  d.objects = own(plan.objects);
+  d.groups = own(plan.groups);
 }
 
 /** Next free option letter: A, B… Z, then AA, AB… */

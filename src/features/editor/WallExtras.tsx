@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Project, WallSideFinish, WallStyle } from '@/domain/model/schema';
 import { WALL_PRESETS, presetMaterialIds } from '@/domain/model/wallPresets';
-import { clampOpenings, updateWalls } from '@/domain/commands/walls';
+import { clampOpenings, setWallStyle, updateWalls } from '@/domain/commands/walls';
 import { ensureMaterial, type WallTrimPart } from '@/domain/commands/entities';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
@@ -70,12 +70,9 @@ export function WallConstruction({ project, wallId, locked }: { project: Project
           exec('Set wall construction', (d) => {
             const wall = d.walls[wallId];
             if (!wall) return;
-            if (next === 'solid') delete wall.style;
-            else wall.style = next;
+            setWallStyle(d, [wallId], next);
             if ((next === 'glass' || next === 'railing-glass') && !wall.styleMaterialId) wall.styleMaterialId = 'glass-clear';
             if (next === 'railing-bars' && !wall.styleMaterialId) wall.styleMaterialId = 'metal-black-matte';
-            if (next.startsWith('railing') && wall.height > 1.3) wall.height = 1.05;
-            if (next === 'half' && wall.height > 1.6) wall.height = 1.05;
             if (next !== 'solid' && next !== 'half') {
               if (wall.materials.top === 'plaster-white') wall.materials.top = 'metal-black-matte';
               ensureMaterial(d, wall.materials.top);
@@ -210,9 +207,9 @@ export function applyWallPreset(wallIds: string[], presetId: string): void {
       if (!w) continue;
       w.role = p.role;
       w.thickness = p.thickness;
+      // Through setWallStyle so a railing remembers the wall's height and a solid preset restores it.
+      setWallStyle(d, [id], p.style ?? 'solid', p.height);
       if (p.height) w.height = p.height;
-      if (p.style && p.style !== 'solid') w.style = p.style;
-      else delete w.style;
       if (p.styleMaterialId) w.styleMaterialId = p.styleMaterialId;
       if (p.materials) w.materials = { ...w.materials, ...p.materials };
       w.finishes = p.finishes ? structuredClone(p.finishes) : undefined;

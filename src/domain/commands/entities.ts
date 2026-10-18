@@ -266,12 +266,13 @@ export function deleteEntities(d: D, ids: string[]): void {
 // ───────────────────────── Groups ─────────────────────────
 
 /** Groups the objects among `ids` (two or more) into one new group; earlier groups of those items are merged in. Returns its id or null. */
-export function groupObjects(d: D, ids: string[], name?: string): string | null {
+export function groupObjects(d: D, ids: string[], name?: string, description?: string): string | null {
   const objs = ids.map((id) => d.objects[id]).filter(Boolean);
   if (objs.length < 2) return null;
   d.groups ??= {};
   const id = newId('grp');
   d.groups[id] = { id, name: (name ?? `Group ${Object.keys(d.groups).length + 1}`).slice(0, 80) };
+  if (description?.trim()) d.groups[id].description = description.trim().slice(0, 500);
   for (const o of objs) o.groupId = id;
   pruneGroups(d);
   return id;
@@ -287,6 +288,16 @@ export function ungroupObjects(d: D, ids: string[]): void {
 export function renameGroup(d: D, groupId: string, name: string): void {
   const g = d.groups?.[groupId];
   if (g && name.trim()) g.name = name.trim().slice(0, 80);
+}
+
+/** Sets a group's name and description (an empty description removes it). */
+export function setGroupDetails(d: D, groupId: string, details: { name: string; description: string }): void {
+  const g = d.groups?.[groupId];
+  if (!g) return;
+  if (details.name.trim()) g.name = details.name.trim().slice(0, 80);
+  const text = details.description.trim().slice(0, 500);
+  if (text) g.description = text;
+  else delete g.description;
 }
 
 /** Drops groups with fewer than two members and member links to missing groups. */

@@ -270,6 +270,21 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   commands; the selection is cleared on a switch (ids belong to one option). No `options` = one implicit "Option A".
   Anything that must reach every option (e.g. `deleteMaterial` reassigning a material) uses `inEveryOption`.
   Exports, the guest viewer and stats show the active option. The popover is portalled to `<body>` (above panels).
+  Pitfall: immer does not draft plain values assigned into a draft, so `putPlan` deep-copies any non-draft plan;
+  otherwise editing a just-duplicated option in the same recipe wrote into the original option and undo history.
+- **Ready-made groups** (`src/data/groups/readyGroups.ts`): furnished setups shipped with Neest (bedrooms, living rooms,
+  kitchens, L-shaped kitchens from the `lKitchen` generator, dining, bathrooms, kids, office, balcony, entry), written in
+  plan metres with the back of the setup at y = 0. Built into `SavedGroup`s on demand (rebuilt when packs change) and
+  shown in the Groups tab by shelf under "Your groups"; ids `ready-…`, asset ids `savedgroup:ready-…`. They place
+  like saved groups; "Copy to my groups" makes an editable copy. Tests check items exist, names are unique and every
+  group has a description.
+- **Group descriptions**: `ObjectGroup.description` and `SavedGroup.description` (≤ 500 chars), edited in the
+  "Group name & description" dialog (`GroupDetailsDialog`, dialog store 'group-details' with `{ kind, id }`), shown in
+  the library info card and carried between placed and saved copies. New groups are named from their contents
+  (`smartGroupName`, e.g. "3-seat sofa & coffee table + 2 more"); saved groups still called "Group 3" are renamed
+  the same way when the Groups tab opens.
+- Wall construction style goes through `setWallStyle` (walls.ts): railings and half walls lower a room-height wall to
+  1.05 m and remember `fullHeight`; switching back to solid or glass restores it (default wall height if unknown).
 - Placing an item happens on pointer-down; `keepPlacedSelection` (placeTools) swallows the click that follows, so the
   3D view's click-to-pick does not select a wall or object under the cursor instead of the new item.
 
@@ -985,3 +1000,11 @@ Known limitations (also in README):
     assets (extra `getAsset` resolver), placed with the ghost and rotation like any item (done).
 59. "A versioning system: several versions of the same layout in one project" → Layout options (§9) (done).
 60. "When a new object is placed, keep it selected even if the click lands on another object" (done).
+61. "Switching a wall to a railing and back leaves it half height" → `setWallStyle` remembers the full height (done).
+62. "Too staged: add normal living items, food on the table, paintings" → `lived-in` pack (12 items: meals, shared
+    dishes, mugs, open book, magazines, remote, chopping board, condiments, dish soap, sneakers, slippers, toiletries)
+    (done).
+63. "A lot of pre-built groups (bedroom setups, kitchens), named properly, with descriptions" → 39 ready-made groups
+    on 9 shelves, group descriptions and the details dialog, content-based group names (done).
+64. "A lot of L-shaped kitchen sets, including cupboards" → 14 generated L kitchens with base and wall cupboards,
+    corner units, tall units, hoods and everyday items, in different finishes and both hands (done).

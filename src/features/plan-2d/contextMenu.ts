@@ -5,6 +5,7 @@ import { derivePlan } from '@/domain/geometry/derive';
 import type { MenuItem } from '@/components/ContextMenu';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type SelItem } from '@/state/editorStore';
+import { useDialogStore } from '@/state/uiStores';
 import {
   deleteSelection,
   duplicateSelection,
@@ -15,7 +16,6 @@ import {
   toggleLockSelection,
 } from '@/features/editor/actions';
 import { groupSelection, groupState, saveSelectionToLibrary, ungroupSelection } from '@/features/editor/groups';
-import { renameGroup } from '@/domain/commands/entities';
 
 export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
   const project = useProjectStore.getState().project;
@@ -41,11 +41,8 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
       ...(gid
         ? [
             {
-              label: 'Rename group…',
-              run: () => {
-                const name = window.prompt('Group name', project.groups?.[gid]?.name ?? 'Group');
-                if (name?.trim()) useProjectStore.getState().execute('Rename group', (d) => renameGroup(d, gid, name));
-              },
+              label: 'Group name & description…',
+              run: () => useDialogStore.getState().open('group-details', { kind: 'placed', id: gid }),
             },
           ]
         : []),

@@ -3,6 +3,7 @@ import type { AssetDefinition, Part, PlanStroke } from '@/data/assets/types';
 import { getAsset, setAssetResolver } from '@/data/assets/registry';
 import { partBounds } from '@/data/assets/plantParts';
 import { usePrefsStore, type SavedGroup } from '@/state/uiStores';
+import { readyGroupById } from '@/data/groups/readyGroups';
 
 /**
  * Saved groups as library items: a group (prefs `savedGroups`) becomes a read-only asset with the
@@ -58,11 +59,11 @@ export function savedGroupAsset(g: SavedGroup): AssetDefinition {
   const def: AssetDefinition = {
     id: `${SAVED_GROUP_PREFIX}${g.id}`,
     name: g.name,
-    category: 'living',
+    category: g.room ?? 'living',
     type: 'misc',
-    group: 'Saved groups',
+    group: g.shelf ?? 'Saved groups',
     tags: ['saved group', 'group', ...g.items.map((it) => getAsset(null, it.assetId)?.name.toLowerCase() ?? '')].filter(Boolean),
-    description: `Your saved group of ${g.items.length} items. Placing it adds them as a new group.`,
+    description: g.description?.trim() || (g.shelf ? `A ready-made group of ${g.items.length} items.` : `Your saved group of ${g.items.length} items. Placing it adds them as a new group.`),
     defaultSize: size,
     minSize: size,
     maxSize: size,
@@ -72,7 +73,7 @@ export function savedGroupAsset(g: SavedGroup): AssetDefinition {
     slots: slots.length ? slots : [{ id: 'none', label: 'None', defaultMaterial: 'solid-white' }],
     build: () => placed,
     planDetail: (): PlanStroke[] => [],
-    source: { name: 'Saved group', license: 'Your own' },
+    source: g.shelf ? { name: 'Neest ready-made group', license: 'CC0-1.0' } : { name: 'Saved group', license: 'Your own' },
   };
   cache.set(g, def);
   return def;
@@ -85,7 +86,7 @@ export const savedGroupAssets = (groups: SavedGroup[]): AssetDefinition[] => gro
 export function savedGroupOf(assetId: string): SavedGroup | undefined {
   if (!assetId.startsWith(SAVED_GROUP_PREFIX)) return undefined;
   const id = assetId.slice(SAVED_GROUP_PREFIX.length);
-  return usePrefsStore.getState().savedGroups.find((g) => g.id === id);
+  return usePrefsStore.getState().savedGroups.find((g) => g.id === id) ?? readyGroupById(id);
 }
 
 setAssetResolver((id) => {

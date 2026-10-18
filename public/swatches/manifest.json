@@ -265,6 +265,10 @@
    "file": "1ac9f6096f64d4ab.webp",
    "tile": true
   },
+  "1afb1555a8f9ed35": {
+   "file": "1afb1555a8f9ed35.webp",
+   "tile": true
+  },
   "1b82fe79bf9c3028": {
    "file": "1b82fe79bf9c3028.webp",
    "tile": true
@@ -344,6 +348,10 @@
   "23348beac4b4561d": {
    "file": "23348beac4b4561d.webp",
    "tile": false
+  },
+  "236129832c21aac1": {
+   "file": "236129832c21aac1.webp",
+   "tile": true
   },
   "247df32593941836": {
    "file": "247df32593941836.webp",
@@ -483,6 +491,10 @@
   },
   "322a4c4ce6522bed": {
    "file": "322a4c4ce6522bed.webp",
+   "tile": true
+  },
+  "33f7330a3810f171": {
+   "file": "33f7330a3810f171.webp",
    "tile": true
   },
   "33fc3f1cf39581ab": {
@@ -925,6 +937,10 @@
    "file": "60ce99d19b7dde8f.webp",
    "tile": true
   },
+  "60f3b7eb35867c89": {
+   "file": "60f3b7eb35867c89.webp",
+   "tile": true
+  },
   "621630097e38ccd0": {
    "file": "621630097e38ccd0.webp",
    "tile": true
@@ -1020,6 +1036,10 @@
   "6947bc010ba59423": {
    "file": "6947bc010ba59423.webp",
    "tile": false
+  },
+  "694890d1258c4205": {
+   "file": "694890d1258c4205.webp",
+   "tile": true
   },
   "6964013748e36c43": {
    "file": "6964013748e36c43.webp",
@@ -2931,6 +2951,11 @@
   "limewash-sage": "1625129d66a3b1e2",
   "limewash-terracotta": "4e05e168f24f65c4",
   "limewash-warm": "a5bc3874a472ade8",
+  "lived-in:canvas-white": "1afb1555a8f9ed35",
+  "lived-in:cork": "60f3b7eb35867c89",
+  "lived-in:glossy-cover": "694890d1258c4205",
+  "lived-in:placemat-linen": "33f7330a3810f171",
+  "lived-in:stoneware": "236129832c21aac1",
   "mattress-white": "e6eee5bbb68e8991",
   "metal-brass": "87b002633c8f48d7",
   "metal-bronze": "2677d1ed4cad1a2c",

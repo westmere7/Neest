@@ -75,6 +75,8 @@ export const WallSegmentSchema = z.object({
   b: Id,
   thickness: num.min(0.02).max(2),
   height: num.min(0.2).max(12),
+  /** Height the wall had before a low style (railing, half wall) lowered it; restored when switched back. */
+  fullHeight: num.min(0.2).max(12).optional(),
   baseElevation: num.min(-2).max(12).default(0),
   role: WallRoleSchema.default('interior'),
   /** Quadratic Bézier control point for curved walls, or null for straight walls. */
@@ -259,6 +261,8 @@ export const PlacedObjectSchema = z.object({
 export const ObjectGroupSchema = z.object({
   id: Id,
   name: z.string().min(1).max(80),
+  /** Optional note about the group (what it is, how it is meant to be used). */
+  description: z.string().max(500).optional(),
 });
 
 export const MaterialCategorySchema = z.enum([

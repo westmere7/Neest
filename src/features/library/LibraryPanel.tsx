@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { openContextMenu } from '@/components/ContextMenu';
-import { removeSavedGroup, renameSavedGroupPrompt } from './SavedGroups';
+import { copyReadyGroup, editSavedGroupDetails, removeSavedGroup } from './SavedGroups';
+import { renameGenericSavedGroups } from '@/features/editor/groups';
+import { READY_GROUP_SHELVES, readyGroupById, readyGroups } from '@/data/groups/readyGroups';
 import { SAVED_GROUP_PREFIX, savedGroupAssets } from './savedGroupAssets';
 import { Grid2x2, Grid3x3, LayoutGrid, PanelLeftClose, Search, Star, Upload } from 'lucide-react';
 import type { OpeningKind, WallRole } from '@/domain/model/schema';
@@ -350,6 +352,10 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const [browse, setBrowse] = useState<Browse>('room');
   const [favOnly, setFavOnly] = useState(false);
   const [cat, setCat] = useState<CatFilter>('all');
+  // Saved groups still called "Group 3" get names from their contents once their items resolve.
+  useEffect(() => {
+    if (browse === 'groups') renameGenericSavedGroups();
+  }, [browse, packs, savedGroups]);
   // Inspector → Show in library: open the item's room (or Imported models), clear filters, then
   // scroll its card into view and flash it.
   const reveal = useEditorStore((s) => s.libraryReveal);
@@ -394,13 +400,11 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     [custom, packs],
   );
   const q = query.trim().toLowerCase();
-  // Groups tab: the user's saved groups, as ordinary item cards.
-  const groupItems =
-    browse === 'groups'
-      ? savedGroupAssets(savedGroups).filter(
-          (a) => !q || `${a.name} ${a.tags.join(' ')}`.toLowerCase().includes(q),
-        )
-      : [];
+  // Groups tab: the user's saved groups, then the ready-made ones by shelf, as ordinary item cards.
+  const groupMatch = (a: { name: string; tags: string[]; description?: string; group: string }) =>
+    !q || `${a.name} ${a.tags.join(' ')} ${a.description ?? ''} ${a.group}`.toLowerCase().includes(q);
+  const groupItems = browse === 'groups' ? savedGroupAssets(savedGroups).filter(groupMatch) : [];
+  const readyItems = browse === 'groups' ? savedGroupAssets(readyGroups()).filter(groupMatch) : [];
   const list = all.filter((a) => {
     if (q) {
       const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''} ${a.plant ? plantSearchText(a.plant) : ''}`;
@@ -431,9 +435,14 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   ];
   const groups =
     browse === 'groups'
-      ? groupItems.length
-        ? [{ key: 'saved-groups', title: '', items: groupItems }]
-        : []
+      ? [
+          ...(groupItems.length ? [{ key: 'saved-groups', title: 'Your groups', items: groupItems }] : []),
+          ...READY_GROUP_SHELVES.map((title) => ({
+            key: `ready-${title}`,
+            title,
+            items: readyItems.filter((a) => a.group === title),
+          })).filter((s) => s.items.length),
+        ]
       : shelves(list, browse, cat);
   return (
     <div className="furniture-tab">
@@ -506,11 +515,13 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
             </div>
           </section>
         ))}
-        {browse === 'groups' && groupItems.length === 0 && (
+        {browse === 'groups' && groupItems.length === 0 && readyItems.length === 0 && (
+          <p className="field-hint pad">No groups match your search.</p>
+        )}
+        {browse === 'groups' && !q && savedGroups.length === 0 && (
           <p className="field-hint pad">
-            {savedGroups.length
-              ? 'No saved groups match your search.'
-              : 'Select placed items, right-click and choose “Save to library as a group”. Saved groups appear here in every project.'}
+            Your own groups: select placed items, right-click and choose “Save to library as a group”. They
+            appear here in every project.
           </p>
         )}
         {list.length === 0 && browse !== 'groups' && (
@@ -625,21 +636,24 @@ function AssetCard({
         const groupId = asset.id.startsWith(SAVED_GROUP_PREFIX)
           ? asset.id.slice(SAVED_GROUP_PREFIX.length)
           : null;
+        const ready = groupId ? readyGroupById(groupId) : undefined;
         openContextMenu(e.clientX, e.clientY, [
           { label: 'Place…', run: () => startPlacing(asset.id) },
           { label: 'Place in view', run: () => placeInView(asset.id) },
-          ...(groupId
-            ? [
-                { label: 'Rename…', run: () => renameSavedGroupPrompt(groupId) },
-                { separator: true, label: '' },
-                { label: 'Delete from library', danger: true, run: () => void removeSavedGroup(groupId) },
-              ]
-            : [
-                {
-                  label: isFav ? 'Remove from favourites' : 'Add to favourites',
-                  run: () => prefs.toggleFavouriteAsset(asset.id),
-                },
-              ]),
+          ...(ready
+            ? [{ label: 'Copy to my groups', run: () => copyReadyGroup(ready) }]
+            : groupId
+              ? [
+                  { label: 'Name & description…', run: () => editSavedGroupDetails(groupId) },
+                  { separator: true, label: '' },
+                  { label: 'Delete from library', danger: true, run: () => void removeSavedGroup(groupId) },
+                ]
+              : [
+                  {
+                    label: isFav ? 'Remove from favourites' : 'Add to favourites',
+                    run: () => prefs.toggleFavouriteAsset(asset.id),
+                  },
+                ]),
         ]);
       }}
     >

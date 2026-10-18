@@ -1,7 +1,7 @@
 import { current, isDraft, type Draft } from 'immer';
 import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
 import { newId } from '../model/ids';
-import type { Project, Vec2, WallRole, WallSegment } from '../model/schema';
+import type { Project, Vec2, WallRole, WallSegment, WallStyle } from '../model/schema';
 import { buildWallPath, paramAt, pointAt, projectOnPath, splitBezier, splitCubic } from '../geometry/wallPath';
 import { computeWallNetwork } from '../geometry/walls';
 import { add, angleDelta, angleOf, closestPointOnSegment, dist, normalize, scale, segmentIntersection, sub } from '../geometry/vec';
@@ -584,6 +584,34 @@ export function updateWalls(d: D, ids: string[], patch: Partial<Omit<WallSegment
     Object.assign(w, rest);
     // A straight wall has no handles at all.
     if (patch.curve === null) w.curveEnd = null;
+  }
+}
+
+/** Styles built lower than a room-height wall: railings and half walls. */
+const isLowStyle = (s: WallStyle | undefined): boolean => s === 'half' || s === 'railing-glass' || s === 'railing-bars';
+
+/**
+ * Changes walls' construction style. Switching to a railing or half wall lowers a room-height wall
+ * to 1.05 m and remembers its height (`fullHeight`); switching back to a solid or glass wall
+ * restores it (or the project's default wall height when none was remembered).
+ */
+export function setWallStyle(d: D, ids: string[], style: WallStyle, lowHeight = 1.05): void {
+  for (const id of ids) {
+    const w = d.walls[id];
+    if (!w) continue;
+    const wasLow = isLowStyle(w.style);
+    if (style === 'solid') delete w.style;
+    else w.style = style;
+    if (isLowStyle(style)) {
+      const limit = style === 'half' ? 1.6 : 1.3;
+      if (w.height > limit) {
+        w.fullHeight = w.height;
+        w.height = lowHeight;
+      }
+    } else if (wasLow) {
+      w.height = w.fullHeight ?? d.settings.defaultWall.height;
+      delete w.fullHeight;
+    }
   }
 }
 

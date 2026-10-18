@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { LengthUnit, Project, WallRole, WallSegment, WallStyle } from '@/domain/model/schema';
 import { formatLengthValue, parseLength } from '@/domain/model/units';
-import { clampOpenings, updateWalls } from '@/domain/commands/walls';
+import { clampOpenings, setWallStyle, updateWalls } from '@/domain/commands/walls';
 import { matchWallFinishes } from '@/domain/commands/wallTools';
 import { useProjectStore } from '@/state/projectStore';
 import { Button, Section, Select } from '@/components/ui';
@@ -199,7 +199,7 @@ export function WallMultiEdit({ project, wallIds }: { project: Project; wallIds:
         label="Style"
         value={style ?? MIXED}
         onChange={(s) => {
-          if (s !== MIXED) exec('Set wall style', (d) => updateWalls(d, ids, { style: s }));
+          if (s !== MIXED) exec('Set wall style', (d) => setWallStyle(d, ids, s));
         }}
         options={style ? STYLE_OPTIONS : [{ value: MIXED, label: 'Mixed' }, ...STYLE_OPTIONS]}
       />

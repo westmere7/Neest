@@ -6,6 +6,7 @@ import { rotate } from '@/domain/geometry/vec';
 import { useProjectStore } from '@/state/projectStore';
 import { setSelectionExpander, useEditorStore, type SelItem } from '@/state/editorStore';
 import { toast, usePrefsStore, type SavedGroup } from '@/state/uiStores';
+import { readyGroupById } from '@/data/groups/readyGroups';
 
 /**
  * Groups of placed items: selecting one member selects the whole group (installed into the editor
@@ -22,6 +23,36 @@ setSelectionExpander((sel: SelItem[]): SelItem[] => {
   const have = new Set(sel.map((s) => s.id));
   return [...sel, ...ids.filter((id) => !have.has(id) && !p.objects[id]?.hidden).map((id) => ({ kind: 'object' as const, id }))];
 });
+
+/** Default names like "Group 3" or "Group of 4 items" that say nothing about the contents. */
+export const isGenericGroupName = (name: string): boolean => /^group( of)? \d+( items?)?$/i.test(name.trim());
+
+/**
+ * A name from a group's contents: its one or two largest items by footprint, then how many more,
+ * e.g. "3-seat sofa & coffee table + 2 more". Unknown items are ignored.
+ */
+export function smartGroupName(items: { assetId: string; width: number; depth: number }[], project: Project | null = null): string {
+  const named = items
+    .map((it) => ({ name: getAsset(project, it.assetId)?.name, area: it.width * it.depth }))
+    .filter((x): x is { name: string; area: number } => Boolean(x.name))
+    .sort((a, b) => b.area - a.area);
+  if (!named.length) return `Group of ${items.length} items`;
+  const short = (n: string) => n.replace(/\s*\([^)]*\)/g, '').replace(/,.*$/, '').trim();
+  const first = short(named[0].name);
+  const second = named.find((x, i) => i > 0 && short(x.name) !== first);
+  const head = second ? `${first} & ${short(second.name).toLowerCase()}` : first;
+  const more = items.length - (second ? 2 : 1);
+  return (more > 0 ? `${head} + ${more} more` : head).slice(0, 60);
+}
+
+/** Renames the user's saved groups that still have generic names after their contents. */
+export function renameGenericSavedGroups(): void {
+  const prefs = usePrefsStore.getState();
+  for (const g of prefs.savedGroups) {
+    if (!isGenericGroupName(g.name) || !g.items.every((it) => getAsset(null, it.assetId))) continue;
+    prefs.updateSavedGroup(g.id, { name: smartGroupName(g.items), description: g.description ?? '' });
+  }
+}
 
 const selectedObjectIds = (p: Project): string[] =>
   useEditorStore
@@ -56,7 +87,11 @@ export function groupSelection(): void {
     toast.warning('Unlock the items first', 'Locked items cannot be grouped.');
     return;
   }
-  const gid = ps.execute(`Group ${ids.length} items`, (d) => groupObjects(d, ids));
+  const name = smartGroupName(
+    ids.map((id) => p.objects[id]),
+    p,
+  );
+  const gid = ps.execute(`Group ${ids.length} items`, (d) => groupObjects(d, ids, name));
   if (gid) toast.success('Grouped', 'Click any of them to select the group. Ctrl+Shift+G ungroups.');
 }
 
@@ -93,11 +128,14 @@ export function saveSelectionToLibrary(name?: string): SavedGroup | null {
     }
   }
   const groupId = objs[0].groupId;
-  const fallback = (groupId && p.groups?.[groupId]?.name) || `Group of ${objs.length} items`;
+  const placedName = groupId ? p.groups?.[groupId]?.name : undefined;
+  const fallback = placedName && !isGenericGroupName(placedName) ? placedName : smartGroupName(objs, p);
+  const description = groupId ? p.groups?.[groupId]?.description : undefined;
   const extent = (o: (typeof objs)[number]) => Math.hypot(o.width, o.depth) / 2;
   const group: SavedGroup = {
     id: Date.now().toString(36),
     name: (name ?? fallback).slice(0, 60),
+    ...(description ? { description } : {}),
     createdAt: Date.now(),
     items: objs.map((o) => ({
       assetId: o.assetId,
@@ -151,7 +189,7 @@ export function placeSavedGroup(group: SavedGroup, at: Vec2, rotation = 0): void
       if (it.mirrored) updateObjects(d, [id], { mirrored: true });
       out.push(id);
     }
-    if (out.length >= 2) groupObjects(d, out, group.name);
+    if (out.length >= 2) groupObjects(d, out, group.name, group.description);
     return out;
   });
   if (missing) toast.warning(`${missing} item${missing > 1 ? 's' : ''} skipped`, 'Their content pack is not installed.');
@@ -163,5 +201,5 @@ export function savedGroupFromDragId(dragId: string): SavedGroup | undefined {
   // Library cards of saved groups use their asset id, `savedgroup:<id>`.
   if (!dragId.startsWith('savedgroup:')) return undefined;
   const id = dragId.slice('savedgroup:'.length);
-  return usePrefsStore.getState().savedGroups.find((g) => g.id === id);
+  return usePrefsStore.getState().savedGroups.find((g) => g.id === id) ?? readyGroupById(id);
 }

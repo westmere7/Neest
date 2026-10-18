@@ -2,11 +2,17 @@ import { create } from 'zustand';
 import { preferenceRepository } from '@/storage/indexeddb/db';
 import type { UserVariant } from '@/data/assets/variants';
 import type { MaterialDefinition } from '@/domain/model/schema';
+import type { AssetCategory } from '@/data/assets/types';
 
 /** A group of placed items saved to the library (Furniture → Saved groups), positions relative to its centre. */
 export interface SavedGroup {
   id: string;
   name: string;
+  /** Optional note shown in the library info card and carried onto placed copies. */
+  description?: string;
+  /** Ready-made groups shipped with Neest (src/data/groups): their library shelf and room. */
+  shelf?: string;
+  room?: AssetCategory;
   createdAt: number;
   items: {
     assetId: string;
@@ -84,6 +90,8 @@ interface PrefsState {
   setLibraryDensity(d: LibraryDensity): void;
   saveGroup(g: SavedGroup): void;
   renameSavedGroup(id: string, name: string): void;
+  /** Changes a saved group's name and description (an empty description removes it). */
+  updateSavedGroup(id: string, details: { name: string; description: string }): void;
   deleteSavedGroup(id: string): void;
   hydrate(): Promise<void>;
 }
@@ -174,6 +182,18 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   },
   renameSavedGroup(id, name) {
     const next = get().savedGroups.map((g) => (g.id === id && name.trim() ? { ...g, name: name.trim().slice(0, 60) } : g));
+    set({ savedGroups: next });
+    persist('savedGroups', next);
+  },
+  updateSavedGroup(id, { name, description }) {
+    const next = get().savedGroups.map((g) => {
+      if (g.id !== id) return g;
+      const out: SavedGroup = { ...g, name: name.trim() ? name.trim().slice(0, 60) : g.name };
+      const text = description.trim().slice(0, 500);
+      if (text) out.description = text;
+      else delete out.description;
+      return out;
+    });
     set({ savedGroups: next });
     persist('savedGroups', next);
   },

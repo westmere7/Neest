@@ -962,3 +962,19 @@
 .is-mobile .option-switch-name {
   max-width: 64px;
 }
+
+/* Group details dialog */
+.group-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: min(420px, 80vw);
+}
+.group-description-input {
+  height: auto;
+  min-height: 90px;
+  padding: 7px 9px;
+  resize: vertical;
+  line-height: 1.45;
+  font: inherit;
+}
