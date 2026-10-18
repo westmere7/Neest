@@ -1192,3 +1192,26 @@ Known limitations (also in README):
      never starts the room tool while placing (it turns the item instead) (done).
 103. "No quality menu on hover; a small chevron on the View button instead" → the chevron under View opens the quick
      quality menu (portal, closes on a choice, Esc or a press elsewhere) (done).
+104. "Detailed full-height wardrobes meeting a 2.7 m ceiling, in many types" → `wardrobes-fullheight` pack (18 items,
+     bedroom › Wardrobes; 2.7 m default, 2.3–3.2 m): shaker with top boxes and cornice, handleless push-to-open with a
+     lit shadow-gap plinth, sliding mirror / oak-and-mirror three-panel / smoked glass (LED) / shoji, panelled bi-fold,
+     reeded oak with leather pulls, rattan cane (own cut-out cane pattern), lit glass-front walk-in, open system, L corner,
+     over-bed bridge, walnut drawer bank, lit dressing-mirror niche, loft steel and glass, VN melamine MDF with aluminium
+     profile handles and VN acrylic gloss with rounded open end shelves. 3 mm reveals, flush scribed end panels, recessed
+     kickers, ceiling scribes, top boxes once the doors would pass ~2.3 m (sliding: above 2.85 m). Models: Filled/Empty
+     where the interior shows, Closed/Open (one door slid across; the hidden door slots come back as props) for opaque
+     sliding ones, Styled/Bare for the acrylic end shelves. Finish variants on every item (done).
+105. "Many more detailed outdoor AC units in varied sizes, VN brands, a wall bracket and a rooftop stand" → the
+     Panasonic CU-XU9ZKH-8 builder became `condenser()` in `packs/_ac-outdoor-kit.ts` (not a pack: `_` files are
+     skipped; the packs import it and copy `AC_PATTERNS`/`AC_MATERIALS`). Layouts: `split` (front fan, coil on the left
+     and back behind wire guards, valve cover with copper flare valves, caps and service port, insulated pipe run,
+     rails with anchor slots on rubber pads, drain socket, black rating plates with printed lines) and `cabinet`
+     (side-discharge mini-VRF: service column on the front right, valves out of the front, base frame with forklift
+     openings); one or two stacked fans; guards `rings`/`spiral`/`radial`/`hbars`/`diamond`/`grid`/`louvre`;
+     plain, louvred, blue-fin and gold-fin coils. New `branded-ac-outdoor-vn` (23 units at published W × H × D:
+     Daikin RKB25/RKF50/RKY50, 4MKM80 and 5MKM100 multi, Panasonic XU12/XU24/N24, LG V10API1/V13API1, Casper
+     GC-09IS35, Mitsubishi Electric MUY-JY25/JY50 and twin-fan PUMY-P125VKM, Samsung AR10TY/AR13CY and twin-fan DVM S
+     Eco, Toshiba H10C4, Gree GWC09PB, Funiki HSC09TMU, Nagakawa NIS-C09R2H10, Sharp AH-X9XEW, MHI SRC25ZSS-W5) and
+     `ac-outdoor-units` (resizable 9k/12k/18k/24k, twin-fan multi, single and twin side-discharge VRF with casing and
+     coil finish variants, a window AC via `windowUnit()`, `wallBracket()` and `rooftopStand()`). All in outdoor ›
+     Climate; the XU9 left `legacyCoplanar.json` (done).

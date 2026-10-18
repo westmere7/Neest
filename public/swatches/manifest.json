@@ -857,6 +857,10 @@
    "file": "547c099ca656ccab.webp",
    "tile": true
   },
+  "549e4bd2ba72d7eb": {
+   "file": "549e4bd2ba72d7eb.webp",
+   "tile": true
+  },
   "54c8310f1efe736a": {
    "file": "54c8310f1efe736a.webp",
    "tile": true
@@ -955,6 +959,10 @@
   },
   "5d6302bf272cab67": {
    "file": "5d6302bf272cab67.webp",
+   "tile": true
+  },
+  "5d733fe5639fcfd8": {
+   "file": "5d733fe5639fcfd8.webp",
    "tile": true
   },
   "5d770c2db6b473a2": {
@@ -1337,8 +1345,16 @@
    "file": "79948a3ebe20ab45.webp",
    "tile": true
   },
+  "7bd56c73c4af6cc3": {
+   "file": "7bd56c73c4af6cc3.webp",
+   "tile": true
+  },
   "7be1d9fea4bfb7ee": {
    "file": "7be1d9fea4bfb7ee.webp",
+   "tile": true
+  },
+  "7c158ad82349228a": {
+   "file": "7c158ad82349228a.webp",
    "tile": true
   },
   "7c850becd5a52092": {
@@ -2108,6 +2124,10 @@
   "c25711e0f18bd6b1": {
    "file": "c25711e0f18bd6b1.webp",
    "tile": false
+  },
+  "c2a72cc405d330f6": {
+   "file": "c2a72cc405d330f6.webp",
+   "tile": true
   },
   "c2e3e3dc2796f95f": {
    "file": "c2e3e3dc2796f95f.webp",
@@ -3431,6 +3451,11 @@
   "wallpaper-tropical": "2f4169268d4103a4",
   "wallpaper-woodchip": "9e3d83bddf06da22",
   "wardrobe-study:shaker-cream": "9f73828dd52aa64b",
+  "wardrobes-fullheight:cane-open": "7bd56c73c4af6cc3",
+  "wardrobes-fullheight:folded-mix": "7c158ad82349228a",
+  "wardrobes-fullheight:garments-mix": "c2a72cc405d330f6",
+  "wardrobes-fullheight:linen-box": "549e4bd2ba72d7eb",
+  "wardrobes-fullheight:washi-paper": "5d733fe5639fcfd8",
   "wicker-fine": "988f1fd79d5b1fa4",
   "wood-acacia": "a40df0f28bb07828",
   "wood-ash-white": "c236614707478bea",

@@ -369,7 +369,7 @@ export function MaterialLibrary() {
   });
   const active = activeId ? project.materials[activeId] ?? MATERIAL_CATALOG_BY_ID[activeId] : null;
   return (
-    <div className="mat-library">
+    <div className={`mat-library${active ? ' editing' : ''}`}>
       <div className="lib-filters">
         <div className="search-box">
           <Search size={13} aria-hidden />

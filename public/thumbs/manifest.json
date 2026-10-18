@@ -4169,6 +4169,114 @@
    "file": "wardrobe-study_wardrobe-study-wall.webp",
    "fp": "bd59a80587931a2d"
   },
+  "wardrobes-fullheight:acrylic-gloss-wardrobe-open-shelves-vn": {
+   "file": "wardrobes-fullheight_acrylic-gloss-wardrobe-open-shelves-vn.webp",
+   "fp": "b79c94f97ea2eb6a"
+  },
+  "wardrobes-fullheight:acrylic-gloss-wardrobe-open-shelves-vn@model:styled": {
+   "file": "wardrobes-fullheight_acrylic-gloss-wardrobe-open-shelves-vn_model_styled.webp",
+   "fp": "d726fc1396623ef6"
+  },
+  "wardrobes-fullheight:dressing-mirror-niche-wardrobe": {
+   "file": "wardrobes-fullheight_dressing-mirror-niche-wardrobe.webp",
+   "fp": "5b5c76581df4f58e"
+  },
+  "wardrobes-fullheight:glass-walk-in-wardrobe-lit": {
+   "file": "wardrobes-fullheight_glass-walk-in-wardrobe-lit.webp",
+   "fp": "b79cac135c4de298"
+  },
+  "wardrobes-fullheight:glass-walk-in-wardrobe-lit@model:filled": {
+   "file": "wardrobes-fullheight_glass-walk-in-wardrobe-lit_model_filled.webp",
+   "fp": "884eaa5b135c0dc8"
+  },
+  "wardrobes-fullheight:handleless-push-wardrobe": {
+   "file": "wardrobes-fullheight_handleless-push-wardrobe.webp",
+   "fp": "770af85cf739121a"
+  },
+  "wardrobes-fullheight:l-corner-wardrobe-full-height": {
+   "file": "wardrobes-fullheight_l-corner-wardrobe-full-height.webp",
+   "fp": "acc72323814c91e5"
+  },
+  "wardrobes-fullheight:loft-steel-glass-wardrobe": {
+   "file": "wardrobes-fullheight_loft-steel-glass-wardrobe.webp",
+   "fp": "e8d04efba0de4b5a"
+  },
+  "wardrobes-fullheight:loft-steel-glass-wardrobe@model:filled": {
+   "file": "wardrobes-fullheight_loft-steel-glass-wardrobe_model_filled.webp",
+   "fp": "1d43bbc8ce0d4536"
+  },
+  "wardrobes-fullheight:melamine-mdf-wardrobe-vn": {
+   "file": "wardrobes-fullheight_melamine-mdf-wardrobe-vn.webp",
+   "fp": "bcd1d7873f73e818"
+  },
+  "wardrobes-fullheight:open-wardrobe-system": {
+   "file": "wardrobes-fullheight_open-wardrobe-system.webp",
+   "fp": "30823ae81da70016"
+  },
+  "wardrobes-fullheight:open-wardrobe-system@model:filled": {
+   "file": "wardrobes-fullheight_open-wardrobe-system_model_filled.webp",
+   "fp": "9c386b8ddd794089"
+  },
+  "wardrobes-fullheight:over-bed-bridge-wardrobe": {
+   "file": "wardrobes-fullheight_over-bed-bridge-wardrobe.webp",
+   "fp": "63583bef176cbecc"
+  },
+  "wardrobes-fullheight:panelled-bifold-wardrobe": {
+   "file": "wardrobes-fullheight_panelled-bifold-wardrobe.webp",
+   "fp": "4f36b8a1eff8fb83"
+  },
+  "wardrobes-fullheight:rattan-cane-wardrobe": {
+   "file": "wardrobes-fullheight_rattan-cane-wardrobe.webp",
+   "fp": "f7f8c7f859092fa6"
+  },
+  "wardrobes-fullheight:rattan-cane-wardrobe@model:filled": {
+   "file": "wardrobes-fullheight_rattan-cane-wardrobe_model_filled.webp",
+   "fp": "1c9a87132e00b12f"
+  },
+  "wardrobes-fullheight:reeded-oak-wardrobe": {
+   "file": "wardrobes-fullheight_reeded-oak-wardrobe.webp",
+   "fp": "45039af1026b60b2"
+  },
+  "wardrobes-fullheight:shaker-wardrobe-top-boxes": {
+   "file": "wardrobes-fullheight_shaker-wardrobe-top-boxes.webp",
+   "fp": "5958fd3e10f4e00f"
+  },
+  "wardrobes-fullheight:shoji-sliding-wardrobe": {
+   "file": "wardrobes-fullheight_shoji-sliding-wardrobe.webp",
+   "fp": "aee944a3ec9170f8"
+  },
+  "wardrobes-fullheight:shoji-sliding-wardrobe@model:open": {
+   "file": "wardrobes-fullheight_shoji-sliding-wardrobe_model_open.webp",
+   "fp": "9504194a348e3993"
+  },
+  "wardrobes-fullheight:sliding-mirror-wardrobe": {
+   "file": "wardrobes-fullheight_sliding-mirror-wardrobe.webp",
+   "fp": "32ac28cccfe1155b"
+  },
+  "wardrobes-fullheight:sliding-mirror-wardrobe@model:open": {
+   "file": "wardrobes-fullheight_sliding-mirror-wardrobe_model_open.webp",
+   "fp": "0f2ceb50967666b5"
+  },
+  "wardrobes-fullheight:smoked-glass-sliding-wardrobe": {
+   "file": "wardrobes-fullheight_smoked-glass-sliding-wardrobe.webp",
+   "fp": "fc6b9ed4b73f4f0c"
+  },
+  "wardrobes-fullheight:smoked-glass-sliding-wardrobe@model:filled": {
+   "file": "wardrobes-fullheight_smoked-glass-sliding-wardrobe_model_filled.webp",
+   "fp": "18cf4b43cfa5ffa9"
+  },
+  "wardrobes-fullheight:three-panel-sliding-wardrobe": {
+   "file": "wardrobes-fullheight_three-panel-sliding-wardrobe.webp",
+   "fp": "043b44d1088511c5"
+  },
+  "wardrobes-fullheight:three-panel-sliding-wardrobe@model:open": {
+   "file": "wardrobes-fullheight_three-panel-sliding-wardrobe_model_open.webp",
+   "fp": "a4942e6c83be9611"
+  },
+  "wardrobes-fullheight:walnut-drawer-bank-wardrobe": {
+   "file": "wardrobes-fullheight_walnut-drawer-bank-wardrobe.webp",
+   "fp": "b512223737a30b11"
+  },
   "washer-dryer-stack": {
    "file": "washer-dryer-stack.webp",
    "fp": "ac182a941e63164c"
