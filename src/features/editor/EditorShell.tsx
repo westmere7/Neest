@@ -33,6 +33,7 @@ import {
   Square,
   Undo2,
   Waypoints,
+  ChevronDown,
 } from 'lucide-react';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type PlanMode, type ToolId, type Workspace } from '@/state/editorStore';
@@ -548,30 +549,39 @@ const QUALITIES = [
   ['ultra', 'Ultra'],
 ] as const;
 
-/** The 3D View button; hovering it offers a quick quality switch beside it. */
+/** The 3D View button; the small chevron under it opens a quick quality switch beside it. */
 function ViewRailButton({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const quality = useProjectStore((s) => s.project?.render.quality);
-  const [hover, setHover] = useState<{ left: number; top: number } | null>(null);
-  const leave = useRef<number | null>(null);
-  const host = useRef<HTMLDivElement>(null);
-  const stay = () => {
-    if (leave.current !== null) window.clearTimeout(leave.current);
-    leave.current = null;
-    const r = host.current?.getBoundingClientRect();
-    if (r) setHover({ left: r.right + 10, top: r.top + r.height / 2 });
+  const [menu, setMenu] = useState<{ left: number; top: number } | null>(null);
+  const chevron = useRef<HTMLButtonElement>(null);
+  const pop = useRef<HTMLDivElement>(null);
+  // Closes on a press anywhere else or Esc.
+  useEffect(() => {
+    if (!menu) return;
+    const away = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (!pop.current?.contains(t) && !chevron.current?.contains(t)) setMenu(null);
+    };
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(null);
+    window.addEventListener('pointerdown', away, true);
+    window.addEventListener('keydown', esc);
+    return () => {
+      window.removeEventListener('pointerdown', away, true);
+      window.removeEventListener('keydown', esc);
+    };
+  }, [menu]);
+  const toggleMenu = () => {
+    if (menu) return setMenu(null);
+    const r = chevron.current?.getBoundingClientRect();
+    if (r) setMenu({ left: r.right + 10, top: r.top - 8 });
   };
-  const go = () => {
-    if (leave.current !== null) window.clearTimeout(leave.current);
-    leave.current = window.setTimeout(() => setHover(null), 250);
-  };
-  useEffect(() => () => void (leave.current !== null && window.clearTimeout(leave.current)), []);
   return (
-    <div className="view-quick" ref={host} onMouseEnter={stay} onMouseLeave={go}>
+    <div className="view-quick">
       <IconButton
         label="3D view panel"
         shortcut="P"
         active={open}
-        tooltipSide="top"
+        tooltipSide="right"
         className="rail-labeled-btn"
         onClick={onToggle}
         data-testid="toggle-view-panel"
@@ -579,29 +589,35 @@ function ViewRailButton({ open, onToggle }: { open: boolean; onToggle: () => voi
         <SlidersHorizontal size={18} />
         <span className="rail-btn-label">View</span>
       </IconButton>
-      {hover &&
+      <button
+        ref={chevron}
+        type="button"
+        className={`view-quick-toggle${menu ? ' open' : ''}`}
+        aria-label="Render quality"
+        aria-expanded={!!menu}
+        title="Render quality"
+        onClick={toggleMenu}
+        data-testid="quality-toggle"
+      >
+        <ChevronDown size={12} strokeWidth={2.4} />
+      </button>
+      {menu &&
         quality &&
         createPortal(
           // In a portal, so it shows above the library and other panels.
-          <div
-            className="view-quick-pop floating"
-            role="group"
-            aria-label="Render quality"
-            data-testid="quality-quick"
-            style={{ left: hover.left, top: hover.top }}
-            onMouseEnter={stay}
-            onMouseLeave={go}
-          >
+          <div ref={pop} className="view-quick-pop floating" role="menu" aria-label="Render quality" data-testid="quality-quick" style={{ left: menu.left, top: menu.top }}>
             <span className="view-quick-title">Quality</span>
             {QUALITIES.map(([q, label]) => (
               <button
                 key={q}
                 type="button"
+                role="menuitemradio"
                 className={q === quality ? 'active' : ''}
-                aria-pressed={q === quality}
-                onClick={() =>
-                  useProjectStore.getState().execute('Change quality', (d) => void (d.render.quality = q))
-                }
+                aria-checked={q === quality}
+                onClick={() => {
+                  useProjectStore.getState().execute('Change quality', (d) => void (d.render.quality = q));
+                  setMenu(null);
+                }}
               >
                 {label}
               </button>

@@ -502,6 +502,11 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
                 Flip hinge ({o.hinge})
               </Button>
             )}
+            {o.kind === 'door-sliding' && (
+              <Button size="sm" title="Which panel slides: the one at the start or the end of the wall" onClick={() => flipOpening(openingId, 'hinge')}>
+                Swap panels ({o.hinge === 'start' ? 'slides from start' : 'slides from end'})
+              </Button>
+            )}
           </div>
           <Slider
             label="Shown open in 3D"

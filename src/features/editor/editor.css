@@ -1044,22 +1044,12 @@
 }
 .view-quick-pop {
   position: fixed;
-  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 6px;
   min-width: 110px;
   z-index: 1000;
-}
-/* Bridges the gap, so the pointer can travel from the button to the list. */
-.view-quick-pop::before {
-  content: '';
-  position: absolute;
-  right: 100%;
-  top: 0;
-  bottom: 0;
-  width: 12px;
 }
 .view-quick-title {
   font-size: 11px;
@@ -1111,4 +1101,32 @@
   grid-template-columns: 1fr auto;
   align-items: end;
   gap: 8px;
+}
+
+/* The chevron under the View button: opens the quick quality switch. */
+.view-quick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.view-quick-toggle {
+  width: 28px;
+  height: 14px;
+  margin-top: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-3);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.view-quick-toggle:hover,
+.view-quick-toggle.open {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.view-quick-toggle.open svg {
+  transform: rotate(180deg);
 }

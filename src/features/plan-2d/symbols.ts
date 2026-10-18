@@ -92,12 +92,15 @@ export function openingSymbol(opening: Opening, geom: WallGeometry, span: Openin
       break;
     }
     case 'door-sliding': {
+      // The sliding panel runs on the swing side; the hinge end says which end it closes from.
       const panel = width * 0.55;
       const t = Math.min(0.035, h * 0.5);
-      const o1 = h * 0.35;
-      const o2 = -h * 0.35;
-      const p1 = [at(span.s0, o1 + t / 2), at(span.s0 + panel, o1 + t / 2), at(span.s0 + panel, o1 - t / 2), at(span.s0, o1 - t / 2)];
-      const p2 = [at(span.s1 - panel, o2 + t / 2), at(span.s1, o2 + t / 2), at(span.s1, o2 - t / 2), at(span.s1 - panel, o2 - t / 2)];
+      const o1 = side * h * 0.35;
+      const o2 = -o1;
+      const [m0, m1] = opening.hinge === 'start' ? [span.s0, span.s0 + panel] : [span.s1 - panel, span.s1];
+      const [f0, f1] = opening.hinge === 'start' ? [span.s1 - panel, span.s1] : [span.s0, span.s0 + panel];
+      const p1 = [at(m0, o1 + t / 2), at(m1, o1 + t / 2), at(m1, o1 - t / 2), at(m0, o1 - t / 2)];
+      const p2 = [at(f0, o2 + t / 2), at(f1, o2 + t / 2), at(f1, o2 - t / 2), at(f0, o2 - t / 2)];
       out.push({ t: 'poly', pts: p1, closed: true, role: 'leaf', fill: true });
       out.push({ t: 'poly', pts: p2, closed: true, role: 'leaf', fill: true });
       break;

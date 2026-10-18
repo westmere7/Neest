@@ -1179,3 +1179,16 @@ Known limitations (also in README):
 98. "Revert an auto-rounded corner" → Curve → Sharp corner (`unroundCorner`) (done).
 99. "Double-click an item: centre and close in" → double-clicking furniture, a door or a window (plan and 3D) selects it
     and focuses the camera (`requestFocus`); double-clicking a room still edits its name (done).
+100. "Add AQUA dryers (common models in VN)" → `branded-washers`: AQH-V700FW (7 kg vented, white), AQH-V800H SS
+     (8 kg vented, grey), AQH-V901K PS (9 kg vented, black), AQH-H900G PS (9 kg heat pump, silver), AQH-H1000J PS
+     (10 kg heat pump, dark silver), at published sizes; `dryer()` adds the back vent or the tank drawer and condenser
+     grille (done).
+101. "Flipping sides of a sliding door changes nothing" → sliding doors now use swingSide (the face the sliding panel
+     runs on) and hinge (the end it closes from; Inspector → Swap panels), in the plan and 3D alike (done).
+102. "R while placing opens wall drawing; it should rotate" → the door/window tool (also after Duplicate) now takes R
+     (flip the hinge end) and Shift+R (flip the side), with the leaf drawn in the ghost. For any item: the plan and the
+     3D view each register the active tool's key handler and used to clear it unconditionally on cleanup, so after a
+     view switch R could reach the global room shortcut; each now clears only its own handler, and the shortcut layer
+     never starts the room tool while placing (it turns the item instead) (done).
+103. "No quality menu on hover; a small chevron on the View button instead" → the chevron under View opens the quick
+     quality menu (portal, closes on a choice, Esc or a press elsewhere) (done).

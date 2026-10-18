@@ -6,6 +6,9 @@
  * Washer-dryer: LG FWY996WCTN4. And the LG WashTower WT1210BBF, a washer and a
  * heat-pump dryer in one tower with the controls in the middle.
  *
+ * Clothes dryers: AQUA (the Vietnamese market's common models) vented AQH-V700FW, AQH-V800H SS and
+ * AQH-V901K PS, and heat-pump AQH-H900G PS and AQH-H1000J PS.
+ *
  * Each item carries `brand` metadata (model, line, published specs and their source). Depth is the
  * overall depth including the door, so the plan shows the real footprint. The shapes are original
  * procedural approximations: no logos or trademark artwork are drawn. Sizes are fixed products: width
@@ -194,6 +197,35 @@ function frontLoader({ w, d, h }: Size3, s: WasherSpec): Part[] {
 
 const plan = (proj: number) => ({ w, d }: Size3) => [line([-w / 2, d / 2 - proj], [w / 2, d / 2 - proj])];
 
+const DRYER_ONLY_TAGS = ['clothes dryer', 'tumble dryer', 'dryer', 'máy sấy', 'máy sấy quần áo', 'laundry', 'appliance', 'utility', 'aqua'];
+
+/**
+ * Front-loading clothes dryer: the washer cabinet with a dryer's front. Vented dryers have no
+ * drawer and a round vent spigot on the back; heat-pump dryers have a water-tank drawer at the top
+ * left and a condenser grille in the kick panel. Big glass door with a lint filter in its rim.
+ */
+function dryer(size: Size3, s: WasherSpec & { heatPump: boolean }): Part[] {
+  const { w, d } = size;
+  const parts = frontLoader(size, s);
+  const zC = d / 2 - s.doorProj;
+  if (s.heatPump) {
+    // Condenser grille: slots across the kick panel.
+    for (const x of spaced(9, -w / 2 + 0.1, w / 2 - 0.2)) parts.push(span(SLOT_GLASS, [x - 0.012, x + 0.012], [0.035, 0.05], [zC, zC + 0.002], o));
+  } else {
+    // Exhaust spigot on the back (vented dryers duct the hot air out).
+    parts.push(discZ('trim', [w / 2 - 0.13, 0.2, -d / 2 - 0.009], 0.05, 0.018, { segments: 28, plan: false }));
+    parts.push(discZ(SLOT_GLASS, [w / 2 - 0.13, 0.2, -d / 2 - 0.017], 0.04, 0.004, { segments: 24, plan: false }));
+  }
+  return parts;
+}
+
+const SLOTS_AQUA = (body: string, bodyLabel: string, trim: string) => [
+  matSlot('body', bodyLabel, body),
+  matSlot('trim', 'Door ring, dial & feet', trim),
+  matSlot(SLOT_GLASS, 'Door glass & display window', 'washer-smoked-glass'),
+  matSlot(SLOT_DISPLAY, 'Display', 'washer-display'),
+];
+
 const SLOTS_WHITE = (ring: string, ringLabel = 'Door ring, dial & feet') => [
   matSlot('body', 'Cabinet & drawer', 'washer-white'),
   matSlot('trim', ringLabel, ring),
@@ -379,14 +411,173 @@ const washTower = defineItem({
   planDetail: plan(0.05),
 });
 
+// ---------------------------------------------------------------------------
+// AQUA clothes dryers (common in Vietnam)
+// ---------------------------------------------------------------------------
+
+const aquaV700 = defineItem({
+  id: 'aqua-aqh-v700fw',
+  name: 'AQUA AQH-V700FW vented dryer 7 kg',
+  category: 'laundry',
+  type: 'appliances',
+  group: 'Laundry',
+  tags: [...DRYER_ONLY_TAGS, 'AQH-V700FW', 'sấy thông hơi', 'vented', '7 kg', 'white'],
+  ...sizes(0.6, 0.555, 0.82),
+  wallSnap: true,
+  description:
+    'AQUA 7 kg vented tumble dryer in white with a large glass door, a programme knob and an LED display on a bilingual English–Vietnamese panel. Ducts warm air out through a vent at the back.',
+  brand: brand('AQUA', 'AQH-V700FW', 'Vented dryer', 'https://www.dienmayxanh.com/may-say-quan-ao/aqua-aqh-v700fw', [
+    ['Capacity', '7 kg'],
+    ['Type', 'Vented (sấy thông hơi), 80 °C'],
+    ['Controls', 'Knob, push buttons, display (English / Vietnamese)'],
+    ['Door', 'Glass'],
+    ['Size (H × W × D)', '820 × 600 × 555 mm, 30 kg'],
+  ]),
+  slots: SLOTS_AQUA('washer-white', 'Cabinet', 'washer-silver-grey'),
+  build: (s) =>
+    dryer(s, {
+      heatPump: false,
+      fascia: { panelH: 0.105, slot: 'body', drawerW: 0, dialX: -0.17, dialR: 0.034, dispX: 0.03, dispW: 0.1, text: '1:20', buttons: 3 },
+      door: { R: 0.205, style: 'ring', tube: 0.02, handle: true },
+      doorFrame: 'trim',
+      doorProj: 0.04,
+      top: 0.02,
+    }),
+  planDetail: plan(0.04),
+});
+
+const aquaV800 = defineItem({
+  id: 'aqua-aqh-v800h-ss',
+  name: 'AQUA AQH-V800H SS vented dryer 8 kg',
+  category: 'laundry',
+  type: 'appliances',
+  group: 'Laundry',
+  tags: [...DRYER_ONLY_TAGS, 'AQH-V800H', 'sấy thông hơi', 'vented', '8 kg', 'grey', 'silver'],
+  ...sizes(0.6, 0.55, 0.83),
+  wallSnap: true,
+  description:
+    'AQUA 8 kg vented tumble dryer in an elegant grey with a dark tinted door, touch keys, a programme knob and an LED display on a bilingual panel. A favourite in Vietnamese apartments for the rainy season.',
+  brand: brand('AQUA', 'AQH-V800H SS', 'Vented dryer', 'https://www.dienmayxanh.com/may-say-quan-ao/may-say-thong-hoi-aqua-aqh-v800h-ss', [
+    ['Capacity', '8 kg'],
+    ['Type', 'Vented (sấy thông hơi), heating element, horizontal drum'],
+    ['Controls', 'Touch keys, buttons, knob, LED display (English / Vietnamese)'],
+    ['Colour', 'Grey'],
+    ['Size (H × W × D)', '830 × 600 × 550 mm, 30 kg'],
+  ]),
+  slots: SLOTS_AQUA('aqua-grey', 'Cabinet', 'washer-dark-chrome'),
+  build: (s) =>
+    dryer(s, {
+      heatPump: false,
+      fascia: { panelH: 0.11, slot: SLOT_GLASS, drawerW: 0, dialX: -0.17, dialR: 0.034, dispX: 0.03, dispW: 0.11, text: '2:10', buttons: 4 },
+      door: { R: 0.21, style: 'flat', handle: true },
+      doorFrame: SLOT_GLASS,
+      doorProj: 0.045,
+      top: 0.02,
+    }),
+  planDetail: plan(0.045),
+});
+
+const aquaV901 = defineItem({
+  id: 'aqua-aqh-v901k-ps',
+  name: 'AQUA AQH-V901K PS vented dryer 9 kg',
+  category: 'laundry',
+  type: 'appliances',
+  group: 'Laundry',
+  tags: [...DRYER_ONLY_TAGS, 'AQH-V901K', 'sấy thông hơi', 'vented', '9 kg', 'black'],
+  ...sizes(0.6, 0.565, 0.83),
+  wallSnap: true,
+  description:
+    'AQUA 9 kg vented tumble dryer in black with an insulated glass door, a programme knob, buttons and an LED display on a bilingual panel; sized for families of three to five.',
+  brand: brand('AQUA', 'AQH-V901K PS', 'Vented dryer', 'https://www.dienmayxanh.com/may-say-quan-ao/may-say-thong-hoi-aqua-9-kg-aqh-v901k-ps', [
+    ['Capacity', '9 kg'],
+    ['Type', 'Vented (sấy thông hơi)'],
+    ['Controls', 'Knob, push buttons, LED display (English / Vietnamese)'],
+    ['Colour', 'Black'],
+    ['Size (H × W × D)', '830 × 600 × 565 mm, 30 kg'],
+  ]),
+  slots: SLOTS_AQUA('washer-black', 'Cabinet', 'washer-dark-chrome'),
+  build: (s) =>
+    dryer(s, {
+      heatPump: false,
+      fascia: { panelH: 0.11, slot: 'body', drawerW: 0, dialX: 0.17, dialR: 0.036, dispX: -0.1, dispW: 0.12, text: '1:45', buttons: 0 },
+      door: { R: 0.215, style: 'ring', tube: 0.018, handle: true },
+      doorFrame: SLOT_GLASS,
+      doorProj: 0.045,
+      top: 0.02,
+    }),
+  planDetail: plan(0.045),
+});
+
+const aquaH900 = defineItem({
+  id: 'aqua-aqh-h900g-ps',
+  name: 'AQUA AQH-H900G PS heat-pump dryer 9 kg',
+  category: 'laundry',
+  type: 'appliances',
+  group: 'Laundry',
+  tags: [...DRYER_ONLY_TAGS, 'AQH-H900G', 'bơm nhiệt', 'heat pump', 'heatpump', 'condenser', '9 kg', 'silver'],
+  ...sizes(0.667, 0.595, 0.846),
+  wallSnap: true,
+  description:
+    'AQUA 9 kg heat-pump dryer in silver: no vent needed, the moisture collects in the water tank at the top left; a knob and display on the panel, a big tinted door and a condenser grille in the kick panel.',
+  brand: brand('AQUA', 'AQH-H900G PS', 'Heat-pump dryer', 'https://dienmaycholon.com/may-say/may-say-aqua-9-kg-aqhh900gps', [
+    ['Capacity', '9 kg'],
+    ['Type', 'Heat pump (bơm nhiệt), up to 56 % less energy'],
+    ['Extras', 'Drying rack, 3-layer lint filter'],
+    ['Colour', 'Silver'],
+    ['Size (H × W × D)', '846 × 667 × 595 mm, 50 kg'],
+  ]),
+  slots: SLOTS_AQUA('aqua-silver', 'Cabinet', 'washer-chrome'),
+  build: (s) =>
+    dryer(s, {
+      heatPump: true,
+      fascia: { panelH: 0.115, slot: 'body', drawerW: 0.17, dialX: -0.07, dialR: 0.034, dispX: 0.1, dispW: 0.12, text: '2:45', buttons: 3 },
+      door: { R: 0.22, style: 'ring', tube: 0.02, handle: true },
+      doorFrame: 'trim',
+      doorProj: 0.05,
+      top: 0.022,
+    }),
+  planDetail: plan(0.05),
+});
+
+const aquaH1000 = defineItem({
+  id: 'aqua-aqh-h1000j-ps',
+  name: 'AQUA AQH-H1000J PS heat-pump dryer 10 kg',
+  category: 'laundry',
+  type: 'appliances',
+  group: 'Laundry',
+  tags: [...DRYER_ONLY_TAGS, 'AQH-H1000J', 'bơm nhiệt', 'heat pump', 'heatpump', 'condenser', '10 kg', 'dark silver'],
+  ...sizes(0.675, 0.595, 0.845),
+  wallSnap: true,
+  description:
+    'AQUA 10 kg heat-pump dryer in dark silver with a black glass control strip, a large door with a black frame, the water tank at the top left and a condenser grille below the door; for families of five to seven.',
+  brand: brand('AQUA', 'AQH-H1000J PS', 'Heat-pump dryer', 'https://cellphones.com.vn/may-say-aqua-bom-nhiet-10kg-aqh-h1000j-ps.html', [
+    ['Capacity', '10 kg'],
+    ['Type', 'Heat pump (bơm nhiệt)'],
+    ['Drum', 'Stainless steel, reversing tumble'],
+    ['Colour', 'Dark silver'],
+    ['Size (H × W × D)', '845 × 675 × 595 mm'],
+  ]),
+  slots: SLOTS_AQUA('aqua-graphite', 'Cabinet', 'washer-dark-chrome'),
+  build: (s) =>
+    dryer(s, {
+      heatPump: true,
+      fascia: { panelH: 0.115, slot: SLOT_GLASS, drawerW: 0.17, dialX: 0.22, dialR: 0.034, dispX: 0.03, dispW: 0.14, text: '3:05', buttons: 0 },
+      door: { R: 0.225, style: 'flat', handle: true },
+      doorFrame: SLOT_GLASS,
+      doorProj: 0.05,
+      top: 0.022,
+    }),
+  planDetail: plan(0.05),
+});
+
 export default definePack({
   name: 'Branded washing machines',
   version: '1.0.0',
   author: 'Neest team',
   description:
-    'Four real front loaders built to their published dimensions: Bosch Serie 6 and Samsung Bespoke AI washers, an LG washer-dryer and the LG WashTower. Brand and spec data is in each item’s info card; no logos are drawn.',
-  license: 'CC0 geometry (made for Neest); Bosch, LG and Samsung are trademarks of their owners',
-  items: [boschWgg, lgFwy, samsungWw, washTower],
+    'Real front loaders built to their published dimensions: Bosch Serie 6 and Samsung Bespoke AI washers, an LG washer-dryer, the LG WashTower, and AQUA vented and heat-pump clothes dryers common in Vietnam. Brand and spec data is in each item’s info card; no logos are drawn.',
+  license: 'CC0 geometry (made for Neest); Bosch, LG, Samsung and AQUA are trademarks of their owners',
+  items: [boschWgg, lgFwy, samsungWw, washTower, aquaV700, aquaV800, aquaV901, aquaH900, aquaH1000],
   materials: [
     { id: 'washer-white', name: 'Appliance white (gloss)', color: '#f5f5f2', roughness: 0.25 },
     { id: 'washer-black', name: 'Appliance black', color: '#1d1e21', roughness: 0.35, metalness: 0.2 },
@@ -396,6 +587,9 @@ export default definePack({
     { id: 'washer-smoked-glass', name: 'Smoked door glass', category: 'glass', color: '#3b434b', roughness: 0.05, metalness: 0.3 },
     { id: 'washer-black-glass', name: 'Black tinted glass', category: 'glass', color: '#121417', roughness: 0.06, metalness: 0.35 },
     { id: 'washer-display', name: 'White LED readout', color: '#f0f6ff', roughness: 0.3, emissive: '#dceaff', emissiveIntensity: 1.2 },
+    { id: 'aqua-grey', name: 'Appliance grey', color: '#8d9196', roughness: 0.3, metalness: 0.35 },
+    { id: 'aqua-silver', name: 'Appliance silver', category: 'metal', color: '#c3c6ca', roughness: 0.28, metalness: 0.55 },
+    { id: 'aqua-graphite', name: 'Appliance dark silver', category: 'metal', color: '#5f6267', roughness: 0.3, metalness: 0.5 },
     { id: 'washer-display-blue', name: 'Blue LED readout', color: '#bfe0ff', roughness: 0.3, emissive: '#57a8ff', emissiveIntensity: 1.4 },
   ],
 });

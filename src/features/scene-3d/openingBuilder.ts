@@ -540,12 +540,21 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
     else if (kind === 'door-double') swingLeaves(pair, (width) => leaf(width, true));
     else if (kind === 'door-french') swingLeaves(pair, (width) => leaf(width, true, leafH, 0.045));
     else if (kind === 'door-sliding') {
+      // The sliding panel (with the handle) runs on the swing side and closes from the hinge end;
+      // the fixed panel sits on the other face at the other end.
       const pw = innerW * 0.55;
       const slide = (opening.openAngle / 90) * innerW * 0.45;
+      const z = swing * t * 0.18;
       const p1 = leaf(pw, true);
-      p1.position.set(-innerW / 2 + slide, bottom, t * 0.18);
       const p2 = leaf(pw);
-      p2.position.set(innerW / 2 - pw, bottom, -t * 0.18);
+      if (hingeAtStart) {
+        p1.position.set(-innerW / 2 + slide, bottom, z);
+        p2.position.set(innerW / 2 - pw, bottom, -z);
+      } else {
+        p1.scale.x = -1;
+        p1.position.set(innerW / 2 - slide, bottom, z);
+        p2.position.set(-innerW / 2, bottom, -z);
+      }
       add(p1, p2);
     } else if (kind === 'door-pocket') {
       // The leaf slides into the wall cavity on the hinge side (0–90° = 0–100 % open).

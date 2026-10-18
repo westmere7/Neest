@@ -105,14 +105,17 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
     if (!active) return;
     gl.domElement.style.cursor = active.cursor;
     useEditorStore.getState().set({ hint: `${active.hint} Right-drag to orbit, middle-drag to pan.` });
-    planKeyRouter.current = (e) => active.onKeyDown?.(e, env) ?? false;
-    planKeyRouter.cancel = () => active.cancel?.(env) ?? false;
+    const keys = (e: KeyboardEvent) => active.onKeyDown?.(e, env) ?? false;
+    const cancel = () => active.cancel?.(env) ?? false;
+    planKeyRouter.current = keys;
+    planKeyRouter.cancel = cancel;
     return () => {
       active.cancel?.(env);
       setOverlay(null);
       gl.domElement.style.cursor = '';
-      if (planKeyRouter.current) planKeyRouter.current = null;
-      planKeyRouter.cancel = null;
+      // Only our own handlers: the plan may have registered its tool since (split view, view switches).
+      if (planKeyRouter.current === keys) planKeyRouter.current = null;
+      if (planKeyRouter.cancel === cancel) planKeyRouter.cancel = null;
     };
   }, [active, env, gl]);
 

@@ -15,7 +15,7 @@ import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { usePrefsStore } from '@/state/uiStores';
 import { placementMaterials, placementModel } from '@/features/library/variantChoice';
-import type { Tool, ToolEnv } from './types';
+import type { PointerInfo, Tool, ToolEnv } from './types';
 import { surfaceUnder } from './surfaces';
 
 /**
@@ -57,11 +57,21 @@ export function hugWall(
 
 export function createOpeningTool(): Tool {
   let target: { wallId: string; offset: number; side: 'left' | 'right' } | null = null;
+  /** R turns the opening round: the hinge end (R) and, inverted from the side pointed at, the side (Shift+R). */
+  let hinge: 'start' | 'end' | null = null;
+  let flipSide = false;
+  let last: PointerInfo | null = null;
+  const hingeOf = (env: ToolEnv): 'start' | 'end' => {
+    const ed = env.editor();
+    const tpl = ed.openingTemplate && ed.openingTemplate.kind === ed.openingKind ? ed.openingTemplate : null;
+    return hinge ?? tpl?.hinge ?? 'start';
+  };
   return {
     id: 'opening',
     cursor: 'copy',
-    hint: 'Hover a wall and click to insert. Doors swing toward the side you point at. Esc to finish.',
+    hint: 'Hover a wall and click to insert. Doors swing toward the side you point at; R flips the hinge, Shift+R the side. Esc to finish.',
     onPointerMove(e, env) {
+      last = e;
       const derived = env.derived();
       const kind = env.editor().openingKind;
       const preset = OPENING_PRESETS[kind];
@@ -88,7 +98,8 @@ export function createOpeningTool(): Tool {
       let s = best.s;
       if (env.editor().snap.grid && !e.alt) s = round(s, grid / 2);
       s = Math.min(Math.max(s, lo), hi);
-      target = { wallId: best.wallId, offset: s, side: best.side };
+      const side = flipSide ? (best.side === 'left' ? 'right' : 'left') : best.side;
+      target = { wallId: best.wallId, offset: s, side };
       const at = (t: number, off: number) => {
         const { p, tangent } = pointAt(g.path, t);
         return add(p, scale(leftNormal(tangent), off));
@@ -96,14 +107,21 @@ export function createOpeningTool(): Tool {
       const s0 = s - width / 2;
       const s1 = s + width / 2;
       const units = env.project().settings;
+      // Which way it opens: the leaf, from the hinge end, out on the chosen side (doors that swing or fold).
+      const h = hingeOf(env);
+      const sgn = side === 'left' ? 1 : -1;
+      const sHinge = h === 'start' ? s0 : s1;
+      const swings = !kind.startsWith('window') && !kind.startsWith('passage') && kind !== 'door-sliding' && kind !== 'door-pocket';
+      const leafLine = swings ? [{ a: at(sHinge, sgn * g.h), b: at(sHinge, sgn * (g.h + Math.min(width, 1.2))), kind: 'preview' as const }] : [];
       env.setSnapLabel('On wall');
       env.setOverlay({
+        lines: leafLine,
         // A little proud of both wall faces: in 3D, walls win depth ties and would hide a flush ghost.
         ghostOpening: { pts: [at(s0, g.h + 0.012), at(s1, g.h + 0.012), at(s1, -g.h - 0.012), at(s0, -g.h - 0.012)], valid: hi >= lo },
         labels: [
           {
             p: at(s, 0),
-            text: `${preset.label} · ${formatLength(s0, units.units, units.precision)} from start`,
+            text: `${preset.label} · ${formatLength(s0, units.units, units.precision)} from start · hinge at ${h} · R / Shift+R to turn`,
             offset: { x: 14, y: 26 },
           },
         ],
@@ -122,16 +140,24 @@ export function createOpeningTool(): Tool {
           // A Duplicate: the original's every setting, on the wall and side clicked.
           const nid = addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, width: tpl.width });
           if (nid) {
-            Object.assign(d.openings[nid], JSON.parse(JSON.stringify(tpl)), { swingSide: t.side });
+            Object.assign(d.openings[nid], JSON.parse(JSON.stringify(tpl)), { swingSide: t.side, hinge: hingeOf(env) });
             clampOpening(d, nid);
           }
           return nid;
         }
-        return addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, design, finish: finish ?? undefined });
+        return addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, hinge: hingeOf(env), design, finish: finish ?? undefined });
       });
       if (id && !e.shift) {
         useEditorStore.getState().setSelection([{ kind: 'opening', id }]);
       }
+    },
+    onKeyDown(e, env) {
+      // R turns the opening (as it turns furniture while placing), instead of starting the room tool.
+      if (e.key.toLowerCase() !== 'r' || e.ctrlKey || e.metaKey) return false;
+      if (e.shiftKey) flipSide = !flipSide;
+      else hinge = hingeOf(env) === 'start' ? 'end' : 'start';
+      if (last) this.onPointerMove?.(last, env);
+      return true;
     },
     cancel(env) {
       target = null;

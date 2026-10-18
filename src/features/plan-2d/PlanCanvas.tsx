@@ -199,12 +199,15 @@ export function PlanCanvas() {
     setOverlay(null);
     setCursor(activeTool.cursor);
     useEditorStore.getState().set({ hint: activeTool.hint });
-    planKeyRouter.current = (e) => activeTool.onKeyDown?.(e, env) ?? false;
-    planKeyRouter.cancel = () => activeTool.cancel?.(env) ?? false;
+    const keys = (e: KeyboardEvent) => activeTool.onKeyDown?.(e, env) ?? false;
+    const cancel = () => activeTool.cancel?.(env) ?? false;
+    planKeyRouter.current = keys;
+    planKeyRouter.cancel = cancel;
     return () => {
       activeTool.cancel?.(env);
-      planKeyRouter.current = null;
-      planKeyRouter.cancel = null;
+      // Only our own handlers: the 3D view may have registered its tool since (split view, view switches).
+      if (planKeyRouter.current === keys) planKeyRouter.current = null;
+      if (planKeyRouter.cancel === cancel) planKeyRouter.cancel = null;
     };
   }, [activeTool, env]);
 
