@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1792314442058,
+  "updatedAt": 1792314556817,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -281,10 +281,12 @@
       "materials": {
         "left": "paint-warm-white",
         "right": "paint-warm-white",
-        "top": "plaster-white"
+        "top": "metal-black-matte"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "style": "glass",
+      "styleMaterialId": "glass-clear"
     }
   },
   "openings": {
@@ -330,8 +332,8 @@
       "hinge": "start",
       "openAngle": 0,
       "style": "glazed",
-      "frameMaterialId": "paint-satin-white",
-      "panelMaterialId": "paint-satin-white"
+      "frameMaterialId": "paint-charcoal",
+      "panelMaterialId": "paint-charcoal"
     },
     "door_cl78ik1k6h": {
       "id": "door_cl78ik1k6h",
@@ -1850,6 +1852,92 @@
       "source": {
         "name": "Chinese home pack by Neest team",
         "license": "CC0 (made for Neest)"
+      }
+    },
+    "wood-walnut": {
+      "id": "wood-walnut",
+      "name": "Walnut",
+      "category": "wood",
+      "color": "#6b4a33",
+      "roughness": 0.5,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "wood-grain",
+        "scale": 1,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "walnut-veneer",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-walnut",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven walnut_veneer",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/walnut_veneer"
+      }
+    },
+    "wood-teak": {
+      "id": "wood-teak",
+      "name": "Teak",
+      "category": "wood",
+      "color": "#9a6a3c",
+      "roughness": 0.6,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "wood-grain",
+        "scale": 0.8,
+        "rotation": 0,
+        "contrast": 0.75
+      },
+      "photo": {
+        "setId": "cherry-wood",
+        "scale": 0.4,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-teak",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Wood066",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Wood066"
+      }
+    },
+    "paint-charcoal": {
+      "id": "paint-charcoal",
+      "name": "Charcoal",
+      "category": "paint",
+      "color": "#3c3f42",
+      "roughness": 0.85,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "paint",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 0.3
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-charcoal",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
       }
     }
   },
