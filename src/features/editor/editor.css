@@ -1104,3 +1104,11 @@
 .btn-row.compact .btn {
   flex: 1;
 }
+
+/* Rounded corner: radius and "Sharp corner" on one row */
+.corner-radius-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 8px;
+}

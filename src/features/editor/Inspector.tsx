@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Focus, LibraryBig, Lock, Minus, PanelRightClose, RotateCw, Scissors, Spline, Trash2, Unlock, X } from 'lucide-react';
+import { ArrowLeftRight, ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Focus, LibraryBig, Lock, Minus, PanelRightClose, RotateCw, Scissors, Spline, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
 import { isDividerWall, isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
@@ -7,7 +7,7 @@ import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
 import { boundsOf, unionBounds, type Bounds } from '@/domain/geometry/vec';
 import { pointAt } from '@/domain/geometry/wallPath';
-import { clampOpenings, cornerArc, curveHandleFraction, maxCornerRadius, roundCorner, setCornerRadius, sharedNode, fitCurveToJoins, flipCurve, joinTangent, makeCircularArc, setCurveHandleFraction, setCurveHandles, setWallAngle, setWallLength, splitWallAt, updateWalls } from '@/domain/commands/walls';
+import { clampOpenings, swapWallFaces, unroundCorner, cornerArc, curveHandleFraction, maxCornerRadius, roundCorner, setCornerRadius, sharedNode, fitCurveToJoins, flipCurve, joinTangent, makeCircularArc, setCurveHandleFraction, setCurveHandles, setWallAngle, setWallLength, splitWallAt, updateWalls } from '@/domain/commands/walls';
 import { assignMaterial, normalizeRotation, setOpeningDesign, suggestedFloor, updateObjects, updateOpening, updateRoom } from '@/domain/commands/entities';
 import { defaultDesign, designFitsKind, OPENING_DESIGNS_BY_ID, resolveOpeningDesign } from '@/domain/model/openingDesigns';
 import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
@@ -329,8 +329,11 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
           <IconButton label="Split in half" disabled={locked} onClick={() => exec('Split wall', (d) => void splitWallAt(d, wallId, g.path.length / 2))}>
             <Scissors size={15} />
           </IconButton>
-          <IconButton label="Swap sides (reverse direction and left/right finishes)" onClick={() => reverseWall(wallId)}>
+          <IconButton label="Reverse direction (each face keeps its finish)" onClick={() => reverseWall(wallId)}>
             <FlipHorizontal2 size={15} />
+          </IconButton>
+          <IconButton label="Swap faces (the two sides trade finishes and trims)" disabled={locked} onClick={() => exec('Swap wall faces', (d) => swapWallFaces(d, wallId))} data-testid="swap-wall-faces">
+            <ArrowLeftRight size={15} />
           </IconButton>
         </div>
       </Section>
@@ -756,23 +759,38 @@ function MultiInspector({ project }: { project: Project }) {
   );
 }
 
-/** A rounded corner (a curved wall between two straight walls): its radius, adjustable. */
+/** A rounded corner (a curved wall between two straight walls): its radius, or back to a sharp corner. */
 function CornerRadiusField({ project, wallId, locked }: { project: Project; wallId: string; locked: boolean }) {
   const c = cornerArc(project, wallId);
   if (!c || c.max <= 0.01) return null;
   const u = project.settings;
   return (
-    <LengthField
-      label="Corner radius"
-      value={c.radius}
-      unit={u.units}
-      precision={u.precision}
-      min={0.02}
-      max={c.max}
-      disabled={locked}
-      testId="corner-radius"
-      onCommit={(v) => useProjectStore.getState().execute('Set corner radius', (d) => void setCornerRadius(d, wallId, v))}
-    />
+    <div className="corner-radius-row">
+      <LengthField
+        label="Corner radius"
+        value={c.radius}
+        unit={u.units}
+        precision={u.precision}
+        min={0.02}
+        max={c.max}
+        disabled={locked}
+        testId="corner-radius"
+        onCommit={(v) => useProjectStore.getState().execute('Set corner radius', (d) => void setCornerRadius(d, wallId, v))}
+      />
+      <Button
+        size="sm"
+        disabled={locked}
+        title="Remove the rounding: the two walls meet in a sharp corner again"
+        data-testid="unround-corner"
+        onClick={() => {
+          let walls: [string, string] | null = null;
+          useProjectStore.getState().execute('Sharp corner', (d) => void (walls = unroundCorner(d, wallId)));
+          if (walls) useEditorStore.getState().setSelection((walls as [string, string]).map((id) => ({ kind: 'wall' as const, id })));
+        }}
+      >
+        Sharp corner
+      </Button>
+    </div>
   );
 }
 

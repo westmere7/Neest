@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyProject } from '../model/defaults';
 import type { Project } from '../model/schema';
 import { buildWallPath, pointAt } from '../geometry/wallPath';
-import { addWallChain, cornerArc, maxCornerRadius, roundCorner, setCornerRadius, sharedNode, type D } from './walls';
+import { addWallChain, cornerArc, maxCornerRadius, roundCorner, setCornerRadius, sharedNode, unroundCorner, type D } from './walls';
 
 const W = { thickness: 0.1, height: 2.7, role: 'interior' as const };
 const edit = (p: Project, fn: (d: D) => void): Project => produce(p, fn);
@@ -78,6 +78,18 @@ describe('roundCorner', () => {
     expect(r.openings.o1.offset).toBeCloseTo(1.2, 6);
     const mid = pointAt(buildWallPath(r.nodes[r.walls[arcId].a], r.nodes[r.walls[arcId].b], r.walls[arcId].curve, r.walls[arcId].curveEnd), 0);
     expect(Math.hypot(mid.p.x, mid.p.y)).toBeCloseTo(0.8, 6);
+  });
+
+  it('reverts a rounded corner to the sharp one', () => {
+    const { p, corner } = ell();
+    let arcId = '';
+    const q = edit(p, (d) => void (arcId = roundCorner(d, corner, 0.5)!));
+    const r = edit(q, (d) => void expect(unroundCorner(d, arcId)).not.toBeNull());
+    expect(Object.keys(r.walls)).toHaveLength(2);
+    expect(Object.keys(r.nodes)).toHaveLength(3);
+    expect(Object.values(r.nodes).some((n) => n.x === 0 && n.y === 0)).toBe(true);
+    expect(r.openings.o1.offset).toBeCloseTo(2, 6);
+    expect(Object.values(r.walls).every((w) => !w.curve)).toBe(true);
   });
 
   it('refuses corners it cannot round', () => {

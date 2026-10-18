@@ -7,6 +7,8 @@ import type { Vec2 } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { snapPoint, type SnapContext } from '@/domain/geometry/snapping';
 import { dist } from '@/domain/geometry/vec';
+import { pointAt, projectOnPath } from '@/domain/geometry/wallPath';
+import { openingOffsetRange } from '@/domain/geometry/walls';
 import { normalizeRotation, updateObjects } from '@/domain/commands/entities';
 import { formatAngle, formatLength } from '@/domain/model/units';
 import { getAsset } from '@/data/assets/registry';
@@ -435,6 +437,153 @@ function ArrowShape({ color, hot }: { color: string; hot: boolean }) {
 }
 
 /**
+ * Gizmo for a selected door or window: an arrow at each side, along the wall, at mid-height.
+ * Dragging either slides the opening along its wall (it cannot leave the wall), snapped to half the
+ * grid (Alt for free), within the part of the wall it fits in. Windows also get an arrow on top that
+ * raises or lowers the sill (5 cm steps). One undo step per drag.
+ */
+function OpeningGizmo({ openingId, controlsRef }: { openingId: string; controlsRef: React.MutableRefObject<OrbitControlsImpl | null> }) {
+  const project = useProjectStore((s) => s.project!);
+  const gl = useThree((s) => s.gl);
+  const get = useThree((s) => s.get);
+  const [hot, setHot] = useState<string | null>(null);
+  const [readout, setReadout] = useState<string | null>(null);
+  const centerRef = useRef(new THREE.Vector3());
+  const scaled = useRef<THREE.Group[]>([]);
+  const o = project.openings[openingId];
+  const g = useMemo(() => (o ? derivePlan(project).network.walls.get(o.wallId) : undefined), [project, o]);
+  const at = g && o ? pointAt(g.path, Math.min(Math.max(o.offset, 0), g.path.length)) : null;
+  const midY = o ? o.sillHeight + o.height / 2 : 0;
+  if (at) centerRef.current.set(at.p.x, midY, at.p.y);
+  useFrame(() => {
+    const { camera, size } = get();
+    const k = worldPerPixel(camera, centerRef.current, size.height) * 80;
+    for (const m of scaled.current) m.scale.setScalar(k);
+  });
+  const wall = o ? project.walls[o.wallId] : undefined;
+  if (!o || !g || !at || !wall || wall.locked || project.layers.construction.locked) return null;
+  const units = project.settings;
+  const tangent = new THREE.Vector3(at.tangent.x, 0, at.tangent.y).normalize();
+
+  const isWindow = o.kind.startsWith('window');
+  const up = new THREE.Vector3(0, 1, 0);
+  const startDrag = (e: ThreeEvent<PointerEvent>, side: 'a' | 'b' | 'sill') => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    const origin = centerRef.current.clone();
+    const axis = side === 'sill' ? up : tangent;
+    const t0 = closestOnLine(e.ray.origin, e.ray.direction, origin, axis);
+    if (t0 === null) return;
+    const offset0 = o.offset;
+    const sill0 = o.sillHeight;
+    const maxSill = Math.max(0, wall.height - o.height - 0.02);
+    const [lo, hi] = openingOffsetRange(g, o.width);
+    const grid = project.settings.gridSize;
+    const raycaster = new THREE.Raycaster();
+    const el = gl.domElement;
+    if (controlsRef.current) controlsRef.current.enabled = false;
+    useProjectStore.getState().begin(side === 'sill' ? 'Change sill height' : isWindow ? 'Move window' : 'Move door');
+    setHot(side);
+    const move = (ev: PointerEvent) => {
+      const rect = el.getBoundingClientRect();
+      raycaster.setFromCamera(
+        new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1),
+        get().camera,
+      );
+      const t = closestOnLine(raycaster.ray.origin, raycaster.ray.direction, origin, axis);
+      if (t === null) return;
+      if (side === 'sill') {
+        let sill = sill0 + (t - t0);
+        if (!ev.altKey && useEditorStore.getState().snap.grid) sill = Math.round(sill / 0.05) * 0.05;
+        sill = Math.min(Math.max(sill, 0), maxSill);
+        setReadout(`Sill ${formatLength(sill, units.units, units.precision)}`);
+        useProjectStore.getState().preview((d) => {
+          if (d.openings[openingId]) d.openings[openingId].sillHeight = sill;
+        });
+        return;
+      }
+      // Onto the wall's own path (curved walls bend away from the tangent line).
+      const p = origin.clone().addScaledVector(tangent, t - t0);
+      let s = g.path.control ? projectOnPath(g.path, { x: p.x, y: p.z }).s : offset0 + (t - t0);
+      if (!ev.altKey && useEditorStore.getState().snap.grid) s = Math.round(s / (grid / 2)) * (grid / 2);
+      s = Math.min(Math.max(s, lo), Math.max(lo, hi));
+      setReadout(`${formatLength(s - o.width / 2, units.units, units.precision)} from wall start`);
+      useProjectStore.getState().preview((d) => {
+        if (d.openings[openingId]) d.openings[openingId].offset = s;
+      });
+    };
+    const done = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', done);
+      useProjectStore.getState().commit();
+      setHot(null);
+      setReadout(null);
+      if (controlsRef.current) controlsRef.current.enabled = true;
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', done);
+  };
+
+  scaled.current = [];
+  const keep = (m: THREE.Group | null) => {
+    if (m) scaled.current.push(m);
+  };
+  const yaw = -Math.atan2(tangent.z, tangent.x);
+  const reach = o.width / 2 + 0.08;
+  return (
+    <group name="neest-gizmo" userData={{ helper: true }}>
+      {(['a', 'b'] as const).map((side) => {
+        const sign = side === 'a' ? -1 : 1;
+        return (
+          <group
+            key={side}
+            position={[at.p.x + tangent.x * reach * sign, midY, at.p.y + tangent.z * reach * sign]}
+            rotation={[0, yaw + (side === 'a' ? Math.PI : 0), 0]}
+            onPointerDown={(e) => startDrag(e, side)}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              setHot((h) => h ?? side);
+              gl.domElement.style.cursor = 'ew-resize';
+            }}
+            onPointerOut={() => {
+              setHot((h) => (h === side ? null : h));
+              gl.domElement.style.cursor = '';
+            }}
+          >
+            <group rotation={[0, 0, -Math.PI / 2]} ref={keep}>
+              <ArrowShape color={AXIS_COLORS.x} hot={hot === 'a' || hot === 'b'} />
+            </group>
+          </group>
+        );
+      })}
+      {isWindow && (
+        <group
+          position={[at.p.x, o.sillHeight + o.height + 0.06, at.p.y]}
+          ref={keep}
+          onPointerDown={(e) => startDrag(e, 'sill')}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setHot((h) => h ?? 'sill');
+            gl.domElement.style.cursor = 'ns-resize';
+          }}
+          onPointerOut={() => {
+            setHot((h) => (h === 'sill' ? null : h));
+            gl.domElement.style.cursor = '';
+          }}
+        >
+          <ArrowShape color={AXIS_COLORS.y} hot={hot === 'sill'} />
+        </group>
+      )}
+      {readout && (
+        <Html position={[at.p.x, o.sillHeight + o.height + (isWindow ? 0.6 : 0.35), at.p.y]} center style={{ pointerEvents: 'none' }}>
+          <div className="label3d accent">{readout}</div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+/**
  * Transform gizmo for selected furniture: X/Z arrows slide along the floor,
  * the Y arrow changes elevation, the centre disc moves freely, the ring
  * rotates and the square on the ring scales a single item proportionally (5 %
@@ -451,6 +600,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
   const scaled = useRef<THREE.Group[]>([]);
   const centerRef = useRef(new THREE.Vector3());
 
+  const openingSel = selection.length === 1 && selection[0].kind === 'opening' ? project.openings[selection[0].id] : null;
   const objs = selection
     .filter((s) => s.kind === 'object')
     .map((s) => project.objects[s.id])
@@ -470,6 +620,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
     for (const g of scaled.current) g.scale.setScalar(k);
   });
 
+  if (openingSel) return <OpeningGizmo openingId={openingSel.id} controlsRef={controlsRef} />;
   if (!n || locked) return null;
   const single = n === 1 ? objs[0] : null;
   const ringR = single ? Math.max(single.width, single.depth) / 2 + 0.22 : 0.3;

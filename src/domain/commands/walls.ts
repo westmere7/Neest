@@ -992,3 +992,50 @@ export function setCornerRadius(d: D, arcId: string, radius: number): boolean {
   clampOpenings(d, [c.legs[0].wall.id, c.legs[1].wall.id]);
   return true;
 }
+
+/** Trades the two faces' finishes (side materials and trims); the wall keeps its direction. */
+export function swapWallFaces(d: D, wallId: string): void {
+  const w = d.walls[wallId];
+  if (!w) return;
+  const { left, right } = w.materials;
+  w.materials.left = right;
+  w.materials.right = left;
+  if (w.finishes) {
+    // Plain copies: Immer drafts cannot be moved between keys as they are.
+    const copy = <T,>(x: T): T => (x === undefined ? x : (JSON.parse(JSON.stringify(x)) as T));
+    const f = { left: copy(w.finishes.right), right: copy(w.finishes.left) };
+    w.finishes = { ...(f.left ? { left: f.left } : {}), ...(f.right ? { right: f.right } : {}) };
+  }
+}
+
+/**
+ * Undoes a rounded corner (see `cornerArc`): the curved wall is removed and the two straight walls
+ * run on to the point where they meet again. Openings on them keep their place; any on the curved
+ * wall are removed with it. Returns the two walls' ids, or null when the wall is not such a corner.
+ */
+export function unroundCorner(d: D, arcId: string): [string, string] | null {
+  const c = cornerArc(d, arcId);
+  if (!c) return null;
+  const [l1, l2] = c.legs;
+  const keep = l1.nodeId;
+  const moved1 = dist(c.corner, l1.node);
+  const moved2 = dist(c.corner, l2.node);
+  const n = d.nodes[keep];
+  n.x = c.corner.x;
+  n.y = c.corner.y;
+  // Offsets run from the start node: a start node moved back to the corner adds that distance.
+  const shift = (wallId: string, nodeId: string, by: number) => {
+    if (d.walls[wallId].a !== nodeId) return;
+    for (const o of Object.values(d.openings)) if (o.wallId === wallId) o.offset += by;
+  };
+  shift(l1.wall.id, l1.nodeId, moved1);
+  shift(l2.wall.id, l2.nodeId, moved2);
+  const w2 = d.walls[l2.wall.id];
+  if (w2.a === l2.nodeId) w2.a = keep;
+  else w2.b = keep;
+  for (const o of Object.values(d.openings)) if (o.wallId === arcId) delete d.openings[o.id];
+  delete d.walls[arcId];
+  delete d.nodes[l2.nodeId];
+  clampOpenings(d, [l1.wall.id, l2.wall.id]);
+  return [l1.wall.id, l2.wall.id];
+}

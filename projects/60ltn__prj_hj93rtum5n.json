@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1792338906080,
+  "updatedAt": 1792340697370,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -106,21 +106,22 @@
       "id": "w_dogbv452x7",
       "a": "n_2pohvnrro2",
       "b": "n_jv6513amah",
-      "thickness": 0.24,
+      "thickness": 0.3,
       "height": 2.7,
       "baseElevation": 0,
       "role": "exterior",
       "curve": null,
       "curveEnd": null,
       "materials": {
-        "left": "paint-warm-white",
-        "right": "plaster-light",
+        "left": "paint-pure-white",
+        "right": "paint-warm-white",
         "top": "plaster-white"
       },
       "locked": false,
       "hidden": false,
+      "styleMaterialId": "glass-clear",
       "finishes": {
-        "left": {
+        "right": {
           "skirting": {
             "height": 0.1,
             "depth": 0.015,
@@ -274,8 +275,8 @@
     },
     "w_hs6qhzyomr": {
       "id": "w_hs6qhzyomr",
-      "a": "n_bu5qk3y4p4",
-      "b": "n_txsaoszm2o",
+      "a": "n_txsaoszm2o",
+      "b": "n_bu5qk3y4p4",
       "thickness": 0.24,
       "height": 2.7,
       "baseElevation": 0,
@@ -284,18 +285,24 @@
       "curveEnd": null,
       "materials": {
         "left": "paint-warm-white",
-        "right": "plaster-light",
+        "right": "paint-warm-white",
         "top": "plaster-white"
       },
       "locked": false,
       "hidden": false,
       "finishes": {
-        "right": {
+        "left": {
           "skirting": {
             "height": 0.1,
             "depth": 0.015,
             "materialId": "paint-satin-white"
           },
+          "cornice": null,
+          "rail": null,
+          "band": null
+        },
+        "right": {
+          "skirting": null,
           "cornice": null,
           "rail": null,
           "band": null
@@ -330,12 +337,12 @@
       "baseElevation": 0,
       "role": "interior",
       "curve": {
-        "x": 3.209999999999997,
-        "y": 8.583857625084603
+        "x": 3.2385954792089673,
+        "y": 8.55526214587563
       },
       "curveEnd": {
-        "x": 3.433857625084604,
-        "y": 8.35999999999999
+        "x": 3.405262145875634,
+        "y": 8.388595479208965
       },
       "materials": {
         "left": "paint-warm-white",
@@ -394,18 +401,34 @@
       "frameMaterialId": "paint-satin-white",
       "panelMaterialId": "paint-satin-white"
     },
-    "door_nieotejjlf": {
-      "id": "door_nieotejjlf",
-      "wallId": "w_dogbv452x7",
+    "door_d2m6n7mm7u": {
+      "id": "door_d2m6n7mm7u",
+      "wallId": "w_yh679e85vf",
       "kind": "door-single",
-      "offset": 2.6,
-      "width": 0.96,
+      "offset": 0.39617038328266796,
+      "width": 0.75,
       "height": 2.2,
       "sillHeight": 0,
-      "swingSide": "right",
+      "swingSide": "left",
       "hinge": "start",
       "openAngle": 0,
       "style": "flush",
+      "frameMaterialId": "paint-satin-white",
+      "panelMaterialId": "paint-satin-white"
+    },
+    "door_6n38cs1ike": {
+      "id": "door_6n38cs1ike",
+      "wallId": "w_hs6qhzyomr",
+      "kind": "door-single",
+      "offset": 2.05,
+      "width": 0.9,
+      "height": 2.1,
+      "sillHeight": 0,
+      "swingSide": "left",
+      "hinge": "end",
+      "openAngle": 55,
+      "style": "glazed",
+      "design": "lites-divided",
       "frameMaterialId": "paint-satin-white",
       "panelMaterialId": "paint-satin-white"
     }
@@ -416,8 +439,8 @@
       "name": "Bathroom",
       "type": "bathroom",
       "anchor": {
-        "x": 3.879109247423254,
-        "y": 9.740337493606399
+        "x": 3.8793800644022833,
+        "y": 9.741094095587748
       },
       "boundaryWallIds": [
         "w_25lple2f6s",
@@ -442,8 +465,8 @@
       "name": "Living and Dining Room",
       "type": "living",
       "anchor": {
-        "x": 2.244709796478587,
-        "y": 3.6507748781845226
+        "x": 2.2599731655816506,
+        "y": 3.649866973028705
       },
       "boundaryWallIds": [
         "w_25lple2f6s",
@@ -2746,6 +2769,202 @@
       "source": {
         "name": "Neest starter library",
         "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "fabric-velvet-rust": {
+      "id": "fabric-velvet-rust",
+      "name": "Rust velvet",
+      "category": "fabric",
+      "color": "#9c4a32",
+      "roughness": 0.78,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.08,
+        "rotation": 0,
+        "contrast": 0.3
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "fabric-velvet-rust",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "fabric-velvet-blush": {
+      "id": "fabric-velvet-blush",
+      "name": "Blush velvet",
+      "category": "fabric",
+      "color": "#c98f8a",
+      "roughness": 0.78,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.08,
+        "rotation": 0,
+        "contrast": 0.3
+      },
+      "photo": {
+        "setId": "velvet",
+        "scale": 0.28,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "fabric-velvet-blush",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven velour_velvet",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/velour_velvet"
+      }
+    },
+    "fabric-velvet-navy": {
+      "id": "fabric-velvet-navy",
+      "name": "Navy velvet",
+      "category": "fabric",
+      "color": "#283453",
+      "roughness": 0.78,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.08,
+        "rotation": 0,
+        "contrast": 0.3
+      },
+      "photo": {
+        "setId": "velvet",
+        "scale": 0.28,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "fabric-velvet-navy",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven velour_velvet",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/velour_velvet"
+      }
+    },
+    "fabric-velvet-mustard": {
+      "id": "fabric-velvet-mustard",
+      "name": "Mustard velvet",
+      "category": "fabric",
+      "color": "#c6942f",
+      "roughness": 0.78,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.08,
+        "rotation": 0,
+        "contrast": 0.3
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "fabric-velvet-mustard",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "wood-ebony": {
+      "id": "wood-ebony",
+      "name": "Ebonised wood",
+      "category": "wood",
+      "color": "#2a211c",
+      "roughness": 0.45,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "wood-grain",
+        "scale": 0.8,
+        "rotation": 0,
+        "contrast": 0.4
+      },
+      "photo": {
+        "setId": "walnut-veneer",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 0.6,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-ebony",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven walnut_veneer",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/walnut_veneer"
+      }
+    },
+    "glass-block": {
+      "id": "glass-block",
+      "name": "Glass block",
+      "category": "glass",
+      "color": "#cfe2e8",
+      "roughness": 0.15,
+      "metalness": 0,
+      "opacity": 0.75,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 0.9,
+        "patternId": "tile-square",
+        "scale": 0.2
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "glass-block",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "brick-red": {
+      "id": "brick-red",
+      "name": "Red brick",
+      "category": "plaster",
+      "color": "#a85a43",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 1,
+        "patternId": "brick",
+        "scale": 0.9
+      },
+      "photo": {
+        "setId": "brick-red",
+        "scale": 1.05,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "brick-red",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Bricks059",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Bricks059"
       }
     }
   },

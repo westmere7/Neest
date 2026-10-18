@@ -1171,3 +1171,9 @@ Known limitations (also in README):
     the curve section was tidied (actions as icons, handles as a segmented choice, short hint) (done).
 95. "Door/window placement is invisible in some areas" → the ghost was flush with the wall faces and lost the walls'
     depth bias; it now stands 12 mm proud (done).
+96. "Gizmo for windows and doors: only arrows along the wall" → `OpeningGizmo` (edit3d.tsx): an arrow at each side
+    slides the opening along its wall (curved walls too), clamped to where it fits; windows also get an up arrow for
+    the sill height. A redesigned furniture gizmo was tried and dropped at the user's request: keep the arrows (done).
+97. "Swap the two faces of a wall" → `swapWallFaces` (⇆ beside Reverse direction): side finishes and trims trade
+    places, the wall keeps its direction (done).
+98. "Revert an auto-rounded corner" → Curve → Sharp corner (`unroundCorner`) (done).
