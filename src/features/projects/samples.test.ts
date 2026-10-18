@@ -35,7 +35,7 @@ function solidFloorItems(objects: PlacedObject[]) {
 
 describe('sample projects', () => {
   it('lists the samples', () => {
-    expect(SAMPLES.map((s) => s.id)).toEqual(['apartment', 'studio', 'loft']);
+    expect(SAMPLES.map((s) => s.id)).toEqual(['apartment', 'studio', 'loft', 'grand']);
   });
 
   it('builds the studio as a single 9 m × 4.5 m room', () => {

@@ -7,6 +7,7 @@ import { detectRoomFaces, pointInFace } from '@/domain/geometry/rooms';
 import { buildWallPath, projectOnPath } from '@/domain/geometry/wallPath';
 import { opening, paintWallFacing, placeFurniture, type Furn } from './sampleHelpers';
 import { buildLoftProject } from './loftProject';
+import { buildGrandApartmentProject } from './grandApartmentProject';
 
 const EXT = { thickness: 0.25, height: 2.7, role: 'exterior' as const };
 const INT = { thickness: 0.12, height: 2.7, role: 'interior' as const };
@@ -275,6 +276,12 @@ export const SAMPLES: SampleDefinition[] = [
     name: 'Complex loft 100 m² (stress test)',
     description: 'Curved bay, chamfer, 4 rooms, 16 openings, ~120 items',
     build: buildLoftProject,
+  },
+  {
+    id: 'grand',
+    name: 'Grand apartment 200 m² (stress test)',
+    description: '10 rooms, piano bay, 28 openings, ~200 items',
+    build: buildGrandApartmentProject,
   },
 ];
 
