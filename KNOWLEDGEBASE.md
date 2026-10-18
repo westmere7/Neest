@@ -262,6 +262,16 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   (`draft | furnished | presentation`), snap settings, plan camera, `requestFit()`, measurements, library panel
   state, `viewPanelOpen` (desktop 3D view panel shown or stashed), `cameraRequest` for 3D views.
 - After undo/redo `EditorPage` prunes selections pointing at deleted entities.
+- **Layout options** (phương án, `domain/commands/options.ts`, `OptionSwitcher` next to the project name): several
+  versions of the plan in one project. `project.options[]` + `activeOptionId`; the active option's plan is the
+  project's own `nodes/walls/openings/rooms/objects/groups` (its `plan` is null), the others store theirs in
+  `options[i].plan`. Settings, materials, imported models, cameras, render, layers and guest are shared. Switching,
+  duplicating (also "same walls, no furniture" and blank), renaming, reordering and deleting are ordinary undoable
+  commands; the selection is cleared on a switch (ids belong to one option). No `options` = one implicit "Option A".
+  Anything that must reach every option (e.g. `deleteMaterial` reassigning a material) uses `inEveryOption`.
+  Exports, the guest viewer and stats show the active option. The popover is portalled to `<body>` (above panels).
+- Placing an item happens on pointer-down; `keepPlacedSelection` (placeTools) swallows the click that follows, so the
+  3D view's click-to-pick does not select a wall or object under the cursor instead of the new item.
 
 ## 10. 2D editor (src/features/plan-2d)
 
@@ -960,3 +970,18 @@ Known limitations (also in README):
     filled black (done).
 53. "Two-sided material slots make no sense for a glass wall" → glass walls and railings show only glazing and frame
     finishes (done).
+54. "Build some of the furniture in these photos" → `soft-modern-home` pack, 22 items (done).
+55. "A lot more paintings: abstracts, real landscapes, animals, fetched from the internet" → `paintings` pack: 44
+    public-domain works (Art Institute of Chicago CC0, Wikimedia Commons) at real size in three frame styles with
+    frame variants; `npm run paintings` (tools/fetch-paintings.mjs) downloads them into public/art/ (credits in
+    public/art/CREDITS.md) as square tiles rolled by half, so a canvas w × h with texture scale max(w, h) shows the
+    painting exactly once (box faces are UV-mapped in metres about their centre). Sizes are fixed (done).
+56. "A lot more curtains, for doors and windows and big ones for full glass walls, in many colours and patterns" →
+    `curtain-collection` pack: 24 items (wave, sheer, double track, pinch pleat, eyelet, tab top, café, Roman,
+    pelmet drapes, cellular, door curtains, string curtain, sash, glass-wall sheers and pairs up to 12 m, vertical and
+    panel blinds), open/drawn versions via `variantOf`, 40+ fabrics and 11 printed patterns (done).
+57. "Show in library" button in the Inspector header (replaces rotate) → opens the library on the item's card (done).
+58. "Groups as the 3rd library tab with real thumbnails and normal placement" → saved groups are `savedgroup:<id>`
+    assets (extra `getAsset` resolver), placed with the ghost and rotation like any item (done).
+59. "A versioning system: several versions of the same layout in one project" → Layout options (§9) (done).
+60. "When a new object is placed, keep it selected even if the click lands on another object" (done).

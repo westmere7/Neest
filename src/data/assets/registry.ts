@@ -10,7 +10,14 @@ export function getAsset(project: Pick<Project, 'customAssets'> | null, assetId:
   const builtIn = ASSETS_BY_ID[assetId];
   if (builtIn) return builtIn;
   const custom = project?.customAssets[assetId];
-  return custom ? customAssetDefinition(custom) : null;
+  if (custom) return customAssetDefinition(custom);
+  return extraResolver?.(assetId) ?? null;
+}
+
+/** Extra asset source installed by the app (saved groups as library items: `savedgroup:<id>`). */
+let extraResolver: ((assetId: string) => AssetDefinition | null) | null = null;
+export function setAssetResolver(fn: (assetId: string) => AssetDefinition | null): void {
+  extraResolver = fn;
 }
 
 const customCache = new Map<string, { src: CustomAsset; def: AssetDefinition }>();

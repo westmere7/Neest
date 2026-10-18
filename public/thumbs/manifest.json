@@ -1013,6 +1013,102 @@
    "file": "cube-storage.webp",
    "fp": "0b2e1e15fa01db39"
   },
+  "curtain-collection:cafe-curtain": {
+   "file": "curtain-collection_cafe-curtain.webp",
+   "fp": "9ff8ff42b9a0864d"
+  },
+  "curtain-collection:cellular-honeycomb-shade": {
+   "file": "curtain-collection_cellular-honeycomb-shade.webp",
+   "fp": "cad0c900c19fc88b"
+  },
+  "curtain-collection:door-curtain-tieback": {
+   "file": "curtain-collection_door-curtain-tieback.webp",
+   "fp": "84c68b97395753cf"
+  },
+  "curtain-collection:eyelet-curtains": {
+   "file": "curtain-collection_eyelet-curtains.webp",
+   "fp": "2790c5e6b42ab630"
+  },
+  "curtain-collection:eyelet-curtains-closed": {
+   "file": "curtain-collection_eyelet-curtains-closed.webp",
+   "fp": "eebabd947d1322bf"
+  },
+  "curtain-collection:flat-roman-shade": {
+   "file": "curtain-collection_flat-roman-shade.webp",
+   "fp": "44f08e17a3654147"
+  },
+  "curtain-collection:french-door-sash-curtain": {
+   "file": "curtain-collection_french-door-sash-curtain.webp",
+   "fp": "3e0d94237f3ae6ec"
+  },
+  "curtain-collection:glass-wall-double-curtains": {
+   "file": "curtain-collection_glass-wall-double-curtains.webp",
+   "fp": "d0c515fb719b37cc"
+  },
+  "curtain-collection:glass-wall-double-curtains-drawn": {
+   "file": "curtain-collection_glass-wall-double-curtains-drawn.webp",
+   "fp": "9620beb4b5b35902"
+  },
+  "curtain-collection:glass-wall-double-curtains-one-side": {
+   "file": "curtain-collection_glass-wall-double-curtains-one-side.webp",
+   "fp": "b545829a29450103"
+  },
+  "curtain-collection:glass-wall-sheer-curtain": {
+   "file": "curtain-collection_glass-wall-sheer-curtain.webp",
+   "fp": "bdae4598831ab2f9"
+  },
+  "curtain-collection:glass-wall-sheer-stacked": {
+   "file": "curtain-collection_glass-wall-sheer-stacked.webp",
+   "fp": "d27dd84fb2485652"
+  },
+  "curtain-collection:panel-track-blinds": {
+   "file": "curtain-collection_panel-track-blinds.webp",
+   "fp": "56209d6e72d85018"
+  },
+  "curtain-collection:pinch-pleat-curtains": {
+   "file": "curtain-collection_pinch-pleat-curtains.webp",
+   "fp": "88fc3d4a6c562a90"
+  },
+  "curtain-collection:pinch-pleat-curtains-closed": {
+   "file": "curtain-collection_pinch-pleat-curtains-closed.webp",
+   "fp": "b0e7d871e5bb3011"
+  },
+  "curtain-collection:sheer-blackout-double-track": {
+   "file": "curtain-collection_sheer-blackout-double-track.webp",
+   "fp": "fdbb7bbb64e0891a"
+  },
+  "curtain-collection:sheer-wave-curtain": {
+   "file": "curtain-collection_sheer-wave-curtain.webp",
+   "fp": "913bb3e6abd3106c"
+  },
+  "curtain-collection:string-door-curtain": {
+   "file": "curtain-collection_string-door-curtain.webp",
+   "fp": "8ecfc6524f5b69d6"
+  },
+  "curtain-collection:tab-top-linen-curtains": {
+   "file": "curtain-collection_tab-top-linen-curtains.webp",
+   "fp": "a022a6edd0f96a70"
+  },
+  "curtain-collection:thermal-portiere-curtain": {
+   "file": "curtain-collection_thermal-portiere-curtain.webp",
+   "fp": "39ddf639114d4022"
+  },
+  "curtain-collection:velvet-drapes-pelmet": {
+   "file": "curtain-collection_velvet-drapes-pelmet.webp",
+   "fp": "8794432476c0c94e"
+  },
+  "curtain-collection:vertical-blinds-glass-door": {
+   "file": "curtain-collection_vertical-blinds-glass-door.webp",
+   "fp": "cb13f407cb16f339"
+  },
+  "curtain-collection:wave-curtains-closed": {
+   "file": "curtain-collection_wave-curtains-closed.webp",
+   "fp": "66d0f48cfff58c89"
+  },
+  "curtain-collection:wave-curtains-open": {
+   "file": "curtain-collection_wave-curtains-open.webp",
+   "fp": "6fa7427bcfc12a4b"
+  },
   "curtains": {
    "file": "curtains.webp",
    "fp": "c0100a27e818d3c1"
@@ -2169,6 +2265,182 @@
    "file": "outdoor-sofa.webp",
    "fp": "2666ad908725fef1"
   },
+  "paintings:af-klint-ten-largest-3": {
+   "file": "paintings_af-klint-ten-largest-3.webp",
+   "fp": "53d350888f7b6db4"
+  },
+  "paintings:andrieu-tiger-resting": {
+   "file": "paintings_andrieu-tiger-resting.webp",
+   "fp": "12d21f776a7cd8dc"
+  },
+  "paintings:bokushin-multitudes-of-cranes": {
+   "file": "paintings_bokushin-multitudes-of-cranes.webp",
+   "fp": "ff675e313403f680"
+  },
+  "paintings:bonheur-horse-fair-study": {
+   "file": "paintings_bonheur-horse-fair-study.webp",
+   "fp": "f1afd4229f0f4be9"
+  },
+  "paintings:caillebotte-paris-rainy-day": {
+   "file": "paintings_caillebotte-paris-rainy-day.webp",
+   "fp": "56a1e42f7eaa6290"
+  },
+  "paintings:cezanne-bay-of-marseille": {
+   "file": "paintings_cezanne-bay-of-marseille.webp",
+   "fp": "3fd21636d87405b2"
+  },
+  "paintings:chosui-portrait-of-rabbit": {
+   "file": "paintings_chosui-portrait-of-rabbit.webp",
+   "fp": "3ad9fdfa6ee051d4"
+  },
+  "paintings:church-cotopaxi": {
+   "file": "paintings_church-cotopaxi.webp",
+   "fp": "21c28fc71fe8fca1"
+  },
+  "paintings:cuyp-vianen-cattle": {
+   "file": "paintings_cuyp-vianen-cattle.webp",
+   "fp": "0ab5418a0d4d7191"
+  },
+  "paintings:delacroix-lion-hunt": {
+   "file": "paintings_delacroix-lion-hunt.webp",
+   "fp": "54c9e1046595d9a5"
+  },
+  "paintings:delaunay-joie-de-vivre": {
+   "file": "paintings_delaunay-joie-de-vivre.webp",
+   "fp": "628ac9d58f612b66"
+  },
+  "paintings:hartley-dark-mountain": {
+   "file": "paintings_hartley-dark-mountain.webp",
+   "fp": "3e4aa7431910571a"
+  },
+  "paintings:hiroshige-crane-waves-sun": {
+   "file": "paintings_hiroshige-crane-waves-sun.webp",
+   "fp": "c3fd9aef846ede6e"
+  },
+  "paintings:hiroshige-kanbara-evening-snow": {
+   "file": "paintings_hiroshige-kanbara-evening-snow.webp",
+   "fp": "eb6d320a66385efe"
+  },
+  "paintings:hiroshige-macaw-pine": {
+   "file": "paintings_hiroshige-macaw-pine.webp",
+   "fp": "4416c2cffad1fd8c"
+  },
+  "paintings:hiroshige-mishima-morning-mist": {
+   "file": "paintings_hiroshige-mishima-morning-mist.webp",
+   "fp": "881577fd65e70cfc"
+  },
+  "paintings:hiroshige-oystercatchers": {
+   "file": "paintings_hiroshige-oystercatchers.webp",
+   "fp": "6ab065c1594f9881"
+  },
+  "paintings:hiroshige-rabbits-moonlight": {
+   "file": "paintings_hiroshige-rabbits-moonlight.webp",
+   "fp": "a5580e6eeefca6b7"
+  },
+  "paintings:hokusai-cranes-snowy-pine": {
+   "file": "paintings_hokusai-cranes-snowy-pine.webp",
+   "fp": "3c27653110abd9cb"
+  },
+  "paintings:hokusai-great-wave": {
+   "file": "paintings_hokusai-great-wave.webp",
+   "fp": "2d02c7b36100c074"
+  },
+  "paintings:inness-catskill-mountains": {
+   "file": "paintings_inness-catskill-mountains.webp",
+   "fp": "a00d4588a05db542"
+  },
+  "paintings:kandinsky-composition-vii": {
+   "file": "paintings_kandinsky-composition-vii.webp",
+   "fp": "3ea2e6b577be8b7c"
+  },
+  "paintings:kandinsky-green-center": {
+   "file": "paintings_kandinsky-green-center.webp",
+   "fp": "fd487be33400b928"
+  },
+  "paintings:kandinsky-houses-murnau": {
+   "file": "paintings_kandinsky-houses-murnau.webp",
+   "fp": "48448f28927bb9bb"
+  },
+  "paintings:kandinsky-improvisation-30": {
+   "file": "paintings_kandinsky-improvisation-30.webp",
+   "fp": "47a07fa60a40e89d"
+  },
+  "paintings:kandinsky-troika": {
+   "file": "paintings_kandinsky-troika.webp",
+   "fp": "8d4cd582d3678df7"
+  },
+  "paintings:kandinsky-two-poplars": {
+   "file": "paintings_kandinsky-two-poplars.webp",
+   "fp": "fe992f6f87e20b80"
+  },
+  "paintings:kandinsky-yellow-red-blue": {
+   "file": "paintings_kandinsky-yellow-red-blue.webp",
+   "fp": "e0ce856604368fee"
+  },
+  "paintings:klee-castle-and-sun": {
+   "file": "paintings_klee-castle-and-sun.webp",
+   "fp": "d8176449d73ca12e"
+  },
+  "paintings:koryusai-cat-goldfish": {
+   "file": "paintings_koryusai-cat-goldfish.webp",
+   "fp": "58910ee8c59cead8"
+  },
+  "paintings:malevich-black-square": {
+   "file": "paintings_malevich-black-square.webp",
+   "fp": "3ca28933ba048043"
+  },
+  "paintings:malevich-suprematist-composition": {
+   "file": "paintings_malevich-suprematist-composition.webp",
+   "fp": "7b44f8acb4f653fa"
+  },
+  "paintings:marc-bewitched-mill": {
+   "file": "paintings_marc-bewitched-mill.webp",
+   "fp": "1af1aa1baaa793e0"
+  },
+  "paintings:mondrian-composition-ii": {
+   "file": "paintings_mondrian-composition-ii.webp",
+   "fp": "3a7b0e5de91389d7"
+  },
+  "paintings:monet-cliff-walk-pourville": {
+   "file": "paintings_monet-cliff-walk-pourville.webp",
+   "fp": "72124779a7409136"
+  },
+  "paintings:monet-irises": {
+   "file": "paintings_monet-irises.webp",
+   "fp": "a4666e448d69a06e"
+  },
+  "paintings:monet-poppy-field": {
+   "file": "paintings_monet-poppy-field.webp",
+   "fp": "226893833370eae1"
+  },
+  "paintings:monet-stacks-end-of-summer": {
+   "file": "paintings_monet-stacks-end-of-summer.webp",
+   "fp": "86ddfa15be9af98a"
+  },
+  "paintings:monet-water-lilies": {
+   "file": "paintings_monet-water-lilies.webp",
+   "fp": "2f86b771f186032c"
+  },
+  "paintings:pissarro-rabbit-warren-snow": {
+   "file": "paintings_pissarro-rabbit-warren-snow.webp",
+   "fp": "90a5cf4da7d3c274"
+  },
+  "paintings:pissarro-snow-louveciennes": {
+   "file": "paintings_pissarro-snow-louveciennes.webp",
+   "fp": "8a909da59734f6f1"
+  },
+  "paintings:seurat-grande-jatte": {
+   "file": "paintings_seurat-grande-jatte.webp",
+   "fp": "4f891a349b96d25d"
+  },
+  "paintings:steinlen-cat-on-cushion": {
+   "file": "paintings_steinlen-cat-on-cushion.webp",
+   "fp": "904b5044a0e3a7d0"
+  },
+  "paintings:van-gogh-fishing-in-spring": {
+   "file": "paintings_van-gogh-fishing-in-spring.webp",
+   "fp": "b646bbf13ea3f722"
+  },
   "parasol": {
    "file": "parasol.webp",
    "fp": "e42d3627f4812e55"
@@ -2732,6 +3004,94 @@
   "soffit-box": {
    "file": "soffit-box.webp",
    "fp": "ad3cd6698ad6b06c"
+  },
+  "soft-modern-home:arch-leg-upholstered-chair": {
+   "file": "soft-modern-home_arch-leg-upholstered-chair.webp",
+   "fp": "df5b8d51de48d962"
+  },
+  "soft-modern-home:arched-bar-wine-cabinet": {
+   "file": "soft-modern-home_arched-bar-wine-cabinet.webp",
+   "fp": "a63c54a9bd6529f5"
+  },
+  "soft-modern-home:backlit-rounded-wall-niche": {
+   "file": "soft-modern-home_backlit-rounded-wall-niche.webp",
+   "fp": "0ce4e2d41c96d869"
+  },
+  "soft-modern-home:black-hoop-back-chair": {
+   "file": "soft-modern-home_black-hoop-back-chair.webp",
+   "fp": "ea3acf2ca5a87be6"
+  },
+  "soft-modern-home:brass-saucer-pendant": {
+   "file": "soft-modern-home_brass-saucer-pendant.webp",
+   "fp": "ad728fb9c4d7c0d2"
+  },
+  "soft-modern-home:butter-rounded-wall-cabinets": {
+   "file": "soft-modern-home_butter-rounded-wall-cabinets.webp",
+   "fp": "fb6f422e10c7ecc2"
+  },
+  "soft-modern-home:cane-back-dining-chair": {
+   "file": "soft-modern-home_cane-back-dining-chair.webp",
+   "fp": "216ea7b6927ec3a1"
+  },
+  "soft-modern-home:cream-base-run-oak-trims": {
+   "file": "soft-modern-home_cream-base-run-oak-trims.webp",
+   "fp": "980e38ec6616711c"
+  },
+  "soft-modern-home:curved-sofa-wood-plinth": {
+   "file": "soft-modern-home_curved-sofa-wood-plinth.webp",
+   "fp": "aa176c3a9b3953b0"
+  },
+  "soft-modern-home:cylinder-wall-cooker-hood": {
+   "file": "soft-modern-home_cylinder-wall-cooker-hood.webp",
+   "fp": "3b9818fb67446f08"
+  },
+  "soft-modern-home:floating-tv-console-pedestal-end": {
+   "file": "soft-modern-home_floating-tv-console-pedestal-end.webp",
+   "fp": "9b0136a6a50b635b"
+  },
+  "soft-modern-home:fluted-pedestal-pill-table": {
+   "file": "soft-modern-home_fluted-pedestal-pill-table.webp",
+   "fp": "97a4bad9ebc2a2f3"
+  },
+  "soft-modern-home:glass-block-window-panel": {
+   "file": "soft-modern-home_glass-block-window-panel.webp",
+   "fp": "942a12ba219f5ee8"
+  },
+  "soft-modern-home:oak-framed-glass-partition": {
+   "file": "soft-modern-home_oak-framed-glass-partition.webp",
+   "fp": "abfb6a1b0c2f7cc5"
+  },
+  "soft-modern-home:oval-black-ash-dining-table": {
+   "file": "soft-modern-home_oval-black-ash-dining-table.webp",
+   "fp": "3b2f173461f71ced"
+  },
+  "soft-modern-home:pill-coffee-table-column-legs": {
+   "file": "soft-modern-home_pill-coffee-table-column-legs.webp",
+   "fp": "d57d1a5434c1311a"
+  },
+  "soft-modern-home:pleated-shade-table-lamp": {
+   "file": "soft-modern-home_pleated-shade-table-lamp.webp",
+   "fp": "4e6fa52a5fff565e"
+  },
+  "soft-modern-home:round-pedestal-side-table": {
+   "file": "soft-modern-home_round-pedestal-side-table.webp",
+   "fp": "29d4482223c7ea55"
+  },
+  "soft-modern-home:rounded-quartz-dining-table": {
+   "file": "soft-modern-home_rounded-quartz-dining-table.webp",
+   "fp": "dab8d8ba6e8ac34f"
+  },
+  "soft-modern-home:wavy-oak-island-underglow": {
+   "file": "soft-modern-home_wavy-oak-island-underglow.webp",
+   "fp": "d46a6092e32aace1"
+  },
+  "soft-modern-home:wide-blade-ceiling-fan": {
+   "file": "soft-modern-home_wide-blade-ceiling-fan.webp",
+   "fp": "2c861a8efbb1829f"
+  },
+  "soft-modern-home:wooden-venetian-blind": {
+   "file": "soft-modern-home_wooden-venetian-blind.webp",
+   "fp": "ec73cb264dc29200"
   },
   "soundbar": {
    "file": "soundbar.webp",

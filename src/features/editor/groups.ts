@@ -2,6 +2,7 @@ import type { MaterialDefinition, Project, Vec2 } from '@/domain/model/schema';
 import { groupObjects, placeObject, prepareVariantMaterials, ungroupObjects, updateObjects, withGroupMates } from '@/domain/commands/entities';
 import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { getAsset } from '@/data/assets/registry';
+import { rotate } from '@/domain/geometry/vec';
 import { useProjectStore } from '@/state/projectStore';
 import { setSelectionExpander, useEditorStore, type SelItem } from '@/state/editorStore';
 import { toast, usePrefsStore, type SavedGroup } from '@/state/uiStores';
@@ -123,7 +124,7 @@ export function saveSelectionToLibrary(name?: string): SavedGroup | null {
 }
 
 /** Places a saved group centred at `at` as a new group, and selects it. */
-export function placeSavedGroup(group: SavedGroup, at: Vec2): void {
+export function placeSavedGroup(group: SavedGroup, at: Vec2, rotation = 0): void {
   const ps = useProjectStore.getState();
   const p = ps.project;
   if (!p) return;
@@ -133,11 +134,13 @@ export function placeSavedGroup(group: SavedGroup, at: Vec2): void {
     for (const it of group.items) {
       if (!getAsset(p, it.assetId)) continue;
       const materials = prepareVariantMaterials(d, it.materials, group.defs);
+      // The whole group turns about its centre.
+      const off = rotate({ x: it.dx, y: it.dy }, rotation);
       const id = placeObject(d, {
         assetId: it.assetId,
-        x: at.x + it.dx,
-        y: at.y + it.dy,
-        rotation: it.rotation,
+        x: at.x + off.x,
+        y: at.y + off.y,
+        rotation: it.rotation + rotation,
         width: it.width,
         depth: it.depth,
         height: it.height,
@@ -157,6 +160,7 @@ export function placeSavedGroup(group: SavedGroup, at: Vec2): void {
 
 /** Saved group from a library drag id (`savedgroup:<id>`), if it exists. */
 export function savedGroupFromDragId(dragId: string): SavedGroup | undefined {
+  // Library cards of saved groups use their asset id, `savedgroup:<id>`.
   if (!dragId.startsWith('savedgroup:')) return undefined;
   const id = dragId.slice('savedgroup:'.length);
   return usePrefsStore.getState().savedGroups.find((g) => g.id === id);

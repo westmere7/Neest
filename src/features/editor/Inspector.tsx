@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Lock, PanelRightClose, RotateCw, Trash2, Unlock, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, LibraryBig, Lock, PanelRightClose, RotateCw, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
 import { isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
@@ -94,8 +94,11 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
       body = <ObjectInspector project={project} objectId={s.id} isMobile={isMobile} />;
       actions = (
         <>
-          <IconButton label="Rotate 90°" shortcut="Q" onClick={() => rotateSelection()} disabled={o.locked}>
-            <RotateCw size={15} />
+          <IconButton
+            label="Show in library"
+            onClick={() => useEditorStore.getState().set({ libraryOpen: true, libraryTab: 'furniture', libraryReveal: { assetId: o.assetId, nonce: Date.now() } })}
+          >
+            <LibraryBig size={15} />
           </IconButton>
           <IconButton label="Duplicate" shortcut="Ctrl+D" onClick={duplicateSelection}>
             <Copy size={15} />

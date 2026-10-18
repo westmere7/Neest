@@ -1,0 +1,48 @@
+# Paintings
+
+Public-domain artworks used by the Paintings pack (`npm run paintings`, tools/fetch-paintings.mjs).
+
+- **Improvisation No. 30 (Cannons)**, Vasily Kandinsky, 1913. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/8991
+- **Painting with Green Center**, Vasily Kandinsky, 1913. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/8987
+- **Painting with Troika**, Vasily Kandinsky, January 18, 1911. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/8983
+- **Landscape with Two Poplars**, Vasily Kandinsky, 1912. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/8980
+- **Houses at Murnau**, Vasily Kandinsky, 1909. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/129849
+- **Composition VII**, Wassily Kandinsky, 1913. Public domain (Wikimedia Commons: Public domain). https://commons.wikimedia.org/wiki/File:Vassily_Kandinsky,_1913_-_Composition_7.jpg
+- **Yellow-Red-Blue**, Wassily Kandinsky, 1925. Public domain (Wikimedia Commons: Public domain). https://commons.wikimedia.org/wiki/File:Kandinsky_-_Jaune_Rouge_Bleu.jpg
+- **Composition II in Red, Blue, and Yellow**, Piet Mondrian, 1930. Public domain (Wikimedia Commons: Public domain). https://commons.wikimedia.org/wiki/File:Piet_Mondriaan,_1930_-_Mondrian_Composition_II_in_Red,_Blue,_and_Yellow.jpg
+- **Suprematist Composition**, Kazimir Malevich, 1916. Public domain (Wikimedia Commons: Public domain). https://commons.wikimedia.org/wiki/File:Suprematist_Composition_-_Kazimir_Malevich.jpg
+- **Black Suprematic Square**, Kazimir Malevich, 1915. Public domain (Wikimedia Commons: Public domain). https://commons.wikimedia.org/wiki/File:Kazimir_Malevich,_1915,_Black_Suprematic_Square,_oil_on_linen_canvas,_79.5_x_79.5_cm,_Tretyakov_Gallery,_Moscow.jpg
+- **Castle and Sun**, Paul Klee, 1928. Public domain (Wikimedia Commons: Public domain). https://commons.wikimedia.org/wiki/File:Burg_und_Sonne_-_Klee.jpg
+- **The Ten Largest, No. 3, Youth**, Hilma af Klint, 1907. Public domain (Wikimedia Commons: Public domain). https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._3_-_Youth_-_1907.jpg
+- **Rhythm, Joy of Life**, Robert Delaunay, 1930. Public domain (Wikimedia Commons: Public domain). https://commons.wikimedia.org/wiki/File:Robert_Delaunay_-_Rythme,_Joie_de_vivre.jpg
+- **The Bewitched Mill**, Franz Marc, 1913. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/9021
+- **The Dark Mountain**, Marsden Hartley, 1909. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/65908
+- **Water Lilies**, Claude Monet, 1906. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/16568
+- **Stacks of Wheat (End of Summer)**, Claude Monet, 1890–91. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/64818
+- **Cliff Walk at Pourville**, Claude Monet, 1882. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/14620
+- **Poppy Field (Giverny)**, Claude Monet, 1890–91. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/4783
+- **Irises**, Claude Monet, 1914–17. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/4887
+- **The Bay of Marseille, Seen from L'Estaque**, Paul Cezanne, c. 1885. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/16487
+- **Fishing in Spring, the Pont de Clichy (Asnières)**, Vincent van Gogh, 1887. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/109314
+- **A Sunday on La Grande Jatte — 1884**, Georges Seurat, 1884–86, border added 1888–89. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/27992
+- **Paris Street; Rainy Day**, Gustave Caillebotte, 1877. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/20684
+- **Snow at Louveciennes**, Camille Pissarro, c. 1870. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/45838
+- **View of Cotopaxi**, Frederic Edwin Church, 1857. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/76571
+- **Catskill Mountains**, George Inness, 1870. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/68388
+- **Under the Wave off Kanagawa (Kanagawa oki nami ura), also known as The Great Wave, from the series "Thirty-Six Views of Mount Fuji (Fugaku sanjūrokkei)"**, Katsushika Hokusai, 1830/33. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/24645
+- **Mishima: Morning Mist (Mishima, asagiri), from the series "Fifty-three Stations of the Tokaido Road (Tokaido gojusan tsugi no uchi)," also known as the Hoeido Tokaido**, Utagawa Hiroshige, c. 1833/34. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/10926
+- **Kanbara: Evening Snow (Kanbara, yoru no yuki), from the series "Fifty-three Stations of the Tokaido (Tokaido gojusan tsugi no uchi)," also known as the Hoeido Tokaido**, Utagawa Hiroshige, c. 1833/34. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/25613
+- **Lion Hunt**, Eugène Delacroix, 1860–61. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/81505
+- **Tiger Resting**, Pierre Andrieu, c. 1845. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/884
+- **Study for The Horse Fair**, Rosa Bonheur, c. 1850. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/93781
+- **A View of Vianen with a Herdsman and Cattle by a River**, Aelbert Cuyp, c. 1643–c. 1645. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/181702
+- **Rabbit Warren at Pontoise, Snow**, Camille Pissarro, 1879. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/20530
+- **Winter: Cat on a Cushion**, Théophile-Alexandre Pierre Steinlen, 1909. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/51719
+- **Cat Pawing at Goldfish**, Isoda Koryusai, c. early 1770s. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/21177
+- **Cranes on snow-covered pine**, Katsushika Hokusai, c. 1834. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/21720
+- **Crane, waves, and rising sun**, Utagawa Hiroshige, 1830s. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/77320
+- **Rabbits in moonlight**, Utagawa Hiroshige, c. 1849/52. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/19013
+- **Macaw on a pine branch**, Utagawa Hiroshige, c. 1835. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/10922
+- **Oystercatchers**, Utagawa Hiroshige, c. 1833/34. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/19026
+- **Portrait of a Rabbit**, Yabu Chosui, 1867. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/42068
+- **Multitudes of Cranes**, Bokushin, spring 1863. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/41906

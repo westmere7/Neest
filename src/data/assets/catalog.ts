@@ -188,6 +188,9 @@ export const ASSET_GROUPS: Record<AssetType, string[]> = {
   decor: [
     'Rugs',
     'Wall art',
+    'Abstract paintings',
+    'Landscape paintings',
+    'Animal paintings',
     'Mirrors',
     'Clocks',
     'Curtains & blinds',

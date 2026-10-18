@@ -48,6 +48,7 @@ import { LibraryPanel } from '@/features/library/LibraryPanel';
 import { Inspector, projectPanelShown } from './Inspector';
 import { MaterialPanel } from '@/features/materials/MaterialPanel';
 import { EditorDialogs } from './EditorDialogs';
+import { OptionSwitcher } from './OptionSwitcher';
 import { useEditorShortcuts } from './useShortcuts';
 import { useSaveStore } from '../projects/projectService';
 import { preloadExport } from './EditorDialogs';
@@ -258,6 +259,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
           </IconButton>
           {!isMobile && <Logo size={22} />}
           <ProjectName />
+          <OptionSwitcher />
           <SaveIndicator />
         </div>
       </div>

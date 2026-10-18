@@ -581,3 +581,12 @@
 .opening-build-options .lib-h {
   margin-top: 16px;
 }
+
+/* Inspector → Show in library: a brief highlight on the item's card. */
+@keyframes asset-reveal {
+  0%, 60% { box-shadow: 0 0 0 3px var(--accent); border-color: var(--accent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.asset-card.revealed {
+  animation: asset-reveal 1.8s var(--ease) 1;
+}

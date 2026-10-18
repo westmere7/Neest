@@ -21,6 +21,7 @@ import { computeWallNetwork, openingOffsetRange } from '../geometry/walls';
 import { detectRoomFaces, matchFacesToRooms } from '../geometry/rooms';
 import { rotate } from '../geometry/vec';
 import { deleteWalls, type D } from './walls';
+import { inEveryOption } from './options';
 
 const plain = (d: D): Project => (isDraft(d) ? (current(d) as Project) : (d as Project));
 const snap = <T,>(x: T): T => (isDraft(x) ? (current(x) as T) : x);
@@ -653,7 +654,10 @@ export function createOverride(d: D, target: MaterialTarget, sourceId: string): 
 export function deleteMaterial(d: D, id: string, replacementId: string): void {
   if (id === replacementId) return;
   ensureMaterial(d, replacementId);
-  for (const t of materialUsage(plain(d), id)) setTarget(d, t, replacementId);
+  // Every layout option, not just the one shown.
+  inEveryOption(d, (p) => {
+    for (const t of materialUsage(plain(p), id)) setTarget(p, t, replacementId);
+  });
   for (const m of Object.values(d.materials)) if (m.overrideOf === id) m.overrideOf = null;
   delete d.materials[id];
 }

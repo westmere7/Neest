@@ -426,6 +426,30 @@ export const GuestSettingsSchema = z
   })
   .default({ startCameraId: null, spawn: null, spawnAngle: 0 });
 
+/**
+ * The parts of a project that differ between layout options (phương án): the plan itself. Settings,
+ * materials, imported models, cameras, render, layers and guest settings are shared by all options.
+ */
+export const OptionPlanSchema = z.object({
+  nodes: z.record(Id, WallNodeSchema).default({}),
+  walls: z.record(Id, WallSegmentSchema).default({}),
+  openings: z.record(Id, OpeningSchema).default({}),
+  rooms: z.record(Id, RoomSchema).default({}),
+  objects: z.record(Id, PlacedObjectSchema).default({}),
+  groups: z.record(Id, ObjectGroupSchema).default({}),
+});
+
+/**
+ * One layout option of the project ("Option A", "Option B"…). The active option's plan lives in the
+ * project's own fields and its `plan` is null; the others keep theirs here until switched to.
+ */
+export const LayoutOptionSchema = z.object({
+  id: Id,
+  name: z.string().min(1).max(60),
+  createdAt: num,
+  plan: OptionPlanSchema.nullable().default(null),
+});
+
 export const ProjectSchema = z.object({
   format: z.literal(PROJECT_FORMAT).default(PROJECT_FORMAT),
   schemaVersion: z.literal(SCHEMA_VERSION),
@@ -446,6 +470,10 @@ export const ProjectSchema = z.object({
   render: RenderSettingsSchema.default({}),
   layers: LayersSchema,
   guest: GuestSettingsSchema,
+  /** Layout options; absent or empty means the project has a single, unnamed layout. */
+  options: z.array(LayoutOptionSchema).optional(),
+  /** Id of the option whose plan is in the fields above. */
+  activeOptionId: Id.nullable().optional(),
 });
 
 export type Vec2 = z.infer<typeof Vec2Schema>;
@@ -483,6 +511,8 @@ export type RenderSettings = z.infer<typeof RenderSettingsSchema>;
 export type ProjectSettings = z.infer<typeof ProjectSettingsSchema>;
 export type Layers = z.infer<typeof LayersSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
+export type OptionPlan = z.infer<typeof OptionPlanSchema>;
+export type LayoutOption = z.infer<typeof LayoutOptionSchema>;
 
 export const isDoorKind = (k: OpeningKind) => k.startsWith('door') || k.startsWith('passage');
 export const isPassageKind = (k: OpeningKind) => k.startsWith('passage');

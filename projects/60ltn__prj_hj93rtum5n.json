@@ -1,0 +1,1895 @@
+{
+  "format": "neest-project",
+  "schemaVersion": 1,
+  "id": "prj_hj93rtum5n",
+  "name": "60LTN",
+  "createdAt": 1792313965430,
+  "updatedAt": 1792314442058,
+  "settings": {
+    "units": "m",
+    "precision": 2,
+    "areaUnit": "m2",
+    "gridSize": 0.1,
+    "defaultWall": {
+      "thickness": 0.1,
+      "height": 2.7,
+      "role": "interior"
+    },
+    "exteriorThickness": 0.24,
+    "showRoomLabels": true,
+    "showRoomAreas": true,
+    "dimensions": {
+      "overall": true,
+      "walls": false,
+      "rooms": true
+    }
+  },
+  "nodes": {
+    "n_n1qm05nnzf": {
+      "id": "n_n1qm05nnzf",
+      "x": 3.21,
+      "y": 9.7
+    },
+    "n_2pohvnrro2": {
+      "id": "n_2pohvnrro2",
+      "x": -0.12,
+      "y": 9.7
+    },
+    "n_fbqfwz64sn": {
+      "id": "n_fbqfwz64sn",
+      "x": -0.12,
+      "y": -0.12
+    },
+    "n_ou5nzaqynd": {
+      "id": "n_ou5nzaqynd",
+      "x": 4.62,
+      "y": -0.12
+    },
+    "n_1s339pmzz9": {
+      "id": "n_1s339pmzz9",
+      "x": 4.62,
+      "y": 11.31
+    },
+    "n_3r425pnlmh": {
+      "id": "n_3r425pnlmh",
+      "x": 3.21,
+      "y": 11.31
+    },
+    "n_sre4e0f7iv": {
+      "id": "n_sre4e0f7iv",
+      "x": 3.21,
+      "y": 8.36
+    },
+    "n_txsaoszm2o": {
+      "id": "n_txsaoszm2o",
+      "x": 4.62,
+      "y": 8.36
+    },
+    "n_jv6513amah": {
+      "id": "n_jv6513amah",
+      "x": -0.12,
+      "y": 1.3599999999999994
+    },
+    "n_bu5qk3y4p4": {
+      "id": "n_bu5qk3y4p4",
+      "x": 4.62,
+      "y": 1.3599999999999999
+    }
+  },
+  "walls": {
+    "w_36njnulpwn": {
+      "id": "w_36njnulpwn",
+      "a": "n_n1qm05nnzf",
+      "b": "n_2pohvnrro2",
+      "thickness": 0.24,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "exterior",
+      "curve": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "plaster-light",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_dogbv452x7": {
+      "id": "w_dogbv452x7",
+      "a": "n_2pohvnrro2",
+      "b": "n_jv6513amah",
+      "thickness": 0.24,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "exterior",
+      "curve": null,
+      "curveEnd": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "plaster-light",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_xxryuyg8se": {
+      "id": "w_xxryuyg8se",
+      "a": "n_fbqfwz64sn",
+      "b": "n_ou5nzaqynd",
+      "thickness": 0.24,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "exterior",
+      "curve": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "plaster-light",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_eufap7w644": {
+      "id": "w_eufap7w644",
+      "a": "n_ou5nzaqynd",
+      "b": "n_bu5qk3y4p4",
+      "thickness": 0.24,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "exterior",
+      "curve": null,
+      "curveEnd": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "plaster-light",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_epakab8ysj": {
+      "id": "w_epakab8ysj",
+      "a": "n_1s339pmzz9",
+      "b": "n_3r425pnlmh",
+      "thickness": 0.1,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "interior",
+      "curve": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "paint-warm-white",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_4ysqvj0a3a": {
+      "id": "w_4ysqvj0a3a",
+      "a": "n_3r425pnlmh",
+      "b": "n_n1qm05nnzf",
+      "thickness": 0.1,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "interior",
+      "curve": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "paint-warm-white",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_25lple2f6s": {
+      "id": "w_25lple2f6s",
+      "a": "n_n1qm05nnzf",
+      "b": "n_sre4e0f7iv",
+      "thickness": 0.1,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "interior",
+      "curve": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "paint-warm-white",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_d1qzodznrp": {
+      "id": "w_d1qzodznrp",
+      "a": "n_txsaoszm2o",
+      "b": "n_1s339pmzz9",
+      "thickness": 0.24,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "exterior",
+      "curve": null,
+      "curveEnd": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "plaster-light",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_yh679e85vf": {
+      "id": "w_yh679e85vf",
+      "a": "n_sre4e0f7iv",
+      "b": "n_txsaoszm2o",
+      "thickness": 0.1,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "interior",
+      "curve": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "paint-warm-white",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_f2wrra87el": {
+      "id": "w_f2wrra87el",
+      "a": "n_jv6513amah",
+      "b": "n_fbqfwz64sn",
+      "thickness": 0.24,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "exterior",
+      "curve": null,
+      "curveEnd": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "plaster-light",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_hs6qhzyomr": {
+      "id": "w_hs6qhzyomr",
+      "a": "n_bu5qk3y4p4",
+      "b": "n_txsaoszm2o",
+      "thickness": 0.24,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "exterior",
+      "curve": null,
+      "curveEnd": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "plaster-light",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "w_r96boupwen": {
+      "id": "w_r96boupwen",
+      "a": "n_jv6513amah",
+      "b": "n_bu5qk3y4p4",
+      "thickness": 0.08,
+      "height": 2.7,
+      "baseElevation": 0,
+      "role": "interior",
+      "curve": null,
+      "materials": {
+        "left": "paint-warm-white",
+        "right": "paint-warm-white",
+        "top": "plaster-white"
+      },
+      "locked": false,
+      "hidden": false
+    }
+  },
+  "openings": {
+    "door_w6ohis0057": {
+      "id": "door_w6ohis0057",
+      "wallId": "w_36njnulpwn",
+      "kind": "door-single",
+      "offset": 0.6069999999999998,
+      "width": 0.96,
+      "height": 2.2,
+      "sillHeight": 0,
+      "swingSide": "right",
+      "hinge": "start",
+      "openAngle": 0,
+      "style": "flush",
+      "frameMaterialId": "paint-satin-white",
+      "panelMaterialId": "paint-satin-white"
+    },
+    "door_nfx4tgcf1t": {
+      "id": "door_nfx4tgcf1t",
+      "wallId": "w_yh679e85vf",
+      "kind": "door-single",
+      "offset": 0.7000000000000002,
+      "width": 0.7,
+      "height": 2.1,
+      "sillHeight": 0,
+      "swingSide": "right",
+      "hinge": "start",
+      "openAngle": 0,
+      "style": "flush",
+      "frameMaterialId": "paint-satin-white",
+      "panelMaterialId": "paint-satin-white"
+    },
+    "door_g95o8zbd16": {
+      "id": "door_g95o8zbd16",
+      "wallId": "w_r96boupwen",
+      "kind": "door-sliding",
+      "offset": 3.3565,
+      "width": 2.35,
+      "height": 2.4,
+      "sillHeight": 0,
+      "swingSide": "left",
+      "hinge": "start",
+      "openAngle": 0,
+      "style": "glazed",
+      "frameMaterialId": "paint-satin-white",
+      "panelMaterialId": "paint-satin-white"
+    },
+    "door_cl78ik1k6h": {
+      "id": "door_cl78ik1k6h",
+      "wallId": "w_xxryuyg8se",
+      "kind": "passage",
+      "offset": 2.37,
+      "width": 4.3,
+      "height": 2.6,
+      "sillHeight": 0,
+      "swingSide": "left",
+      "hinge": "start",
+      "openAngle": 0,
+      "style": "flush",
+      "frameMaterialId": "paint-satin-white",
+      "panelMaterialId": "paint-satin-white"
+    }
+  },
+  "rooms": {
+    "room_z23o9npq3z": {
+      "id": "room_z23o9npq3z",
+      "name": "Bathroom",
+      "type": "bathroom",
+      "anchor": {
+        "x": 3.88,
+        "y": 9.834999999999999
+      },
+      "boundaryWallIds": [
+        "w_25lple2f6s",
+        "w_4ysqvj0a3a",
+        "w_d1qzodznrp",
+        "w_epakab8ysj",
+        "w_yh679e85vf"
+      ],
+      "floorMaterialId": "tile-white-square",
+      "ceilingMaterialId": "paint-ceiling-white",
+      "showCeiling": true,
+      "ceilingHeight": null,
+      "showLabel": true,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    "room_296q174o70": {
+      "id": "room_296q174o70",
+      "name": "Living and Dining Room",
+      "type": "living",
+      "anchor": {
+        "x": 2.2532954625361734,
+        "y": 3.964517950712011
+      },
+      "boundaryWallIds": [
+        "w_25lple2f6s",
+        "w_36njnulpwn",
+        "w_dogbv452x7",
+        "w_hs6qhzyomr",
+        "w_r96boupwen",
+        "w_yh679e85vf"
+      ],
+      "floorMaterialId": "wood-oak-wide",
+      "ceilingMaterialId": "paint-ceiling-white",
+      "showCeiling": true,
+      "ceilingHeight": null,
+      "showLabel": true,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    "room_l4be4phnto": {
+      "id": "room_l4be4phnto",
+      "name": "Balcony",
+      "type": "balcony",
+      "anchor": {
+        "x": 2.25,
+        "y": 0.6599999999999997
+      },
+      "boundaryWallIds": [
+        "w_eufap7w644",
+        "w_f2wrra87el",
+        "w_r96boupwen",
+        "w_xxryuyg8se"
+      ],
+      "floorMaterialId": "chinese-home:carved-stone",
+      "ceilingMaterialId": "paint-ceiling-white",
+      "showCeiling": true,
+      "ceilingHeight": null,
+      "showLabel": true,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  },
+  "objects": {
+    "obj_5lbatt05sm": {
+      "id": "obj_5lbatt05sm",
+      "assetId": "column-square",
+      "name": null,
+      "x": -0.04,
+      "y": 1.52,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 0.4,
+      "depth": 0.4,
+      "height": 2.7,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_9kq3bso1sx": {
+      "id": "obj_9kq3bso1sx",
+      "assetId": "column-square",
+      "name": null,
+      "x": 4.62,
+      "y": 1.52,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 0.4,
+      "depth": 0.4,
+      "height": 2.7,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_fk6h0vlxir": {
+      "id": "obj_fk6h0vlxir",
+      "assetId": "column-square",
+      "name": null,
+      "x": -0.12,
+      "y": 5.19,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 0.4,
+      "depth": 0.4,
+      "height": 2.7,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_4kmvx8ba1d": {
+      "id": "obj_4kmvx8ba1d",
+      "assetId": "column-square",
+      "name": null,
+      "x": 4.62,
+      "y": 5.19,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 0.4,
+      "depth": 0.4,
+      "height": 2.7,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_jcup6ul9bl": {
+      "id": "obj_jcup6ul9bl",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 0.9,
+      "y": 2.1,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_2o64i5pmwy": {
+      "id": "obj_2o64i5pmwy",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 2.25,
+      "y": 2.1,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_hege2eknxt": {
+      "id": "obj_hege2eknxt",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.6,
+      "y": 2.1,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_zkrvt1b59v": {
+      "id": "obj_zkrvt1b59v",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 0.9,
+      "y": 3.25,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_jv463p6h8f": {
+      "id": "obj_jv463p6h8f",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 2.25,
+      "y": 3.25,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_wwrpplpb78": {
+      "id": "obj_wwrpplpb78",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.6,
+      "y": 3.25,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_vfqnqqjkqt": {
+      "id": "obj_vfqnqqjkqt",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 0.9,
+      "y": 4.4,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_pbjvhenqx8": {
+      "id": "obj_pbjvhenqx8",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 2.25,
+      "y": 4.4,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_3s1iw5ij05": {
+      "id": "obj_3s1iw5ij05",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.6,
+      "y": 4.4,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_l2d15vue20": {
+      "id": "obj_l2d15vue20",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 0.9,
+      "y": 5.55,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_z5sl80j4w0": {
+      "id": "obj_z5sl80j4w0",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 2.25,
+      "y": 5.55,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_207zu8f1ng": {
+      "id": "obj_207zu8f1ng",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.6,
+      "y": 5.55,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_bti4fes25i": {
+      "id": "obj_bti4fes25i",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 0.9,
+      "y": 6.7,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_9j7ohoiubm": {
+      "id": "obj_9j7ohoiubm",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 2.25,
+      "y": 6.7,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_oq9q9mamj3": {
+      "id": "obj_oq9q9mamj3",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.6,
+      "y": 6.7,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_362tecchq0": {
+      "id": "obj_362tecchq0",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 0.9,
+      "y": 7.85,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_6wubqj2mt7": {
+      "id": "obj_6wubqj2mt7",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 2.25,
+      "y": 7.85,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_av5p406rpi": {
+      "id": "obj_av5p406rpi",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.6,
+      "y": 7.85,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_udndmk0ztp": {
+      "id": "obj_udndmk0ztp",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 0.9,
+      "y": 9,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_zu4j7nw3wn": {
+      "id": "obj_zu4j7nw3wn",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 2.25,
+      "y": 9,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_t29cxlazhx": {
+      "id": "obj_t29cxlazhx",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.88,
+      "y": 9.2,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_w9yb0dynai": {
+      "id": "obj_w9yb0dynai",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.88,
+      "y": 10.55,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_t079h3i8w6": {
+      "id": "obj_t079h3i8w6",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 0.9,
+      "y": 0.66,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_to6jkiykj2": {
+      "id": "obj_to6jkiykj2",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 2.25,
+      "y": 0.66,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_512n9itidq": {
+      "id": "obj_512n9itidq",
+      "assetId": "lighting-collection:recessed-downlight",
+      "name": null,
+      "x": 3.6,
+      "y": 0.66,
+      "elevation": 2.6500000000000004,
+      "rotation": 0,
+      "width": 0.12,
+      "depth": 0.12,
+      "height": 0.04,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_5hff7rj882": {
+      "id": "obj_5hff7rj882",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 2.25,
+      "y": -0.12,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 4.300000000000001,
+      "depth": 0.24,
+      "height": 0.12,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_6h7jdo3hqw": {
+      "id": "obj_6h7jdo3hqw",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 0.125,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.04999999999999999,
+      "depth": 0.08,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_jpu7xr2g8l": {
+      "id": "obj_jpu7xr2g8l",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 0.975,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.050000000000000044,
+      "depth": 0.08,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_ir91aqtds6": {
+      "id": "obj_ir91aqtds6",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 3.525,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.04999999999999982,
+      "depth": 0.08,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_mac8jcqw7v": {
+      "id": "obj_mac8jcqw7v",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 4.375,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.05000000000000071,
+      "depth": 0.08,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_sz256blr5y": {
+      "id": "obj_sz256blr5y",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 0.5499999999999999,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.7999999999999999,
+      "depth": 0.08,
+      "height": 0.04999999999999999,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_mc59omxc0l": {
+      "id": "obj_mc59omxc0l",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 0.5499999999999999,
+      "y": -0.12,
+      "elevation": 1.01,
+      "rotation": 0,
+      "width": 0.7999999999999999,
+      "depth": 0.08,
+      "height": 0.050000000000000044,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_25s1ngfjry": {
+      "id": "obj_25s1ngfjry",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 0.5499999999999999,
+      "y": -0.12,
+      "elevation": 1.78,
+      "rotation": 0,
+      "width": 0.7999999999999999,
+      "depth": 0.08,
+      "height": 0.050000000000000044,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_ds3vdhdfxo": {
+      "id": "obj_ds3vdhdfxo",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 0.5499999999999999,
+      "y": -0.12,
+      "elevation": 2.55,
+      "rotation": 0,
+      "width": 0.7999999999999999,
+      "depth": 0.08,
+      "height": 0.04999999999999982,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_i6w8s8x122": {
+      "id": "obj_i6w8s8x122",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 3.9499999999999997,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.7999999999999998,
+      "depth": 0.08,
+      "height": 0.04999999999999999,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_34rk9emqc0": {
+      "id": "obj_34rk9emqc0",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 3.9499999999999997,
+      "y": -0.12,
+      "elevation": 1.01,
+      "rotation": 0,
+      "width": 0.7999999999999998,
+      "depth": 0.08,
+      "height": 0.050000000000000044,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_udiewiyxyz": {
+      "id": "obj_udiewiyxyz",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 3.9499999999999997,
+      "y": -0.12,
+      "elevation": 1.78,
+      "rotation": 0,
+      "width": 0.7999999999999998,
+      "depth": 0.08,
+      "height": 0.050000000000000044,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_aa8fngre2u": {
+      "id": "obj_aa8fngre2u",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 3.9499999999999997,
+      "y": -0.12,
+      "elevation": 2.55,
+      "rotation": 0,
+      "width": 0.7999999999999998,
+      "depth": 0.08,
+      "height": 0.04999999999999982,
+      "mirrored": false,
+      "materials": {
+        "surface": "metal-white-powder"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_ntuv9b2nb7": {
+      "id": "obj_ntuv9b2nb7",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 1.2777777777777777,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.08000000000000007,
+      "depth": 0.24,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_dsi0u5ix0l": {
+      "id": "obj_dsi0u5ix0l",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 1.5555555555555556,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.08000000000000007,
+      "depth": 0.24,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_2clyz53rmp": {
+      "id": "obj_2clyz53rmp",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 1.8333333333333335,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.08000000000000007,
+      "depth": 0.24,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_77fzf7qc9s": {
+      "id": "obj_77fzf7qc9s",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 2.111111111111111,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.08000000000000007,
+      "depth": 0.24,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_hoedy893dk": {
+      "id": "obj_hoedy893dk",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 2.388888888888889,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.08000000000000007,
+      "depth": 0.24,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_v1pirz34z8": {
+      "id": "obj_v1pirz34z8",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 2.666666666666667,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.08000000000000007,
+      "depth": 0.24,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_f05qdg6ljw": {
+      "id": "obj_f05qdg6ljw",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 2.9444444444444446,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.08000000000000007,
+      "depth": 0.24,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_fxjmavjqrd": {
+      "id": "obj_fxjmavjqrd",
+      "assetId": "generic-box",
+      "name": null,
+      "x": 3.2222222222222223,
+      "y": -0.12,
+      "elevation": 0.12,
+      "rotation": 0,
+      "width": 0.08000000000000007,
+      "depth": 0.24,
+      "height": 2.48,
+      "mirrored": false,
+      "materials": {
+        "surface": "paint-pure-white"
+      },
+      "locked": false,
+      "hidden": false
+    }
+  },
+  "groups": {},
+  "materials": {
+    "paint-warm-white": {
+      "id": "paint-warm-white",
+      "name": "Warm white paint",
+      "category": "paint",
+      "color": "#eeebe4",
+      "roughness": 0.9,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "paint",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 0.35
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-warm-white",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "plaster-light": {
+      "id": "plaster-light",
+      "name": "Light plaster",
+      "category": "plaster",
+      "color": "#e4dfd6",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.8
+      },
+      "photo": {
+        "setId": "plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.8,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "plaster-light",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Plaster001",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Plaster001"
+      }
+    },
+    "plaster-white": {
+      "id": "plaster-white",
+      "name": "White plaster",
+      "category": "plaster",
+      "color": "#efece6",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.5
+      },
+      "photo": {
+        "setId": "plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.6,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "plaster-white",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Plaster001",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Plaster001"
+      }
+    },
+    "wood-oak-natural": {
+      "id": "wood-oak-natural",
+      "name": "Natural oak planks",
+      "category": "wood",
+      "color": "#c49a6c",
+      "roughness": 0.6,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "wood-planks",
+        "scale": 1.6,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "oak-planks",
+        "scale": 1.8,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-oak-natural",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG WoodFloor051",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/WoodFloor051"
+      }
+    },
+    "tile-large-grey": {
+      "id": "tile-large-grey",
+      "name": "Large grey porcelain",
+      "category": "tile",
+      "color": "#a9a9a5",
+      "roughness": 0.4,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "tile-large",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "porcelain-large",
+        "scale": 4.8,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "tile-large-grey",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Tiles052",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Tiles052"
+      }
+    },
+    "paint-ceiling-white": {
+      "id": "paint-ceiling-white",
+      "name": "Ceiling white",
+      "category": "paint",
+      "color": "#f3f2ee",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-ceiling-white",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "paint-satin-white": {
+      "id": "paint-satin-white",
+      "name": "Satin white trim",
+      "category": "paint",
+      "color": "#f1f0ec",
+      "roughness": 0.45,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-satin-white",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "metal-anthracite": {
+      "id": "metal-anthracite",
+      "name": "Anthracite metal",
+      "category": "metal",
+      "color": "#3a3d40",
+      "roughness": 0.45,
+      "metalness": 0.7,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "metal-anthracite",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "glass-clear": {
+      "id": "glass-clear",
+      "name": "Clear glass",
+      "category": "glass",
+      "color": "#dcebf0",
+      "roughness": 0.05,
+      "metalness": 0,
+      "opacity": 0.22,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "glass-clear",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "solid-light-grey": {
+      "id": "solid-light-grey",
+      "name": "Light grey",
+      "category": "solid",
+      "color": "#d9d9d6",
+      "roughness": 0.6,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "solid-light-grey",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "wood-oak-wide": {
+      "id": "wood-oak-wide",
+      "name": "Wide oak boards",
+      "category": "wood",
+      "color": "#b88c5f",
+      "roughness": 0.6,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "wood-planks-wide",
+        "scale": 2.4,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "oak-wide-boards",
+        "scale": 1.9,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-oak-wide",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG WoodFloor040",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/WoodFloor040"
+      }
+    },
+    "tile-white-square": {
+      "id": "tile-white-square",
+      "name": "White square tile",
+      "category": "tile",
+      "color": "#f2f1ec",
+      "roughness": 0.25,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "tile-square",
+        "scale": 0.6,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "tile-square",
+        "scale": 1,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "tile-white-square",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Tiles107",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Tiles107"
+      }
+    },
+    "tile-terrazzo": {
+      "id": "tile-terrazzo",
+      "name": "Terrazzo",
+      "category": "tile",
+      "color": "#dad4ca",
+      "roughness": 0.35,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "terrazzo",
+        "scale": 0.8,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "terrazzo",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "tile-terrazzo",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Terrazzo005",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Terrazzo005"
+      }
+    },
+    "tile-penny-charcoal": {
+      "id": "tile-penny-charcoal",
+      "name": "Charcoal penny mosaic",
+      "category": "tile",
+      "color": "#4a4b4e",
+      "roughness": 0.25,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "penny",
+        "scale": 0.3,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "tile-penny-charcoal",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "asian-everyday:terrazzo-speckled": {
+      "id": "asian-everyday:terrazzo-speckled",
+      "name": "Speckled terrazzo tile",
+      "category": "tile",
+      "color": "#ffffff",
+      "roughness": 0.4,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "asian-everyday:speckled-terrazzo",
+        "scale": 0.6,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "asian-everyday:terrazzo-speckled",
+      "source": {
+        "name": "Asian everyday pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
+    },
+    "tile-mosaic-blue": {
+      "id": "tile-mosaic-blue",
+      "name": "Blue mosaic",
+      "category": "tile",
+      "color": "#6e93a8",
+      "roughness": 0.25,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "mosaic",
+        "scale": 0.3,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "tile-mosaic",
+        "scale": 0.4,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "tile-mosaic-blue",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Tiles133A",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Tiles133A"
+      }
+    },
+    "tile-zellige-green": {
+      "id": "tile-zellige-green",
+      "name": "Green zellige",
+      "category": "tile",
+      "color": "#4f7a68",
+      "roughness": 0.2,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "subway",
+        "scale": 0.5,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "tile-glazed-subway",
+        "scale": 0.7,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "tile-zellige-green",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Tiles032",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Tiles032"
+      }
+    },
+    "stone-granite": {
+      "id": "stone-granite",
+      "name": "Speckled granite",
+      "category": "stone",
+      "color": "#8d8b88",
+      "roughness": 0.35,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "granite",
+        "scale": 0.6,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "granite",
+        "scale": 1,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "stone-granite",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Granite005A",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Granite005A"
+      }
+    },
+    "stone-marble-beige": {
+      "id": "stone-marble-beige",
+      "name": "Crema beige marble",
+      "category": "stone",
+      "color": "#e2d6c3",
+      "roughness": 0.2,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "marble",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.8
+      },
+      "photo": {
+        "setId": "marble-beige",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "stone-marble-beige",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Marble014",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Marble014"
+      }
+    },
+    "decorative-plants:gravel": {
+      "id": "decorative-plants:gravel",
+      "name": "Pebble gravel",
+      "category": "stone",
+      "color": "#9d968a",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "terrazzo",
+        "scale": 0.1,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "decorative-plants:gravel",
+      "source": {
+        "name": "Hanging & decorative plants pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
+    },
+    "indoor-plants:concrete-planter": {
+      "id": "indoor-plants:concrete-planter",
+      "name": "Concrete planter",
+      "category": "stone",
+      "color": "#9c9a94",
+      "roughness": 0.9,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "concrete",
+        "scale": 0.6,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "indoor-plants:concrete-planter",
+      "source": {
+        "name": "Indoor plants pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
+    },
+    "chinese-home:carved-stone": {
+      "id": "chinese-home:carved-stone",
+      "name": "Carved granite",
+      "category": "stone",
+      "color": "#b8b2a6",
+      "roughness": 0.85,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "granite",
+        "scale": 0.4,
+        "rotation": 0,
+        "contrast": 0.7
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "chinese-home:carved-stone",
+      "source": {
+        "name": "Chinese home pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
+    }
+  },
+  "customAssets": {},
+  "cameras": [],
+  "render": {
+    "quality": "high",
+    "exposure": 1,
+    "timeOfDay": 14,
+    "sunAzimuth": 135,
+    "sunIntensity": 2.2,
+    "sunWarmth": 0,
+    "envIntensity": 0.9,
+    "shadows": true,
+    "background": "#dfe3e6",
+    "wallDisplay": "full",
+    "cutawayHeight": 1.2,
+    "showCeilings": false,
+    "showRoomLabels": false,
+    "hiddenCategories": [
+      "ceiling"
+    ]
+  },
+  "layers": {
+    "construction": {
+      "visible": true,
+      "locked": false
+    },
+    "furniture": {
+      "visible": true,
+      "locked": false
+    },
+    "annotations": {
+      "visible": true,
+      "locked": false
+    }
+  },
+  "guest": {
+    "startCameraId": null,
+    "spawn": null,
+    "spawnAngle": 0
+  }
+}

@@ -73,6 +73,8 @@ export interface EditorState {
   chromeHidden: boolean;
   libraryOpen: boolean;
   libraryTab: LibraryTab;
+  /** Asks the library to show an item's card (Inspector → Show in library); the nonce re-triggers it. */
+  libraryReveal: { assetId: string; nonce: number } | null;
   buildGroup: BuildGroup;
   libraryWidth: number;
   /** Desktop 3D view settings panel shown; when false it is stashed behind the rail's View button (P). */
@@ -126,6 +128,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   chromeHidden: false,
   libraryOpen: true,
   libraryTab: 'furniture',
+  libraryReveal: null,
   buildGroup: 'walls',
   libraryWidth: 300,
   // Opened on demand (top-bar button or P), not every time the 3D view is shown.

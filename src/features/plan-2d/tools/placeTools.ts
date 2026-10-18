@@ -2,6 +2,7 @@ import type { Vec2 } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { addOpening, placeObject } from '@/domain/commands/entities';
 import { chosenOpeningFinish } from '@/features/editor/openingFinishChoice';
+import { placeSavedGroup, savedGroupFromDragId } from '@/features/editor/groups';
 import { openingOffsetRange } from '@/domain/geometry/walls';
 import { pointAt, projectOnPath } from '@/domain/geometry/wallPath';
 import type { DerivedPlan } from '@/domain/geometry/derive';
@@ -121,6 +122,29 @@ export function createOpeningTool(): Tool {
 
 // ───────────────────────── Furniture placement ─────────────────────────
 
+/**
+ * Placing happens on pointer-down; the click that follows on release must not select whatever lies
+ * under the cursor instead (the 3D view picks objects on click, and clears the selection on a click
+ * into empty space). Swallows that one click; the next press disarms it.
+ */
+function keepPlacedSelection(): void {
+  if (typeof window === 'undefined') return;
+  let timer = 0;
+  const done = () => {
+    window.removeEventListener('click', stop, true);
+    window.removeEventListener('pointerdown', done, true);
+    window.clearTimeout(timer);
+  };
+  const stop = (ev: MouseEvent) => {
+    ev.stopPropagation();
+    ev.preventDefault();
+    done();
+  };
+  window.addEventListener('click', stop, true);
+  window.addEventListener('pointerdown', done, true);
+  timer = window.setTimeout(done, 5000);
+}
+
 export function placementFor(
   asset: AssetDefinition,
   world: Vec2,
@@ -191,6 +215,17 @@ export function createPlaceTool(): Tool {
       const asset = assetOf(env);
       if (!asset) return;
       const pl = placementFor(asset, e.world, env.editor().placeRotation, env, e.alt);
+      // A saved group: place its items as a new group, turned with the ghost.
+      const group = savedGroupFromDragId(asset.id);
+      if (group) {
+        placeSavedGroup(group, { x: pl.x, y: pl.y }, pl.rotation);
+        keepPlacedSelection();
+        if (!e.shift) {
+          env.setOverlay(null);
+          useEditorStore.getState().set({ placeAssetId: null });
+        }
+        return;
+      }
       const id = useProjectStore.getState().execute(`Place ${asset.name.toLowerCase()}`, (d) =>
         placeObject(d, {
           assetId: asset.id,
@@ -205,6 +240,7 @@ export function createPlaceTool(): Tool {
         }),
       );
       usePrefsStore.getState().pushRecentAsset(asset.id);
+      if (id) keepPlacedSelection();
       if (!e.shift && id) {
         env.setOverlay(null);
         useEditorStore.getState().set({ tool: 'select', placeAssetId: null, selection: [{ kind: 'object', id }] });
