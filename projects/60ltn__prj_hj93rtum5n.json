@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1792341008041,
+  "updatedAt": 1792341622322,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -172,7 +172,7 @@
       "id": "w_eufap7w644",
       "a": "n_ou5nzaqynd",
       "b": "n_bu5qk3y4p4",
-      "thickness": 0.24,
+      "thickness": 0.38,
       "height": 2.7,
       "baseElevation": 0,
       "role": "exterior",
@@ -301,7 +301,7 @@
       "id": "w_f2wrra87el",
       "a": "n_jv6513amah",
       "b": "n_fbqfwz64sn",
-      "thickness": 0.24,
+      "thickness": 0.38,
       "height": 2.7,
       "baseElevation": 0,
       "role": "exterior",
@@ -368,7 +368,8 @@
       "locked": false,
       "hidden": false,
       "style": "glass",
-      "styleMaterialId": "glass-clear"
+      "styleMaterialId": "glass-clear",
+      "glassFrame": "rails"
     },
     "w_pb2plwwg9b": {
       "id": "w_pb2plwwg9b",
@@ -382,6 +383,10 @@
         "x": 3.21,
         "y": 8.503268880054145
       },
+      "curveEnd": {
+        "x": 3.3532688800541464,
+        "y": 8.36
+      },
       "materials": {
         "left": "paint-warm-white",
         "right": "paint-warm-white",
@@ -389,10 +394,6 @@
       },
       "locked": false,
       "hidden": false,
-      "curveEnd": {
-        "x": 3.3532688800541464,
-        "y": 8.36
-      },
       "heightEnd": null,
       "finishes": {
         "left": {
@@ -424,21 +425,6 @@
       "frameMaterialId": "paint-satin-white",
       "panelMaterialId": "paint-satin-white"
     },
-    "door_g95o8zbd16": {
-      "id": "door_g95o8zbd16",
-      "wallId": "w_r96boupwen",
-      "kind": "door-sliding",
-      "offset": 3.3565,
-      "width": 2.35,
-      "height": 2.4,
-      "sillHeight": 0,
-      "swingSide": "left",
-      "hinge": "start",
-      "openAngle": 0,
-      "style": "glazed",
-      "frameMaterialId": "paint-charcoal",
-      "panelMaterialId": "paint-charcoal"
-    },
     "door_cl78ik1k6h": {
       "id": "door_cl78ik1k6h",
       "wallId": "w_xxryuyg8se",
@@ -469,8 +455,8 @@
       "frameMaterialId": "paint-satin-white",
       "panelMaterialId": "paint-satin-white",
       "transom": false,
-      "threshold": true,
-      "casing": false
+      "casing": false,
+      "threshold": true
     }
   },
   "rooms": {
@@ -532,8 +518,8 @@
       "name": "Balcony",
       "type": "balcony",
       "anchor": {
-        "x": 2.25,
-        "y": 0.6599999999999997
+        "x": 2.2499999999999996,
+        "y": 0.6599999999999998
       },
       "boundaryWallIds": [
         "w_eufap7w644",
@@ -557,8 +543,8 @@
       "id": "obj_5lbatt05sm",
       "assetId": "column-square",
       "name": null,
-      "x": -0.04,
-      "y": 1.52,
+      "x": -0.12655810938579,
+      "y": 1.5,
       "elevation": 0,
       "rotation": 0,
       "width": 0.4,
@@ -1033,7 +1019,8 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_6h7jdo3hqw": {
       "id": "obj_6h7jdo3hqw",
@@ -1051,7 +1038,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_jpu7xr2g8l": {
       "id": "obj_jpu7xr2g8l",
@@ -1069,7 +1057,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_ir91aqtds6": {
       "id": "obj_ir91aqtds6",
@@ -1087,7 +1076,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_mac8jcqw7v": {
       "id": "obj_mac8jcqw7v",
@@ -1105,7 +1095,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_sz256blr5y": {
       "id": "obj_sz256blr5y",
@@ -1123,7 +1114,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_mc59omxc0l": {
       "id": "obj_mc59omxc0l",
@@ -1141,7 +1133,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_25s1ngfjry": {
       "id": "obj_25s1ngfjry",
@@ -1159,7 +1152,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_ds3vdhdfxo": {
       "id": "obj_ds3vdhdfxo",
@@ -1177,7 +1171,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_i6w8s8x122": {
       "id": "obj_i6w8s8x122",
@@ -1195,7 +1190,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_34rk9emqc0": {
       "id": "obj_34rk9emqc0",
@@ -1213,7 +1209,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_udiewiyxyz": {
       "id": "obj_udiewiyxyz",
@@ -1231,7 +1228,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_aa8fngre2u": {
       "id": "obj_aa8fngre2u",
@@ -1249,7 +1247,8 @@
         "surface": "metal-white-powder"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_ntuv9b2nb7": {
       "id": "obj_ntuv9b2nb7",
@@ -1267,7 +1266,8 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_dsi0u5ix0l": {
       "id": "obj_dsi0u5ix0l",
@@ -1285,7 +1285,8 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_2clyz53rmp": {
       "id": "obj_2clyz53rmp",
@@ -1303,7 +1304,8 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_77fzf7qc9s": {
       "id": "obj_77fzf7qc9s",
@@ -1321,7 +1323,8 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_hoedy893dk": {
       "id": "obj_hoedy893dk",
@@ -1339,7 +1342,8 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_v1pirz34z8": {
       "id": "obj_v1pirz34z8",
@@ -1357,7 +1361,8 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_f05qdg6ljw": {
       "id": "obj_f05qdg6ljw",
@@ -1375,7 +1380,8 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     },
     "obj_fxjmavjqrd": {
       "id": "obj_fxjmavjqrd",
@@ -1393,10 +1399,131 @@
         "surface": "paint-pure-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
+    },
+    "obj_cglzbndqvq": {
+      "id": "obj_cglzbndqvq",
+      "assetId": "generic-box",
+      "name": "Glass panel",
+      "x": 0.55,
+      "y": -0.12,
+      "elevation": 0.172,
+      "rotation": 0,
+      "width": 0.796,
+      "depth": 0.02,
+      "height": 0.836,
+      "mirrored": false,
+      "materials": {
+        "surface": "glass-clear"
+      },
+      "locked": false,
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
+    },
+    "obj_1sn6f09dxr": {
+      "id": "obj_1sn6f09dxr",
+      "assetId": "generic-box",
+      "name": "Glass panel",
+      "x": 0.55,
+      "y": -0.12,
+      "elevation": 1.062,
+      "rotation": 0,
+      "width": 0.796,
+      "depth": 0.02,
+      "height": 0.716,
+      "mirrored": false,
+      "materials": {
+        "surface": "glass-clear"
+      },
+      "locked": false,
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
+    },
+    "obj_4s8qvks8b8": {
+      "id": "obj_4s8qvks8b8",
+      "assetId": "generic-box",
+      "name": "Glass panel",
+      "x": 0.55,
+      "y": -0.12,
+      "elevation": 1.832,
+      "rotation": 0,
+      "width": 0.796,
+      "depth": 0.02,
+      "height": 0.716,
+      "mirrored": false,
+      "materials": {
+        "surface": "glass-clear"
+      },
+      "locked": false,
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
+    },
+    "obj_mr8n3vorul": {
+      "id": "obj_mr8n3vorul",
+      "assetId": "generic-box",
+      "name": "Glass panel",
+      "x": 3.95,
+      "y": -0.12,
+      "elevation": 0.172,
+      "rotation": 0,
+      "width": 0.796,
+      "depth": 0.02,
+      "height": 0.836,
+      "mirrored": false,
+      "materials": {
+        "surface": "glass-clear"
+      },
+      "locked": false,
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
+    },
+    "obj_aqhnc90mqn": {
+      "id": "obj_aqhnc90mqn",
+      "assetId": "generic-box",
+      "name": "Glass panel",
+      "x": 3.95,
+      "y": -0.12,
+      "elevation": 1.062,
+      "rotation": 0,
+      "width": 0.796,
+      "depth": 0.02,
+      "height": 0.716,
+      "mirrored": false,
+      "materials": {
+        "surface": "glass-clear"
+      },
+      "locked": false,
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
+    },
+    "obj_p0j2gi1auu": {
+      "id": "obj_p0j2gi1auu",
+      "assetId": "generic-box",
+      "name": "Glass panel",
+      "x": 3.95,
+      "y": -0.12,
+      "elevation": 1.832,
+      "rotation": 0,
+      "width": 0.796,
+      "depth": 0.02,
+      "height": 0.716,
+      "mirrored": false,
+      "materials": {
+        "surface": "glass-clear"
+      },
+      "locked": false,
+      "hidden": false,
+      "groupId": "grp_0fbl7mn2ue"
     }
   },
-  "groups": {},
+  "groups": {
+    "grp_0fbl7mn2ue": {
+      "id": "grp_0fbl7mn2ue",
+      "name": "Balcony facade",
+      "description": "Balcony front of 60LTN: base slab, white slat screen and two side grids with glass panels (3 per side)."
+    }
+  },
   "materials": {
     "paint-warm-white": {
       "id": "paint-warm-white",
@@ -2963,10 +3090,10 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": {
-        "rotation": 0,
-        "contrast": 0.9,
         "patternId": "tile-square",
-        "scale": 0.2
+        "scale": 0.2,
+        "rotation": 0,
+        "contrast": 0.9
       },
       "photo": null,
       "overrideOf": null,
@@ -2987,10 +3114,10 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": {
-        "rotation": 0,
-        "contrast": 1,
         "patternId": "brick",
-        "scale": 0.9
+        "scale": 0.9,
+        "rotation": 0,
+        "contrast": 1
       },
       "photo": {
         "setId": "brick-red",
@@ -3018,10 +3145,10 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": {
-        "rotation": 0,
-        "contrast": 1,
         "patternId": "slate",
-        "scale": 1
+        "scale": 1,
+        "rotation": 0,
+        "contrast": 1
       },
       "photo": {
         "setId": "slate-floor",
@@ -3098,10 +3225,10 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": {
-        "rotation": 0,
-        "contrast": 0.7,
         "patternId": "marble",
-        "scale": 2
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.7
       },
       "photo": {
         "setId": "onyx-white",
@@ -3129,10 +3256,10 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": {
-        "rotation": 0,
-        "contrast": 1,
         "patternId": "concrete",
-        "scale": 2
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 1
       },
       "photo": {
         "setId": "board-concrete",
@@ -3160,10 +3287,10 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": {
-        "rotation": 0,
-        "contrast": 1,
         "patternId": "limewash",
-        "scale": 2.2
+        "scale": 2.2,
+        "rotation": 0,
+        "contrast": 1
       },
       "photo": null,
       "overrideOf": null,
@@ -3215,1273 +3342,462 @@
     "spawn": null,
     "spawnAngle": 0
   },
-  "collections": [],
-  "options": [
+  "collections": [
     {
-      "id": "opt_t738981d7o",
-      "name": "Base",
-      "createdAt": 1792313965430,
-      "plan": {
-        "nodes": {
-          "n_n1qm05nnzf": {
-            "id": "n_n1qm05nnzf",
-            "x": 3.21,
-            "y": 9.7
-          },
-          "n_2pohvnrro2": {
-            "id": "n_2pohvnrro2",
-            "x": -0.12,
-            "y": 9.7
-          },
-          "n_fbqfwz64sn": {
-            "id": "n_fbqfwz64sn",
-            "x": -0.12,
-            "y": -0.12
-          },
-          "n_ou5nzaqynd": {
-            "id": "n_ou5nzaqynd",
-            "x": 4.62,
-            "y": -0.12
-          },
-          "n_1s339pmzz9": {
-            "id": "n_1s339pmzz9",
-            "x": 4.62,
-            "y": 11.31
-          },
-          "n_3r425pnlmh": {
-            "id": "n_3r425pnlmh",
-            "x": 3.21,
-            "y": 11.31
-          },
-          "n_sre4e0f7iv": {
-            "id": "n_sre4e0f7iv",
-            "x": 3.21,
-            "y": 8.36
-          },
-          "n_txsaoszm2o": {
-            "id": "n_txsaoszm2o",
-            "x": 4.62,
-            "y": 8.36
-          },
-          "n_jv6513amah": {
-            "id": "n_jv6513amah",
-            "x": -0.12,
-            "y": 1.3599999999999994
-          },
-          "n_bu5qk3y4p4": {
-            "id": "n_bu5qk3y4p4",
-            "x": 4.62,
-            "y": 1.3599999999999999
-          }
-        },
-        "walls": {
-          "w_36njnulpwn": {
-            "id": "w_36njnulpwn",
-            "a": "n_n1qm05nnzf",
-            "b": "n_2pohvnrro2",
-            "thickness": 0.24,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "exterior",
-            "curve": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "plaster-light",
-              "top": "plaster-white"
+      "id": "col_tamfac3wf2",
+      "name": "60LTN",
+      "description": "Pieces made for the 60LTN apartment.",
+      "items": [
+        "savedgroup:mve1s2bp"
+      ],
+      "groups": {
+        "mve1s2bp": {
+          "id": "mve1s2bp",
+          "name": "Balcony facade",
+          "description": "Balcony front of 60LTN: base slab, white slat screen and two side grids with glass panels (3 per side).",
+          "createdAt": 1792341377989,
+          "items": [
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 0,
+              "dy": 0,
+              "elevation": 0,
+              "rotation": 0,
+              "width": 4.300000000000001,
+              "depth": 0.24,
+              "height": 0.12,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
             },
-            "locked": false,
-            "hidden": false
-          },
-          "w_dogbv452x7": {
-            "id": "w_dogbv452x7",
-            "a": "n_2pohvnrro2",
-            "b": "n_jv6513amah",
-            "thickness": 0.24,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "exterior",
-            "curve": null,
-            "curveEnd": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "plaster-light",
-              "top": "plaster-white"
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -2.125,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.04999999999999999,
+              "depth": 0.08,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
             },
-            "locked": false,
-            "hidden": false,
-            "finishes": {
-              "left": {
-                "skirting": {
-                  "height": 0.1,
-                  "depth": 0.015,
-                  "materialId": "paint-satin-white"
-                },
-                "cornice": null,
-                "rail": null,
-                "band": null
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -1.275,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.050000000000000044,
+              "depth": 0.08,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 1.275,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.04999999999999982,
+              "depth": 0.08,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 2.125,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.05000000000000071,
+              "depth": 0.08,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -1.7,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.7999999999999999,
+              "depth": 0.08,
+              "height": 0.04999999999999999,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -1.7,
+              "dy": 0,
+              "elevation": 1.01,
+              "rotation": 0,
+              "width": 0.7999999999999999,
+              "depth": 0.08,
+              "height": 0.050000000000000044,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -1.7,
+              "dy": 0,
+              "elevation": 1.78,
+              "rotation": 0,
+              "width": 0.7999999999999999,
+              "depth": 0.08,
+              "height": 0.050000000000000044,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -1.7,
+              "dy": 0,
+              "elevation": 2.55,
+              "rotation": 0,
+              "width": 0.7999999999999999,
+              "depth": 0.08,
+              "height": 0.04999999999999982,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 1.7,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.7999999999999998,
+              "depth": 0.08,
+              "height": 0.04999999999999999,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 1.7,
+              "dy": 0,
+              "elevation": 1.01,
+              "rotation": 0,
+              "width": 0.7999999999999998,
+              "depth": 0.08,
+              "height": 0.050000000000000044,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 1.7,
+              "dy": 0,
+              "elevation": 1.78,
+              "rotation": 0,
+              "width": 0.7999999999999998,
+              "depth": 0.08,
+              "height": 0.050000000000000044,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 1.7,
+              "dy": 0,
+              "elevation": 2.55,
+              "rotation": 0,
+              "width": 0.7999999999999998,
+              "depth": 0.08,
+              "height": 0.04999999999999982,
+              "mirrored": false,
+              "materials": {
+                "surface": "metal-white-powder"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -0.9722,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.08000000000000007,
+              "depth": 0.24,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -0.6944,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.08000000000000007,
+              "depth": 0.24,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -0.4167,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.08000000000000007,
+              "depth": 0.24,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": -0.1389,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.08000000000000007,
+              "depth": 0.24,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 0.1389,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.08000000000000007,
+              "depth": 0.24,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 0.4167,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.08000000000000007,
+              "depth": 0.24,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 0.6944,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.08000000000000007,
+              "depth": 0.24,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": null,
+              "dx": 0.9722,
+              "dy": 0,
+              "elevation": 0.12,
+              "rotation": 0,
+              "width": 0.08000000000000007,
+              "depth": 0.24,
+              "height": 2.48,
+              "mirrored": false,
+              "materials": {
+                "surface": "paint-pure-white"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": "Glass panel",
+              "dx": -1.7,
+              "dy": 0,
+              "elevation": 0.172,
+              "rotation": 0,
+              "width": 0.796,
+              "depth": 0.02,
+              "height": 0.836,
+              "mirrored": false,
+              "materials": {
+                "surface": "glass-clear"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": "Glass panel",
+              "dx": -1.7,
+              "dy": 0,
+              "elevation": 1.062,
+              "rotation": 0,
+              "width": 0.796,
+              "depth": 0.02,
+              "height": 0.716,
+              "mirrored": false,
+              "materials": {
+                "surface": "glass-clear"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": "Glass panel",
+              "dx": -1.7,
+              "dy": 0,
+              "elevation": 1.832,
+              "rotation": 0,
+              "width": 0.796,
+              "depth": 0.02,
+              "height": 0.716,
+              "mirrored": false,
+              "materials": {
+                "surface": "glass-clear"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": "Glass panel",
+              "dx": 1.7,
+              "dy": 0,
+              "elevation": 0.172,
+              "rotation": 0,
+              "width": 0.796,
+              "depth": 0.02,
+              "height": 0.836,
+              "mirrored": false,
+              "materials": {
+                "surface": "glass-clear"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": "Glass panel",
+              "dx": 1.7,
+              "dy": 0,
+              "elevation": 1.062,
+              "rotation": 0,
+              "width": 0.796,
+              "depth": 0.02,
+              "height": 0.716,
+              "mirrored": false,
+              "materials": {
+                "surface": "glass-clear"
+              }
+            },
+            {
+              "assetId": "generic-box",
+              "name": "Glass panel",
+              "dx": 1.7,
+              "dy": 0,
+              "elevation": 1.832,
+              "rotation": 0,
+              "width": 0.796,
+              "depth": 0.02,
+              "height": 0.716,
+              "mirrored": false,
+              "materials": {
+                "surface": "glass-clear"
               }
             }
+          ],
+          "size": {
+            "w": 4.344339811320566,
+            "d": 4.306692466382991
           },
-          "w_xxryuyg8se": {
-            "id": "w_xxryuyg8se",
-            "a": "n_fbqfwz64sn",
-            "b": "n_ou5nzaqynd",
-            "thickness": 0.24,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "exterior",
-            "curve": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "plaster-light",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "w_eufap7w644": {
-            "id": "w_eufap7w644",
-            "a": "n_ou5nzaqynd",
-            "b": "n_bu5qk3y4p4",
-            "thickness": 0.24,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "exterior",
-            "curve": null,
-            "curveEnd": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "plaster-light",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "w_epakab8ysj": {
-            "id": "w_epakab8ysj",
-            "a": "n_1s339pmzz9",
-            "b": "n_3r425pnlmh",
-            "thickness": 0.1,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "interior",
-            "curve": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "paint-warm-white",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "w_4ysqvj0a3a": {
-            "id": "w_4ysqvj0a3a",
-            "a": "n_3r425pnlmh",
-            "b": "n_n1qm05nnzf",
-            "thickness": 0.1,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "interior",
-            "curve": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "paint-warm-white",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "w_25lple2f6s": {
-            "id": "w_25lple2f6s",
-            "a": "n_n1qm05nnzf",
-            "b": "n_sre4e0f7iv",
-            "thickness": 0.1,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "interior",
-            "curve": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "paint-warm-white",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "w_d1qzodznrp": {
-            "id": "w_d1qzodznrp",
-            "a": "n_txsaoszm2o",
-            "b": "n_1s339pmzz9",
-            "thickness": 0.24,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "exterior",
-            "curve": null,
-            "curveEnd": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "plaster-light",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "w_yh679e85vf": {
-            "id": "w_yh679e85vf",
-            "a": "n_sre4e0f7iv",
-            "b": "n_txsaoszm2o",
-            "thickness": 0.1,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "interior",
-            "curve": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "paint-warm-white",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "w_f2wrra87el": {
-            "id": "w_f2wrra87el",
-            "a": "n_jv6513amah",
-            "b": "n_fbqfwz64sn",
-            "thickness": 0.24,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "exterior",
-            "curve": null,
-            "curveEnd": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "plaster-light",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "w_hs6qhzyomr": {
-            "id": "w_hs6qhzyomr",
-            "a": "n_bu5qk3y4p4",
-            "b": "n_txsaoszm2o",
-            "thickness": 0.24,
-            "height": 2.7,
-            "baseElevation": 0,
-            "role": "exterior",
-            "curve": null,
-            "curveEnd": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "plaster-light",
-              "top": "plaster-white"
-            },
-            "locked": false,
-            "hidden": false,
-            "finishes": {
-              "right": {
-                "skirting": {
-                  "height": 0.1,
-                  "depth": 0.015,
-                  "materialId": "paint-satin-white"
-                },
-                "cornice": null,
-                "rail": null,
-                "band": null
+          "defs": {
+            "paint-pure-white": {
+              "id": "paint-pure-white",
+              "name": "Pure white paint",
+              "category": "paint",
+              "color": "#f6f6f3",
+              "roughness": 0.88,
+              "metalness": 0,
+              "opacity": 1,
+              "emissive": null,
+              "emissiveIntensity": 0,
+              "texture": {
+                "patternId": "paint",
+                "scale": 1.2,
+                "rotation": 0,
+                "contrast": 0.3
+              },
+              "photo": null,
+              "overrideOf": null,
+              "catalogId": "paint-pure-white",
+              "source": {
+                "name": "Neest starter library",
+                "license": "Original (procedural, CC0-compatible)"
               }
             }
-          },
-          "w_r96boupwen": {
-            "id": "w_r96boupwen",
-            "a": "n_jv6513amah",
-            "b": "n_bu5qk3y4p4",
-            "thickness": 0.08,
-            "height": 2.69,
-            "baseElevation": 0,
-            "role": "interior",
-            "curve": null,
-            "materials": {
-              "left": "paint-warm-white",
-              "right": "paint-warm-white",
-              "top": "metal-black-matte"
-            },
-            "locked": false,
-            "hidden": false,
-            "style": "glass",
-            "styleMaterialId": "glass-clear"
           }
-        },
-        "openings": {
-          "door_w6ohis0057": {
-            "id": "door_w6ohis0057",
-            "wallId": "w_36njnulpwn",
-            "kind": "door-single",
-            "offset": 0.6069999999999998,
-            "width": 0.96,
-            "height": 2.2,
-            "sillHeight": 0,
-            "swingSide": "right",
-            "hinge": "start",
-            "openAngle": 0,
-            "style": "flush",
-            "frameMaterialId": "paint-satin-white",
-            "panelMaterialId": "paint-satin-white"
-          },
-          "door_g95o8zbd16": {
-            "id": "door_g95o8zbd16",
-            "wallId": "w_r96boupwen",
-            "kind": "door-sliding",
-            "offset": 3.3565,
-            "width": 2.35,
-            "height": 2.4,
-            "sillHeight": 0,
-            "swingSide": "left",
-            "hinge": "start",
-            "openAngle": 0,
-            "style": "glazed",
-            "frameMaterialId": "paint-charcoal",
-            "panelMaterialId": "paint-charcoal"
-          },
-          "door_cl78ik1k6h": {
-            "id": "door_cl78ik1k6h",
-            "wallId": "w_xxryuyg8se",
-            "kind": "passage",
-            "offset": 2.37,
-            "width": 4.29,
-            "height": 2.6,
-            "sillHeight": 0,
-            "swingSide": "left",
-            "hinge": "start",
-            "openAngle": 0,
-            "style": "flush",
-            "frameMaterialId": "paint-satin-white",
-            "panelMaterialId": "paint-satin-white"
-          }
-        },
-        "rooms": {
-          "room_z23o9npq3z": {
-            "id": "room_z23o9npq3z",
-            "name": "Bathroom",
-            "type": "bathroom",
-            "anchor": {
-              "x": 3.88,
-              "y": 9.834999999999999
-            },
-            "boundaryWallIds": [
-              "w_25lple2f6s",
-              "w_4ysqvj0a3a",
-              "w_d1qzodznrp",
-              "w_epakab8ysj",
-              "w_yh679e85vf"
-            ],
-            "floorMaterialId": "tile-white-square",
-            "ceilingMaterialId": "paint-ceiling-white",
-            "showCeiling": true,
-            "ceilingHeight": null,
-            "showLabel": true,
-            "labelOffset": {
-              "x": 0,
-              "y": 0
-            }
-          },
-          "room_296q174o70": {
-            "id": "room_296q174o70",
-            "name": "Living and Dining Room",
-            "type": "living",
-            "anchor": {
-              "x": 2.2532954625361734,
-              "y": 3.964517950712011
-            },
-            "boundaryWallIds": [
-              "w_25lple2f6s",
-              "w_36njnulpwn",
-              "w_dogbv452x7",
-              "w_hs6qhzyomr",
-              "w_r96boupwen",
-              "w_yh679e85vf"
-            ],
-            "floorMaterialId": "wood-oak-wide",
-            "ceilingMaterialId": "paint-ceiling-white",
-            "showCeiling": true,
-            "ceilingHeight": null,
-            "showLabel": true,
-            "labelOffset": {
-              "x": 0,
-              "y": 0
-            }
-          },
-          "room_l4be4phnto": {
-            "id": "room_l4be4phnto",
-            "name": "Balcony",
-            "type": "balcony",
-            "anchor": {
-              "x": 2.25,
-              "y": 0.6599999999999997
-            },
-            "boundaryWallIds": [
-              "w_eufap7w644",
-              "w_f2wrra87el",
-              "w_r96boupwen",
-              "w_xxryuyg8se"
-            ],
-            "floorMaterialId": "chinese-home:carved-stone",
-            "ceilingMaterialId": "paint-ceiling-white",
-            "showCeiling": true,
-            "ceilingHeight": null,
-            "showLabel": true,
-            "labelOffset": {
-              "x": 0,
-              "y": 0
-            }
-          }
-        },
-        "objects": {
-          "obj_5lbatt05sm": {
-            "id": "obj_5lbatt05sm",
-            "assetId": "column-square",
-            "name": null,
-            "x": -0.04,
-            "y": 1.52,
-            "elevation": 0,
-            "rotation": 0,
-            "width": 0.4,
-            "depth": 0.4,
-            "height": 2.7,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_9kq3bso1sx": {
-            "id": "obj_9kq3bso1sx",
-            "assetId": "column-square",
-            "name": null,
-            "x": 4.62,
-            "y": 1.52,
-            "elevation": 0,
-            "rotation": 0,
-            "width": 0.4,
-            "depth": 0.4,
-            "height": 2.7,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_fk6h0vlxir": {
-            "id": "obj_fk6h0vlxir",
-            "assetId": "column-square",
-            "name": null,
-            "x": -0.12,
-            "y": 5.19,
-            "elevation": 0,
-            "rotation": 0,
-            "width": 0.4,
-            "depth": 0.4,
-            "height": 2.7,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_4kmvx8ba1d": {
-            "id": "obj_4kmvx8ba1d",
-            "assetId": "column-square",
-            "name": null,
-            "x": 4.62,
-            "y": 5.19,
-            "elevation": 0,
-            "rotation": 0,
-            "width": 0.4,
-            "depth": 0.4,
-            "height": 2.7,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_jcup6ul9bl": {
-            "id": "obj_jcup6ul9bl",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 0.9,
-            "y": 2.1,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_2o64i5pmwy": {
-            "id": "obj_2o64i5pmwy",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 2.25,
-            "y": 2.1,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_hege2eknxt": {
-            "id": "obj_hege2eknxt",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.6,
-            "y": 2.1,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_zkrvt1b59v": {
-            "id": "obj_zkrvt1b59v",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 0.9,
-            "y": 3.25,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_jv463p6h8f": {
-            "id": "obj_jv463p6h8f",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 2.25,
-            "y": 3.25,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_wwrpplpb78": {
-            "id": "obj_wwrpplpb78",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.6,
-            "y": 3.25,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_vfqnqqjkqt": {
-            "id": "obj_vfqnqqjkqt",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 0.9,
-            "y": 4.4,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_pbjvhenqx8": {
-            "id": "obj_pbjvhenqx8",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 2.25,
-            "y": 4.4,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_3s1iw5ij05": {
-            "id": "obj_3s1iw5ij05",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.6,
-            "y": 4.4,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_l2d15vue20": {
-            "id": "obj_l2d15vue20",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 0.9,
-            "y": 5.55,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_z5sl80j4w0": {
-            "id": "obj_z5sl80j4w0",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 2.25,
-            "y": 5.55,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_207zu8f1ng": {
-            "id": "obj_207zu8f1ng",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.6,
-            "y": 5.55,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_bti4fes25i": {
-            "id": "obj_bti4fes25i",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 0.9,
-            "y": 6.7,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_9j7ohoiubm": {
-            "id": "obj_9j7ohoiubm",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 2.25,
-            "y": 6.7,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_oq9q9mamj3": {
-            "id": "obj_oq9q9mamj3",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.6,
-            "y": 6.7,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_362tecchq0": {
-            "id": "obj_362tecchq0",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 0.9,
-            "y": 7.85,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_6wubqj2mt7": {
-            "id": "obj_6wubqj2mt7",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 2.25,
-            "y": 7.85,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_av5p406rpi": {
-            "id": "obj_av5p406rpi",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.6,
-            "y": 7.85,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_udndmk0ztp": {
-            "id": "obj_udndmk0ztp",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 0.9,
-            "y": 9,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_zu4j7nw3wn": {
-            "id": "obj_zu4j7nw3wn",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 2.25,
-            "y": 9,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_t29cxlazhx": {
-            "id": "obj_t29cxlazhx",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.88,
-            "y": 9.2,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_w9yb0dynai": {
-            "id": "obj_w9yb0dynai",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.88,
-            "y": 10.55,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_t079h3i8w6": {
-            "id": "obj_t079h3i8w6",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 0.9,
-            "y": 0.66,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_to6jkiykj2": {
-            "id": "obj_to6jkiykj2",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 2.25,
-            "y": 0.66,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_512n9itidq": {
-            "id": "obj_512n9itidq",
-            "assetId": "lighting-collection:recessed-downlight",
-            "name": null,
-            "x": 3.6,
-            "y": 0.66,
-            "elevation": 2.6500000000000004,
-            "rotation": 0,
-            "width": 0.12,
-            "depth": 0.12,
-            "height": 0.04,
-            "mirrored": false,
-            "materials": {},
-            "locked": false,
-            "hidden": false
-          },
-          "obj_5hff7rj882": {
-            "id": "obj_5hff7rj882",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 2.25,
-            "y": -0.12,
-            "elevation": 0,
-            "rotation": 0,
-            "width": 4.300000000000001,
-            "depth": 0.24,
-            "height": 0.12,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_6h7jdo3hqw": {
-            "id": "obj_6h7jdo3hqw",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 0.125,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.04999999999999999,
-            "depth": 0.08,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_jpu7xr2g8l": {
-            "id": "obj_jpu7xr2g8l",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 0.975,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.050000000000000044,
-            "depth": 0.08,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_ir91aqtds6": {
-            "id": "obj_ir91aqtds6",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 3.525,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.04999999999999982,
-            "depth": 0.08,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_mac8jcqw7v": {
-            "id": "obj_mac8jcqw7v",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 4.375,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.05000000000000071,
-            "depth": 0.08,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_sz256blr5y": {
-            "id": "obj_sz256blr5y",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 0.5499999999999999,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.7999999999999999,
-            "depth": 0.08,
-            "height": 0.04999999999999999,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_mc59omxc0l": {
-            "id": "obj_mc59omxc0l",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 0.5499999999999999,
-            "y": -0.12,
-            "elevation": 1.01,
-            "rotation": 0,
-            "width": 0.7999999999999999,
-            "depth": 0.08,
-            "height": 0.050000000000000044,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_25s1ngfjry": {
-            "id": "obj_25s1ngfjry",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 0.5499999999999999,
-            "y": -0.12,
-            "elevation": 1.78,
-            "rotation": 0,
-            "width": 0.7999999999999999,
-            "depth": 0.08,
-            "height": 0.050000000000000044,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_ds3vdhdfxo": {
-            "id": "obj_ds3vdhdfxo",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 0.5499999999999999,
-            "y": -0.12,
-            "elevation": 2.55,
-            "rotation": 0,
-            "width": 0.7999999999999999,
-            "depth": 0.08,
-            "height": 0.04999999999999982,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_i6w8s8x122": {
-            "id": "obj_i6w8s8x122",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 3.9499999999999997,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.7999999999999998,
-            "depth": 0.08,
-            "height": 0.04999999999999999,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_34rk9emqc0": {
-            "id": "obj_34rk9emqc0",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 3.9499999999999997,
-            "y": -0.12,
-            "elevation": 1.01,
-            "rotation": 0,
-            "width": 0.7999999999999998,
-            "depth": 0.08,
-            "height": 0.050000000000000044,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_udiewiyxyz": {
-            "id": "obj_udiewiyxyz",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 3.9499999999999997,
-            "y": -0.12,
-            "elevation": 1.78,
-            "rotation": 0,
-            "width": 0.7999999999999998,
-            "depth": 0.08,
-            "height": 0.050000000000000044,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_aa8fngre2u": {
-            "id": "obj_aa8fngre2u",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 3.9499999999999997,
-            "y": -0.12,
-            "elevation": 2.55,
-            "rotation": 0,
-            "width": 0.7999999999999998,
-            "depth": 0.08,
-            "height": 0.04999999999999982,
-            "mirrored": false,
-            "materials": {
-              "surface": "metal-white-powder"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_ntuv9b2nb7": {
-            "id": "obj_ntuv9b2nb7",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 1.2777777777777777,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.08000000000000007,
-            "depth": 0.24,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_dsi0u5ix0l": {
-            "id": "obj_dsi0u5ix0l",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 1.5555555555555556,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.08000000000000007,
-            "depth": 0.24,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_2clyz53rmp": {
-            "id": "obj_2clyz53rmp",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 1.8333333333333335,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.08000000000000007,
-            "depth": 0.24,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_77fzf7qc9s": {
-            "id": "obj_77fzf7qc9s",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 2.111111111111111,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.08000000000000007,
-            "depth": 0.24,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_hoedy893dk": {
-            "id": "obj_hoedy893dk",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 2.388888888888889,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.08000000000000007,
-            "depth": 0.24,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_v1pirz34z8": {
-            "id": "obj_v1pirz34z8",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 2.666666666666667,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.08000000000000007,
-            "depth": 0.24,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_f05qdg6ljw": {
-            "id": "obj_f05qdg6ljw",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 2.9444444444444446,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.08000000000000007,
-            "depth": 0.24,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          },
-          "obj_fxjmavjqrd": {
-            "id": "obj_fxjmavjqrd",
-            "assetId": "generic-box",
-            "name": null,
-            "x": 3.2222222222222223,
-            "y": -0.12,
-            "elevation": 0.12,
-            "rotation": 0,
-            "width": 0.08000000000000007,
-            "depth": 0.24,
-            "height": 2.48,
-            "mirrored": false,
-            "materials": {
-              "surface": "paint-pure-white"
-            },
-            "locked": false,
-            "hidden": false
-          }
-        },
-        "groups": {}
+        }
       }
-    },
+    }
+  ],
+  "options": [
     {
       "id": "opt_ru6m3n3apr",
       "name": "A · Japandi studio",
@@ -16220,7 +15536,7 @@
     },
     {
       "id": "opt_zt7wtb0hnd",
-      "name": "Base B",
+      "name": "Base",
       "createdAt": 1792338019707,
       "plan": null
     }
