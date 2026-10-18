@@ -397,6 +397,10 @@
    "file": "25442279ed2d482b.webp",
    "tile": true
   },
+  "25aee79cfbd327df": {
+   "file": "25aee79cfbd327df.webp",
+   "tile": true
+  },
   "25b7a97e0c651a4f": {
    "file": "25b7a97e0c651a4f.webp",
    "tile": true
@@ -637,6 +641,10 @@
    "file": "3d0576200ff54621.webp",
    "tile": true
   },
+  "3d4089dcf23a8e8e": {
+   "file": "3d4089dcf23a8e8e.webp",
+   "tile": true
+  },
   "3dbd89c06feba9a6": {
    "file": "3dbd89c06feba9a6.webp",
    "tile": true
@@ -803,6 +811,10 @@
   },
   "4fbed15a870502ca": {
    "file": "4fbed15a870502ca.webp",
+   "tile": true
+  },
+  "4fdea672c935c5bc": {
+   "file": "4fdea672c935c5bc.webp",
    "tile": true
   },
   "4fe68397ff9b18d3": {
@@ -1057,10 +1069,6 @@
    "file": "645e6c231b577236.webp",
    "tile": true
   },
-  "64a9d9327e2e2525": {
-   "file": "64a9d9327e2e2525.webp",
-   "tile": true
-  },
   "64b0119e4aff6b1e": {
    "file": "64b0119e4aff6b1e.webp",
    "tile": true
@@ -1245,6 +1253,10 @@
    "file": "72360ed84a4343b9.webp",
    "tile": false
   },
+  "72857b6edb30d72f": {
+   "file": "72857b6edb30d72f.webp",
+   "tile": true
+  },
   "72a1d88c853bf5e4": {
    "file": "72a1d88c853bf5e4.webp",
    "tile": false
@@ -1345,6 +1357,10 @@
    "file": "79948a3ebe20ab45.webp",
    "tile": true
   },
+  "7a0575fa8e8df6f0": {
+   "file": "7a0575fa8e8df6f0.webp",
+   "tile": true
+  },
   "7bd56c73c4af6cc3": {
    "file": "7bd56c73c4af6cc3.webp",
    "tile": true
@@ -1372,6 +1388,10 @@
   "7e905b46009d4c45": {
    "file": "7e905b46009d4c45.webp",
    "tile": false
+  },
+  "7eae746e7b9766c4": {
+   "file": "7eae746e7b9766c4.webp",
+   "tile": true
   },
   "7f0ed9172267b3a8": {
    "file": "7f0ed9172267b3a8.webp",
@@ -1495,6 +1515,10 @@
   },
   "8938ca5ed4c49b04": {
    "file": "8938ca5ed4c49b04.webp",
+   "tile": true
+  },
+  "899e4502e4c0977c": {
+   "file": "899e4502e4c0977c.webp",
    "tile": true
   },
   "89fd231e20c688cc": {
@@ -1777,6 +1801,10 @@
    "file": "a25b89b924918aa8.webp",
    "tile": true
   },
+  "a332defee7510396": {
+   "file": "a332defee7510396.webp",
+   "tile": true
+  },
   "a36aafcdcecde431": {
    "file": "a36aafcdcecde431.webp",
    "tile": true
@@ -1831,6 +1859,10 @@
   },
   "a8c70178413c083f": {
    "file": "a8c70178413c083f.webp",
+   "tile": true
+  },
+  "a97c110e46a56166": {
+   "file": "a97c110e46a56166.webp",
    "tile": true
   },
   "a9af35e176370d4c": {
@@ -1929,6 +1961,10 @@
    "file": "b06de45ea6cd4746.webp",
    "tile": true
   },
+  "b0dcb00c0815017a": {
+   "file": "b0dcb00c0815017a.webp",
+   "tile": true
+  },
   "b0feb425cd250313": {
    "file": "b0feb425cd250313.webp",
    "tile": true
@@ -1957,12 +1993,20 @@
    "file": "b20aacea37a34942.webp",
    "tile": true
   },
+  "b225c0c243fb6dce": {
+   "file": "b225c0c243fb6dce.webp",
+   "tile": true
+  },
   "b2433e4cd123303a": {
    "file": "b2433e4cd123303a.webp",
    "tile": true
   },
   "b28186e1e7a88df4": {
    "file": "b28186e1e7a88df4.webp",
+   "tile": true
+  },
+  "b30f5ce4abc81b1b": {
+   "file": "b30f5ce4abc81b1b.webp",
    "tile": true
   },
   "b313d2a618ce69fa": {
@@ -2023,6 +2067,10 @@
   },
   "b993de3b973b83ae": {
    "file": "b993de3b973b83ae.webp",
+   "tile": true
+  },
+  "b99522f6b30e3383": {
+   "file": "b99522f6b30e3383.webp",
    "tile": true
   },
   "bac2b8bec6afaaaf": {
@@ -2127,6 +2175,10 @@
   },
   "c2a72cc405d330f6": {
    "file": "c2a72cc405d330f6.webp",
+   "tile": true
+  },
+  "c2cadab61b6aa56a": {
+   "file": "c2cadab61b6aa56a.webp",
    "tile": true
   },
   "c2e3e3dc2796f95f": {
@@ -2433,8 +2485,16 @@
    "file": "df167e7650f9c530.webp",
    "tile": true
   },
+  "df269fa41bfd6969": {
+   "file": "df269fa41bfd6969.webp",
+   "tile": true
+  },
   "df3b42c58320cfb0": {
    "file": "df3b42c58320cfb0.webp",
+   "tile": true
+  },
+  "df3e8a6e4e52f656": {
+   "file": "df3e8a6e4e52f656.webp",
    "tile": true
   },
   "df839f5cddaf5ac0": {
@@ -2503,6 +2563,10 @@
   },
   "e34aa249ca0d80b4": {
    "file": "e34aa249ca0d80b4.webp",
+   "tile": true
+  },
+  "e374fa823599fa4c": {
+   "file": "e374fa823599fa4c.webp",
    "tile": true
   },
   "e38af748c6efcb49": {
@@ -2819,6 +2883,11 @@
   }
  },
  "ids": {
+  "ac-outdoor-units:climate-coil": "4fdea672c935c5bc",
+  "ac-outdoor-units:climate-coil-blue": "b225c0c243fb6dce",
+  "ac-outdoor-units:climate-coil-gold": "899e4502e4c0977c",
+  "ac-outdoor-units:climate-coil-louvre": "7a0575fa8e8df6f0",
+  "ac-outdoor-units:climate-galvanised": "e374fa823599fa4c",
   "appliances:black-stainless": "a751e15a9ebb4f0c",
   "appliances:coffee-beans": "93a4eeb9475e8550",
   "appliances:enamel-mint": "c316dfa043866eb8",
@@ -2876,8 +2945,17 @@
   "book-mix": "f3704e6482f3638a",
   "bosch-dishwashers:bosch-inox": "b3ac1c7685ce146f",
   "bosch-dishwashers:bosch-steel": "b8ce56951a3f7ee6",
+  "branded-ac-outdoor-vn:climate-coil": "a97c110e46a56166",
+  "branded-ac-outdoor-vn:climate-coil-blue": "b99522f6b30e3383",
+  "branded-ac-outdoor-vn:climate-coil-gold": "c2cadab61b6aa56a",
+  "branded-ac-outdoor-vn:climate-coil-louvre": "72857b6edb30d72f",
+  "branded-ac-outdoor-vn:climate-galvanised": "7eae746e7b9766c4",
   "branded-audio:marshall-grille": "cd02a04e3cc6d8f0",
-  "branded-climate-vn:climate-coil": "64a9d9327e2e2525",
+  "branded-climate-vn:climate-coil": "3d4089dcf23a8e8e",
+  "branded-climate-vn:climate-coil-blue": "df269fa41bfd6969",
+  "branded-climate-vn:climate-coil-gold": "b30f5ce4abc81b1b",
+  "branded-climate-vn:climate-coil-louvre": "25aee79cfbd327df",
+  "branded-climate-vn:climate-galvanised": "b0dcb00c0815017a",
   "branded-climate-vn:purifier-perforated": "0d510498f16c5096",
   "branded-fitness:walkingpad-belt": "1c4067ba9ea01990",
   "branded-fridges:fridge-inox": "81991a47f7a3f61d",
@@ -3196,6 +3274,8 @@
   "korean-home:silk-yellow": "5778513feaee9c09",
   "korean-home:yugi-brass": "2c3dbc6cdd51ce59",
   "korean-home:zelkova": "65a6a5652ef0d8a6",
+  "l-desks:carbon-weave": "a332defee7510396",
+  "l-desks:desk-mat": "df3e8a6e4e52f656",
   "laminate-fluted-white": "fa70b37e29d647c0",
   "laminate-oak": "72360ed84a4343b9",
   "laminate-terrazzo": "819a0a0e3ab4e39c",

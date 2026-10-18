@@ -324,6 +324,14 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   overlay setter, hint/cursor). Overlays are plain data (`ToolOverlay`) rendered by the canvas (SVG) **or** by the
   3D bridge. Keyboard: the active tool gets first refusal via `planKeyRouter`, then `useShortcuts`.
 - Typed lengths while drawing walls (`3.5`, `350cm`, `11'6"` + Enter) and room sizes (`4x3`).
+- **Shift-drag axis lock** (`domain/geometry/axisLock.ts`): every move (2D select-tool move of items, walls and
+  multi-selections; 3D body drag; the gizmo's centre disc) keeps to one plan axis while Shift is held. `createAxisLock()`
+  per gesture picks the axis the pointer moved furthest along and switches only when the other leads by
+  `AXIS_SWITCH_RATIO` (1.25); grid snapping (`snapOnAxis`) rounds the free coordinate only and wall hugging counts
+  only when it stays on the line (`onAxis`). Feedback: "Locked to X/Y axis" (Z in 3D) in the status-bar snap slot, a
+  dashed guide in 2D and a thin line in the gizmo's axis colour in 3D (`axisLockFeedback3D`). Shift-press on an
+  already selected item defers its toggle to the release, so Shift-click still deselects but Shift-drag moves.
+  A single straight wall keeps sliding along its normal; endpoint handles keep Shift = 45° steps.
 
 ### Groups, right-click menus and browser keys
 
@@ -634,6 +642,12 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
     after the original.
 - **Sofas** (`packs/sofas.pack.ts`, 17): one parametric builder (arms, backs, bases, chaise, recliner, floor sofa)
   plus a curved sofa, each with hand-made finish variants.
+- **Couches & sectionals** (`packs/couches.pack.ts`, 18): a module layout (`straight`, `modules`, `lCorner`, `chaise`,
+  `uChaise`) feeds one builder; each module side is an arm, a back, a seam (joined) or open. Piping is `weltRect` rods on
+  the rounded cushion edges (k = 0.293 × bevel); leaning back cushions use `leanCushion` (Ry · Rx turned into XYZ Euler
+  angles) so a cushion can face any side of a corner. Right-hand sectionals mirror the parts (`mirrorX`).
+- **L-shaped desks** (`packs/l-desks.pack.ts`, 12): main run along the back, return down the left (corner at the back
+  left); `lPair` adds the mirrored return-right version as `variantOf`.
 - **Kitchen counters** (`packs/kitchen-counters.pack.ts`, 28): a counter is a row of bays (door, doors, drawers,
   open, pull-out, oven, dishwasher, hob, sinks). The worktop is cut into strips around the sink openings, and bowls
   hang in them (inset rim, undermount or apron).
@@ -1213,13 +1227,38 @@ Known limitations (also in README):
      and back behind wire guards, valve cover with copper flare valves, caps and service port, insulated pipe run,
      rails with anchor slots on rubber pads, drain socket, black rating plates with printed lines) and `cabinet`
      (side-discharge mini-VRF: service column on the front right, valves out of the front, base frame with forklift
-     openings); one or two stacked fans; guards `rings`/`spiral`/`radial`/`hbars`/`diamond`/`grid`/`louvre`;
-     plain, louvred, blue-fin and gold-fin coils. New `branded-ac-outdoor-vn` (23 units at published W × H × D:
-     Daikin RKB25/RKF50/RKY50, 4MKM80 and 5MKM100 multi, Panasonic XU12/XU24/N24, LG V10API1/V13API1, Casper
-     GC-09IS35, Mitsubishi Electric MUY-JY25/JY50 and twin-fan PUMY-P125VKM, Samsung AR10TY/AR13CY and twin-fan DVM S
-     Eco, Toshiba H10C4, Gree GWC09PB, Funiki HSC09TMU, Nagakawa NIS-C09R2H10, Sharp AH-X9XEW, MHI SRC25ZSS-W5) and
-     `ac-outdoor-units` (resizable 9k/12k/18k/24k, twin-fan multi, single and twin side-discharge VRF with casing and
+     openings); one or two stacked fans in real round holes in the front panel (strips plus corner prisms), each with a
+     shallow charcoal bell-mouth (closed lathe loop), swept blades whose pitch twists root to tip (two prism panels each,
+     `zxEuler`), hub, motor on a bracket, a dark partition, floor and ceiling, and the coil visible behind; guards `rings`/`spiral`/`radial`/`hbars`/`diamond`/`grid`/`louvre`;
+     plain, louvred, blue-fin and gold-fin coils. New `branded-ac-outdoor-vn` (18 units at published W × H × D:
+     Daikin RKB25/RKF50/RKY50, 4MKM80 and 5MKM100 multi, Panasonic XU12/N24, LG V10API1, Casper
+     GC-09IS35, Mitsubishi Electric MUY-JY50 and twin-fan PUMY-P125VKM, Samsung AR13CY and twin-fan DVM S
+     Eco, Toshiba H10C4, Gree GWC09PB, Nagakawa NIS-C09R2H10, Sharp AH-X9XEW, MHI SRC25ZSS-W5) and
+     `ac-outdoor-units` (resizable 9k/12k/18k/24k, twin-fan multi, twin side-discharge VRF with casing and
      coil finish variants, a window AC via `windowUnit()`, `wallBracket()` and `rooftopStand()`). All in outdoor ›
-     Climate; the XU9 left `legacyCoplanar.json` (done).
+     Climate; the XU9 left `legacyCoplanar.json`. Near-identical units were dropped before shipping (LG V13API1,
+     Panasonic XU24, Mitsubishi JY25, Samsung AR10TY, Funiki HSC09TMU, the generic single-fan side-discharge unit) (done).
 106. "Why does the 3D view reload the textures each time?" → leaving 3D unmounted the canvas and its WebGL context;
     the desktop 3D view is now kept mounted, hidden and paused (`EditorShell` `mount3d`, `Scene3DView active`) (done).
+107. "Shift while moving keeps the move on a straight line (one axis), like Figma/SketchUp" → Shift-drag axis lock in
+     the 2D select tool (items, walls, multi-selections), the 3D body drag and the gizmo's centre disc; snapping and
+     Alt still apply along the line; status-bar "Locked to X axis" plus a guide line in 2D and 3D; Shift-click
+     selection unchanged; listed in the shortcuts (`axisLock.ts` + tests) (done).
+108. "More detailed couches and L-shaped desks" → `packs/couches.pack.ts` (18, living › Sofas & loveseats, the two
+     sofa beds in Daybeds & sofa beds) and `packs/l-desks.pack.ts` (12, office › Desks). Couches are built from modules
+     (straight run, corner seat, return, chaise) with arms/backs/seams per side: piped (welted) seat and back cushions,
+     leaning back cushions with optional buttons, tight/tufted/channel/pillow/camel backs, track, rolled (pleated scroll
+     fronts with welt rings), English, tuxedo, cloud and wood-capped arms, tapered/splayed/turned/bun/cabriole/block/cone
+     legs, wood rail, oak base, plinth, skirt with kick pleats. Items: piped track-arm 3- and 2-seat, rolled-arm
+     Chesterfield, mid-century on a walnut rail, 4-module cloud, L corner, chaise and U sectionals (right/left versions
+     mirrored, `variantOf`), click-clack and pull-out sleeper sofa beds, camelback with show wood, tufted tuxedo, curved
+     four-seat (wedge prism cushions), slipcovered linen, Japandi on an oak base. Desks, each with return left and return
+     right (`variantOf`): steel-frame oak, gaming with riser and RGB (glows), executive with pedestal and leather inlay,
+     dual-motor standing (three-stage columns, keypad shows the height), compact corner with a 45° inner corner, built-in
+     with a bookcase tower and wall shelves. Finish variants on every item (done).
+109. "Another model of the wardrobe with study desk without the desk section, as a separate model" → new item
+     `wardrobe-study:wardrobe-shelf-tower-niche` (not a `variantOf` version, its own card): the same wall without the desk,
+     63 cm deep (the desk changes the outline, so it cannot be a model of the original); `buildWall(size, desk)` is
+     shared (done). While shipping thumbnails: `renderSwatchesForExport` preloaded only `swatch` maps, so pack bitmap
+     sets (paintings, halloween: colour map only) lost their swatch files whenever `npm run thumbs` rendered few items
+     (the colour maps had not been loaded by item renders); it now also preloads `color` for sets without a swatch map.

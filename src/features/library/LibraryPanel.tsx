@@ -25,7 +25,7 @@ import { useEditorStore, type LibraryTab } from '@/state/editorStore';
 import { LIBRARY_DENSITIES, useDialogStore, usePrefsStore, type LibraryDensity } from '@/state/uiStores';
 import { IconButton, Segmented } from '@/components/ui';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
-import { MaterialLibrary } from '@/features/materials/MaterialUI';
+import { MaterialLibrary, SearchClear, searchKeyDown } from '@/features/materials/MaterialUI';
 import { useAssetThumbnail } from './thumbnails';
 import { CardModelButton, useChosenModel } from './ModelPicker';
 import { withModel } from '@/data/assets/models';
@@ -476,10 +476,11 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
               placeholder={`Search ${all.length} items…`}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.stopPropagation()}
+              onKeyDown={searchKeyDown(query, setQuery)}
               aria-label="Search library"
               data-testid="library-search"
             />
+            <SearchClear query={query} onClear={() => setQuery('')} testId="library-search-clear" />
           </div>
           <IconButton
             label="Favourites"

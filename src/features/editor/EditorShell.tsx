@@ -584,7 +584,7 @@ function ViewRailButton({ open, onToggle }: { open: boolean; onToggle: () => voi
     if (r) setMenu({ left: r.right + 10, top: r.top - 8 });
   };
   return (
-    <div className="view-quick">
+    <div className="rail-view-quick">
       <IconButton
         label="3D view panel"
         shortcut="P"

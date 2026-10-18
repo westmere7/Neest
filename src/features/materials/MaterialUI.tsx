@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Copy, Link2, Link2Off, Pencil, Search, Star, Trash2 } from 'lucide-react';
+import { Copy, Link2, Link2Off, Pencil, Search, Star, Trash2, X } from 'lucide-react';
 import { MaterialSchema, type MaterialCategory, type MaterialDefinition, type PhotoTextureRef, type Project } from '@/domain/model/schema';
 import {
   assignMaterial,
@@ -30,6 +30,32 @@ import './materials.css';
 function usePhotoVersion(): number {
   return useSyncExternalStore(subscribePhotos, photoVersion, photoVersion);
 }
+
+/** The × inside a `.search-box` (after its input): clears the query and puts the caret back in the field. */
+export function SearchClear({ query, onClear, testId }: { query: string; onClear: () => void; testId?: string }) {
+  if (!query) return null;
+  return (
+    <button
+      type="button"
+      className="search-clear"
+      aria-label="Clear search"
+      title="Clear search"
+      onClick={(e) => {
+        onClear();
+        e.currentTarget.parentElement?.querySelector('input')?.focus();
+      }}
+      data-testid={testId}
+    >
+      <X size={13} aria-hidden />
+    </button>
+  );
+}
+
+/** Search-field keys: keep them from the editor shortcuts; Esc clears a query. */
+export const searchKeyDown = (query: string, setQuery: (q: string) => void) => (e: React.KeyboardEvent) => {
+  e.stopPropagation();
+  if (e.key === 'Escape' && query) setQuery('');
+};
 
 export function MaterialSwatch({
   material,
@@ -287,7 +313,8 @@ export function FinishPicker({
       <div className="mat-picker-head">
         <div className="search-box">
           <Search size={13} aria-hidden />
-          <input className="input" placeholder="Search finishes" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus={!panel} onKeyDown={(e) => e.stopPropagation()} aria-label="Search finishes" />
+          <input className="input" placeholder="Search finishes" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus={!panel} onKeyDown={searchKeyDown(query, setQuery)} aria-label="Search finishes" />
+          <SearchClear query={query} onClear={() => setQuery('')} />
         </div>
         <select className="input select" value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Category">
           <option value="project">In this project & favourites</option>
@@ -373,7 +400,8 @@ export function MaterialLibrary() {
       <div className="lib-filters">
         <div className="search-box">
           <Search size={13} aria-hidden />
-          <input className="input" placeholder="Search materials" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.stopPropagation()} aria-label="Search materials" />
+          <input className="input" placeholder="Search materials" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={searchKeyDown(query, setQuery)} aria-label="Search materials" />
+          <SearchClear query={query} onClear={() => setQuery('')} testId="material-search-clear" />
         </div>
         <select className="input select" value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Material category">
           <option value="project">Used in this project</option>

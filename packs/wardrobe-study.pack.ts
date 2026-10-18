@@ -24,6 +24,7 @@ import {
   span,
   type Part,
   type PlanStroke,
+  type Size3,
   type V2,
 } from '@/packs/kit';
 
@@ -61,14 +62,17 @@ function sidePlate(slot: string, pts: V2[], x: number, t: number): Part {
   };
 }
 
-/** The layout shared by the 3D build and the plan detail. */
-function layout(w: number, d: number, h: number) {
+/**
+ * The layout shared by the 3D build and the plan detail. Without the desk the item is only as deep as
+ * the wardrobe, less the 3 cm the pulls and knobs stand out.
+ */
+function layout(w: number, d: number, h: number, desk = true) {
   const x0 = -w / 2;
   const x1 = w / 2;
   const zb = -d / 2;
-  const D = clamp(d - 0.75, 0.45, 0.6);
+  const D = desk ? clamp(d - 0.75, 0.45, 0.6) : d - 0.032;
   const zf = zb + D;
-  const ov = 0.04; // the desk overhangs the tower on its outer side
+  const ov = desk ? 0.04 : 0; // the desk overhangs the tower on its outer side
   const tw = clamp(w * 0.25, 0.42, 0.6);
   const rw = clamp(w * 0.2, 0.34, 0.45);
   const xt0 = x0 + ov;
@@ -80,26 +84,9 @@ function layout(w: number, d: number, h: number) {
   return { x0, x1, zb, zf, D, tw, xt0, xt1, xr0, n, yU, deskH, dw: tw + ov };
 }
 
-const studyWall = defineItem({
-  id: 'wardrobe-study-wall',
-  name: 'Wardrobe with study desk & corner niche',
-  category: 'bedroom',
-  type: 'storage',
-  group: 'Wardrobes',
-  tags: ['wardrobe', 'desk', 'study', 'built-in', 'shaker', 'oak', 'shelves', 'led', 'niche', 'combo', 'tủ quần áo', 'bàn học', 'vietnamese', 'apartment'],
-  defaultSize: { w: 2.0, d: 1.75, h: 2.4 },
-  minSize: { w: 1.7, d: 1.3, h: 2.1 },
-  maxSize: { w: 3.0, d: 2.1, h: 2.7 },
-  wallSnap: true,
-  slots: [
-    matSlot('oak', 'Oak tower & desk', 'laminate-oak'),
-    matSlot('white', 'Wardrobe fronts', 'shaker-cream'),
-    matSlot('metal', 'Pulls', 'metal-brass'),
-    matSlot('light', 'Shelf LEDs', 'led-warm-strip'),
-  ],
-  light: { color: '#ffcf8a', intensity: 0.35, distance: 2.2, y: 1.3 },
-  build: ({ w, d, h }) => {
-    const L = layout(w, d, h);
+/** The whole wall; `desk` = false leaves out the desk that runs forward from the tower. */
+function buildWall({ w, d, h }: Size3, desk: boolean): Part[] {
+    const L = layout(w, d, h, desk);
     const { x1, zb, zf, xt0, xt1, xr0, n, yU, deskH, dw } = L;
     const x0 = L.x0;
     const t = 0.018;
@@ -128,35 +115,37 @@ const studyWall = defineItem({
     const R = 0.08;
     const top = 0.035;
     const zEnd = d / 2;
-    parts.push(
-      // Niche floor inside the tower continues as the desk top.
-      sp('oak', [xt0 + t, xt1 - t], [deskH - top, deskH], [zb + 0.012, zc]),
-      // Top and end panel tuck 1 cm into the bend so the joints don't show.
-      span('oak', [x0, x0 + dw], [deskH - top, deskH], [zc, zEnd - R + 0.01], { bevel: 0.004 }),
-      span('oak', [x0, x0 + dw], [0, deskH - R + 0.01], [zEnd - top, zEnd], { bevel: 0.004 }),
-    );
-    // Waterfall bend between the top and the end panel (fine steps: prism sides are flat-shaded).
-    const seg = 24;
-    const bend: V2[] = [];
-    for (const i of range(seg + 1)) {
-      const a = Math.PI / 2 - (i / seg) * (Math.PI / 2);
-      bend.push([zEnd - R + Math.cos(a) * R, deskH - R + Math.sin(a) * R]);
-    }
-    for (const i of range(seg + 1)) {
-      const a = (i / seg) * (Math.PI / 2);
-      bend.push([zEnd - R + Math.cos(a) * (R - top), deskH - R + Math.sin(a) * (R - top)]);
-    }
-    parts.push(sidePlate('oak', bend, x0, dw));
-    // Apron drawers, opening toward the room (+x), with a finger gap under the top.
-    const dz0 = zc + 0.02;
-    const dz1 = zEnd - top - 0.01;
-    parts.push(sp('oak', [x0 + 0.06, x0 + dw - 0.024], [deskH - 0.16, deskH - top], [dz0, dz1]));
-    const dm = (dz0 + dz1) / 2;
-    for (const [a, b] of [
-      [dz0, dm - 0.0015],
-      [dm + 0.0015, dz1],
-    ] as V2[]) {
-      parts.push(sp('oak', [x0 + dw - 0.024, x0 + dw - 0.006], [deskH - 0.155, deskH - top - 0.014], [a, b], 0.003));
+    // Niche floor inside the tower: it continues as the desk top, or stays as a ledge without the desk.
+    parts.push(sp('oak', [xt0 + t, xt1 - t], [deskH - top, deskH], [zb + 0.012, zc]));
+    if (desk) {
+      parts.push(
+        // Top and end panel tuck 1 cm into the bend so the joints don't show.
+        span('oak', [x0, x0 + dw], [deskH - top, deskH], [zc, zEnd - R + 0.01], { bevel: 0.004 }),
+        span('oak', [x0, x0 + dw], [0, deskH - R + 0.01], [zEnd - top, zEnd], { bevel: 0.004 }),
+      );
+      // Waterfall bend between the top and the end panel (fine steps: prism sides are flat-shaded).
+      const seg = 24;
+      const bend: V2[] = [];
+      for (const i of range(seg + 1)) {
+        const a = Math.PI / 2 - (i / seg) * (Math.PI / 2);
+        bend.push([zEnd - R + Math.cos(a) * R, deskH - R + Math.sin(a) * R]);
+      }
+      for (const i of range(seg + 1)) {
+        const a = (i / seg) * (Math.PI / 2);
+        bend.push([zEnd - R + Math.cos(a) * (R - top), deskH - R + Math.sin(a) * (R - top)]);
+      }
+      parts.push(sidePlate('oak', bend, x0, dw));
+      // Apron drawers, opening toward the room (+x), with a finger gap under the top.
+      const dz0 = zc + 0.02;
+      const dz1 = zEnd - top - 0.01;
+      parts.push(sp('oak', [x0 + 0.06, x0 + dw - 0.024], [deskH - 0.16, deskH - top], [dz0, dz1]));
+      const dm = (dz0 + dz1) / 2;
+      for (const [a, b] of [
+        [dz0, dm - 0.0015],
+        [dm + 0.0015, dz1],
+      ] as V2[]) {
+        parts.push(sp('oak', [x0 + dw - 0.024, x0 + dw - 0.006], [deskH - 0.155, deskH - top - 0.014], [a, b], 0.003));
+      }
     }
 
     // ── White shaker wardrobe ───────────────────────────────────────────────
@@ -212,15 +201,59 @@ const studyWall = defineItem({
     );
 
     return parts;
-  },
-  planDetail: ({ w, d, h }) => {
-    const { x0, x1, zb, zf, xt1, xr0, n, dw } = layout(w, d, h);
-    const out: PlanStroke[] = [line([x0 + dw, zf], [x0 + dw, d / 2]), line([x0, zf], [x0 + dw, zf])];
-    const dW = (xr0 - xt1) / n;
-    for (const i of range(n + 1)) out.push(line([xt1 + i * dW, zf - 0.02], [xt1 + i * dW, zf]));
-    out.push(line([xr0, zb], [xr0, zf]), line([xt1, zb], [xt1, zf]), line([xt1, zf], [x1 - 0.12, zf]));
-    return out;
-  },
+}
+
+function wallPlan({ w, d, h }: Size3, desk: boolean): PlanStroke[] {
+  const { x0, x1, zb, zf, xt1, xr0, n, dw } = layout(w, d, h, desk);
+  const out: PlanStroke[] = desk ? [line([x0 + dw, zf], [x0 + dw, d / 2]), line([x0, zf], [x0 + dw, zf])] : [];
+  const dW = (xr0 - xt1) / n;
+  for (const i of range(n + 1)) out.push(line([xt1 + i * dW, zf - 0.02], [xt1 + i * dW, zf]));
+  out.push(line([xr0, zb], [xr0, zf]), line([xt1, zb], [xt1, zf]), line([xt1, zf], [x1 - 0.12, zf]));
+  return out;
+}
+
+const slots = [
+  matSlot('oak', 'Oak tower & desk', 'laminate-oak'),
+  matSlot('white', 'Wardrobe fronts', 'shaker-cream'),
+  matSlot('metal', 'Pulls', 'metal-brass'),
+  matSlot('light', 'Shelf LEDs', 'led-warm-strip'),
+];
+
+const studyWall = defineItem({
+  id: 'wardrobe-study-wall',
+  name: 'Wardrobe with study desk & corner niche',
+  category: 'bedroom',
+  type: 'storage',
+  group: 'Wardrobes',
+  tags: ['wardrobe', 'desk', 'study', 'built-in', 'shaker', 'oak', 'shelves', 'led', 'niche', 'combo', 'tủ quần áo', 'bàn học', 'vietnamese', 'apartment'],
+  defaultSize: { w: 2.0, d: 1.75, h: 2.4 },
+  minSize: { w: 1.7, d: 1.3, h: 2.1 },
+  maxSize: { w: 3.0, d: 2.1, h: 2.7 },
+  wallSnap: true,
+  slots,
+  light: { color: '#ffcf8a', intensity: 0.35, distance: 2.2, y: 1.3 },
+  build: (s) => buildWall(s, true),
+  planDetail: (s) => wallPlan(s, true),
+});
+
+/** The same wall without the desk: only as deep as the wardrobe, the tower keeps a ledge at desk height. */
+const towerWall = defineItem({
+  id: 'wardrobe-shelf-tower-niche',
+  name: 'Wardrobe with oak shelf tower & corner niche',
+  category: 'bedroom',
+  type: 'storage',
+  group: 'Wardrobes',
+  tags: ['wardrobe', 'built-in', 'shaker', 'oak', 'shelves', 'led', 'niche', 'shelf tower', 'tủ quần áo', 'vietnamese', 'apartment'],
+  description:
+    'A built-in bedroom wall without a desk: an oak shelf tower with LED-lit open shelves and a ledge over a closed base, a white shaker wardrobe with brass pulls, and a rounded column with an open oak corner niche.',
+  defaultSize: { w: 2.0, d: 0.63, h: 2.4 },
+  minSize: { w: 1.7, d: 0.5, h: 2.1 },
+  maxSize: { w: 3.0, d: 0.66, h: 2.7 },
+  wallSnap: true,
+  slots: [matSlot('oak', 'Oak tower & niche', 'laminate-oak'), ...slots.slice(1)],
+  light: { color: '#ffcf8a', intensity: 0.35, distance: 2.2, y: 1.3 },
+  build: (s) => buildWall(s, false),
+  planDetail: (s) => wallPlan(s, false),
 });
 
 const TAU = Math.PI * 2;
@@ -244,7 +277,7 @@ export default definePack({
   author: 'Neest team',
   description: 'Built-in bedroom wall: oak shelf tower and study desk, white shaker wardrobe and a rounded corner niche.',
   license: 'CC0 (made for Neest)',
-  items: [studyWall],
+  items: [studyWall, towerWall],
   patterns: [
     {
       id: 'satin-lacquer',

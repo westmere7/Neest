@@ -107,6 +107,9 @@ export async function renderSwatchesForExport(
   await loadPhotoManifest();
   const sets = materials.map((m) => wantsPhoto({ photo: m.photo ?? null })?.setId).filter((s): s is string => Boolean(s));
   await preloadPhotoSets(new Set(sets), ['swatch'], 20_000);
+  // Pack bitmap sets (paintings, halloween…) have no swatch map: their swatch is cut from the colour map.
+  const colourOnly = sets.filter((s) => !photoEntry(s)?.maps.swatch);
+  if (colourOnly.length) await preloadPhotoSets(new Set(colourOnly), ['color'], 20_000);
   const ids: Record<string, string> = {};
   const files = new Map<string, { fp: string; tile: boolean; dataUrl: string }>();
   for (const m of materials) {

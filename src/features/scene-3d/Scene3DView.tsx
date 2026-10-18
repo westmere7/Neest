@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import type { PlacedObject, Project, RenderSettings, WallDisplay } from '@/domain/model/schema';
 import { derivePlan, type DerivedPlan } from '@/domain/geometry/derive';
-import { round } from '@/domain/geometry/vec';
 import {
   addCameraPreset,
   deleteCameraPreset,
@@ -45,7 +44,8 @@ import { InfiniteGrid } from './InfiniteGrid';
 import { GlobalIllumination } from './globalIllumination';
 import { namedView, presetView, type CameraView, type NamedView } from './cameraViews';
 import { liveScene, sharedRegistry } from './sceneRuntime';
-import { hitsGizmo, TransformGizmo, ToolBridge3D } from './edit3d';
+import { axisLockFeedback3D, hitsGizmo, TransformGizmo, ToolBridge3D } from './edit3d';
+import { createAxisLock, onAxis, snapOnAxis } from '@/domain/geometry/axisLock';
 import { clientCompute, useCanvasMeasureFix } from './useCanvasMeasureFix';
 import { floatingInsets } from '@/components/layoutInsets';
 import { SceneLoading, type SceneLoadStage } from './SceneLoading';
@@ -355,7 +355,7 @@ function LiveBridge({ helpersRef }: { helpersRef: React.MutableRefObject<THREE.G
   return null;
 }
 
-/** Drag selected furniture on the floor plane in 3D (with grid snapping and wall hugging). */
+/** Drag selected furniture on the floor plane in 3D (with grid snapping and wall hugging; Shift keeps to one axis). */
 function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const latest = useRef({ project, derived });
@@ -384,6 +384,8 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
       );
       const raycaster = new THREE.Raycaster();
       const el = live.gl.domElement;
+      const lock = createAxisLock();
+      const lockFx = axisLockFeedback3D(live.scene);
       let started = false;
       if (controlsRef.current) controlsRef.current.enabled = false;
       const move = (ev: PointerEvent) => {
@@ -400,23 +402,25 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
           started = true;
         }
         const { project: pr, derived: dv } = latest.current;
-        let x = p.x + offset.x;
-        let y = p.z + offset.y;
+        const moved = lock.apply({ x: p.x + offset.x - obj.x, y: p.z + offset.y - obj.y }, ev.shiftKey);
+        let x = obj.x + moved.x;
+        let y = obj.y + moved.y;
         const grid = pr.settings.gridSize;
-        if (useEditorStore.getState().snap.grid && !ev.altKey) {
-          x = round(x, grid / 2);
-          y = round(y, grid / 2);
-        }
+        if (useEditorStore.getState().snap.grid && !ev.altKey) ({ x, y } = snapOnAxis({ x, y }, obj, lock.axis, grid / 2));
         const asset = getAsset(pr, obj.assetId);
         let rotation = obj.rotation;
+        let hugged = false;
         if (asset && mates.length < 2 && (asset.wallSnap || asset.mount === 'wall') && !ev.altKey) {
           const h = hugWall(dv, { x, y }, obj.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE);
-          if (h) {
+          // While locked, only a wall the item meets on its line counts.
+          if (h && onAxis(h, obj, lock.axis)) {
             x = h.x;
             y = h.y;
             rotation = h.rotation;
+            hugged = true;
           }
         }
+        lockFx.update(lock.axis, obj, obj.elevation + 0.02, hugged && lock.axis ? 'Against wall' : null);
         useProjectStore.getState().preview((dr) => {
           if (mates.length > 1) {
             for (const id of mates) {
@@ -443,6 +447,7 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
       const up = () => {
         window.removeEventListener('pointermove', move);
         window.removeEventListener('pointerup', up);
+        lockFx.clear();
         if (started) useProjectStore.getState().commit();
         if (controlsRef.current) controlsRef.current.enabled = true;
       };

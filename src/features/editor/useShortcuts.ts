@@ -31,6 +31,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'E', action: 'Extend / trim / join walls' },
   { keys: 'M', action: 'Measure' },
   { keys: 'Shift (while drawing)', action: 'Lock angle to 45° steps' },
+  { keys: 'Shift (while moving)', action: 'Keep the move on one axis (X or Y)' },
   { keys: 'Alt (while dragging)', action: 'Disable snapping' },
   { keys: 'Digits + Enter', action: 'Exact length while drawing' },
   { keys: 'A (curved wall)', action: 'Switch 3-point arc / free bend' },

@@ -1,6 +1,42 @@
 {
  "version": 1,
  "items": {
+  "ac-outdoor-units:ac-rooftop-stand": {
+   "file": "ac-outdoor-units_ac-rooftop-stand.webp",
+   "fp": "1743fdb6523287ab"
+  },
+  "ac-outdoor-units:ac-wall-bracket": {
+   "file": "ac-outdoor-units_ac-wall-bracket.webp",
+   "fp": "b001d8e35604b1c8"
+  },
+  "ac-outdoor-units:outdoor-unit-12000btu": {
+   "file": "ac-outdoor-units_outdoor-unit-12000btu.webp",
+   "fp": "88059e5c744a4723"
+  },
+  "ac-outdoor-units:outdoor-unit-18000btu": {
+   "file": "ac-outdoor-units_outdoor-unit-18000btu.webp",
+   "fp": "a15307c266ffbe0c"
+  },
+  "ac-outdoor-units:outdoor-unit-24000btu": {
+   "file": "ac-outdoor-units_outdoor-unit-24000btu.webp",
+   "fp": "5d05ba4c9625b698"
+  },
+  "ac-outdoor-units:outdoor-unit-9000btu": {
+   "file": "ac-outdoor-units_outdoor-unit-9000btu.webp",
+   "fp": "6b81839670e2d890"
+  },
+  "ac-outdoor-units:outdoor-unit-side-discharge-twin": {
+   "file": "ac-outdoor-units_outdoor-unit-side-discharge-twin.webp",
+   "fp": "2e9cdeceebf4eb4a"
+  },
+  "ac-outdoor-units:outdoor-unit-twin-fan-multi": {
+   "file": "ac-outdoor-units_outdoor-unit-twin-fan-multi.webp",
+   "fp": "213e11af97f835be"
+  },
+  "ac-outdoor-units:window-air-conditioner": {
+   "file": "ac-outdoor-units_window-air-conditioner.webp",
+   "fp": "836907b58d79ae0c"
+  },
   "air-conditioner": {
    "file": "air-conditioner.webp",
    "fp": "d2bb6148c658ad54"
@@ -645,6 +681,78 @@
    "file": "bosch-dishwashers_sps2ikw04e.webp",
    "fp": "06757b5e5ffe1eb8"
   },
+  "branded-ac-outdoor-vn:casper-gc-09is35": {
+   "file": "branded-ac-outdoor-vn_casper-gc-09is35.webp",
+   "fp": "9217b92bde419030"
+  },
+  "branded-ac-outdoor-vn:daikin-4mkm80rvmv": {
+   "file": "branded-ac-outdoor-vn_daikin-4mkm80rvmv.webp",
+   "fp": "78402a6c9f9dd2d4"
+  },
+  "branded-ac-outdoor-vn:daikin-5mkm100rvmv": {
+   "file": "branded-ac-outdoor-vn_daikin-5mkm100rvmv.webp",
+   "fp": "a70f7ef058702f4d"
+  },
+  "branded-ac-outdoor-vn:daikin-rkb25wmvmv": {
+   "file": "branded-ac-outdoor-vn_daikin-rkb25wmvmv.webp",
+   "fp": "65cdbbd6d64992c8"
+  },
+  "branded-ac-outdoor-vn:daikin-rkf50xvmv": {
+   "file": "branded-ac-outdoor-vn_daikin-rkf50xvmv.webp",
+   "fp": "52272c9c0e09dba1"
+  },
+  "branded-ac-outdoor-vn:daikin-rky50wvmv": {
+   "file": "branded-ac-outdoor-vn_daikin-rky50wvmv.webp",
+   "fp": "b7dbf70e70c1e351"
+  },
+  "branded-ac-outdoor-vn:gree-gwc09pb-k3d0p4": {
+   "file": "branded-ac-outdoor-vn_gree-gwc09pb-k3d0p4.webp",
+   "fp": "4deb341ba9a7434d"
+  },
+  "branded-ac-outdoor-vn:lg-v10api1": {
+   "file": "branded-ac-outdoor-vn_lg-v10api1.webp",
+   "fp": "a92315f04100564c"
+  },
+  "branded-ac-outdoor-vn:mitsubishi-electric-muy-jy50vf": {
+   "file": "branded-ac-outdoor-vn_mitsubishi-electric-muy-jy50vf.webp",
+   "fp": "8dfc8cc707084363"
+  },
+  "branded-ac-outdoor-vn:mitsubishi-electric-pumy-p125vkm": {
+   "file": "branded-ac-outdoor-vn_mitsubishi-electric-pumy-p125vkm.webp",
+   "fp": "2409d56dcac0254d"
+  },
+  "branded-ac-outdoor-vn:mitsubishi-heavy-src25zss-w5": {
+   "file": "branded-ac-outdoor-vn_mitsubishi-heavy-src25zss-w5.webp",
+   "fp": "6f8cdc9ac7ea6efb"
+  },
+  "branded-ac-outdoor-vn:nagakawa-nis-c09r2h10": {
+   "file": "branded-ac-outdoor-vn_nagakawa-nis-c09r2h10.webp",
+   "fp": "6bcacc253c39d19c"
+  },
+  "branded-ac-outdoor-vn:panasonic-cu-n24zkh-8": {
+   "file": "branded-ac-outdoor-vn_panasonic-cu-n24zkh-8.webp",
+   "fp": "f532518e51b8093e"
+  },
+  "branded-ac-outdoor-vn:panasonic-cu-xu12zkh-8": {
+   "file": "branded-ac-outdoor-vn_panasonic-cu-xu12zkh-8.webp",
+   "fp": "ce53781b7fa664aa"
+  },
+  "branded-ac-outdoor-vn:samsung-ar13cyfaawknsv": {
+   "file": "branded-ac-outdoor-vn_samsung-ar13cyfaawknsv.webp",
+   "fp": "83ca327306b358c4"
+  },
+  "branded-ac-outdoor-vn:samsung-dvm-s-eco-am060fxmdgh": {
+   "file": "branded-ac-outdoor-vn_samsung-dvm-s-eco-am060fxmdgh.webp",
+   "fp": "cccfb3f9703edb0a"
+  },
+  "branded-ac-outdoor-vn:sharp-ah-x9xew": {
+   "file": "branded-ac-outdoor-vn_sharp-ah-x9xew.webp",
+   "fp": "39104b1d23740132"
+  },
+  "branded-ac-outdoor-vn:toshiba-ras-h10c4kcvg-v": {
+   "file": "branded-ac-outdoor-vn_toshiba-ras-h10c4kcvg-v.webp",
+   "fp": "9f68ad9904c277e0"
+  },
   "branded-appliances-vn:electrolux-ewf9024p5wb": {
    "file": "branded-appliances-vn_electrolux-ewf9024p5wb.webp",
    "fp": "81ac6705f35b1aaf"
@@ -727,7 +835,7 @@
   },
   "branded-climate-vn:panasonic-cu-xu9zkh-8": {
    "file": "branded-climate-vn_panasonic-cu-xu9zkh-8.webp",
-   "fp": "c2479394d05e161e"
+   "fp": "1abbfd954b35beae"
   },
   "branded-climate-vn:panasonic-f-409kb": {
    "file": "branded-climate-vn_panasonic-f-409kb.webp",
@@ -1248,6 +1356,78 @@
   "console-table@model:empty": {
    "file": "console-table_model_empty.webp",
    "fp": "86b8f0d2851b0e4d"
+  },
+  "couches:camelback-show-wood": {
+   "file": "couches_camelback-show-wood.webp",
+   "fp": "17547be270014604"
+  },
+  "couches:chaise-sectional-piped-left": {
+   "file": "couches_chaise-sectional-piped-left.webp",
+   "fp": "34f07cffed6b926c"
+  },
+  "couches:chaise-sectional-piped-right": {
+   "file": "couches_chaise-sectional-piped-right.webp",
+   "fp": "3663a9e63c56df29"
+  },
+  "couches:chesterfield-rolled-arm": {
+   "file": "couches_chesterfield-rolled-arm.webp",
+   "fp": "7174ed496bb79fd9"
+  },
+  "couches:click-clack-sofa-bed": {
+   "file": "couches_click-clack-sofa-bed.webp",
+   "fp": "162a9d6d60a37cc3"
+  },
+  "couches:cloud-modular-4": {
+   "file": "couches_cloud-modular-4.webp",
+   "fp": "d5253ebaef07682b"
+  },
+  "couches:curved-loose-cushion": {
+   "file": "couches_curved-loose-cushion.webp",
+   "fp": "efb78dce0b8d95ed"
+  },
+  "couches:japandi-oak-base": {
+   "file": "couches_japandi-oak-base.webp",
+   "fp": "1423baf485cf1b68"
+  },
+  "couches:l-corner-sectional-left": {
+   "file": "couches_l-corner-sectional-left.webp",
+   "fp": "441cb3f70978d0f5"
+  },
+  "couches:l-corner-sectional-right": {
+   "file": "couches_l-corner-sectional-right.webp",
+   "fp": "4a607dc62e31571f"
+  },
+  "couches:mid-century-walnut-rail": {
+   "file": "couches_mid-century-walnut-rail.webp",
+   "fp": "404c4d4fca2b1198"
+  },
+  "couches:piped-track-arm-2-seat": {
+   "file": "couches_piped-track-arm-2-seat.webp",
+   "fp": "a9b655af24cbff4d"
+  },
+  "couches:piped-track-arm-3-seat": {
+   "file": "couches_piped-track-arm-3-seat.webp",
+   "fp": "2947d3fbdf3fce95"
+  },
+  "couches:pull-out-sleeper-3-seat": {
+   "file": "couches_pull-out-sleeper-3-seat.webp",
+   "fp": "0db63d6239d6c52f"
+  },
+  "couches:slipcovered-linen-skirted": {
+   "file": "couches_slipcovered-linen-skirted.webp",
+   "fp": "2c670e15c1851582"
+  },
+  "couches:tufted-tuxedo-3-seat": {
+   "file": "couches_tufted-tuxedo-3-seat.webp",
+   "fp": "ba72ea35c7a4384c"
+  },
+  "couches:u-sectional-chaise-left": {
+   "file": "couches_u-sectional-chaise-left.webp",
+   "fp": "012fc11449dec264"
+  },
+  "couches:u-sectional-chaise-right": {
+   "file": "couches_u-sectional-chaise-right.webp",
+   "fp": "660e5ff7f1e70b28"
   },
   "counter-stool-backed": {
    "file": "counter-stool-backed.webp",
@@ -2296,6 +2476,54 @@
   "korean-home:kimchi-fridge": {
    "file": "korean-home_kimchi-fridge.webp",
    "fp": "c532d6468d738866"
+  },
+  "l-desks:built-in-l-desk-bookcase-left": {
+   "file": "l-desks_built-in-l-desk-bookcase-left.webp",
+   "fp": "1ff29e833d706ff7"
+  },
+  "l-desks:built-in-l-desk-bookcase-right": {
+   "file": "l-desks_built-in-l-desk-bookcase-right.webp",
+   "fp": "42dac380aabc2b40"
+  },
+  "l-desks:compact-corner-desk-left": {
+   "file": "l-desks_compact-corner-desk-left.webp",
+   "fp": "5805a6e3648cff04"
+  },
+  "l-desks:compact-corner-desk-right": {
+   "file": "l-desks_compact-corner-desk-right.webp",
+   "fp": "8d071d21c7f91c00"
+  },
+  "l-desks:dual-motor-standing-l-desk-left": {
+   "file": "l-desks_dual-motor-standing-l-desk-left.webp",
+   "fp": "905c93d96d580adc"
+  },
+  "l-desks:dual-motor-standing-l-desk-right": {
+   "file": "l-desks_dual-motor-standing-l-desk-right.webp",
+   "fp": "981a8f18857dd289"
+  },
+  "l-desks:executive-l-desk-left": {
+   "file": "l-desks_executive-l-desk-left.webp",
+   "fp": "3b8a0823b881755c"
+  },
+  "l-desks:executive-l-desk-right": {
+   "file": "l-desks_executive-l-desk-right.webp",
+   "fp": "1bfc995f57439a9b"
+  },
+  "l-desks:gaming-l-desk-riser-left": {
+   "file": "l-desks_gaming-l-desk-riser-left.webp",
+   "fp": "b8c39a46629fdfef"
+  },
+  "l-desks:gaming-l-desk-riser-right": {
+   "file": "l-desks_gaming-l-desk-riser-right.webp",
+   "fp": "f1dfdc20433180d1"
+  },
+  "l-desks:steel-frame-oak-l-desk-left": {
+   "file": "l-desks_steel-frame-oak-l-desk-left.webp",
+   "fp": "19412c478059727f"
+  },
+  "l-desks:steel-frame-oak-l-desk-right": {
+   "file": "l-desks_steel-frame-oak-l-desk-right.webp",
+   "fp": "6633b19cbcfb5d49"
   },
   "lantern-outdoor": {
    "file": "lantern-outdoor.webp",
@@ -4164,6 +4392,10 @@
   "wardrobe": {
    "file": "wardrobe.webp",
    "fp": "c558794bd025a6e1"
+  },
+  "wardrobe-study:wardrobe-shelf-tower-niche": {
+   "file": "wardrobe-study_wardrobe-shelf-tower-niche.webp",
+   "fp": "c287f36166a4b047"
   },
   "wardrobe-study:wardrobe-study-wall": {
    "file": "wardrobe-study_wardrobe-study-wall.webp",

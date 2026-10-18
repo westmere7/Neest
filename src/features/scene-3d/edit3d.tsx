@@ -7,6 +7,7 @@ import type { Vec2 } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { snapPoint, type SnapContext } from '@/domain/geometry/snapping';
 import { dist } from '@/domain/geometry/vec';
+import { axisLockLabel, createAxisLock, snapOnAxis, type LockAxis } from '@/domain/geometry/axisLock';
 import { pointAt, projectOnPath } from '@/domain/geometry/wallPath';
 import { openingOffsetRange } from '@/domain/geometry/walls';
 import { normalizeRotation, updateObjects } from '@/domain/commands/entities';
@@ -392,6 +393,43 @@ export function hitsGizmo(e: { intersections: THREE.Intersection[] }): boolean {
 const AXIS_COLORS = { x: '#e5574a', y: '#4fb36a', z: '#4a8fe5' } as const;
 type Axis = 'x' | 'y' | 'z';
 
+const lockGuideMats = {
+  x: new THREE.LineBasicMaterial({ color: AXIS_COLORS.x, transparent: true, opacity: 0.85, depthTest: false }),
+  y: new THREE.LineBasicMaterial({ color: AXIS_COLORS.z, transparent: true, opacity: 0.85, depthTest: false }),
+};
+
+/**
+ * Feedback for a Shift-locked 3D move: a thin line along the locked axis (the gizmo's arrow colour)
+ * through the moved item, and "Locked to … axis" in the status bar. Call `clear()` when the drag ends.
+ */
+export function axisLockFeedback3D(scene: THREE.Scene) {
+  const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-60, 0, 0), new THREE.Vector3(60, 0, 0)]);
+  const line = new THREE.Line(geo, lockGuideMats.x);
+  line.name = 'axis-lock-guide';
+  line.renderOrder = 30;
+  line.userData.helper = true;
+  line.raycast = () => {};
+  const setLabel = (snapLabel: string | null) => {
+    if (useEditorStore.getState().snapLabel !== snapLabel) useEditorStore.getState().set({ snapLabel });
+  };
+  return {
+    update(axis: LockAxis | null, origin: Vec2, y: number, extra: string | null = null) {
+      if (axis) {
+        line.material = lockGuideMats[axis];
+        line.position.set(origin.x, y, origin.y);
+        line.rotation.set(0, axis === 'x' ? 0 : -Math.PI / 2, 0);
+        if (!line.parent) scene.add(line);
+      } else line.removeFromParent();
+      setLabel([axis && axisLockLabel(axis, '3d'), extra].filter(Boolean).join(' · ') || null);
+    },
+    clear() {
+      line.removeFromParent();
+      geo.dispose();
+      setLabel(null);
+    },
+  };
+}
+
 /** Parameter along the line (p + t·a) closest to the ray (o + s·d). */
 function closestOnLine(o: THREE.Vector3, d: THREE.Vector3, p: THREE.Vector3, a: THREE.Vector3): number | null {
   const w0 = o.clone().sub(p);
@@ -598,6 +636,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
   const selection = useEditorStore((s) => s.selection);
   const gl = useThree((s) => s.gl);
   const get = useThree((s) => s.get);
+  const scene = useThree((s) => s.scene);
   const [hot, setHot] = useState<string | null>(null);
   const [readout, setReadout] = useState<string | null>(null);
   const scaled = useRef<THREE.Group[]>([]);
@@ -649,6 +688,9 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
     e.ray.intersectPlane(floor, hit0);
     const a0 = Math.atan2(hit0.z - cz, hit0.x - cx);
     const r0 = Math.max(0.05, Math.hypot(hit0.x - cx, hit0.z - cz));
+    // The free move keeps to one axis while Shift is held.
+    const lock = createAxisLock();
+    const lockFx = mode === 'free' ? axisLockFeedback3D(scene) : null;
     if (controlsRef.current) controlsRef.current.enabled = false;
     useProjectStore
       .getState()
@@ -688,12 +730,15 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
       if (mode === 'free') {
         const p = new THREE.Vector3();
         if (!ray.intersectPlane(floor, p)) return;
-        let dx = p.x - hit0.x;
-        let dz = p.z - hit0.z;
+        const moved = lock.apply({ x: p.x - hit0.x, y: p.z - hit0.z }, ev.shiftKey);
+        let dx = moved.x;
+        let dz = moved.y;
         if (snap) {
-          dx = Math.round((cx + dx) / (grid / 2)) * (grid / 2) - cx;
-          dz = Math.round((cz + dz) / (grid / 2)) * (grid / 2) - cz;
+          const c = snapOnAxis({ x: cx + dx, y: cz + dz }, { x: cx, y: cz }, lock.axis, grid / 2);
+          dx = c.x - cx;
+          dz = c.y - cz;
         }
+        lockFx?.update(lock.axis, { x: cx, y: cz }, base + 0.02);
         setReadout(`Δ ${formatLength(Math.hypot(dx, dz), units.units, units.precision)}`);
         useProjectStore.getState().preview((d) => {
           for (const id of ids) {
@@ -732,6 +777,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       useProjectStore.getState().commit();
+      lockFx?.clear();
       setHot(null);
       setReadout(null);
       if (controlsRef.current) controlsRef.current.enabled = true;

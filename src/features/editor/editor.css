@@ -1045,8 +1045,8 @@
   margin-top: 8px;
 }
 
-/* View button: quick quality switch on hover (3D) */
-.view-quick {
+/* View button: quick quality switch on hover (3D). Not `.view-quick`: that is the 3D panel's row of view buttons. */
+.rail-view-quick {
   position: relative;
 }
 .view-quick-pop {
@@ -1111,7 +1111,7 @@
 }
 
 /* The chevron under the View button: opens the quick quality switch. */
-.view-quick {
+.rail-view-quick {
   display: flex;
   flex-direction: column;
   align-items: center;

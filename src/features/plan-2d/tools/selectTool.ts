@@ -12,6 +12,7 @@ import { hitHandle, hitTest, marqueeSelect, selectionHandles, type Handle } from
 import { WALL_HUG_MOVE, hugWall } from './placeTools';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './types';
 import { movedElevation } from './surfaces';
+import { axisGuide, axisLockLabel, createAxisLock, onAxis, snapOnAxis, type AxisLockState } from '@/domain/geometry/axisLock';
 
 type Gesture =
   | { type: 'pending'; start: Vec2; startScreen: Vec2; hit: SelItem | null; shift: boolean; wasSelected: boolean }
@@ -23,6 +24,8 @@ type Gesture =
       objects: Record<string, Vec2>;
       perp: { normal: Vec2 } | null;
       primaryObject: string | null;
+      /** Shift keeps the move on one plan axis. */
+      lock: AxisLockState;
     }
   | { type: 'slide-opening'; openingId: string }
   | { type: 'node'; nodeId: string; anchor: Vec2 | null; excludeWalls: Set<string> }
@@ -118,6 +121,7 @@ export function createSelectTool(): Tool {
       objects,
       perp,
       primaryObject: objIds.length === 1 && !Object.keys(nodes).length ? objIds[0] : null,
+      lock: createAxisLock(),
     };
   };
 
@@ -141,7 +145,7 @@ export function createSelectTool(): Tool {
   return {
     id: 'select',
     cursor: 'default',
-    hint: 'Click to select, drag to move, drag on empty space to box-select. Shift adds to the selection.',
+    hint: 'Click to select, drag to move, drag on empty space to box-select. Shift-click adds to the selection; Shift-drag moves along one axis.',
     busy: () => gesture !== null,
 
     onPointerDown(e, env) {
@@ -184,8 +188,10 @@ export function createSelectTool(): Tool {
       const hit = hitTest(project, derived, e.world, env.tol());
       const wasSelected = !!hit && sel.some((s) => s.id === hit.id);
       if (hit) {
-        if (e.shift) editor().toggleSelection(hit);
-        else if (!wasSelected) editor().setSelection([hit]);
+        // Shift on a selected item waits for the release: a drag moves the selection along one axis instead.
+        if (e.shift) {
+          if (!wasSelected) editor().toggleSelection(hit);
+        } else if (!wasSelected) editor().setSelection([hit]);
       }
       gesture = { type: 'pending', start: e.world, startScreen: e.screen, hit, shift: e.shift, wasSelected };
     },
@@ -210,7 +216,9 @@ export function createSelectTool(): Tool {
         }
         case 'move': {
           const g = gesture;
-          let delta = sub(e.world, g.start);
+          // A single straight wall already slides along its normal; anything else locks to an axis with Shift.
+          let delta = g.lock.apply(sub(e.world, g.start), e.shift && !g.perp);
+          const axis = g.perp ? null : g.lock.axis;
           const grid = project.settings.gridSize;
           const snapOn = editor().snap.grid && !e.alt;
           if (g.perp) {
@@ -226,9 +234,11 @@ export function createSelectTool(): Tool {
             const base = g.objects[g.primaryObject];
             const asset = o ? getAsset(project, o.assetId) : null;
             let target = add(base, delta);
-            if (snapOn) target = { x: round(target.x, grid / 2), y: round(target.y, grid / 2) };
+            if (snapOn) target = snapOnAxis(target, base, axis, grid / 2);
             if (asset && o && (asset.wallSnap || asset.mount === 'wall') && !e.alt) {
-              hugged = hugWall(env.derived(), add(base, sub(e.world, g.start)), o.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE);
+              hugged = hugWall(env.derived(), add(base, delta), o.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE);
+              // While locked, only a wall the item meets on its line counts.
+              if (hugged && !onAxis(hugged, base, axis)) hugged = null;
               if (hugged) target = { x: hugged.x, y: hugged.y };
             }
             delta = sub(target, base);
@@ -250,8 +260,9 @@ export function createSelectTool(): Tool {
               if (lift !== undefined) o.elevation = lift;
             }
           });
-          env.setSnapLabel(hugged ? 'Against wall' : null);
+          env.setSnapLabel([axis && axisLockLabel(axis), hugged && 'Against wall'].filter(Boolean).join(' · ') || null);
           env.setOverlay({
+            lines: axis ? [{ ...axisGuide(g.start, axis, 4000 * env.px()), kind: 'guide' as const }] : undefined,
             labels: [{ p: e.world, text: `Δ ${fmt(env, Math.hypot(delta.x, delta.y))}`, offset: { x: 14, y: 22 } }],
           });
           return;
@@ -448,7 +459,10 @@ export function createSelectTool(): Tool {
       switch (g.type) {
         case 'pending': {
           if (!g.hit && !g.shift) editor().clearSelection();
-          else if (g.hit && g.wasSelected && !g.shift) editor().setSelection([g.hit]);
+          else if (g.hit && g.wasSelected) {
+            if (g.shift) editor().toggleSelection(g.hit);
+            else editor().setSelection([g.hit]);
+          }
           if (!g.hit) {
             const room = hitTest(project, env.derived(), e.world, env.tol(), { rooms: true });
             if (room) editor().setSelection(g.shift ? [...editor().selection, room] : [room]);
