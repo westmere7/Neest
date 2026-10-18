@@ -79,6 +79,11 @@ let manifestPromise: Promise<PhotoManifest | null> | null = null;
 let version = 0;
 const listeners = new Set<() => void>();
 
+/** Tells swatch components to re-render (also used when the shipped swatch manifest arrives). */
+export function notifyPhotos(): void {
+  notify();
+}
+
 function notify() {
   version++;
   for (const fn of [...listeners]) fn();

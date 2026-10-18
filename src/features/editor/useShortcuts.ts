@@ -6,6 +6,7 @@ import { isEditableTarget } from '@/components/hooks';
 import { planKeyRouter } from '@/features/plan-2d/PlanCanvas';
 import { flushSave } from '../projects/projectService';
 import { deleteSelection, duplicateSelection, nudgeSelection, rotateSelection, selectAll, toggleLockSelection } from './actions';
+import { groupSelection, ungroupSelection } from './groups';
 
 export const TOOL_SHORTCUTS: Record<string, ToolId> = {
   v: 'select',
@@ -40,6 +41,8 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'Q', action: 'Rotate selection 90°' },
   { keys: 'Arrows (Shift ×10)', action: 'Nudge selection' },
   { keys: 'Ctrl+L', action: 'Lock / unlock selection' },
+  { keys: 'Ctrl+G / Ctrl+Shift+G', action: 'Group / ungroup items' },
+  { keys: 'Right-click', action: 'Menu for the item under the pointer' },
   { keys: 'F', action: 'Fit plan' },
   { keys: 'G', action: 'Toggle grid' },
   { keys: '1 / 2', action: 'Outline / 2D plan' },
@@ -106,6 +109,12 @@ export function useEditorShortcuts(isMobile: boolean) {
       if (mod && key === 'a') {
         e.preventDefault();
         selectAll();
+        return;
+      }
+      if (mod && key === 'g') {
+        e.preventDefault();
+        if (e.shiftKey) ungroupSelection();
+        else groupSelection();
         return;
       }
       if (mod && key === 'l') {

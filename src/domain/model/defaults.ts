@@ -59,6 +59,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
     objects: {},
     materials: defaultMaterialSet(),
     customAssets: {},
+    groups: {},
     cameras: [],
     render: {
       quality: 'balanced',

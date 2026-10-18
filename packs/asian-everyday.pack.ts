@@ -10,6 +10,7 @@
  * speckled terrazzo floor tile, kawung batik with wax crackle, and fine teak grain.
  */
 import {
+  PLANT_SPECIES,
   arcPoints,
   blobCluster,
   box,
@@ -1357,10 +1358,12 @@ const airCooler = defineItem({
 const frangipani = defineItem({
   id: 'potted-frangipani',
   name: 'Potted frangipani tree',
-  category: 'outdoor',
+  category: 'plants',
   type: 'plants',
   group: 'Outdoor plants',
+  plant: PLANT_SPECIES['plumeria-rubra'],
   tags: ['frangipani', 'plumeria', 'hoa su', 'champa', 'temple tree', 'flowering tree', 'glazed pot', 'tropical', 'asian'],
+  description: 'A frangipani tree (hoa sứ) with thick branching stems, clusters of long leaves and fragrant white-and-yellow flowers, in a cobalt glazed pot.',
   defaultSize: { w: 0.9, d: 0.9, h: 1.8 },
   minSize: { w: 0.5, d: 0.5, h: 1.0 },
   maxSize: { w: 1.6, d: 1.6, h: 3.0 },

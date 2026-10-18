@@ -190,6 +190,131 @@ const DEFS: Def[] = [
   { id: 'screen-glow', name: 'Lit screen', category: 'solid', color: '#1b2a3a', roughness: 0.1, emissive: '#4a7ab0', emissiveIntensity: 0.6 },
   { id: 'light-cool', name: 'Cool light diffuser', category: 'solid', color: '#f4f8ff', roughness: 0.6, emissive: '#dfe9ff', emissiveIntensity: 2.5 },
   { id: 'light-candle', name: 'Candle flame', category: 'solid', color: '#ffd9a0', roughness: 0.6, emissive: '#ffb060', emissiveIntensity: 3 },
+  // ── Expanded library (2026-10) ──────────────────────────────────────────
+  // More paint colours
+  { id: 'paint-navy', name: 'Hale navy', category: 'paint', color: '#2f3e55', roughness: 0.85, texture: tex('paint', 1.2, 0.3) },
+  { id: 'paint-olive', name: 'Olive', category: 'paint', color: '#7a7a52', roughness: 0.88, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-clay', name: 'Clay', category: 'paint', color: '#b98a6e', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-lavender', name: 'Lavender grey', category: 'paint', color: '#b8aec9', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-butter', name: 'Butter yellow', category: 'paint', color: '#efdfa8', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-mint', name: 'Pale mint', category: 'paint', color: '#c3dccb', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-mushroom', name: 'Mushroom', category: 'paint', color: '#a99b8b', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-oxblood', name: 'Oxblood', category: 'paint', color: '#6b2c2c', roughness: 0.85, texture: tex('paint', 1.2, 0.3) },
+  { id: 'paint-stone-grey', name: 'Stone grey', category: 'paint', color: '#9a9b97', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-powder-pink', name: 'Powder pink', category: 'paint', color: '#ead2cf', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-cobalt', name: 'Cobalt blue', category: 'paint', color: '#2f5ea8', roughness: 0.85, texture: tex('paint', 1.2, 0.3) },
+  { id: 'paint-jade', name: 'Jade', category: 'paint', color: '#4f8f7c', roughness: 0.88, texture: tex('paint', 1.2, 0.3) },
+  { id: 'paint-mustard', name: 'Mustard', category: 'paint', color: '#c9a03a', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-soft-black', name: 'Soft black', category: 'paint', color: '#2a2b2e', roughness: 0.85, texture: tex('paint', 1.2, 0.3) },
+  { id: 'paint-sky', name: 'Sky blue', category: 'paint', color: '#c7dbe8', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+  { id: 'paint-cream', name: 'Cream', category: 'paint', color: '#f1e8d6', roughness: 0.9, texture: tex('paint', 1.2, 0.35) },
+
+  // Wallpaper (shown in the paint shelf, tinted by the colour)
+  { id: 'wallpaper-stripe-sage', name: 'Sage stripe wallpaper', category: 'paint', color: '#c9d3bd', roughness: 0.8, texture: tex('wallpaper-stripes', 0.6, 1) },
+  { id: 'wallpaper-stripe-blue', name: 'Blue stripe wallpaper', category: 'paint', color: '#c4d1df', roughness: 0.8, texture: tex('wallpaper-stripes', 0.6, 1) },
+  { id: 'wallpaper-damask-gold', name: 'Gold damask wallpaper', category: 'paint', color: '#d9c99c', roughness: 0.6, texture: tex('wallpaper-damask', 0.64, 1) },
+  { id: 'wallpaper-damask-grey', name: 'Grey damask wallpaper', category: 'paint', color: '#b9bbbd', roughness: 0.6, texture: tex('wallpaper-damask', 0.64, 1) },
+  { id: 'wallpaper-deco-teal', name: 'Teal art deco wallpaper', category: 'paint', color: '#86aaa1', roughness: 0.7, texture: tex('wallpaper-deco', 0.6, 1) },
+  { id: 'wallpaper-deco-blush', name: 'Blush art deco wallpaper', category: 'paint', color: '#e2c3bb', roughness: 0.7, texture: tex('wallpaper-deco', 0.6, 1) },
+  { id: 'grasscloth-natural', name: 'Natural grasscloth wallpaper', category: 'paint', color: '#cdb892', roughness: 0.95, texture: tex('wallpaper-grasscloth', 0.9, 1) },
+  { id: 'grasscloth-indigo', name: 'Indigo grasscloth wallpaper', category: 'paint', color: '#4f5c76', roughness: 0.95, texture: tex('wallpaper-grasscloth', 0.9, 1) },
+  { id: 'wallpaper-tropical', name: 'Tropical leaf wallpaper', category: 'paint', color: '#ffffff', roughness: 0.75, texture: tex('wallpaper-botanical', 1.4, 1) },
+  { id: 'wallpaper-floral', name: 'Ditsy floral wallpaper', category: 'paint', color: '#ffffff', roughness: 0.75, texture: tex('wallpaper-floral', 0.7, 1) },
+  { id: 'wallpaper-woodchip', name: 'Woodchip wallpaper', category: 'paint', color: '#f1efea', roughness: 0.95, texture: tex('plaster', 1, 0.7) },
+
+  // Plaster finishes
+  { id: 'limewash-warm', name: 'Warm limewash', category: 'plaster', color: '#e7dccb', roughness: 0.95, texture: tex('limewash', 2.2, 1) },
+  { id: 'limewash-grey', name: 'Grey limewash', category: 'plaster', color: '#c5c2ba', roughness: 0.95, texture: tex('limewash', 2.2, 1) },
+  { id: 'limewash-terracotta', name: 'Terracotta limewash', category: 'plaster', color: '#c58c6e', roughness: 0.95, texture: tex('limewash', 2.2, 1) },
+  { id: 'limewash-sage', name: 'Sage limewash', category: 'plaster', color: '#a9b49d', roughness: 0.95, texture: tex('limewash', 2.2, 1) },
+  { id: 'venetian-white', name: 'White Venetian plaster', category: 'plaster', color: '#ece8e0', roughness: 0.3, texture: tex('venetian', 2, 1) },
+  { id: 'venetian-grey', name: 'Grey Venetian plaster', category: 'plaster', color: '#a9a6a0', roughness: 0.3, texture: tex('venetian', 2, 1) },
+  { id: 'tadelakt-sand', name: 'Sand tadelakt', category: 'plaster', color: '#d8c4a2', roughness: 0.35, texture: tex('venetian', 1.6, 0.9) },
+  { id: 'plaster-rough-white', name: 'Rough painted plaster', category: 'plaster', color: '#eeeae3', roughness: 0.95, texture: tex('plaster', 2, 1) },
+
+  // Wood: parquet, panels and Vietnamese furniture woods
+  { id: 'wood-chevron-oak', name: 'Oak chevron parquet', category: 'wood', color: '#c49a6c', roughness: 0.55, texture: tex('chevron', 1.6, 1) },
+  { id: 'wood-chevron-smoked', name: 'Smoked oak chevron', category: 'wood', color: '#7d5c42', roughness: 0.55, texture: tex('chevron', 1.6, 1) },
+  { id: 'wood-versailles', name: 'Versailles parquet', category: 'wood', color: '#c9a173', roughness: 0.5, texture: tex('parquet-basket', 2, 1) },
+  { id: 'wood-basketweave', name: 'Basketweave parquet', category: 'wood', color: '#9a6b45', roughness: 0.5, texture: tex('parquet-basket', 1.5, 1) },
+  { id: 'wood-diagonal-parquet', name: 'Diagonal parquet', category: 'wood', color: '#b88a5c', roughness: 0.5, texture: tex('chevron', 2, 0.8, 45) },
+  { id: 'wood-herringbone-dark', name: 'Dark herringbone', category: 'wood', color: '#6e4a30', roughness: 0.5, texture: tex('herringbone', 1.2, 1) },
+  { id: 'wood-dark-oak-planks', name: 'Dark oak planks', category: 'wood', color: '#6b4a33', roughness: 0.55, texture: tex('wood-planks', 1.6, 1) },
+  { id: 'wood-grey-oak', name: 'Grey washed oak', category: 'wood', color: '#a39a8e', roughness: 0.6, texture: tex('wood-planks', 1.6, 0.8) },
+  { id: 'wood-whitewashed', name: 'Whitewashed planks', category: 'wood', color: '#e6dccd', roughness: 0.6, texture: tex('wood-planks', 1.6, 0.6) },
+  { id: 'wood-bamboo', name: 'Bamboo', category: 'wood', color: '#cdb478', roughness: 0.55, texture: tex('wood-slats', 0.9, 0.5) },
+  { id: 'wood-fluted-oak', name: 'Fluted oak panel', category: 'wood', color: '#c49a6c', roughness: 0.55, texture: tex('fluted', 0.36, 1) },
+  { id: 'wood-fluted-walnut', name: 'Fluted walnut panel', category: 'wood', color: '#6b4a33', roughness: 0.5, texture: tex('fluted', 0.36, 1) },
+  { id: 'wood-slats-oak', name: 'Oak slat panel', category: 'wood', color: '#c8a172', roughness: 0.6, texture: tex('wood-slats', 0.5, 1) },
+  { id: 'wood-slats-walnut', name: 'Walnut slat panel', category: 'wood', color: '#5f4330', roughness: 0.55, texture: tex('wood-slats', 0.5, 1) },
+  { id: 'wood-acacia', name: 'Acacia (gỗ keo)', category: 'wood', color: '#a46d3f', roughness: 0.55, texture: tex('wood-grain', 0.8, 0.9) },
+  { id: 'wood-rosewood', name: 'Rosewood (gỗ hương)', category: 'wood', color: '#6a2f22', roughness: 0.4, texture: tex('wood-grain', 0.8, 0.8) },
+  { id: 'wood-mahogany', name: 'Mahogany', category: 'wood', color: '#7a3b28', roughness: 0.45, texture: tex('wood-grain', 0.8, 0.8) },
+  { id: 'wood-ironwood', name: 'Ironwood (gỗ lim)', category: 'wood', color: '#4e3424', roughness: 0.45, texture: tex('wood-grain', 0.7, 0.8) },
+  { id: 'cane-natural', name: 'Rattan cane webbing', category: 'wood', color: '#d6b480', roughness: 0.8, texture: tex('cane', 0.2, 1) },
+  { id: 'wicker-fine', name: 'Fine wicker', category: 'wood', color: '#c7a578', roughness: 0.85, texture: tex('jute', 0.1, 0.9) },
+
+  // Tiles
+  { id: 'tile-cement-classic', name: 'Gạch bông cement tile', category: 'tile', color: '#ffffff', roughness: 0.55, texture: tex('cement-tile', 0.4, 1) },
+  { id: 'tile-terracotta-rustic', name: 'Rustic terracotta (Bát Tràng)', category: 'tile', color: '#b8643f', roughness: 0.85, texture: tex('terracotta-tile', 1.2, 1) },
+  { id: 'tile-fishscale-teal', name: 'Teal fish-scale tile', category: 'tile', color: '#4f8f86', roughness: 0.15, texture: tex('fishscale', 0.6, 1) },
+  { id: 'tile-fishscale-white', name: 'White fish-scale tile', category: 'tile', color: '#eeeeea', roughness: 0.15, texture: tex('fishscale', 0.6, 1) },
+  { id: 'tile-penny-white', name: 'White penny mosaic', category: 'tile', color: '#f0f0ec', roughness: 0.2, texture: tex('penny', 0.3, 1) },
+  { id: 'tile-penny-charcoal', name: 'Charcoal penny mosaic', category: 'tile', color: '#4a4b4e', roughness: 0.25, texture: tex('penny', 0.3, 1) },
+  { id: 'tile-azulejo-border', name: 'Blue painted tiles (border)', category: 'tile', color: '#dbe4f3', roughness: 0.15, texture: tex('tile-square', 0.9, 1) },
+  { id: 'tile-azulejo-floral', name: 'Blue painted tiles (floral)', category: 'tile', color: '#dbe4f3', roughness: 0.15, texture: tex('tile-square', 0.9, 1) },
+  { id: 'tile-terrazzo-colour', name: 'Colourful terrazzo', category: 'tile', color: '#efebe5', roughness: 0.3, texture: tex('terrazzo', 1, 1) },
+  { id: 'tile-subway-green', name: 'Bottle-green subway tile', category: 'tile', color: '#5f8a74', roughness: 0.12, texture: tex('subway', 0.6, 1) },
+  { id: 'tile-subway-black', name: 'Black subway tile', category: 'tile', color: '#2f3032', roughness: 0.15, texture: tex('subway', 0.6, 1) },
+  { id: 'tile-square-sage', name: 'Sage square tile', category: 'tile', color: '#a9b8a2', roughness: 0.2, texture: tex('tile-square', 0.6, 1) },
+
+  // Stone
+  { id: 'stone-onyx-white', name: 'White onyx', category: 'stone', color: '#efeae4', roughness: 0.15, texture: tex('marble', 2, 0.7) },
+  { id: 'stone-marble-beige', name: 'Crema beige marble', category: 'stone', color: '#e2d6c3', roughness: 0.2, texture: tex('marble', 2, 0.8) },
+  { id: 'stone-marble-green', name: 'Verde marble', category: 'stone', color: '#3f5a4c', roughness: 0.2, texture: tex('marble', 1.6, 1) },
+  { id: 'stone-quartz-white', name: 'White quartz', category: 'stone', color: '#f2f1ee', roughness: 0.25, texture: tex('granite', 0.6, 0.35) },
+
+  // Metal finishes
+  { id: 'metal-gold', name: 'Polished gold', category: 'metal', color: '#d4af37', roughness: 0.22, metalness: 1 },
+  { id: 'metal-champagne', name: 'Champagne aluminium', category: 'metal', color: '#c8b48e', roughness: 0.35, metalness: 0.85, texture: tex('brushed', 0.4, 0.35) },
+  { id: 'metal-bronze', name: 'Antique bronze', category: 'metal', color: '#8c6a4a', roughness: 0.4, metalness: 1, texture: tex('brushed', 0.4, 0.5) },
+  { id: 'metal-gunmetal', name: 'Gunmetal', category: 'metal', color: '#4a4d52', roughness: 0.35, metalness: 1, texture: tex('brushed', 0.4, 0.6) },
+  { id: 'metal-rose-gold', name: 'Rose gold', category: 'metal', color: '#c99a86', roughness: 0.25, metalness: 1 },
+  { id: 'metal-stainless-polished', name: 'Polished stainless', category: 'metal', color: '#d8dadc', roughness: 0.15, metalness: 1 },
+
+  // Fabric
+  { id: 'fabric-linen-sage', name: 'Sage linen', category: 'fabric', color: '#a7b39c', roughness: 0.95, texture: tex('weave', 0.15, 0.7) },
+  { id: 'fabric-linen-rust', name: 'Rust linen', category: 'fabric', color: '#b06a48', roughness: 0.95, texture: tex('weave', 0.15, 0.7) },
+  { id: 'fabric-boucle-oat', name: 'Oat bouclé', category: 'fabric', color: '#d9cfbf', roughness: 1, texture: tex('boucle', 0.2, 0.9) },
+  { id: 'fabric-velvet-mustard', name: 'Mustard velvet', category: 'fabric', color: '#c6942f', roughness: 0.78, texture: tex('weave', 0.08, 0.3) },
+  { id: 'fabric-velvet-rust', name: 'Rust velvet', category: 'fabric', color: '#9c4a32', roughness: 0.78, texture: tex('weave', 0.08, 0.3) },
+  { id: 'fabric-corduroy-olive', name: 'Olive corduroy', category: 'fabric', color: '#6b6f3e', roughness: 0.9, texture: tex('fluted', 0.03, 0.8) },
+  { id: 'fabric-corduroy-camel', name: 'Camel corduroy', category: 'fabric', color: '#b78b5c', roughness: 0.9, texture: tex('fluted', 0.03, 0.8) },
+  { id: 'fabric-damask-cream', name: 'Cream damask', category: 'fabric', color: '#e9dfc8', roughness: 0.7, texture: tex('wallpaper-damask', 0.3, 0.8) },
+  { id: 'fabric-floral-print', name: 'Floral print cotton', category: 'fabric', color: '#ffffff', roughness: 0.9, texture: tex('wallpaper-floral', 0.35, 1) },
+
+  // Leather
+  { id: 'leather-smooth-black', name: 'Smooth black leather', category: 'leather', color: '#262423', roughness: 0.4, texture: tex('leather', 0.25, 0.5) },
+  { id: 'leather-white', name: 'White leather', category: 'leather', color: '#e9e4dc', roughness: 0.45, texture: tex('leather', 0.25, 0.6) },
+  { id: 'leather-burgundy', name: 'Burgundy leather', category: 'leather', color: '#5e2328', roughness: 0.45, texture: tex('leather', 0.25, 0.8) },
+  { id: 'leather-olive', name: 'Olive leather', category: 'leather', color: '#5e5f3a', roughness: 0.5, texture: tex('leather', 0.25, 0.8) },
+  { id: 'suede-sand', name: 'Sand suede', category: 'leather', color: '#c9ad86', roughness: 0.95, texture: tex('boucle', 0.12, 0.25) },
+
+  // Rugs and carpet
+  { id: 'carpet-grey', name: 'Grey carpet', category: 'rug', color: '#8e8f91', roughness: 1, texture: tex('boucle', 0.3, 0.5) },
+  { id: 'carpet-navy', name: 'Navy carpet', category: 'rug', color: '#33405a', roughness: 1, texture: tex('boucle', 0.3, 0.5) },
+  { id: 'carpet-beige', name: 'Beige carpet', category: 'rug', color: '#cfc2ac', roughness: 1, texture: tex('boucle', 0.3, 0.5) },
+  { id: 'rug-sisal', name: 'Sisal', category: 'rug', color: '#bfa77d', roughness: 1, texture: tex('jute', 0.18, 1) },
+  { id: 'rug-cement-tile', name: 'Tile-print rug', category: 'rug', color: '#ffffff', roughness: 1, texture: tex('cement-tile', 0.5, 0.8) },
+
+  // Laminate and composites
+  { id: 'laminate-walnut', name: 'Walnut-effect laminate', category: 'laminate', color: '#6e4c34', roughness: 0.45, texture: tex('wood-grain', 1, 0.7) },
+  { id: 'laminate-fluted-white', name: 'Fluted white MDF', category: 'laminate', color: '#f0efeb', roughness: 0.55, texture: tex('fluted', 0.3, 0.7) },
+  { id: 'laminate-greige', name: 'Greige matte laminate', category: 'laminate', color: '#c9c2b6', roughness: 0.6 },
+  { id: 'laminate-pink', name: 'Dusty pink laminate', category: 'laminate', color: '#e2c1bc', roughness: 0.55 },
+  { id: 'laminate-olive', name: 'Olive laminate', category: 'laminate', color: '#7c7f5a', roughness: 0.55 },
+  { id: 'laminate-gloss-grey', name: 'Grey gloss laminate', category: 'laminate', color: '#8d8f93', roughness: 0.15 },
+  { id: 'laminate-terrazzo', name: 'Terrazzo-effect laminate', category: 'laminate', color: '#ece8e2', roughness: 0.4, texture: tex('terrazzo', 0.8, 0.8) },
 ];
 
 /**
@@ -267,6 +392,27 @@ const PHOTOS: Record<string, { set: string; scale?: number; contrast?: number; r
   'rug-wool-cream': { set: 'wool-carpet' },
   // Other
   cork: { set: 'cork' },
+  // Expanded library (2026-10)
+  'wallpaper-woodchip': { set: 'woodchip-wallpaper' },
+  'plaster-rough-white': { set: 'painted-plaster' },
+  'wood-versailles': { set: 'versailles-parquet' },
+  'wood-basketweave': { set: 'basketweave-parquet' },
+  'wood-diagonal-parquet': { set: 'diagonal-parquet' },
+  'wood-herringbone-dark': { set: 'herringbone-dark' },
+  'wood-dark-oak-planks': { set: 'dark-oak-planks' },
+  'wood-grey-oak': { set: 'dark-oak-planks', contrast: 0.7 },
+  'wood-bamboo': { set: 'bamboo-panel' },
+  'wicker-fine': { set: 'wicker-fine' },
+  'tile-azulejo-border': { set: 'azulejo-border' },
+  'tile-azulejo-floral': { set: 'azulejo-floral' },
+  'tile-terrazzo-colour': { set: 'terrazzo-colour' },
+  'stone-onyx-white': { set: 'onyx-white' },
+  'stone-marble-beige': { set: 'marble-beige' },
+  'leather-smooth-black': { set: 'leather-smooth' },
+  'leather-white': { set: 'leather-smooth', contrast: 0.7 },
+  'carpet-grey': { set: 'carpet-plain' },
+  'carpet-navy': { set: 'carpet-plain' },
+  'carpet-beige': { set: 'carpet-plain' },
 };
 
 function photoFor(id: string): PhotoTextureRef | null {
@@ -311,7 +457,7 @@ export const MATERIAL_CATALOG_BY_ID: Record<string, MaterialDefinition> = Object
 );
 
 export const MATERIAL_CATEGORY_LABELS: Record<MaterialCategory, string> = {
-  paint: 'Paint & wall finishes',
+  paint: 'Paint & wallpaper',
   plaster: 'Plaster, concrete & masonry',
   wood: 'Wood & veneer',
   tile: 'Tile & mosaic',

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { assetModelSlots } from './assetModels';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { PlacedObject, Project, Room, Vec2 } from '@/domain/model/schema';
 import type { RoomFace } from '@/domain/geometry/rooms';
@@ -450,9 +451,28 @@ function bakedPart(part: Part): THREE.BufferGeometry {
  * objects with the same asset and size (flagged `userData.cached`: never dispose them).
  */
 export function assetSlotGeometries(asset: AssetDefinition, size: Size3): { slot: string; geometry: THREE.BufferGeometry }[] {
-  const key = `${asset.id}|${r4(size.w)}|${r4(size.d)}|${r4(size.h)}`;
+  const model = asset.model ? assetModelSlots(asset) : null;
+  const key = `${asset.id}|${r4(size.w)}|${r4(size.d)}|${r4(size.h)}${model ? `|m${asset.model!.hash}` : ''}`;
   const hit = slotGeoCache.get(key);
   if (hit) return hit;
+  if (model) {
+    // A shipped mesh, scaled uniformly to fit the box (it stands on y = 0, centred).
+    const box = new THREE.Box3();
+    for (const { geometry } of model) box.union(geometry.boundingBox!);
+    const dims = box.getSize(new THREE.Vector3());
+    const k = Math.min(size.w / Math.max(dims.x, 1e-4), size.d / Math.max(dims.z, 1e-4), size.h / Math.max(dims.y, 1e-4));
+    const out = model.map(({ slot, geometry }) => {
+      const g = geometry.clone();
+      g.scale(k, k, k);
+      g.computeBoundingBox();
+      g.computeBoundingSphere();
+      g.userData.cached = true;
+      return { slot, geometry: g };
+    });
+    if (slotGeoCache.size > 600) slotGeoCache.clear();
+    slotGeoCache.set(key, out);
+    return out;
+  }
   const bySlot = new Map<string, THREE.BufferGeometry[]>();
   for (const part of asset.build(size)) {
     const list = bySlot.get(part.slot) ?? [];

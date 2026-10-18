@@ -246,6 +246,14 @@ export const PlacedObjectSchema = z.object({
   materials: z.record(z.string(), Id).default({}),
   locked: z.boolean().default(false),
   hidden: z.boolean().default(false),
+  /** Group this item belongs to (`Project.groups`); members are selected and moved together. */
+  groupId: Id.optional(),
+});
+
+/** A named group of placed items (Ctrl+G). Older builds ignore it and keep the items. */
+export const ObjectGroupSchema = z.object({
+  id: Id,
+  name: z.string().min(1).max(80),
 });
 
 export const MaterialCategorySchema = z.enum([
@@ -426,6 +434,7 @@ export const ProjectSchema = z.object({
   openings: z.record(Id, OpeningSchema).default({}),
   rooms: z.record(Id, RoomSchema).default({}),
   objects: z.record(Id, PlacedObjectSchema).default({}),
+  groups: z.record(Id, ObjectGroupSchema).default({}),
   materials: z.record(Id, MaterialSchema).default({}),
   customAssets: z.record(Id, CustomAssetSchema).default({}),
   cameras: z.array(CameraPresetSchema).default([]),
@@ -451,6 +460,7 @@ export type Opening = z.infer<typeof OpeningSchema>;
 export type RoomType = z.infer<typeof RoomTypeSchema>;
 export type Room = z.infer<typeof RoomSchema>;
 export type PlacedObject = z.infer<typeof PlacedObjectSchema>;
+export type ObjectGroup = z.infer<typeof ObjectGroupSchema>;
 export type MaterialCategory = z.infer<typeof MaterialCategorySchema>;
 export type TextureRef = z.infer<typeof TextureRefSchema>;
 export type PhotoTextureRef = z.infer<typeof PhotoTextureRefSchema>;

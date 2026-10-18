@@ -3,6 +3,7 @@ import type { AssetDefinition } from '@/data/assets/types';
 import { dropPackKeys, subscribePacks } from '@/packs/events';
 import { getDb } from '@/storage/indexeddb/db';
 import { thumbFileName, thumbFingerprint } from './thumbFingerprint';
+import { loadAssetModel, preloadAssetModels } from '@/features/scene-3d/assetModels';
 
 /**
  * Library thumbnails, rendered once and reused.
@@ -78,6 +79,7 @@ async function pump() {
       const fp = thumbFingerprint(asset);
       let url: string | null = null;
       try {
+        if (asset.model) await loadAssetModel(asset);
         url = renderAssetThumbnail(asset);
       } catch {
         url = null;
@@ -151,6 +153,7 @@ export function useAssetThumbnail<T extends Element>(asset: AssetDefinition): [R
 export async function renderThumbsForExport(assets: AssetDefinition[]): Promise<{ id: string; file: string; fp: string; dataUrl: string }[]> {
   const { renderAssetThumbnail } = await import('@/features/scene-3d/thumbnailRenderer');
   const out: { id: string; file: string; fp: string; dataUrl: string }[] = [];
+  await preloadAssetModels(assets);
   for (const a of assets) {
     const fp = thumbFingerprint(a);
     const dataUrl = fp ? renderAssetThumbnail(a) : null;

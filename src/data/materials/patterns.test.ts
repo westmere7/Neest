@@ -136,7 +136,7 @@ describe('texture pattern registry', () => {
   it('lists exactly the registered ids', () => {
     expect([...TEXTURE_PATTERN_IDS].sort()).toEqual(Object.keys(TEXTURE_PATTERNS).sort());
     expect(new Set(TEXTURE_PATTERN_IDS).size).toBe(TEXTURE_PATTERN_IDS.length);
-    expect(TEXTURE_PATTERN_IDS).toHaveLength(28);
+    expect(TEXTURE_PATTERN_IDS).toHaveLength(45);
   });
 
   it('has consistent metadata', () => {
@@ -150,7 +150,10 @@ describe('texture pattern registry', () => {
     expect(TEXTURE_PATTERN_IDS.filter((id) => TEXTURE_PATTERNS[id].colored).sort()).toEqual([
       'art',
       'books',
+      'cement-tile',
       'rug-geometric',
+      'wallpaper-botanical',
+      'wallpaper-floral',
     ]);
   });
 });

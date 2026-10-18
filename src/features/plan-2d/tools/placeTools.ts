@@ -1,6 +1,7 @@
 import type { Vec2 } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { addOpening, placeObject } from '@/domain/commands/entities';
+import { chosenOpeningFinish } from '@/features/editor/openingFinishChoice';
 import { openingOffsetRange } from '@/domain/geometry/walls';
 import { pointAt, projectOnPath } from '@/domain/geometry/wallPath';
 import type { DerivedPlan } from '@/domain/geometry/derive';
@@ -11,6 +12,7 @@ import type { AssetDefinition } from '@/data/assets/types';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { usePrefsStore } from '@/state/uiStores';
+import { placementMaterials } from '@/features/library/variantChoice';
 import type { Tool, ToolEnv } from './types';
 
 /**
@@ -99,10 +101,11 @@ export function createOpeningTool(): Tool {
       const ed = env.editor();
       const kind = ed.openingKind;
       const design = kind.startsWith('window') ? ed.windowDesign : ed.doorDesign;
+      const finish = chosenOpeningFinish(kind);
       const id = useProjectStore
         .getState()
         .execute(`Add ${OPENING_PRESETS[kind].label.toLowerCase()}`, (d) =>
-          addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, design }),
+          addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, design, finish: finish ?? undefined }),
         );
       if (id && !e.shift) {
         useEditorStore.getState().setSelection([{ kind: 'opening', id }]);
@@ -198,6 +201,7 @@ export function createPlaceTool(): Tool {
           depth: asset.defaultSize.d,
           height: asset.defaultSize.h,
           elevation: asset.defaultElevation,
+          materials: placementMaterials(d, asset),
         }),
       );
       usePrefsStore.getState().pushRecentAsset(asset.id);

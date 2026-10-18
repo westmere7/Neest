@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { PanelLeftClose, Search, Star, Upload } from 'lucide-react';
+import { openContextMenu } from '@/components/ContextMenu';
+import { SavedGroupsShelf } from './SavedGroups';
+import { Grid2x2, Grid3x3, LayoutGrid, PanelLeftClose, Search, Star, Upload } from 'lucide-react';
 import type { OpeningKind, WallRole } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { formatLength } from '@/domain/model/units';
@@ -12,11 +14,12 @@ import {
   groupRank,
 } from '@/data/assets/catalog';
 import { assetPlan, customAssetDefinition } from '@/data/assets/registry';
+import { plantSearchText } from '@/data/assets/plantInfo';
 import type { AssetCategory, AssetDefinition, AssetType } from '@/data/assets/types';
 import { usePackVersion } from '@/packs/events';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type LibraryTab } from '@/state/editorStore';
-import { useDialogStore, usePrefsStore } from '@/state/uiStores';
+import { LIBRARY_DENSITIES, useDialogStore, usePrefsStore, type LibraryDensity } from '@/state/uiStores';
 import { IconButton, Segmented } from '@/components/ui';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
 import { MaterialLibrary } from '@/features/materials/MaterialUI';
@@ -31,12 +34,32 @@ const BUILD_GROUP_TITLES = {
   windows: 'Windows',
 } as const;
 
+const DENSITY_LABELS: Record<LibraryDensity, string> = { roomy: 'Large', normal: 'Medium', dense: 'Small' };
+const DENSITY_ICONS = { roomy: Grid2x2, normal: LayoutGrid, dense: Grid3x3 } satisfies Record<LibraryDensity, unknown>;
+
+/** Cycles the library's card size: large → medium (default) → small. */
+function DensityButton() {
+  const density = usePrefsStore((s) => s.libraryDensity);
+  const next = LIBRARY_DENSITIES[(LIBRARY_DENSITIES.indexOf(density) + 1) % LIBRARY_DENSITIES.length];
+  const Icon = DENSITY_ICONS[density];
+  return (
+    <IconButton
+      label={`Card size: ${DENSITY_LABELS[density]} (switch to ${DENSITY_LABELS[next].toLowerCase()})`}
+      onClick={() => usePrefsStore.getState().setLibraryDensity(next)}
+      data-testid="library-density"
+    >
+      <Icon size={16} />
+    </IconButton>
+  );
+}
+
 export function LibraryPanel({ isMobile }: { isMobile: boolean }) {
   const tab = useEditorStore((s) => s.libraryTab);
   const buildGroup = useEditorStore((s) => s.buildGroup);
   const width = useEditorStore((s) => s.libraryWidth);
   const set = useEditorStore((s) => s.set);
   const workspace = useEditorStore((s) => s.workspace);
+  const density = usePrefsStore((s) => s.libraryDensity);
   const resizing = useRef<{ x: number; w: number } | null>(null);
   const tabs: { value: LibraryTab; label: string }[] = [
     { value: 'furniture', label: 'Furniture' },
@@ -49,6 +72,7 @@ export function LibraryPanel({ isMobile }: { isMobile: boolean }) {
       style={isMobile ? undefined : { width }}
       aria-label="Library"
       data-testid="library"
+      data-density={density}
     >
       <header className="library-head">
         {current === 'build' ? (
@@ -62,9 +86,12 @@ export function LibraryPanel({ isMobile }: { isMobile: boolean }) {
             options={tabs.map((t) => ({ ...t, testId: `lib-tab-${t.value}` }))}
           />
         )}
-        <IconButton label="Close library" onClick={() => set({ libraryOpen: false })}>
-          <PanelLeftClose size={16} />
-        </IconButton>
+        <div className="library-head-actions">
+          <DensityButton />
+          <IconButton label="Close library" onClick={() => set({ libraryOpen: false })}>
+            <PanelLeftClose size={16} />
+          </IconButton>
+        </div>
       </header>
       <div className="library-body">
         {current === 'build' && <BuildTab />}
@@ -232,7 +259,7 @@ function BuildTab() {
 // ───────────── Furniture tab ─────────────
 
 type Browse = 'room' | 'type';
-type CatFilter = AssetCategory | AssetType | 'all' | 'recent';
+type CatFilter = AssetCategory | AssetType | 'all' | 'recent' | 'groups';
 
 interface Shelf {
   key: string;
@@ -241,6 +268,20 @@ interface Shelf {
 }
 
 /** Splits a listing into titled shelves, Sims buy-mode style. */
+/** Versions of an item (`variantOf`: with or without books, tableware…) follow it on the shelf. */
+function besideBase(items: AssetDefinition[]): AssetDefinition[] {
+  const ids = new Set(items.map((a) => a.id));
+  const versions = new Map<string, AssetDefinition[]>();
+  for (const a of items) if (a.variantOf && ids.has(a.variantOf)) versions.set(a.variantOf, [...(versions.get(a.variantOf) ?? []), a]);
+  if (!versions.size) return items;
+  const out: AssetDefinition[] = [];
+  for (const a of items) {
+    if (a.variantOf && ids.has(a.variantOf)) continue;
+    out.push(a, ...(versions.get(a.id) ?? []));
+  }
+  return out;
+}
+
 function shelves(list: AssetDefinition[], browse: Browse, cat: CatFilter): Shelf[] {
   if (cat === 'recent') return [{ key: cat, title: '', items: list }];
   const byKey = new Map<string, Shelf & { rank: number }>();
@@ -266,13 +307,14 @@ function shelves(list: AssetDefinition[], browse: Browse, cat: CatFilter): Shelf
   }
   return [...byKey.values()]
     .sort((x, y) => x.rank - y.rank || x.title.localeCompare(y.title))
-    .map(({ key, title, items }) => ({ key, title, items }));
+    .map(({ key, title, items }) => ({ key, title, items: besideBase(items) }));
 }
 
 function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const project = useProjectStore((s) => s.project!);
   const favourites = usePrefsStore((s) => s.favouriteAssets);
   const recents = usePrefsStore((s) => s.recentAssets);
+  const savedGroups = usePrefsStore((s) => s.savedGroups);
   const packs = usePackVersion();
   const [query, setQuery] = useState('');
   const [browse, setBrowse] = useState<Browse>('room');
@@ -290,12 +332,13 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const q = query.trim().toLowerCase();
   const list = all.filter((a) => {
     if (q) {
-      const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''}`;
+      const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''} ${a.plant ? plantSearchText(a.plant) : ''}`;
       if (!hay.toLowerCase().includes(q)) return false;
     }
     if (favOnly && !favourites.includes(a.id)) return false;
     if (cat === 'all') return true;
     if (cat === 'recent') return recents.includes(a.id);
+    if (cat === 'groups') return false;
     return browse === 'room' ? a.category === cat : a.type === cat;
   });
   if (cat === 'recent') list.sort((a, b) => recents.indexOf(a.id) - recents.indexOf(b.id));
@@ -303,12 +346,13 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const cats: { value: CatFilter; label: string }[] = [
     { value: 'all', label: 'All' },
     { value: 'recent', label: 'Recent' },
+    { value: 'groups', label: savedGroups.length ? `Saved groups (${savedGroups.length})` : 'Saved groups' },
     ...(browse === 'room'
       ? ASSET_CATEGORY_ORDER.filter((c) => present.has(c)).map((c) => ({ value: c as CatFilter, label: ASSET_CATEGORY_LABELS[c] }))
       : ASSET_TYPE_ORDER.filter((t) => present.has(t)).map((t) => ({ value: t as CatFilter, label: ASSET_TYPE_LABELS[t] }))),
     ...(browse === 'room' && custom.length ? [{ value: 'custom' as CatFilter, label: ASSET_CATEGORY_LABELS.custom }] : []),
   ];
-  const groups = shelves(list, browse, cat);
+  const groups = cat === 'groups' ? [] : shelves(list, browse, cat);
   return (
     <div className="furniture-tab">
       <div className="lib-filters">
@@ -331,7 +375,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
             value={browse}
             onChange={(v) => {
               setBrowse(v);
-              setCat((c) => (c === 'recent' ? c : 'all'));
+              setCat((c) => (c === 'recent' || c === 'groups' ? c : 'all'));
             }}
             options={[
               { value: 'room', label: 'By room', testId: 'browse-room' },
@@ -377,7 +421,8 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
             </div>
           </section>
         ))}
-        {list.length === 0 && (
+        {cat === 'groups' && <SavedGroupsShelf query={query} />}
+        {list.length === 0 && cat !== 'groups' && (
           <p className="field-hint pad">
             {favOnly ? 'Star items to collect them here.' : cat === 'recent' ? 'Items you place appear here.' : 'No items match your search.'}
           </p>
@@ -416,6 +461,18 @@ export function AssetPlanThumb({ asset }: { asset: AssetDefinition }) {
   );
 }
 
+/** Starts the place tool with an asset (as clicking its card does). */
+function startPlacing(assetId: string) {
+  const ed = useEditorStore.getState();
+  ed.set({ tool: 'place', placeAssetId: assetId, placeRotation: 0, workspace: ed.workspace === 'walk' ? '3d' : ed.workspace });
+}
+
+/** Places an asset in the middle of the plan view (as dropping it there would). */
+function placeInView(assetId: string) {
+  const cam = useEditorStore.getState().planCamera;
+  window.dispatchEvent(new CustomEvent('neest:drop-asset', { detail: { assetId, x: cam.cx, y: cam.cy } }));
+}
+
 function AssetCard({ asset, info }: { asset: AssetDefinition; info: InfoCardControl | null }) {
   const fav = usePrefsStore((s) => s.favouriteAssets.includes(asset.id));
   const placing = useEditorStore((s) => s.tool === 'place' && s.placeAssetId === asset.id);
@@ -438,6 +495,17 @@ function AssetCard({ asset, info }: { asset: AssetDefinition; info: InfoCardCont
       onPointerEnter={info ? (e) => e.pointerType !== 'touch' && info.enter(asset, e.currentTarget) : undefined}
       onPointerLeave={info ? () => info.leave() : undefined}
       onPointerDown={info ? () => info.dismiss() : undefined}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        info?.dismiss();
+        const prefs = usePrefsStore.getState();
+        const isFav = prefs.favouriteAssets.includes(asset.id);
+        openContextMenu(e.clientX, e.clientY, [
+          { label: 'Place…', run: () => startPlacing(asset.id) },
+          { label: 'Place in view', run: () => placeInView(asset.id) },
+          { label: isFav ? 'Remove from favourites' : 'Add to favourites', run: () => prefs.toggleFavouriteAsset(asset.id) },
+        ]);
+      }}
     >
       <button
         type="button"
@@ -462,13 +530,7 @@ function AssetCard({ asset, info }: { asset: AssetDefinition; info: InfoCardCont
         onBlur={info ? () => info.leave() : undefined}
         onClick={() => {
           info?.dismiss();
-          const ed = useEditorStore.getState();
-          ed.set({
-            tool: 'place',
-            placeAssetId: asset.id,
-            placeRotation: 0,
-            workspace: ed.workspace === 'walk' ? '3d' : ed.workspace,
-          });
+          startPlacing(asset.id);
         }}
         aria-pressed={placing}
         // Desktop: name, source and the place/drag hint are in the info card instead.

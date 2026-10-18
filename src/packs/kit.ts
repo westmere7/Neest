@@ -11,7 +11,14 @@ import type { MaterialCategory } from '@/domain/model/schema';
 import type { AssetSpec } from '@/data/assets/parts';
 
 export * from '@/data/assets/parts';
-export type { AssetBrand, AssetCategory, AssetType, Part, PlanStroke, Size3, MaterialSlot } from '@/data/assets/types';
+export * from '@/data/assets/plantParts';
+export * from '@/data/assets/humanParts';
+export { PLANT_SPECIES, type PlantSpeciesId } from '@/data/assets/plantSpecies';
+/** A built-in library asset by id (to make a version of it with or without props); undefined if unknown. */
+export { builtInAsset } from '@/data/assets/catalog';
+/** Baked realistic people (npm run people): figure id → GLB file, hash, size [w, d, h] and slots. */
+export { default as PEOPLE_MODELS } from '@/data/assets/peopleModels.json';
+export type { AssetBrand, AssetCategory, AssetModel, AssetPresetVariant, AssetType, Part, PlanStroke, PlantInfo, Size3, MaterialSlot } from '@/data/assets/types';
 
 /** An item (furniture/object) in a pack: the same fields as a built-in asset. */
 export type PackItem = AssetSpec;

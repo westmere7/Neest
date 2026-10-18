@@ -18,6 +18,8 @@ const MIN_PER_CATEGORY: Record<Exclude<AssetCategory, 'custom'>, number> = {
   storage: 3,
   lighting: 5,
   decor: 7,
+  plants: 10,
+  people: 0,
   electronics: 4,
   generic: 2,
 };

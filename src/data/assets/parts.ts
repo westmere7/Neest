@@ -915,6 +915,10 @@ export interface AssetSpec {
   light?: AssetDefinition['light'];
   description?: string;
   brand?: AssetDefinition['brand'];
+  plant?: AssetDefinition['plant'];
+  variants?: AssetDefinition['variants'];
+  model?: AssetDefinition['model'];
+  variantOf?: AssetDefinition['variantOf'];
 }
 
 export function defineAsset(spec: AssetSpec): AssetDefinition {

@@ -49,6 +49,22 @@ export const ASSETS_BY_ID: Record<string, AssetDefinition> = Object.fromEntries(
   ASSET_CATALOG.map((a) => [a.id, a]),
 );
 
+/** A built-in asset by id (packs use it through the kit to build versions of library items). */
+const BUILT_IN_BY_ID = new Map(ASSET_CATALOG.map((a) => [a.id, a]));
+export const builtInAsset = (id: string): AssetDefinition | undefined => BUILT_IN_BY_ID.get(id);
+
+/**
+ * Special entry in `render.hiddenCategories`: hides every ceiling-mounted item (pendants, fans,
+ * ceiling lights…) whatever its room, while their light keeps shining.
+ */
+export const CEILING_CATEGORY = 'ceiling';
+
+/** Whether an asset is hidden by the render settings' category filter. */
+export function isAssetHidden(asset: Pick<AssetDefinition, 'category' | 'mount'> | null | undefined, hidden: readonly string[]): boolean {
+  if (!asset || !hidden.length) return false;
+  return hidden.includes(asset.category) || (asset.mount === 'ceiling' && hidden.includes(CEILING_CATEGORY));
+}
+
 export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   living: 'Living room',
   bedroom: 'Bedroom',
@@ -63,7 +79,9 @@ export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   storage: 'Storage',
   lighting: 'Lighting',
   decor: 'Decor',
+  plants: 'Plants & flowers',
   electronics: 'Electronics',
+  people: 'People',
   construction: 'Structure',
   generic: 'Basic shapes',
   custom: 'Imported models',
@@ -84,7 +102,9 @@ export const ASSET_CATEGORY_ORDER: AssetCategory[] = [
   'storage',
   'lighting',
   'decor',
+  'plants',
   'electronics',
+  'people',
   'construction',
   'generic',
 ];
@@ -102,6 +122,7 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   electronics: 'Electronics',
   activities: 'Hobbies & skills',
   kids: 'Kids',
+  people: 'People',
   structure: 'Structure',
   misc: 'Basic shapes',
 };
@@ -119,6 +140,7 @@ export const ASSET_TYPE_ORDER: AssetType[] = [
   'electronics',
   'activities',
   'kids',
+  'people',
   'structure',
   'misc',
 ];
@@ -175,7 +197,8 @@ export const ASSET_GROUPS: Record<AssetType, string[]> = {
     'Screens & dividers',
     'Fireplaces',
   ],
-  plants: ['Indoor plants', 'Succulents & cacti', 'Hanging plants', 'Trees', 'Outdoor plants'],
+  people: ['Standing', 'Sitting', 'Lying down', 'Kitchen & chores', 'Grooming', 'Exercise & leisure', 'Children'],
+  plants: ['Indoor plants', 'Trees', 'Succulents & cacti', 'Hanging plants', 'Wall & vertical gardens', 'Terrariums & moss', 'Herbs & edibles', 'Cut & dried flowers', 'Outdoor plants'],
   electronics: ['TV & audio', 'Computers', 'Gaming', 'Climate', 'Smart home'],
   activities: ['Music', 'Fitness', 'Games', 'Creative', 'Knowledge'],
   kids: ['Toys', 'Kids furniture', 'Nursery'],

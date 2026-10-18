@@ -1,0 +1,712 @@
+{
+ "boy-at-desk": {
+  "file": "models/people/boy-at-desk.glb",
+  "hash": "f51e5edb80b6",
+  "size": [
+   0.428,
+   0.615,
+   1.082
+  ],
+  "seat": 0.336,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "boy-standing": {
+  "file": "models/people/boy-standing.glb",
+  "hash": "fde742928954",
+  "size": [
+   0.428,
+   0.23,
+   1.081
+  ],
+  "seat": 0.485,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Beach"
+ },
+ "girl-standing": {
+  "file": "models/people/girl-standing.glb",
+  "hash": "5a09309dc14d",
+  "size": [
+   0.313,
+   0.229,
+   1.2
+  ],
+  "seat": 0.595,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "grandfather-standing": {
+  "file": "models/people/grandfather-standing.glb",
+  "hash": "bb9a144187f0",
+  "size": [
+   0.517,
+   0.364,
+   1.617
+  ],
+  "seat": 0.753,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_Hoodie"
+ },
+ "grandmother-standing": {
+  "file": "models/people/grandmother-standing.glb",
+  "hash": "e595e9f9458d",
+  "size": [
+   0.42,
+   0.339,
+   1.494
+  ],
+  "seat": 0.777,
+  "slots": [
+   "skin",
+   "top",
+   "accent",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Suit"
+ },
+ "man-arms-crossed": {
+  "file": "models/people/man-arms-crossed.glb",
+  "hash": "4eee32ff8527",
+  "size": [
+   0.579,
+   0.395,
+   1.719
+  ],
+  "seat": 0.799,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_Hoodie"
+ },
+ "man-brushing-teeth": {
+  "file": "models/people/man-brushing-teeth.glb",
+  "hash": "ba99fe42e6f5",
+  "size": [
+   0.547,
+   0.456,
+   1.665
+  ],
+  "seat": 0.79,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Beach"
+ },
+ "man-cooking": {
+  "file": "models/people/man-cooking.glb",
+  "hash": "feee30fdf84b",
+  "size": [
+   0.549,
+   0.71,
+   1.669
+  ],
+  "seat": 0.794,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "man-lying-side": {
+  "file": "models/people/man-lying-side.glb",
+  "hash": "dab617886c22",
+  "size": [
+   0.72,
+   1.796,
+   0.413
+  ],
+  "seat": 0.167,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "man-meditating": {
+  "file": "models/people/man-meditating.glb",
+  "hash": "b18fde1dc6a3",
+  "size": [
+   0.84,
+   0.778,
+   0.982
+  ],
+  "seat": 0.09,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "man-phone-scroll": {
+  "file": "models/people/man-phone-scroll.glb",
+  "hash": "247284aa128d",
+  "size": [
+   0.545,
+   0.633,
+   1.673
+  ],
+  "seat": 0.79,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_Hoodie"
+ },
+ "man-reaching-shelf": {
+  "file": "models/people/man-reaching-shelf.glb",
+  "hash": "21760b05bd89",
+  "size": [
+   0.54,
+   0.418,
+   2.066
+  ],
+  "seat": 0.901,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "man-sitting-chair": {
+  "file": "models/people/man-sitting-chair.glb",
+  "hash": "6c8c71487ec1",
+  "size": [
+   0.54,
+   0.777,
+   1.304
+  ],
+  "seat": 0.395,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_Hoodie"
+ },
+ "man-sofa": {
+  "file": "models/people/man-sofa.glb",
+  "hash": "21f91225aacd",
+  "size": [
+   0.589,
+   1.167,
+   1.278
+  ],
+  "seat": 0.361,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "man-squatting": {
+  "file": "models/people/man-squatting.glb",
+  "hash": "ed4b924aada7",
+  "size": [
+   0.778,
+   0.831,
+   0.869
+  ],
+  "seat": 0.081,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Beach"
+ },
+ "man-standing": {
+  "file": "models/people/man-standing.glb",
+  "hash": "afb13869fd28",
+  "size": [
+   0.531,
+   0.388,
+   1.68
+  ],
+  "seat": 0.785,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "man-tall-hands-on-hips": {
+  "file": "models/people/man-tall-hands-on-hips.glb",
+  "hash": "b38642942066",
+  "size": [
+   0.67,
+   0.488,
+   1.879
+  ],
+  "seat": 0.877,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "man-typing": {
+  "file": "models/people/man-typing.glb",
+  "hash": "54e9432dde76",
+  "size": [
+   0.545,
+   0.806,
+   1.306
+  ],
+  "seat": 0.403,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "man-walking": {
+  "file": "models/people/man-walking.glb",
+  "hash": "11eec59daa0f",
+  "size": [
+   0.552,
+   0.829,
+   1.821
+  ],
+  "seat": 0.875,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_2"
+ },
+ "teen-girl-waving": {
+  "file": "models/people/teen-girl-waving.glb",
+  "hash": "8e5bb20a9e66",
+  "size": [
+   0.589,
+   0.308,
+   1.567
+  ],
+  "seat": 0.789,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "teen-hugging-knees": {
+  "file": "models/people/teen-hugging-knees.glb",
+  "hash": "c8733eb227aa",
+  "size": [
+   0.501,
+   0.529,
+   1.003
+  ],
+  "seat": 0.156,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "men/Casual_Hoodie"
+ },
+ "teen-lying-reading": {
+  "file": "models/people/teen-lying-reading.glb",
+  "hash": "11a8a6dfad9c",
+  "size": [
+   0.308,
+   1.775,
+   0.626
+  ],
+  "seat": 0.003,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "toddler-sitting": {
+  "file": "models/people/toddler-sitting.glb",
+  "hash": "af83714302b1",
+  "size": [
+   0.206,
+   0.544,
+   0.461
+  ],
+  "seat": 0.015,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-chopping": {
+  "file": "models/people/woman-chopping.glb",
+  "hash": "d8b88608618c",
+  "size": [
+   0.441,
+   0.672,
+   1.564
+  ],
+  "seat": 0.816,
+  "slots": [
+   "skin",
+   "top",
+   "accent",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Suit"
+ },
+ "woman-cooking": {
+  "file": "models/people/woman-cooking.glb",
+  "hash": "a718387f652b",
+  "size": [
+   0.422,
+   0.663,
+   1.549
+  ],
+  "seat": 0.804,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-cross-legged": {
+  "file": "models/people/woman-cross-legged.glb",
+  "hash": "4bd685cd31ac",
+  "size": [
+   0.823,
+   0.693,
+   0.855
+  ],
+  "seat": 0.095,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-eating-rice": {
+  "file": "models/people/woman-eating-rice.glb",
+  "hash": "6fdb44fe1d7f",
+  "size": [
+   0.418,
+   0.746,
+   1.146
+  ],
+  "seat": 0.391,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-kneeling": {
+  "file": "models/people/woman-kneeling.glb",
+  "hash": "46f84e5c6f8e",
+  "size": [
+   0.397,
+   0.677,
+   0.802
+  ],
+  "seat": 0.027,
+  "slots": [
+   "skin",
+   "top",
+   "accent",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Suit"
+ },
+ "woman-lying-back": {
+  "file": "models/people/woman-lying-back.glb",
+  "hash": "5e4fd3fb85a7",
+  "size": [
+   0.445,
+   1.722,
+   0.495
+  ],
+  "seat": 0.034,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-mirror-hair": {
+  "file": "models/people/woman-mirror-hair.glb",
+  "hash": "13c4e937d798",
+  "size": [
+   0.435,
+   0.575,
+   1.602
+  ],
+  "seat": 0.819,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-phone-call": {
+  "file": "models/people/woman-phone-call.glb",
+  "hash": "656034c31184",
+  "size": [
+   0.481,
+   0.346,
+   1.619
+  ],
+  "seat": 0.827,
+  "slots": [
+   "skin",
+   "top",
+   "accent",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Suit"
+ },
+ "woman-sitting-chair": {
+  "file": "models/people/woman-sitting-chair.glb",
+  "hash": "e8f5e80821d3",
+  "size": [
+   0.428,
+   0.699,
+   1.15
+  ],
+  "seat": 0.387,
+  "slots": [
+   "skin",
+   "hair",
+   "top",
+   "accent",
+   "shoes",
+   "bottoms"
+  ],
+  "source": "women/Formal"
+ },
+ "woman-sofa": {
+  "file": "models/people/woman-sofa.glb",
+  "hash": "91fd81fe0377",
+  "size": [
+   0.494,
+   1.05,
+   1.148
+  ],
+  "seat": 0.361,
+  "slots": [
+   "skin",
+   "top",
+   "accent",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Suit"
+ },
+ "woman-standing": {
+  "file": "models/people/woman-standing.glb",
+  "hash": "ac22371bdbb3",
+  "size": [
+   0.423,
+   0.317,
+   1.58
+  ],
+  "seat": 0.809,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-stretching": {
+  "file": "models/people/woman-stretching.glb",
+  "hash": "8207fe0ed30e",
+  "size": [
+   0.448,
+   0.325,
+   1.873
+  ],
+  "seat": 0.829,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-summer-dress": {
+  "file": "models/people/woman-summer-dress.glb",
+  "hash": "1921251c323b",
+  "size": [
+   0.45,
+   0.434,
+   1.6
+  ],
+  "seat": 0.816,
+  "slots": [
+   "skin",
+   "hair",
+   "top",
+   "accent",
+   "shoes",
+   "bottoms"
+  ],
+  "source": "women/Formal"
+ },
+ "woman-typing": {
+  "file": "models/people/woman-typing.glb",
+  "hash": "fd13cb0ee652",
+  "size": [
+   0.434,
+   0.766,
+   1.177
+  ],
+  "seat": 0.4,
+  "slots": [
+   "skin",
+   "top",
+   "accent",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Suit"
+ },
+ "woman-walking": {
+  "file": "models/people/woman-walking.glb",
+  "hash": "edaab6f98d54",
+  "size": [
+   0.42,
+   0.801,
+   1.657
+  ],
+  "seat": 0.854,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ },
+ "woman-washing-dishes": {
+  "file": "models/people/woman-washing-dishes.glb",
+  "hash": "0dd2b94568d5",
+  "size": [
+   0.422,
+   0.611,
+   1.541
+  ],
+  "seat": 0.809,
+  "slots": [
+   "skin",
+   "top",
+   "shoes",
+   "hair",
+   "bottoms"
+  ],
+  "source": "women/Casual"
+ }
+}

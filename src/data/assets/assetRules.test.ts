@@ -1,0 +1,98 @@
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it } from 'vitest';
+import '@/packs/loader';
+import { ASSET_CATALOG, ASSET_GROUPS } from './catalog';
+import { MATERIAL_CATALOG } from '@/data/materials/catalog';
+import LEGACY_NO_DESCRIPTION from './legacyNoDescription.json';
+
+/**
+ * House rules for library content (built-in and /packs), so items added later by people or agents
+ * keep the same structure. KNOWLEDGEBASE.md §12 "Asset rules" and packs/README.md explain each one;
+ * describeAssetChecks (catalog.test.ts, packs.test.ts) covers geometry, slots and lights.
+ */
+const items = ASSET_CATALOG.filter((a) => a.category !== 'custom');
+const packFile = (id: string) => (id.includes(':') ? id.split(':')[0] : null);
+const root = path.resolve(__dirname, '../../..');
+const readJson = (p: string) => (existsSync(p) ? (JSON.parse(readFileSync(p, 'utf8')) as Record<string, unknown>) : null);
+
+describe('asset rules', () => {
+  it('ids are lowercase kebab-case and names are unique within a room', () => {
+    const seen = new Map<string, string>();
+    for (const a of items) {
+      const local = a.id.split(':').pop()!;
+      expect(local, a.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      const key = `${a.category}|${a.name.toLowerCase()}`;
+      expect(seen.get(key), `${a.id} has the same name as ${seen.get(key)} in ${a.category}`).toBeUndefined();
+      seen.set(key, a.id);
+    }
+  });
+
+  it('every item has at least three search tags and new items have a description', () => {
+    // Items from before this rule are listed in legacyNoDescription.json. The list may only shrink:
+    // when you give one of them a description, remove its id from the file.
+    const legacy = new Set<string>(LEGACY_NO_DESCRIPTION);
+    for (const a of items) {
+      const described = (a.description?.trim().length ?? 0) >= 20;
+      if (legacy.has(a.id)) expect(described, `${a.id} now has a description: remove it from legacyNoDescription.json`).toBe(false);
+      else expect(described, `${a.id} needs a one- or two-sentence description (20+ characters)`).toBe(true);
+      expect(new Set(a.tags.map((t) => t.toLowerCase())).size, `${a.id} needs 3+ distinct tags`).toBeGreaterThanOrEqual(3);
+    }
+    const ids = new Set(items.map((a) => a.id));
+    expect(LEGACY_NO_DESCRIPTION.filter((id) => !ids.has(id)), 'ids in legacyNoDescription.json that no longer exist').toEqual([]);
+  });
+
+  it('plants, flowers and other vegetation always have a description', () => {
+    for (const a of items.filter((x) => x.category === 'plants')) expect(a.description?.trim().length ?? 0, a.id).toBeGreaterThanOrEqual(20);
+  });
+
+  it('versions of an item (variantOf) point to an existing item on the same shelf', () => {
+    const byId = new Map(items.map((a) => [a.id, a]));
+    for (const a of items.filter((x) => x.variantOf)) {
+      const base = byId.get(a.variantOf!);
+      expect(base, `${a.id}: variantOf ${a.variantOf} does not exist`).toBeDefined();
+      expect(`${base!.category}|${base!.group}`, `${a.id} should sit on the same shelf as ${a.variantOf}`).toBe(`${a.category}|${a.group}`);
+    }
+  });
+
+  it('shelves (groups) belong to the item type', () => {
+    for (const a of items) expect(ASSET_GROUPS[a.type] ?? [], `${a.id}: group '${a.group}' is not in ASSET_GROUPS.${a.type}`).toContain(a.group);
+  });
+
+  it('branded packs only hold real models with brand info', () => {
+    for (const a of items) {
+      const pack = packFile(a.id);
+      if (pack?.startsWith('branded-')) expect(a.brand, `${a.id} is in a branded pack but has no brand { name, model }`).toBeDefined();
+      if (!a.brand) continue;
+      expect(a.brand.name.trim(), a.id).not.toBe('');
+      expect(a.brand.model.trim(), `${a.id} needs the exact model number`).not.toBe('');
+      expect(a.name.toLowerCase(), `${a.id}: the name should start with or include the maker`).toContain(a.brand.name.toLowerCase().split(' ')[0]);
+    }
+  });
+
+  it('items whose name mentions a brand carry brand info', () => {
+    const brandWords = /\b(samsung|lg|sony|panasonic|toshiba|daikin|macbook|imac|ipad|iphone|dell|asus|lenovo|toto|inax|grohe|bosch|xiaomi|electrolux|jbl)\b/i;
+    for (const a of items) if (!a.brand) expect(brandWords.test(a.name), `${a.id} (${a.name}) names a brand: add brand { name, model } or rename it`).toBe(false);
+  });
+
+  it('every item has a shipped thumbnail (npm run thumbs)', () => {
+    const m = readJson(path.join(root, 'public/thumbs/manifest.json')) as { items: Record<string, { file: string }> } | null;
+    expect(m, 'public/thumbs/manifest.json is missing: run npm run thumbs').not.toBeNull();
+    const missing = items.filter((a) => !m!.items[a.id] || !existsSync(path.join(root, 'public/thumbs', m!.items[a.id].file))).map((a) => a.id);
+    expect(missing, 'items without a pre-rendered thumbnail: run npm run thumbs').toEqual([]);
+  });
+
+  it('every textured material has a shipped swatch (npm run thumbs)', () => {
+    const m = readJson(path.join(root, 'public/swatches/manifest.json')) as { ids: Record<string, string>; files: Record<string, { file: string }> } | null;
+    expect(m, 'public/swatches/manifest.json is missing: run npm run thumbs').not.toBeNull();
+    const textured = MATERIAL_CATALOG.filter((x) => x.texture || x.photo?.enabled);
+    const missing = textured.filter((x) => {
+      const fp = m!.ids[x.id];
+      return !fp || !m!.files[fp] || !existsSync(path.join(root, 'public/swatches', m!.files[fp].file));
+    });
+    expect(
+      missing.map((x) => x.id),
+      'materials without a pre-rendered swatch: run npm run thumbs',
+    ).toEqual([]);
+  });
+});

@@ -1703,6 +1703,538 @@ function drawBooks(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
 }
 
 // ---------------------------------------------------------------------------
+// Wallpapers
+// ---------------------------------------------------------------------------
+
+/** Anti-aliased band test: 1 inside [a, b] (tile units), soft over `px`. */
+const band = (t: number, a: number, b: number, px: number): number => clamp01((t - a) / px + 0.5) * clamp01((b - t) / px + 0.5);
+
+/** Paper ground: fine fibres and faint mottling around `base`. */
+function paperGround(N: number, rng: Rng, base: number): Field {
+  const L = field(N, base);
+  addFbm(L, N, 4, 4, 3, 0.025, nextSeed(rng));
+  addNoise(L, N, 160, 160, 0.012, nextSeed(rng));
+  return L;
+}
+
+/** Regency stripes: a wide satin band, a pair of pinstripes and paper grain, four repeats per tile. */
+function drawWallpaperStripes(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = paperGround(N, rng, 0.92);
+  addNoise(L, N, 6, 120, 0.015, nextSeed(rng)); // vertical print streaks
+  const px = 4 / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const t = fract(((x + 0.5) / N) * 4);
+      L[i] -= 0.11 * band(t, 0.04, 0.42, px) + 0.16 * band(t, 0.5, 0.515, px) + 0.16 * band(t, 0.545, 0.56, px);
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Damask: large mirrored medallions inside an ogee frame, with scrolls and leaves, in a half-drop repeat. */
+function drawWallpaperDamask(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = paperGround(N, rng, 0.83);
+  const centres: [number, number][] = [
+    [0.25, 0.25],
+    [0.75, 0.75],
+  ];
+  const pw = 1 / N;
+  const fill = (d: number) => clamp01(d / pw + 0.5);
+  const stroke = (d: number, w: number) => clamp01((w - Math.abs(d)) / pw + 0.5);
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const u = (x + 0.5) / N;
+      const v = (y + 0.5) / N;
+      let motif = 0;
+      let line = 0;
+      for (const [cx, cy] of centres) {
+        let dx = u - cx;
+        let dy = v - cy;
+        dx -= Math.round(dx);
+        dy -= Math.round(dy);
+        const ax = Math.abs(dx);
+        // Ogee frame: a pointed oval ring round each medallion.
+        const ox = ax + 0.06 * Math.abs(dy);
+        const og = Math.hypot(ox / 0.25, dy / 0.36) - 1;
+        motif = Math.max(motif, stroke(og * 0.22, 0.007));
+        // Central rosette with petals and a tall finial and stem.
+        const r = Math.hypot(ax * 1.25, dy);
+        const th = Math.atan2(ax * 1.25, dy);
+        const rose = 0.12 + 0.035 * Math.cos(6 * th) + 0.02 * Math.cos(12 * th) - r;
+        motif = Math.max(motif, fill(rose));
+        line = Math.max(line, stroke(rose, pw * 1.1));
+        const finial = 0.03 * Math.exp(-Math.pow((dy + 0.2) / 0.06, 2)) + 0.012 - ax;
+        if (dy < -0.08 && dy > -0.3) motif = Math.max(motif, fill(finial));
+        if (dy > 0.08 && dy < 0.28) motif = Math.max(motif, fill(0.01 - ax));
+        // Curling scrolls either side, top and bottom.
+        for (const sy of [-0.15, 0.15]) {
+          const rd = Math.hypot(ax - 0.15, dy - sy) - 0.06;
+          const open = Math.atan2(dy - sy, ax - 0.15) * Math.sign(sy);
+          if (open > -2.4) motif = Math.max(motif, stroke(rd, 0.012));
+          motif = Math.max(motif, fill(0.022 - Math.hypot(ax - 0.12, dy - sy * 0.7)));
+        }
+        // Leaves between the frames.
+        const lx = ax - 0.36;
+        const leaf = Math.hypot(lx * 1.6, dy) - 0.06 * (0.6 + 0.4 * Math.cos(2 * Math.atan2(dy, lx)));
+        motif = Math.max(motif, fill(-leaf));
+      }
+      L[i] += 0.1 * motif - 0.07 * line;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Fish-scale lookup: the scale on top at (u, v) in tile units with `cols` scales per row. */
+function scaleAt(u: number, v: number, cols: number): { i: number; j: number; r: number; a: number } {
+  const s = 1 / cols;
+  const rows = cols * 2;
+  const row = Math.floor(v * rows);
+  let best = { i: 0, j: 0, r: 2, a: 0 };
+  let bestY = -Infinity;
+  for (let dr = 0; dr <= 2; dr++) {
+    const j = row + dr;
+    const cy = j / rows;
+    const off = mod(j, 2) ? s / 2 : 0;
+    const ic = Math.round((u - off) / s);
+    for (const di of [-1, 0, 1]) {
+      const cx = (ic + di) * s + off;
+      const dx = u - cx;
+      const dy = v - cy;
+      const r = Math.hypot(dx, dy) / (s * 0.5);
+      // Each scale shows its upper half; lower rows are laid over the rows above.
+      if (r < 1 && dy <= 0 && cy > bestY) {
+        bestY = cy;
+        best = { i: mod(ic + di, cols), j: mod(j, rows), r, a: Math.atan2(dx, -dy) };
+      }
+    }
+  }
+  return best;
+}
+
+/** Art-deco fans: overlapping scallops with concentric arcs and radiating ribs. */
+function drawWallpaperDeco(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = paperGround(N, rng, 0.9);
+  const cols = 4;
+  const pw = (2 * cols) / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const sc = scaleAt((x + 0.5) / N, (y + 0.5) / N, cols);
+      if (sc.r > 1) continue;
+      const arcs = Math.abs(fract(sc.r * 4) - 0.5);
+      const ribs = Math.abs(fract((sc.a / Math.PI) * 6 + 0.5) - 0.5) * sc.r;
+      const rim = 1 - smoothstep(0, pw * 1.5, 1 - sc.r);
+      const arcLine = (1 - smoothstep(0, pw * 1.3, 0.5 - arcs)) * smoothstep(0.25, 0.3, sc.r);
+      const ribLine = (1 - smoothstep(0, pw, ribs)) * smoothstep(0.2, 0.35, sc.r) * (sc.r < 0.75 ? 1 : 0);
+      L[i] -= 0.17 * arcLine + 0.12 * ribLine + 0.2 * rim;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Grasscloth: horizontal plant fibres with slubs over fine vertical weft threads. */
+function drawWallpaperGrasscloth(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N, 0.86);
+  addNoise(L, N, 3, 90, 0.07, nextSeed(rng));
+  addNoise(L, N, 8, 180, 0.04, nextSeed(rng));
+  addFbm(L, N, 2, 6, 2, 0.04, nextSeed(rng));
+  const slub = noiseField(N, 6, 48, nextSeed(rng));
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const weft = Math.abs(fract(((x + 0.5) / N) * 64) - 0.5) < 0.08 ? 0.035 : 0;
+      L[i] += (slub[i] > 0.55 ? (slub[i] - 0.55) * 0.25 : 0) - weft;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+type Rgb3 = [number, number, number];
+const mixRgb = (a: Rgb, b: Rgb, t: number): Rgb3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
+/** Tropical leaves (banana and palm-like) in greens on a warm cream ground. */
+function drawWallpaperBotanical(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const ground: Rgb = [0.94, 0.92, 0.85];
+  const f = rgbField(N, ground);
+  const tex = fbmField(N, 5, 5, 3, nextSeed(rng));
+  for (let i = 0; i < N * N; i++) {
+    const k = 1 + 0.025 * tex[i];
+    f.r[i] *= k;
+    f.g[i] *= k;
+    f.b[i] *= k;
+  }
+  const greens: Rgb[] = [
+    [0.16, 0.36, 0.25],
+    [0.26, 0.48, 0.3],
+    [0.42, 0.6, 0.38],
+    [0.2, 0.42, 0.36],
+  ];
+  for (let k = 0; k < 16; k++) {
+    const cx = rng() * N;
+    const cy = rng() * N;
+    const len = N * range(rng, 0.22, 0.36);
+    const wid = len * range(rng, 0.2, 0.34);
+    const ang = rng() * TAU;
+    const col = greens[Math.floor(rng() * greens.length)];
+    const dark = mixRgb(col, [0.05, 0.15, 0.1], 0.35);
+    const light = mixRgb(col, [0.85, 0.92, 0.7], 0.35);
+    const ca = Math.cos(ang);
+    const sa = Math.sin(ang);
+    const splits = rng() < 0.5;
+    const R = len + 2;
+    forBox(N, cx - R, cy - R, cx + R, cy + R, (i, px, py) => {
+      const dx = px - cx;
+      const dy = py - cy;
+      const lx = dx * ca + dy * sa; // along the leaf, 0 at the stalk
+      const ly = -dx * sa + dy * ca;
+      if (lx < 0 || lx > len) return;
+      const t = lx / len;
+      const hw = wid * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.05)), 0.75);
+      const edge = hw - Math.abs(ly);
+      if (edge < -0.5) return;
+      // Tears from the margin towards the midrib (banana leaves).
+      if (splits && Math.abs(ly) > hw * 0.25 && Math.abs(fract((lx + Math.abs(ly) * 0.7) / (len * 0.12)) - 0.5) < 0.04) return;
+      let c: Rgb3 = [col[0], col[1], col[2]];
+      if (Math.abs(fract((lx + Math.abs(ly) * 0.8) / (len * 0.06)) - 0.5) < 0.08) c = mixRgb(c, dark, 0.35);
+      if (Math.abs(ly) < Math.max(0.8, hw * 0.05)) c = mixRgb(c, light, 0.7);
+      blend(f, i, c, cover(edge));
+    });
+  }
+  putRgb(ctx, N, f);
+}
+
+/** Ditsy floral: small five-petal flowers with leaf pairs scattered on a soft ground. */
+function drawWallpaperFloral(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const ground: Rgb = [0.93, 0.91, 0.86];
+  const f = rgbField(N, ground);
+  const petals: Rgb[] = [
+    [0.86, 0.55, 0.58],
+    [0.96, 0.95, 0.93],
+    [0.78, 0.66, 0.84],
+    [0.95, 0.78, 0.5],
+  ];
+  const leaf: Rgb = [0.45, 0.58, 0.42];
+  const eye: Rgb = [0.93, 0.76, 0.3];
+  for (let k = 0; k < 46; k++) {
+    const cx = rng() * N;
+    const cy = rng() * N;
+    const r = N * range(rng, 0.018, 0.03);
+    const col = petals[Math.floor(rng() * petals.length)];
+    const rot = rng() * TAU;
+    for (const s of [-1, 1]) {
+      const la = rot + s * 1.9;
+      const lx0 = cx + Math.cos(la) * r * 1.4;
+      const ly0 = cy + Math.sin(la) * r * 1.4;
+      forBox(N, lx0 - r, ly0 - r, lx0 + r, ly0 + r, (i, px, py) => {
+        const dx = px - lx0;
+        const dy = py - ly0;
+        const a = dx * Math.cos(la) + dy * Math.sin(la);
+        const b = -dx * Math.sin(la) + dy * Math.cos(la);
+        blend(f, i, leaf, cover(r * 0.9 - Math.hypot(a, b * 2.4)));
+      });
+    }
+    const R = r * 1.2;
+    forBox(N, cx - R, cy - R, cx + R, cy + R, (i, px, py) => {
+      const dx = px - cx;
+      const dy = py - cy;
+      const rr = Math.hypot(dx, dy);
+      const th = Math.atan2(dy, dx) - rot;
+      blend(f, i, col, cover(r * (0.62 + 0.38 * Math.abs(Math.cos((5 * th) / 2))) - rr));
+      blend(f, i, eye, cover(r * 0.22 - rr));
+    });
+  }
+  putRgb(ctx, N, f);
+}
+
+// ---------------------------------------------------------------------------
+// Floors and tiles
+// ---------------------------------------------------------------------------
+
+/** Encaustic cement tiles (gạch bông): an eight-fold star, a ring and corner circles, 2 × 2 tiles. */
+function drawCementTile(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const cream: Rgb = [0.92, 0.89, 0.81];
+  const navy: Rgb = [0.17, 0.26, 0.35];
+  const terra: Rgb = [0.71, 0.38, 0.27];
+  const sage: Rgb = [0.5, 0.6, 0.5];
+  const grout: Rgb = [0.62, 0.6, 0.56];
+  const f = rgbField(N, cream);
+  const mottle = fbmField(N, 6, 6, 4, nextSeed(rng));
+  const pw = 4 / N; // one pixel in tile-local units (2 tiles across, local −1…1)
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const a = fract(((x + 0.5) / N) * 2) * 2 - 1;
+      const b = fract(((y + 0.5) / N) * 2) * 2 - 1;
+      let ax = Math.abs(a);
+      let ay = Math.abs(b);
+      if (ay > ax) [ax, ay] = [ay, ax];
+      const r = Math.hypot(ax, ay);
+      const th = Math.atan2(ay, ax);
+      // Corner quarter circles (whole circles where four tiles meet).
+      const corner = Math.hypot(1 - ax, 1 - ay);
+      blend(f, i, navy, cover((0.42 - corner) / pw));
+      blend(f, i, cream, cover((0.3 - corner) / pw));
+      blend(f, i, terra, cover((0.18 - corner) / pw));
+      // Ring, petals on the diagonals, star in the middle.
+      blend(f, i, navy, cover((0.035 - Math.abs(r - 0.66)) / pw));
+      const pa = ax - 0.47;
+      const pb = ay - 0.47;
+      blend(f, i, sage, cover((0.16 - Math.hypot((pa + pb) * 0.75, (pa - pb) * 1.6)) / pw));
+      blend(f, i, navy, cover((0.3 + 0.12 * Math.cos(8 * th) - r) / pw));
+      blend(f, i, terra, cover((0.12 - r) / pw));
+      // Border line just inside the tile edge, grout, cement mottling.
+      blend(f, i, navy, cover((0.025 - Math.abs(ax - 0.93)) / pw) * (ay < 0.93 ? 1 : 0));
+      blend(f, i, grout, cover((ax - 0.985) / pw));
+      const m = 1 + 0.045 * mottle[i];
+      f.r[i] *= m;
+      f.g[i] *= m;
+      f.b[i] *= m;
+    }
+  }
+  putRgb(ctx, N, f);
+}
+
+/** Simple parallel grain for parquet blocks: streaks across `t` (0–1 across the block). */
+const blockGrain = (t: number, seed: number, along: number): number =>
+  0.04 * Math.sin(TAU * (t * (6 + 4 * hash2(seed, 1, 7)) + 0.6 * Math.sin(TAU * along + seed))) + 0.025 * Math.sin(TAU * t * 23 + seed * 3.1);
+
+/** Chevron parquet: planks cut at 45° meeting on the centre line of each of four columns. */
+function drawChevron(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const seed = nextSeed(rng) % 9973;
+  const fine = fbmField(N, 6, 60, 2, nextSeed(rng));
+  const cols = 4;
+  const rows = 8;
+  const pw = 1 / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    const v = (y + 0.5) / N;
+    for (let x = 0; x < N; x++, i++) {
+      const u = (x + 0.5) / N;
+      const c = Math.floor(u * cols);
+      const lu = u * cols - c; // 0…1 across the column
+      const m = Math.abs(lu - 0.5) / cols; // distance from the column centre, tile units
+      const side = lu < 0.5 ? 0 : 1;
+      const q = (v + m) * rows;
+      const k = Math.floor(q);
+      const across = q - k;
+      const id = (c * 31 + mod(k, rows) * 7 + side * 3 + seed) | 0;
+      let l = 0.83 + (hash2(id, 3, seed) - 0.5) * 0.12 + blockGrain(across, id, m * cols) + 0.02 * fine[i];
+      l *= 0.62 + 0.38 * smoothstep(0, pw * 1.2, Math.min(across, 1 - across) / rows);
+      l *= 0.6 + 0.4 * smoothstep(0, pw * 1.2, m);
+      l *= 0.6 + 0.4 * smoothstep(0, pw * 1.2, Math.min(lu, 1 - lu) / cols);
+      L[i] = l;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Basketweave parquet: squares of three planks alternating direction, 4 × 4 squares per tile. */
+function drawParquetBasket(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const seed = nextSeed(rng) % 9973;
+  const fine = fbmField(N, 30, 30, 2, nextSeed(rng));
+  const S = 4;
+  const pw = 1 / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const a = ((x + 0.5) / N) * S;
+      const b = ((y + 0.5) / N) * S;
+      const ci = Math.floor(a);
+      const cj = Math.floor(b);
+      const fa = a - ci;
+      const fb = b - cj;
+      const vertical = (ci + cj) % 2 === 0;
+      const across = (vertical ? fa : fb) * 3;
+      const along = vertical ? fb : fa;
+      const k = Math.floor(across);
+      const t = across - k;
+      const id = (ci * 13 + cj * 17 + k * 5 + seed) | 0;
+      let l = 0.83 + (hash2(id, 9, seed) - 0.5) * 0.12 + blockGrain(t, id, along) + 0.015 * fine[i];
+      l *= 0.62 + 0.38 * smoothstep(0, pw * 1.2, Math.min(t, 1 - t) / (3 * S));
+      l *= 0.58 + 0.42 * smoothstep(0, pw * 1.2, Math.min(fa, 1 - fa, fb, 1 - fb) / S);
+      L[i] = l;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Rustic square terracotta (Bát Tràng style): fired-clay mottling, darker fired edges, sunken grout. */
+function drawTerracottaTile(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const seed = nextSeed(rng) % 9973;
+  const mottle = fbmField(N, 8, 8, 4, nextSeed(rng));
+  const pits = noiseField(N, 90, 90, nextSeed(rng));
+  const S = 4;
+  const pw = 1 / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const a = ((x + 0.5) / N) * S;
+      const b = ((y + 0.5) / N) * S;
+      const ci = Math.floor(a);
+      const cj = Math.floor(b);
+      const e = Math.min(a - ci, ci + 1 - a, b - cj, cj + 1 - b) / S; // distance to the tile edge
+      const tone = (hash2(mod(ci, S) + seed, mod(cj, S), 11) - 0.5) * 0.14;
+      let l = 0.84 + tone + 0.06 * mottle[i] - 0.06 * (1 - smoothstep(0, 0.02, e)) - (pits[i] > 0.7 ? (pits[i] - 0.7) * 0.4 : 0);
+      if (e < 0.008) l = 0.62 + 0.03 * mottle[i];
+      else l *= 0.75 + 0.25 * smoothstep(0.008, 0.008 + pw * 1.5, e);
+      L[i] = l;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Fish-scale (scallop) glazed tiles with pooled glaze, per-tile shade and grout. */
+function drawFishscale(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const seed = nextSeed(rng) % 9973;
+  const cols = 6;
+  const pw = (2 * cols) / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const sc = scaleAt((x + 0.5) / N, (y + 0.5) / N, cols);
+      if (sc.r > 1) {
+        L[i] = 0.68;
+        continue;
+      }
+      const tone = (hash2(sc.i + seed, sc.j, 5) - 0.5) * 0.12;
+      const pool = 0.06 * (1 - sc.r) - 0.05 * Math.pow(sc.r, 6);
+      const grout = 1 - smoothstep(0, pw * 1.6, 1 - sc.r);
+      L[i] = (0.86 + tone + pool) * (1 - grout) + 0.68 * grout;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Penny-round mosaic: small round tiles in staggered rows, 12 across, with grout. */
+function drawPenny(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const seed = nextSeed(rng) % 9973;
+  const cols = 12;
+  const rows = 14;
+  const rad = 0.46 / cols;
+  const pw = 1 / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    const v = (y + 0.5) / N;
+    for (let x = 0; x < N; x++, i++) {
+      const u = (x + 0.5) / N;
+      const row = Math.floor(v * rows);
+      let best = 1;
+      let bi = 0;
+      let bj = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        const j = row + dr;
+        const off = mod(j, 2) ? 0.5 / cols : 0;
+        const cy = (j + 0.5) / rows;
+        const ci = Math.round((u - off) * cols - 0.5);
+        for (let di = -1; di <= 1; di++) {
+          const cx = (ci + di + 0.5) / cols + off;
+          const d = Math.hypot(wrapDist(u, cx, 1), wrapDist(v, cy, 1)) / rad;
+          if (d < best) {
+            best = d;
+            bi = mod(ci + di, cols);
+            bj = mod(j, rows);
+          }
+        }
+      }
+      const tone = (hash2(bi + seed, bj, 13) - 0.5) * 0.14;
+      const inside = smoothstep(0, (pw * 1.3) / rad, 1 - best);
+      L[i] = 0.66 * (1 - inside) + (0.87 + tone + 0.05 * (1 - best)) * inside;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+// ---------------------------------------------------------------------------
+// Wall and furniture finishes
+// ---------------------------------------------------------------------------
+
+/** Limewash: cloudy, crossing brush strokes with soft chalky variation. */
+function drawLimewash(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N, 0.86);
+  addFbm(L, N, 2, 2, 4, 0.09, nextSeed(rng), 0.55);
+  const h = noiseField(N, 26, 5, nextSeed(rng));
+  const v = noiseField(N, 5, 26, nextSeed(rng));
+  const mask = fbmField(N, 3, 3, 2, nextSeed(rng));
+  addNoise(L, N, 120, 120, 0.01, nextSeed(rng));
+  for (let i = 0; i < N * N; i++) {
+    const t = smoothstep(-0.3, 0.3, mask[i]);
+    L[i] += 0.035 * (h[i] * t + v[i] * (1 - t));
+  }
+  putGray(ctx, N, L);
+}
+
+/** Venetian (polished) plaster: soft cloudy marbling with burnished lighter veils. */
+function drawVenetian(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N, 0.87);
+  const warp = fbmField(N, 3, 3, 4, nextSeed(rng), 0.55);
+  const cloud = fbmField(N, 4, 4, 4, nextSeed(rng));
+  for (let i = 0; i < N * N; i++) {
+    const vein = 1 - smoothstep(0, 0.06, Math.abs(fract(warp[i] * 2.5) - 0.5) - 0.38);
+    L[i] += 0.05 * cloud[i] + 0.04 * vein - 0.02 * warp[i];
+  }
+  putGray(ctx, N, L);
+}
+
+/** Fluted (reeded) panel: twelve vertical rounded flutes with shadowed joints and faint grain. */
+function drawFluted(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const grain = fbmField(N, 48, 4, 2, nextSeed(rng));
+  const flutes = 12;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const shade = Math.sin(Math.PI * fract(((x + 0.5) / N) * flutes));
+      L[i] = 0.62 + 0.32 * Math.pow(shade, 0.7) + 0.02 * grain[i];
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Wood slat panel: eight vertical slats with grain over dark felt gaps (acoustic panels, screens). */
+function drawWoodSlats(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const seed = nextSeed(rng) % 9973;
+  const grain = fbmField(N, 60, 3, 3, nextSeed(rng));
+  const slats = 8;
+  const gap = 0.16;
+  const pw = 1 / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const a = ((x + 0.5) / N) * slats;
+      const k = Math.floor(a);
+      const t = a - k;
+      if (t > 1 - gap) {
+        L[i] = 0.3;
+        continue;
+      }
+      const tw = t / (1 - gap);
+      const id = k + seed;
+      let l = 0.86 + (hash2(id, 4, seed) - 0.5) * 0.1 + 0.05 * grain[i] + blockGrain(tw, id, (y + 0.5) / N) * 0.6;
+      l *= 0.8 + 0.2 * smoothstep(0, (pw * slats) / (1 - gap), Math.min(tw, 1 - tw));
+      L[i] = l;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Rattan cane webbing: horizontal, vertical and two diagonal strands round open octagons. */
+function drawCane(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const fibre = noiseField(N, 64, 64, nextSeed(rng));
+  const cells = 8;
+  const strand = (d: number, w: number): number => (d < w ? 0.74 + 0.22 * Math.cos(((Math.PI / 2) * d) / w) : 0);
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const u = fract(((x + 0.5) / N) * cells);
+      const v = fract(((y + 0.5) / N) * cells);
+      const dH = Math.abs(v - Math.round(v));
+      const dV = Math.abs(u - Math.round(u));
+      const dD1 = Math.abs(fract(u + v + 0.5) - 0.5) / Math.SQRT2;
+      const dD2 = Math.abs(fract(u - v + 0.5) - 0.5) / Math.SQRT2;
+      const s = Math.max(strand(dH, 0.17), strand(dV, 0.17), strand(dD1, 0.1) * 0.98, strand(dD2, 0.1) * 0.96);
+      L[i] = s > 0 ? s + 0.03 * fibre[i] : 0.4;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -1735,6 +2267,26 @@ const PATTERN_LIST: TexturePattern[] = [
   { id: 'rug-geometric', name: 'Geometric rug', normalStrength: 0.35, colored: true, draw: drawRugGeometric },
   { id: 'art', name: 'Abstract art print', normalStrength: 0.05, colored: true, draw: drawArt },
   { id: 'books', name: 'Book spines', normalStrength: 0.4, colored: true, draw: drawBooks },
+  // Wallpapers
+  { id: 'wallpaper-stripes', name: 'Regency stripe wallpaper', normalStrength: 0.15, draw: drawWallpaperStripes },
+  { id: 'wallpaper-damask', name: 'Damask wallpaper', normalStrength: 0.2, draw: drawWallpaperDamask },
+  { id: 'wallpaper-deco', name: 'Art deco fan wallpaper', normalStrength: 0.2, draw: drawWallpaperDeco },
+  { id: 'wallpaper-grasscloth', name: 'Grasscloth', normalStrength: 0.6, draw: drawWallpaperGrasscloth },
+  { id: 'wallpaper-botanical', name: 'Tropical leaf wallpaper', normalStrength: 0.1, colored: true, draw: drawWallpaperBotanical },
+  { id: 'wallpaper-floral', name: 'Ditsy floral wallpaper', normalStrength: 0.1, colored: true, draw: drawWallpaperFloral },
+  // Floors and tiles
+  { id: 'cement-tile', name: 'Encaustic cement tile (gạch bông)', normalStrength: 0.35, colored: true, draw: drawCementTile },
+  { id: 'chevron', name: 'Chevron parquet', normalStrength: 0.5, draw: drawChevron },
+  { id: 'parquet-basket', name: 'Basketweave parquet', normalStrength: 0.5, draw: drawParquetBasket },
+  { id: 'terracotta-tile', name: 'Rustic terracotta tile', normalStrength: 0.8, draw: drawTerracottaTile },
+  { id: 'fishscale', name: 'Fish-scale tile', normalStrength: 0.8, draw: drawFishscale },
+  { id: 'penny', name: 'Penny-round mosaic', normalStrength: 0.85, draw: drawPenny },
+  // Wall and furniture finishes
+  { id: 'limewash', name: 'Limewash', normalStrength: 0.3, draw: drawLimewash },
+  { id: 'venetian', name: 'Venetian plaster', normalStrength: 0.15, draw: drawVenetian },
+  { id: 'fluted', name: 'Fluted panel', normalStrength: 1, draw: drawFluted },
+  { id: 'wood-slats', name: 'Wood slat panel', normalStrength: 0.9, draw: drawWoodSlats },
+  { id: 'cane', name: 'Rattan cane webbing', normalStrength: 1, draw: drawCane },
 ];
 
 export const TEXTURE_PATTERNS: Record<string, TexturePattern> = Object.fromEntries(

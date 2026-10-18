@@ -6,6 +6,7 @@
  * beside it on a cream saucer.
  */
 import {
+  PLANT_SPECIES,
   circle,
   clamp,
   cushion,
@@ -390,10 +391,12 @@ const MONSTERA_LEAVES: LeafSpec[] = [
 const monstera = defineItem({
   id: 'cafe-monstera',
   name: 'Monstera in terracotta pot',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
+  plant: PLANT_SPECIES['monstera-deliciosa'],
   tags: ['monstera', 'swiss cheese plant', 'split leaf', 'terracotta', 'saucer', 'houseplant', 'café', 'cây trầu bà', 'vietnamese'],
+  description: 'A Swiss cheese plant with split leaves, in a weathered terracotta pot on a cream stoneware saucer.',
   defaultSize: { w: 0.95, d: 0.85, h: 1.15 },
   minSize: { w: 0.5, d: 0.45, h: 0.7 },
   maxSize: { w: 1.3, d: 1.2, h: 1.9 },

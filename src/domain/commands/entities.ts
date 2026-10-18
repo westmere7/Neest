@@ -38,6 +38,8 @@ export interface AddOpeningArgs {
   hinge?: 'start' | 'end';
   /** Design to apply (ignored when it does not fit the kind); absent = the kind's default look. */
   design?: OpeningDesign | null;
+  /** Finish set to apply after the design (see `applyOpeningFinish`). */
+  finish?: { materials: OpeningFinishMaterials; defs?: Record<string, MaterialDefinition> };
 }
 
 export function addOpening(d: D, args: AddOpeningArgs): string | null {
@@ -63,8 +65,32 @@ export function addOpening(d: D, args: AddOpeningArgs): string | null {
   };
   if (args.design && designFitsKind(args.design, args.kind)) applyDesign(d, opening, args.design);
   d.openings[id] = opening;
+  if (args.finish) applyOpeningFinish(d, [id], args.finish.materials, args.finish.defs);
   clampOpening(d, id);
   return id;
+}
+
+/** Materials of a door/window finish set: the frame and (doors) the leaf. */
+export interface OpeningFinishMaterials {
+  frame: string;
+  panel?: string;
+}
+
+const isGlass = (d: D, id: string): boolean => (d.materials[id] ?? MATERIAL_CATALOG_BY_ID[id])?.category === 'glass';
+
+/**
+ * Applies a finish set to openings: the frame always, the leaf only on doors whose leaf is not
+ * glass (windows keep their glazing). `defs` carries copies of project-only materials of a saved
+ * finish (see `prepareVariantMaterials`).
+ */
+export function applyOpeningFinish(d: D, ids: string[], materials: OpeningFinishMaterials, defs?: Record<string, MaterialDefinition>): void {
+  const m = prepareVariantMaterials(d, { ...materials }, defs);
+  for (const id of ids) {
+    const o = d.openings[id];
+    if (!o || o.kind.startsWith('passage')) continue;
+    if (m.frame) o.frameMaterialId = m.frame;
+    if (m.panel && !o.kind.startsWith('window') && !isGlass(d, o.panelMaterialId)) o.panelMaterialId = m.panel;
+  }
 }
 
 /** Keeps an opening within its host wall's clear range (never past a wall end or junction). */
@@ -187,11 +213,24 @@ export function translateObjects(d: D, ids: string[], delta: Vec2): void {
 /** Duplicates objects and openings with an offset. Returns new ids (same order). */
 export function duplicateEntities(d: D, ids: string[], offset: Vec2): string[] {
   const out: string[] = [];
+  // Copies of grouped items form new groups (one per original group).
+  const regroup = new Map<string, string>();
   for (const id of ids) {
     const o = d.objects[id];
     if (o) {
       const nid = newId('obj');
-      d.objects[nid] = { ...structuredClone(snap(o)), id: nid, x: o.x + offset.x, y: o.y + offset.y };
+      const copy = { ...structuredClone(snap(o)), id: nid, x: o.x + offset.x, y: o.y + offset.y };
+      if (o.groupId) {
+        let g = regroup.get(o.groupId);
+        if (!g) {
+          g = newId('grp');
+          regroup.set(o.groupId, g);
+          d.groups ??= {};
+          d.groups[g] = { id: g, name: `${d.groups[o.groupId]?.name ?? 'Group'} copy`.slice(0, 80) };
+        }
+        copy.groupId = g;
+      }
+      d.objects[nid] = copy;
       out.push(nid);
       continue;
     }
@@ -220,6 +259,51 @@ export function deleteEntities(d: D, ids: string[]): void {
     } else if (d.rooms[id]) wallIds.push(...exclusiveRoomWalls(plain(d), id));
   }
   if (wallIds.length) deleteWalls(d, [...new Set(wallIds)]);
+  pruneGroups(d);
+}
+
+// ───────────────────────── Groups ─────────────────────────
+
+/** Groups the objects among `ids` (two or more) into one new group; earlier groups of those items are merged in. Returns its id or null. */
+export function groupObjects(d: D, ids: string[], name?: string): string | null {
+  const objs = ids.map((id) => d.objects[id]).filter(Boolean);
+  if (objs.length < 2) return null;
+  d.groups ??= {};
+  const id = newId('grp');
+  d.groups[id] = { id, name: (name ?? `Group ${Object.keys(d.groups).length + 1}`).slice(0, 80) };
+  for (const o of objs) o.groupId = id;
+  pruneGroups(d);
+  return id;
+}
+
+/** Removes the groups of the given objects (every member of each group is released). */
+export function ungroupObjects(d: D, ids: string[]): void {
+  const groups = new Set(ids.map((id) => d.objects[id]?.groupId).filter((g): g is string => Boolean(g)));
+  for (const o of Object.values(d.objects)) if (o.groupId && groups.has(o.groupId)) delete o.groupId;
+  pruneGroups(d);
+}
+
+export function renameGroup(d: D, groupId: string, name: string): void {
+  const g = d.groups?.[groupId];
+  if (g && name.trim()) g.name = name.trim().slice(0, 80);
+}
+
+/** Drops groups with fewer than two members and member links to missing groups. */
+export function pruneGroups(d: D): void {
+  d.groups ??= {};
+  const count = new Map<string, number>();
+  for (const o of Object.values(d.objects)) if (o.groupId) count.set(o.groupId, (count.get(o.groupId) ?? 0) + 1);
+  for (const o of Object.values(d.objects)) if (o.groupId && (!d.groups[o.groupId] || (count.get(o.groupId) ?? 0) < 2)) delete o.groupId;
+  for (const id of Object.keys(d.groups)) if ((count.get(id) ?? 0) < 2) delete d.groups[id];
+}
+
+/** Ids of every object in the same groups as `ids` (plus `ids` themselves). */
+export function withGroupMates(p: Pick<Project, 'objects'>, ids: string[]): string[] {
+  const groups = new Set(ids.map((id) => p.objects[id]?.groupId).filter((g): g is string => Boolean(g)));
+  if (!groups.size) return ids;
+  const out = new Set(ids);
+  for (const o of Object.values(p.objects)) if (o.groupId && groups.has(o.groupId)) out.add(o.id);
+  return [...out];
 }
 
 /** Walls that bound the given room and no other room. */
@@ -321,6 +405,42 @@ export type MaterialScope =
   | 'rooms-of-type'
   /** Every surface currently using the target's material. */
   | 'same-material';
+
+/**
+ * Makes the materials of a colour variant available in the project and returns the slot → id map
+ * to use. Catalogue materials are copied as usual; materials the variant carries (`defs`, from a
+ * variant saved in another project) are added, under a new id when this project already has a
+ * different material with that id, so edited surfaces elsewhere are never overwritten.
+ */
+export function prepareVariantMaterials(d: D, materials: Record<string, string>, defs?: Record<string, MaterialDefinition>): Record<string, string> {
+  const out: Record<string, string> = {};
+  const remap = new Map<string, string>();
+  for (const [slot, id] of Object.entries(materials)) {
+    const def = defs?.[id];
+    if (!def) {
+      out[slot] = ensureMaterial(d, id);
+      continue;
+    }
+    if (!remap.has(id)) {
+      const same = (m: MaterialDefinition | undefined) => !!m && JSON.stringify({ ...m, id: def.id }) === JSON.stringify(def);
+      let target = id;
+      if (d.materials[id] ? !same(d.materials[id]) : MATERIAL_CATALOG_BY_ID[id] && !same(MATERIAL_CATALOG_BY_ID[id])) target = newId('mat');
+      if (!d.materials[target]) d.materials[target] = { ...structuredClone(def), id: target };
+      remap.set(id, target);
+    }
+    out[slot] = remap.get(id)!;
+  }
+  return out;
+}
+
+/** Applies a colour variant to objects: their slot materials become exactly the variant's (other slots return to the defaults). */
+export function applyObjectVariant(d: D, objectIds: string[], materials: Record<string, string>, defs?: Record<string, MaterialDefinition>): void {
+  const ids = prepareVariantMaterials(d, materials, defs);
+  for (const oid of objectIds) {
+    const o = d.objects[oid];
+    if (o) o.materials = { ...ids };
+  }
+}
 
 /** Copies a catalogue material into the project if not present. Returns its id. */
 export function ensureMaterial(d: D, id: string): string {

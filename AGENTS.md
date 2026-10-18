@@ -13,3 +13,10 @@ Ground rules:
 - No backend, auth or network dependencies for core features.
 - `projects/` is shared with the team through git: remove projects you created only for testing.
 - New floating panels must be registered in `src/components/layoutInsets.ts` so views frame around them.
+- Adding library items or materials: follow **KNOWLEDGEBASE.md §12 "Asset rules"**. In short:
+  - Put new content in a pack (`packs/<id>.pack.ts`). Never rename or remove existing item ids.
+  - Every item needs a valid room, type and shelf, a specific name, a description and 3+ tags.
+  - All vegetation goes in `category: 'plants'` with `plant: PLANT_SPECIES[...]`.
+  - Branded items are real models sold in Vietnam, with `brand`, in `branded-*.pack.ts`.
+  - Then run `npm run thumbs` and keep the generated `public/thumbs` and `public/swatches` files.
+  - `src/data/assets/assetRules.test.ts` enforces these rules.

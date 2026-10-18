@@ -14,6 +14,8 @@ import {
   selectAll,
   toggleLockSelection,
 } from '@/features/editor/actions';
+import { groupSelection, groupState, saveSelectionToLibrary, ungroupSelection } from '@/features/editor/groups';
+import { renameGroup } from '@/domain/commands/entities';
 
 export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
   const project = useProjectStore.getState().project;
@@ -31,7 +33,24 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
   const items: MenuItem[] = [];
   if (hit.kind === 'object') {
     const o = project.objects[hit.id];
+    const g = groupState(project);
+    const gid = o?.groupId;
     items.push(
+      ...(g.canGroup ? [{ label: `Group ${g.count} items`, shortcut: 'Ctrl+G', run: groupSelection }] : []),
+      ...(g.canUngroup ? [{ label: g.groupName ? `Ungroup “${g.groupName}”` : 'Ungroup', shortcut: 'Ctrl+Shift+G', run: ungroupSelection }] : []),
+      ...(gid
+        ? [
+            {
+              label: 'Rename group…',
+              run: () => {
+                const name = window.prompt('Group name', project.groups?.[gid]?.name ?? 'Group');
+                if (name?.trim()) useProjectStore.getState().execute('Rename group', (d) => renameGroup(d, gid, name));
+              },
+            },
+          ]
+        : []),
+      ...(g.count >= 1 ? [{ label: g.count > 1 || gid ? 'Save to library as a group' : 'Save to library', run: () => void saveSelectionToLibrary() }] : []),
+      ...(g.canGroup || g.canUngroup || g.count >= 1 ? [{ separator: true, label: '' }] : []),
       { label: 'Duplicate', shortcut: 'Ctrl+D', run: duplicateSelection },
       { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: o?.locked },
       { label: o?.locked ? 'Unlock' : 'Lock', shortcut: 'Ctrl+L', run: toggleLockSelection },

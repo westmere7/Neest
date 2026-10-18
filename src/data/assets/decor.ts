@@ -1,4 +1,6 @@
 import type { AssetDefinition, Part, Size3 } from './types';
+import { PLANT_SPECIES } from './plantSpecies';
+import { GOLDEN, bladeLeaf, containParts, fitGroup, knotWidth, plantBox, polar, strapWidth, vadd, vmul } from './plantParts';
 import {
   blobCluster,
   box,
@@ -10,7 +12,6 @@ import {
   defineAsset,
   discZ,
   ellipsePoints,
-  foliage,
   frame4,
   lathe,
   lerp,
@@ -584,97 +585,140 @@ const floorCushion = defineAsset({
 
 const plantPotted = defineAsset({
   id: 'plant-potted',
-  name: 'Potted plant',
-  category: 'decor',
+  name: 'Spider plant',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
-  tags: ['plant', 'pot', 'greenery', 'houseplant', 'bush'],
+  plant: PLANT_SPECIES['chlorophytum-comosum'],
+  tags: ['spider plant', 'chlorophytum', 'airplane plant', 'striped leaves', 'pet safe', 'plantlets', 'tall pot'],
+  description: 'A variegated spider plant in a tall white planter: arching cream-striped leaves and runners hung with baby plantlets.',
   defaultSize: { w: 0.45, d: 0.45, h: 0.9 },
   minSize: { w: 0.2, d: 0.2, h: 0.3 },
   maxSize: { w: 1.0, d: 1.0, h: 1.6 },
   slots: [
     matSlot('pot', 'Pot & saucer', 'ceramic-white'),
-    matSlot('leaf', 'Foliage', 'plant-leaf'),
+    matSlot('leaf', 'Leaves', 'plant-leaf'),
     matSlot('soil', 'Soil', 'plant-soil'),
-    matSlot('leafDark', 'Inner foliage', 'plant-leaf-dark'),
+    matSlot('leafDark', 'Leaf stripes', 'paint-cream'),
   ],
-  build: ({ w, d, h }) => {
+  build: (size) => {
+    const { w, d, h } = size;
     const m = Math.min(w, d) / 2;
-    const potR = m * 0.6;
-    const potH = clamp(h * 0.3, 0.1, 0.38);
-    const by = potH * 0.88;
-    return [
-      cyl('pot', [0, 0.006, 0], potR * 0.82, 0.012, { segments: 32 }),
-      ...potted('pot', 'soil', [0, 0.012, 0], potR, potH - 0.012, 'taper'),
-      ...foliage('leafDark', [0, by, 0], m * 0.55, h - by, 10, 5, { spread: 0.3 }),
-      ...foliage('leaf', [0, by, 0], m, h - by, 22, 11, { spread: 0.85 }),
-    ];
+    const box = plantBox(size);
+    const potR = m * 0.5;
+    const potH = clamp(h * 0.42, 0.1, 0.5);
+    const by = potH * 0.9;
+    const k = clamp(h / 0.9, 0.5, 1.6);
+    const parts: Part[] = [cyl('pot', [0, 0.006, 0], potR * 0.82, 0.012, { segments: 32 }), ...potted('pot', 'soil', [0, 0.012, 0], potR, potH - 0.012, 'cylinder')];
+    const rand = rng(17);
+    const crown: V3 = [0, by + 0.01, 0];
+    // Arching strap leaves: a green blade with a narrower, thicker cream stripe down the middle.
+    for (const i of range(18)) {
+      const az = i * GOLDEN;
+      const len = 0.36 * k * lerp(0.6, 1, rand());
+      const tilt = lerp(0.15, 0.85, rand());
+      const o = { segs: 3, bend: lerp(0.9, 1.5, rand()), roll: (rand() - 0.5) * 0.4, twist: (rand() - 0.5) * 0.3, samples: 4 };
+      const green = bladeLeaf('leaf', crown, len, strapWidth(0.02 * k, 0.75, 0.5), az, tilt, { ...o, thick: 0.002, plan: i < 4 });
+      const stripe = bladeLeaf('leafDark', crown, len * 0.97, strapWidth(0.008 * k, 0.7, 0.5), az, tilt, { ...o, thick: 0.0032 });
+      parts.push(...fitGroup([...green.parts, ...stripe.parts], crown, box));
+    }
+    // Two runners with baby plantlets hanging over the pot rim.
+    for (const r of range(2)) {
+      const a = r * Math.PI + 0.6;
+      const p1 = polar(potR + 0.06 * k, a, by + 0.08 * k);
+      const p2 = polar(Math.min(m - 0.04, potR + 0.14 * k), a + 0.2, Math.max(0.08, by - 0.18 * k));
+      const g: Part[] = [rod('leaf', crown, p1, 0.0025, { segments: 5, plan: false }), rod('leaf', p1, p2, 0.0022, { segments: 5, plan: false })];
+      for (const j of range(6)) {
+        g.push(...bladeLeaf('leaf', p2, 0.07 * k, strapWidth(0.012 * k, 0.6, 0.5), j * 1.05 + a, lerp(0.7, 1.4, (j % 3) / 2), { segs: 1, thick: 0.002 }).parts);
+      }
+      parts.push(...fitGroup(g, crown, box));
+    }
+    return containParts(parts, box);
   },
-  planDetail: ({ w, d }) => [circle([0, 0], (Math.min(w, d) / 2) * 0.6)],
+  planDetail: ({ w, d }) => [circle([0, 0], (Math.min(w, d) / 2) * 0.5), poly(ellipsePoints(0, 0, (Math.min(w, d) / 2) * 0.9, (Math.min(w, d) / 2) * 0.9, 18))],
 });
 
 const plantLarge = defineAsset({
   id: 'plant-large',
-  name: 'Large floor plant',
-  category: 'decor',
+  name: 'Corn plant (dracaena)',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
-  tags: ['plant', 'tree', 'fiddle leaf', 'indoor tree', 'greenery'],
+  plant: PLANT_SPECIES['dracaena-fragrans'],
+  tags: ['corn plant', 'dracaena fragrans', 'janet craig', 'floor plant', 'low light', 'canes', 'woven basket'],
+  description: "Dracaena fragrans 'Janet Craig': three bark canes of staggered heights topped with rosettes of glossy, arching strap leaves, in a woven basket.",
   defaultSize: { w: 0.8, d: 0.8, h: 1.8 },
   minSize: { w: 0.4, d: 0.4, h: 1.0 },
   maxSize: { w: 1.5, d: 1.5, h: 2.6 },
   slots: [
     matSlot('pot', 'Basket', 'rug-jute'),
-    matSlot('leaf', 'Foliage', 'plant-leaf'),
-    matSlot('trunk', 'Trunk', 'wood-dark-stain'),
+    matSlot('leaf', 'Leaves', 'plant-leaf-dark'),
+    matSlot('trunk', 'Canes', 'wood-dark-stain'),
     matSlot('soil', 'Soil', 'plant-soil'),
   ],
-  build: ({ w, d, h }) => {
+  build: (size) => {
+    const { w, d, h } = size;
     const m = Math.min(w, d) / 2;
-    const potR = m * 0.5;
+    const box = plantBox(size);
+    const k = clamp(h / 1.8, 0.6, 1.4);
+    const potR = m * 0.45;
     const potH = clamp(h * 0.2, 0.22, 0.42);
     const parts: Part[] = [...potted('pot', 'soil', [0, 0, 0], potR, potH, 'cylinder')];
     // Woven bands and a rolled rim on the basket.
     for (const f of [0.25, 0.5, 0.75]) parts.push(ring('pot', [0, potH * f, 0], potR - 0.006, 0.006, { plan: false }));
     parts.push(ring('pot', [0, potH - 0.009, 0], potR - 0.009, 0.009, { plan: false }));
-    parts.push(
-      ...rodPath(
-        'trunk',
-        [
-          [0, potH * 0.85, 0],
-          [0.02, h * 0.35, 0.01],
-          [-0.01, h * 0.55, 0],
-        ],
-        0.022,
-      ),
-      rod('trunk', [-0.01, h * 0.55, 0], [0, h * 0.72, 0], 0.016, { plan: false }),
-    );
-    const rc = m * 0.4;
-    for (const k of range(5)) {
-      const a = (k * 2 * Math.PI) / 5 + 0.4;
-      const y0 = lerp(h * 0.42, h * 0.62, k / 4);
-      const tip: V3 = [Math.sin(a) * (m - rc) * 0.92, y0 + h * 0.08, Math.cos(a) * (m - rc) * 0.92];
-      parts.push(
-        rod('trunk', [0, y0, 0], tip, 0.01, { plan: false }),
-        ...foliage('leaf', tip, rc, Math.min(h - tip[1], rc * 1.6), 11, 20 + k, { spread: 0.8 }),
-      );
+    const rand = rng(29);
+    const canes: [number, number][] = [
+      [0.44, 0.3],
+      [0.62, 2.4],
+      [0.8, 4.4],
+    ];
+    for (const [ci, [f, a]] of canes.entries()) {
+      const base = polar(potR * 0.3, a, potH * 0.85);
+      const top = vadd(polar(potR * 0.35, a + 0.2), [0, h * f - 0.12 * k, 0]);
+      const r = 0.032 * k * (1 - ci * 0.12);
+      parts.push(rod('trunk', base, top, r, { rTop: r * 0.9, segments: 10, plan: false }), cyl('trunk', top, r * 0.92, 0.012, { segments: 10, plan: false }));
+      // Rings left on the cane by old leaves.
+      for (const q of [0.3, 0.55, 0.8]) parts.push(ring('trunk', vadd(base, vmul(vadd(top, vmul(base, -1)), q)), r * 1.02, 0.003, { plan: false }));
+      for (const i of range(10)) {
+        const az = i * GOLDEN + ci;
+        const tilt = lerp(0.2, 1.1, (i % 5) / 4) + (rand() - 0.5) * 0.15;
+        const len = 0.5 * k * lerp(0.75, 1, rand());
+        const blade = bladeLeaf(
+          'leaf',
+          top,
+          len,
+          knotWidth(0.075 * k, [
+            [0, 0.45],
+            [0.2, 0.95],
+            [0.6, 1],
+            [0.9, 0.55],
+            [1, 0],
+          ]),
+          az,
+          tilt,
+          { segs: 2, bend: lerp(0.5, 1.1, rand()), fold: 0.18, roll: (rand() - 0.5) * 0.4, thick: 0.003, samples: 5, plan: ci === 2 && i < 3 },
+        );
+        parts.push(...fitGroup(blade.parts, top, box));
+      }
     }
-    parts.push(...foliage('leaf', [0, h * 0.7, 0], m * 0.5, h * 0.3, 14, 3, { spread: 0.6 }));
-    return parts;
+    return containParts(parts, box);
   },
   planDetail: ({ w, d }) => {
     const m = Math.min(w, d) / 2;
-    return [circle([0, 0], m * 0.5), poly(ellipsePoints(0, 0, m * 0.9, m * 0.9, 24))];
+    return [circle([0, 0], m * 0.45), poly(ellipsePoints(0, 0, m * 0.9, m * 0.9, 24))];
   },
 });
 
 const plantMonstera = defineAsset({
   id: 'plant-monstera',
   name: 'Monstera',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
+  plant: PLANT_SPECIES['monstera-deliciosa'],
   tags: ['monstera', 'swiss cheese plant', 'houseplant', 'tropical', 'big leaves'],
+  description: 'A Swiss cheese plant with large split, holed leaves on long stalks, climbing a moss pole in a white ceramic pot.',
   defaultSize: { w: 0.7, d: 0.7, h: 1.0 },
   minSize: { w: 0.4, d: 0.4, h: 0.5 },
   maxSize: { w: 1.3, d: 1.3, h: 1.8 },
@@ -717,10 +761,12 @@ const plantMonstera = defineAsset({
 const plantFiddleLeaf = defineAsset({
   id: 'plant-fiddle-leaf',
   name: 'Fiddle-leaf fig',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Trees',
+  plant: PLANT_SPECIES['ficus-lyrata'],
   tags: ['fiddle leaf fig', 'ficus lyrata', 'indoor tree', 'houseplant', 'big leaves'],
+  description: 'A fiddle-leaf fig trained as a small tree: a bare trunk topped with big, violin-shaped, dark glossy leaves, in a black glazed pot.',
   defaultSize: { w: 0.6, d: 0.6, h: 1.7 },
   minSize: { w: 0.4, d: 0.4, h: 1.0 },
   maxSize: { w: 1.0, d: 1.0, h: 2.4 },
@@ -770,10 +816,12 @@ const plantFiddleLeaf = defineAsset({
 const plantSnake = defineAsset({
   id: 'plant-snake',
   name: 'Snake plant',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
+  plant: PLANT_SPECIES['dracaena-trifasciata'],
   tags: ['snake plant', 'sansevieria', "mother-in-law's tongue", 'houseplant', 'upright'],
+  description: "Snake plant 'Laurentii': stiff upright sword leaves with yellow edges, in a white ceramic pot.",
   defaultSize: { w: 0.35, d: 0.35, h: 0.8 },
   minSize: { w: 0.2, d: 0.2, h: 0.4 },
   maxSize: { w: 0.6, d: 0.6, h: 1.3 },
@@ -814,11 +862,13 @@ const plantSnake = defineAsset({
 
 const plantCactus = defineAsset({
   id: 'plant-cactus',
-  name: 'Cactus',
-  category: 'decor',
+  name: 'Peruvian apple cactus',
+  category: 'plants',
   type: 'plants',
   group: 'Succulents & cacti',
-  tags: ['cactus', 'saguaro', 'succulent', 'desert', 'terracotta'],
+  plant: PLANT_SPECIES['cereus-repandus'],
+  tags: ['cactus', 'cereus', 'peruvian apple cactus', 'column cactus', 'succulent', 'terracotta', 'pet safe'],
+  description: 'A branching column cactus with ribbed green stems and a pink bloom, in a terracotta pot.',
   defaultSize: { w: 0.3, d: 0.3, h: 0.7 },
   minSize: { w: 0.15, d: 0.15, h: 0.3 },
   maxSize: { w: 0.6, d: 0.6, h: 1.6 },
@@ -871,10 +921,12 @@ const plantCactus = defineAsset({
 const plantSucculents = defineAsset({
   id: 'plant-succulents',
   name: 'Succulent trio',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Succulents & cacti',
+  plant: PLANT_SPECIES['succulent-trio'],
   tags: ['succulents', 'echeveria', 'aloe', 'windowsill', 'tabletop', 'trio'],
+  description: 'Three small succulents on a light oak tray: a blue-grey echeveria rosette, a clump of finger mammillaria and a small aloe.',
   defaultSize: { w: 0.4, d: 0.16, h: 0.16 },
   minSize: { w: 0.25, d: 0.1, h: 0.08 },
   maxSize: { w: 0.8, d: 0.3, h: 0.3 },
@@ -935,10 +987,12 @@ const plantSucculents = defineAsset({
 const plantHangingPothos = defineAsset({
   id: 'plant-hanging-pothos',
   name: 'Hanging pothos',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Hanging plants',
+  plant: PLANT_SPECIES['epipremnum-aureum'],
   tags: ['pothos', 'hanging plant', 'macrame', 'trailing', 'vines', 'devils ivy'],
+  description: 'Golden pothos trailing long vines of heart-shaped leaves from a white pot in a jute macramé hanger.',
   defaultSize: { w: 0.45, d: 0.45, h: 1.0 },
   minSize: { w: 0.3, d: 0.3, h: 0.5 },
   maxSize: { w: 0.8, d: 0.8, h: 1.8 },
@@ -1021,11 +1075,13 @@ const plantHangingPothos = defineAsset({
 
 const plantKentiaPalm = defineAsset({
   id: 'plant-kentia-palm',
-  name: 'Kentia palm',
-  category: 'decor',
+  name: 'Kentia palm in a sage pot',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
+  plant: PLANT_SPECIES['howea-forsteriana'],
   tags: ['kentia', 'palm', 'howea', 'tropical', 'fronds', 'indoor tree'],
+  description: 'A Kentia palm with arching fronds of drooping leaflets on dark stalks, in a sage-glazed pot.',
   defaultSize: { w: 1.0, d: 1.0, h: 1.8 },
   minSize: { w: 0.6, d: 0.6, h: 1.0 },
   maxSize: { w: 1.6, d: 1.6, h: 2.6 },
@@ -1079,10 +1135,12 @@ const plantKentiaPalm = defineAsset({
 const plantOliveTree = defineAsset({
   id: 'plant-olive-tree',
   name: 'Olive tree',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Trees',
+  plant: PLANT_SPECIES['olea-europaea'],
   tags: ['olive tree', 'mediterranean', 'indoor tree', 'standard tree', 'terracotta'],
+  description: 'A small olive tree with a twisted trunk and a crown of narrow silver-green leaves, in a terracotta pot.',
   defaultSize: { w: 0.7, d: 0.7, h: 1.6 },
   minSize: { w: 0.4, d: 0.4, h: 0.9 },
   maxSize: { w: 1.2, d: 1.2, h: 2.4 },
@@ -1133,11 +1191,13 @@ const plantOliveTree = defineAsset({
 
 const plantOrchid = defineAsset({
   id: 'plant-orchid',
-  name: 'Orchid',
-  category: 'decor',
+  name: 'Pink moth orchid',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
+  plant: PLANT_SPECIES['phalaenopsis-pink'],
   tags: ['orchid', 'phalaenopsis', 'flowers', 'tabletop', 'blooms'],
+  description: 'A pink moth orchid: broad leathery leaves at the base and an arching staked stem of pink blooms, in a white pot of bark.',
   defaultSize: { w: 0.3, d: 0.2, h: 0.55 },
   minSize: { w: 0.15, d: 0.12, h: 0.3 },
   maxSize: { w: 0.45, d: 0.35, h: 0.9 },

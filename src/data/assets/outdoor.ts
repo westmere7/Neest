@@ -1,4 +1,5 @@
 import type { AssetDefinition, Part, Size3 } from './types';
+import { PLANT_SPECIES } from './plantSpecies';
 import {
   blobCluster,
   box,
@@ -965,11 +966,13 @@ const parasol = defineAsset({
 
 const planterHerbs = defineAsset({
   id: 'planter-herbs',
-  name: 'Herb planter box',
-  category: 'outdoor',
+  name: 'Herb planter (basil, parsley, chives)',
+  category: 'plants',
   type: 'plants',
-  group: 'Outdoor plants',
+  group: 'Herbs & edibles',
+  plant: PLANT_SPECIES['herb-trio'],
   tags: ['herbs', 'planter', 'raised bed', 'kitchen garden', 'balcony', 'basil'],
+  description: 'A pine raised planter with three kitchen herbs side by side: bushy sweet basil, flat-leaf parsley and a clump of chives.',
   defaultSize: { w: 1.0, d: 0.4, h: 0.75 },
   minSize: { w: 0.6, d: 0.3, h: 0.4 },
   maxSize: { w: 1.8, d: 0.6, h: 0.9 },
@@ -1336,10 +1339,12 @@ const deckBox = defineAsset({
 const pottedBayTree = defineAsset({
   id: 'potted-bay-tree',
   name: 'Potted bay tree',
-  category: 'outdoor',
+  category: 'plants',
   type: 'plants',
   group: 'Outdoor plants',
+  plant: PLANT_SPECIES['laurus-nobilis'],
   tags: ['bay tree', 'topiary', 'laurel', 'standard', 'potted plant', 'terrace', 'entrance'],
+  description: 'A bay laurel trained as a lollipop standard, with a clipped ball of dark glossy leaves on a straight trunk in a terracotta pot.',
   defaultSize: { w: 0.55, d: 0.55, h: 1.6 },
   minSize: { w: 0.4, d: 0.4, h: 1.0 },
   maxSize: { w: 0.8, d: 0.8, h: 2.2 },

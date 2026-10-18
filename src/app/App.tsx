@@ -38,6 +38,27 @@ export function App() {
     return () => mq?.removeEventListener?.('change', syncSystemTheme);
   }, [hydrate, syncSystemTheme]);
 
+  // Browser defaults that fight the editor: Alt (focuses the browser menu, Alt+arrows navigate away)
+  // and the browser's own right-click menu (the app shows its own; text fields keep theirs).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Alt' || (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home'))) e.preventDefault();
+    };
+    const onMenu = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest('input, textarea, [contenteditable="true"], .allow-native-menu')) return;
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey, true);
+    window.addEventListener('keyup', onKey, true);
+    window.addEventListener('contextmenu', onMenu);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('keyup', onKey, true);
+      window.removeEventListener('contextmenu', onMenu);
+    };
+  }, []);
+
   return (
     <>
       <Suspense fallback={<div className="app-loading">Loading Neest…</div>}>

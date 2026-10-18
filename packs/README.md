@@ -18,6 +18,15 @@ Files starting with `_` are ignored. Delete a pack file to remove the pack. Proj
 
 ## Rules
 
+First read the house rules in [KNOWLEDGEBASE.md §12 "Asset rules"](../KNOWLEDGEBASE.md). `npm test` enforces them:
+
+- a specific name, a description and 3+ tags;
+- plants in `category: 'plants'` with `plant: PLANT_SPECIES[...]`;
+- branded items with `brand`, in `branded-*.pack.ts`;
+- a pre-rendered thumbnail from `npm run thumbs`.
+
+The format:
+
 - The **pack id** is the file name. Item, material, pattern and texture ids are local to the pack, so in the app an item becomes `<pack-id>:<item-id>`. Packs never clash with the built-in library or with each other.
 - **Items** use the built-in asset format (see `src/data/assets/types.ts` and the helpers in `src/data/assets/parts.ts`; everything is re-exported from `@/packs/kit`):
   - Local space: origin at the centre of the footprint on the floor; x = width, y = up, **+z = front**.
@@ -45,6 +54,8 @@ npx vitest run src/packs
 ```
 
 This runs every pack item through the same checks as the built-in library: size bounds, slots, materials and lights.
+Also run `npx vitest run src/data/assets` for the house rules, and run `npm run thumbs` once your items look right,
+so they ship with thumbnails.
 
 ## Example
 

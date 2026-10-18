@@ -8,6 +8,7 @@
  * fine hongmu rosewood grain and silk brocade with gold roundels.
  */
 import {
+  PLANT_SPECIES,
   box,
   cells,
   circle,
@@ -919,10 +920,12 @@ const lanternPair = defineItem({
 const moneyTree = defineItem({
   id: 'money-tree',
   name: 'Money tree (pachira)',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
-  group: 'Indoor plants',
+  group: 'Trees',
+  plant: PLANT_SPECIES['pachira-aquatica-single'],
   tags: ['money tree', 'pachira', 'fa cai shu', 'braided', 'feng shui', 'plant', 'lucky', 'chinese'],
+  description: 'A money tree (fā cái shù) with a braided trunk, umbrella-like palmate leaves and a red ribbon, in a blue-and-white porcelain pot.',
   defaultSize: { w: 0.75, d: 0.75, h: 1.4 },
   minSize: { w: 0.35, d: 0.35, h: 0.7 },
   maxSize: { w: 1.0, d: 1.0, h: 2.2 },
@@ -988,10 +991,12 @@ const moneyTree = defineItem({
 const luckyBamboo = defineItem({
   id: 'lucky-bamboo',
   name: 'Lucky bamboo in vase',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
+  plant: PLANT_SPECIES['dracaena-sanderiana'],
   tags: ['lucky bamboo', 'fu gui zhu', 'dracaena', 'bamboo', 'feng shui', 'glass vase', 'pebbles', 'chinese'],
+  description: 'Lucky bamboo stalks tied with a gold ribbon, standing in a clear glass vase of pebbles and water.',
   defaultSize: { w: 0.28, d: 0.28, h: 0.75 },
   minSize: { w: 0.15, d: 0.15, h: 0.4 },
   maxSize: { w: 0.5, d: 0.5, h: 1.4 },

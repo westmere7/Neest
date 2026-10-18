@@ -5,6 +5,7 @@ import { setPackPatterns, type TexturePattern } from '@/data/materials/patterns'
 import { setPackPhotoSets, type PhotoManifestEntry } from '@/features/materials/photoTextures';
 import { ASSET_CATALOG, ASSET_CATEGORY_ORDER, ASSET_TYPE_ORDER, ASSETS_BY_ID } from '@/data/assets/catalog';
 import { defineAsset } from '@/data/assets/parts';
+import { checkPlantInfo } from '@/data/assets/plantInfo';
 import type { AssetCategory, AssetDefinition, AssetType, Part, Size3 } from '@/data/assets/types';
 import type { PackSpec } from './kit';
 import { notifyPacksChanged } from './events';
@@ -177,6 +178,9 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
         const type: AssetType = TYPES.has(item.type) ? item.type : 'misc';
         if (category !== item.category) report(`Item "${item.id}": unknown category "${item.category}", shown under Decor.`);
         const firstSlot = item.slots[0].id;
+        // A malformed care guide is reported and dropped; the item itself still loads.
+        const plantErrors = item.plant ? checkPlantInfo(item.plant) : [];
+        if (plantErrors.length) report(`Item "${item.id}": plant info ignored (${plantErrors.join('; ')}).`);
         let warned = false;
         const def = defineAsset({
           ...item,
@@ -184,7 +188,10 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
           category,
           type,
           group: item.group || 'Ornaments',
+          plant: plantErrors.length ? undefined : item.plant,
           slots: item.slots.map((s) => ({ ...s, defaultMaterial: matId(s.defaultMaterial) })),
+          variantOf: item.variantOf ? (spec.items.some((x) => x.id === item.variantOf) ? ns(item.variantOf) : item.variantOf) : undefined,
+          variants: item.variants?.map((v) => ({ ...v, materials: Object.fromEntries(Object.entries(v.materials ?? {}).map(([k, m]) => [k, matId(m)])) })),
           build: (size) => {
             try {
               const parts = item.build(size);

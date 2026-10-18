@@ -59,8 +59,13 @@ export interface EditorState {
   /** Designs for newly inserted doors / windows (null = the kind's default look). */
   doorDesign: OpeningDesign | null;
   windowDesign: OpeningDesign | null;
+  /** Finish set for the next door / window placed: a finish id or `user:<id>`; null = the default look. */
+  doorFinish: string | null;
+  windowFinish: string | null;
   placeAssetId: string | null;
   placeRotation: number;
+  /** Colour variant chosen per asset in the library (asset id → variant id); new items are placed in it. */
+  variantChoice: Record<string, string>;
   selection: SelItem[];
   hover: SelItem | null;
   workspace: Workspace;
@@ -109,8 +114,11 @@ export const useEditorStore = create<EditorState>((set) => ({
   openingKind: 'door-single',
   doorDesign: null,
   windowDesign: null,
+  doorFinish: null,
+  windowFinish: null,
   placeAssetId: null,
   placeRotation: 0,
+  variantChoice: {},
   selection: [],
   hover: null,
   workspace: 'plan',
@@ -135,11 +143,14 @@ export const useEditorStore = create<EditorState>((set) => ({
   cameraRequest: null,
 
   setTool: (tool) => set({ tool, hint: null, snapLabel: null }),
-  setSelection: (selection) => set({ selection }),
+  setSelection: (selection) => set({ selection: expandSelection(selection) }),
   toggleSelection: (item) =>
     set((s) => {
+      // A grouped item toggles with its whole group.
+      const items = expandSelection([item]);
       const exists = s.selection.some((x) => x.id === item.id);
-      return { selection: exists ? s.selection.filter((x) => x.id !== item.id) : [...s.selection, item] };
+      const ids = new Set(items.map((x) => x.id));
+      return { selection: exists ? s.selection.filter((x) => !ids.has(x.id)) : [...s.selection, ...items.filter((x) => !s.selection.some((y) => y.id === x.id))] };
     }),
   clearSelection: () => set({ selection: [] }),
   setHover: (hover) => set((s) => (s.hover?.id === hover?.id ? s : { hover })),
@@ -147,6 +158,15 @@ export const useEditorStore = create<EditorState>((set) => ({
   requestFit: () => set((s) => ({ fitRequest: s.fitRequest + 1 })),
   requestCamera: (view) => set({ cameraRequest: { view, nonce: Math.random() } }),
 }));
+
+/**
+ * Widens a selection to whole groups of placed items. Installed by the editor
+ * (features/editor/groups.ts) so this store needs no project access; identity until then.
+ */
+let expandSelection: (sel: SelItem[]) => SelItem[] = (sel) => sel;
+export function setSelectionExpander(fn: (sel: SelItem[]) => SelItem[]): void {
+  expandSelection = fn;
+}
 
 const selectionKey = (sel: SelItem[]) => sel.map((s) => `${s.kind}:${s.id}`).join('|');
 

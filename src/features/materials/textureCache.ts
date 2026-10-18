@@ -1,6 +1,7 @@
 import type { MaterialDefinition } from '@/domain/model/schema';
 import { renderPattern } from '@/data/materials/patterns';
 import { photoSwatchUrl } from './photoTextures';
+import { shippedSwatch } from './swatchFiles';
 
 const urlCache = new Map<string, string | null>();
 
@@ -38,12 +39,15 @@ export function tintedPatternUrl(m: Pick<MaterialDefinition, 'texture' | 'color'
 }
 
 /**
- * CSS background for a material swatch: the tinted photo texture when it is on
- * and loaded, else the procedural texture, else a flat colour. Components that
+ * CSS background for a material swatch: a pre-rendered file from public/swatches when one
+ * matches, else the tinted photo texture when it is on and loaded, else the procedural
+ * texture, else a flat colour. Components that
  * show swatches should re-render on `subscribePhotos` (photos load async).
  */
 export function swatchBackground(m: Pick<MaterialDefinition, 'texture' | 'color' | 'opacity' | 'metalness'> & Partial<Pick<MaterialDefinition, 'photo'>>): string {
   const base = m.color;
+  const shipped = shippedSwatch(m);
+  if (shipped) return shipped.tile ? `url(${shipped.url}) center / 64px 64px, ${base}` : `url(${shipped.url}) center / cover, ${base}`;
   const photo = m.photo ? photoSwatchUrl({ photo: m.photo, color: m.color }) : null;
   if (photo) return `url(${photo}) center / cover, ${base}`;
   const url = tintedPatternUrl(m, 96);

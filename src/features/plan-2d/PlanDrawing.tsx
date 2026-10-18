@@ -1,4 +1,5 @@
 import { memo, type ReactNode } from 'react';
+import { isAssetHidden } from '@/data/assets/catalog';
 import type { AreaUnit, LengthUnit, Project, Vec2 } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { piecePolygon } from '@/domain/geometry/walls';
@@ -101,7 +102,7 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
   const furniture: ReactNode[] = [];
   if (opts.showFurniture && project.layers.furniture.visible) {
     const objs = Object.values(project.objects)
-      .filter((o) => !o.hidden && !project.render.hiddenCategories.includes(getAsset(project, o.assetId)?.category ?? ''))
+      .filter((o) => !o.hidden && !isAssetHidden(getAsset(project, o.assetId), project.render.hiddenCategories))
       .sort((a, b) => Number(isOverhead(project, a)) - Number(isOverhead(project, b)) || a.elevation + a.height - (b.elevation + b.height));
     for (const o of objs) {
       const asset = getAsset(project, o.assetId);

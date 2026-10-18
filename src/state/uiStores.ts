@@ -1,9 +1,38 @@
 import { create } from 'zustand';
 import { preferenceRepository } from '@/storage/indexeddb/db';
+import type { UserVariant } from '@/data/assets/variants';
+import type { MaterialDefinition } from '@/domain/model/schema';
+
+/** A group of placed items saved to the library (Furniture → Saved groups), positions relative to its centre. */
+export interface SavedGroup {
+  id: string;
+  name: string;
+  createdAt: number;
+  items: {
+    assetId: string;
+    name: string | null;
+    dx: number;
+    dy: number;
+    elevation: number;
+    rotation: number;
+    width: number;
+    depth: number;
+    height: number;
+    mirrored: boolean;
+    materials: Record<string, string>;
+  }[];
+  /** Plan footprint (metres). */
+  size: { w: number; d: number };
+  /** Copies of project-only or edited materials used by the items. */
+  defs?: Record<string, MaterialDefinition>;
+}
 
 // ───────────── Theme & preferences ─────────────
 
 export type ThemePref = 'light' | 'dark' | 'system';
+/** Library card size: roomy = large cards, normal = the default, dense = small cards. */
+export type LibraryDensity = 'roomy' | 'normal' | 'dense';
+export const LIBRARY_DENSITIES: LibraryDensity[] = ['roomy', 'normal', 'dense'];
 
 const THEME_KEY = 'neest.theme';
 
@@ -36,6 +65,11 @@ interface PrefsState {
   onboardingDismissed: boolean;
   /** Mirror projects into the repository projects/ folder when served by the dev server. */
   repoSync: boolean;
+  /** Colour variants the user saved, by asset id. */
+  assetVariants: Record<string, UserVariant[]>;
+  libraryDensity: LibraryDensity;
+  /** Groups saved to the library (every project). */
+  savedGroups: SavedGroup[];
   loaded: boolean;
   setThemePref(p: ThemePref): void;
   syncSystemTheme(): void;
@@ -45,6 +79,12 @@ interface PrefsState {
   pushRecentMaterial(id: string): void;
   dismissOnboarding(): void;
   setRepoSync(on: boolean): void;
+  saveAssetVariant(assetId: string, variant: UserVariant): void;
+  deleteAssetVariant(assetId: string, id: string): void;
+  setLibraryDensity(d: LibraryDensity): void;
+  saveGroup(g: SavedGroup): void;
+  renameSavedGroup(id: string, name: string): void;
+  deleteSavedGroup(id: string): void;
   hydrate(): Promise<void>;
 }
 
@@ -61,6 +101,9 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   recentMaterials: [],
   onboardingDismissed: false,
   repoSync: true,
+  assetVariants: {},
+  libraryDensity: 'normal',
+  savedGroups: [],
   loaded: false,
   setThemePref(p) {
     try {
@@ -109,15 +152,52 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
     set({ repoSync: on });
     persist('repoSync', on);
   },
+  saveAssetVariant(assetId, variant) {
+    const cur = get().assetVariants;
+    const next = { ...cur, [assetId]: [...(cur[assetId] ?? []).filter((v) => v.id !== variant.id), variant] };
+    set({ assetVariants: next });
+    persist('assetVariants', next);
+  },
+  deleteAssetVariant(assetId, id) {
+    const cur = get().assetVariants;
+    const list = (cur[assetId] ?? []).filter((v) => v.id !== id);
+    const next = { ...cur };
+    if (list.length) next[assetId] = list;
+    else delete next[assetId];
+    set({ assetVariants: next });
+    persist('assetVariants', next);
+  },
+  saveGroup(g) {
+    const next = [g, ...get().savedGroups.filter((x) => x.id !== g.id)];
+    set({ savedGroups: next });
+    persist('savedGroups', next);
+  },
+  renameSavedGroup(id, name) {
+    const next = get().savedGroups.map((g) => (g.id === id && name.trim() ? { ...g, name: name.trim().slice(0, 60) } : g));
+    set({ savedGroups: next });
+    persist('savedGroups', next);
+  },
+  deleteSavedGroup(id) {
+    const next = get().savedGroups.filter((g) => g.id !== id);
+    set({ savedGroups: next });
+    persist('savedGroups', next);
+  },
+  setLibraryDensity(d) {
+    set({ libraryDensity: d });
+    persist('libraryDensity', d);
+  },
   async hydrate() {
     try {
-      const [fa, ra, fm, rm, ob, rs] = await Promise.all([
+      const [fa, ra, fm, rm, ob, rs, av, ld, sg] = await Promise.all([
         preferenceRepository.get<string[]>('favouriteAssets'),
         preferenceRepository.get<string[]>('recentAssets'),
         preferenceRepository.get<string[]>('favouriteMaterials'),
         preferenceRepository.get<string[]>('recentMaterials'),
         preferenceRepository.get<boolean>('onboardingDismissed'),
         preferenceRepository.get<boolean>('repoSync'),
+        preferenceRepository.get<Record<string, UserVariant[]>>('assetVariants'),
+        preferenceRepository.get<LibraryDensity>('libraryDensity'),
+        preferenceRepository.get<SavedGroup[]>('savedGroups'),
       ]);
       set({
         favouriteAssets: fa ?? [],
@@ -126,6 +206,9 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         recentMaterials: rm ?? [],
         onboardingDismissed: ob ?? false,
         repoSync: rs ?? true,
+        assetVariants: av && typeof av === 'object' ? av : {},
+        libraryDensity: ld && LIBRARY_DENSITIES.includes(ld) ? ld : 'normal',
+        savedGroups: Array.isArray(sg) ? sg : [],
         loaded: true,
       });
     } catch {

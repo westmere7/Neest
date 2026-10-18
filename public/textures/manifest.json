@@ -1054,6 +1054,438 @@
       "meanColor": "#cccccc",
       "meanRoughness": 0.47,
       "bytes": 114128
+    },
+    "versailles-parquet": {
+      "id": "versailles-parquet",
+      "name": "Versailles parquet",
+      "source": "ambientCG",
+      "assetId": "WoodFloor055",
+      "url": "https://ambientcg.com/a/WoodFloor055",
+      "download": "https://ambientcg.com/get?file=WoodFloor055_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#957558",
+      "meanLinear": [
+        0.5683,
+        0.5703,
+        0.5665
+      ],
+      "meanColor": "#c7c7c6",
+      "meanRoughness": 0.351,
+      "bytes": 233372
+    },
+    "dark-oak-planks": {
+      "id": "dark-oak-planks",
+      "name": "Dark oak planks",
+      "source": "ambientCG",
+      "assetId": "WoodFloor064",
+      "url": "https://ambientcg.com/a/WoodFloor064",
+      "download": "https://ambientcg.com/get?file=WoodFloor064_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#6d4315",
+      "meanLinear": [
+        0.5964,
+        0.5984,
+        0.595
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.403,
+      "bytes": 138408
+    },
+    "herringbone-dark": {
+      "id": "herringbone-dark",
+      "name": "Dark herringbone",
+      "source": "ambientCG",
+      "assetId": "WoodFloor014",
+      "url": "https://ambientcg.com/a/WoodFloor014",
+      "download": "https://ambientcg.com/get?file=WoodFloor014_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1.6,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#513b2a",
+      "meanLinear": [
+        0.5602,
+        0.5615,
+        0.56
+      ],
+      "meanColor": "#c5c5c5",
+      "meanRoughness": 0.366,
+      "bytes": 302164
+    },
+    "basketweave-parquet": {
+      "id": "basketweave-parquet",
+      "name": "Basketweave parquet",
+      "source": "ambientCG",
+      "assetId": "WoodFloor070",
+      "url": "https://ambientcg.com/a/WoodFloor070",
+      "download": "https://ambientcg.com/get?file=WoodFloor070_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1.5,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#5a370f",
+      "meanLinear": [
+        0.4324,
+        0.4341,
+        0.4312
+      ],
+      "meanColor": "#b0b0af",
+      "meanRoughness": 0.322,
+      "bytes": 174838
+    },
+    "diagonal-parquet": {
+      "id": "diagonal-parquet",
+      "name": "Diagonal parquet",
+      "source": "Poly Haven",
+      "assetId": "diagonal_parquet",
+      "url": "https://polyhaven.com/a/diagonal_parquet",
+      "download": "https://api.polyhaven.com/files/diagonal_parquet",
+      "license": "CC0 1.0 Universal",
+      "size": 2.36,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#a56736",
+      "meanLinear": [
+        0.5751,
+        0.5767,
+        0.5749
+      ],
+      "meanColor": "#c8c8c8",
+      "meanRoughness": 0.102,
+      "bytes": 151334
+    },
+    "bamboo-panel": {
+      "id": "bamboo-panel",
+      "name": "Bamboo panel",
+      "source": "ambientCG",
+      "assetId": "Bamboo001B",
+      "url": "https://ambientcg.com/a/Bamboo001B",
+      "download": "https://ambientcg.com/get?file=Bamboo001B_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1.2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#a9934a",
+      "meanLinear": [
+        0.599,
+        0.6016,
+        0.5991
+      ],
+      "meanColor": "#cbcccb",
+      "meanRoughness": 0.524,
+      "bytes": 136732
+    },
+    "azulejo-border": {
+      "id": "azulejo-border",
+      "name": "Painted tiles (border)",
+      "source": "ambientCG",
+      "assetId": "Tiles101",
+      "url": "https://ambientcg.com/a/Tiles101",
+      "download": "https://ambientcg.com/get?file=Tiles101_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.9,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#d0d0e1",
+      "meanLinear": [
+        0.544,
+        0.5417,
+        0.5699
+      ],
+      "meanColor": "#c3c2c7",
+      "meanRoughness": 0.104,
+      "bytes": 407854
+    },
+    "azulejo-floral": {
+      "id": "azulejo-floral",
+      "name": "Painted tiles (floral)",
+      "source": "ambientCG",
+      "assetId": "Tiles103",
+      "url": "https://ambientcg.com/a/Tiles103",
+      "download": "https://ambientcg.com/get?file=Tiles103_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.9,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#ccccde",
+      "meanLinear": [
+        0.5448,
+        0.5415,
+        0.5759
+      ],
+      "meanColor": "#c3c2c8",
+      "meanRoughness": 0.1,
+      "bytes": 384592
+    },
+    "terrazzo-colour": {
+      "id": "terrazzo-colour",
+      "name": "Colourful terrazzo",
+      "source": "ambientCG",
+      "assetId": "Terrazzo013",
+      "url": "https://ambientcg.com/a/Terrazzo013",
+      "download": "https://ambientcg.com/get?file=Terrazzo013_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#dbd6d0",
+      "meanLinear": [
+        0.5855,
+        0.5845,
+        0.583
+      ],
+      "meanColor": "#c9c9c9",
+      "meanRoughness": 0.224,
+      "bytes": 168222
+    },
+    "onyx-white": {
+      "id": "onyx-white",
+      "name": "White onyx",
+      "source": "ambientCG",
+      "assetId": "Onyx015",
+      "url": "https://ambientcg.com/a/Onyx015",
+      "download": "https://ambientcg.com/get?file=Onyx015_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#ceccc9",
+      "meanLinear": [
+        0.5983,
+        0.6014,
+        0.5983
+      ],
+      "meanColor": "#cbcccb",
+      "meanRoughness": 0.044,
+      "bytes": 135268
+    },
+    "marble-beige": {
+      "id": "marble-beige",
+      "name": "Beige marble",
+      "source": "ambientCG",
+      "assetId": "Marble014",
+      "url": "https://ambientcg.com/a/Marble014",
+      "download": "https://ambientcg.com/get?file=Marble014_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#d1c4b1",
+      "meanLinear": [
+        0.598,
+        0.5987,
+        0.597
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.07,
+      "bytes": 198868
+    },
+    "woodchip-wallpaper": {
+      "id": "woodchip-wallpaper",
+      "name": "Woodchip wallpaper",
+      "source": "ambientCG",
+      "assetId": "Wallpaper001A",
+      "url": "https://ambientcg.com/a/Wallpaper001A",
+      "download": "https://ambientcg.com/get?file=Wallpaper001A_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#e0e1dc",
+      "meanLinear": [
+        0.6037,
+        0.6037,
+        0.6037
+      ],
+      "meanColor": "#cccccc",
+      "meanRoughness": 0.657,
+      "bytes": 228316
+    },
+    "painted-plaster": {
+      "id": "painted-plaster",
+      "name": "Rough painted plaster",
+      "source": "ambientCG",
+      "assetId": "PaintedPlaster017",
+      "url": "https://ambientcg.com/a/PaintedPlaster017",
+      "download": "https://ambientcg.com/get?file=PaintedPlaster017_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#bebfbb",
+      "meanLinear": [
+        0.6033,
+        0.6034,
+        0.6029
+      ],
+      "meanColor": "#cccccc",
+      "meanRoughness": 0.517,
+      "bytes": 316830
+    },
+    "leather-smooth": {
+      "id": "leather-smooth",
+      "name": "Smooth leather",
+      "source": "ambientCG",
+      "assetId": "Leather027",
+      "url": "https://ambientcg.com/a/Leather027",
+      "download": "https://ambientcg.com/get?file=Leather027_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.5,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#101010",
+      "meanLinear": [
+        0.3838,
+        0.3838,
+        0.3835
+      ],
+      "meanColor": "#a6a6a6",
+      "meanRoughness": 0.451,
+      "bytes": 425648
+    },
+    "carpet-plain": {
+      "id": "carpet-plain",
+      "name": "Plain carpet",
+      "source": "ambientCG",
+      "assetId": "Carpet012",
+      "url": "https://ambientcg.com/a/Carpet012",
+      "download": "https://ambientcg.com/get?file=Carpet012_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#3d424f",
+      "meanLinear": [
+        0.1618,
+        0.1654,
+        0.169
+      ],
+      "meanColor": "#707172",
+      "meanRoughness": 0.88,
+      "bytes": 1201398
+    },
+    "wicker-fine": {
+      "id": "wicker-fine",
+      "name": "Fine wicker",
+      "source": "ambientCG",
+      "assetId": "Wicker005",
+      "url": "https://ambientcg.com/a/Wicker005",
+      "download": "https://ambientcg.com/get?file=Wicker005_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.4,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#8b6b50",
+      "meanLinear": [
+        0.5986,
+        0.5998,
+        0.597
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.603,
+      "bytes": 609414
     }
   }
 }

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { isAssetHidden } from '@/data/assets/catalog';
+import { useAssetModelsVersion } from './assetModels';
 import * as THREE from 'three';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -206,6 +208,14 @@ function WallMesh({
             }
           : undefined
       }
+      onContextMenu={
+        onPick
+          ? (e: ThreeEvent<MouseEvent>) => {
+              e.stopPropagation();
+              onPick('wall', g.wall.id, e);
+            }
+          : undefined
+      }
     />
   );
 }
@@ -244,6 +254,14 @@ function WallExtrasNode({
             }
           : undefined
       }
+      onContextMenu={
+        onPick
+          ? (e: ThreeEvent<MouseEvent>) => {
+              e.stopPropagation();
+              onPick('wall', g.wall.id, e);
+            }
+          : undefined
+      }
     />
   );
 }
@@ -267,8 +285,9 @@ function ObjectNode({ obj, ctx, modelsVersion, onPick, onPointerDown }: {
   onPointerDown?: SceneOptions['onObjectPointerDown'];
 }) {
   const packs = usePackVersion();
+  const assetModels = useAssetModelsVersion();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const group = useMemo(() => buildObject(obj, ctx), [obj, modelsVersion, ctx.shadows, ctx.project.customAssets, packs]);
+  const group = useMemo(() => buildObject(obj, ctx), [obj, modelsVersion, ctx.shadows, ctx.project.customAssets, packs, assetModels]);
   return (
     <primitive
       object={group}
@@ -276,6 +295,14 @@ function ObjectNode({ obj, ctx, modelsVersion, onPick, onPointerDown }: {
         onPick
           ? (e: ThreeEvent<MouseEvent>) => {
               if (e.delta > 4) return;
+              e.stopPropagation();
+              onPick('object', obj.id, e);
+            }
+          : undefined
+      }
+      onContextMenu={
+        onPick
+          ? (e: ThreeEvent<MouseEvent>) => {
               e.stopPropagation();
               onPick('object', obj.id, e);
             }
@@ -374,6 +401,14 @@ function OpeningNode({ g, spanId, project, ctx, cut, onPick }: { g: WallGeometry
             }
           : undefined
       }
+      onContextMenu={
+        onPick
+          ? (e: ThreeEvent<MouseEvent>) => {
+              e.stopPropagation();
+              onPick('opening', o.id, e);
+            }
+          : undefined
+      }
     />
   );
 }
@@ -406,6 +441,14 @@ function RoomSlabs({ derived, ctx, showCeilings, onPick }: { derived: DerivedPla
             onPick && m.userData.id
               ? (e: ThreeEvent<MouseEvent>) => {
                   if (e.delta > 4) return;
+                  e.stopPropagation();
+                  onPick('room', m.userData.id as string, e);
+                }
+              : undefined
+          }
+          onContextMenu={
+            onPick && m.userData.id
+              ? (e: ThreeEvent<MouseEvent>) => {
                   e.stopPropagation();
                   onPick('room', m.userData.id as string, e);
                 }
@@ -538,8 +581,8 @@ export function SceneContent({ project, derived, registry, options }: { project:
   const hubMat = registry.get(project, 'plaster-white');
   const objects = Object.values(project.objects).filter((o) => {
     if (o.hidden || !project.layers.furniture.visible) return false;
-    const cat = getAsset(project, o.assetId)?.category;
-    return !cat || !options.hiddenCategories.includes(cat);
+    // Lights of hidden items still shine (LampLights reads every object).
+    return !isAssetHidden(getAsset(project, o.assetId), options.hiddenCategories);
   });
   return (
     <group name="neest-plan">

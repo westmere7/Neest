@@ -9,11 +9,18 @@ import { usePackVersion } from '@/packs/events';
 import { useProjectStore } from '@/state/projectStore';
 import type { PreviewHandle } from '@/features/scene-3d/objectPreview';
 import { AssetPlanThumb } from './LibraryPanel';
+import { PlantCare } from './PlantCare';
+import { VariantSwatches } from './VariantSwatches';
+import { variantDefs, variantsFor } from './variantChoice';
+import { useEditorStore } from '@/state/editorStore';
+import { usePrefsStore } from '@/state/uiStores';
+import type { AssetVariant } from '@/data/assets/variants';
 import { useAssetThumbnail } from './thumbnails';
 
 /**
- * Library hover card: a bigger (live 3D) preview, size, source, description and brand details of
- * the furniture card under the pointer, beside the library panel.
+ * Library hover card: a bigger (live 3D) preview, colour variant swatches, size, source, description,
+ * brand details and plant care guide of the furniture card under the pointer, beside the library panel.
+ * Picking a swatch shows that variant in the preview and places new items in it.
  *
  * It opens after a short hover with a mouse or pen (never on touch), or when a card gets keyboard
  * focus, and closes on leave, blur, scroll, Esc, click or drag. Moving to the next card while one
@@ -184,9 +191,20 @@ type PreviewState = 'loading' | 'ok' | 'fallback';
  * the item at its default size. The cached library thumbnail shows until the model is ready, and
  * stays when 3D isn't available.
  */
+/** The variant chosen for an asset in the library (re-renders when the choice or the saved variants change). */
+function useChosenVariant(asset: AssetDefinition): { variants: AssetVariant[]; chosen: AssetVariant | undefined } {
+  const choice = useEditorStore((s) => s.variantChoice[asset.id]);
+  const saved = usePrefsStore((s) => s.assetVariants[asset.id]);
+  usePackVersion();
+  const variants = variantsFor(asset, saved);
+  return { variants, chosen: variants.find((v) => v.id === choice) };
+}
+
 function InfoPreview({ asset }: { asset: AssetDefinition }) {
   const project = useProjectStore((s) => s.project!);
   const packs = usePackVersion();
+  const { chosen } = useChosenVariant(asset);
+  const variantKey = chosen ? chosen.id : '';
   const [hostRef, thumb] = useAssetThumbnail<HTMLDivElement>(asset);
   const [handle, setHandle] = useState<PreviewHandle | null>(null);
   const [state, setState] = useState<PreviewState>('loading');
@@ -219,13 +237,18 @@ function InfoPreview({ asset }: { asset: AssetDefinition }) {
     if (!handle) return;
     let alive = true;
     setState('loading');
-    void handle.showAsset(asset, latest.current).then((r) => {
+    // A saved variant may carry project-only materials: resolve them through a project copy.
+    const defs = chosen ? variantDefs(asset, chosen.id) : undefined;
+    const p = defs ? { ...latest.current, materials: { ...defs, ...latest.current.materials } } : latest.current;
+    void handle.showAsset(asset, p, chosen?.materials ?? {}).then((r) => {
       if (alive && r !== 'stale') setState(r);
     });
     return () => {
       alive = false;
     };
-  }, [handle, asset, materials, packs]);
+    // The chosen variant is identified by its key; its object is rebuilt on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handle, asset, materials, packs, variantKey]);
 
   return (
     <div ref={hostRef} className={`aic-preview is-${state}`} aria-hidden>
@@ -279,6 +302,33 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+/** Colour variant swatches; picking one arms the place tool with it (the next item placed uses it). */
+function InfoVariants({ asset }: { asset: AssetDefinition }) {
+  const { variants, chosen } = useChosenVariant(asset);
+  if (variants.length < 2) return null;
+  const current = chosen ?? variants[0];
+  return (
+    <div className="aic-variants">
+      <VariantSwatches
+        variants={variants}
+        selected={current.id}
+        onPick={(v) => {
+          // Picking a variant also arms the place tool with this item; the card stays open.
+          const ed = useEditorStore.getState();
+          ed.set({
+            variantChoice: { ...ed.variantChoice, [asset.id]: v.id },
+            tool: 'place',
+            placeAssetId: asset.id,
+            placeRotation: 0,
+            workspace: ed.workspace === 'walk' ? '3d' : ed.workspace,
+          });
+        }}
+      />
+      <div className="vs-caption">{current.name}</div>
+    </div>
+  );
+}
+
 function InfoBody({ asset }: { asset: AssetDefinition }) {
   const units = useProjectStore((s) => s.project!.settings.units);
   const src = sourceOf(asset);
@@ -292,6 +342,7 @@ function InfoBody({ asset }: { asset: AssetDefinition }) {
           {asset.group} · {ASSET_CATEGORY_LABELS[asset.category]}
         </span>
       </header>
+      <InfoVariants asset={asset} />
       {asset.description && <p className="aic-desc">{asset.description}</p>}
       {brand && (
         <section className="aic-brand" aria-label={`${brand.name} product`}>
@@ -319,6 +370,7 @@ function InfoBody({ asset }: { asset: AssetDefinition }) {
           )}
         </section>
       )}
+      {asset.plant && <PlantCare plant={asset.plant} units={units} className="aic-plant" />}
       <dl className="aic-rows">
         <Row label="Size">
           <span className="num">{sizeText(asset.defaultSize, units)}</span>

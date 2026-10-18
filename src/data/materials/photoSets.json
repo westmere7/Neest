@@ -39,6 +39,22 @@
     { "id": "jute-weave", "name": "Jute basket weave", "source": "ambientcg", "assetId": "Wicker001", "size": 0.3, "resolution": 1024 },
     { "id": "rattan", "name": "Rattan weave", "source": "ambientcg", "assetId": "Wicker010A", "size": 0.5, "resolution": 1024 },
     { "id": "cork", "name": "Cork", "source": "ambientcg", "assetId": "Cork002", "size": 0.5, "resolution": 1024 },
-    { "id": "brushed-metal", "name": "Brushed metal", "source": "ambientcg", "assetId": "Metal009", "size": 1.0, "resolution": 1024 }
+    { "id": "brushed-metal", "name": "Brushed metal", "source": "ambientcg", "assetId": "Metal009", "size": 1.0, "resolution": 1024 },
+    { "id": "versailles-parquet", "name": "Versailles parquet", "source": "ambientcg", "assetId": "WoodFloor055", "size": 2.0, "resolution": 1024 },
+    { "id": "dark-oak-planks", "name": "Dark oak planks", "source": "ambientcg", "assetId": "WoodFloor064", "size": 2.0, "resolution": 1024 },
+    { "id": "herringbone-dark", "name": "Dark herringbone", "source": "ambientcg", "assetId": "WoodFloor014", "size": 1.6, "resolution": 1024 },
+    { "id": "basketweave-parquet", "name": "Basketweave parquet", "source": "ambientcg", "assetId": "WoodFloor070", "size": 1.5, "resolution": 1024 },
+    { "id": "diagonal-parquet", "name": "Diagonal parquet", "source": "polyhaven", "assetId": "diagonal_parquet", "size": 2.36, "resolution": 1024 },
+    { "id": "bamboo-panel", "name": "Bamboo panel", "source": "ambientcg", "assetId": "Bamboo001B", "size": 1.2, "resolution": 1024 },
+    { "id": "azulejo-border", "name": "Painted tiles (border)", "source": "ambientcg", "assetId": "Tiles101", "size": 0.9, "resolution": 1024 },
+    { "id": "azulejo-floral", "name": "Painted tiles (floral)", "source": "ambientcg", "assetId": "Tiles103", "size": 0.9, "resolution": 1024 },
+    { "id": "terrazzo-colour", "name": "Colourful terrazzo", "source": "ambientcg", "assetId": "Terrazzo013", "size": 1.0, "resolution": 1024 },
+    { "id": "onyx-white", "name": "White onyx", "source": "ambientcg", "assetId": "Onyx015", "size": 2.0, "resolution": 1024 },
+    { "id": "marble-beige", "name": "Beige marble", "source": "ambientcg", "assetId": "Marble014", "size": 2.0, "resolution": 1024 },
+    { "id": "woodchip-wallpaper", "name": "Woodchip wallpaper", "source": "ambientcg", "assetId": "Wallpaper001A", "size": 1.0, "resolution": 1024 },
+    { "id": "painted-plaster", "name": "Rough painted plaster", "source": "ambientcg", "assetId": "PaintedPlaster017", "size": 2.0, "resolution": 1024 },
+    { "id": "leather-smooth", "name": "Smooth leather", "source": "ambientcg", "assetId": "Leather027", "size": 0.5, "resolution": 1024 },
+    { "id": "carpet-plain", "name": "Plain carpet", "source": "ambientcg", "assetId": "Carpet012", "size": 1.0, "resolution": 1024 },
+    { "id": "wicker-fine", "name": "Fine wicker", "source": "ambientcg", "assetId": "Wicker005", "size": 0.4, "resolution": 1024 }
   ]
 }

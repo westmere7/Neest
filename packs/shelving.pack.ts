@@ -9,6 +9,7 @@
  * Pack patterns: oak veneer grain, powder-coat stipple, woven basket and pegboard holes.
  */
 import {
+  PLANT_SPECIES,
   bookRow,
   box,
   clamp,
@@ -1462,10 +1463,12 @@ const bookLadderLibrary = defineItem({
 const plantStandTiered = defineItem({
   id: 'plant-stand-tiered',
   name: 'Tiered plant stand',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Indoor plants',
+  plant: PLANT_SPECIES['tiered-stand-mix'],
   tags: ['plant stand', 'plant ladder', 'tiered', 'pots', 'houseplants', 'plant shelf'],
+  description: 'An oak tiered plant stand with terracotta pots of pothos, a baby rubber plant and a snake plant.',
   defaultSize: { w: 0.8, d: 0.35, h: 0.9 },
   minSize: { w: 0.45, d: 0.25, h: 0.5 },
   maxSize: { w: 1.4, d: 0.5, h: 1.4 },

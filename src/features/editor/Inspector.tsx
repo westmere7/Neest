@@ -26,6 +26,9 @@ import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
 import { ObjectPreview } from './ObjectPreview';
+import { PlantCare } from '@/features/library/PlantCare';
+import { OpeningFinishes, OpeningToolFinish } from './OpeningFinishes';
+import { ObjectVariants } from './ObjectVariants';
 
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
   useProjectStore.getState().execute(label, fn);
@@ -454,6 +457,7 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
         </Section>
       )}
       <Section title="Finishes">
+        <OpeningFinishes project={project} openingId={openingId} />
         <MaterialSlotRow label="Frame" target={{ kind: 'opening-frame', openingId }} materialId={o.frameMaterialId} />
         {!isPassageKind(o.kind) && (
           <MaterialSlotRow label={win ? 'Glazing' : 'Door leaf'} target={{ kind: 'opening-panel', openingId }} materialId={o.panelMaterialId} />
@@ -497,9 +501,15 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
             {asset.pack.author ? ` by ${asset.pack.author}` : ''} · {asset.source.license}
           </p>
         )}
+        {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
       </Section>
+      {asset?.plant && (
+        <Section title="Plant care">
+          <PlantCare plant={asset.plant} units={u.units} details />
+        </Section>
+      )}
       <Section title="Size">
-        {locked && <p className="notice">Locked — unlock to move or resize.</p>}
+        {locked &&<p className="notice">Locked — unlock to move or resize.</p>}
         <div className="grid-3">
           <LengthField label="Width" value={o.width} unit={u.units} precision={u.precision} min={min.w} max={max.w} disabled={locked || asset?.resizable.w === false} testId="object-width" onCommit={(v) => upd('Resize object', { width: v })} />
           <LengthField label="Depth" value={o.depth} unit={u.units} precision={u.precision} min={min.d} max={max.d} disabled={locked || asset?.resizable.d === false} onCommit={(v) => upd('Resize object', { depth: v })} />
@@ -741,6 +751,11 @@ function OpeningToolOptions() {
       {!isPassageKind(kind) && (
         <Section title={win ? 'Window design' : 'Door design'}>
           <OpeningDesignGrid kind={kind} value={design} onPick={(d) => useEditorStore.getState().set(win ? { windowDesign: d } : { doorDesign: d })} />
+        </Section>
+      )}
+      {!isPassageKind(kind) && (
+        <Section title={win ? 'Window finish' : 'Door finish'}>
+          <OpeningToolFinish kind={kind} />
         </Section>
       )}
     </>

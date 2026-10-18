@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { openContextMenu } from '@/components/ContextMenu';
+import { planContextMenuItems } from '@/features/plan-2d/contextMenu';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
@@ -19,9 +21,9 @@ import {
 import type { PlacedObject, Project, RenderSettings, WallDisplay } from '@/domain/model/schema';
 import { derivePlan, type DerivedPlan } from '@/domain/geometry/derive';
 import { round } from '@/domain/geometry/vec';
-import { addCameraPreset, deleteCameraPreset, updateCameraPreset } from '@/domain/commands/entities';
+import { addCameraPreset, deleteCameraPreset, updateCameraPreset, withGroupMates } from '@/domain/commands/entities';
 import { getAsset } from '@/data/assets/registry';
-import { ASSET_CATEGORY_LABELS, ASSET_CATEGORY_ORDER } from '@/data/assets/catalog';
+import { ASSET_CATEGORY_LABELS, ASSET_CATEGORY_ORDER, CEILING_CATEGORY } from '@/data/assets/catalog';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { toast, useDialogStore } from '@/state/uiStores';
@@ -294,6 +296,9 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
       const hit = new THREE.Vector3();
       if (!e.ray.intersectPlane(plane, hit)) return;
       const offset = { x: obj.x - hit.x, y: obj.y - hit.z };
+      // Grouped items move together (no wall hugging for a group).
+      const mates = withGroupMates(latest.current.project, [obj.id]).filter((id) => !latest.current.project.objects[id]?.locked);
+      const starts = Object.fromEntries(mates.map((id) => [id, { x: latest.current.project.objects[id].x, y: latest.current.project.objects[id].y }]));
       const raycaster = new THREE.Raycaster();
       const el = live.gl.domElement;
       let started = false;
@@ -318,7 +323,7 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
         }
         const asset = getAsset(pr, obj.assetId);
         let rotation = obj.rotation;
-        if (asset && (asset.wallSnap || asset.mount === 'wall') && !ev.altKey) {
+        if (asset && mates.length < 2 && (asset.wallSnap || asset.mount === 'wall') && !ev.altKey) {
           const h = hugWall(dv, { x, y }, obj.depth, asset.mount === 'wall' ? 0.6 : 0.25);
           if (h) {
             x = h.x;
@@ -327,6 +332,16 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
           }
         }
         useProjectStore.getState().preview((dr) => {
+          if (mates.length > 1) {
+            for (const id of mates) {
+              const m = dr.objects[id];
+              if (m) {
+                m.x = starts[id].x + (x - obj.x);
+                m.y = starts[id].y + (y - obj.y);
+              }
+            }
+            return;
+          }
           const o = dr.objects[obj.id];
           if (o) {
             o.x = x;
@@ -394,10 +409,25 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
   const drawing = !walk && workspace === '3d' && tool !== 'select' && tool !== 'pan';
   const drag = useObjectDrag(project, derived, !walk && !drawing);
   const selectedIds = useMemo(() => new Set(selection.map((s) => s.id)), [selection]);
+  // Right-click: the same menu as in the plan, for the item under the pointer (not after a right-drag orbit/pan).
+  const rightDown = useRef<{ x: number; y: number } | null>(null);
+  const menuShown = useRef(0);
+  const rightDragged = (ev: MouseEvent) => !!rightDown.current && Math.hypot(ev.clientX - rightDown.current.x, ev.clientY - rightDown.current.y) > 5;
   const onPick = useCallback<NonNullable<SceneOptions['onPick']>>((kind, id, e) => {
     if (hitsGizmo(e)) return; // the transform gizmo owns this pointer
     const ed = useEditorStore.getState();
     const item = { kind, id } as const;
+    if (e.nativeEvent.type === 'contextmenu') {
+      e.nativeEvent.preventDefault();
+      if (rightDragged(e.nativeEvent)) return;
+      if (!ed.selection.some((s) => s.id === id)) ed.setSelection([item]);
+      const items = planContextMenuItems(item, { x: e.point.x, y: e.point.z });
+      if (items.length) {
+        menuShown.current = e.nativeEvent.timeStamp;
+        openContextMenu(e.nativeEvent.clientX, e.nativeEvent.clientY, items);
+      }
+      return;
+    }
     if (e.shiftKey) ed.toggleSelection(item);
     else ed.setSelection([item]);
   }, []);
@@ -445,6 +475,16 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
     <div
       className="scene3d"
       data-testid="scene-3d"
+      onPointerDown={(e) => {
+        if (e.button === 2) rightDown.current = { x: e.clientX, y: e.clientY };
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        // An item already opened its menu for this click; otherwise offer the empty-space menu.
+        if (walk || drawing || menuShown.current === e.nativeEvent.timeStamp || rightDragged(e.nativeEvent)) return;
+        const items = planContextMenuItems(null, { x: 0, y: 0 });
+        if (items.length) openContextMenu(e.clientX, e.clientY, items);
+      }}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes('application/x-neest-asset')) {
           e.preventDefault();
@@ -854,6 +894,25 @@ function ViewPanel({
           <section>
             <h3>Show categories</h3>
             <div className="chips">
+              {(() => {
+                const hidden = r.hiddenCategories.includes(CEILING_CATEGORY);
+                return (
+                  <button
+                    type="button"
+                    className={`chip chip-special${hidden ? '' : ' on'}`}
+                    aria-pressed={!hidden}
+                    title="Ceiling-mounted items in every room (pendants, ceiling lights, fans). Their light stays on when hidden."
+                    data-testid="category-ceiling"
+                    onClick={() =>
+                      setRender(hidden ? 'Show ceiling items' : 'Hide ceiling items', {
+                        hiddenCategories: hidden ? r.hiddenCategories.filter((x) => x !== CEILING_CATEGORY) : [...r.hiddenCategories, CEILING_CATEGORY],
+                      })
+                    }
+                  >
+                    Ceiling
+                  </button>
+                );
+              })()}
               {ASSET_CATEGORY_ORDER.map((c) => {
                 const hidden = r.hiddenCategories.includes(c);
                 return (

@@ -11,7 +11,7 @@ export const THUMB_VERSION = 1;
 const cache = new WeakMap<AssetDefinition, string>();
 
 /** 64-bit FNV-1a style hash as 16 hex chars (two 32-bit lanes with different seeds). */
-function hash(text: string): string {
+export function fingerprintHash(text: string): string {
   let a = 0x811c9dc5;
   let b = 0x01000193 ^ 0x5bd1e995;
   for (let i = 0; i < text.length; i++) {
@@ -44,7 +44,7 @@ export function thumbFingerprint(asset: AssetDefinition): string | null {
     const pattern = m?.texture ? patternInfo(m.texture.patternId) : undefined;
     return { slot: s.id, id: s.defaultMaterial, m: m ?? null, draw: pattern ? String(pattern.draw) : null };
   });
-  const fp = hash(JSON.stringify({ v: THUMB_VERSION, size: asset.defaultSize, parts, materials }, round));
+  const fp = fingerprintHash(JSON.stringify({ v: THUMB_VERSION, size: asset.defaultSize, parts, materials, model: asset.model?.hash ?? null }, round));
   cache.set(asset, fp);
   return fp;
 }

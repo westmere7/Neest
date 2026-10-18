@@ -5,7 +5,9 @@ import { getAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { usePrefsStore } from '@/state/uiStores';
+import { placementMaterials } from '@/features/library/variantChoice';
 import { placementFor } from '@/features/plan-2d/tools/placeTools';
+import { placeSavedGroup, savedGroupFromDragId } from '@/features/editor/groups';
 
 /** Places an asset dropped from the library onto the plan (with wall snapping). */
 export function useDropAsset() {
@@ -14,6 +16,8 @@ export function useDropAsset() {
       const { assetId, x, y } = (e as CustomEvent<{ assetId: string; x: number; y: number }>).detail;
       const project = useProjectStore.getState().project;
       if (!project) return;
+      const group = savedGroupFromDragId(assetId);
+      if (group) return placeSavedGroup(group, { x, y });
       const asset = getAsset(project, assetId);
       if (!asset) return;
       const env = {
@@ -32,6 +36,7 @@ export function useDropAsset() {
           depth: asset.defaultSize.d,
           height: asset.defaultSize.h,
           elevation: asset.defaultElevation,
+          materials: placementMaterials(d, asset),
         }),
       );
       usePrefsStore.getState().pushRecentAsset(asset.id);

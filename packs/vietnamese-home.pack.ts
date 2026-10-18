@@ -10,6 +10,7 @@
  * brocade and split bamboo slats.
  */
 import {
+  PLANT_SPECIES,
   circle,
   clamp,
   cushion,
@@ -1007,10 +1008,12 @@ const nonLa = defineItem({
 const kumquat = defineItem({
   id: 'kumquat-tree',
   name: 'Tết kumquat tree',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
   group: 'Trees',
+  plant: PLANT_SPECIES['citrus-japonica-kumquat'],
   tags: ['kumquat', 'quat', 'tet', 'lunar new year', 'li xi', 'red envelope', 'fruit tree', 'vietnamese', 'lucky'],
+  description: 'A Tết kumquat tree (cây quất) laden with orange fruit and hung with red lì xì envelopes, in a brown-glazed pot.',
   defaultSize: { w: 0.85, d: 0.85, h: 1.35 },
   minSize: { w: 0.45, d: 0.45, h: 0.7 },
   maxSize: { w: 1.4, d: 1.4, h: 2.2 },
@@ -1092,10 +1095,12 @@ const kumquat = defineItem({
 const peachBlossom = defineItem({
   id: 'peach-blossom',
   name: 'Peach blossom branches in vase',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
-  group: 'Indoor plants',
+  group: 'Cut & dried flowers',
+  plant: PLANT_SPECIES['cut-peach-blossom'],
   tags: ['peach blossom', 'hoa dao', 'tet', 'lunar new year', 'branches', 'pink', 'vase', 'vietnamese', 'spring'],
+  description: 'Tết peach blossom branches (hoa đào) in pink bloom with red lì xì envelopes, in a Bát Tràng crackle-glaze vase.',
   defaultSize: { w: 0.75, d: 0.55, h: 1.5 },
   minSize: { w: 0.4, d: 0.3, h: 0.8 },
   maxSize: { w: 1.4, d: 1.0, h: 2.4 },
@@ -1264,10 +1269,12 @@ const bambooBlind = defineItem({
 const lotusBowl = defineItem({
   id: 'lotus-pond-bowl',
   name: 'Lotus bowl',
-  category: 'decor',
+  category: 'plants',
   type: 'plants',
-  group: 'Indoor plants',
+  group: 'Outdoor plants',
+  plant: PLANT_SPECIES['nelumbo-nucifera'],
   tags: ['lotus', 'hoa sen', 'water plant', 'bowl', 'pond', 'ceramic', 'vietnamese', 'national flower'],
+  description: 'A dwarf bowl lotus (hoa sen) with round leaves and pink flowers above the water, in a Bát Tràng crackle-glaze bowl.',
   defaultSize: { w: 0.6, d: 0.6, h: 0.75 },
   minSize: { w: 0.35, d: 0.35, h: 0.35 },
   maxSize: { w: 1.2, d: 1.2, h: 1.3 },

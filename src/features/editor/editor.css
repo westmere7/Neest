@@ -573,6 +573,11 @@
 [data-theme='dark'] .chip.on {
   color: var(--accent);
 }
+/* A filter across rooms (e.g. Ceiling): outlined so it reads differently from the room chips. */
+.chip.chip-special {
+  outline: 1px dashed var(--border-strong);
+  outline-offset: -1px;
+}
 .chips {
   display: flex;
   flex-wrap: wrap;

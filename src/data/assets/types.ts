@@ -26,7 +26,9 @@ export type AssetCategory =
   | 'storage'
   | 'lighting'
   | 'decor'
+  | 'plants'
   | 'electronics'
+  | 'people'
   | 'generic'
   | 'custom';
 
@@ -44,6 +46,7 @@ export type AssetType =
   | 'electronics'
   | 'activities'
   | 'kids'
+  | 'people'
   | 'structure'
   | 'misc';
 
@@ -117,6 +120,24 @@ export interface AssetDefinition {
   description?: string;
   /** Set for models of a real, branded product (shown in the library's info card). */
   brand?: AssetBrand;
+  /** Care and placement guide for plants (shown in the library's info card and the Inspector). */
+  plant?: PlantInfo;
+  /**
+   * Hand-made colour variants (outfits, finish sets) offered instead of the automatic themes.
+   * `materials` maps slot id → material id for the slots that differ from the defaults.
+   */
+  variants?: AssetPresetVariant[];
+  /**
+   * A shipped mesh (GLB in public/, one mesh per slot, named by slot id) shown in 3D and thumbnails
+   * once loaded, fitted uniformly into the item box. `build` still gives the 2D footprint and the
+   * fallback while the file loads or when it is missing.
+   */
+  model?: AssetModel;
+  /**
+   * Id of the asset this one is a version of (with or without props: books, tableware…). The
+   * library lists it right after that asset.
+   */
+  variantOf?: string;
   /** Placement behaviour: snap the back (-z) against walls when placed nearby. */
   wallSnap?: boolean;
   source: { name: string; license: string };
@@ -152,6 +173,22 @@ export interface AssetLight {
 }
 
 /** A real product an asset models: maker, model number and its published specs. */
+/** A shipped mesh for an asset (see `AssetDefinition.model`). */
+export interface AssetModel {
+  /** Path under public/, e.g. "models/people/woman-standing.glb". */
+  url: string;
+  /** Content hash (changes re-render thumbnails and bust caches). */
+  hash: string;
+}
+
+/** A hand-made colour variant of an asset (see `AssetDefinition.variants`). */
+export interface AssetPresetVariant {
+  /** Lowercase id, unique within the asset. */
+  id: string;
+  name: string;
+  materials: Record<string, string>;
+}
+
 export interface AssetBrand {
   /** Maker, e.g. "Bosch". */
   name: string;
@@ -163,6 +200,65 @@ export interface AssetBrand {
   url?: string;
   /** Published specs as label/value pairs, e.g. ["Place settings", "13"]. */
   specs?: [string, string][];
+}
+
+/** Light a plant wants, brightest first: direct sun → bright indirect → medium → low light. */
+export type PlantLight = 'direct-sun' | 'bright-indirect' | 'medium' | 'low';
+export type PlantDifficulty = 'easy' | 'moderate' | 'demanding';
+export type PlantGrowth = 'slow' | 'moderate' | 'fast';
+
+/**
+ * Care and placement guide for a houseplant. Temperatures are °C, sizes metres (both are shown in
+ * the project's units). Text fields are short phrases, one line each in the info card.
+ */
+export interface PlantInfo {
+  /**
+   * 'living' (default) is a growing plant; 'cut' flowers and branches in water, 'dried' stems and
+   * 'preserved' moss last a while instead of growing (`vaseLife`).
+   */
+  form?: 'living' | 'cut' | 'dried' | 'preserved';
+  /** How long cut, dried or preserved material lasts, e.g. "7–10 days" (required for those forms). */
+  vaseLife?: string;
+  /** Botanical name, e.g. "Ficus lyrata" or "Epipremnum aureum 'Golden'"; a mixed planting lists each species. */
+  botanical: string;
+  /** Plant family, e.g. "Moraceae". */
+  family: string;
+  /** Other common names, e.g. "Devil's ivy". */
+  aka?: string;
+  /** Light levels it does well in, best first. */
+  light: PlantLight[];
+  /** Where to stand it: window aspect and distance, e.g. "Within 1 m of an east or west window". */
+  spot: string;
+  /** What to keep it away from: radiators, draughts, cold glass, full midday sun… */
+  avoid: string;
+  /** Rooms that suit it, e.g. ["Living room", "Bathroom"]. */
+  rooms: string[];
+  water: {
+    /** How often in the growing season (spring–summer), e.g. "Every 7–10 days". */
+    summer: string;
+    /** How often in autumn–winter. */
+    winter: string;
+    /** How to tell it needs water, e.g. "Top 5 cm of soil dry; pot feels light". */
+    sign: string;
+  };
+  humidity: { level: 'low' | 'average' | 'high'; note: string };
+  /** Comfortable range and the lowest it tolerates, °C. */
+  temperature: { min: number; max: number; lowest: number };
+  /** Potting mix and drainage. */
+  soil: string;
+  /** When and how to repot. */
+  repot: string;
+  /** Feeding schedule. */
+  feed: string;
+  /** Typical mature size indoors as [from, to] metres (stem length and spread of an arrangement). */
+  height: [number, number];
+  spread: [number, number];
+  growth: PlantGrowth;
+  /** Cats and dogs: safe (non-toxic) or toxic, with what happens. */
+  pets: { safe: boolean; note: string };
+  difficulty: PlantDifficulty;
+  /** One practical tip. */
+  tip?: string;
 }
 
 export interface AssetPackInfo {

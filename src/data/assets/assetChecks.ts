@@ -190,11 +190,27 @@ export function describeAssetChecks(assets: AssetDefinition[]): void {
 
     it('declares 1–4 unique material slots backed by catalogue materials', () => {
       expect(asset.slots.length).toBeGreaterThanOrEqual(1);
-      expect(asset.slots.length).toBeLessThanOrEqual(4);
+      // People may also have shoes and outfit-detail slots (6).
+      expect(asset.slots.length).toBeLessThanOrEqual(asset.type === 'people' ? 6 : 4);
       expect(slotIds.size).toBe(asset.slots.length);
       for (const s of asset.slots) {
         expect(s.label.trim(), s.id).not.toBe('');
         expect(MATERIAL_CATALOG_BY_ID[s.defaultMaterial], `${s.id} → ${s.defaultMaterial}`).toBeDefined();
+      }
+    });
+
+    it('has well-formed hand-made variants', () => {
+      const ids = new Set<string>();
+      for (const v of asset.variants ?? []) {
+        expect(v.id, 'variant id').toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+        expect(ids.has(v.id), `duplicate variant ${v.id}`).toBe(false);
+        ids.add(v.id);
+        expect(v.name.trim(), v.id).not.toBe('');
+        expect(Object.keys(v.materials).length, `${v.id} changes no slot`).toBeGreaterThan(0);
+        for (const [slot, m] of Object.entries(v.materials)) {
+          expect(slotIds.has(slot), `${v.id}: unknown slot ${slot}`).toBe(true);
+          expect(MATERIAL_CATALOG_BY_ID[m], `${v.id}: ${slot} → ${m}`).toBeDefined();
+        }
       }
     });
 

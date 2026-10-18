@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { loadAssetModel } from './assetModels';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { PlacedObject, Project } from '@/domain/model/schema';
 import { getAsset } from '@/data/assets/registry';
@@ -95,7 +96,8 @@ export interface PreviewHandle {
   /** Builds and shows an object (rebuild after size/material edits). Resolves 'fallback' when it can't be shown in 3D. */
   show(obj: PlacedObject, project: Project): Promise<PreviewResult>;
   /** Shows a library asset at its default size with its default materials. */
-  showAsset(asset: AssetDefinition, project: Project): Promise<PreviewResult>;
+  /** An asset at its default size, optionally in a colour variant (slot → material id). */
+  showAsset(asset: AssetDefinition, project: Project, materials?: Record<string, string>): Promise<PreviewResult>;
   /** Stops rendering and releases the canvas (the renderer itself is kept for the next preview). */
   detach(): void;
 }
@@ -174,6 +176,10 @@ class Controller implements PreviewHandle {
       if (!model) return this.noModel();
       customModels.set(custom.blobId, model);
     }
+    if (asset.model) {
+      await loadAssetModel(asset);
+      if (token !== this.token || !this.attached) return 'stale';
+    }
     // At the origin and unrotated: the preview turns it, the plan placement doesn't matter.
     const model = buildObject({ ...obj, x: 0, y: 0, elevation: 0, rotation: 0 }, { project, registry: sharedRegistry, customModels, shadows: false });
     const box = new THREE.Box3().setFromObject(model);
@@ -215,7 +221,7 @@ class Controller implements PreviewHandle {
     return 'fallback';
   }
 
-  showAsset(asset: AssetDefinition, project: Project): Promise<PreviewResult> {
+  showAsset(asset: AssetDefinition, project: Project, materials: Record<string, string> = {}): Promise<PreviewResult> {
     const s = asset.defaultSize;
     return this.show(
       {
@@ -230,7 +236,7 @@ class Controller implements PreviewHandle {
         depth: s.d,
         height: s.h,
         mirrored: false,
-        materials: {},
+        materials,
         locked: false,
         hidden: false,
       },

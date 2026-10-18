@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-10-17 (photo textures).
+Last updated: 2026-10-18 (houseplants with care guides, bathroom and Vietnam branded packs, materials, colour variants).
 
 ---
 
@@ -57,7 +57,8 @@ _Prompt/                 Product brief (prompt.md) and its origin (InitialPrompt
 packs/                   Content packs: one <pack-id>.pack.ts file each (README.md = authoring guide)
 projects/                Shared project folder mirrored by the dev server (README.md explains it)
 public/                  favicon (PWA icon), textures/ (CC0 photo maps + manifest.json, from `npm run textures`),
-                         thumbs/ (pre-rendered library thumbnails + manifest.json, from `npm run thumbs`)
+                         thumbs/ (pre-rendered library thumbnails + manifest.json, from `npm run thumbs`),
+                         swatches/ (pre-rendered material swatches + manifest.json, also from `npm run thumbs`)
 start-neest.bat          Windows launcher (Node check, npm install, dev server, browser)
 start-neest.command      macOS Finder double-click launcher (invokes start-neest.sh)
 start-neest.sh           macOS/Linux shell launcher (Node check, npm install, dev server, browser)
@@ -66,6 +67,7 @@ tools/
   neest-packs-plugin.ts      Vite plugin: hot-reloads the pack loader when /packs files are added/deleted
   fetch-textures.mjs     `npm run textures`: downloads/re-encodes the CC0 photo texture sets (needs sharp, dev dep)
   generate-thumbs.mjs    `npm run thumbs`: renders every library item in headless Chromium into public/thumbs
+                         and every textured material swatch into public/swatches
 src/
   main.tsx               React root (+ dev debug hooks)
   app/App.tsx            Hash router: #/ launcher, #/p/:id editor, #/guest/:id guest view
@@ -91,7 +93,8 @@ src/
   features/
     projects/            Launcher, projectService (lifecycle, autosave, repo mirroring, thumbnails),
                          thumbnails.ts (on-demand previews), demoProject (SAMPLES, apartment, studio),
-                         loftProject (100 m² stress sample), sampleHelpers (shared sample builders)
+                         loftProject (100 m² stress sample), grandApartmentProject (200 m²
+                         stress sample), sampleHelpers (shared sample builders)
     editor/              EditorPage/Shell (top bar, tool rail, status bar, canvas controls), Inspector,
                          EditorDialogs (render/export/settings/shortcuts/…), actions, useShortcuts
     plan-2d/             PlanCanvas (interactive SVG), PlanDrawing (pure renderer shared with exports),
@@ -277,6 +280,47 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   3D bridge. Keyboard: the active tool gets first refusal via `planKeyRouter`, then `useShortcuts`.
 - Typed lengths while drawing walls (`3.5`, `350cm`, `11'6"` + Enter) and room sizes (`4x3`).
 
+### Groups, right-click menus and browser keys
+
+- **Groups**:
+  - Model: `PlacedObject.groupId` plus `Project.groups` (`{ id, name }`, default `{}`, so older files load).
+  - Commands in entities.ts: `groupObjects`, `ungroupObjects`, `renameGroup`, `pruneGroups` (groups of fewer
+    than two members are dropped, e.g. after deleting) and `withGroupMates`. `duplicateEntities` gives copies a
+    new group.
+  - Selection: `features/editor/groups.ts` installs `setSelectionExpander` into the editor store, so
+    `setSelection` widens to whole groups and `toggleSelection` toggles a whole group. Marquee, 2D clicks, 3D
+    picks and menus all get this for free.
+  - Moving: the 2D drag moves the whole selection, and the 3D body-drag moves group mates too (no wall hug for a
+    group).
+  - Shortcuts: Ctrl+G groups, Ctrl+Shift+G ungroups.
+- **Saved groups**:
+  - Right-click → "Save to library as a group" stores relative positions, sizes, finishes and copies of
+    project-only materials in prefs (`savedGroups`, every project).
+  - Furniture → "Saved groups" (`features/library/SavedGroups.tsx`) shows footprint previews. Click places the
+    group in view; drag uses the asset drag channel with id `savedgroup:<id>`, handled in `useDropAsset`.
+    Placing creates a new group.
+- **Right-click menus**:
+  - Plan: `plan-2d/contextMenu.ts` builds the items, adding Group, Ungroup, Rename group and Save to library.
+  - 3D: every `onPick` site in SceneContent also fires on `contextmenu`. Scene3DView opens the same menu, or the
+    empty-space menu, and ignores the click after a right-drag orbit or pan.
+  - Library: asset cards offer Place, Place in view and Favourite; saved-group cards offer Place, Rename and Delete.
+  - App.tsx suppresses the browser's own menu except in text fields (`.allow-native-menu` opts out).
+- **Alt**: App.tsx blocks the browser default for Alt (menu focus) and for Alt+←/→/Home (history navigation).
+  `altKey` still reaches pointer handlers, so Alt keeps disabling snapping.
+- **Ceiling filter**: the special `render.hiddenCategories` entry `ceiling` (`CEILING_CATEGORY`, the dashed
+  "Ceiling" chip) hides ceiling-mounted items in every room. `isAssetHidden` applies it in 3D, the plan and the
+  guest view. Their lights keep shining because `LampLights` reads every object.
+- **Door and window finishes** (`domain/model/openingFinishes.ts`):
+  - Finish sets: 12 for doors (frame + leaf, e.g. oak, walnut, teak, gỗ lim, gỗ hương, laminates, paints) and 9 for
+    windows (frame only: uPVC, aluminium incl. Xingfa champagne and wood-grain, steel, bronze, timber).
+  - `applyOpeningFinish` keeps glass leaves.
+  - UI: swatches in the Inspector (`OpeningFinishes`, applies to all selected openings of the family) and in the
+    door/window tool options (for the next opening placed: `editor.doorFinish/windowFinish`).
+  - Users save their own under prefs `assetVariants['@door' | '@window']`.
+- **Library card size**: three densities (Large / Medium / Small), from prefs `libraryDensity` and the header
+  button, through `data-density` CSS.
+- **Hover card variants**: picking a variant also arms the place tool with that item. The card stays open.
+
 ### Walls: styles, trims, slopes and drawing tools
 - **Schema** (all optional, so old projects are unchanged):
   - `WallSegment.style`: 'solid' | 'half' | 'glass' | 'railing-glass' | 'railing-bars'.
@@ -396,8 +440,10 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 
 - **Assets** (`data/assets`): 270 procedural assets, one module per room. Each has:
   - a stable id
-  - **category** (room: living, bedroom, kids, dining, kitchen, bathroom, laundry, office, hobbies, outdoor, storage, lighting, decor, electronics, construction, generic)
-  - **type** (what it is: seating, beds, surfaces, storage, appliances, plumbing, lighting, decor, plants, electronics, activities, kids, structure, misc)
+  - **category** (room: living, bedroom, kids, dining, kitchen, bathroom, laundry, office, hobbies, outdoor, storage, lighting, decor, plants, electronics, people, construction, generic)
+  - **type** (what it is: seating, beds, surfaces, storage, appliances, plumbing, lighting, decor, plants, electronics, activities, kids, people, structure, misc)
+  - optional `variants` (hand-made colour variants that replace the automatic themes), `model` (a shipped GLB, see
+    "People and shipped models") and `variantOf` (a with/without-props version of another item, listed right after it)
   - **group** (shelf name; must be one of `ASSET_GROUPS[type]` in catalog.ts)
   - tags, default/min/max size, resizable flags, mount (floor/wall/ceiling) and default elevation
   - material slots with catalogue defaults
@@ -416,6 +462,108 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Listings are split into shelves: per room or type in "All", otherwise per group, ordered by `ASSET_GROUPS` and `groupRank`.
   - Search matches name, tags, room, type, group and pack name.
 
+### Asset rules (for anyone adding content: people and agents)
+
+`src/data/assets/assetRules.test.ts` enforces these rules. `plantInfo.test.ts`, `catalog.test.ts` (`describeAssetChecks`) and
+`src/packs/packs.test.ts` cover the rest. Break one and `npm test` fails with a message that names the item.
+
+1. **Where:** new content goes in a pack (`packs/<id>.pack.ts`, one file per collection). Edit the built-in modules
+   only to fix or improve existing items. **Never rename or remove an item id**: saved projects and samples refer to it.
+2. **Identity:** ids are lowercase kebab-case. Choose `category` (room), `type` (what it is) and `group` (a shelf
+   from `ASSET_GROUPS[type]`). Make the name specific ("Oak slatted bench", not "Bench 2"). Names must be unique within
+   a room.
+3. **Text:** every new item needs a `description` (one or two sentences, 20+ characters, saying what it looks like and
+   what it is made of) and 3+ distinct `tags` (synonyms, styles, and Vietnamese names when they are common).
+   Older items without a description are frozen in `legacyNoDescription.json`. That list may only shrink: when you
+   describe one of them, remove its id from the file.
+4. **Size:** `defaultSize` is a typical real product in metres, with realistic `minSize`/`maxSize`. Parts stay
+   inside the size box at every size, with 160 parts at most. Mark small details `plan: false`.
+5. **Slots:** 1–4 slots, labelled by what they are ("Frame", "Seat cushions", "Leaves", "Pot"). Each default is a
+   catalogue material of the right kind. Colour variants come from the label and the default material's family
+   (`variants.ts`), so a slot called "Fabric" with a wood default gets wrong variants. Check the swatches in the hover card.
+6. **Plants (all vegetation, cut or dried flowers, moss, terrariums, planted planters):**
+   - Use `category: 'plants'`, `type: 'plants'` and a Plants shelf.
+   - Set `plant: PLANT_SPECIES['<id>']`. If the species is missing, add a full guide to `plantSpecies.ts` first;
+     `checkPlantInfo` validates it.
+   - Cut, dried and preserved items need `form` and `vaseLife`.
+   - Name the actual species or cultivar ("Peace lily 'Sensation'"), not "Potted plant".
+   - Plant info is never allowed outside Plants, and plant-named items must be in Plants.
+7. **Branded items:**
+   - Only real models sold in Vietnam.
+   - Set `brand: { name, model, line?, url, specs }` with the exact model number.
+   - The item name includes the maker.
+   - Put them in a `branded-*.pack.ts` file. Every item in such a file must carry `brand`.
+   - Any item whose name mentions a known brand must carry `brand`.
+   - Branded items get no colour variants (automatic).
+8. **Materials:**
+   - Procedural patterns tile seamlessly and stay near-white unless `colored`.
+   - Photo sets go in `photoSets.json` + `PHOTOS`, then `npm run textures`. Stay under 60 MB, and every set must be used.
+9. **Thumbnails:**
+   - After adding or changing items or materials, run `npm run thumbs` and keep the files it writes:
+     `public/thumbs/` for items, `public/swatches/` for textured materials. Then the library never renders while
+     browsing.
+   - The tests fail when an item or textured material has no shipped file.
+   - Stale files are harmless: the fingerprint no longer matches, so the app renders that one at runtime. Re-run anyway.
+10. **People:** figures go in `packs/people.pack.ts` (category/type `people`) with a pose from `HUMAN_POSES` (or a new
+    one there) and outfit `variants`. After adding or changing a figure, run `npm run people` (bakes the realistic GLB)
+    and then `npm run thumbs`. `people.test.ts` fails when a figure has no model or a stale hash.
+11. **Versions of an item** (with or without props) are separate items with `variantOf`. See `packs/model-variants.pack.ts`.
+   - The test checks presence only. Fingerprints computed in Node differ from the browser's, because the SSR
+     transform rewrites pattern code.
+
+### People and shipped models
+
+- **People pack** (`packs/people.pack.ts`, category/type `people`, 39 figures): Asian sizing first. Vietnamese
+  adults are 1.56 m / 1.68 m and other East Asian adults 1.58–1.74 m; the pack also has taller and shorter adults,
+  seniors, teenagers, and children of 2, 5, 7 and 10. Six skin tones. The poses cover standing, walking, phone,
+  arms crossed, hands on hips, waving, chair, desk, eating with a rice bowl, sofa, cross-legged, seiza, hugging
+  knees, squat, lying on the back, side and front, cooking, chopping, washing up, reaching up, mirror and
+  stretching. Hand-made outfit `variants` change the top and bottoms. Sitting figures state the seat height
+  they fit.
+- **Pose system** (`data/assets/humanParts.ts`, in the kit):
+  - `HumanPose` is joint angles: body pitch/roll/yaw, torso lean/tilt/twist, head, and per limb
+    flex/abd/turn/bend/ankle, with shin/foot overrides for folded legs.
+  - `humanPoseTargets(pose)` turns a pose into frames and unit segment directions.
+  - `humanFigure(body, pose)` builds the procedural figure from anthropometric proportions (Drillis & Contini).
+  - `HUMAN_POSES` holds the ready poses.
+- **Realistic figures** (`npm run people` = `tools/bake-people.mjs` + `src/devtools/peopleBake.ts` in headless
+  Chromium):
+  - Sources: the CC0 Quaternius Ultimate Modular Men/Women GLBs (shared 62-bone rig; meshopt copies from
+    github.com/nikitapage10/models), downloaded once into the OS temp folder.
+  - The bake measures stature in a straightened standing pose, scales to the figure's stature (children: head
+    bone scaled up, legs down), and aims each bone along `humanPoseTargets`.
+  - Aiming uses rest-pose local segment directions. The feet are IK-style bones parented to the root, so they
+    are placed at the end of the shins. Forearms are twisted so palms face down or inward.
+  - Materials map to slots: skin, hair (also brows and eyes), top (main body material), accent (other body
+    materials), bottoms, shoes.
+  - Output: positions + indices only, standing on y = 0 and centred, written to
+    `public/models/people/<id>.glb` (7 MB in all) and `src/data/assets/peopleModels.json` (file, sha1 hash,
+    size, seat height, slots; exported by the kit as `PEOPLE_MODELS`).
+  - `people.test.ts` checks that every figure has a model and that the hashes match the files.
+- **Shipped models at runtime** (`features/scene-3d/assetModels.ts`):
+  - `assetSlotGeometries` uses an asset's `model` once it has loaded. The model gets smooth normals and
+    box-projected UVs in metres, and is fitted uniformly into the box. Until then, and whenever the file is
+    missing (tests, offline before first use), the procedural `build` is shown.
+  - `build` also always gives the 2D footprint.
+  - `ObjectNode` re-renders on `useAssetModelsVersion`. The hover preview, thumbnails and exports call
+    `loadAssetModel` / `preloadAssetModels` first.
+  - The thumbnail fingerprint includes the model hash.
+  - The asset checks allow 6 slots for people (shoes and outfit details).
+- **Model variants** (`packs/model-variants.pack.ts`):
+  - Empty versions of dressed furniture drop prop slots: a bookcase without books, cabinets without china.
+  - Styled versions add props on bare furniture: tables set for dinner, a sideboard with a lamp and vases, a
+    worktop with jars. They build the base lower than their box and keep props inside with `containParts`.
+  - Both use `builtInAsset(id)` from the kit and set `variantOf`. `LibraryPanel.besideBase` lists them right
+    after the original.
+- **Sofas** (`packs/sofas.pack.ts`, 17): one parametric builder (arms, backs, bases, chaise, recliner, floor sofa)
+  plus a curved sofa, each with hand-made finish variants.
+- **Kitchen counters** (`packs/kitchen-counters.pack.ts`, 28): a counter is a row of bays (door, doors, drawers,
+  open, pull-out, oven, dishwasher, hob, sinks). The worktop is cut into strips around the sink openings, and bowls
+  hang in them (inset rim, undermount or apron).
+  - Items: base units, runs from 1.8 to 3 m, a Vietnamese tiled masonry counter (bếp xây), islands, a peninsula,
+    and eight sink units including a stainless sink with drainer.
+  - Sink units include the tap in their height.
+
 ### Content packs (`/packs`)
 - **One file per pack**: `packs/<pack-id>.pack.ts` must `export default definePack({ name, version?, author?, description?, license?, items, materials?, patterns?, textures? })`. It imports everything it needs from `@/packs/kit`, which re-exports the asset helpers and types.
   - `packs/README.md` is the authoring guide.
@@ -432,8 +580,37 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Each run calls `notifyPacksChanged()`. Caches drop pack entries: builders, plan footprints, thumbnails, `MaterialRegistry` textures, pattern canvases and photo images. `usePackVersion()` re-renders the library, `PlanCanvas` (drawOpts), `SceneContent` and each `ObjectNode`.
   - Verified in the browser: adding, editing and deleting pack files updates the open editor without a page reload.
 - **Provenance**: library cards show a pack badge **only on hover** (plus the tooltip). The inspector of a placed item shows "From the <pack> pack v<version> by <author> · <licence>". A project item whose pack is missing renders as a placeholder, with a notice naming the pack.
+- **Plant care guides** (`AssetDefinition.plant: PlantInfo`, types.ts): botanical name, family, light levels
+  (`direct-sun | bright-indirect | medium | low`), spot (window distance), avoid (radiators, draughts), rooms, water
+  (summer / winter / how to tell), humidity level, temperature (°C min/max/lowest), soil, repot, feed, mature height
+  and spread (m), growth, pets (`safe` + note, ASPCA lists), difficulty, tip. `data/assets/plantInfo.ts` formats it
+  (°F first for ft/in projects, friendly size ranges), builds library search words (botanical name, "low light",
+  "pet safe", rooms) and validates it: `checkPlantInfo` runs in the pack loader, which drops a malformed guide and
+  reports it. `features/library/PlantCare.tsx` renders it short (badges + five one-line rows: spot, water, temp,
+  humidity, grows to) in the hover card; the Inspector adds a "More care details" toggle.
+- **Plant geometry kit** (`data/assets/plantParts.ts`, re-exported by `@/packs/kit`): `bladeLeaf` (shaped outlines
+  split into panels along the midrib: arch, twist, V-fold, slits, wavy/toothed margins, heart/arrow basal lobes),
+  `pinnateFrond`, `palmateOutline`, `sprigOutline`, `planter` (terracotta, cylinder, taper, bowl, egg, footed,
+  basket, cube, hanging), `plantStand`, `hangingCords`, `fitGroup`/`containParts` (keep every part in the box at
+  any size). `leafPanel` does not re-centre outlines, so texture u = 0 stays on the midrib (leaf patterns draw it on
+  the tile edge) and `along` continues the pattern across a blade's panels.
+- **Colour variants** (`data/assets/variants.ts`): every slot is sorted into a family (wood, planks, painted, fabric,
+  velvet, leather, metal, stone, pottery, plastic, rug, foliage, flower) from its label and default material, or kept
+  fixed (glass, lights, screens, soil, sanitary ceramic, printed patterns, baskets…). Six themes (Natural, Dark, Light,
+  Warm, Cool, Bold) pick one catalogue material per family (`FAMILY_THEMES`), so variants are coordinated sets;
+  appliances use realistic metals only; plants vary only leaves (other greens: same leaf texture first, limited
+  lightness jumps), flowers and pots. Branded and imported items get none (`hasFixedFinish`). ~580 of ~675 items
+  have variants. Users save their own from an edited item (Inspector → "Save as variant"): `UserVariant`s live in
+  prefs (`assetVariants`, IndexedDB) and carry copies of project-only/edited materials; `prepareVariantMaterials`
+  adds them under a new id when the target project already has a different material with that id.
+  UI: `VariantSwatches` in the hover card (choice in `editor.variantChoice`, shown in the live preview and used by
+  both placement paths via `features/library/variantChoice.ts`) and `editor/ObjectVariants.tsx` (apply to every
+  selected item of the kind, save, delete saved ones).
 - **Tests**: `src/packs/packs.test.ts` loads the real `/packs`, runs `describeAssetChecks` on every pack item, and checks namespacing, textures, reload replacement and the build fallback. Run it with `npx vitest run src/packs`.
-- **Materials** (`data/materials/catalog.ts`): ≈130 materials in 12 categories; defaults in `DEFAULT_MATERIALS`.
+- **Materials** (`data/materials/catalog.ts`): ≈230 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
+  no new category, so older builds still load projects); defaults in `DEFAULT_MATERIALS`. 45 procedural patterns
+  (wallpapers incl. coloured tropical/floral, gạch bông cement tile, chevron/basketweave parquet, terracotta, fish-scale,
+  penny, limewash, Venetian plaster, fluted, wood slats, cane webbing) and 55 CC0 photo sets (31 MB of the 60 MB budget).
   Two texture sources per material, same **texture × colour (multiply) model**:
   - **Procedural** (`texture`, `patterns.ts`): 28 seamless tiles drawn with wrap-around maths, deterministic seeds,
     normal maps derived by Sobel. Tiles are near-white luminance; `art`, `books`, `rug-geometric` are coloured.
@@ -462,6 +639,12 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Refresh/extend: edit `photoSets.json` (+ `PHOTOS`), run `npm run textures` (`--force` re-encodes from the
     download cache in the OS temp dir, `--only a,b`, `--prune`). Bump `PIPELINE` in the script when processing
     changes. Tests (`photoTextures.test.ts`) check the mapping, manifest consistency and the < 60 MB budget.
+- **Shipped swatches** (`features/materials/swatchFiles.ts`): `npm run thumbs` also writes one 96 px WebP per
+  distinct swatch look to `public/swatches/`. Each file is keyed by a fingerprint of colour + pattern code + contrast,
+  or photo set + crop + tint, not by material id, so project copies that look the same reuse it. The manifest maps
+  fingerprint → file and catalogue id → fingerprint (the coverage index the tests read). `swatchBackground` uses a
+  matching file first, then falls back to drawing at runtime. The manifest arriving triggers `notifyPhotos()`, so
+  swatch components re-render.
 - **Finish picker** (`MaterialSlotRow` → `FinishPicker`): on desktop a slot row opens `MaterialPanel`, a
   full-height floating panel docked left of the Inspector (`editor.materialPicker` = { key, label, target,
   fallbackId }; width shared via `--inspector-w`; listed in `floatingInsets`). A pick applies at once and the panel
@@ -531,10 +714,12 @@ construction documents.
 
 - `npm test` (Vitest, jsdom): geometry (intersections, polygons, triangulation, Bézier, units), commands (chains,
   T-junctions, crossings, corridors, stubs, islands, L-rooms, splits, clamps, merge/heal, room identity),
-  history (undo/redo, gesture collapsing), schema, sample projects (three samples; studio is exactly
+  history (undo/redo, gesture collapsing), schema, sample projects (four samples; studio is exactly
   9 × 4.5 m with no colliding furniture), the **loft stress sample** (`loft.test.ts`: schema, curved walls,
   unclamped openings, four rooms ≈ 100 m², no error diagnostics, derive < 60 ms, DXF/sheet/report, mass
-  edits with undo/redo), asset catalogue (1224 checks), texture patterns (123 checks), photo textures (set list, catalogue mapping, manifest/files/size budget, load-time photo fill, registry fallback). Canvas 2D is unavailable
+  edits with undo/redo), the **grand apartment sample** (`grandApartment.test.ts`: ten rooms ≈ 205 m², 28
+  unclamped openings, 200+ items with no colliding or wall-crossing furniture, derive < 120 ms, exports, mass edits), asset catalogue (1224 checks), texture patterns (191 checks), plant info and houseplants pack, colour variants (every
+  generated variant, foliage stays green, fixed slots, user variants, applying with carried materials), photo textures (set list, catalogue mapping, manifest/files/size budget, load-time photo fill, registry fallback). Canvas 2D is unavailable
   in jsdom — texture functions return `null` there by design.
 - `npm run test:e2e` (Playwright, Chromium): smoke flows in `e2e/` against the dev server.
 - Browser checks: use the dev hooks. For synthetic pointer events, compute coordinates with
@@ -596,8 +781,8 @@ construction documents.
 
 - **New tool**: implement `Tool` in `plan-2d/tools/`, register it in `PlanCanvas` and `ToolBridge3D` (if it works
   in 3D), add to `TOOLS` in `EditorShell` and `TOOL_SHORTCUTS`. Emit previews via `ToolOverlay` only.
-- **New asset**: add to the category file with `defineAsset` helpers; slot defaults must exist in the material
-  catalogue; run `npx vitest run src/data/assets`.
+- **New asset**: follow §12 "Asset rules": usually a pack file (`packs/README.md`) with `defineItem`; slot defaults
+  must exist in the material catalogue; run `npx vitest run src/data/assets src/packs`, then `npm run thumbs`.
 - **New material/pattern**: add to `catalog.ts`; new pattern ids must be implemented in `patterns.ts` (tests check).
 - **New project setting**: add to `ProjectSettingsSchema` **with a default**, set it in `createEmptyProject`.
 - **New export**: build from `Project` + `derivePlan` (+ `buildSheet`/builders); add a pane in `ExportPanel`;
@@ -616,7 +801,9 @@ Done and verified in the browser:
   editor plan modes (`draft`, `furnished`), no-interface mode, and a start-up fit to the free canvas area.
 - Inspector editing with validation.
 - Materials with linked/override semantics.
-- Furniture library: 270 built-in assets in 16 rooms (Sims-style room/type shelves), content packs in /packs
+- Furniture library: 270 built-in assets in 16 rooms (Sims-style room/type shelves), ~400 more in content packs in /packs
+  (incl. houseplants with care guides, bathroom collection and Vietnam branded packs), colour variants with saved user
+  variants
   (Halloween example), favourites, recents, search, drag and drop.
 - 3D view: lighting, quality presets, wall display modes with clipped cutaway openings, saved views,
   walkthrough, guest view, and fitted framing beside panels.
@@ -630,7 +817,8 @@ Done and verified in the browser:
 - **Orbit around the selection** in 3D: selecting furniture eases the orbit pivot to its centre
   (`SelectionPivot` in Scene3DView; camera stays put and turns to face it).
 - Teal/brass palette.
-- Three samples: a two-bedroom apartment, a 9 × 4.5 m studio, and a 100 m² loft stress test.
+- Four samples: a two-bedroom apartment, a 9 × 4.5 m studio, a 100 m² loft stress test and a 200 m² grand
+  apartment stress test (10 rooms, ~210 items).
 
 Next: broaden Playwright coverage (drawing, 3D editing, exports), mobile polish, and a Cloudflare sync backend
 behind the storage seam (later).
@@ -694,3 +882,49 @@ Known limitations (also in README):
     Sony BRAVIA 8/9; screens show pack-pattern pictures), `branded-washers` (Bosch, Miele, LG, Samsung, LG WashTower) and
     `branded-fridges` (Samsung/LG side-by-side and French door, Bosch, Liebherr), 6 items each at published sizes with
     `brand` specs; shared `segmentText` seven-segment helper in parts.ts (done).
+32. "Build a much more complex 200 m² apartment with a lot of decor to test it" → `grandApartmentProject.ts` (sample
+    `grand`: 10 rooms ≈ 205 m², curved piano bay, chamfer, 28 openings, 208 items) + `grandApartment.test.ts` (done).
+33. "Add a lot of detailed houseplants with clear plant info (placement, water, humidity, temperature, soil, size, pets,
+    difficulty)" → `houseplants` pack (27 species: floor trees, mid-size, tabletop, hanging, in terracotta, ceramic,
+    concrete, baskets, a plant stand and macramé), `PlantInfo` schema + `checkPlantInfo`, plant geometry kit, care
+    block in the hover card and Inspector, plant search words (done).
+34. "Shorter info for those plants" → compact care block (badges + five one-line rows); full notes behind "More care
+    details" in the Inspector only (done).
+35. "A lot more bathroom items, including branded" + "make sure branded packs are what we can find in VN" →
+    `bathroom-collection` (25: vanities, corner basin, oval/alcove/corner baths, quadrant and grid showers, vòi xịt,
+    instant heater, exhaust fan, mirrors, storage, accessories) and `branded-bathroom-vn` (TOTO MS885DE2, INAX
+    AC-902VN, Caesar CD1338, American Standard Active 0955 + WF-1772, TOTO LT710CSR, Caesar L5225, GROHE Euphoria 310,
+    Ariston SL2 20 RS) at sizes from Vietnamese retailer listings (done). Viglacera left out: no reliable published sizes.
+36. "Check all branded packs and add more Vietnam-common stuff, incl. speakers and laptops" → existing branded packs
+    kept (Miele, Liebherr and the US Bosch 800 Series are rare in Vietnam); new `branded-laptops` (MacBook Air M3,
+    MacBook Pro 14 M4, Dell Inspiron 15 3530, ASUS Vivobook 15, Acer Nitro V 15, Lenovo LOQ 15), `branded-audio` (JBL
+    Flip 6, Charge 5, PartyBox 110, Acnos Acoustic 3 karaoke, Marshall Stanmore III/Acton III, Samsung HW-Q600C bar +
+    sub), `branded-climate-vn` (Daikin FTKB25XVMV, Panasonic XU9 indoor/outdoor, Panasonic F-409KB and F-60WWK fans,
+    Xiaomi Air Purifier 4) and `branded-appliances-vn` (Electrolux EWF9024P5WB, Toshiba AW-M905BV, Panasonic
+    NR-BX410WKVN, Toshiba RC-18NMFVN rice cooker, Sharp R-205VN, Karofi KAQ-U95 Pro) (done).
+37. "A lot more materials for flooring, wallpaper, furniture, woods, paints, finishes; procedural and bitmap" → 17 new
+    patterns, 16 new CC0 photo sets (`npm run textures`), ~100 materials (done).
+38. "Colour variants under the name in the hover info, like the Sims; save your own; sensible per object; not for
+    branded" → `variants.ts` themes per material family, swatches in the hover card and Inspector, placement in the
+    chosen variant, saved user variants (done).
+39. "Revise the plant system: all in one vegetation section; specific items with full data" → category/type `plants`
+    ("Plants & flowers", 9 shelves), `PLANT_SPECIES` database (≈90 guides incl. cut/dried forms), every vegetation
+    item moved there with a species guide and a description; generic Spider plant / Corn plant rebuilt (done).
+40. "Index/generate thumbs for all materials and items" → `npm run thumbs` also writes `public/swatches` (fingerprint
+    keyed, shared by look) and `swatchBackground` uses them; tests fail when a file is missing (done).
+41. "Make sure other agents follow the asset structure" → §12 "Asset rules", AGENTS.md and packs/README.md, enforced by
+    `assetRules.test.ts` (descriptions with a frozen legacy list, tags, shelves, brands, plants, thumbnails) (done).
+42. "A tad denser library, or 3 levels" → Large / Medium / Small card size in the library header (done).
+43. "Correctly sized humans (Asian first) in many poses with clothing variants" → `people` pack with the pose system;
+    then "less mannequin-like, low poly but realistic, from the internet" → CC0 Quaternius characters baked into
+    our poses (`npm run people`), shown via the new shipped-model path; procedural figure kept as fallback (done).
+44. "Colour variants for doors and windows" + "all variants can be saved back" → opening finish sets with
+    Save as variant (furniture, people outfits, doors and windows all save their own) (done).
+45. "More detailed couches and sofas with variants" → `sofas` pack, 17 sofas (done).
+46. "Model variants as separate assets (shelves with/without books, tables with/without tableware)" → `model-variants`
+    pack, 27 versions listed next to their originals (`variantOf`) (done).
+47. "A lot of kitchen counters incl. sinks" → `kitchen-counters` pack, 28 items (done).
+48. "Grouping of placed items, saved to a Groups section; disable Alt; right-click menus incl. group/ungroup" → groups,
+    Saved groups shelf, 2D/3D/library context menus, Alt and native-menu suppression (done).
+49. "Picking a variant should enter place mode (keep the hover card)" (done).
+50. "A Ceiling category that hides ceiling-attached objects but keeps their lighting" (done).

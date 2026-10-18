@@ -45,3 +45,19 @@ Maps were resized and re-encoded as WebP. Delete this folder to fall back to Nee
 | rattan | ambientCG | [Wicker010A](https://ambientcg.com/a/Wicker010A) | 0.5 m | 1024 |
 | cork | ambientCG | [Cork002](https://ambientcg.com/a/Cork002) | 0.5 m | 1024 |
 | brushed-metal | ambientCG | [Metal009](https://ambientcg.com/a/Metal009) | 1 m | 1024 |
+| versailles-parquet | ambientCG | [WoodFloor055](https://ambientcg.com/a/WoodFloor055) | 2 m | 1024 |
+| dark-oak-planks | ambientCG | [WoodFloor064](https://ambientcg.com/a/WoodFloor064) | 2 m | 1024 |
+| herringbone-dark | ambientCG | [WoodFloor014](https://ambientcg.com/a/WoodFloor014) | 1.6 m | 1024 |
+| basketweave-parquet | ambientCG | [WoodFloor070](https://ambientcg.com/a/WoodFloor070) | 1.5 m | 1024 |
+| diagonal-parquet | Poly Haven | [diagonal_parquet](https://polyhaven.com/a/diagonal_parquet) | 2.36 m | 1024 |
+| bamboo-panel | ambientCG | [Bamboo001B](https://ambientcg.com/a/Bamboo001B) | 1.2 m | 1024 |
+| azulejo-border | ambientCG | [Tiles101](https://ambientcg.com/a/Tiles101) | 0.9 m | 1024 |
+| azulejo-floral | ambientCG | [Tiles103](https://ambientcg.com/a/Tiles103) | 0.9 m | 1024 |
+| terrazzo-colour | ambientCG | [Terrazzo013](https://ambientcg.com/a/Terrazzo013) | 1 m | 1024 |
+| onyx-white | ambientCG | [Onyx015](https://ambientcg.com/a/Onyx015) | 2 m | 1024 |
+| marble-beige | ambientCG | [Marble014](https://ambientcg.com/a/Marble014) | 2 m | 1024 |
+| woodchip-wallpaper | ambientCG | [Wallpaper001A](https://ambientcg.com/a/Wallpaper001A) | 1 m | 1024 |
+| painted-plaster | ambientCG | [PaintedPlaster017](https://ambientcg.com/a/PaintedPlaster017) | 2 m | 1024 |
+| leather-smooth | ambientCG | [Leather027](https://ambientcg.com/a/Leather027) | 0.5 m | 1024 |
+| carpet-plain | ambientCG | [Carpet012](https://ambientcg.com/a/Carpet012) | 1 m | 1024 |
+| wicker-fine | ambientCG | [Wicker005](https://ambientcg.com/a/Wicker005) | 0.4 m | 1024 |

@@ -8,6 +8,7 @@
  * straight hinoki grain, kozo-fibre washi paper and an indigo seigaiha wave print for fabrics.
  */
 import {
+  PLANT_SPECIES,
   box,
   cells,
   circle,
@@ -429,11 +430,13 @@ const futon = defineItem({
 
 const bonsai = defineItem({
   id: 'bonsai-tree',
-  name: 'Bonsai tree',
-  category: 'decor',
+  name: 'Black pine bonsai',
+  category: 'plants',
   type: 'plants',
-  group: 'Indoor plants',
+  group: 'Trees',
+  plant: PLANT_SPECIES['pinus-thunbergii-bonsai'],
   tags: ['bonsai', 'pine', 'tree', 'plant', 'pot', 'japanese', 'miniature tree'],
+  description: 'A Japanese black pine bonsai with an old twisting trunk and clipped needle pads over moss, in a glazed bonsai pot.',
   defaultSize: { w: 0.5, d: 0.35, h: 0.45 },
   minSize: { w: 0.25, d: 0.18, h: 0.22 },
   maxSize: { w: 1.0, d: 0.7, h: 0.9 },
@@ -512,11 +515,13 @@ const bonsai = defineItem({
 
 const ikebana = defineItem({
   id: 'ikebana',
-  name: 'Ikebana arrangement',
-  category: 'decor',
+  name: 'Ikebana: plum blossom & camellia',
+  category: 'plants',
   type: 'plants',
-  group: 'Indoor plants',
+  group: 'Cut & dried flowers',
+  plant: PLANT_SPECIES['ikebana-plum-camellia'],
   tags: ['ikebana', 'flower arrangement', 'suiban', 'kenzan', 'plum blossom', 'camellia', 'japanese', 'flowers'],
+  description: 'An ikebana arrangement in a black suiban basin: a flowering plum branch with pink camellias and dark leaves.',
   defaultSize: { w: 0.45, d: 0.32, h: 0.6 },
   minSize: { w: 0.25, d: 0.2, h: 0.3 },
   maxSize: { w: 1.0, d: 0.7, h: 1.4 },

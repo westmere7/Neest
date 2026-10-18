@@ -489,3 +489,87 @@
 .aic-hint {
   margin: 0;
 }
+
+/* Card size (library density): roomy = large cards, normal = default, dense = small cards. */
+.library-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.library[data-density='roomy'] .asset-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.library[data-density='roomy'] .asset-name {
+  font-size: 12.5px;
+}
+.library[data-density='roomy'] .build-grid {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+.library[data-density='roomy'] .build-card svg {
+  width: 42px;
+  height: 42px;
+}
+.library[data-density='roomy'] .mat-row {
+  padding: 7px 6px;
+}
+.library[data-density='roomy'] .mat-row .mat-swatch {
+  width: 40px !important;
+  height: 40px !important;
+}
+.library[data-density='dense'] .asset-grid {
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 5px;
+  padding: 8px;
+}
+.library[data-density='dense'] .asset-thumb {
+  margin: 3px;
+}
+.library[data-density='dense'] .asset-main {
+  padding-bottom: 5px;
+}
+.library[data-density='dense'] .asset-name {
+  padding: 0 5px;
+  font-size: 11px;
+}
+.library[data-density='dense'] .asset-dims {
+  padding: 0 5px;
+  font-size: 9.5px;
+}
+.library[data-density='dense'] .fav-btn {
+  top: 5px;
+  right: 5px;
+  width: 19px;
+  height: 19px;
+}
+.library[data-density='dense'] .fav-btn svg {
+  width: 11px;
+  height: 11px;
+}
+.library[data-density='dense'] .shelf-h {
+  margin: 10px 10px 4px;
+}
+.library[data-density='dense'] .build-grid {
+  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+  gap: 4px;
+}
+.library[data-density='dense'] .build-card {
+  padding: 6px 3px 5px;
+  font-size: 10.5px;
+}
+.library[data-density='dense'] .build-card svg {
+  width: 28px;
+  height: 28px;
+}
+.library[data-density='dense'] .mat-row {
+  padding: 3px 6px;
+  gap: 8px;
+}
+.library[data-density='dense'] .mat-row .mat-swatch {
+  width: 22px !important;
+  height: 22px !important;
+}
+.library[data-density='dense'] .mat-row-text {
+  font-size: 11.5px;
+}
