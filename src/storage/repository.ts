@@ -18,6 +18,8 @@ export interface ProjectSummary {
   objectCount: number;
   /** Total clear floor area in m². */
   area: number;
+  /** Layout options (absent in summaries saved before options were counted). */
+  optionCount?: number;
 }
 
 export interface ProjectSaveMeta {

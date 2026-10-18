@@ -354,7 +354,8 @@ export const hasFixedFinish = (asset: AssetDefinition): boolean => !!asset.brand
 
 /**
  * The built-in colour variants of an asset: the original first, then up to six themes that change
- * at least one slot. Empty for branded and imported items and for items with nothing to vary.
+ * at least one slot. Branded items offer only the finishes the maker sells (their hand-made
+ * `variants`); imported items and items with nothing to vary get none.
  */
 export function assetVariants(asset: AssetDefinition): AssetVariant[] {
   const hit = variantCache.get(asset.id);
@@ -365,8 +366,8 @@ export function assetVariants(asset: AssetDefinition): AssetVariant[] {
 }
 
 function buildVariants(asset: AssetDefinition): AssetVariant[] {
+  if (asset.variants?.length && asset.category !== 'custom') return presetVariants(asset);
   if (hasFixedFinish(asset)) return [];
-  if (asset.variants?.length) return presetVariants(asset);
   const families = asset.slots.map((s) => [s, slotFamily(asset, s.id)] as const).filter(([, f]) => f !== null);
   if (!families.length) return [];
   const original: AssetVariant = { id: 'original', name: 'Original', materials: {}, swatch: swatchColors(asset, {}) };

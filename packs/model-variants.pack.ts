@@ -1,103 +1,34 @@
 /**
- * Model variants — alternative versions of library items, listed right after the original
- * (`variantOf`): empty versions of dressed furniture (a bookcase without books, a desk without
- * its accessories) and styled versions of bare furniture (a dining table set for dinner, a
- * sideboard with a lamp, vases and books).
+ * Model variants for library furniture: dressed items get an empty model (a bookcase without
+ * books, a bar cart without bottles) and bare items a styled one (a dining table set for dinner,
+ * a sideboard with a lamp, vases and books). Pick the model with the toggle on the library card,
+ * in its info card, or in the Inspector for placed items.
  *
- * Empty versions drop the prop slots of the original. Styled versions build the original a bit
- * lower than their own box and stand props on its top, so everything stays inside the box.
+ * Empty models hide the prop slots of the original. Styled models stand props on the item's top;
+ * the props rise above the item but never change its size, outline or collisions.
+ *
+ * These used to be separate library items ("Bookcase, empty"…); projects that placed them are
+ * moved to the original item in the matching model when they load (RETIRED_MODEL_ITEMS).
  */
-import {
-  builtInAsset,
-  containParts,
-  cyl,
-  defineItem,
-  definePack,
-  lathe,
-  matSlot,
-  plantBox,
-  range,
-  rng,
-  span,
-  sphere,
-  type PackItem,
-  type Part,
-  type Size3,
-} from '@/packs/kit';
+import { containParts, cyl, definePack, lathe, plantBox, matSlot, range, rng, span, sphere, type AssetModelVariant, type Part, type Size3 } from '@/packs/kit';
 
 const o = { plan: false };
 
-function base(id: string) {
-  const a = builtInAsset(id);
-  if (!a) throw new Error(`model-variants: unknown base asset ${id}`);
-  return a;
-}
+type Extension = { original: string; models: AssetModelVariant[] };
 
-/** A version of `baseId` without the parts in `drop` slots. */
-function empty(baseId: string, id: string, name: string, drop: string[], description: string, tags: string[]): PackItem {
-  const b = base(baseId);
-  return defineItem({
-    id,
-    name,
-    category: b.category,
-    type: b.type,
-    group: b.group,
-    tags: [...new Set([...b.tags, 'empty', 'bare', 'without props', ...tags])],
-    description,
-    defaultSize: b.defaultSize,
-    minSize: b.minSize,
-    maxSize: b.maxSize,
-    resizable: b.resizable,
-    mount: b.mount,
-    defaultElevation: b.defaultElevation,
-    wallSnap: b.wallSnap,
-    slots: b.slots.filter((s) => !drop.includes(s.id)),
-    build: (size) => b.build(size).filter((p) => !drop.includes(p.slot)),
-    planDetail: b.planDetail,
-    variantOf: baseId,
-  });
-}
+/** The original keeps its props; the "empty" model drops the parts in the `drop` slots. */
+const empty = (drop: string[], name = 'Empty', original = 'Filled'): Extension => ({ original, models: [{ id: 'empty', name, hide: drop }] });
 
 type Slot = [id: string, label: string, material: string];
 
-/** A version of `baseId` with props on its top surface, `extra` metres high. */
-function styled(
-  baseId: string,
-  id: string,
-  name: string,
-  extra: number,
-  slots: Slot[],
-  props: (size: Size3, top: number) => Part[],
-  description: string,
-  tags: string[],
-): PackItem {
-  const b = base(baseId);
-  const lift = (s: Size3 | undefined): Size3 | undefined => (s ? { ...s, h: s.h + extra } : undefined);
-  return defineItem({
-    id,
-    name,
-    category: b.category,
-    type: b.type,
-    group: b.group,
-    tags: [...new Set([...b.tags, 'styled', 'decorated', ...tags])],
-    description,
-    defaultSize: lift(b.defaultSize)!,
-    minSize: lift(b.minSize),
-    maxSize: lift(b.maxSize),
-    resizable: b.resizable,
-    mount: b.mount,
-    defaultElevation: b.defaultElevation,
-    wallSnap: b.wallSnap,
-    slots: [...b.slots, ...slots.map(([sid, label, m]) => matSlot(sid, label, m))],
-    build: (size) => {
-      const top = size.h - extra;
-      // Props move or shrink to stay inside the box at small sizes.
-      return [...b.build({ ...size, h: top }), ...containParts(props(size, top), plantBox(size))];
-    },
-    planDetail: b.planDetail ? (size) => b.planDetail!({ ...size, h: size.h - extra }) : undefined,
-    variantOf: baseId,
-  });
-}
+/** How far props may rise above the item's top. */
+const ABOVE = 1;
+
+/** The original stays bare; the "styled" model adds props on its top (moved or shrunk to stay over the item at small sizes). */
+const styled = (slots: Slot[], props: (size: Size3, top: number) => Part[], name = 'Styled', original = 'Bare'): Extension => ({
+  original,
+  models: [{ id: 'styled', name, slots: slots.map(([id, label, m]) => matSlot(id, label, m)), props: (size) => containParts(props(size, size.h), { ...plantBox(size), y1: size.h + ABOVE }) }],
+});
 
 // ───────────── Props ─────────────
 
@@ -198,178 +129,89 @@ function roundSettings(size: Size3, top: number, tw: string, gl: string): Part[]
   return parts;
 }
 
-// ───────────── Items ─────────────
+// ───────────── Models ─────────────
 
-const items: PackItem[] = [
-  // Empty versions of dressed furniture.
-  empty('bookcase', 'bookcase-empty', 'Bookcase, empty', ['books'], 'The same bookcase with bare shelves, ready to fill with your own books and objects.', ['empty shelves']),
-  empty('shelf-ladder', 'shelf-ladder-empty', 'Leaning ladder shelf, empty', ['books', 'decor', 'plant'], 'The leaning ladder shelf with its shelves left bare.', ['empty shelves']),
-  empty('shelving-unit', 'shelving-unit-empty', 'Open shelving unit, empty', ['books', 'decor'], 'The open shelving unit with nothing on its shelves.', ['empty shelves']),
-  empty('cube-storage', 'cube-storage-baskets-only', 'Cube storage, baskets only', ['books', 'decor'], 'The cube storage unit with only its fabric baskets: open cubes are left empty.', ['empty cubes']),
-  empty('coffee-table-glass', 'coffee-table-glass-clear', 'Glass coffee table, clear top', ['books', 'decor'], 'The glass coffee table with nothing on it.', ['clear']),
-  empty('console-table', 'console-table-bare', 'Console table, bare', ['decor', 'books'], 'The console table with an empty top.', ['clear top']),
-  empty('tables-nesting', 'tables-nesting-bare', 'Nesting side tables, bare', ['decor', 'books'], 'The nesting side tables with clear tops.', ['clear top']),
-  empty('desk-hutch', 'desk-hutch-empty', 'Desk with hutch, empty shelves', ['books'], 'The desk with hutch, its shelves left empty.', ['empty shelves']),
-  empty('bedside-table', 'bedside-table-bare', 'Bedside table, bare', ['decor'], 'The bedside table with a clear top.', ['clear top']),
-  empty('china-cabinet', 'china-cabinet-empty', 'China cabinet, empty', ['china'], 'The china cabinet with empty glass shelves.', ['empty shelves']),
-  empty('display-cabinet', 'display-cabinet-empty', 'Glass display cabinet, empty', ['items'], 'The glass display cabinet with nothing on display.', ['empty shelves']),
-  empty('bar-cart', 'bar-cart-no-bottles', 'Bar cart, no bottles', ['bottles'], 'The bar cart without its bottles, leaving the mirrored shelves and ice bucket.', ['no bottles']),
-  empty('wine-rack', 'wine-rack-empty', 'Wine rack, empty', ['bottles', 'caps', 'labels'], 'The wine rack with every slot empty.', ['empty']),
-  empty('dining-table-trestle', 'dining-table-trestle-no-runner', 'Farmhouse trestle table, no runner', ['runner'], 'The farmhouse trestle table without its linen runner.', ['plain']),
-  empty('picnic-table', 'picnic-table-no-cloth', 'Picnic table, no cloth', ['cloth'], 'The picnic table without its tablecloth.', ['plain']),
-  empty('utility-sink', 'utility-sink-empty', 'Utility sink, empty', ['items'], 'The utility sink with nothing on or under it.', ['empty']),
-  // Styled versions of bare furniture.
-  styled(
-    'dining-table-rect',
-    'dining-table-rect-set',
-    'Rectangular dining table, set for dinner',
-    0.19,
-    [
-      ['tableware', 'Tableware', 'ceramic-white'],
-      ['glassware', 'Glasses', 'glass-clear'],
-    ],
-    (s, t) => placeSettings(s, t, 'tableware', 'glassware'),
-    'The rectangular dining table laid for dinner: a plate and glass at every seat and a vase in the middle.',
-    ['set table', 'place settings', 'dinner', 'plates', 'glasses'],
-  ),
-  styled(
-    'dining-table-round',
-    'dining-table-round-set',
-    'Round dining table, set for dinner',
-    0.13,
-    [
-      ['tableware', 'Tableware', 'ceramic-white'],
-      ['glassware', 'Glasses', 'glass-clear'],
-    ],
-    (s, t) => roundSettings(s, t, 'tableware', 'glassware'),
-    'The round dining table laid with plates and glasses around a fruit bowl.',
-    ['set table', 'place settings', 'dinner', 'plates', 'fruit bowl'],
-  ),
-  styled(
-    'dining-table-pedestal',
-    'dining-table-pedestal-set',
-    'Tulip pedestal table, set for two',
-    0.13,
-    [
-      ['tableware', 'Tableware', 'ceramic-white'],
-      ['glassware', 'Glasses', 'glass-clear'],
-    ],
-    (s, t) => roundSettings(s, t, 'tableware', 'glassware'),
-    'The tulip pedestal table laid with plates and glasses around a fruit bowl.',
-    ['set table', 'place settings', 'breakfast', 'plates'],
-  ),
-  styled(
-    'patio-table',
-    'patio-table-set',
-    'Patio dining table, set for lunch',
-    0.19,
-    [
-      ['tableware', 'Tableware', 'ceramic-white'],
-      ['glassware', 'Glasses', 'glass-clear'],
-    ],
-    (s, t) => placeSettings(s, t, 'tableware', 'glassware'),
-    'The patio dining table laid outdoors with plates, glasses and a vase.',
-    ['set table', 'outdoor dining', 'lunch', 'plates', 'glasses'],
-  ),
-  styled(
-    'coffee-table-round',
-    'coffee-table-round-styled',
-    'Round coffee table with books & vase',
-    0.3,
+const TABLEWARE: Slot[] = [
+  ['tableware', 'Tableware', 'ceramic-white'],
+  ['glassware', 'Glasses', 'glass-clear'],
+];
+
+const models: Record<string, Extension> = {
+  // Empty models of dressed furniture.
+  bookcase: empty(['books']),
+  'shelf-ladder': empty(['books', 'decor', 'plant']),
+  'shelving-unit': empty(['books', 'decor']),
+  'cube-storage': empty(['books', 'decor'], 'Baskets only'),
+  'coffee-table-glass': empty(['books', 'decor'], 'Clear top'),
+  'console-table': empty(['decor', 'books'], 'Bare'),
+  'tables-nesting': empty(['decor', 'books'], 'Bare'),
+  'desk-hutch': empty(['books']),
+  'bedside-table': empty(['decor'], 'Bare'),
+  'china-cabinet': empty(['china']),
+  'display-cabinet': empty(['items']),
+  'bar-cart': empty(['bottles'], 'No bottles'),
+  'wine-rack': empty(['bottles', 'caps', 'labels']),
+  'dining-table-trestle': empty(['runner'], 'No runner', 'With runner'),
+  'picnic-table': empty(['cloth'], 'No cloth', 'With cloth'),
+  'utility-sink': empty(['items']),
+  // Styled models of bare furniture.
+  'dining-table-rect': styled(TABLEWARE, (s, t) => placeSettings(s, t, 'tableware', 'glassware'), 'Table set'),
+  'dining-table-round': styled(TABLEWARE, (s, t) => roundSettings(s, t, 'tableware', 'glassware'), 'Table set'),
+  'dining-table-pedestal': styled(TABLEWARE, (s, t) => roundSettings(s, t, 'tableware', 'glassware'), 'Table set'),
+  'patio-table': styled(TABLEWARE, (s, t) => placeSettings(s, t, 'tableware', 'glassware'), 'Table set'),
+  'coffee-table-round': styled(
     [
       ['books', 'Books', 'book-mix'],
       ['decor', 'Vase & tray', 'ceramic-sage'],
     ],
     (s, t) => [...bookStack('books', -s.w * 0.15, s.d * 0.05, t, 3, 11), vase('decor', s.w * 0.18, -s.d * 0.08, t, 0.28, 0.07), bowl('decor', s.w * 0.12, s.d * 0.2, t, 0.09, 0.05)],
-    'The round coffee table styled with a stack of books, a tall vase and a small bowl.',
-    ['books', 'vase', 'coffee table books'],
   ),
-  styled(
-    'side-table',
-    'side-table-styled',
-    'Side table with lamp & book',
-    0.5,
+  'side-table': styled(
     [
       ['shade', 'Lamp shade', 'fabric-cream'],
       ['books', 'Books', 'book-mix'],
     ],
     (s, t) => [...lamp('base', 'shade', -s.w * 0.12, -s.d * 0.08, t, 0.48), ...bookStack('books', s.w * 0.15, s.d * 0.15, t, 2, 5)],
-    'The side table with a small table lamp and a couple of books.',
-    ['table lamp', 'books', 'reading'],
   ),
-  styled(
-    'sideboard',
-    'sideboard-styled',
-    'Sideboard with lamp, vases & books',
-    0.55,
-    [['decor', 'Lamp shade, vases & books', 'ceramic-white']],
-    (s, t) => [
-      ...lamp('handle', 'decor', -s.w * 0.36, 0, t, 0.52),
-      vase('decor', s.w * 0.05, -s.d * 0.1, t, 0.32, 0.08),
-      vase('decor', s.w * 0.14, -s.d * 0.05, t, 0.2, 0.06),
-      bowl('decor', s.w * 0.34, s.d * 0.05, t, 0.13, 0.07),
-      ...bookStack('decor', -s.w * 0.12, s.d * 0.1, t, 3, 7),
-    ],
-    'The sideboard styled with a brass table lamp, two ceramic vases, a stack of books and a bowl.',
-    ['table lamp', 'vases', 'credenza styling'],
-  ),
-  styled(
-    'media-console',
-    'media-console-styled',
-    'Media console with books & vases',
-    0.32,
+  sideboard: styled([['decor', 'Lamp shade, vases & books', 'ceramic-white']], (s, t) => [
+    ...lamp('handle', 'decor', -s.w * 0.36, 0, t, 0.52),
+    vase('decor', s.w * 0.05, -s.d * 0.1, t, 0.32, 0.08),
+    vase('decor', s.w * 0.14, -s.d * 0.05, t, 0.2, 0.06),
+    bowl('decor', s.w * 0.34, s.d * 0.05, t, 0.13, 0.07),
+    ...bookStack('decor', -s.w * 0.12, s.d * 0.1, t, 3, 7),
+  ]),
+  'media-console': styled(
     [
       ['books', 'Books', 'book-mix'],
       ['decor', 'Vases', 'ceramic-white'],
     ],
     (s, t) => [...bookRowStanding('books', -s.w * 0.45, -s.d * 0.1, t, 8, 21), vase('decor', s.w * 0.38, 0, t, 0.3, 0.07), bowl('decor', s.w * 0.25, s.d * 0.1, t, 0.1, 0.05)],
-    'The media console with a row of books, a tall vase and a bowl, leaving the middle free for a TV.',
-    ['books', 'vases', 'tv unit styling'],
   ),
-  styled(
-    'dresser',
-    'dresser-styled',
-    'Chest of drawers with tray, vase & books',
-    0.3,
+  dresser: styled(
     [
       ['decor', 'Tray & vase', 'ceramic-white'],
       ['books', 'Books', 'book-mix'],
     ],
     (s, t) => [span('decor', [-s.w * 0.4, -s.w * 0.1], [t, t + 0.015], [-s.d * 0.25, s.d * 0.15], o), vase('decor', s.w * 0.3, -s.d * 0.1, t, 0.28, 0.07), ...bookStack('books', 0.05, 0, t, 2, 3)],
-    'The chest of drawers styled with a tray, a vase and a couple of books.',
-    ['tray', 'vase', 'bedroom styling'],
   ),
-  styled(
-    'kitchen-base-cabinet',
-    'kitchen-base-cabinet-styled',
-    'Kitchen base cabinet with jars & board',
-    0.24,
-    [['items', 'Jars & bowls', 'ceramic-white']],
-    (s, t) => [
-      span('items', [-s.w * 0.4, -s.w * 0.05], [t, t + 0.02], [-s.d * 0.3, s.d * 0.05], { bevel: 0.004, ...o }),
-      ...range(3).map((i) => cyl('items', [s.w * (0.1 + i * 0.12), t + 0.08 + (i % 2) * 0.03, -s.d * 0.3], 0.05, 0.16 + (i % 2) * 0.06, { segments: 16, ...o })),
-      bowl('items', s.w * 0.25, s.d * 0.15, t, 0.1, 0.06),
-    ],
-    'The kitchen base cabinet with a chopping board, three storage jars and a bowl on the worktop.',
-    ['jars', 'chopping board', 'kitchen styling'],
-  ),
-  styled(
-    'kitchen-island',
-    'kitchen-island-styled',
-    'Kitchen island with fruit bowl & vase',
-    0.32,
-    [['items', 'Bowl & vase', 'ceramic-white']],
-    (s, t) => [bowl('items', -s.w * 0.15, 0, t, 0.16, 0.08), ...fruit('items', -s.w * 0.15, 0, t + 0.03, 0.14), vase('items', s.w * 0.22, -s.d * 0.1, t, 0.3, 0.07)],
-    'The kitchen island with a fruit bowl and a tall vase of stems.',
-    ['fruit bowl', 'vase', 'kitchen styling'],
-  ),
-];
+  'kitchen-base-cabinet': styled([['items', 'Jars & bowls', 'ceramic-white']], (s, t) => [
+    span('items', [-s.w * 0.4, -s.w * 0.05], [t, t + 0.02], [-s.d * 0.3, s.d * 0.05], { bevel: 0.004, ...o }),
+    ...range(3).map((i) => cyl('items', [s.w * (0.1 + i * 0.12), t + 0.08 + (i % 2) * 0.03, -s.d * 0.3], 0.05, 0.16 + (i % 2) * 0.06, { segments: 16, ...o })),
+    bowl('items', s.w * 0.25, s.d * 0.15, t, 0.1, 0.06),
+  ]),
+  'kitchen-island': styled([['items', 'Bowl & vase', 'ceramic-white']], (s, t) => [
+    bowl('items', -s.w * 0.15, 0, t, 0.16, 0.08),
+    ...fruit('items', -s.w * 0.15, 0, t + 0.03, 0.14),
+    vase('items', s.w * 0.22, -s.d * 0.1, t, 0.3, 0.07),
+  ]),
+};
 
 export default definePack({
   name: 'Model variants',
-  version: '1.0.0',
+  version: '2.0.0',
   author: 'Neest',
-  description: 'Empty and styled versions of library furniture, listed next to the originals.',
+  description: 'Empty and styled models of library furniture, picked with the model toggle.',
   license: 'CC0-1.0',
-  items,
+  items: [],
+  models,
 });

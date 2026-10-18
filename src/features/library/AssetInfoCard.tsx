@@ -1,19 +1,32 @@
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
-import { ExternalLink } from 'lucide-react';
-import type { LengthUnit } from '@/domain/model/schema';
+import { ExternalLink, Maximize2 } from 'lucide-react';
+import type { LengthUnit, PlacedObject } from '@/domain/model/schema';
 import { formatLength } from '@/domain/model/units';
 import { ASSET_CATEGORY_LABELS } from '@/data/assets/catalog';
 import type { AssetDefinition, Size3 } from '@/data/assets/types';
 import { usePackVersion } from '@/packs/events';
 import { useProjectStore } from '@/state/projectStore';
+import { getAsset } from '@/data/assets/registry';
+import { Dialog } from '@/components/Overlays';
+import { Button } from '@/components/ui';
 import type { PreviewHandle } from '@/features/scene-3d/objectPreview';
 import { AssetPlanThumb } from './LibraryPanel';
 import { PlantCare } from './PlantCare';
 import { VariantSwatches } from './VariantSwatches';
+import { ModelPicker, chooseModel, useChosenModel } from './ModelPicker';
+import { withModel } from '@/data/assets/models';
 import { variantDefs, variantsFor } from './variantChoice';
 import { useEditorStore } from '@/state/editorStore';
-import { usePrefsStore } from '@/state/uiStores';
+import { useDialogStore, usePrefsStore } from '@/state/uiStores';
 import type { AssetVariant } from '@/data/assets/variants';
 import { useAssetThumbnail } from './thumbnails';
 
@@ -173,7 +186,14 @@ export function AssetInfoCard({ control }: { control: InfoCardControl }) {
       onPointerEnter={() => control.hold()}
       onPointerLeave={() => control.leave()}
     >
-      <InfoPreview asset={shown.asset} />
+      <InfoPreview
+        asset={shown.asset}
+        onExpand={() => {
+          const id = shown.asset.id;
+          control.dismiss();
+          useDialogStore.getState().open('asset-viewer', { assetId: id });
+        }}
+      />
       <InfoBody asset={shown.asset} />
     </div>,
     document.body,
@@ -182,7 +202,8 @@ export function AssetInfoCard({ control }: { control: InfoCardControl }) {
 
 // ───────────── Contents ─────────────
 
-const prefersReducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 type PreviewState = 'loading' | 'ok' | 'fallback';
 
@@ -192,7 +213,10 @@ type PreviewState = 'loading' | 'ok' | 'fallback';
  * stays when 3D isn't available.
  */
 /** The variant chosen for an asset in the library (re-renders when the choice or the saved variants change). */
-function useChosenVariant(asset: AssetDefinition): { variants: AssetVariant[]; chosen: AssetVariant | undefined } {
+function useChosenVariant(asset: AssetDefinition): {
+  variants: AssetVariant[];
+  chosen: AssetVariant | undefined;
+} {
   const choice = useEditorStore((s) => s.variantChoice[asset.id]);
   const saved = usePrefsStore((s) => s.assetVariants[asset.id]);
   usePackVersion();
@@ -200,12 +224,28 @@ function useChosenVariant(asset: AssetDefinition): { variants: AssetVariant[]; c
   return { variants, chosen: variants.find((v) => v.id === choice) };
 }
 
-function InfoPreview({ asset }: { asset: AssetDefinition }) {
+/**
+ * `viewer`: the large free-view version (scroll to zoom, double-click to reset); otherwise the hover
+ * card preview, with an expand button (`onExpand`) once the model shows.
+ */
+function InfoPreview({
+  asset,
+  viewer = false,
+  onExpand,
+  object,
+}: {
+  asset: AssetDefinition;
+  viewer?: boolean;
+  onExpand?: () => void;
+  object?: PlacedObject;
+}) {
   const project = useProjectStore((s) => s.project!);
   const packs = usePackVersion();
   const { chosen } = useChosenVariant(asset);
   const variantKey = chosen ? chosen.id : '';
-  const [hostRef, thumb] = useAssetThumbnail<HTMLDivElement>(asset);
+  const { chosen: model } = useChosenModel(asset);
+  const shown = useMemo(() => withModel(asset, model?.id), [asset, model]);
+  const [hostRef, thumb] = useAssetThumbnail<HTMLDivElement>(shown);
   const [handle, setHandle] = useState<PreviewHandle | null>(null);
   const [state, setState] = useState<PreviewState>('loading');
   const latest = useRef(project);
@@ -219,7 +259,11 @@ function InfoPreview({ asset }: { asset: AssetDefinition }) {
     import('@/features/scene-3d/objectPreview')
       .then((m) => {
         if (cancelled) return;
-        h = m.attachPreview(host, { reducedMotion: prefersReducedMotion(), onFail: () => setState('fallback') });
+        h = m.attachPreview(host, {
+          reducedMotion: prefersReducedMotion(),
+          onFail: () => setState('fallback'),
+          zoom: viewer,
+        });
         if (h) setHandle(h);
         else setState('fallback');
       })
@@ -230,6 +274,7 @@ function InfoPreview({ asset }: { asset: AssetDefinition }) {
       cancelled = true;
       h?.detach();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hostRef]);
 
   const materials = project.materials;
@@ -239,8 +284,13 @@ function InfoPreview({ asset }: { asset: AssetDefinition }) {
     setState('loading');
     // A saved variant may carry project-only materials: resolve them through a project copy.
     const defs = chosen ? variantDefs(asset, chosen.id) : undefined;
-    const p = defs ? { ...latest.current, materials: { ...defs, ...latest.current.materials } } : latest.current;
-    void handle.showAsset(asset, p, chosen?.materials ?? {}).then((r) => {
+    const p = defs
+      ? { ...latest.current, materials: { ...defs, ...latest.current.materials } }
+      : latest.current;
+    // A placed item shows as placed (its size, finishes and model); a library item in the library choice.
+    void (
+      object ? handle.show(object, latest.current) : handle.showAsset(asset, p, chosen?.materials ?? {}, model?.id)
+    ).then((r) => {
       if (alive && r !== 'stale') setState(r);
     });
     return () => {
@@ -248,19 +298,103 @@ function InfoPreview({ asset }: { asset: AssetDefinition }) {
     };
     // The chosen variant is identified by its key; its object is rebuilt on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handle, asset, materials, packs, variantKey]);
+  }, [handle, shown, materials, packs, variantKey, object]);
 
   return (
-    <div ref={hostRef} className={`aic-preview is-${state}`} aria-hidden>
-      {state !== 'ok' && (thumb ? <img src={thumb} alt="" draggable={false} /> : <AssetPlanThumb asset={asset} />)}
+    <div className={`aic-preview-wrap${viewer ? ' viewer' : ''}`}>
+      <div ref={hostRef} className={`aic-preview is-${state}${viewer ? ' viewer' : ''}`} aria-hidden>
+        {state !== 'ok' &&
+          (thumb ? <img src={thumb} alt="" draggable={false} /> : <AssetPlanThumb asset={shown} />)}
+      </div>
+      {onExpand && state === 'ok' && (
+        <button
+          type="button"
+          className="aic-expand"
+          aria-label="Open a large view"
+          title="Open a large view to look around it"
+          onClick={onExpand}
+          data-testid="aic-expand"
+        >
+          <Maximize2 size={13} aria-hidden />
+        </button>
+      )}
+      {viewer && <p className="aic-view-hint">Drag to turn · scroll to zoom · double-click to reset</p>}
     </div>
+  );
+}
+
+/**
+ * Large viewer of a library item (opened from the hover card's expand button): the live model to
+ * turn and zoom freely, beside everything the card shows, with its model and colour pickers and a
+ * Place button.
+ */
+export function AssetViewerDialog({
+  assetId,
+  objectId,
+  onClose,
+}: {
+  assetId: string;
+  objectId?: string;
+  onClose: () => void;
+}) {
+  const project = useProjectStore((s) => s.project!);
+  usePackVersion();
+  const obj = objectId ? project.objects[objectId] : undefined;
+  const asset = getAsset(project, obj?.assetId ?? assetId);
+  if (!asset) return null;
+  return (
+    <Dialog
+      title={obj?.name ?? asset.name}
+      onClose={onClose}
+      wide="xl"
+      testId="asset-viewer"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Close
+          </Button>
+          {!obj && (
+            <Button
+              variant="primary"
+              data-testid="asset-viewer-place"
+              onClick={() => {
+                const ed = useEditorStore.getState();
+                ed.set({
+                  tool: 'place',
+                  placeAssetId: asset.id,
+                  placeRotation: 0,
+                  workspace: ed.workspace === 'walk' ? '3d' : ed.workspace,
+                });
+                onClose();
+              }}
+            >
+              Place
+            </Button>
+          )}
+        </>
+      }
+    >
+      <div className="asset-viewer">
+        <InfoPreview asset={asset} viewer object={obj} />
+        <div className="asset-viewer-info">
+          <InfoBody
+            asset={asset}
+            hint={null}
+            pickers={!obj}
+            size={obj ? { w: obj.width, d: obj.depth, h: obj.height } : undefined}
+          />
+        </div>
+      </div>
+    </Dialog>
   );
 }
 
 /** A length to the millimetre (or quarter inch) without trailing zeros: 0.85 m, 84.5 cm, 2' 9.25". */
 function len(m: number, units: LengthUnit, suffix: boolean): string {
   if (units === 'ft') return formatLength(m, units, 2);
-  const text = formatLength(m, units, 3, { suffix: false }).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+  const text = formatLength(m, units, 3, { suffix: false })
+    .replace(/(\.\d*?)0+$/, '$1')
+    .replace(/\.$/, '');
   if (!suffix) return text;
   return units === 'in' ? `${text}"` : `${text} ${units}`;
 }
@@ -329,7 +463,43 @@ function InfoVariants({ asset }: { asset: AssetDefinition }) {
   );
 }
 
-function InfoBody({ asset }: { asset: AssetDefinition }) {
+/** Model variant picker (filled, bare…); picking one arms the place tool with it, like a colour. */
+function InfoModels({ asset }: { asset: AssetDefinition }) {
+  const { models, chosen } = useChosenModel(asset);
+  if (!chosen) return null;
+  return (
+    <div className="aic-models">
+      <ModelPicker
+        models={models}
+        selected={chosen.id}
+        onPick={(m) => {
+          chooseModel(asset, m.id);
+          const ed = useEditorStore.getState();
+          ed.set({
+            tool: 'place',
+            placeAssetId: asset.id,
+            placeRotation: 0,
+            workspace: ed.workspace === 'walk' ? '3d' : ed.workspace,
+          });
+        }}
+      />
+    </div>
+  );
+}
+
+function InfoBody({
+  asset,
+  hint = 'Click to place, or drag onto the plan.',
+  pickers = true,
+  size,
+}: {
+  asset: AssetDefinition;
+  hint?: ReactNode;
+  /** Model and colour pickers for new items (off for a placed item, which has its own in the Inspector). */
+  pickers?: boolean;
+  /** A placed item's own size (default: the item's default size). */
+  size?: Size3;
+}) {
   const units = useProjectStore((s) => s.project!.settings.units);
   const src = sourceOf(asset);
   const resize = resizeText(asset, units);
@@ -342,7 +512,8 @@ function InfoBody({ asset }: { asset: AssetDefinition }) {
           {asset.group} · {ASSET_CATEGORY_LABELS[asset.category]}
         </span>
       </header>
-      <InfoVariants asset={asset} />
+      {pickers && <InfoModels asset={asset} />}
+      {pickers && <InfoVariants asset={asset} />}
       {asset.description && <p className="aic-desc">{asset.description}</p>}
       {brand && (
         <section className="aic-brand" aria-label={`${brand.name} product`}>
@@ -373,15 +544,15 @@ function InfoBody({ asset }: { asset: AssetDefinition }) {
       {asset.plant && <PlantCare plant={asset.plant} units={units} className="aic-plant" />}
       <dl className="aic-rows">
         <Row label="Size">
-          <span className="num">{sizeText(asset.defaultSize, units)}</span>
-          {resize && <span className="aic-sub num">{resize}</span>}
+          <span className="num">{sizeText(size ?? asset.defaultSize, units)}</span>
+          {resize && !size && <span className="aic-sub num">{resize}</span>}
         </Row>
         <Row label="Source">
           {src.name}
           <span className="aic-sub">{src.license}</span>
         </Row>
       </dl>
-      <p className="aic-hint">Click to place, or drag onto the plan.</p>
+      {hint && <p className="aic-hint">{hint}</p>}
     </div>
   );
 }

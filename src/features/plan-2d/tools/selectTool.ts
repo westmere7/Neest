@@ -9,8 +9,9 @@ import { getAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type SelItem } from '@/state/editorStore';
 import { hitHandle, hitTest, marqueeSelect, selectionHandles, type Handle } from '../hitTest';
-import { hugWall } from './placeTools';
+import { WALL_HUG_MOVE, hugWall } from './placeTools';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './types';
+import { movedElevation } from './surfaces';
 
 type Gesture =
   | { type: 'pending'; start: Vec2; startScreen: Vec2; hit: SelItem | null; shift: boolean; wasSelected: boolean }
@@ -227,13 +228,17 @@ export function createSelectTool(): Tool {
             let target = add(base, delta);
             if (snapOn) target = { x: round(target.x, grid / 2), y: round(target.y, grid / 2) };
             if (asset && o && (asset.wallSnap || asset.mount === 'wall') && !e.alt) {
-              hugged = hugWall(env.derived(), add(base, sub(e.world, g.start)), o.depth, asset.mount === 'wall' ? 0.6 : 0.25);
+              hugged = hugWall(env.derived(), add(base, sub(e.world, g.start)), o.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE);
               if (hugged) target = { x: hugged.x, y: hugged.y };
             }
             delta = sub(target, base);
           }
           const nodes = Object.fromEntries(Object.entries(g.nodes).map(([id, p]) => [id, add(p, delta)]));
           const hugRot = hugged?.rotation;
+          // A single small item steps onto (or off) tables, counters and cabinets it is moved over.
+          const movingIds = Object.keys(g.objects);
+          const base = store().tx?.base;
+          const lift = movingIds.length === 1 && base ? movedElevation(base, movingIds[0], g.objects[movingIds[0]].x + delta.x, g.objects[movingIds[0]].y + delta.y) : undefined;
           store().preview((d) => {
             setNodePositions(d, nodes);
             for (const [id, p] of Object.entries(g.objects)) {
@@ -242,6 +247,7 @@ export function createSelectTool(): Tool {
               o.x = p.x + delta.x;
               o.y = p.y + delta.y;
               if (hugRot !== undefined && id === g.primaryObject) o.rotation = normalizeRotation(hugRot);
+              if (lift !== undefined) o.elevation = lift;
             }
           });
           env.setSnapLabel(hugged ? 'Against wall' : null);

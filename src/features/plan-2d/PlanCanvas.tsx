@@ -7,7 +7,7 @@ import { pointAt } from '@/domain/geometry/wallPath';
 import { rectPolygon } from '@/domain/geometry/polygon';
 import { add, dist, leftNormal, scale } from '@/domain/geometry/vec';
 import { formatLength } from '@/domain/model/units';
-import { assetPlan, getAsset } from '@/data/assets/registry';
+import { assetPlan, getObjectAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type ToolId } from '@/state/editorStore';
 import { usePrefsStore } from '@/state/uiStores';
@@ -632,7 +632,7 @@ function OverlayLayer({ overlay, px }: { overlay: ToolOverlay; px: number }) {
   }
   if (overlay.ghostObject) {
     const g = overlay.ghostObject;
-    const asset = getAsset(project, g.assetId);
+    const asset = getObjectAsset(project, g);
     if (asset) {
       const plan = assetPlan(asset, { w: g.width, d: g.depth, h: g.height }, project.customAssets[g.assetId]);
       els.push(

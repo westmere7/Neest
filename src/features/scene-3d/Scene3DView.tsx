@@ -21,16 +21,22 @@ import {
 import type { PlacedObject, Project, RenderSettings, WallDisplay } from '@/domain/model/schema';
 import { derivePlan, type DerivedPlan } from '@/domain/geometry/derive';
 import { round } from '@/domain/geometry/vec';
-import { addCameraPreset, deleteCameraPreset, updateCameraPreset, withGroupMates } from '@/domain/commands/entities';
+import {
+  addCameraPreset,
+  deleteCameraPreset,
+  updateCameraPreset,
+  withGroupMates,
+} from '@/domain/commands/entities';
 import { getAsset } from '@/data/assets/registry';
 import { ASSET_CATEGORY_LABELS, ASSET_CATEGORY_ORDER, CEILING_CATEGORY } from '@/data/assets/catalog';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
-import { toast, useDialogStore } from '@/state/uiStores';
+import { toast, useDialogStore, usePrefsStore } from '@/state/uiStores';
 import { Button, IconButton, Segmented, Slider, Toggle } from '@/components/ui';
 import { useIsMobile } from '@/components/hooks';
-import { hugWall } from '@/features/plan-2d/tools/placeTools';
-import { WalkControls } from '@/features/walkthrough/WalkControls';
+import { WALL_HUG_MOVE, hugWall } from '@/features/plan-2d/tools/placeTools';
+import { FloorReflections } from './floorReflections';
+import { WalkControls, toggleWalkFly, useWalkFly } from '@/features/walkthrough/WalkControls';
 import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
 import { PostEffects } from './PostEffects';
@@ -41,7 +47,9 @@ import { liveScene, sharedRegistry } from './sceneRuntime';
 import { hitsGizmo, TransformGizmo, ToolBridge3D } from './edit3d';
 import { clientCompute, useCanvasMeasureFix } from './useCanvasMeasureFix';
 import { floatingInsets } from '@/components/layoutInsets';
+import { SceneLoading, type SceneLoadStage } from './SceneLoading';
 import './scene3d.css';
+import { movedElevation } from '@/features/plan-2d/tools/surfaces';
 
 type Projection = 'perspective' | 'orthographic';
 
@@ -80,7 +88,14 @@ function FreeAreaOffset() {
     c.x = nx;
     c.y = ny;
     c.cam = camera;
-    (camera as THREE.PerspectiveCamera | THREE.OrthographicCamera).setViewOffset(size.width, size.height, -nx, -ny, size.width, size.height);
+    (camera as THREE.PerspectiveCamera | THREE.OrthographicCamera).setViewOffset(
+      size.width,
+      size.height,
+      -nx,
+      -ny,
+      size.width,
+      size.height,
+    );
   });
   useEffect(
     () => () => {
@@ -102,7 +117,13 @@ function insetsKey(el: HTMLElement): string {
 function CameraDirector({ view }: { view: { v: CameraView; nonce: number } | null }) {
   const get = useThree((s) => s.get);
   const gl = useThree((s) => s.gl);
-  const anim = useRef<{ from: THREE.Vector3; to: THREE.Vector3; tFrom: THREE.Vector3; tTo: THREE.Vector3; t: number } | null>(null);
+  const anim = useRef<{
+    from: THREE.Vector3;
+    to: THREE.Vector3;
+    tFrom: THREE.Vector3;
+    tTo: THREE.Vector3;
+    t: number;
+  } | null>(null);
   const applied = useRef<number>(-1);
   const pending = useRef(view);
   pending.current = view;
@@ -131,7 +152,12 @@ function CameraDirector({ view }: { view: { v: CameraView; nonce: number } | nul
         applied.current = -1; // re-apply as a jump
       }
     }
-    if (req && applied.current !== req.nonce && ctrl && (ctrl as unknown as { object: THREE.Camera }).object === camera) {
+    if (
+      req &&
+      applied.current !== req.nonce &&
+      ctrl &&
+      (ctrl as unknown as { object: THREE.Camera }).object === camera
+    ) {
       const v = req.v;
       const isPersp = (camera as THREE.PerspectiveCamera).isPerspectiveCamera === true;
       if (isPersp === (v.projection === 'perspective')) {
@@ -139,7 +165,9 @@ function CameraDirector({ view }: { view: { v: CameraView; nonce: number } | nul
         if (v.fitSphere || v.fitOrtho) {
           const key = insetsKey(gl.domElement);
           settle.current =
-            reframe.current && settle.current ? { ...settle.current, key } : { until: performance.now() + (first ? 1200 : 700), key, moved: false };
+            reframe.current && settle.current
+              ? { ...settle.current, key }
+              : { until: performance.now() + (first ? 1200 : 700), key, moved: false };
         } else settle.current = null;
         reframe.current = false;
         applied.current = req.nonce;
@@ -207,16 +235,20 @@ function CameraDirector({ view }: { view: { v: CameraView; nonce: number } | nul
  * include objects, the orbit target eases to their centre and the camera pans
  * along with it (same offset, so the view direction never changes), so dragging
  * orbits around the selection and the wheel zooms toward it. Clearing the
- * selection leaves the pivot as is.
+ * selection leaves the pivot as is. Only with the "Centre camera on selection"
+ * preference (off by default).
  */
 function SelectionPivot() {
   const get = useThree((s) => s.get);
+  const enabled = usePrefsStore((s) => s.focusSelection);
   const key = useEditorStore((s) =>
-    s.selection
-      .filter((x) => x.kind === 'object')
-      .map((x) => x.id)
-      .sort()
-      .join(','),
+    !enabled
+      ? ''
+      : s.selection
+          .filter((x) => x.kind === 'object')
+          .map((x) => x.id)
+          .sort()
+          .join(','),
   );
   const anim = useRef<{ from: THREE.Vector3; to: THREE.Vector3; t: number } | null>(null);
   useEffect(() => {
@@ -290,22 +322,33 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
       const live = liveScene.current;
       if (!enabled || e.button !== 0 || !live || hitsGizmo(e)) return;
       const sel = useEditorStore.getState().selection;
-      if (!sel.some((s) => s.id === obj.id) || obj.locked || latest.current.project.layers.furniture.locked) return;
+      if (!sel.some((s) => s.id === obj.id) || obj.locked || latest.current.project.layers.furniture.locked)
+        return;
       e.stopPropagation();
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -obj.elevation);
       const hit = new THREE.Vector3();
       if (!e.ray.intersectPlane(plane, hit)) return;
       const offset = { x: obj.x - hit.x, y: obj.y - hit.z };
       // Grouped items move together (no wall hugging for a group).
-      const mates = withGroupMates(latest.current.project, [obj.id]).filter((id) => !latest.current.project.objects[id]?.locked);
-      const starts = Object.fromEntries(mates.map((id) => [id, { x: latest.current.project.objects[id].x, y: latest.current.project.objects[id].y }]));
+      const mates = withGroupMates(latest.current.project, [obj.id]).filter(
+        (id) => !latest.current.project.objects[id]?.locked,
+      );
+      const starts = Object.fromEntries(
+        mates.map((id) => [
+          id,
+          { x: latest.current.project.objects[id].x, y: latest.current.project.objects[id].y },
+        ]),
+      );
       const raycaster = new THREE.Raycaster();
       const el = live.gl.domElement;
       let started = false;
       if (controlsRef.current) controlsRef.current.enabled = false;
       const move = (ev: PointerEvent) => {
         const rect = el.getBoundingClientRect();
-        const ndc = new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1);
+        const ndc = new THREE.Vector2(
+          ((ev.clientX - rect.left) / rect.width) * 2 - 1,
+          -((ev.clientY - rect.top) / rect.height) * 2 + 1,
+        );
         raycaster.setFromCamera(ndc, live.camera);
         const p = new THREE.Vector3();
         if (!raycaster.ray.intersectPlane(plane, p)) return;
@@ -324,7 +367,7 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
         const asset = getAsset(pr, obj.assetId);
         let rotation = obj.rotation;
         if (asset && mates.length < 2 && (asset.wallSnap || asset.mount === 'wall') && !ev.altKey) {
-          const h = hugWall(dv, { x, y }, obj.depth, asset.mount === 'wall' ? 0.6 : 0.25);
+          const h = hugWall(dv, { x, y }, obj.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE);
           if (h) {
             x = h.x;
             y = h.y;
@@ -347,6 +390,10 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
             o.x = x;
             o.y = y;
             o.rotation = rotation;
+            // Small items step onto (or off) the tables and counters they are moved over.
+            const base = useProjectStore.getState().tx?.base;
+            const lift = base ? movedElevation(base, obj.id, x, y) : undefined;
+            if (lift !== undefined) o.elevation = lift;
           }
         });
       };
@@ -376,7 +423,10 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
   const isMobile = useIsMobile();
   useCanvasMeasureFix();
   const [projection, setProjection] = useState<Projection>('perspective');
-  const [view, setView] = useState<{ v: CameraView; nonce: number } | null>(() => ({ v: initialView(derived), nonce: 1 }));
+  const [view, setView] = useState<{ v: CameraView; nonce: number } | null>(() => ({
+    v: initialView(derived, project.render.fov),
+    nonce: 1,
+  }));
   const [showDims, setShowDims] = useState(false);
   const [showHelpers, setShowHelpers] = useState(true);
   const helpersRef = useRef<THREE.Group>(null);
@@ -394,9 +444,18 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
     const preset = project.cameras.find((c) => c.id === cameraRequest.view);
     if (preset) {
       goTo(presetView(preset));
-      if (preset.wallDisplay && preset.wallDisplay !== project.render.wallDisplay)
-        useProjectStore.getState().execute('Apply view', (d) => void (d.render.wallDisplay = preset.wallDisplay!));
-    } else goTo(namedView(cameraRequest.view as NamedView, derived.bounds));
+      const wall =
+        preset.wallDisplay && preset.wallDisplay !== project.render.wallDisplay ? preset.wallDisplay : null;
+      const fov =
+        preset.projection === 'perspective' && Math.abs(preset.fov - project.render.fov) > 0.01
+          ? preset.fov
+          : null;
+      if (wall || fov != null)
+        useProjectStore.getState().execute('Apply view', (d) => {
+          if (wall) d.render.wallDisplay = wall;
+          if (fov != null) d.render.fov = clampFov(fov);
+        });
+    } else goTo({ ...namedView(cameraRequest.view as NamedView, derived.bounds), fov: project.render.fov });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraRequest]);
 
@@ -412,7 +471,8 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
   // Right-click: the same menu as in the plan, for the item under the pointer (not after a right-drag orbit/pan).
   const rightDown = useRef<{ x: number; y: number } | null>(null);
   const menuShown = useRef(0);
-  const rightDragged = (ev: MouseEvent) => !!rightDown.current && Math.hypot(ev.clientX - rightDown.current.x, ev.clientY - rightDown.current.y) > 5;
+  const rightDragged = (ev: MouseEvent) =>
+    !!rightDown.current && Math.hypot(ev.clientX - rightDown.current.x, ev.clientY - rightDown.current.y) > 5;
   const onPick = useCallback<NonNullable<SceneOptions['onPick']>>((kind, id, e) => {
     if (hitsGizmo(e)) return; // the transform gizmo owns this pointer
     const ed = useEditorStore.getState();
@@ -447,12 +507,21 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
     onObjectPointerDown: walk || drawing ? undefined : drag.onObjectPointerDown,
   };
 
-  const dpr: [number, number] = r.quality === 'ultra' ? [1.5, 2] : r.quality === 'high' ? [1, 2] : r.quality === 'balanced' ? [1, 1.5] : [0.75, 1];
+  const dpr: [number, number] =
+    r.quality === 'ultra'
+      ? [1.5, 2]
+      : r.quality === 'high'
+        ? [1, 2]
+        : r.quality === 'balanced'
+          ? [1, 1.5]
+          : [0.75, 1];
   // The canvas stays covered by the loading screen until the scene has compiled and drawn.
   const [ready, setReady] = useState(false);
   const [compiled, setCompiled] = useState(false);
   const onReady = useCallback(() => setReady(true), []);
   const onCompiled = useCallback(() => setCompiled(true), []);
+  const [stage, setStage] = useState<SceneLoadStage>('scene');
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   // Switching quality changes lights, shadows and effects, so shaders recompile. The switch shows
   // at once; drawing pauses (last frame stays) under a light overlay until they compile in the
   // background, instead of freezing the page on the next frame. A layout effect runs before that
@@ -465,6 +534,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
     setSwitching(r.quality);
     setCompiled(false);
     setReady(false);
+    setStage('materials');
   }, [r.quality]);
   useEffect(() => {
     if (ready) setSwitching(null);
@@ -481,7 +551,8 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
       onContextMenu={(e) => {
         e.preventDefault();
         // An item already opened its menu for this click; otherwise offer the empty-space menu.
-        if (walk || drawing || menuShown.current === e.nativeEvent.timeStamp || rightDragged(e.nativeEvent)) return;
+        if (walk || drawing || menuShown.current === e.nativeEvent.timeStamp || rightDragged(e.nativeEvent))
+          return;
         const items = planContextMenuItems(null, { x: 0, y: 0 });
         if (items.length) openContextMenu(e.clientX, e.clientY, items);
       }}
@@ -498,7 +569,13 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         e.preventDefault();
         const rect = live.gl.domElement.getBoundingClientRect();
         const ray = new THREE.Raycaster();
-        ray.setFromCamera(new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1), live.camera);
+        ray.setFromCamera(
+          new THREE.Vector2(
+            ((e.clientX - rect.left) / rect.width) * 2 - 1,
+            -((e.clientY - rect.top) / rect.height) * 2 + 1,
+          ),
+          live.camera,
+        );
         const p = new THREE.Vector3();
         if (ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), p))
           window.dispatchEvent(new CustomEvent('neest:drop-asset', { detail: { assetId, x: p.x, y: p.z } }));
@@ -507,21 +584,48 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
       <Canvas
         shadows={{ type: THREE.PCFSoftShadowMap, enabled: r.shadows && r.quality !== 'draft' }}
         dpr={dpr}
-        gl={{ antialias: r.quality !== 'draft', alpha: true, preserveDrawingBuffer: import.meta.env.DEV, powerPreference: 'high-performance' }}
+        gl={{
+          antialias: r.quality !== 'draft',
+          alpha: true,
+          preserveDrawingBuffer: import.meta.env.DEV,
+          powerPreference: 'high-performance',
+        }}
         onCreated={(state) => state.setEvents({ compute: clientCompute as never })}
         onPointerMissed={(e) => {
           if (!walk && !drawing && e.button === 0) useEditorStore.getState().clearSelection();
         }}
       >
         <color attach="background" args={[r.background]} />
-        {!ready && <FirstFrames key={r.quality} onCompiled={onCompiled} onReady={onReady} />}
+        {!ready && (
+          <FirstFrames
+            key={r.quality}
+            onCompiled={onCompiled}
+            onReady={onReady}
+            onStage={setStage}
+            onProgress={setProgress}
+          />
+        )}
         <PostEffects quality={r.quality} selectedIds={options.selectedIds} paused={!compiled} />
         <GlobalIllumination enabled={r.quality === 'ultra' && ready} project={project} derived={derived} />
+        <FloorReflections enabled={r.quality === 'ultra'} />
         {walk || projection === 'perspective' ? (
-          <PerspectiveCamera makeDefault position={view?.v.position ?? [10, 10, 10]} fov={walk ? 70 : (view?.v.fov ?? 45)} near={0.05} far={600} />
+          <PerspectiveCamera
+            makeDefault
+            position={view?.v.position ?? [10, 10, 10]}
+            fov={walk ? r.walkFov : (view?.v.fov ?? r.fov)}
+            near={walk ? 0.05 : 0.1}
+            far={600}
+          />
         ) : (
-          <OrthographicCamera makeDefault position={view?.v.position ?? [10, 10, 10]} zoom={view?.v.zoom ?? 40} near={-200} far={600} />
+          <OrthographicCamera
+            makeDefault
+            position={view?.v.position ?? [10, 10, 10]}
+            zoom={view?.v.zoom ?? 40}
+            near={-200}
+            far={600}
+          />
         )}
+        {(walk || projection === 'perspective') && <FovSync fov={walk ? r.walkFov : r.fov} />}
         {!walk && (
           <OrbitControls
             ref={drag.controlsRef as unknown as React.Ref<OrbitControlsImpl>}
@@ -539,10 +643,16 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
           />
         )}
         {!walk && <CameraDirector view={view} />}
+        {!walk && projection === 'perspective' && <NearPlaneSync bounds={derived.bounds} />}
         {!walk && <SelectionPivot />}
         {!walk && <FreeAreaOffset />}
         {walk && <WalkControls project={project} derived={derived} onExit={exitWalk} />}
-        <Lighting project={project} derived={derived} shadows={r.shadows && r.quality !== 'draft'} quality={r.quality} />
+        <Lighting
+          project={project}
+          derived={derived}
+          shadows={r.shadows && r.quality !== 'draft'}
+          quality={r.quality}
+        />
         <SceneContent project={project} derived={derived} registry={sharedRegistry} options={options} />
         {!walk && (
           <group ref={helpersRef} visible={showHelpers}>
@@ -551,7 +661,12 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         )}
         <mesh rotation-x={-Math.PI / 2} position={[0, -0.01, 0]} receiveShadow raycast={() => null}>
           <planeGeometry args={[400, 400]} />
-          <shadowMaterial transparent opacity={0.18} onBeforeCompile={sunShadowOnly} customProgramCacheKey={sunShadowKey} />
+          <shadowMaterial
+            transparent
+            opacity={0.18}
+            onBeforeCompile={sunShadowOnly}
+            customProgramCacheKey={sunShadowKey}
+          />
         </mesh>
         <LiveBridge helpersRef={helpersRef} />
         {!walk && <ToolBridge3D enabled={workspace === '3d'} />}
@@ -559,9 +674,11 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
       </Canvas>
       {!ready &&
         (switching ? (
-          <div className="pane-loading scene3d-loading switching">Applying {QUALITY_LABELS[switching]} quality…</div>
+          <div className="pane-loading scene3d-loading switching">
+            Applying {QUALITY_LABELS[switching]} quality…
+          </div>
         ) : (
-          <div className="pane-loading scene3d-loading">Loading 3D view…</div>
+          <SceneLoading stage={stage} progress={progress} />
         ))}
       {walk && <WalkHud onExit={exitWalk} isMobile={isMobile} />}
       {/* Mobile has no tool rail to bring a stashed panel back, so it only collapses there. */}
@@ -582,7 +699,10 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
           <IconButton label="Home view" onClick={() => goTo(namedView('home', derived.bounds))}>
             <Home size={15} />
           </IconButton>
-          <IconButton label="Walk through" onClick={() => useEditorStore.getState().set({ workspace: 'walk' })}>
+          <IconButton
+            label="Walk through"
+            onClick={() => useEditorStore.getState().set({ workspace: 'walk' })}
+          >
             <Footprints size={15} />
           </IconButton>
         </div>
@@ -591,7 +711,12 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
   );
 }
 
-const QUALITY_LABELS: Record<RenderSettings['quality'], string> = { draft: 'Draft', balanced: 'Balanced', high: 'High', ultra: 'Ultra' };
+const QUALITY_LABELS: Record<RenderSettings['quality'], string> = {
+  draft: 'Draft',
+  balanced: 'Balanced',
+  high: 'High',
+  ultra: 'Ultra',
+};
 
 /**
  * The ground only shows the sun's shadow. Lamp lights inside the building cast shadows too
@@ -602,7 +727,10 @@ const SUN_SHADOW_MASK = THREE.ShaderChunk.shadowmask_pars_fragment
   .replace('#if NUM_SPOT_LIGHT_SHADOWS > 0', '#if 0')
   .replace('#if NUM_POINT_LIGHT_SHADOWS > 0', '#if 0');
 function sunShadowOnly(shader: THREE.WebGLProgramParametersWithUniforms) {
-  shader.fragmentShader = shader.fragmentShader.replace('#include <shadowmask_pars_fragment>', SUN_SHADOW_MASK);
+  shader.fragmentShader = shader.fragmentShader.replace(
+    '#include <shadowmask_pars_fragment>',
+    SUN_SHADOW_MASK,
+  );
 }
 const sunShadowKey = () => 'neest-sun-shadow-only';
 
@@ -615,12 +743,24 @@ const sunShadowKey = () => 'neest-sun-shadow-only';
  * user never sees the blank canvas that used to appear for a few seconds after the view loaded.
  * A time limit makes sure the loading screen can never get stuck.
  */
-function FirstFrames({ onCompiled, onReady }: { onCompiled: () => void; onReady: () => void }) {
+function FirstFrames({
+  onCompiled,
+  onReady,
+  onStage,
+  onProgress,
+}: {
+  onCompiled: () => void;
+  onReady: () => void;
+  onStage: (s: SceneLoadStage) => void;
+  onProgress: (p: { done: number; total: number } | null) => void;
+}) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const invalidate = useThree((s) => s.invalidate);
   const stage = useRef<'build' | 'compile' | number>('build');
+  // How long each step took (dev builds log it and keep it in window.__NEEST_LOAD__).
+  const times = useRef({ t0: performance.now(), scene: 0, materials: 0, frames: 0 });
   useEffect(() => {
     const t = window.setTimeout(() => {
       onCompiled();
@@ -634,10 +774,16 @@ function FirstFrames({ onCompiled, onReady }: { onCompiled: () => void; onReady:
       // SceneContent adds its geometry after mount; wait until the plan group is populated.
       if (!scene.getObjectByName('neest-plan')?.children.length) return invalidate();
       stage.current = 'compile';
+      times.current.scene = performance.now();
+      onStage('materials');
       gl.compileAsync(scene, camera)
+        .catch(() => undefined)
+        .then(() => uploadTextures(gl, scene, onProgress))
         .catch(() => undefined)
         .finally(() => {
           stage.current = 0;
+          times.current.materials = performance.now();
+          onStage('frames');
           onCompiled();
           invalidate();
         });
@@ -645,18 +791,123 @@ function FirstFrames({ onCompiled, onReady }: { onCompiled: () => void; onReady:
     }
     if (s === 'compile') return;
     stage.current = s + 1;
-    if (s + 1 >= 3) onReady();
-    else invalidate();
+    if (s + 1 === 3) {
+      const t = times.current;
+      t.frames = performance.now();
+      if (import.meta.env.DEV) {
+        const ms = {
+          scene: Math.round(t.scene - t.t0),
+          materials: Math.round(t.materials - t.scene),
+          frames: Math.round(t.frames - t.materials),
+        };
+        (window as unknown as { __NEEST_LOAD__?: object }).__NEEST_LOAD__ = ms;
+        console.info(
+          '[3d] ready: scene ' +
+            ms.scene +
+            ' ms · materials ' +
+            ms.materials +
+            ' ms · first frames ' +
+            ms.frames +
+            ' ms',
+        );
+      }
+      onReady();
+    } else if (s + 1 < 3) invalidate();
   });
   return null;
 }
 
+/**
+ * Uploads the scene's textures to the GPU a few at a time, yielding between batches, so the first
+ * frame does not upload them all at once (that froze the page for seconds on big projects) and the
+ * loading screen keeps animating and counting.
+ */
+async function uploadTextures(
+  gl: THREE.WebGLRenderer,
+  scene: THREE.Scene,
+  onProgress: (p: { done: number; total: number } | null) => void,
+): Promise<void> {
+  const KEYS = [
+    'map',
+    'normalMap',
+    'roughnessMap',
+    'metalnessMap',
+    'alphaMap',
+    'emissiveMap',
+    'aoMap',
+    'bumpMap',
+  ] as const;
+  const textures = new Set<THREE.Texture>();
+  scene.traverse((o) => {
+    const mat = (o as THREE.Mesh).material;
+    if (!mat) return;
+    for (const m of Array.isArray(mat) ? mat : [mat]) {
+      const rec = m as unknown as Record<string, THREE.Texture | null | undefined>;
+      for (const k of KEYS) {
+        const t = rec[k];
+        if (t?.isTexture && t.image) textures.add(t);
+      }
+    }
+  });
+  const list = [...textures];
+  let slice = performance.now();
+  for (const [i, t] of list.entries()) {
+    gl.initTexture(t);
+    if (performance.now() - slice > 24) {
+      onProgress({ done: i + 1, total: list.length });
+      await new Promise((r) => setTimeout(r, 0));
+      slice = performance.now();
+    }
+  }
+  onProgress(null);
+}
+
 /** The editor always opens on a view fitted to the visible canvas; Guest View uses the project's start camera. */
-function initialView(derived: DerivedPlan): CameraView {
-  return namedView('home', derived.bounds);
+function initialView(derived: DerivedPlan, fov = 45): CameraView {
+  return { ...namedView('home', derived.bounds), fov };
+}
+
+const clampFov = (v: number) => Math.min(110, Math.max(15, v));
+
+/**
+ * Adaptive near plane against z-fighting: depth precision depends on how far the near plane is, so
+ * while the camera is outside the apartment (the usual orbit view) the near plane moves out to a
+ * quarter of the distance to it — tens of times more precision, no flicker between surfaces a few
+ * millimetres apart (skirting on walls, rugs on floors, doors on cabinets). Inside the rooms it
+ * stays at 10 cm so nothing close is clipped.
+ */
+function NearPlaneSync({ bounds }: { bounds: DerivedPlan['bounds'] }) {
+  useFrame(({ camera }) => {
+    if (!(camera instanceof THREE.PerspectiveCamera) || !bounds) return;
+    const p = camera.position;
+    // Distance from the camera to the apartment's box (plan bounds, floor to a little above the ceiling).
+    const dx = Math.max(bounds.minX - p.x, 0, p.x - bounds.maxX);
+    const dy = Math.max(0 - p.y, 0, p.y - 4);
+    const dz = Math.max(bounds.minY - p.z, 0, p.z - bounds.maxY);
+    const dist = Math.hypot(dx, dy, dz);
+    const near = Math.min(3, Math.max(0.1, dist * 0.25));
+    if (Math.abs(near - camera.near) > camera.near * 0.08) {
+      camera.near = near;
+      camera.updateProjectionMatrix();
+    }
+  });
+  return null;
+}
+
+/** Keeps the perspective camera's field of view in step with the View panel setting. */
+function FovSync({ fov }: { fov: number }) {
+  const camera = useThree((s) => s.camera);
+  useEffect(() => {
+    if (camera instanceof THREE.PerspectiveCamera && Math.abs(camera.fov - fov) > 0.01) {
+      camera.fov = fov;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera, fov]);
+  return null;
 }
 
 function WalkHud({ onExit, isMobile }: { onExit: () => void; isMobile: boolean }) {
+  const flying = useWalkFly();
   return (
     <>
       <div className="walk-hud floating" role="status">
@@ -667,9 +918,24 @@ function WalkHud({ onExit, isMobile }: { onExit: () => void; isMobile: boolean }
             Click to look around · <kbd>W</kbd>
             <kbd>A</kbd>
             <kbd>S</kbd>
-            <kbd>D</kbd> to move · <kbd>Shift</kbd> to run · <kbd>Esc</kbd> to exit
+            <kbd>D</kbd> to move · <kbd>Shift</kbd> to run · <kbd>F</kbd> {flying ? 'walk again' : 'free-fly'}
+            {flying && (
+              <>
+                {' '}
+                · <kbd>Space</kbd>/<kbd>Q</kbd> up/down
+              </>
+            )}{' '}
+            · <kbd>Esc</kbd> to exit
           </span>
         )}
+        <Button
+          size="sm"
+          variant={flying ? 'primary' : 'subtle'}
+          onClick={toggleWalkFly}
+          data-testid="walk-fly"
+        >
+          {flying ? 'Flying' : 'Free-fly'}
+        </Button>
         <Button size="sm" onClick={onExit}>
           Exit walkthrough
         </Button>
@@ -743,7 +1009,11 @@ function ViewPanel({
     );
   };
   return (
-    <aside className={`view-panel floating${open ? '' : ' collapsed'}${isMobile ? ' mobile' : ''}`} aria-label="3D view settings" data-testid="view-panel">
+    <aside
+      className={`view-panel floating${open ? '' : ' collapsed'}${isMobile ? ' mobile' : ''}`}
+      aria-label="3D view settings"
+      data-testid="view-panel"
+    >
       <header>
         <h2>3D view</h2>
         {/* Desktop stashes the whole panel instead; mobile has no rail button to bring it back, so it collapses. */}
@@ -763,10 +1033,19 @@ function ViewPanel({
         )}
       </header>
       <div className="view-quick">
-        <IconButton label="Home view" onClick={() => goTo(namedView('home', derived.bounds))} data-testid="view-home">
+        <IconButton
+          label="Home view"
+          onClick={() => goTo(namedView('home', derived.bounds))}
+          data-testid="view-home"
+        >
           <Home size={15} />
         </IconButton>
-        <Button size="sm" variant="subtle" onClick={() => goTo(namedView('top', derived.bounds))} data-testid="view-top">
+        <Button
+          size="sm"
+          variant="subtle"
+          onClick={() => goTo(namedView('top', derived.bounds))}
+          data-testid="view-top"
+        >
           Top
         </Button>
         <Button size="sm" variant="subtle" onClick={() => goTo(namedView('iso', derived.bounds))}>
@@ -775,10 +1054,18 @@ function ViewPanel({
         <Button size="sm" variant="subtle" onClick={() => goTo(namedView('perspective', derived.bounds))}>
           Persp.
         </Button>
-        <IconButton label="Walk through" onClick={() => useEditorStore.getState().set({ workspace: 'walk' })} data-testid="enter-walk">
+        <IconButton
+          label="Walk through"
+          onClick={() => useEditorStore.getState().set({ workspace: 'walk' })}
+          data-testid="enter-walk"
+        >
           <Footprints size={15} />
         </IconButton>
-        <IconButton label="Render image" onClick={() => useDialogStore.getState().open('render')} data-testid="open-render">
+        <IconButton
+          label="Render image"
+          onClick={() => useDialogStore.getState().open('render')}
+          data-testid="open-render"
+        >
           <ImageDown size={15} />
         </IconButton>
       </div>
@@ -791,7 +1078,9 @@ function ViewPanel({
                 <Save size={13} /> Save current
               </Button>
             </div>
-            {project.cameras.length === 0 && <p className="field-hint">Frame a view you like and save it here.</p>}
+            {project.cameras.length === 0 && (
+              <p className="field-hint">Frame a view you like and save it here.</p>
+            )}
             {project.cameras.map((c) => (
               <div key={c.id} className="cam-row">
                 {renaming === c.id ? (
@@ -807,7 +1096,10 @@ function ViewPanel({
                     }}
                     onBlur={(e) => {
                       const name = e.target.value.trim();
-                      if (name && name !== c.name) useProjectStore.getState().execute('Rename view', (d) => updateCameraPreset(d, c.id, { name }));
+                      if (name && name !== c.name)
+                        useProjectStore
+                          .getState()
+                          .execute('Rename view', (d) => updateCameraPreset(d, c.id, { name }));
                       setRenaming(null);
                     }}
                   />
@@ -823,11 +1115,41 @@ function ViewPanel({
                 <IconButton label="Update to current camera" onClick={() => updateView(c.id)}>
                   <RefreshCw size={13} />
                 </IconButton>
-                <IconButton label="Delete view" onClick={() => useProjectStore.getState().execute('Delete view', (d) => deleteCameraPreset(d, c.id))}>
+                <IconButton
+                  label="Delete view"
+                  onClick={() =>
+                    useProjectStore.getState().execute('Delete view', (d) => deleteCameraPreset(d, c.id))
+                  }
+                >
                   <Trash2 size={13} />
                 </IconButton>
               </div>
             ))}
+          </section>
+          <section>
+            <h3>Camera</h3>
+            <Slider
+              label="Field of view"
+              value={r.fov}
+              min={20}
+              max={100}
+              step={1}
+              format={(v) => `${Math.round(v)}° · ${Math.round(12 / Math.tan((v * Math.PI) / 360))} mm`}
+              onCommit={(v) => setRender('Change field of view', { fov: v })}
+            />
+            <Slider
+              label="Walkthrough field of view"
+              value={r.walkFov}
+              min={40}
+              max={100}
+              step={1}
+              format={(v) => `${Math.round(v)}°`}
+              onCommit={(v) => setRender('Change walkthrough field of view', { walkFov: v })}
+            />
+            <p className="field-hint">
+              Wider shows more of a small room; narrower flattens perspective like a longer lens. Saved views
+              keep their own.
+            </p>
           </section>
           <section>
             <h3>Walls</h3>
@@ -844,10 +1166,27 @@ function ViewPanel({
               ]}
             />
             {r.wallDisplay === 'cutaway' && (
-              <Slider label="Cut height" value={r.cutawayHeight} min={0.3} max={3} step={0.05} format={(v) => `${v.toFixed(2)} m`} onCommit={(v) => setRender('Change cut height', { cutawayHeight: v })} />
+              <Slider
+                label="Cut height"
+                value={r.cutawayHeight}
+                min={0.3}
+                max={3}
+                step={0.05}
+                format={(v) => `${v.toFixed(2)} m`}
+                onCommit={(v) => setRender('Change cut height', { cutawayHeight: v })}
+              />
             )}
-            <Toggle label="Ceilings" checked={r.showCeilings} onChange={(v) => setRender('Toggle ceilings', { showCeilings: v })} hint="Visible from inside rooms" />
-            <Toggle label="Room labels" checked={r.showRoomLabels} onChange={(v) => setRender('Toggle 3D labels', { showRoomLabels: v })} />
+            <Toggle
+              label="Ceilings"
+              checked={r.showCeilings}
+              onChange={(v) => setRender('Toggle ceilings', { showCeilings: v })}
+              hint="Visible from inside rooms"
+            />
+            <Toggle
+              label="Room labels"
+              checked={r.showRoomLabels}
+              onChange={(v) => setRender('Toggle 3D labels', { showRoomLabels: v })}
+            />
             <Toggle label="Wall dimensions" checked={showDims} onChange={setShowDims} />
             <Toggle label="Helpers (grid, selection)" checked={showHelpers} onChange={setShowHelpers} />
           </section>
@@ -865,21 +1204,68 @@ function ViewPanel({
                 { value: 'ultra', label: 'Ultra' },
               ]}
             />
-            <Slider label="Time of day" value={r.timeOfDay} min={6} max={20} step={0.25} format={(v) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`} onCommit={(v) => setRender('Change time of day', { timeOfDay: v })} />
-            <Slider label="Sun direction" value={r.sunAzimuth} min={0} max={360} step={5} format={(v) => `${v}°`} onCommit={(v) => setRender('Change sun direction', { sunAzimuth: v })} />
-            <Slider label="Sun strength" value={r.sunIntensity} min={0} max={6} step={0.1} onCommit={(v) => setRender('Change sun strength', { sunIntensity: v })} />
+            <Slider
+              label="Time of day"
+              value={r.timeOfDay}
+              min={6}
+              max={20}
+              step={0.25}
+              format={(v) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`}
+              onCommit={(v) => setRender('Change time of day', { timeOfDay: v })}
+            />
+            <Slider
+              label="Sun direction"
+              value={r.sunAzimuth}
+              min={0}
+              max={360}
+              step={5}
+              format={(v) => `${v}°`}
+              onCommit={(v) => setRender('Change sun direction', { sunAzimuth: v })}
+            />
+            <Slider
+              label="Sun strength"
+              value={r.sunIntensity}
+              min={0}
+              max={6}
+              step={0.1}
+              onCommit={(v) => setRender('Change sun strength', { sunIntensity: v })}
+            />
             <Slider
               label="Sun warmth"
               value={r.sunWarmth}
               min={-1}
               max={1}
               step={0.05}
-              format={(v) => (Math.abs(v) < 0.025 ? 'Natural' : v > 0 ? `Warm ${Math.round(v * 100)}%` : `Cool ${Math.round(-v * 100)}%`)}
+              format={(v) =>
+                Math.abs(v) < 0.025
+                  ? 'Natural'
+                  : v > 0
+                    ? `Warm ${Math.round(v * 100)}%`
+                    : `Cool ${Math.round(-v * 100)}%`
+              }
               onCommit={(v) => setRender('Change sun warmth', { sunWarmth: v })}
             />
-            <Slider label="Ambient light" value={r.envIntensity} min={0} max={2.5} step={0.05} onCommit={(v) => setRender('Change ambient light', { envIntensity: v })} />
-            <Slider label="Exposure" value={r.exposure} min={0.3} max={2.5} step={0.05} onCommit={(v) => setRender('Change exposure', { exposure: v })} />
-            <Toggle label="Shadows" checked={r.shadows} onChange={(v) => setRender('Toggle shadows', { shadows: v })} />
+            <Slider
+              label="Ambient light"
+              value={r.envIntensity}
+              min={0}
+              max={2.5}
+              step={0.05}
+              onCommit={(v) => setRender('Change ambient light', { envIntensity: v })}
+            />
+            <Slider
+              label="Exposure"
+              value={r.exposure}
+              min={0.3}
+              max={2.5}
+              step={0.05}
+              onCommit={(v) => setRender('Change exposure', { exposure: v })}
+            />
+            <Toggle
+              label="Shadows"
+              checked={r.shadows}
+              onChange={(v) => setRender('Toggle shadows', { shadows: v })}
+            />
             <div className="field">
               <span className="field-label">Background</span>
               <input
@@ -905,7 +1291,9 @@ function ViewPanel({
                     data-testid="category-ceiling"
                     onClick={() =>
                       setRender(hidden ? 'Show ceiling items' : 'Hide ceiling items', {
-                        hiddenCategories: hidden ? r.hiddenCategories.filter((x) => x !== CEILING_CATEGORY) : [...r.hiddenCategories, CEILING_CATEGORY],
+                        hiddenCategories: hidden
+                          ? r.hiddenCategories.filter((x) => x !== CEILING_CATEGORY)
+                          : [...r.hiddenCategories, CEILING_CATEGORY],
                       })
                     }
                   >
@@ -923,7 +1311,9 @@ function ViewPanel({
                     aria-pressed={!hidden}
                     onClick={() =>
                       setRender('Toggle category', {
-                        hiddenCategories: hidden ? r.hiddenCategories.filter((x) => x !== c) : [...r.hiddenCategories, c],
+                        hiddenCategories: hidden
+                          ? r.hiddenCategories.filter((x) => x !== c)
+                          : [...r.hiddenCategories, c],
                       })
                     }
                   >

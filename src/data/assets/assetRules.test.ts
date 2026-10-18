@@ -5,6 +5,9 @@ import '@/packs/loader';
 import { ASSET_CATALOG, ASSET_GROUPS } from './catalog';
 import { MATERIAL_CATALOG } from '@/data/materials/catalog';
 import LEGACY_NO_DESCRIPTION from './legacyNoDescription.json';
+import LEGACY_COPLANAR from './legacyCoplanar.json';
+import { coplanarClashes } from './coplanar';
+import { assetModels, withModel } from './models';
 
 /**
  * House rules for library content (built-in and /packs), so items added later by people or agents
@@ -40,6 +43,25 @@ describe('asset rules', () => {
     }
     const ids = new Set(items.map((a) => a.id));
     expect(LEGACY_NO_DESCRIPTION.filter((id) => !ids.has(id)), 'ids in legacyNoDescription.json that no longer exist').toEqual([]);
+  });
+
+  it('parts of different slots never share a face plane (they flicker in 3D)', () => {
+    // A grille disc whose top is level with the body's top, a label flush with its panel: lift the
+    // smaller part 1 mm proud (see coplanar.ts). Items from before this rule are listed in
+    // legacyCoplanar.json; the list may only shrink.
+    const legacy = new Set<string>(LEGACY_COPLANAR);
+    for (const a of items) {
+      const looks = [a, ...assetModels(a).map((m) => withModel(a, m.id))];
+      const clashes = looks.flatMap((l) => coplanarClashes(l.build(l.defaultSize)).map((c) => ({ id: l.id, ...c })));
+      if (legacy.has(a.id)) {
+        expect(clashes.length, `${a.id} no longer has coplanar parts: remove it from legacyCoplanar.json`).toBeGreaterThan(0);
+        continue;
+      }
+      const c = clashes[0];
+      expect(c, c && `${c.id}: parts #${c.parts[0]} ('${c.slots[0]}') and #${c.parts[1]} ('${c.slots[1]}') share the plane ${c.axis} = ${c.plane.toFixed(4)}`).toBeUndefined();
+    }
+    const ids = new Set(items.map((a) => a.id));
+    expect(LEGACY_COPLANAR.filter((id) => !ids.has(id)), 'ids in legacyCoplanar.json that no longer exist').toEqual([]);
   });
 
   it('plants, flowers and other vegetation always have a description', () => {

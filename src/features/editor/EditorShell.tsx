@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -39,7 +40,6 @@ import { useDialogStore } from '@/state/uiStores';
 import { derivePlan } from '@/domain/geometry/derive';
 import { formatLength } from '@/domain/model/units';
 import { IconButton, Segmented, Toggle } from '@/components/ui';
-import { ThemeSwitch } from '@/components/ThemeSwitch';
 import { useIsMobile } from '@/components/hooks';
 import { Logo } from '@/components/Logo';
 import { navigate } from '@/app/App';
@@ -55,6 +55,7 @@ import { preloadExport } from './EditorDialogs';
 import { describeSelection } from './actions';
 import { useDropAsset } from '@/features/library/useDropAsset';
 import './editor.css';
+import { SceneLoading } from '@/features/scene-3d/SceneLoading';
 
 const Scene3DView = lazy(() => import('@/features/scene-3d/Scene3DView'));
 
@@ -112,7 +113,7 @@ export function EditorShell() {
         )}
         {show3d && (
           <div className="pane pane-3d">
-            <Suspense fallback={<div className="pane-loading">Loading 3D view…</div>}>
+            <Suspense fallback={<SceneLoading stage="code" />}>
               <Scene3DView mode={workspace === 'walk' ? 'walk' : 'orbit'} />
             </Suspense>
           </div>
@@ -132,7 +133,11 @@ export function EditorShell() {
         </>
       )}
       {chromeHidden && (
-        <button type="button" className="restore-ui" onClick={() => useEditorStore.getState().set({ chromeHidden: false })}>
+        <button
+          type="button"
+          className="restore-ui"
+          onClick={() => useEditorStore.getState().set({ chromeHidden: false })}
+        >
           Show interface <kbd>Tab</kbd>
         </button>
       )}
@@ -148,7 +153,9 @@ function SaveIndicator() {
     const t = setInterval(() => tick((x) => x + 1), 30000);
     return () => clearInterval(t);
   }, []);
-  const time = lastSavedAt ? new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+  const time = lastSavedAt
+    ? new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
   const label =
     state === 'saving' || state === 'pending'
       ? 'Saving…'
@@ -157,7 +164,14 @@ function SaveIndicator() {
         : time
           ? `Saved locally ${time}`
           : 'Saved locally';
-  const repoLabel = repo === 'synced' ? ' · in repo' : repo === 'pending' ? ' · syncing repo' : repo === 'error' ? ' · repo sync failed' : '';
+  const repoLabel =
+    repo === 'synced'
+      ? ' · in repo'
+      : repo === 'pending'
+        ? ' · syncing repo'
+        : repo === 'error'
+          ? ' · repo sync failed'
+          : '';
   return (
     <span
       className={`save-indicator state-${state}`}
@@ -281,10 +295,22 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
       </div>
       <div className="topbar-right">
         <div className="topbar-island floating">
-          <IconButton label={undoLabel ? `Undo ${undoLabel.toLowerCase()}` : 'Undo'} shortcut="Ctrl+Z" disabled={!canUndo} onClick={() => useProjectStore.getState().undo()} data-testid="undo">
+          <IconButton
+            label={undoLabel ? `Undo ${undoLabel.toLowerCase()}` : 'Undo'}
+            shortcut="Ctrl+Z"
+            disabled={!canUndo}
+            onClick={() => useProjectStore.getState().undo()}
+            data-testid="undo"
+          >
             <Undo2 size={17} />
           </IconButton>
-          <IconButton label={redoLabel ? `Redo ${redoLabel.toLowerCase()}` : 'Redo'} shortcut="Ctrl+Shift+Z" disabled={!canRedo} onClick={() => useProjectStore.getState().redo()} data-testid="redo">
+          <IconButton
+            label={redoLabel ? `Redo ${redoLabel.toLowerCase()}` : 'Redo'}
+            shortcut="Ctrl+Shift+Z"
+            disabled={!canRedo}
+            onClick={() => useProjectStore.getState().redo()}
+            data-testid="redo"
+          >
             <Redo2 size={17} />
           </IconButton>
         </div>
@@ -298,7 +324,8 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
                 if (projectShown) return ed.set({ projectPanelOpen: false });
                 // Bring it up even when a selection or a drawing tool's options hold its place.
                 ed.set({ projectPanelOpen: true, selection: [] });
-                if (ed.workspace !== 'walk' && !projectPanelShown(useEditorStore.getState())) ed.setTool('select');
+                if (ed.workspace !== 'walk' && !projectPanelShown(useEditorStore.getState()))
+                  ed.setTool('select');
               }}
               data-testid="toggle-project-panel"
             >
@@ -324,11 +351,14 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
             <Footprints size={17} />
           </IconButton>
           {!isMobile && (
-            <IconButton label="Hide interface" shortcut="Tab" onClick={() => useEditorStore.getState().set({ chromeHidden: true })}>
+            <IconButton
+              label="Hide interface"
+              shortcut="Tab"
+              onClick={() => useEditorStore.getState().set({ chromeHidden: true })}
+            >
               <EyeOff size={17} />
             </IconButton>
           )}
-          {!isMobile && <ThemeSwitch />}
         </div>
       </div>
     </header>
@@ -504,21 +534,82 @@ function ToolRail({ in3d }: { in3d: boolean }) {
       {/* 3D only: shows or stashes the 3D view settings panel */}
       {in3d && (
         <div className="tool-rail-group floating" role="group" aria-label="3D view">
-          <IconButton
-            label="3D view panel"
-            shortcut="P"
-            active={viewPanelOpen}
-            tooltipSide="right"
-            className="rail-labeled-btn"
-            onClick={() => set({ viewPanelOpen: !viewPanelOpen })}
-            data-testid="toggle-view-panel"
-          >
-            <SlidersHorizontal size={18} />
-            <span className="rail-btn-label">View</span>
-          </IconButton>
+          <ViewRailButton open={viewPanelOpen} onToggle={() => set({ viewPanelOpen: !viewPanelOpen })} />
         </div>
       )}
     </nav>
+  );
+}
+
+const QUALITIES = [
+  ['draft', 'Draft'],
+  ['balanced', 'Balanced'],
+  ['high', 'High'],
+  ['ultra', 'Ultra'],
+] as const;
+
+/** The 3D View button; hovering it offers a quick quality switch beside it. */
+function ViewRailButton({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  const quality = useProjectStore((s) => s.project?.render.quality);
+  const [hover, setHover] = useState<{ left: number; top: number } | null>(null);
+  const leave = useRef<number | null>(null);
+  const host = useRef<HTMLDivElement>(null);
+  const stay = () => {
+    if (leave.current !== null) window.clearTimeout(leave.current);
+    leave.current = null;
+    const r = host.current?.getBoundingClientRect();
+    if (r) setHover({ left: r.right + 10, top: r.top + r.height / 2 });
+  };
+  const go = () => {
+    if (leave.current !== null) window.clearTimeout(leave.current);
+    leave.current = window.setTimeout(() => setHover(null), 250);
+  };
+  useEffect(() => () => void (leave.current !== null && window.clearTimeout(leave.current)), []);
+  return (
+    <div className="view-quick" ref={host} onMouseEnter={stay} onMouseLeave={go}>
+      <IconButton
+        label="3D view panel"
+        shortcut="P"
+        active={open}
+        tooltipSide="top"
+        className="rail-labeled-btn"
+        onClick={onToggle}
+        data-testid="toggle-view-panel"
+      >
+        <SlidersHorizontal size={18} />
+        <span className="rail-btn-label">View</span>
+      </IconButton>
+      {hover &&
+        quality &&
+        createPortal(
+          // In a portal, so it shows above the library and other panels.
+          <div
+            className="view-quick-pop floating"
+            role="group"
+            aria-label="Render quality"
+            data-testid="quality-quick"
+            style={{ left: hover.left, top: hover.top }}
+            onMouseEnter={stay}
+            onMouseLeave={go}
+          >
+            <span className="view-quick-title">Quality</span>
+            {QUALITIES.map(([q, label]) => (
+              <button
+                key={q}
+                type="button"
+                className={q === quality ? 'active' : ''}
+                aria-pressed={q === quality}
+                onClick={() =>
+                  useProjectStore.getState().execute('Change quality', (d) => void (d.render.quality = q))
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
+    </div>
   );
 }
 
@@ -529,7 +620,9 @@ function CanvasControls() {
   const [snapOpen, setSnapOpen] = useState(false);
   const setZoom = (factor: number) => {
     const cam = useEditorStore.getState().planCamera;
-    useEditorStore.getState().set({ planCamera: { ...cam, zoom: Math.min(3000, Math.max(4, cam.zoom * factor)) } });
+    useEditorStore
+      .getState()
+      .set({ planCamera: { ...cam, zoom: Math.min(3000, Math.max(4, cam.zoom * factor)) } });
   };
   const anySnap = snap.grid || snap.geometry || snap.angle || snap.guides;
   return (
@@ -543,15 +636,32 @@ function CanvasControls() {
       <IconButton label="Zoom in" onClick={() => setZoom(1.25)} tooltipSide="top">
         <Plus size={16} />
       </IconButton>
-      <IconButton label="Fit plan" shortcut="F" onClick={() => useEditorStore.getState().requestFit()} tooltipSide="top">
+      <IconButton
+        label="Fit plan"
+        shortcut="F"
+        onClick={() => useEditorStore.getState().requestFit()}
+        tooltipSide="top"
+      >
         <Maximize size={16} />
       </IconButton>
       <span className="tb-sep" />
-      <IconButton label="Grid" shortcut="G" active={gridVisible} onClick={() => useEditorStore.getState().set({ gridVisible: !gridVisible })} tooltipSide="top">
+      <IconButton
+        label="Grid"
+        shortcut="G"
+        active={gridVisible}
+        onClick={() => useEditorStore.getState().set({ gridVisible: !gridVisible })}
+        tooltipSide="top"
+      >
         <Grid3x3 size={16} />
       </IconButton>
       <div className="popover-anchor">
-        <IconButton label="Snapping" active={anySnap} onClick={() => setSnapOpen(!snapOpen)} tooltipSide="top" aria-expanded={snapOpen}>
+        <IconButton
+          label="Snapping"
+          active={anySnap}
+          onClick={() => setSnapOpen(!snapOpen)}
+          tooltipSide="top"
+          aria-expanded={snapOpen}
+        >
           <Magnet size={16} />
         </IconButton>
         {snapOpen && (
@@ -582,7 +692,10 @@ function CanvasControls() {
 
 function GridSizeControl() {
   const settings = useProjectStore((s) => s.project!.settings);
-  const options = settings.units === 'ft' || settings.units === 'in' ? [0.0254, 0.0508, 0.1524, 0.3048] : [0.01, 0.05, 0.1, 0.25, 0.5];
+  const options =
+    settings.units === 'ft' || settings.units === 'in'
+      ? [0.0254, 0.0508, 0.1524, 0.3048]
+      : [0.01, 0.05, 0.1, 0.25, 0.5];
   return (
     <div className="field">
       <span className="field-label">Grid spacing</span>
@@ -595,7 +708,10 @@ function GridSizeControl() {
             d.settings.gridSize = parseFloat(v);
           })
         }
-        options={options.map((o) => ({ value: String(o), label: formatLength(o, settings.units, 0).replace(' ', '') }))}
+        options={options.map((o) => ({
+          value: String(o),
+          label: formatLength(o, settings.units, 0).replace(' ', ''),
+        }))}
       />
     </div>
   );
@@ -617,7 +733,13 @@ function StatusBar() {
   return (
     <footer className="status-bar floating" data-testid="status-bar">
       <span className="status-tool">
-        {workspace === 'walk' ? 'Walkthrough' : workspace === '3d' ? (tool === 'select' ? '3D · Select & move' : `3D · ${toolLabel}`) : toolLabel}
+        {workspace === 'walk'
+          ? 'Walkthrough'
+          : workspace === '3d'
+            ? tool === 'select'
+              ? '3D · Select & move'
+              : `3D · ${toolLabel}`
+            : toolLabel}
       </span>
       <span className="status-hint">{hint}</span>
       <span className="status-spacer" />
@@ -649,13 +771,19 @@ function StatusBar() {
                 className="diag-item"
                 onClick={() => {
                   const p = useProjectStore.getState().project!;
-                  useEditorStore.getState().setSelection(
-                    d.entityIds
-                      .map((id) =>
-                        p.walls[id] ? { kind: 'wall' as const, id } : p.openings[id] ? { kind: 'opening' as const, id } : null,
-                      )
-                      .filter((x): x is { kind: 'wall' | 'opening'; id: string } => !!x),
-                  );
+                  useEditorStore
+                    .getState()
+                    .setSelection(
+                      d.entityIds
+                        .map((id) =>
+                          p.walls[id]
+                            ? { kind: 'wall' as const, id }
+                            : p.openings[id]
+                              ? { kind: 'opening' as const, id }
+                              : null,
+                        )
+                        .filter((x): x is { kind: 'wall' | 'opening'; id: string } => !!x),
+                    );
                 }}
               >
                 <strong>{d.message}</strong>
@@ -679,19 +807,40 @@ function MobileBar() {
   const set = useEditorStore((s) => s.set);
   return (
     <nav className="mobile-bar floating" aria-label="Mobile tools">
-      <button type="button" className={tool === 'select' && workspace !== 'walk' ? 'on' : ''} onClick={() => set({ tool: 'select', workspace: workspace === 'walk' ? '3d' : workspace })}>
+      <button
+        type="button"
+        className={tool === 'select' && workspace !== 'walk' ? 'on' : ''}
+        onClick={() => set({ tool: 'select', workspace: workspace === 'walk' ? '3d' : workspace })}
+      >
         <MousePointer2 size={18} />
         <span>Select</span>
       </button>
-      <button type="button" className={workspace === '3d' ? 'on' : ''} onClick={() => set({ workspace: workspace === '3d' ? 'plan' : '3d' })}>
+      <button
+        type="button"
+        className={workspace === '3d' ? 'on' : ''}
+        onClick={() => set({ workspace: workspace === '3d' ? 'plan' : '3d' })}
+      >
         <Box size={18} />
         <span>{workspace === '3d' ? '2D' : '3D'}</span>
       </button>
-      <button type="button" className={workspace === 'walk' ? 'on' : ''} onClick={() => set({ workspace: 'walk' })}>
+      <button
+        type="button"
+        className={workspace === 'walk' ? 'on' : ''}
+        onClick={() => set({ workspace: 'walk' })}
+      >
         <Footprints size={18} />
         <span>Walk</span>
       </button>
-      <button type="button" onClick={() => set({ libraryOpen: true, libraryTab: 'furniture', workspace: workspace === 'walk' ? 'plan' : workspace })}>
+      <button
+        type="button"
+        onClick={() =>
+          set({
+            libraryOpen: true,
+            libraryTab: 'furniture',
+            workspace: workspace === 'walk' ? 'plan' : workspace,
+          })
+        }
+      >
         <LibraryBig size={18} />
         <span>Add</span>
       </button>
@@ -702,4 +851,3 @@ function MobileBar() {
     </nav>
   );
 }
-

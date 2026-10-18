@@ -887,11 +887,26 @@ function laptopParts(): Part[] {
 
 const laptopMonitor = defineItem({
   id: 'laptop-stacked-monitor',
-  name: 'Gaming laptop with stacked portable monitor',
+  name: 'Lenovo Legion Pro 7 with ZenScreen OLED above',
   category: 'office',
   type: 'electronics',
   group: 'Computers',
-  tags: ['laptop', 'gaming', 'portable monitor', 'second screen', 'monitor arm', 'red backlight', 'laptop gaming', 'màn hình phụ', 'máy tính'],
+  tags: ['laptop', 'gaming', 'lenovo', 'legion pro 7', '16irx8h', 'asus', 'zenscreen', 'mq16fc', 'oled', 'portable monitor', 'second screen', 'monitor arm', 'red backlight', 'laptop gaming', 'màn hình phụ', 'máy tính'],
+  description:
+    'A Lenovo Legion Pro 7 16IRX8H gaming laptop on a cooling stand with an ASUS ZenScreen OLED MQ16FC 16″ portable monitor held above it on an arm.',
+  brand: {
+    name: 'Lenovo · ASUS',
+    model: 'Legion Pro 7 16IRX8H + ZenScreen OLED MQ16FC',
+    line: 'Gaming laptop with a 16″ OLED portable monitor',
+    url: 'https://psref.lenovo.com/syspool/Sys/PDF/Legion/Legion_Pro_7_16IRX8H/Legion_Pro_7_16IRX8H_Spec.PDF',
+    specs: [
+      ['Laptop (W × D × H)', '363.4 × 263.6 × 22–25.9 mm, < 2.8 kg'],
+      ['Laptop display', '16″ 2560 × 1600, 240 Hz'],
+      ['Keyboard', 'Per-key RGB, numpad'],
+      ['Monitor (W × H × D)', '358 × 226 × 9 mm, about 0.65 kg'],
+      ['Monitor panel', '16″ OLED 1920 × 1200, kickstand, tripod socket'],
+    ],
+  },
   defaultSize: { ...LAP },
   minSize: { w: 0.34, d: 0.34, h: 0.45 },
   maxSize: { w: 0.52, d: 0.52, h: 0.7 },

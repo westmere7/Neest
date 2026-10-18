@@ -1,8 +1,8 @@
 /**
- * Branded climate (Vietnam) — six cooling and air products found in most Vietnamese homes, at their
+ * Branded climate (Vietnam) — five cooling and air products found in most Vietnamese homes, at their
  * published sizes.
  *
- * Split air conditioners: Daikin FTKB25XVMV and Panasonic CS-XU9ZKH-8 indoor units (wall-mounted
+ * Split air conditioner: the Panasonic CS-XU9ZKH-8 indoor unit (wall-mounted
  * near the ceiling) and the Panasonic CU-XU9ZKH-8 outdoor unit for the balcony. Fans: Panasonic
  * F-409KB stand fan and F-60WWK five-blade ceiling fan. Air: Xiaomi Smart Air Purifier 4.
  *
@@ -52,6 +52,114 @@ function sideProfile(slot: string, profile: V2[], w: number, plan = true): Part 
   return p;
 }
 
+/**
+ * Split-AC outdoor unit (condenser), front +z, built inside its box:
+ *  - painted steel casing wrapping the front, top and right side, with stamped ribs on the lid, a
+ *    carrying recess and a small rating plate;
+ *  - the left side and back left open on the aluminium coil (fin texture) behind wire guards;
+ *  - a round fan opening (bellmouth ring, dark shroud) with a four-blade swept fan and motor hub
+ *    behind a domed wire grille of rings and spokes;
+ *  - a valve cover on the right with two copper service valves, flare nuts and the insulated pipe
+ *    run going back to the wall;
+ *  - two base rails on rubber anti-vibration pads.
+ * `fan` is the fan opening's centre x as a share of the width and its radius as a share of the height.
+ */
+function outdoorUnit({ w, d, h }: Size3, fan = { x: 0.38, r: 0.4 }): Part[] {
+  const zf = d / 2 - 0.036; // casing front: the domed grille stands proud of it
+  const zb = -d / 2;
+  const y0 = 0.032; // casing bottom (feet below)
+  const t = 0.01; // sheet thickness
+  const xr = w / 2 - 0.028; // casing right edge (valve cover beyond)
+  const parts: Part[] = [];
+  // Casing: lid, front, right side and base pan; coil on the left and back.
+  parts.push(
+    span('body', [-w / 2, xr], [h - 0.014, h], [zb, zf], { bevel: 0.006 }),
+    span('body', [-w / 2 + 0.004, xr], [y0, h - 0.014], [zf - t, zf], { bevel: 0.004, plan: false }),
+    span('body', [xr - t, xr], [y0, h - 0.014], [zb + 0.004, zf - t], o),
+    span('body', [-w / 2, xr], [y0, y0 + 0.014], [zb, zf], o),
+    span('body', [-w / 2, -w / 2 + 0.016], [y0, h - 0.014], [zf - 0.03, zf], o),
+    span('fins', [-w / 2 + 0.002, -w / 2 + 0.014], [y0 + 0.014, h - 0.014], [zb + 0.004, zf - 0.03], o),
+    span('fins', [-w / 2 + 0.014, xr - t], [y0 + 0.014, h - 0.014], [zb + 0.002, zb + 0.022], o),
+    // Dark inside, seen through the fan opening.
+    span('grille', [-w / 2 + 0.016, xr - t], [y0 + 0.014, h - 0.014], [zb + 0.022, zb + 0.03], o),
+  );
+  // Stamped ribs on the lid and a carrying recess on the right side.
+  for (const z of [zb + d * 0.3, zb + d * 0.62]) parts.push(span('body', [-w / 2 + 0.05, xr - 0.05], [h, h + 0.002], [z - 0.012, z + 0.012], { bevel: 0.001, plan: false }));
+  parts.push(span('fins', [xr - 0.0005, xr + 0.001], [h * 0.74, h * 0.77], [zb + d * 0.36, zb + d * 0.64], { bevel: 0.002, plan: false }));
+  // Rating plate and a thin trim line on the front right.
+  const fx = -w / 2 + w * fan.x;
+  const fr = h * fan.r;
+  const fy = y0 + (h - y0) / 2 + 0.004;
+  const px0 = fx + fr + 0.03;
+  parts.push(span('fins', [px0, Math.min(xr - 0.02, px0 + 0.07)], [h * 0.16, h * 0.22], [zf, zf + 0.0015], o));
+  parts.push(span('grille', [px0, xr - 0.015], [h - 0.05, h - 0.047], [zf, zf + 0.0012], o));
+  // Wire guards over the exposed coil: back and left side.
+  for (const x of [-0.42, -0.21, 0, 0.21, 0.42].map((k) => k * (w - 0.06) + (xr - w / 2) / 2)) parts.push(vcyl('grille', x, zb + 0.0015, y0 + 0.02, h - 0.02, 0.001, o));
+  for (const y of [0.22, 0.5, 0.78].map((k) => y0 + k * (h - y0))) parts.push(rod('grille', [-w / 2 + 0.02, y, zb + 0.0015], [xr - 0.02, y, zb + 0.0015], 0.001, o));
+  for (const y of [0.3, 0.7].map((k) => y0 + k * (h - y0))) parts.push(rod('grille', [-w / 2 + 0.0015, y, zb + 0.02], [-w / 2 + 0.0015, y, zf - 0.04], 0.001, o));
+  // Fan opening: dark shroud, bellmouth ring.
+  parts.push(discZ('grille', [fx, fy, zf + 0.0006], fr, 0.002, { segments: 48, plan: false }));
+  parts.push({ ...torus('body', [0, 0, 0], fr, 0.009, o), position: [fx, fy, zf - 0.002] } as Part);
+  // Fan: motor hub and four swept blades just behind the grille.
+  parts.push(discZ('grille', [fx, fy, zf + 0.012], fr * 0.16, 0.022, { segments: 24, plan: false }), discZ('fins', [fx, fy, zf + 0.024], fr * 0.09, 0.006, { segments: 20, plan: false }));
+  for (const k of range(4)) {
+    const a = (k / 4) * Math.PI * 2 + 0.3;
+    const rm = fr * 0.52;
+    parts.push(
+      sphere('fins', [fx + Math.cos(a) * rm, fy + Math.sin(a) * rm, zf + 0.012], 1, {
+        scale: [fr * 0.4, fr * 0.2, 0.004],
+        rotation: [0, 0, a + 0.55],
+        plan: false,
+      }),
+    );
+  }
+  // Domed grille: rings rising towards the centre, spokes, centre badge.
+  const dome = 0.012;
+  const nr = 8;
+  for (const i of range(nr)) {
+    const r = fr * (0.16 + (0.84 * (i + 1)) / nr) - 0.004;
+    parts.push({ ...torus('grille', [0, 0, 0], r, 0.0016, o), position: [fx, fy, zf + 0.02 + dome * (1 - r / fr)] } as Part);
+  }
+  for (const k of range(8)) {
+    const a = (k / 8) * Math.PI * 2 + Math.PI / 8;
+    const r0 = fr * 0.17;
+    const r1 = fr - 0.004;
+    parts.push(rod('grille', [fx + Math.cos(a) * r0, fy + Math.sin(a) * r0, zf + 0.02 + dome * (1 - r0 / fr)], [fx + Math.cos(a) * r1, fy + Math.sin(a) * r1, zf + 0.02], 0.0018, { segments: 6, plan: false }));
+  }
+  parts.push(discZ('grille', [fx, fy, zf + 0.033], fr * 0.17, 0.004, { segments: 28, plan: false }), discZ('body', [fx, fy, zf + 0.0355], fr * 0.08, 0.002, { segments: 20, plan: false }));
+  // Valve cover on the right, with the service valves under it and the insulated pipe run.
+  const vy0 = y0 + 0.02;
+  const vy1 = y0 + (h - y0) * 0.55;
+  parts.push(span('body', [xr, w / 2 - 0.002], [vy0, vy1], [zb + d * 0.15, zf - 0.02], { bevel: 0.008, plan: false }));
+  for (const [k, r] of [
+    [0, 0.008],
+    [1, 0.011],
+  ] as const) {
+    const vy = vy0 + 0.035 + k * 0.05;
+    const vz = zb + d * 0.1;
+    parts.push(
+      rod('fins', [xr - 0.01, vy, vz], [w / 2 - 0.004, vy, vz], r + 0.004, { segments: 10, plan: false }),
+      rod('pipes', [w / 2 - 0.02, vy, vz], [w / 2 - 0.004, vy, vz], r + 0.008, { segments: 6, plan: false }),
+      rod('pipes', [w / 2 - 0.012, vy, vz], [w / 2 - 0.012, vy - 0.02, vz], r, { segments: 10, plan: false }),
+    );
+  }
+  // Pipes (wrapped in white insulation tape) bend down and run back to the wall.
+  const by = vy0 + 0.01;
+  parts.push(
+    rod('body', [w / 2 - 0.016, vy0 + 0.06, zb + d * 0.1], [w / 2 - 0.016, by, zb + d * 0.1], 0.016, { segments: 12, plan: false }),
+    rod('body', [w / 2 - 0.016, by, zb + d * 0.1], [w / 2 - 0.016, by, zb + 0.004], 0.016, { segments: 12, plan: false }),
+    sphere('body', [w / 2 - 0.016, by, zb + d * 0.1], 0.016, o),
+  );
+  // Base rails on rubber pads.
+  for (const s of [-1, 1]) {
+    const x = s * (w / 2 - 0.1) + (xr - w / 2) / 2;
+    parts.push(span('fins', [x - 0.025, x + 0.025], [0.012, y0], [zb + 0.005, zf - 0.005], { bevel: 0.002 }));
+    for (const z of [zb + 0.03, zf - 0.03]) parts.push(cyl('grille', [x, 0.006, z], 0.016, 0.012, { segments: 12, plan: false }));
+    parts.push(span('grille', [x - 0.008, x + 0.008], [y0 - 0.001, y0], [zf - 0.03, zf - 0.012], o));
+  }
+  return parts;
+}
+
 /** Wall split-AC indoor unit: rounded body, front panel, louvre flap, display window. */
 function indoorUnit(w: number, d: number, h: number, look: { bulge: number; flapY: number; display: number }): Part[] {
   const zb = -d / 2;
@@ -79,26 +187,6 @@ function indoorUnit(w: number, d: number, h: number, look: { bulge: number; flap
 }
 
 const AC_SLOTS = [matSlot('body', 'Casing', 'plastic-white'), matSlot('trim', 'Display & seams', 'solid-light-grey'), matSlot('vent', 'Air outlet', 'solid-black')];
-
-const daikin = defineItem({
-  id: 'daikin-ftkb25xvmv',
-  name: 'Daikin FTKB25XVMV air conditioner',
-  category: 'living',
-  type: 'electronics',
-  group: 'Climate',
-  tags: [...TAGS, 'daikin', 'điều hòa', 'máy lạnh', 'air conditioner', 'split ac', 'inverter', '9000 btu', '1 hp'],
-  description: 'Compact Daikin 1 HP inverter split air conditioner indoor unit, mounted high on the wall.',
-  ...fixed(0.77, 0.242, 0.285),
-  mount: 'wall',
-  defaultElevation: 2.15,
-  slots: AC_SLOTS,
-  build: ({ w, d, h }) => indoorUnit(w, d, h, { bulge: 0.02, flapY: 0.05, display: 0.05 }),
-  brand: brand('Daikin', 'FTKB25XVMV / RKB25XVMV', 'FTKB inverter, 1 HP', 'https://meta.vn/dieu-hoa-daikin-ftkb25xvmv-rkb25xvmv-p92312', [
-    ['Cooling', '9,000 BTU (1 HP), rooms under 15 m²'],
-    ['Indoor unit (W × H × D)', '770 × 285 × 242 mm'],
-    ['Indoor weight', '8 kg'],
-  ]),
-});
 
 const panaIndoor = defineItem({
   id: 'panasonic-cs-xu9zkh-8',
@@ -128,23 +216,11 @@ const panaOutdoor = defineItem({
   type: 'electronics',
   group: 'Climate',
   tags: [...TAGS, 'panasonic', 'dàn nóng', 'cục nóng', 'outdoor unit', 'condenser', 'air conditioner', 'balcony'],
-  description: 'Outdoor condenser for the Panasonic XU9 split system, with its round fan grille, for a balcony or wall bracket.',
+  description: 'Outdoor condenser for the Panasonic XU9 split system: four-blade fan behind a domed wire grille, aluminium coil behind guards at the back and side, copper service valves under the side cover with the insulated pipe run, on rubber-padded base rails.',
   ...fixed(0.65, 0.23, 0.511),
   wallSnap: true,
-  slots: [matSlot('body', 'Casing', 'plastic-white'), matSlot('grille', 'Fan grille', 'metal-anthracite'), matSlot('fins', 'Coil fins & valves', 'metal-brushed-steel')],
-  build: ({ w, d, h }) => {
-    const zf = d / 2;
-    const fx = -w / 2 + h * 0.48;
-    const fr = h * 0.4;
-    const parts: Part[] = [span('body', [-w / 2, w / 2], [0.03, h], [-d / 2 + 0.01, zf], { bevel: 0.006 })];
-    for (const s of [-1, 1]) parts.push(span('body', [s * (w / 2 - 0.08) - 0.04, s * (w / 2 - 0.08) + 0.04], [0, 0.03], [-d / 2, zf]));
-    parts.push(discZ('grille', [fx, h / 2 + 0.01, zf - 0.004], fr, 0.006, o));
-    for (const k of range(5)) parts.push(torus('fins', [fx, h / 2 + 0.01, zf + 0.001], fr * (0.25 + k * 0.17), 0.0018, o));
-    parts.push(rod('fins', [fx - fr, h / 2 + 0.01, zf + 0.002], [fx + fr, h / 2 + 0.01, zf + 0.002], 0.002, o), rod('fins', [fx, h / 2 + 0.01 - fr, zf + 0.002], [fx, h / 2 + 0.01 + fr, zf + 0.002], 0.002, o));
-    parts.push(span('fins', [-w / 2 - 0.0, -w / 2 + 0.002], [0.05, h - 0.03], [-d / 2 + 0.02, zf - 0.02], o));
-    for (const y of [0.12, 0.16]) parts.push(cyl('fins', [w / 2 - 0.02, y, zf - 0.04], 0.012, 0.03, { rotation: [0, 0, Math.PI / 2], plan: false }));
-    return parts;
-  },
+  slots: [matSlot('body', 'Casing & pipe insulation', 'climate-casing'), matSlot('grille', 'Fan grille, guards & feet pads', 'metal-black-matte'), matSlot('fins', 'Coil, fan blades & rails', 'climate-coil'), matSlot('pipes', 'Copper valves', 'metal-copper')],
+  build: (size) => outdoorUnit(size, { x: 0.37, r: 0.4 }),
   brand: brand('Panasonic', 'CU-XU9ZKH-8', 'XU inverter outdoor unit', 'https://hoanghamobile.com/dieu-hoa/panasonic-inverter-1-hp-cu-cs-xu9zkh-8', [
     ['Outdoor unit (W × H × D)', '650 × 511 × 230 mm'],
     ['Weight', '18 kg'],
@@ -252,7 +328,8 @@ const purifier = defineItem({
     return [
       lathe('body', [0, 0, 0], [[0, 0], [r * 0.96, 0], [r, 0.02], [r, h - 0.05], [0, h - 0.05]], { segments: 40 }),
       lathe('top', [0, h - 0.05, 0], [[0, 0], [r, 0], [r * 0.98, 0.05], [0, 0.05]], { segments: 40, plan: false }),
-      cyl('grille', [0, h - 0.002, 0], r * 0.84, 0.004, { segments: 40, plan: false }),
+      // Outlet grille 0.8 mm proud of the top (a flush disc flickers against it).
+      cyl('grille', [0, h - 0.0016, 0], r * 0.84, 0.0048, { segments: 40, plan: false }),
       cyl('top', [0, h - 0.06, r - 0.004], 0.03, 0.004, { rotation: [Math.PI / 2, 0, 0], plan: false }),
     ];
   },
@@ -267,10 +344,32 @@ export default definePack({
   name: 'Branded climate (Vietnam)',
   version: '1.0.0',
   author: 'Neest team',
-  description: 'Six cooling and air products common in Vietnamese homes at their published sizes: Daikin and Panasonic split air conditioners (with a Panasonic outdoor unit), Panasonic stand and ceiling fans, and the Xiaomi Smart Air Purifier 4.',
+  description: 'Five cooling and air products common in Vietnamese homes at their published sizes: the Panasonic XU9 split air conditioner (indoor and outdoor units), Panasonic stand and ceiling fans, and the Xiaomi Smart Air Purifier 4.',
   license: 'CC0 (made for Neest); brand names belong to their owners',
-  items: [daikin, panaIndoor, panaOutdoor, standFan, ceilingFan, purifier],
+  items: [panaIndoor, panaOutdoor, standFan, ceilingFan, purifier],
+  patterns: [
+    {
+      id: 'coil-fins',
+      name: 'Condenser coil fins',
+      normalStrength: 0.9,
+      draw(ctx, size) {
+        ctx.fillStyle = '#d9dcdf';
+        ctx.fillRect(0, 0, size, size);
+        const n = 64;
+        for (let i = 0; i < n; i++) {
+          const x = (i * size) / n;
+          ctx.fillStyle = '#9da3a8';
+          ctx.fillRect(Math.round(x), 0, Math.max(1, Math.round(size / n / 3)), size);
+        }
+        // Copper return bends of the tubes, every few centimetres.
+        ctx.fillStyle = '#b8bcc0';
+        for (let j = 0; j < 8; j++) ctx.fillRect(0, Math.round(((j + 0.5) * size) / 8) - 1, size, 3);
+      },
+    },
+  ],
   materials: [
+    { id: 'climate-casing', name: 'Outdoor unit casing', category: 'metal', color: '#eeede8', roughness: 0.45, metalness: 0.1 },
+    { id: 'climate-coil', name: 'Aluminium condenser coil', category: 'metal', color: '#ffffff', roughness: 0.4, metalness: 0.6, pattern: { id: 'coil-fins', scale: 0.12, contrast: 1 } },
     { id: 'fan-blade-blue', name: 'Translucent fan blade', category: 'solid', color: '#8fb6d8', roughness: 0.25, opacity: 0.8 },
     { id: 'purifier-perforated', name: 'Perforated white plastic', category: 'solid', color: '#f1f1ef', roughness: 0.5, pattern: { id: 'mosaic', scale: 0.02, contrast: 0.3 } },
   ],

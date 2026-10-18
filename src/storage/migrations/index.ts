@@ -1,5 +1,6 @@
 import { PROJECT_FORMAT, ProjectSchema, SCHEMA_VERSION, type Project } from '@/domain/model/schema';
 import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
+import { upgradeRetiredItem } from '@/data/assets/models';
 
 export class ProjectImportError extends Error {
   constructor(
@@ -114,6 +115,11 @@ export function repairProject(project: Project): MigrationResult {
   }
   if (droppedOpenings) warnings.push(`${droppedOpenings} door/window(s) referenced missing walls and were removed.`);
   for (const [key, o] of Object.entries(p.objects)) if (o.id !== key) o.id = key;
+  // Separate empty/styled version items became model variants of the original item.
+  let upgraded = 0;
+  for (const o of Object.values(p.objects)) if (upgradeRetiredItem(o)) upgraded++;
+  for (const opt of p.options ?? []) for (const o of Object.values(opt.plan?.objects ?? {})) if (upgradeRetiredItem(o)) upgraded++;
+  if (upgraded) warnings.push(`${upgraded} retired item(s) replaced: empty or styled versions now use the original item with a model variant, look-alike branded items the one kept.`);
   for (const [key, r] of Object.entries(p.rooms)) if (r.id !== key) r.id = key;
   for (const [key, m] of Object.entries(p.materials)) if (m.id !== key) m.id = key;
   const camIds = new Set<string>();

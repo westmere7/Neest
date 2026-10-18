@@ -20,6 +20,7 @@ import { createExtendTool } from '@/features/plan-2d/tools/extendTool';
 import type { GhostObject, PointerInfo, Tool, ToolEnv, ToolOverlay } from '@/features/plan-2d/tools/types';
 import { buildObject, partGeometry } from './builders';
 import { sharedRegistry } from './sceneRuntime';
+import { canScale, scalePct, scaledSize } from '@/features/editor/objectScale';
 
 /** Tools available directly in the 3D view (selection uses mesh picking instead). */
 export const TOOLS_3D: ToolId[] = ['select', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place'];
@@ -257,6 +258,7 @@ function GhostObject3D({ ghost }: { ghost: GhostObject }) {
       {
         id: '__ghost__',
         assetId: ghost.assetId,
+        ...(ghost.model ? { model: ghost.model } : {}),
         name: null,
         x: 0,
         y: 0,
@@ -283,7 +285,7 @@ function GhostObject3D({ ghost }: { ghost: GhostObject }) {
     return g;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ghost.assetId, ghost.width, ghost.depth, ghost.height]);
-  const elevation = asset?.defaultElevation ?? 0;
+  const elevation = ghost.elevation ?? asset?.defaultElevation ?? 0;
   return (
     <group position={[ghost.x, elevation, ghost.y]} rotation={[0, -ghost.rotation, 0]}>
       <primitive object={group} position={[0, 0, 0]} rotation={[0, 0, 0]} />
@@ -431,8 +433,9 @@ function ArrowShape({ color, hot }: { color: string; hot: boolean }) {
 
 /**
  * Transform gizmo for selected furniture: X/Z arrows slide along the floor,
- * the Y arrow changes elevation, the centre disc moves freely, and the ring
- * rotates. Arrows keep a constant on-screen size. Snaps to the grid (Alt for
+ * the Y arrow changes elevation, the centre disc moves freely, the ring
+ * rotates and the square on the ring scales a single item proportionally (5 %
+ * steps; Alt for free scaling). Arrows keep a constant on-screen size. Snaps to the grid (Alt for
  * free movement); each drag is a single undo step.
  */
 export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefObject<OrbitControlsImpl | null> }) {
@@ -469,12 +472,15 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
   const ringR = single ? Math.max(single.width, single.depth) / 2 + 0.22 : 0.3;
   const units = project.settings;
 
-  const startDrag = (e: ThreeEvent<PointerEvent>, mode: Axis | 'free' | 'rotate') => {
+  const scaleAsset = single ? getAsset(project, single.assetId) : null;
+  const scalable = !!scaleAsset && canScale(scaleAsset) && !project.customAssets[single!.assetId];
+
+  const startDrag = (e: ThreeEvent<PointerEvent>, mode: Axis | 'free' | 'rotate' | 'scale') => {
     console.debug('[gizmo] down', mode, e.button);
     if (e.button !== 0) return;
     e.stopPropagation();
     const ids = objs.map((o) => o.id);
-    const start = new Map(objs.map((o) => [o.id, { x: o.x, y: o.y, e: o.elevation, r: o.rotation }]));
+    const start = new Map(objs.map((o) => [o.id, { x: o.x, y: o.y, e: o.elevation, r: o.rotation, w: o.width, d: o.depth, h: o.height }]));
     const grid = project.settings.gridSize;
     const raycaster = new THREE.Raycaster();
     const el = gl.domElement;
@@ -485,10 +491,11 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
     const hit0 = new THREE.Vector3();
     e.ray.intersectPlane(floor, hit0);
     const a0 = Math.atan2(hit0.z - cz, hit0.x - cx);
+    const r0 = Math.max(0.05, Math.hypot(hit0.x - cx, hit0.z - cz));
     if (controlsRef.current) controlsRef.current.enabled = false;
     useProjectStore
       .getState()
-      .begin(mode === 'rotate' ? 'Rotate object' : mode === 'y' ? 'Change elevation' : n > 1 ? 'Move objects' : 'Move object');
+      .begin(mode === 'rotate' ? 'Rotate object' : mode === 'scale' ? 'Scale object' : mode === 'y' ? 'Change elevation' : n > 1 ? 'Move objects' : 'Move object');
     setHot(mode);
     const move = (ev: PointerEvent) => {
       const rect = el.getBoundingClientRect();
@@ -506,6 +513,19 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
         rot = normalizeRotation(rot);
         setReadout(formatAngle(rot));
         useProjectStore.getState().preview((d) => updateObjects(d, [single.id], { rotation: rot }));
+        return;
+      }
+      if (mode === 'scale' && single && scaleAsset) {
+        const p = new THREE.Vector3();
+        if (!ray.intersectPlane(floor, p)) return;
+        let k = Math.hypot(p.x - cx, p.z - cz) / r0;
+        const s0 = start.get(single.id)!;
+        const pct0 = scalePct({ width: s0.w, depth: s0.d, height: s0.h }, scaleAsset);
+        // Snap the resulting size to 5 % of the default size.
+        if (!ev.altKey) k = Math.max(0.05, Math.round((pct0 * k) / 5) * 5) / pct0;
+        const next = scaledSize({ width: s0.w, depth: s0.d, height: s0.h }, scaleAsset, k);
+        setReadout(`Scale ${Math.round(scalePct({ width: next.width ?? s0.w, depth: next.depth ?? s0.d, height: next.height ?? s0.h }, scaleAsset))}%`);
+        useProjectStore.getState().preview((d) => updateObjects(d, [single.id], next));
         return;
       }
       if (mode === 'free') {
@@ -567,7 +587,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
     onPointerOver: (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
       setHot((h) => h ?? id);
-      gl.domElement.style.cursor = id === 'rotate' ? 'grab' : 'move';
+      gl.domElement.style.cursor = id === 'rotate' ? 'grab' : id === 'scale' ? 'nesw-resize' : 'move';
     },
     onPointerOut: () => {
       setHot((h) => (h === id ? null : h));
@@ -610,6 +630,17 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
           <mesh position={[0, 0, ringR]} rotation-x={-Math.PI / 2} material={gizmoMat(ACCENT, true)} renderOrder={19} raycast={() => null}>
             <circleGeometry args={[0.06, 20]} />
           </mesh>
+          {scalable && (
+            // Scale handle: a square on the ring between the front and the right.
+            <group position={[ringR * Math.SQRT1_2, 0.004, ringR * Math.SQRT1_2]} rotation={[0, Math.PI / 4, 0]} onPointerDown={(e) => startDrag(e, 'scale')} {...hover('scale')}>
+              <mesh rotation-x={-Math.PI / 2} material={gizmoMat('#f2efe9', hot === 'scale')} renderOrder={23}>
+                <planeGeometry args={[hot === 'scale' ? 0.15 : 0.12, hot === 'scale' ? 0.15 : 0.12]} />
+              </mesh>
+              <mesh rotation-x={-Math.PI / 2} position={[0, 0.001, 0]} material={gizmoMat(ACCENT, hot === 'scale')} renderOrder={24} raycast={() => null}>
+                <ringGeometry args={[0.035, 0.05, 4, 1, Math.PI / 4]} />
+              </mesh>
+            </group>
+          )}
         </group>
       )}
       {readout && (

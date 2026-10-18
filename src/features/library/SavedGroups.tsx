@@ -1,7 +1,7 @@
 import { confirmAction, toast, useDialogStore, usePrefsStore, type SavedGroup } from '@/state/uiStores';
 
 /**
- * Saved-group actions for the library's Groups tab (the cards themselves are ordinary item cards
+ * Saved-group actions for the library's Groups list (the cards themselves are ordinary item cards
  * built by savedGroupAssets.ts).
  */
 export function editSavedGroupDetails(id: string): void {

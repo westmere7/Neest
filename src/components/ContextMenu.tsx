@@ -8,6 +8,8 @@ export interface MenuItem {
   danger?: boolean;
   disabled?: boolean;
   separator?: boolean;
+  /** Shown with a check mark (one choice of several). */
+  checked?: boolean;
   run?: () => void;
 }
 
@@ -75,14 +77,16 @@ export function ContextMenuHost() {
         ) : (
           <button
             key={i}
-            role="menuitem"
-            className={`menu-item${item.danger ? ' danger' : ''}`}
+            role={item.checked === undefined ? 'menuitem' : 'menuitemradio'}
+            aria-checked={item.checked}
+            className={`menu-item${item.danger ? ' danger' : ''}${item.checked ? ' checked' : ''}`}
             disabled={item.disabled}
             onClick={() => {
               closeContextMenu();
               item.run?.();
             }}
           >
+            {item.checked !== undefined && <span className="menu-check" aria-hidden>{item.checked ? '✓' : ''}</span>}
             <span>{item.label}</span>
             {item.shortcut && <kbd>{item.shortcut}</kbd>}
           </button>

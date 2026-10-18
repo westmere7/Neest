@@ -30,7 +30,9 @@ describe('complex loft stress sample', () => {
     for (const g of net.walls.values()) for (const sp of g.spans) expect(sp.clamped, sp.id).toBe(false);
     const curved = [...net.walls.values()].find((g) => g.wall.role === 'exterior' && g.path.control);
     expect(curved?.spans.length).toBe(3);
-    expect(net.hubs.length).toBeGreaterThan(3); // T-junctions and the crossing divider
+    // T-junctions and the crossing divider join as through-walls (square ends, branches butt into
+    // the wall that runs on): no junction hubs.
+    expect(net.hubs.length).toBe(0);
   });
 
   it('detects four named rooms totalling about 100 m²', () => {

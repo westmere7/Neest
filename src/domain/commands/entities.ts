@@ -146,6 +146,8 @@ export interface PlaceObjectArgs {
   elevation?: number;
   materials?: Record<string, string>;
   name?: string | null;
+  /** Model variant (omit for the asset's default model). */
+  model?: string;
 }
 
 export function placeObject(d: D, args: PlaceObjectArgs): string {
@@ -165,9 +167,23 @@ export function placeObject(d: D, args: PlaceObjectArgs): string {
     materials: { ...(args.materials ?? {}) },
     locked: false,
     hidden: false,
+    ...(args.model ? { model: args.model } : {}),
   };
   d.objects[id] = obj;
   return id;
+}
+
+/**
+ * Sets the model variant of items (undefined = the default model). Size, place and materials stay:
+ * a model only changes the item's contents.
+ */
+export function setObjectModel(d: D, ids: string[], model: string | undefined): void {
+  for (const id of ids) {
+    const o = d.objects[id];
+    if (!o) continue;
+    if (model) o.model = model;
+    else delete o.model;
+  }
 }
 
 export function updateObjects(d: D, ids: string[], patch: Partial<Omit<PlacedObject, 'id'>>): void {

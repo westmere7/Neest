@@ -3,6 +3,7 @@ import { prepareVariantMaterials } from '@/domain/commands/entities';
 import type { D } from '@/domain/commands/walls';
 import type { AssetDefinition } from '@/data/assets/types';
 import { assetVariants, userVariantsFor, type AssetVariant } from '@/data/assets/variants';
+import { storedModelId } from '@/data/assets/models';
 import { useEditorStore } from '@/state/editorStore';
 import { usePrefsStore } from '@/state/uiStores';
 
@@ -26,6 +27,11 @@ export function variantDefs(asset: AssetDefinition, variantId: string): Record<s
 export function chosenVariant(asset: AssetDefinition): AssetVariant | undefined {
   const id = useEditorStore.getState().variantChoice[asset.id];
   return id ? variantsFor(asset).find((v) => v.id === id) : undefined;
+}
+
+/** Model to store on a new item: the one chosen in the library (undefined = the default model). */
+export function placementModel(asset: AssetDefinition): string | undefined {
+  return storedModelId(asset, useEditorStore.getState().modelChoice[asset.id]);
 }
 
 /** Slot materials for placing a new item in the chosen variant (inside a project recipe). */

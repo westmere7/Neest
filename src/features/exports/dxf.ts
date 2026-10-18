@@ -6,7 +6,7 @@ import { pointAt } from '@/domain/geometry/wallPath';
 import { dot, leftNormal, sub } from '@/domain/geometry/vec';
 import { polygonCentroid } from '@/domain/geometry/polygon';
 import { formatArea, formatLength } from '@/domain/model/units';
-import { assetPlan, getAsset, objectSize } from '@/data/assets/registry';
+import { assetPlan, getObjectAsset, objectSize } from '@/data/assets/registry';
 import { openingSymbol } from '@/features/plan-2d/symbols';
 import { dimensionGeometry } from '@/features/plan-2d/dimensions';
 
@@ -186,7 +186,7 @@ export function buildDxf(project: Project, o: DxfOptions): string {
   if (o.furniture) {
     for (const obj of Object.values(project.objects)) {
       if (obj.hidden) continue;
-      const asset = getAsset(project, obj.assetId);
+      const asset = getObjectAsset(project, obj);
       if (!asset) continue;
       const plan = assetPlan(asset, objectSize(obj), project.customAssets[obj.assetId]);
       const c = Math.cos(obj.rotation);

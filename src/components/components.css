@@ -473,6 +473,19 @@ kbd {
 .menu-item:disabled {
   opacity: 0.45;
 }
+/* Choice items (one of several): a check column, label after it. */
+.menu-item[role='menuitemradio'] {
+  justify-content: flex-start;
+  gap: 6px;
+}
+.menu-check {
+  width: 14px;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+.menu-item.checked {
+  font-weight: 600;
+}
 .menu-sep {
   height: 1px;
   margin: 4px 6px;

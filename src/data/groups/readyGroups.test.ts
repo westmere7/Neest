@@ -50,7 +50,7 @@ describe('ready-made groups', () => {
     expect(a.group).toBe('Bedroom setups');
     expect(a.category).toBe('bedroom');
     expect(a.build({ w: 1, d: 1, h: 1 }).length).toBeGreaterThan(5);
-    // Shelves are the Groups tab's own, not catalogue groups.
+    // Shelves are the Groups list's own, not catalogue groups.
     expect(Object.values(ASSET_GROUPS).flat()).not.toContain('Bedroom setups');
   });
 });

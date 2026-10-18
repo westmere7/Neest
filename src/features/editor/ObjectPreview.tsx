@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { Maximize2 } from 'lucide-react';
+import { useDialogStore } from '@/state/uiStores';
 import type { Project } from '@/domain/model/schema';
 import { getAsset } from '@/data/assets/registry';
 import { usePackVersion } from '@/packs/events';
@@ -7,10 +9,12 @@ import type { PreviewHandle } from '@/features/scene-3d/objectPreview';
 
 type State = 'loading' | 'ok' | 'fallback';
 
-const prefersReducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Small live 3D view of a placed object for the Inspector: slowly turns, drag to turn it by hand.
+ * Small live 3D view of a placed object for the Inspector: slowly turns, drag to turn it by hand; the
+ * expand button (on hover) opens the large viewer with the item's full details.
  * The renderer (lazy-loaded with three) is one shared canvas, see `scene-3d/objectPreview.ts`.
  * Falls back to the 2D plan symbol when WebGL or an imported model isn't available.
  */
@@ -33,7 +37,10 @@ export function ObjectPreview({ project, objectId }: { project: Project; objectI
     import('@/features/scene-3d/objectPreview')
       .then((m) => {
         if (cancelled) return;
-        h = m.attachPreview(host, { reducedMotion: prefersReducedMotion(), onFail: () => setState('fallback') });
+        h = m.attachPreview(host, {
+          reducedMotion: prefersReducedMotion(),
+          onFail: () => setState('fallback'),
+        });
         if (h) setHandle(h);
         else setState('fallback');
       })
@@ -47,7 +54,7 @@ export function ObjectPreview({ project, objectId }: { project: Project; objectI
   }, []);
 
   // Rebuild when what the model looks like changes (not when it is moved or rotated in the plan).
-  const look = `${o.id}|${o.assetId}|${o.width}|${o.depth}|${o.height}|${o.mirrored}|${JSON.stringify(o.materials)}|${packs}`;
+  const look = `${o.id}|${o.assetId}|${o.width}|${o.depth}|${o.height}|${o.mirrored}|${JSON.stringify(o.materials)}|${o.model ?? ''}|${packs}`;
   const materials = project.materials;
   useEffect(() => {
     if (!handle) return;
@@ -63,15 +70,31 @@ export function ObjectPreview({ project, objectId }: { project: Project; objectI
 
   const label = o.name ?? asset?.name ?? 'Object';
   return (
-    <div
-      ref={hostRef}
-      className={`object-preview is-${state}`}
-      role="img"
-      aria-label={state === 'ok' ? `3D preview of ${label}. Drag to turn it.` : `Plan symbol of ${label}`}
-      title={state === 'ok' ? 'Drag to turn' : undefined}
-      data-testid="object-preview"
-    >
-      {state === 'fallback' && asset && <AssetPlanThumb asset={asset} />}
+    <div className="object-preview-wrap">
+      <div
+        ref={hostRef}
+        className={`object-preview is-${state}`}
+        role="img"
+        aria-label={state === 'ok' ? `3D preview of ${label}. Drag to turn it.` : `Plan symbol of ${label}`}
+        title={state === 'ok' ? 'Drag to turn' : undefined}
+        data-testid="object-preview"
+      >
+        {state === 'fallback' && asset && <AssetPlanThumb asset={asset} />}
+      </div>
+      {asset && (
+        <button
+          type="button"
+          className="aic-expand"
+          aria-label={`Open a large view of ${label}`}
+          title="Large view and full details"
+          data-testid="object-preview-expand"
+          onClick={() =>
+            useDialogStore.getState().open('asset-viewer', { assetId: o.assetId, objectId: o.id })
+          }
+        >
+          <Maximize2 size={13} aria-hidden />
+        </button>
+      )}
     </div>
   );
 }

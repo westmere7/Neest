@@ -3,7 +3,7 @@ import type { Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { materialUsage } from '@/domain/commands/entities';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
-import { getAsset, objectSlotMaterialId, resolveMaterial } from '@/data/assets/registry';
+import { getObjectAsset, objectSlotMaterialId, resolveMaterial } from '@/data/assets/registry';
 
 /** Machine-readable summary of rooms, openings, furniture inventory and material usage. */
 export function buildReport(project: Project) {
@@ -25,7 +25,7 @@ export function buildReport(project: Project) {
   const inventory = new Map<string, { item: string; category: string; count: number; sizes: Set<string> }>();
   const usedMaterials = new Map<string, number>();
   for (const o of Object.values(project.objects)) {
-    const a = getAsset(project, o.assetId);
+    const a = getObjectAsset(project, o);
     const key = o.assetId;
     const entry = inventory.get(key) ?? { item: a?.name ?? o.assetId, category: a?.category ?? 'unknown', count: 0, sizes: new Set<string>() };
     entry.count++;

@@ -217,6 +217,10 @@
    "file": "bar-cart.webp",
    "fp": "705b66208fbd6f21"
   },
+  "bar-cart@model:empty": {
+   "file": "bar-cart_model_empty.webp",
+   "fp": "0d324db23415a8ac"
+  },
   "bar-stool": {
    "file": "bar-stool.webp",
    "fp": "d9dc541cfa8295e6"
@@ -365,6 +369,102 @@
    "file": "bean-bag.webp",
    "fp": "c698526221f5881a"
   },
+  "beauty:acrylic-makeup-organiser": {
+   "file": "beauty_acrylic-makeup-organiser.webp",
+   "fp": "5184c94724cb728a"
+  },
+  "beauty:bathroom-shelf-toiletries": {
+   "file": "beauty_bathroom-shelf-toiletries.webp",
+   "fp": "13129223f0aa087e"
+  },
+  "beauty:beauty-trolley-filled": {
+   "file": "beauty_beauty-trolley-filled.webp",
+   "fp": "6be8d58565bdc7b7"
+  },
+  "beauty:body-lotion-trio": {
+   "file": "beauty_body-lotion-trio.webp",
+   "fp": "8bfca12c678d7fbb"
+  },
+  "beauty:candle-diffuser-set": {
+   "file": "beauty_candle-diffuser-set.webp",
+   "fp": "0397c5cb59d34346"
+  },
+  "beauty:cosmetic-bag-brush-roll": {
+   "file": "beauty_cosmetic-bag-brush-roll.webp",
+   "fp": "f2625c37020051a9"
+  },
+  "beauty:glass-top-makeup-desk": {
+   "file": "beauty_glass-top-makeup-desk.webp",
+   "fp": "536931ebdc09cf81"
+  },
+  "beauty:glass-top-makeup-desk@model:filled": {
+   "file": "beauty_glass-top-makeup-desk_model_filled.webp",
+   "fp": "d4c9be07c07aadd3"
+  },
+  "beauty:hair-styling-tools": {
+   "file": "beauty_hair-styling-tools.webp",
+   "fp": "be2454e8c64d97a9"
+  },
+  "beauty:handbag-display-shelf": {
+   "file": "beauty_handbag-display-shelf.webp",
+   "fp": "71955b196d1d8941"
+  },
+  "beauty:hollywood-vanity-set-up": {
+   "file": "beauty_hollywood-vanity-set-up.webp",
+   "fp": "53527f25c549446f"
+  },
+  "beauty:hollywood-vanity-set-up@model:filled": {
+   "file": "beauty_hollywood-vanity-set-up_model_filled.webp",
+   "fp": "17d293a6f04af791"
+  },
+  "beauty:jewellery-stand-set": {
+   "file": "beauty_jewellery-stand-set.webp",
+   "fp": "e30e13e0c8188f2b"
+  },
+  "beauty:led-arched-floor-mirror": {
+   "file": "beauty_led-arched-floor-mirror.webp",
+   "fp": "04a83f498dd13ed7"
+  },
+  "beauty:lighted-makeup-mirror": {
+   "file": "beauty_lighted-makeup-mirror.webp",
+   "fp": "f9deda8fa62062cc"
+  },
+  "beauty:makeup-collection": {
+   "file": "beauty_makeup-collection.webp",
+   "fp": "3748b158949b41b8"
+  },
+  "beauty:nail-polish-wall-rack": {
+   "file": "beauty_nail-polish-wall-rack.webp",
+   "fp": "dbbed45fd81a7b3d"
+  },
+  "beauty:oak-vanity-round-mirror": {
+   "file": "beauty_oak-vanity-round-mirror.webp",
+   "fp": "0e21824972b7dda0"
+  },
+  "beauty:oak-vanity-round-mirror@model:filled": {
+   "file": "beauty_oak-vanity-round-mirror_model_filled.webp",
+   "fp": "f02cbe54e9479eb1"
+  },
+  "beauty:perfume-collection-tray": {
+   "file": "beauty_perfume-collection-tray.webp",
+   "fp": "27ed15c559c525cc"
+  },
+  "beauty:shower-caddy-filled": {
+   "file": "beauty_shower-caddy-filled.webp",
+   "fp": "c8bde2c2035b2b6e"
+  },
+  "beauty:skincare-routine-set": {
+   "file": "beauty_skincare-routine-set.webp",
+   "fp": "170c2ccf22ff0cb8"
+  },
+  "beauty:velvet-shell-vanity-chair": {
+   "file": "beauty_velvet-shell-vanity-chair.webp",
+   "fp": "d34a592f94d335d4"
+  },
+  "beauty:velvet-vanity-stool": {
+   "file": "beauty_velvet-vanity-stool.webp",
+   "fp": "d564e57452bb94fe"
+  },
   "bed-bunk": {
    "file": "bed-bunk.webp",
    "fp": "def2b1752bf644f9"
@@ -481,6 +581,10 @@
    "file": "bedside-table.webp",
    "fp": "a603b7381954ec18"
   },
+  "bedside-table@model:empty": {
+   "file": "bedside-table_model_empty.webp",
+   "fp": "57944179ece496a3"
+  },
   "bench": {
    "file": "bench.webp",
    "fp": "f5833e27b537d290"
@@ -513,13 +617,13 @@
    "file": "bookcase.webp",
    "fp": "8c4de43bb15ac119"
   },
+  "bookcase@model:empty": {
+   "file": "bookcase_model_empty.webp",
+   "fp": "251d23864ff68d98"
+  },
   "books-stack": {
    "file": "books-stack.webp",
    "fp": "672cdd17703169e2"
-  },
-  "bosch-dishwashers:shpm88z75n": {
-   "file": "bosch-dishwashers_shpm88z75n.webp",
-   "fp": "f44289db29481756"
   },
   "bosch-dishwashers:sks62e32eu": {
    "file": "bosch-dishwashers_sks62e32eu.webp",
@@ -569,10 +673,6 @@
    "file": "branded-audio_acnos-acoustic-3.webp",
    "fp": "d9d744e38e924ea2"
   },
-  "branded-audio:jbl-charge-5": {
-   "file": "branded-audio_jbl-charge-5.webp",
-   "fp": "e3278df202af24fc"
-  },
   "branded-audio:jbl-flip-6": {
    "file": "branded-audio_jbl-flip-6.webp",
    "fp": "cbd0513ff918ac79"
@@ -580,10 +680,6 @@
   "branded-audio:jbl-partybox-110": {
    "file": "branded-audio_jbl-partybox-110.webp",
    "fp": "781a8129ecca98f3"
-  },
-  "branded-audio:marshall-acton-iii": {
-   "file": "branded-audio_marshall-acton-iii.webp",
-   "fp": "64a4c0d59c41b29a"
   },
   "branded-audio:marshall-stanmore-iii": {
    "file": "branded-audio_marshall-stanmore-iii.webp",
@@ -617,14 +713,6 @@
    "file": "branded-bathroom-vn_caesar-l5225.webp",
    "fp": "d75333361c7c9b2a"
   },
-  "branded-bathroom-vn:grohe-euphoria-smartcontrol-310": {
-   "file": "branded-bathroom-vn_grohe-euphoria-smartcontrol-310.webp",
-   "fp": "6073da2118a2991f"
-  },
-  "branded-bathroom-vn:inax-ac-902vn": {
-   "file": "branded-bathroom-vn_inax-ac-902vn.webp",
-   "fp": "10fa0e7707f462db"
-  },
   "branded-bathroom-vn:toto-lt710csr": {
    "file": "branded-bathroom-vn_toto-lt710csr.webp",
    "fp": "56543e289ec4c968"
@@ -633,17 +721,13 @@
    "file": "branded-bathroom-vn_toto-ms885de2.webp",
    "fp": "618382a23e24dd43"
   },
-  "branded-climate-vn:daikin-ftkb25xvmv": {
-   "file": "branded-climate-vn_daikin-ftkb25xvmv.webp",
-   "fp": "aa97e16d1d5583eb"
-  },
   "branded-climate-vn:panasonic-cs-xu9zkh-8": {
    "file": "branded-climate-vn_panasonic-cs-xu9zkh-8.webp",
    "fp": "9d673a482685b464"
   },
   "branded-climate-vn:panasonic-cu-xu9zkh-8": {
    "file": "branded-climate-vn_panasonic-cu-xu9zkh-8.webp",
-   "fp": "c3ad8c030740af4a"
+   "fp": "c2479394d05e161e"
   },
   "branded-climate-vn:panasonic-f-409kb": {
    "file": "branded-climate-vn_panasonic-f-409kb.webp",
@@ -655,7 +739,15 @@
   },
   "branded-climate-vn:xiaomi-air-purifier-4": {
    "file": "branded-climate-vn_xiaomi-air-purifier-4.webp",
-   "fp": "84b1d9467954525f"
+   "fp": "68977c88848dc9b9"
+  },
+  "branded-fitness:kingsmith-walkingpad-c2": {
+   "file": "branded-fitness_kingsmith-walkingpad-c2.webp",
+   "fp": "2b4445366caed028"
+  },
+  "branded-fitness:kingsmith-walkingpad-c2-folded": {
+   "file": "branded-fitness_kingsmith-walkingpad-c2-folded.webp",
+   "fp": "fa2e2f945e6e401c"
   },
   "branded-fridges:bosch-kgn392ldfg": {
    "file": "branded-fridges_bosch-kgn392ldfg.webp",
@@ -681,9 +773,141 @@
    "file": "branded-fridges_samsung-rs68a8840s9.webp",
    "fp": "ba13171129124f7c"
   },
-  "branded-laptops:acer-nitro-v-15": {
-   "file": "branded-laptops_acer-nitro-v-15.webp",
-   "fp": "d7036b7e01ccd22c"
+  "branded-home-electronics:apple-homepod-2": {
+   "file": "branded-home-electronics_apple-homepod-2.webp",
+   "fp": "0b641728016d3967"
+  },
+  "branded-home-electronics:apple-homepod-mini": {
+   "file": "branded-home-electronics_apple-homepod-mini.webp",
+   "fp": "90fb13bc376ca55b"
+  },
+  "branded-home-electronics:daikin-mck55tvm6": {
+   "file": "branded-home-electronics_daikin-mck55tvm6.webp",
+   "fp": "154e57fbe30c08b2"
+  },
+  "branded-home-electronics:dreame-h12-pro": {
+   "file": "branded-home-electronics_dreame-h12-pro.webp",
+   "fp": "08e9abd38bf2b91f"
+  },
+  "branded-home-electronics:dyson-purifier-cool-tp07": {
+   "file": "branded-home-electronics_dyson-purifier-cool-tp07.webp",
+   "fp": "6580d972da7312c7"
+  },
+  "branded-home-electronics:dyson-v12-detect-slim": {
+   "file": "branded-home-electronics_dyson-v12-detect-slim.webp",
+   "fp": "3417fc04b22ae196"
+  },
+  "branded-home-electronics:dyson-v15-detect": {
+   "file": "branded-home-electronics_dyson-v15-detect.webp",
+   "fp": "311f0fe07eda5447"
+  },
+  "branded-home-electronics:ecovacs-deebot-t30-omni": {
+   "file": "branded-home-electronics_ecovacs-deebot-t30-omni.webp",
+   "fp": "4ec82daaeb5d67cf"
+  },
+  "branded-home-electronics:fujie-ofr4411": {
+   "file": "branded-home-electronics_fujie-ofr4411.webp",
+   "fp": "8318a07bd5798242"
+  },
+  "branded-home-electronics:google-nest-audio": {
+   "file": "branded-home-electronics_google-nest-audio.webp",
+   "fp": "c19e9688e6f121c5"
+  },
+  "branded-home-electronics:google-nest-hub-2": {
+   "file": "branded-home-electronics_google-nest-hub-2.webp",
+   "fp": "7d3e61d8a2785780"
+  },
+  "branded-home-electronics:google-nest-mini-2": {
+   "file": "branded-home-electronics_google-nest-mini-2.webp",
+   "fp": "22db096df0cbbe6a"
+  },
+  "branded-home-electronics:hitachi-cv-sf16a": {
+   "file": "branded-home-electronics_hitachi-cv-sf16a.webp",
+   "fp": "dc63022315047a73"
+  },
+  "branded-home-electronics:philips-airfryer-hd9252": {
+   "file": "branded-home-electronics_philips-airfryer-hd9252.webp",
+   "fp": "d6e32f44d8b02ba0"
+  },
+  "branded-home-electronics:philips-blender-hr2041": {
+   "file": "branded-home-electronics_philips-blender-hr2041.webp",
+   "fp": "ad4bbd8cf65aaa1d"
+  },
+  "branded-home-electronics:roborock-s8-pro-ultra": {
+   "file": "branded-home-electronics_roborock-s8-pro-ultra.webp",
+   "fp": "1cf86b958063346d"
+  },
+  "branded-home-electronics:sharp-kc-g40ev-w": {
+   "file": "branded-home-electronics_sharp-kc-g40ev-w.webp",
+   "fp": "698ca40219c5db14"
+  },
+  "branded-home-electronics:tp-link-archer-ax73": {
+   "file": "branded-home-electronics_tp-link-archer-ax73.webp",
+   "fp": "a8d89ed74f965742"
+  },
+  "branded-home-electronics:tp-link-deco-x50": {
+   "file": "branded-home-electronics_tp-link-deco-x50.webp",
+   "fp": "0739af5837a300ff"
+  },
+  "branded-home-electronics:xiaomi-electric-kettle-2": {
+   "file": "branded-home-electronics_xiaomi-electric-kettle-2.webp",
+   "fp": "49636d83c6a6a3f1"
+  },
+  "branded-home-electronics:xiaomi-robot-vacuum-s10": {
+   "file": "branded-home-electronics_xiaomi-robot-vacuum-s10.webp",
+   "fp": "e9fe7838fec8d119"
+  },
+  "branded-home-electronics:xiaomi-robot-vacuum-x10-plus": {
+   "file": "branded-home-electronics_xiaomi-robot-vacuum-x10-plus.webp",
+   "fp": "06bcab720abe12d1"
+  },
+  "branded-home-electronics:xiaomi-router-ax3000t": {
+   "file": "branded-home-electronics_xiaomi-router-ax3000t.webp",
+   "fp": "2f911df370b38de7"
+  },
+  "branded-home-electronics:xiaomi-smart-air-fryer-6-5l": {
+   "file": "branded-home-electronics_xiaomi-smart-air-fryer-6-5l.webp",
+   "fp": "563f4fbade810ce7"
+  },
+  "branded-home-electronics:xiaomi-smart-air-purifier-4-lite": {
+   "file": "branded-home-electronics_xiaomi-smart-air-purifier-4-lite.webp",
+   "fp": "b51c2a86cbf0b811"
+  },
+  "branded-home-electronics:xiaomi-smart-air-purifier-4-pro": {
+   "file": "branded-home-electronics_xiaomi-smart-air-purifier-4-pro.webp",
+   "fp": "d9b236eca99bb947"
+  },
+  "branded-home-electronics:xiaomi-smart-dehumidifier-22l": {
+   "file": "branded-home-electronics_xiaomi-smart-dehumidifier-22l.webp",
+   "fp": "ce5994bc7225d238"
+  },
+  "branded-home-electronics:xiaomi-smart-humidifier-2": {
+   "file": "branded-home-electronics_xiaomi-smart-humidifier-2.webp",
+   "fp": "c2dab92da8631c41"
+  },
+  "branded-home-electronics:xiaomi-smart-space-heater-s": {
+   "file": "branded-home-electronics_xiaomi-smart-space-heater-s.webp",
+   "fp": "d8921343e3c1a2d8"
+  },
+  "branded-home-electronics:xiaomi-smart-standing-fan-2": {
+   "file": "branded-home-electronics_xiaomi-smart-standing-fan-2.webp",
+   "fp": "04008131ec52c8da"
+  },
+  "branded-home-electronics:xiaomi-smart-standing-fan-2-lite": {
+   "file": "branded-home-electronics_xiaomi-smart-standing-fan-2-lite.webp",
+   "fp": "fa71c006a5d91538"
+  },
+  "branded-home-electronics:xiaomi-smart-standing-fan-2-pro": {
+   "file": "branded-home-electronics_xiaomi-smart-standing-fan-2-pro.webp",
+   "fp": "65924fe4061daf34"
+  },
+  "branded-home-electronics:xiaomi-smart-tower-fan": {
+   "file": "branded-home-electronics_xiaomi-smart-tower-fan.webp",
+   "fp": "567591e19281533c"
+  },
+  "branded-home-electronics:xiaomi-vacuum-cleaner-g11": {
+   "file": "branded-home-electronics_xiaomi-vacuum-cleaner-g11.webp",
+   "fp": "464645c8f4bcc853"
   },
   "branded-laptops:asus-vivobook-15-x1504va": {
    "file": "branded-laptops_asus-vivobook-15-x1504va.webp",
@@ -692,10 +916,6 @@
   "branded-laptops:dell-inspiron-15-3530": {
    "file": "branded-laptops_dell-inspiron-15-3530.webp",
    "fp": "cdd5fe241457a39b"
-  },
-  "branded-laptops:lenovo-loq-15irx9": {
-   "file": "branded-laptops_lenovo-loq-15irx9.webp",
-   "fp": "001789292bc9b991"
   },
   "branded-laptops:macbook-air-13-m3": {
    "file": "branded-laptops_macbook-air-13-m3.webp",
@@ -731,27 +951,19 @@
   },
   "branded-washers:bosch-wgg254z0gb": {
    "file": "branded-washers_bosch-wgg254z0gb.webp",
-   "fp": "cbffb298c049f270"
+   "fp": "0186e950cfd12f09"
   },
   "branded-washers:lg-fwy996wctn4": {
    "file": "branded-washers_lg-fwy996wctn4.webp",
-   "fp": "133155c45db6adfd"
+   "fp": "ec088afce9a4c81d"
   },
   "branded-washers:lg-washtower-wt1210bbf": {
    "file": "branded-washers_lg-washtower-wt1210bbf.webp",
-   "fp": "4e5a86bc931a66bf"
-  },
-  "branded-washers:miele-wtd160-wcs": {
-   "file": "branded-washers_miele-wtd160-wcs.webp",
-   "fp": "c35b608eb861c538"
-  },
-  "branded-washers:miele-wwd320-wcs": {
-   "file": "branded-washers_miele-wwd320-wcs.webp",
-   "fp": "047ec9b625d681a1"
+   "fp": "282bb046e1b47ac0"
   },
   "branded-washers:samsung-ww11db8b95gbu3": {
    "file": "branded-washers_samsung-ww11db8b95gbu3.webp",
-   "fp": "d0dc5f915437c83e"
+   "fp": "a0ed9485024165e6"
   },
   "broom-cupboard": {
    "file": "broom-cupboard.webp",
@@ -913,6 +1125,10 @@
    "file": "china-cabinet.webp",
    "fp": "bd2004f96ef0400e"
   },
+  "china-cabinet@model:empty": {
+   "file": "china-cabinet_model_empty.webp",
+   "fp": "db4c78825d1bdb41"
+  },
   "chinese-home:bamboo-steamer-stack": {
    "file": "chinese-home_bamboo-steamer-stack.webp",
    "fp": "006fe21acbc29cfd"
@@ -977,9 +1193,17 @@
    "file": "coffee-table-glass.webp",
    "fp": "28c5033da91caa37"
   },
+  "coffee-table-glass@model:empty": {
+   "file": "coffee-table-glass_model_empty.webp",
+   "fp": "21833476e53156b0"
+  },
   "coffee-table-round": {
    "file": "coffee-table-round.webp",
    "fp": "1a5b7de98116f9cf"
+  },
+  "coffee-table-round@model:styled": {
+   "file": "coffee-table-round_model_styled.webp",
+   "fp": "b429af5471a7bcc4"
   },
   "coffee-table-trunk": {
    "file": "coffee-table-trunk.webp",
@@ -1001,6 +1225,10 @@
    "file": "console-table.webp",
    "fp": "e7b6ce6153d10c41"
   },
+  "console-table@model:empty": {
+   "file": "console-table_model_empty.webp",
+   "fp": "86b8f0d2851b0e4d"
+  },
   "counter-stool-backed": {
    "file": "counter-stool-backed.webp",
    "fp": "6f4e497efc6c4248"
@@ -1012,6 +1240,10 @@
   "cube-storage": {
    "file": "cube-storage.webp",
    "fp": "0b2e1e15fa01db39"
+  },
+  "cube-storage@model:empty": {
+   "file": "cube-storage_model_empty.webp",
+   "fp": "dedc6ad48d16ce29"
   },
   "curtain-collection:cafe-curtain": {
    "file": "curtain-collection_cafe-curtain.webp",
@@ -1245,6 +1477,10 @@
    "file": "desk-hutch.webp",
    "fp": "977077c2dacdc4a4"
   },
+  "desk-hutch@model:empty": {
+   "file": "desk-hutch_model_empty.webp",
+   "fp": "866647754b81da2e"
+  },
   "desk-l-shaped": {
    "file": "desk-l-shaped.webp",
    "fp": "4afd4554f5c9a9ca"
@@ -1277,17 +1513,33 @@
    "file": "dining-table-pedestal.webp",
    "fp": "3a9e5f6d084fb8f1"
   },
+  "dining-table-pedestal@model:styled": {
+   "file": "dining-table-pedestal_model_styled.webp",
+   "fp": "97e2424d8433a44b"
+  },
   "dining-table-rect": {
    "file": "dining-table-rect.webp",
    "fp": "09e84ca5b6794b65"
+  },
+  "dining-table-rect@model:styled": {
+   "file": "dining-table-rect_model_styled.webp",
+   "fp": "0a10546734a045b1"
   },
   "dining-table-round": {
    "file": "dining-table-round.webp",
    "fp": "b904d660f7cfc7a3"
   },
+  "dining-table-round@model:styled": {
+   "file": "dining-table-round_model_styled.webp",
+   "fp": "89ecde1e96b481ef"
+  },
   "dining-table-trestle": {
    "file": "dining-table-trestle.webp",
    "fp": "52964c81f6df59fe"
+  },
+  "dining-table-trestle@model:empty": {
+   "file": "dining-table-trestle_model_empty.webp",
+   "fp": "ee993b1ae9e282da"
   },
   "dishwasher": {
    "file": "dishwasher.webp",
@@ -1296,6 +1548,10 @@
   "display-cabinet": {
    "file": "display-cabinet.webp",
    "fp": "8d5b75defceb4759"
+  },
+  "display-cabinet@model:empty": {
+   "file": "display-cabinet_model_empty.webp",
+   "fp": "3d352d2a9b713cb1"
   },
   "dollhouse": {
    "file": "dollhouse.webp",
@@ -1308,6 +1564,10 @@
   "dresser": {
    "file": "dresser.webp",
    "fp": "5fc2189c5f4e4493"
+  },
+  "dresser@model:styled": {
+   "file": "dresser_model_styled.webp",
+   "fp": "683a5713751f94a2"
   },
   "drum-kit": {
    "file": "drum-kit.webp",
@@ -1757,6 +2017,10 @@
    "file": "kitchen-base-cabinet.webp",
    "fp": "bcf8ddaed9f33723"
   },
+  "kitchen-base-cabinet@model:styled": {
+   "file": "kitchen-base-cabinet_model_styled.webp",
+   "fp": "df0a433ad86b8b5f"
+  },
   "kitchen-collection:appliance-garage": {
    "file": "kitchen-collection_appliance-garage.webp",
    "fp": "6c7ea0b8c2beadbb"
@@ -1911,11 +2175,11 @@
   },
   "kitchen-counters:island-sink-seating": {
    "file": "kitchen-counters_island-sink-seating.webp",
-   "fp": "7f1d51ac6754779f"
+   "fp": "0dc45934cd4f517c"
   },
   "kitchen-counters:masonry-counter-vn": {
    "file": "kitchen-counters_masonry-counter-vn.webp",
-   "fp": "288ce8273af4e75a"
+   "fp": "a0923b8017367d69"
   },
   "kitchen-counters:peninsula-breakfast-bar": {
    "file": "kitchen-counters_peninsula-breakfast-bar.webp",
@@ -1923,15 +2187,15 @@
   },
   "kitchen-counters:run-180-sink": {
    "file": "kitchen-counters_run-180-sink.webp",
-   "fp": "1997405dc48b2b28"
+   "fp": "1b51fe251942c177"
   },
   "kitchen-counters:run-240-sink-hob": {
    "file": "kitchen-counters_run-240-sink-hob.webp",
-   "fp": "0cddd447267eacdc"
+   "fp": "654510f77048ab8f"
   },
   "kitchen-counters:run-300-full": {
    "file": "kitchen-counters_run-300-full.webp",
-   "fp": "8dc2a07110f0d151"
+   "fp": "87f5f4399cbeb18a"
   },
   "kitchen-counters:run-handleless-240": {
    "file": "kitchen-counters_run-handleless-240.webp",
@@ -1939,39 +2203,43 @@
   },
   "kitchen-counters:sink-bar-prep-45": {
    "file": "kitchen-counters_sink-bar-prep-45.webp",
-   "fp": "2db96f4f4a528f70"
+   "fp": "5349f8f752eb854e"
   },
   "kitchen-counters:sink-double-bowl-120": {
    "file": "kitchen-counters_sink-double-bowl-120.webp",
-   "fp": "69f4206eb0f58c69"
+   "fp": "169f6ab23525b0b4"
   },
   "kitchen-counters:sink-drainer-vn": {
    "file": "kitchen-counters_sink-drainer-vn.webp",
-   "fp": "2f697f874df575e7"
+   "fp": "3b39422fbad90dcd"
   },
   "kitchen-counters:sink-farmhouse-shaker": {
    "file": "kitchen-counters_sink-farmhouse-shaker.webp",
-   "fp": "e7f26db95b793088"
+   "fp": "a7e8d7b524492b5b"
   },
   "kitchen-counters:sink-granite-black": {
    "file": "kitchen-counters_sink-granite-black.webp",
-   "fp": "423b936fa39ca61e"
+   "fp": "6171bf5378f332ec"
   },
   "kitchen-counters:sink-inset-80": {
    "file": "kitchen-counters_sink-inset-80.webp",
-   "fp": "28a337e1adf948c5"
+   "fp": "94ae961dcdbc2aad"
   },
   "kitchen-counters:sink-laundry-counter": {
    "file": "kitchen-counters_sink-laundry-counter.webp",
-   "fp": "98dc763777be47b9"
+   "fp": "ebe3ce7fbc826bce"
   },
   "kitchen-counters:sink-undermount-quartz": {
    "file": "kitchen-counters_sink-undermount-quartz.webp",
-   "fp": "26399555cb0981b9"
+   "fp": "66d5b199da97b79f"
   },
   "kitchen-island": {
    "file": "kitchen-island.webp",
    "fp": "84a71cc1759e389e"
+  },
+  "kitchen-island@model:styled": {
+   "file": "kitchen-island_model_styled.webp",
+   "fp": "15cdf7077a7130ad"
   },
   "kitchen-open-shelf": {
    "file": "kitchen-open-shelf.webp",
@@ -2105,6 +2373,118 @@
    "file": "lighting-collection_vanity-light-bar.webp",
    "fp": "7ea88c2c5607024a"
   },
+  "lighting-designer:architect-desk-lamp": {
+   "file": "lighting-designer_architect-desk-lamp.webp",
+   "fp": "cdd11833a7aaf50a"
+  },
+  "lighting-designer:beehive-glass-pendant": {
+   "file": "lighting-designer_beehive-glass-pendant.webp",
+   "fp": "70a69e60fe814f48"
+  },
+  "lighting-designer:branching-globe-chandelier": {
+   "file": "lighting-designer_branching-globe-chandelier.webp",
+   "fp": "805cfc82067561ae"
+  },
+  "lighting-designer:coach-wall-lantern": {
+   "file": "lighting-designer_coach-wall-lantern.webp",
+   "fp": "aa29dce8373ddb70"
+  },
+  "lighting-designer:cordless-mushroom-lamp": {
+   "file": "lighting-designer_cordless-mushroom-lamp.webp",
+   "fp": "afe9168a7cb0bfcd"
+  },
+  "lighting-designer:crystal-tier-chandelier": {
+   "file": "lighting-designer_crystal-tier-chandelier.webp",
+   "fp": "ef258129fc9ee532"
+  },
+  "lighting-designer:factory-enamel-pendant": {
+   "file": "lighting-designer_factory-enamel-pendant.webp",
+   "fp": "bb68a6817df33c8a"
+  },
+  "lighting-designer:flexible-wall-reading-light": {
+   "file": "lighting-designer_flexible-wall-reading-light.webp",
+   "fp": "11a6c2dd09093c63"
+  },
+  "lighting-designer:glass-dome-table-lamp": {
+   "file": "lighting-designer_glass-dome-table-lamp.webp",
+   "fp": "20f60cd9f7966e81"
+  },
+  "lighting-designer:globe-tree-floor-lamp": {
+   "file": "lighting-designer_globe-tree-floor-lamp.webp",
+   "fp": "79187a700370ee29"
+  },
+  "lighting-designer:globe-wall-sconce": {
+   "file": "lighting-designer_globe-wall-sconce.webp",
+   "fp": "2005db16079d0a0f"
+  },
+  "lighting-designer:himalayan-salt-lamp": {
+   "file": "lighting-designer_himalayan-salt-lamp.webp",
+   "fp": "02449ef424317650"
+  },
+  "lighting-designer:layered-shade-pendant": {
+   "file": "lighting-designer_layered-shade-pendant.webp",
+   "fp": "4478fd381735dfda"
+  },
+  "lighting-designer:leaf-artichoke-pendant": {
+   "file": "lighting-designer_leaf-artichoke-pendant.webp",
+   "fp": "45a5c0c3b4d6d39b"
+  },
+  "lighting-designer:louvred-bollard-light": {
+   "file": "lighting-designer_louvred-bollard-light.webp",
+   "fp": "a103e70a7e227130"
+  },
+  "lighting-designer:magnetic-track-system": {
+   "file": "lighting-designer_magnetic-track-system.webp",
+   "fp": "4aa0a69ba4adec00"
+  },
+  "lighting-designer:mushroom-dome-floor-lamp": {
+   "file": "lighting-designer_mushroom-dome-floor-lamp.webp",
+   "fp": "357e15db973040f3"
+  },
+  "lighting-designer:paper-column-floor-lamp": {
+   "file": "lighting-designer_paper-column-floor-lamp.webp",
+   "fp": "36d3603e90cf6782"
+  },
+  "lighting-designer:pleated-shade-table-lamp": {
+   "file": "lighting-designer_pleated-shade-table-lamp.webp",
+   "fp": "ac0fcdc14646cf9f"
+  },
+  "lighting-designer:rgb-corner-floor-lamp": {
+   "file": "lighting-designer_rgb-corner-floor-lamp.webp",
+   "fp": "61ff2f5360e58280"
+  },
+  "lighting-designer:rgb-light-bars": {
+   "file": "lighting-designer_rgb-light-bars.webp",
+   "fp": "3076e4edcc62788b"
+  },
+  "lighting-designer:rice-paper-lantern-pendant": {
+   "file": "lighting-designer_rice-paper-lantern-pendant.webp",
+   "fp": "ba481ba3281f4822"
+  },
+  "lighting-designer:schoolhouse-semi-flush": {
+   "file": "lighting-designer_schoolhouse-semi-flush.webp",
+   "fp": "30e87ec57748a16c"
+  },
+  "lighting-designer:shell-uplight-sconce": {
+   "file": "lighting-designer_shell-uplight-sconce.webp",
+   "fp": "1302e310c2f7e397"
+  },
+  "lighting-designer:solar-stake-lights": {
+   "file": "lighting-designer_solar-stake-lights.webp",
+   "fp": "6f391f7a209044c7"
+  },
+  "lighting-designer:studio-tripod-floor-lamp": {
+   "file": "lighting-designer_studio-tripod-floor-lamp.webp",
+   "fp": "6196a6895ee1a1f3"
+  },
+  "lighting-designer:suspended-linear-led": {
+   "file": "lighting-designer_suspended-linear-led.webp",
+   "fp": "ae3f42db9763a88d"
+  },
+  "lighting-designer:wood-bead-chandelier": {
+   "file": "lighting-designer_wood-bead-chandelier.webp",
+   "fp": "91b4d6b5d8bc055c"
+  },
   "lived-in:chopping-board-vegetables": {
    "file": "lived-in_chopping-board-vegetables.webp",
    "fp": "2d592e836850f7fd"
@@ -2157,6 +2537,10 @@
    "file": "media-console.webp",
    "fp": "55d410814b697829"
   },
+  "media-console@model:styled": {
+   "file": "media-console_model_styled.webp",
+   "fp": "a0d9c5ea67161783"
+  },
   "medicine-cabinet": {
    "file": "medicine-cabinet.webp",
    "fp": "b8ed1def79991a21"
@@ -2180,114 +2564,6 @@
   "mirror-sunburst": {
    "file": "mirror-sunburst.webp",
    "fp": "37839cb50f3084a7"
-  },
-  "model-variants:bar-cart-no-bottles": {
-   "file": "model-variants_bar-cart-no-bottles.webp",
-   "fp": "0d324db23415a8ac"
-  },
-  "model-variants:bedside-table-bare": {
-   "file": "model-variants_bedside-table-bare.webp",
-   "fp": "57944179ece496a3"
-  },
-  "model-variants:bookcase-empty": {
-   "file": "model-variants_bookcase-empty.webp",
-   "fp": "251d23864ff68d98"
-  },
-  "model-variants:china-cabinet-empty": {
-   "file": "model-variants_china-cabinet-empty.webp",
-   "fp": "db4c78825d1bdb41"
-  },
-  "model-variants:coffee-table-glass-clear": {
-   "file": "model-variants_coffee-table-glass-clear.webp",
-   "fp": "21833476e53156b0"
-  },
-  "model-variants:coffee-table-round-styled": {
-   "file": "model-variants_coffee-table-round-styled.webp",
-   "fp": "4724a92d9e778819"
-  },
-  "model-variants:console-table-bare": {
-   "file": "model-variants_console-table-bare.webp",
-   "fp": "86b8f0d2851b0e4d"
-  },
-  "model-variants:cube-storage-baskets-only": {
-   "file": "model-variants_cube-storage-baskets-only.webp",
-   "fp": "dedc6ad48d16ce29"
-  },
-  "model-variants:desk-hutch-empty": {
-   "file": "model-variants_desk-hutch-empty.webp",
-   "fp": "866647754b81da2e"
-  },
-  "model-variants:dining-table-pedestal-set": {
-   "file": "model-variants_dining-table-pedestal-set.webp",
-   "fp": "b341385eceef11ea"
-  },
-  "model-variants:dining-table-rect-set": {
-   "file": "model-variants_dining-table-rect-set.webp",
-   "fp": "947d861ebd60d804"
-  },
-  "model-variants:dining-table-round-set": {
-   "file": "model-variants_dining-table-round-set.webp",
-   "fp": "99391893cd7ac213"
-  },
-  "model-variants:dining-table-trestle-no-runner": {
-   "file": "model-variants_dining-table-trestle-no-runner.webp",
-   "fp": "ee993b1ae9e282da"
-  },
-  "model-variants:display-cabinet-empty": {
-   "file": "model-variants_display-cabinet-empty.webp",
-   "fp": "3d352d2a9b713cb1"
-  },
-  "model-variants:dresser-styled": {
-   "file": "model-variants_dresser-styled.webp",
-   "fp": "625ba35793e56c08"
-  },
-  "model-variants:kitchen-base-cabinet-styled": {
-   "file": "model-variants_kitchen-base-cabinet-styled.webp",
-   "fp": "f3f81597139fd77e"
-  },
-  "model-variants:kitchen-island-styled": {
-   "file": "model-variants_kitchen-island-styled.webp",
-   "fp": "ddb0ac6fac738ef7"
-  },
-  "model-variants:media-console-styled": {
-   "file": "model-variants_media-console-styled.webp",
-   "fp": "a3aca6934663a98c"
-  },
-  "model-variants:patio-table-set": {
-   "file": "model-variants_patio-table-set.webp",
-   "fp": "c8966fd650b9f1b2"
-  },
-  "model-variants:picnic-table-no-cloth": {
-   "file": "model-variants_picnic-table-no-cloth.webp",
-   "fp": "f10a1f21266ed156"
-  },
-  "model-variants:shelf-ladder-empty": {
-   "file": "model-variants_shelf-ladder-empty.webp",
-   "fp": "54e38f16a7c5fada"
-  },
-  "model-variants:shelving-unit-empty": {
-   "file": "model-variants_shelving-unit-empty.webp",
-   "fp": "1889272015e70ec1"
-  },
-  "model-variants:side-table-styled": {
-   "file": "model-variants_side-table-styled.webp",
-   "fp": "745f073e0ccfffd0"
-  },
-  "model-variants:sideboard-styled": {
-   "file": "model-variants_sideboard-styled.webp",
-   "fp": "147ef4894264681d"
-  },
-  "model-variants:tables-nesting-bare": {
-   "file": "model-variants_tables-nesting-bare.webp",
-   "fp": "7e95c70aa38ab291"
-  },
-  "model-variants:utility-sink-empty": {
-   "file": "model-variants_utility-sink-empty.webp",
-   "fp": "b04256c228682213"
-  },
-  "model-variants:wine-rack-empty": {
-   "file": "model-variants_wine-rack-empty.webp",
-   "fp": "70913f6a622e3086"
   },
   "monitor": {
    "file": "monitor.webp",
@@ -2315,179 +2591,179 @@
   },
   "paintings:af-klint-ten-largest-3": {
    "file": "paintings_af-klint-ten-largest-3.webp",
-   "fp": "53d350888f7b6db4"
+   "fp": "b7e11695b5b83969"
   },
   "paintings:andrieu-tiger-resting": {
    "file": "paintings_andrieu-tiger-resting.webp",
-   "fp": "12d21f776a7cd8dc"
+   "fp": "14e3abb268557574"
   },
   "paintings:bokushin-multitudes-of-cranes": {
    "file": "paintings_bokushin-multitudes-of-cranes.webp",
-   "fp": "ff675e313403f680"
+   "fp": "74f30913da5dc8cf"
   },
   "paintings:bonheur-horse-fair-study": {
    "file": "paintings_bonheur-horse-fair-study.webp",
-   "fp": "f1afd4229f0f4be9"
+   "fp": "23850ba7fc183491"
   },
   "paintings:caillebotte-paris-rainy-day": {
    "file": "paintings_caillebotte-paris-rainy-day.webp",
-   "fp": "56a1e42f7eaa6290"
+   "fp": "9be7b7abf746f5a4"
   },
   "paintings:cezanne-bay-of-marseille": {
    "file": "paintings_cezanne-bay-of-marseille.webp",
-   "fp": "3fd21636d87405b2"
+   "fp": "d053f239cc4f361e"
   },
   "paintings:chosui-portrait-of-rabbit": {
    "file": "paintings_chosui-portrait-of-rabbit.webp",
-   "fp": "3ad9fdfa6ee051d4"
+   "fp": "f6a408ecd25bfcf8"
   },
   "paintings:church-cotopaxi": {
    "file": "paintings_church-cotopaxi.webp",
-   "fp": "21c28fc71fe8fca1"
+   "fp": "f4710ac6d9ad4a3f"
   },
   "paintings:cuyp-vianen-cattle": {
    "file": "paintings_cuyp-vianen-cattle.webp",
-   "fp": "0ab5418a0d4d7191"
+   "fp": "0dc257293b7dfd39"
   },
   "paintings:delacroix-lion-hunt": {
    "file": "paintings_delacroix-lion-hunt.webp",
-   "fp": "54c9e1046595d9a5"
+   "fp": "db1ff51a7e2d22c4"
   },
   "paintings:delaunay-joie-de-vivre": {
    "file": "paintings_delaunay-joie-de-vivre.webp",
-   "fp": "628ac9d58f612b66"
+   "fp": "3eba9486151c70cd"
   },
   "paintings:hartley-dark-mountain": {
    "file": "paintings_hartley-dark-mountain.webp",
-   "fp": "3e4aa7431910571a"
+   "fp": "601888327e044647"
   },
   "paintings:hiroshige-crane-waves-sun": {
    "file": "paintings_hiroshige-crane-waves-sun.webp",
-   "fp": "c3fd9aef846ede6e"
+   "fp": "299798371cfa0511"
   },
   "paintings:hiroshige-kanbara-evening-snow": {
    "file": "paintings_hiroshige-kanbara-evening-snow.webp",
-   "fp": "eb6d320a66385efe"
+   "fp": "fa2ce7e30343b2df"
   },
   "paintings:hiroshige-macaw-pine": {
    "file": "paintings_hiroshige-macaw-pine.webp",
-   "fp": "4416c2cffad1fd8c"
+   "fp": "ecbc35d9cd11d9c5"
   },
   "paintings:hiroshige-mishima-morning-mist": {
    "file": "paintings_hiroshige-mishima-morning-mist.webp",
-   "fp": "881577fd65e70cfc"
+   "fp": "1d1e51d2dd7cabec"
   },
   "paintings:hiroshige-oystercatchers": {
    "file": "paintings_hiroshige-oystercatchers.webp",
-   "fp": "6ab065c1594f9881"
+   "fp": "5b6745cf20fcf5de"
   },
   "paintings:hiroshige-rabbits-moonlight": {
    "file": "paintings_hiroshige-rabbits-moonlight.webp",
-   "fp": "a5580e6eeefca6b7"
+   "fp": "ce24fd667d9eae3a"
   },
   "paintings:hokusai-cranes-snowy-pine": {
    "file": "paintings_hokusai-cranes-snowy-pine.webp",
-   "fp": "3c27653110abd9cb"
+   "fp": "fdb09c02ce133e19"
   },
   "paintings:hokusai-great-wave": {
    "file": "paintings_hokusai-great-wave.webp",
-   "fp": "2d02c7b36100c074"
+   "fp": "2f10f107d9e6a83e"
   },
   "paintings:inness-catskill-mountains": {
    "file": "paintings_inness-catskill-mountains.webp",
-   "fp": "a00d4588a05db542"
+   "fp": "153935c328ff0291"
   },
   "paintings:kandinsky-composition-vii": {
    "file": "paintings_kandinsky-composition-vii.webp",
-   "fp": "3ea2e6b577be8b7c"
+   "fp": "0c36eac6c91d2344"
   },
   "paintings:kandinsky-green-center": {
    "file": "paintings_kandinsky-green-center.webp",
-   "fp": "fd487be33400b928"
+   "fp": "4fc992a8013825ef"
   },
   "paintings:kandinsky-houses-murnau": {
    "file": "paintings_kandinsky-houses-murnau.webp",
-   "fp": "48448f28927bb9bb"
+   "fp": "941967c741a3906e"
   },
   "paintings:kandinsky-improvisation-30": {
    "file": "paintings_kandinsky-improvisation-30.webp",
-   "fp": "47a07fa60a40e89d"
+   "fp": "560b7f4dae0ad6a8"
   },
   "paintings:kandinsky-troika": {
    "file": "paintings_kandinsky-troika.webp",
-   "fp": "8d4cd582d3678df7"
+   "fp": "28e787ed22980010"
   },
   "paintings:kandinsky-two-poplars": {
    "file": "paintings_kandinsky-two-poplars.webp",
-   "fp": "fe992f6f87e20b80"
+   "fp": "269db726b946b3ec"
   },
   "paintings:kandinsky-yellow-red-blue": {
    "file": "paintings_kandinsky-yellow-red-blue.webp",
-   "fp": "e0ce856604368fee"
+   "fp": "c200a031e3be7bb9"
   },
   "paintings:klee-castle-and-sun": {
    "file": "paintings_klee-castle-and-sun.webp",
-   "fp": "d8176449d73ca12e"
+   "fp": "a06f5660488424e6"
   },
   "paintings:koryusai-cat-goldfish": {
    "file": "paintings_koryusai-cat-goldfish.webp",
-   "fp": "58910ee8c59cead8"
+   "fp": "2e4dffa4d5dd5f3a"
   },
   "paintings:malevich-black-square": {
    "file": "paintings_malevich-black-square.webp",
-   "fp": "3ca28933ba048043"
+   "fp": "4d5e099458c78790"
   },
   "paintings:malevich-suprematist-composition": {
    "file": "paintings_malevich-suprematist-composition.webp",
-   "fp": "7b44f8acb4f653fa"
+   "fp": "40537bd332b884cf"
   },
   "paintings:marc-bewitched-mill": {
    "file": "paintings_marc-bewitched-mill.webp",
-   "fp": "1af1aa1baaa793e0"
+   "fp": "38a58e8eb5c7e799"
   },
   "paintings:mondrian-composition-ii": {
    "file": "paintings_mondrian-composition-ii.webp",
-   "fp": "3a7b0e5de91389d7"
+   "fp": "65e8eafe8055de6e"
   },
   "paintings:monet-cliff-walk-pourville": {
    "file": "paintings_monet-cliff-walk-pourville.webp",
-   "fp": "72124779a7409136"
+   "fp": "4f7ec436fec941bb"
   },
   "paintings:monet-irises": {
    "file": "paintings_monet-irises.webp",
-   "fp": "a4666e448d69a06e"
+   "fp": "9fd26a2367f18a8f"
   },
   "paintings:monet-poppy-field": {
    "file": "paintings_monet-poppy-field.webp",
-   "fp": "226893833370eae1"
+   "fp": "9cbfc66c0b3ad973"
   },
   "paintings:monet-stacks-end-of-summer": {
    "file": "paintings_monet-stacks-end-of-summer.webp",
-   "fp": "86ddfa15be9af98a"
+   "fp": "0c5b722c51842d21"
   },
   "paintings:monet-water-lilies": {
    "file": "paintings_monet-water-lilies.webp",
-   "fp": "2f86b771f186032c"
+   "fp": "89baffb05fcaff17"
   },
   "paintings:pissarro-rabbit-warren-snow": {
    "file": "paintings_pissarro-rabbit-warren-snow.webp",
-   "fp": "90a5cf4da7d3c274"
+   "fp": "eb96275aa47daca3"
   },
   "paintings:pissarro-snow-louveciennes": {
    "file": "paintings_pissarro-snow-louveciennes.webp",
-   "fp": "8a909da59734f6f1"
+   "fp": "ec1e5130952e6284"
   },
   "paintings:seurat-grande-jatte": {
    "file": "paintings_seurat-grande-jatte.webp",
-   "fp": "4f891a349b96d25d"
+   "fp": "21126055682f60c5"
   },
   "paintings:steinlen-cat-on-cushion": {
    "file": "paintings_steinlen-cat-on-cushion.webp",
-   "fp": "904b5044a0e3a7d0"
+   "fp": "5da3b0c3d72ac809"
   },
   "paintings:van-gogh-fishing-in-spring": {
    "file": "paintings_van-gogh-fishing-in-spring.webp",
-   "fp": "b646bbf13ea3f722"
+   "fp": "2b65cf50c33c96f9"
   },
   "parasol": {
    "file": "parasol.webp",
@@ -2508,6 +2784,10 @@
   "patio-table": {
    "file": "patio-table.webp",
    "fp": "fc8b3fe3dcb9fe7a"
+  },
+  "patio-table@model:styled": {
+   "file": "patio-table_model_styled.webp",
+   "fp": "6115d987b2f484f8"
   },
   "pendant-globe-cluster": {
    "file": "pendant-globe-cluster.webp",
@@ -2793,6 +3073,10 @@
    "file": "picnic-table.webp",
    "fp": "f5579c6fda62960f"
   },
+  "picnic-table@model:empty": {
+   "file": "picnic-table_model_empty.webp",
+   "fp": "f10a1f21266ed156"
+  },
   "picture-light": {
    "file": "picture-light.webp",
    "fp": "011928f0e097faa2"
@@ -2941,9 +3225,17 @@
    "file": "shelf-ladder.webp",
    "fp": "4af46aba3890b244"
   },
+  "shelf-ladder@model:empty": {
+   "file": "shelf-ladder_model_empty.webp",
+   "fp": "54e38f16a7c5fada"
+  },
   "shelving-unit": {
    "file": "shelving-unit.webp",
    "fp": "278b0062bc60813f"
+  },
+  "shelving-unit@model:empty": {
+   "file": "shelving-unit_model_empty.webp",
+   "fp": "1889272015e70ec1"
   },
   "shelving:bath-wall-shelf": {
    "file": "shelving_bath-wall-shelf.webp",
@@ -3049,9 +3341,17 @@
    "file": "side-table.webp",
    "fp": "edf2bdade6f1a495"
   },
+  "side-table@model:styled": {
+   "file": "side-table_model_styled.webp",
+   "fp": "8f90d81ebb76b679"
+  },
   "sideboard": {
    "file": "sideboard.webp",
    "fp": "22cc8a23fa88a3e1"
+  },
+  "sideboard@model:styled": {
+   "file": "sideboard_model_styled.webp",
+   "fp": "9778b1a900f49181"
   },
   "smart-speaker": {
    "file": "smart-speaker.webp",
@@ -3261,6 +3561,222 @@
    "file": "storage-trunk.webp",
    "fp": "3029a4e4dcb6d20c"
   },
+  "structures:alcove-cupboard-shelves": {
+   "file": "structures_alcove-cupboard-shelves.webp",
+   "fp": "5ce2f7dcfb297534"
+  },
+  "structures:alternating-tread-stair": {
+   "file": "structures_alternating-tread-stair.webp",
+   "fp": "1e8ee579d7600d49"
+  },
+  "structures:arched-opening-wall": {
+   "file": "structures_arched-opening-wall.webp",
+   "fp": "c868311930b4d3f9"
+  },
+  "structures:breeze-block-screen-wall": {
+   "file": "structures_breeze-block-screen-wall.webp",
+   "fp": "8705fb624ba7bb8a"
+  },
+  "structures:built-in-booth-banquette": {
+   "file": "structures_built-in-booth-banquette.webp",
+   "fp": "96f853792f98ded4"
+  },
+  "structures:built-in-desk-nook": {
+   "file": "structures_built-in-desk-nook.webp",
+   "fp": "15fed2140329578c"
+  },
+  "structures:built-in-media-wall": {
+   "file": "structures_built-in-media-wall.webp",
+   "fp": "0577c4605485a7a2"
+  },
+  "structures:built-in-wardrobe-wall": {
+   "file": "structures_built-in-wardrobe-wall.webp",
+   "fp": "871907c234d3aa4f"
+  },
+  "structures:cane-panel-room-divider": {
+   "file": "structures_cane-panel-room-divider.webp",
+   "fp": "7487e6e222563da9"
+  },
+  "structures:cast-iron-column-radiator": {
+   "file": "structures_cast-iron-column-radiator.webp",
+   "fp": "b3686f7174cd12e0"
+  },
+  "structures:chimney-breast-log-burner": {
+   "file": "structures_chimney-breast-log-burner.webp",
+   "fp": "04757081a3c6657d"
+  },
+  "structures:coffered-ceiling": {
+   "file": "structures_coffered-ceiling.webp",
+   "fp": "048f909c32892942"
+  },
+  "structures:curved-bullnose-steps": {
+   "file": "structures_curved-bullnose-steps.webp",
+   "fp": "291e6c0c702c5cf9"
+  },
+  "structures:curved-glass-block-wall": {
+   "file": "structures_curved-glass-block-wall.webp",
+   "fp": "b5be79943fa6b77d"
+  },
+  "structures:double-panel-convector-radiator": {
+   "file": "structures_double-panel-convector-radiator.webp",
+   "fp": "984dfc2e1b531553"
+  },
+  "structures:downstand-beam": {
+   "file": "structures_downstand-beam.webp",
+   "fp": "e357bbe67c057d30"
+  },
+  "structures:entryway-bench-cubbies": {
+   "file": "structures_entryway-bench-cubbies.webp",
+   "fp": "3afe3779c2269894"
+  },
+  "structures:exposed-timber-ceiling-joists": {
+   "file": "structures_exposed-timber-ceiling-joists.webp",
+   "fp": "a60bff15f690c08b"
+  },
+  "structures:floating-staircase-glass": {
+   "file": "structures_floating-staircase-glass.webp",
+   "fp": "10da2f9596259cbf"
+  },
+  "structures:folding-attic-ladder": {
+   "file": "structures_folding-attic-ladder.webp",
+   "fp": "e54ca64d8d43365b"
+  },
+  "structures:glass-balustrade-oak-rail": {
+   "file": "structures_glass-balustrade-oak-rail.webp",
+   "fp": "d4be885dd3b65789"
+  },
+  "structures:half-wall-oak-cap": {
+   "file": "structures_half-wall-oak-cap.webp",
+   "fp": "b5a95a091151a7ba"
+  },
+  "structures:half-wall-spindle-screen": {
+   "file": "structures_half-wall-spindle-screen.webp",
+   "fp": "b64707a18ace837b"
+  },
+  "structures:half-wall-with-columns": {
+   "file": "structures_half-wall-with-columns.webp",
+   "fp": "32daf756963d328a"
+  },
+  "structures:kitchen-soffit-downlights": {
+   "file": "structures_kitchen-soffit-downlights.webp",
+   "fp": "3dab6aaec539b26c"
+  },
+  "structures:l-shaped-corner-duct-chase": {
+   "file": "structures_l-shaped-corner-duct-chase.webp",
+   "fp": "b28fd9a1a19ac326"
+  },
+  "structures:l-shaped-staircase": {
+   "file": "structures_l-shaped-staircase.webp",
+   "fp": "2d042d2a36f978ce"
+  },
+  "structures:linear-electric-fire-surround": {
+   "file": "structures_linear-electric-fire-surround.webp",
+   "fp": "1b4d005c6df3529b"
+  },
+  "structures:marble-clad-square-column": {
+   "file": "structures_marble-clad-square-column.webp",
+   "fp": "31929f92c27b805b"
+  },
+  "structures:mirror-clad-column": {
+   "file": "structures_mirror-clad-column.webp",
+   "fp": "44d0b47a81ff13f9"
+  },
+  "structures:mushroom-concrete-column": {
+   "file": "structures_mushroom-concrete-column.webp",
+   "fp": "1c94787bdb5061ca"
+  },
+  "structures:panelled-pilaster": {
+   "file": "structures_panelled-pilaster.webp",
+   "fp": "19edc19c3f0556f0"
+  },
+  "structures:pipe-riser-boxing": {
+   "file": "structures_pipe-riser-boxing.webp",
+   "fp": "ccea0261b06e0f17"
+  },
+  "structures:radiator-cover-dowel-grille": {
+   "file": "structures_radiator-cover-dowel-grille.webp",
+   "fp": "24f54ff0ac508687"
+  },
+  "structures:raised-platform-drawers": {
+   "file": "structures_raised-platform-drawers.webp",
+   "fp": "c48ae4d89f3bb51e"
+  },
+  "structures:reeded-classical-column": {
+   "file": "structures_reeded-classical-column.webp",
+   "fp": "06cb3d2e3af48ed6"
+  },
+  "structures:reeded-glass-arched-door-partition": {
+   "file": "structures_reeded-glass-arched-door-partition.webp",
+   "fp": "bce87512a5560c64"
+  },
+  "structures:serpentine-slat-partition": {
+   "file": "structures_serpentine-slat-partition.webp",
+   "fp": "1efd40795a46f86f"
+  },
+  "structures:slat-clad-square-column": {
+   "file": "structures_slat-clad-square-column.webp",
+   "fp": "15e8c31c6f418bb8"
+  },
+  "structures:sliding-barn-door-partition": {
+   "file": "structures_sliding-barn-door-partition.webp",
+   "fp": "fd4dcb7a78a38c6d"
+  },
+  "structures:spindle-balustrade-newels": {
+   "file": "structures_spindle-balustrade-newels.webp",
+   "fp": "79c9511403f06750"
+  },
+  "structures:spiral-staircase": {
+   "file": "structures_spiral-staircase.webp",
+   "fp": "e9379f2b2249cc7f"
+  },
+  "structures:split-level-steps-led": {
+   "file": "structures_split-level-steps-led.webp",
+   "fp": "51d2d5f123168542"
+  },
+  "structures:steel-h-column": {
+   "file": "structures_steel-h-column.webp",
+   "fp": "23368a51524fde93"
+  },
+  "structures:steel-i-beam-ceiling": {
+   "file": "structures_steel-i-beam-ceiling.webp",
+   "fp": "702bc28ffd75846d"
+  },
+  "structures:steel-spine-staircase": {
+   "file": "structures_steel-spine-staircase.webp",
+   "fp": "452437546c5100c3"
+  },
+  "structures:storage-window-seat": {
+   "file": "structures_storage-window-seat.webp",
+   "fp": "904607a463d37428"
+  },
+  "structures:straight-staircase-spindles": {
+   "file": "structures_straight-staircase-spindles.webp",
+   "fp": "db72c30f2d364483"
+  },
+  "structures:timber-post-beam-frame": {
+   "file": "structures_timber-post-beam-frame.webp",
+   "fp": "7252fb3e78e96b90"
+  },
+  "structures:tray-ceiling-led-cove": {
+   "file": "structures_tray-ceiling-led-cove.webp",
+   "fp": "f45cb57e78aafabe"
+  },
+  "structures:tuscan-column": {
+   "file": "structures_tuscan-column.webp",
+   "fp": "26dee3732409353c"
+  },
+  "structures:u-shaped-staircase": {
+   "file": "structures_u-shaped-staircase.webp",
+   "fp": "8af7b1f8ca99202f"
+  },
+  "structures:window-seat-with-bookcases": {
+   "file": "structures_window-seat-with-bookcases.webp",
+   "fp": "e5cff65a49112768"
+  },
+  "structures:wood-stove-with-flue": {
+   "file": "structures_wood-stove-with-flue.webp",
+   "fp": "e3444f0e4286ad24"
+  },
   "studio-living:black-glass-fridge": {
    "file": "studio-living_black-glass-fridge.webp",
    "fp": "19cd4552548a1854"
@@ -3301,6 +3817,142 @@
    "file": "studio-living_white-wire-shelf-tower.webp",
    "fp": "8076488007453837"
   },
+  "styled-storage:glass-door-wardrobe": {
+   "file": "styled-storage_glass-door-wardrobe.webp",
+   "fp": "0ca075d60703c794"
+  },
+  "styled-storage:glass-door-wardrobe@model:filled": {
+   "file": "styled-storage_glass-door-wardrobe_model_filled.webp",
+   "fp": "73d79aed7e30885b"
+  },
+  "styled-storage:open-wardrobe-clothes": {
+   "file": "styled-storage_open-wardrobe-clothes.webp",
+   "fp": "98fea6b69527949e"
+  },
+  "styled-storage:open-wardrobe-clothes@model:filled": {
+   "file": "styled-storage_open-wardrobe-clothes_model_filled.webp",
+   "fp": "02c93c4efa22afe1"
+  },
+  "styled-storage:styled-bookcase": {
+   "file": "styled-storage_styled-bookcase.webp",
+   "fp": "a2b739e8d0b59236"
+  },
+  "styled-storage:styled-bookcase@model:filled": {
+   "file": "styled-storage_styled-bookcase_model_filled.webp",
+   "fp": "795d0a2eac432c33"
+  },
+  "styled-storage:styled-clothes-rail": {
+   "file": "styled-storage_styled-clothes-rail.webp",
+   "fp": "368e8ce3736e5272"
+  },
+  "styled-storage:styled-clothes-rail@model:filled": {
+   "file": "styled-storage_styled-clothes-rail_model_filled.webp",
+   "fp": "fcf9254ac5fe77ca"
+  },
+  "styled-storage:styled-cube-shelf": {
+   "file": "styled-storage_styled-cube-shelf.webp",
+   "fp": "986caa84927b23a1"
+  },
+  "styled-storage:styled-cube-shelf@model:filled": {
+   "file": "styled-storage_styled-cube-shelf_model_filled.webp",
+   "fp": "4d02c17b5801f74b"
+  },
+  "styled-storage:styled-display-cabinet": {
+   "file": "styled-storage_styled-display-cabinet.webp",
+   "fp": "8dc968b9cebb48cb"
+  },
+  "styled-storage:styled-display-cabinet@model:filled": {
+   "file": "styled-storage_styled-display-cabinet_model_filled.webp",
+   "fp": "07ac1e6d6258c960"
+  },
+  "styled-storage:styled-dresser": {
+   "file": "styled-storage_styled-dresser.webp",
+   "fp": "360bd0fce917f105"
+  },
+  "styled-storage:styled-dresser@model:filled": {
+   "file": "styled-storage_styled-dresser_model_filled.webp",
+   "fp": "9ae57a63d82163a7"
+  },
+  "styled-storage:styled-floating-shelves": {
+   "file": "styled-storage_styled-floating-shelves.webp",
+   "fp": "9463494d249a555c"
+  },
+  "styled-storage:styled-floating-shelves@model:filled": {
+   "file": "styled-storage_styled-floating-shelves_model_filled.webp",
+   "fp": "85de0461c209f134"
+  },
+  "styled-storage:styled-kitchen-wall-shelves": {
+   "file": "styled-storage_styled-kitchen-wall-shelves.webp",
+   "fp": "ee05586edb20e39a"
+  },
+  "styled-storage:styled-kitchen-wall-shelves@model:filled": {
+   "file": "styled-storage_styled-kitchen-wall-shelves_model_filled.webp",
+   "fp": "f88ca8fc875c203d"
+  },
+  "styled-storage:styled-ladder-shelf": {
+   "file": "styled-storage_styled-ladder-shelf.webp",
+   "fp": "9b3ca7e8c20442c2"
+  },
+  "styled-storage:styled-ladder-shelf@model:filled": {
+   "file": "styled-storage_styled-ladder-shelf_model_filled.webp",
+   "fp": "88bfd6278508505a"
+  },
+  "styled-storage:styled-pantry-cabinet": {
+   "file": "styled-storage_styled-pantry-cabinet.webp",
+   "fp": "8c88435011effda1"
+  },
+  "styled-storage:styled-pantry-cabinet@model:filled": {
+   "file": "styled-storage_styled-pantry-cabinet_model_filled.webp",
+   "fp": "2db6a5c0cc7c2a4c"
+  },
+  "styled-storage:styled-room-divider-shelf": {
+   "file": "styled-storage_styled-room-divider-shelf.webp",
+   "fp": "914293ddad9c1aff"
+  },
+  "styled-storage:styled-room-divider-shelf@model:filled": {
+   "file": "styled-storage_styled-room-divider-shelf_model_filled.webp",
+   "fp": "16dda99dce067e14"
+  },
+  "styled-storage:styled-shoe-rack": {
+   "file": "styled-storage_styled-shoe-rack.webp",
+   "fp": "72150e6a7c6bb28f"
+  },
+  "styled-storage:styled-shoe-rack@model:filled": {
+   "file": "styled-storage_styled-shoe-rack_model_filled.webp",
+   "fp": "b6baca5bd6a5fae5"
+  },
+  "styled-storage:styled-sideboard": {
+   "file": "styled-storage_styled-sideboard.webp",
+   "fp": "2f8ae9a5dc648f73"
+  },
+  "styled-storage:styled-sideboard@model:filled": {
+   "file": "styled-storage_styled-sideboard_model_filled.webp",
+   "fp": "3e31ed7479ddc079"
+  },
+  "styled-storage:styled-tv-wall-unit": {
+   "file": "styled-storage_styled-tv-wall-unit.webp",
+   "fp": "86a0bd2b215a6024"
+  },
+  "styled-storage:styled-tv-wall-unit@model:filled": {
+   "file": "styled-storage_styled-tv-wall-unit_model_filled.webp",
+   "fp": "b0ab36087ae3e441"
+  },
+  "styled-storage:utility-wire-rack-filled": {
+   "file": "styled-storage_utility-wire-rack-filled.webp",
+   "fp": "4319fb2327d481b6"
+  },
+  "styled-storage:utility-wire-rack-filled@model:filled": {
+   "file": "styled-storage_utility-wire-rack-filled_model_filled.webp",
+   "fp": "217eed48a3b50826"
+  },
+  "styled-storage:walk-in-closet-run": {
+   "file": "styled-storage_walk-in-closet-run.webp",
+   "fp": "b0345f89279c443c"
+  },
+  "styled-storage:walk-in-closet-run@model:filled": {
+   "file": "styled-storage_walk-in-closet-run_model_filled.webp",
+   "fp": "38933f639361127a"
+  },
   "sun-lounger": {
    "file": "sun-lounger.webp",
    "fp": "09f9f3e29f61aa49"
@@ -3316,6 +3968,10 @@
   "tables-nesting": {
    "file": "tables-nesting.webp",
    "fp": "0f271d4cd44b412b"
+  },
+  "tables-nesting@model:empty": {
+   "file": "tables-nesting_model_empty.webp",
+   "fp": "7e95c70aa38ab291"
   },
   "task-lamp": {
    "file": "task-lamp.webp",
@@ -3396,6 +4052,10 @@
   "utility-sink": {
    "file": "utility-sink.webp",
    "fp": "a41ebf39e88dc092"
+  },
+  "utility-sink@model:empty": {
+   "file": "utility-sink_model_empty.webp",
+   "fp": "b04256c228682213"
   },
   "valet-stand": {
    "file": "valet-stand.webp",
@@ -3516,6 +4176,10 @@
   "wine-rack": {
    "file": "wine-rack.webp",
    "fp": "419c1c79e401185c"
+  },
+  "wine-rack@model:empty": {
+   "file": "wine-rack_model_empty.webp",
+   "fp": "70913f6a622e3086"
   },
   "wooden-seating:adirondack-chair": {
    "file": "wooden-seating_adirondack-chair.webp",

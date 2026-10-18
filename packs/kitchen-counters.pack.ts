@@ -177,7 +177,9 @@ function counterParts(size: Size3, s: CounterStyle): Part[] {
       );
       continue;
     }
-    parts.push(span(s.masonry ? 'worktop' : 'front', x, [y0, y1], [L.zBack, zf], { plan: true }));
+    // Sink bays stop below the bowl, so the opening shows the bowl and not the cabinet's top.
+    const isSink = b.kind === 'sink' || b.kind === 'sink2' || b.kind === 'sink-drainer';
+    parts.push(span(s.masonry ? 'worktop' : 'front', x, [y0, isSink ? Math.max(y0 + 0.05, y1 - 0.27) : y1], [L.zBack, zf], { plan: true }));
     const H = y1 - y0;
     switch (b.kind) {
       case 'door':

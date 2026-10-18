@@ -1,11 +1,12 @@
 import { getAsset } from '@/data/assets/registry';
+import { currentItem, storedModelId } from '@/data/assets/models';
 import type { AssetCategory } from '@/data/assets/types';
 import { packVersion } from '@/packs/events';
 import type { SavedGroup } from '@/state/uiStores';
 
 /**
  * Ready-made groups shipped with Neest: furnished setups (bedrooms, kitchens, dining sets…) shown in
- * the library's Groups tab next to the user's own saved groups and placed the same way (as a new
+ * the library's Groups list (Furniture dropdown) next to the user's own saved groups and placed the same way (as a new
  * group, turned with the ghost). Each item is written in plan metres around the group: the back of
  * the setup is the top edge (y = 0, against a wall), its front faces +y. Rotation follows the plan
  * convention: 0 = front faces +y, π = faces −y, −π/2 = faces +x, π/2 = faces −x. Sizes and
@@ -23,6 +24,8 @@ interface ReadyItem {
   m?: Record<string, string>;
   /** Mirrored (left-right) item. */
   mi?: boolean;
+  /** Model variant (e.g. "empty", "styled"). */
+  md?: string;
 }
 
 export interface ReadyGroupSpec {
@@ -1219,7 +1222,7 @@ READY_GROUP_SPECS.push(
   },
 );
 
-/** Shelf order in the Groups tab. */
+/** Shelf order in the library's Groups list. */
 export const READY_GROUP_SHELVES = [
   BED,
   LIVING,
@@ -1246,7 +1249,8 @@ export function buildReadyGroup(spec: ReadyGroupSpec): SavedGroup {
   const items: SavedGroup['items'] = [];
   const boxes: [number, number, number, number][] = [];
   for (const it of spec.items) {
-    const a = getAsset(null, it.a);
+    const cur = currentItem(it.a, it.md);
+    const a = getAsset(null, cur.assetId);
     if (!a) continue;
     const w = it.w ?? a.defaultSize.w;
     const d = it.d ?? a.defaultSize.d;
@@ -1266,6 +1270,7 @@ export function buildReadyGroup(spec: ReadyGroupSpec): SavedGroup {
       height: h,
       mirrored: Boolean(it.mi),
       materials: { ...(it.m ?? {}) },
+      ...(storedModelId(a, cur.model) ? { model: storedModelId(a, cur.model) } : {}),
     });
   }
   const x0 = Math.min(...boxes.map((b) => b[0]));

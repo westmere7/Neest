@@ -83,6 +83,7 @@ export class IndexedDbProjectRepository implements ProjectRepository {
         roomCount: meta.roomCount ?? prev?.roomCount ?? Object.keys(project.rooms).length,
         objectCount: meta.objectCount ?? Object.keys(project.objects).length,
         area: meta.area ?? prev?.area ?? 0,
+        optionCount: project.options?.length ?? 0,
       });
     });
   }

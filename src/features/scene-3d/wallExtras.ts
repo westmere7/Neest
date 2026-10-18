@@ -6,6 +6,8 @@ import { pointAt, slicePath } from '@/domain/geometry/wallPath';
 import { add, dist, leftNormal, scale } from '@/domain/geometry/vec';
 import type { MaterialRegistry } from './materialRegistry';
 
+import { EXTRAS_DEPTH_BIAS, EXTRAS_DEPTH_SLOPE, biasDepth } from './depthBias';
+
 /**
  * Everything a wall shows besides its solid body:
  * - mouldings and finish bands on each face (skirting, cornice, dado/picture rail, wainscot or
@@ -88,7 +90,16 @@ function prismAlong(q: Quads, A: Vec2[], B: Vec2[], s0: number, s1: number, lo: 
   const S = vertexS(A, s0, s1);
   const at = (P: Vec2[], i: number, top: boolean) => V(P[i], top ? hi(S[i]) : lo(S[i]));
   for (let i = 0; i < n - 1; i++) {
-    const c = [at(A, i, false), at(A, i + 1, false), at(B, i + 1, false), at(B, i, false), at(A, i, true), at(A, i + 1, true), at(B, i + 1, true), at(B, i, true)];
+    const c = [
+      at(A, i, false),
+      at(A, i + 1, false),
+      at(B, i + 1, false),
+      at(B, i, false),
+      at(A, i, true),
+      at(A, i + 1, true),
+      at(B, i + 1, true),
+      at(B, i, true),
+    ];
     const inside = c.reduce((s, v) => s.add(v), new THREE.Vector3()).multiplyScalar(1 / 8);
     q.quad(c[0], c[1], c[5], c[4], inside); // A face
     q.quad(c[3], c[2], c[6], c[7], inside); // B face
@@ -100,7 +111,15 @@ function prismAlong(q: Quads, A: Vec2[], B: Vec2[], s0: number, s1: number, lo: 
 }
 
 /** A strip centred on the wall's centreline: half-width `hw` across the wall, from s0 to s1 along it. */
-function centreStrip(q: Quads, g: WallGeometry, s0: number, s1: number, hw: number, lo: HeightFn, hi: HeightFn) {
+function centreStrip(
+  q: Quads,
+  g: WallGeometry,
+  s0: number,
+  s1: number,
+  hw: number,
+  lo: HeightFn,
+  hi: HeightFn,
+) {
   const a = Math.max(0, s0);
   const b = Math.min(g.path.length, s1);
   if (b - a < 1e-4) return;
@@ -114,8 +133,16 @@ function offsetFace(g: WallGeometry, pts: Vec2[], s0: number, s1: number, side: 
 }
 
 /** Intervals of [0, L] where no opening gap overlaps the height range [lo, hi]. */
-function freeIntervals(g: WallGeometry, lo: number, hi: number, from = 0, to = g.path.length): [number, number][] {
-  const blocks = g.spans.filter((sp) => sp.sill < hi - 1e-4 && sp.head > lo + 1e-4).map((sp) => [sp.s0, sp.s1] as [number, number]);
+function freeIntervals(
+  g: WallGeometry,
+  lo: number,
+  hi: number,
+  from = 0,
+  to = g.path.length,
+): [number, number][] {
+  const blocks = g.spans
+    .filter((sp) => sp.sill < hi - 1e-4 && sp.head > lo + 1e-4)
+    .map((sp) => [sp.s0, sp.s1] as [number, number]);
   blocks.sort((x, y) => x[0] - y[0]);
   const out: [number, number][] = [];
   let cur = from;
@@ -128,7 +155,15 @@ function freeIntervals(g: WallGeometry, lo: number, hi: number, from = 0, to = g
 }
 
 /** A moulding/band on one face: proud of the face by `depth`, between lo(s) and hi(s), skipping openings. */
-function faceLayer(q: Quads, g: WallGeometry, side: 1 | -1, depth: number, lo: HeightFn, hi: HeightFn, cut?: number) {
+function faceLayer(
+  q: Quads,
+  g: WallGeometry,
+  side: 1 | -1,
+  depth: number,
+  lo: HeightFn,
+  hi: HeightFn,
+  cut?: number,
+) {
   const L = g.path.length;
   const top = (s: number) => (cut !== undefined ? Math.min(hi(s), cut) : hi(s));
   const minLo = Math.min(lo(0), lo(L));
@@ -142,9 +177,15 @@ function faceLayer(q: Quads, g: WallGeometry, side: 1 | -1, depth: number, lo: H
 }
 
 /** Builds the trims for one face. */
-function addFinishes(get: (id: string) => Quads, g: WallGeometry, side: 1 | -1, f: WallSideFinish, cut?: number) {
+function addFinishes(
+  get: (id: string) => Quads,
+  g: WallGeometry,
+  side: 1 | -1,
+  f: WallSideFinish,
+  cut?: number,
+) {
   const z0 = g.z0;
-  const below = (y: number) => (cut === undefined || y < cut - 1e-4);
+  const below = (y: number) => cut === undefined || y < cut - 1e-4;
   const band = f.band;
   if (band && below(z0)) {
     const hiB = (s: number) => Math.min(z0 + band.height, g.topAt(s));
@@ -156,17 +197,35 @@ function addFinishes(get: (id: string) => Quads, g: WallGeometry, side: 1 | -1, 
   const sk = f.skirting;
   if (sk && below(z0)) {
     // Skirting stands proud of any band behind it.
-    faceLayer(get(sk.materialId), g, side, sk.depth + (band ? band.depth : 0), () => z0, (s) => Math.min(z0 + sk.height, g.topAt(s)), cut);
+    faceLayer(
+      get(sk.materialId),
+      g,
+      side,
+      sk.depth + (band ? band.depth : 0),
+      () => z0,
+      (s) => Math.min(z0 + sk.height, g.topAt(s)),
+      cut,
+    );
   }
   const rail = f.rail;
   if (rail) {
     const lo = z0 + rail.y - rail.height / 2;
-    if (below(lo)) faceLayer(get(rail.materialId), g, side, rail.depth + (band && rail.y <= band.height ? band.depth : 0), () => lo, (s) => Math.min(lo + rail.height, g.topAt(s)), cut);
+    if (below(lo))
+      faceLayer(
+        get(rail.materialId),
+        g,
+        side,
+        rail.depth + (band && rail.y <= band.height ? band.depth : 0),
+        () => lo,
+        (s) => Math.min(lo + rail.height, g.topAt(s)),
+        cut,
+      );
   }
   const co = f.cornice;
   if (co) {
     const lo = (s: number) => g.topAt(s) - co.height;
-    if (below(Math.min(lo(0), lo(g.path.length)))) faceLayer(get(co.materialId), g, side, co.depth, lo, g.topAt, cut);
+    if (below(Math.min(lo(0), lo(g.path.length))))
+      faceLayer(get(co.materialId), g, side, co.depth, lo, g.topAt, cut);
   }
 }
 
@@ -178,28 +237,78 @@ function divisions(a: number, b: number, max: number): number[] {
   return out;
 }
 
+/**
+ * Where a wall is actually visible along its path: a wall that butts into another (a T-junction) or
+ * ends inside a thicker one starts and ends at that wall's face, not at the node in its middle.
+ * Frames, posts and rails stay within this range, so they never run into (and fight with) the
+ * wall they meet.
+ */
+function visibleRange(g: WallGeometry): [number, number] {
+  const L = g.path.length;
+  const t0 = g.path.samples[0].tangent;
+  const t1 = g.path.samples[g.path.samples.length - 1].tangent;
+  const a = g.path.samples[0].p;
+  const b = g.path.samples[g.path.samples.length - 1].p;
+  const along = (p: { x: number; y: number }, o: { x: number; y: number }, t: { x: number; y: number }) =>
+    (p.x - o.x) * t.x + (p.y - o.y) * t.y;
+  const s0 = Math.max(0, Math.min(along(g.startLeft, a, t0), along(g.startRight, a, t0)));
+  const s1 = Math.max(0, Math.min(along(b, g.endLeft, t1), along(b, g.endRight, t1)));
+  return s0 + s1 < L - 0.05 ? [s0, L - s1] : [0, L];
+}
+
+/** A piece's range clipped to the wall's visible range (null when nothing is left). */
+function clipPiece(g: WallGeometry, s0: number, s1: number): [number, number] | null {
+  const [v0, v1] = visibleRange(g);
+  const a = Math.max(s0, v0);
+  const b = Math.min(s1, v1);
+  return b - a > 0.01 ? [a, b] : null;
+}
+
 function addGlassWall(frame: Quads, glass: Quads, g: WallGeometry, cut?: number) {
   const hw = Math.min(g.h, 0.035);
   const post = 0.05;
-  for (const pc of g.pieces) {
+  for (const raw of g.pieces) {
+    const clipped = clipPiece(g, raw.s0, raw.s1);
+    if (!clipped) continue;
+    const pc = { ...raw, s0: clipped[0], s1: clipped[1] };
     const lo = pc.z0;
     const hiRaw = (s: number) => (pc.kind === 'below' ? pc.z1 : g.topAt(s));
     const hi = (s: number) => (cut !== undefined ? Math.min(hiRaw(s), cut) : hiRaw(s));
     if (Math.max(hi(pc.s0), hi(pc.s1)) - lo < 0.02) continue;
     const rail = Math.min(0.05, (hi(pc.s0) - lo) / 4);
-    centreStrip(frame, g, pc.s0, pc.s1, hw, () => lo, () => lo + rail);
-    if (cut === undefined || hiRaw(pc.s0) <= cut) centreStrip(frame, g, pc.s0, pc.s1, hw, (s) => hi(s) - rail, hi);
+    centreStrip(
+      frame,
+      g,
+      pc.s0,
+      pc.s1,
+      hw,
+      () => lo,
+      () => lo + rail,
+    );
+    if (cut === undefined || hiRaw(pc.s0) <= cut)
+      centreStrip(frame, g, pc.s0, pc.s1, hw, (s) => hi(s) - rail, hi);
     for (const s of [pc.s0 + post / 2, pc.s1 - post / 2, ...divisions(pc.s0, pc.s1, 1.2)]) {
       centreStrip(frame, g, s - post / 2, s + post / 2, hw, () => lo, hi);
     }
-    centreStrip(glass, g, pc.s0, pc.s1, 0.006, () => lo + rail, (s) => hi(s) - rail);
+    centreStrip(
+      glass,
+      g,
+      pc.s0,
+      pc.s1,
+      0.006,
+      () => lo + rail,
+      (s) => hi(s) - rail,
+    );
   }
 }
 
 function addRailing(frame: Quads, infill: Quads, g: WallGeometry, glassInfill: boolean, cut?: number) {
   const hiRaw = g.topAt;
   const hi = (s: number) => (cut !== undefined ? Math.min(hiRaw(s), cut) : hiRaw(s));
-  for (const pc of g.planPieces) {
+  for (const raw of g.planPieces) {
+    const clipped = clipPiece(g, raw.s0, raw.s1);
+    if (!clipped) continue;
+    const pc = { ...raw, s0: clipped[0], s1: clipped[1] };
     const lo = pc.z0;
     const ends = [pc.s0 + 0.03, pc.s1 - 0.03];
     const posts = [ends[0], ...divisions(ends[0], ends[1], 1.4), ends[1]];
@@ -209,14 +318,47 @@ function addRailing(frame: Quads, infill: Quads, g: WallGeometry, glassInfill: b
       centreStrip(frame, g, pc.s0, pc.s1, 0.03, (s) => hiRaw(s) - 0.045, hiRaw);
     }
     if (glassInfill) {
-      centreStrip(frame, g, pc.s0, pc.s1, 0.03, () => lo, () => lo + 0.06);
+      centreStrip(
+        frame,
+        g,
+        pc.s0,
+        pc.s1,
+        0.03,
+        () => lo,
+        () => lo + 0.06,
+      );
       for (let i = 0; i < posts.length - 1; i++) {
-        centreStrip(infill, g, posts[i] + 0.04, posts[i + 1] - 0.04, 0.006, () => lo + 0.06, (s) => hi(s) - 0.07);
+        centreStrip(
+          infill,
+          g,
+          posts[i] + 0.04,
+          posts[i + 1] - 0.04,
+          0.006,
+          () => lo + 0.06,
+          (s) => hi(s) - 0.07,
+        );
       }
     } else {
-      centreStrip(frame, g, pc.s0, pc.s1, 0.015, () => lo + 0.08, () => lo + 0.11);
+      centreStrip(
+        frame,
+        g,
+        pc.s0,
+        pc.s1,
+        0.015,
+        () => lo + 0.08,
+        () => lo + 0.11,
+      );
       for (let i = 0; i < posts.length - 1; i++) {
-        for (const s of divisions(posts[i], posts[i + 1], 0.11)) centreStrip(infill, g, s - 0.007, s + 0.007, 0.007, () => lo + 0.11, (x) => hi(x) - 0.045);
+        for (const s of divisions(posts[i], posts[i + 1], 0.11))
+          centreStrip(
+            infill,
+            g,
+            s - 0.007,
+            s + 0.007,
+            0.007,
+            () => lo + 0.11,
+            (x) => hi(x) - 0.045,
+          );
       }
     }
   }
@@ -228,7 +370,15 @@ function addHalfWallCap(q: Quads, g: WallGeometry, cut?: number) {
     if (cut !== undefined && Math.min(g.topAt(pc.s0), g.topAt(pc.s1)) > cut) continue;
     const left = offsetFace(g, pc.left, pc.s0, pc.s1, 1, over);
     const right = offsetFace(g, pc.right, pc.s0, pc.s1, -1, over);
-    prismAlong(q, left, right, pc.s0, pc.s1, (s) => g.topAt(s) - 0.035, (s) => g.topAt(s) + 0.005);
+    prismAlong(
+      q,
+      left,
+      right,
+      pc.s0,
+      pc.s1,
+      (s) => g.topAt(s) - 0.035,
+      (s) => g.topAt(s) + 0.005,
+    );
   }
 }
 
@@ -270,7 +420,13 @@ export function buildWallExtras(g: WallGeometry, ctx: WallExtrasContext, cut?: n
     addGlassWall(get(w.materials.top), get(w.styleMaterialId ?? 'glass-clear'), g, cut);
   } else {
     const glassInfill = style === 'railing-glass';
-    addRailing(get(w.materials.top), get(w.styleMaterialId ?? (glassInfill ? 'glass-clear' : w.materials.top)), g, glassInfill, cut);
+    addRailing(
+      get(w.materials.top),
+      get(w.styleMaterialId ?? (glassInfill ? 'glass-clear' : w.materials.top)),
+      g,
+      glassInfill,
+      cut,
+    );
   }
   const group = new THREE.Group();
   group.userData = { kind: 'wall', id: w.id };
@@ -282,6 +438,9 @@ export function buildWallExtras(g: WallGeometry, ctx: WallExtrasContext, cut?: n
     mesh.castShadow = shadows;
     mesh.receiveShadow = shadows;
     mesh.userData = { kind: 'wall', id: w.id };
+    // Trim loses depth ties: where a frame, rail or moulding meets an object or wall it is the part
+    // buried inside (a glass frame running into a column), so the other surface shows.
+    biasDepth(mesh, EXTRAS_DEPTH_BIAS, EXTRAS_DEPTH_SLOPE);
     group.add(mesh);
   }
   return group.children.length ? group : null;

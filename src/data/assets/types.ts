@@ -82,6 +82,8 @@ export type Part = PartShape & {
   slot: string;
   /** Include in the derived 2D plan footprint (default true). */
   plan?: boolean;
+  /** Texture offset in metres (u, v): shows another stretch of a pattern, so repeated parts (rows of books, hanging clothes) differ. */
+  uv?: [number, number];
 };
 
 /** Extra 2D plan detail drawn on top of the derived footprint, in local [x, z] coords. */
@@ -129,6 +131,13 @@ export interface AssetDefinition {
    * `materials` maps slot id → material id for the slots that differ from the defaults.
    */
   variants?: AssetPresetVariant[];
+  /**
+   * Model variants: the same item filled or bare (a bookcase with or without books, a wardrobe
+   * with clothes, a table set for dinner). The first is the default; placed items pick one with
+   * `PlacedObject.model`. Props a model adds are for looks only: never in the 2D outline, the
+   * size or collisions. Packs can also add models to other items (see `withModel`).
+   */
+  models?: AssetModelVariant[];
   /**
    * A shipped mesh (GLB in public/, one mesh per slot, named by slot id) shown in 3D and thumbnails
    * once loaded, fitted uniformly into the item box. `build` still gives the 2D footprint and the
@@ -181,6 +190,20 @@ export interface AssetModel {
   url: string;
   /** Content hash (changes re-render thumbnails and bust caches). */
   hash: string;
+}
+
+/** A model variant of an asset (see `AssetDefinition.models`). */
+export interface AssetModelVariant {
+  /** Lowercase id, unique within the asset. */
+  id: string;
+  /** Short name shown on the toggle, e.g. "Styled", "Empty". */
+  name: string;
+  /** Slots whose parts this model leaves out (props built into the item: books, tableware…). */
+  hide?: string[];
+  /** Extra props for this model, built for the item's size; they may rise above its top. */
+  props?: (size: Size3) => Part[];
+  /** Material slots only this model's props use (slot ids must not clash with the item's). */
+  slots?: MaterialSlot[];
 }
 
 /** A hand-made colour variant of an asset (see `AssetDefinition.variants`). */

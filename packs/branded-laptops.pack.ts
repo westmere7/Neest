@@ -2,7 +2,7 @@
  * Branded laptops — six laptops sold widely in Vietnam, open on a desk at their published sizes.
  *
  * Apple MacBook Air 13 (M3) and MacBook Pro 14 (M4); everyday Windows laptops Dell Inspiron 15 3530
- * and ASUS Vivobook 15 X1504VA; gaming laptops Acer Nitro V 15 and Lenovo LOQ 15IRX9.
+ * and ASUS Vivobook 15 X1504VA. (Gaming laptops that looked the same as the MacBook Pro were dropped.)
  *
  * Each item is shown open at about 110° (the lid leans back behind the base), so its footprint is a
  * little deeper and its height is the open screen; `brand.specs` list the closed size from the
@@ -180,46 +180,6 @@ const vivobook = defineItem({
   ]),
 });
 
-const NITRO: LaptopSpec = { W: 0.3623, D: 0.2399, T: 0.0269, lid: 0.28, bezel: 0.008, chin: 0.026, r: 0.006, kb: { w: 0.92, d0: 0.06, d1: 0.48 }, rearVent: true };
-const nitro = defineItem({
-  id: 'acer-nitro-v-15',
-  name: 'Acer Nitro V 15 gaming laptop',
-  category: 'office',
-  type: 'electronics',
-  group: 'Computers',
-  tags: [...TAGS, 'acer', 'nitro', 'gaming laptop', 'laptop gaming', 'rtx'],
-  description: 'Popular entry gaming laptop: a chunkier 15.6" chassis with rear exhausts and a backlit keyboard.',
-  ...fixed(openSize(NITRO)),
-  slots: SLOTS('plastic-black'),
-  build: (size) => laptop(NITRO, size),
-  planDetail: plan(NITRO),
-  brand: brand('Acer', 'Nitro V 15 ANV15-51', 'Nitro V', 'https://laptopmedia.com/?p=1415771', [
-    ['Display', '15.6" FHD 144 Hz'],
-    ['Closed size (W × D × H)', '362.3 × 239.9 × 22.9–26.9 mm'],
-    ['Weight', '2.1 kg'],
-  ]),
-});
-
-const LOQ: LaptopSpec = { W: 0.3599, D: 0.2587, T: 0.0239, lid: 0.3, bezel: 0.007, chin: 0.024, r: 0.007, kb: { w: 0.92, d0: 0.1, d1: 0.5 }, rearVent: true };
-const loq = defineItem({
-  id: 'lenovo-loq-15irx9',
-  name: 'Lenovo LOQ 15IRX9 gaming laptop',
-  category: 'office',
-  type: 'electronics',
-  group: 'Computers',
-  tags: [...TAGS, 'lenovo', 'loq', 'gaming laptop', 'laptop gaming', 'rtx'],
-  description: 'Lenovo LOQ 15 with its deep chassis, rear cooling block and full-size keyboard.',
-  ...fixed(openSize(LOQ)),
-  slots: SLOTS('metal-anthracite'),
-  build: (size) => laptop(LOQ, size),
-  planDetail: plan(LOQ),
-  brand: brand('Lenovo', 'LOQ 15IRX9', 'LOQ', 'https://nanoreview.net/en/laptop/lenovo-loq-15irx9-2024', [
-    ['Display', '15.6" FHD 144 Hz'],
-    ['Closed size (W × D × H)', '359.86 × 258.7 × 21.9–23.9 mm'],
-    ['Weight', 'from 2.38 kg'],
-  ]),
-});
-
 // ---------------------------------------------------------------------------
 // Screen wallpaper
 // ---------------------------------------------------------------------------
@@ -254,9 +214,9 @@ export default definePack({
   name: 'Branded laptops',
   version: '1.0.0',
   author: 'Neest team',
-  description: 'Six laptops sold widely in Vietnam at their published sizes: MacBook Air 13 and MacBook Pro 14, Dell Inspiron 15, ASUS Vivobook 15, Acer Nitro V 15 and Lenovo LOQ 15.',
+  description: 'Four laptops sold widely in Vietnam at their published sizes: MacBook Air 13 and MacBook Pro 14, Dell Inspiron 15 and ASUS Vivobook 15.',
   license: 'CC0 (made for Neest); brand names belong to their owners',
-  items: [macbookAir, macbookPro, inspiron, vivobook, nitro, loq],
+  items: [macbookAir, macbookPro, inspiron, vivobook],
   patterns: [wallpaper],
   materials: [{ id: 'wallpaper', name: 'Laptop screen', category: 'glass', color: '#ffffff', roughness: 0.15, emissive: '#3a4a7a', emissiveIntensity: 0.35, pattern: { id: 'wallpaper', scale: 0.3 } }],
 });

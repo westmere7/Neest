@@ -5,10 +5,10 @@ import type { AreaUnit, LengthUnit, Project, Vec2 } from '@/domain/model/schema'
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { piecePolygon } from '@/domain/geometry/walls';
 import { pointAt, slicePath } from '@/domain/geometry/wallPath';
-import { add, dot, leftNormal, sub } from '@/domain/geometry/vec';
+import { add, dot, leftNormal, scale, sub } from '@/domain/geometry/vec';
 import { convexHull, polygonCentroid } from '@/domain/geometry/polygon';
 import { formatArea, formatLength } from '@/domain/model/units';
-import { assetPlan, getAsset, objectSize, objectSlotMaterialId, resolveMaterial } from '@/data/assets/registry';
+import { assetPlan, getAsset, getObjectAsset, objectSize, objectSlotMaterialId, resolveMaterial } from '@/data/assets/registry';
 import { tintedPatternUrl } from '@/features/materials/textureCache';
 import type { PlanMode } from '@/state/editorStore';
 import { dimensionGeometry, type DimensionSpec } from './dimensions';
@@ -25,7 +25,7 @@ export interface PlanDrawOptions {
   areaUnit: AreaUnit;
   showRoomLabels: boolean;
   showAreas: boolean;
-  dims: { overall: boolean; walls: boolean; rooms: boolean };
+  dims: { overall: boolean; walls: boolean; rooms: boolean; openings?: boolean; thickness?: boolean; objects?: boolean };
   showFurniture: boolean;
   showConstruction: boolean;
   showAnnotations: boolean;
@@ -106,7 +106,7 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
       .filter((o) => !o.hidden && !isAssetHidden(getAsset(project, o.assetId), project.render.hiddenCategories))
       .sort((a, b) => Number(isOverhead(project, a)) - Number(isOverhead(project, b)) || a.elevation + a.height - (b.elevation + b.height));
     for (const o of objs) {
-      const asset = getAsset(project, o.assetId);
+      const asset = getObjectAsset(project, o);
       const deg = (o.rotation * 180) / Math.PI;
       const tf = `translate(${f(o.x)} ${f(o.y)}) rotate(${f(deg)})${o.mirrored ? ' scale(-1 1)' : ''}`;
       if (!asset) {
@@ -370,6 +370,51 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
         const n = leftNormal(mid.tangent);
         const outward = dot(n, sub(mid.p, centroid)) >= 0 ? 1 : -1;
         dims.push({ a: g.path.a, b: g.path.b, offset: outward * (g.h + 12 * px), text: formatLength(L, opts.unit, opts.precision) });
+      }
+    }
+    if ((opts.dims.openings || opts.dims.thickness) && walls.length) {
+      const centroid = polygonCentroid(walls.map((g) => pointAt(g.path, g.path.length / 2).p));
+      for (const g of walls) {
+        const mid = pointAt(g.path, g.path.length / 2);
+        const inward = dot(leftNormal(mid.tangent), sub(mid.p, centroid)) >= 0 ? -1 : 1;
+        // Door and window widths on the room side, just off the wall face.
+        if (opts.dims.openings) {
+          for (const span of g.spans) {
+            if (!project.openings[span.id] || (span.s1 - span.s0) / px < 24) continue;
+            const a = pointAt(g.path, span.s0).p;
+            const b = pointAt(g.path, span.s1).p;
+            dims.push({ a, b, offset: inward * (g.h + 10 * px), text: formatLength(span.s1 - span.s0, opts.unit, opts.precision) });
+          }
+        }
+        // Thickness across the wall at a quarter of its length (clear of most openings and lengths).
+        if (opts.dims.thickness && g.path.length / px > 60) {
+          const q = pointAt(g.path, g.path.length * 0.25);
+          const n = leftNormal(q.tangent);
+          dims.push({ a: add(q.p, scale(n, -g.h)), b: add(q.p, scale(n, g.h)), offset: 0, text: formatLength(g.h * 2, opts.unit, opts.precision) });
+        }
+      }
+    }
+    // Width (along the front) and depth (along the right side) of every visible item, except small
+    // things standing on furniture (a laptop on a desk) and sides too short on screen to label.
+    if (opts.dims.objects && opts.showFurniture && project.layers.furniture.visible) {
+      for (const o of Object.values(project.objects)) {
+        if (o.hidden || Math.max(o.width, o.depth) / px < 40) continue;
+        if (o.elevation > 0.3 && getAsset(project, o.assetId)?.mount === 'floor') continue;
+        const c = Math.cos(o.rotation);
+        const s = Math.sin(o.rotation);
+        const at = (lx: number, lz: number): Vec2 => ({ x: o.x + lx * c - lz * s, y: o.y + lx * s + lz * c });
+        const centre = { x: o.x, y: o.y };
+        const outside = (a: Vec2, b: Vec2) => {
+          const n = leftNormal({ x: b.x - a.x, y: b.y - a.y });
+          const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+          return dot(n, sub(m, centre)) >= 0 ? 1 : -1;
+        };
+        const fa = at(-o.width / 2, o.depth / 2);
+        const fb = at(o.width / 2, o.depth / 2);
+        if (o.width / px >= 40) dims.push({ a: fa, b: fb, offset: outside(fa, fb) * 7 * px, text: formatLength(o.width, opts.unit, opts.precision) });
+        const ra = at(o.width / 2, o.depth / 2);
+        const rb = at(o.width / 2, -o.depth / 2);
+        if (o.depth / px >= 40) dims.push({ a: ra, b: rb, offset: outside(ra, rb) * 7 * px, text: formatLength(o.depth, opts.unit, opts.precision) });
       }
     }
   }

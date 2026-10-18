@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { Project } from '@/domain/model/schema';
@@ -16,10 +16,33 @@ export const walkInput = {
   run: false,
 };
 
+/** Free-fly in the walkthrough (F): move where you look, up and down, through walls. */
+const fly = { on: false };
+const flyListeners = new Set<() => void>();
+export function setWalkFly(on: boolean): void {
+  if (fly.on === on) return;
+  fly.on = on;
+  flyListeners.forEach((fn) => fn());
+}
+export const toggleWalkFly = (): void => setWalkFly(!fly.on);
+export function useWalkFly(): boolean {
+  return useSyncExternalStore(
+    (cb) => {
+      flyListeners.add(cb);
+      return () => void flyListeners.delete(cb);
+    },
+    () => fly.on,
+    () => false,
+  );
+}
+const FLY_SPEED = 2.5;
+
 /**
  * First-person walkthrough: pointer-lock mouse look and WASD/arrow keys on
  * desktop, joystick + drag-to-look on touch. Movement collides with walls
- * (doorways are passable) and taller furniture.
+ * (doorways are passable) and taller furniture. F switches to free-fly: move
+ * along the view, Space/E up, Q/C down, no collisions; switching back lands at
+ * eye height.
  */
 export function WalkControls({ project, derived, onExit, startOverride }: { project: Project; derived: DerivedPlan; onExit?: () => void; startOverride?: { x: number; y: number; angle: number } | null }) {
   const { camera, gl } = useThree();
@@ -36,6 +59,7 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
     camera.position.set(spawn.p.x, EYE_HEIGHT, spawn.p.y);
     yaw.current = -spawn.angle - Math.PI / 2;
     pitch.current = 0;
+    setWalkFly(false);
     if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
       (camera as THREE.PerspectiveCamera).fov = 70;
       camera.near = 0.05;
@@ -49,6 +73,8 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement) return;
       keys.current.add(e.code);
+      if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey) toggleWalkFly();
+      if (e.code === 'Space') e.preventDefault();
       if (e.code === 'Escape' && document.pointerLockElement !== el) onExit?.();
     };
     const onKeyUp = (e: KeyboardEvent) => keys.current.delete(e.code);
@@ -92,6 +118,18 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
     if (len > 1) {
       fwd /= len;
       strafe /= len;
+    }
+    if (fly.on) {
+      // Free-fly: along the view (pitch included), up/down keys, no collisions.
+      const sp = FLY_SPEED * (run ? 3 : 1) * dt;
+      const cp = Math.cos(pitch.current);
+      const look = new THREE.Vector3(-Math.sin(yaw.current) * cp, Math.sin(pitch.current), -Math.cos(yaw.current) * cp);
+      const side = new THREE.Vector3(Math.cos(yaw.current), 0, -Math.sin(yaw.current));
+      const vert = (k.has('Space') || k.has('KeyE') ? 1 : 0) - (k.has('KeyQ') || k.has('KeyC') ? 1 : 0);
+      camera.position.addScaledVector(look, fwd * sp).addScaledVector(side, strafe * sp);
+      camera.position.y = Math.min(40, Math.max(0.15, camera.position.y + vert * sp));
+      camera.rotation.set(pitch.current, yaw.current, 0, 'YXZ');
+      return;
     }
     const speed = SPEED * (run ? 2 : 1) * dt;
     const forward = new THREE.Vector3(-Math.sin(yaw.current), 0, -Math.cos(yaw.current));

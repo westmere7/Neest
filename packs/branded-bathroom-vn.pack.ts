@@ -2,9 +2,9 @@
  * Branded bathroom (Vietnam) — nine real products sold widely in Vietnam, built to their
  * published dimensions.
  *
- * Toilets: TOTO MS885DE2 and INAX AC-902VN one-piece, Caesar CD1338 two-piece. Basins: American
+ * Toilets: TOTO MS885DE2 one-piece, Caesar CD1338 two-piece. Basins: American
  * Standard Active 0955 wall-hung with semi-pedestal, TOTO LT710CSR and Caesar L5225 counter-top.
- * Showers: American Standard Signature WF-1772 rain column and GROHE Euphoria SmartControl 310 Duo.
+ * Showers: American Standard Signature WF-1772 rain column.
  * Water heating: Ariston SL2 20 RS 2.5 FE storage heater (bình nóng lạnh).
  *
  * Specs come from Vietnamese retailer listings (meta.vn) and the makers' pro catalogues, linked in
@@ -162,26 +162,6 @@ const totoMs885 = defineItem({
     ['Rough-in (tâm xả)', '305 mm'],
     ['Glaze', 'Cefiontect'],
     ['Seat', 'Soft-close, Ecowasher TCW07S (no power)'],
-  ]),
-});
-
-const inaxAc902 = defineItem({
-  id: 'inax-ac-902vn',
-  name: 'INAX AC-902VN one-piece toilet',
-  category: 'bathroom',
-  type: 'plumbing',
-  group: 'Toilets',
-  tags: tags('inax', 'lixil', 'bồn cầu 1 khối', 'bồn cầu inax', 'one-piece toilet', 'aqua ceramic', 'ac-902'),
-  description: 'Compact squared one-piece INAX toilet with a skirted base, soft-close seat and a top push button.',
-  ...fixed(0.372, 0.721, 0.68),
-  wallSnap: true,
-  slots: TOILET_SLOTS,
-  build: ({ w, d, h }) => toilet(w, d, h, { onePiece: true, skirt: true, tankRound: 0.02, tankD: 0.21, seatY: 0.4, squareButton: true }),
-  planDetail: (s) => toiletPlan(s, 0.21),
-  brand: brand('INAX', 'AC-902VN', 'One-piece toilet (LIXIL)', 'https://meta.vn/bon-cau-1-khoi-inax-ac-902vn-p91839', [
-    ['Size (D × W × H)', '721 × 372 × 680 mm'],
-    ['Type', 'One-piece, skirted'],
-    ['Seat', 'Soft-close'],
   ]),
 });
 
@@ -369,28 +349,6 @@ const amstdWf1772 = defineItem({
   ]),
 });
 
-const groheEuphoria = defineItem({
-  id: 'grohe-euphoria-smartcontrol-310',
-  name: 'GROHE Euphoria SmartControl 310 Duo',
-  category: 'bathroom',
-  type: 'plumbing',
-  group: 'Showers & tubs',
-  tags: tags('grohe', 'sen cây nhiệt độ', 'thermostatic shower', 'rain shower', 'smartcontrol', 'euphoria', '26507000'),
-  description: 'Thermostatic shower system with push-and-turn SmartControl buttons, a glass shelf, a 310 mm Rainshower head on a 450 mm arm and a hand shower.',
-  ...fixed(0.441, 0.61, 1.104),
-  mount: 'wall',
-  defaultElevation: 1.0,
-  slots: [matSlot('metal', 'Chrome', 'metal-chrome'), matSlot('accent', 'Shelf & controls', 'glass-frosted'), matSlot('hose', 'Hose', 'metal-brushed-steel')],
-  build: ({ d, h }) => showerColumn({ d, h, head: 0.31, arm: 0.45, shelf: true, mixerW: 0.441 }),
-  brand: brand('GROHE', '26507000', 'Euphoria SmartControl System 310 Duo', 'https://pro.grohe.com/en_pj/shower-system-with-thermostat-for-wall-mounting-26507000.html', [
-    ['Head shower', 'Rainshower SmartActive 310, Ø310 mm'],
-    ['Shower arm', '450 mm'],
-    ['Hose', '1750 mm'],
-    ['Height', '≈ 1104 mm'],
-    ['Control', 'Thermostat with SmartControl push buttons'],
-  ]),
-});
-
 const aristonSl2 = defineItem({
   id: 'ariston-sl2-20-rs',
   name: 'Ariston SL2 20 RS water heater',
@@ -430,8 +388,8 @@ export default definePack({
   version: '1.0.0',
   author: 'Neest team',
   description:
-    'Nine bathroom products sold widely in Vietnam at their published sizes: TOTO, INAX and Caesar toilets; American Standard, TOTO and Caesar basins; American Standard and GROHE shower columns; and an Ariston storage water heater.',
+    'Seven bathroom products sold widely in Vietnam at their published sizes: TOTO and Caesar toilets; American Standard, TOTO and Caesar basins; an American Standard shower column; and an Ariston storage water heater.',
   license: 'CC0 (made for Neest); brand names belong to their owners',
-  items: [totoMs885, inaxAc902, caesarCd1338, amstdActive, totoLt710, caesarL5225, amstdWf1772, groheEuphoria, aristonSl2],
+  items: [totoMs885, caesarCd1338, amstdActive, totoLt710, caesarL5225, amstdWf1772, aristonSl2],
 });
 

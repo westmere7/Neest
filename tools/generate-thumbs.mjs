@@ -39,10 +39,12 @@ try {
   // Fingerprint everything in the page (packs included) and decide what needs rendering.
   const all = await page.evaluate(async () => {
     const { ASSET_CATALOG } = await import('/src/data/assets/catalog.ts');
+    const { withAllModels } = await import('/src/data/assets/models.ts');
     const { thumbFingerprint, thumbFileName, THUMB_VERSION } = await import('/src/features/library/thumbFingerprint.ts');
+    // Items with model variants get a thumbnail per model (the library card shows the chosen one).
     return {
       version: THUMB_VERSION,
-      items: ASSET_CATALOG.filter((a) => a.category !== 'custom').map((a) => ({ id: a.id, fp: thumbFingerprint(a), file: thumbFileName(a.id) })),
+      items: withAllModels(ASSET_CATALOG.filter((a) => a.category !== 'custom')).map((a) => ({ id: a.id, fp: thumbFingerprint(a), file: thumbFileName(a.id) })),
     };
   });
   const todo = all.items.filter((i) => i.fp && previous.items?.[i.id]?.fp !== i.fp);
@@ -56,8 +58,9 @@ try {
     const ids = todo.slice(k, k + BATCH).map((i) => i.id);
     const rendered = await page.evaluate(async (ids) => {
       const { ASSET_CATALOG } = await import('/src/data/assets/catalog.ts');
+      const { withAllModels } = await import('/src/data/assets/models.ts');
       const { renderThumbsForExport } = await import('/src/features/library/thumbnails.ts');
-      return renderThumbsForExport(ASSET_CATALOG.filter((a) => ids.includes(a.id)));
+      return renderThumbsForExport(withAllModels(ASSET_CATALOG).filter((a) => ids.includes(a.id)));
     }, ids);
     for (const r of rendered) {
       const b64 = r.dataUrl.replace(/^data:image\/\w+;base64,/, '');

@@ -8,10 +8,11 @@ import type { JunctionHub, WallGeometry, WallPiece } from '@/domain/geometry/wal
 import { triangulate } from '@/domain/geometry/polygon';
 import { pointAt } from '@/domain/geometry/wallPath';
 import { dist, leftNormal, normalize, sub } from '@/domain/geometry/vec';
-import { getAsset, objectSlotMaterialId } from '@/data/assets/registry';
+import { getObjectAsset, objectSlotMaterialId } from '@/data/assets/registry';
 import { dropPackKeys, subscribePacks } from '@/packs/events';
 import type { AssetDefinition, Part, Size3 } from '@/data/assets/types';
 import type { MaterialRegistry } from './materialRegistry';
+import { biasSlotsBySize } from './depthBias';
 
 // ───────────────────────── Geometry accumulation ─────────────────────────
 
@@ -89,7 +90,22 @@ function vertexS(pts: Vec2[], s0: number, s1: number): number[] {
 }
 
 /** Vertical strip along a polyline with outward normals on `side` (+1 left, -1 right). */
-function addSide(acc: Acc, pts: Vec2[], z0: number, z1: TopFn, side: 1 | -1, uOffset: number, s1 = uOffset + polylineLengths(pts)[pts.length - 1]) {
+/**
+ * Side face of a wall piece. `breaks` are heights where a neighbouring piece's edge starts or ends
+ * on this piece's first and last vertical edge (a lintel or sill beside a full-height piece): the
+ * face is split into bands there, so both pieces share those vertices and the GPU leaves no
+ * hairline crack along the joint (a T-junction).
+ */
+function addSide(
+  acc: Acc,
+  pts: Vec2[],
+  z0: number,
+  z1: TopFn,
+  side: 1 | -1,
+  uOffset: number,
+  s1 = uOffset + polylineLengths(pts)[pts.length - 1],
+  breaks: { start: number[]; end: number[] } = { start: [], end: [] },
+) {
   const L = polylineLengths(pts);
   const S = typeof z1 === 'number' ? null : vertexS(pts, uOffset, s1);
   const top = (i: number) => (typeof z1 === 'number' ? z1 : z1(S![i]));
@@ -103,9 +119,24 @@ function addSide(acc: Acc, pts: Vec2[], z0: number, z1: TopFn, side: 1 | -1, uOf
     const u1 = uOffset + L[i + 1];
     const ta = top(i);
     const tb = top(i + 1);
-    acc.face([V(a, z0), V(b, z0), V(b, tb), V(a, ta)], normal, [
-      [u0, z0],
-      [u1, z0],
+    const cut = [...(i === 0 ? breaks.start : []), ...(i === pts.length - 2 ? breaks.end : [])]
+      .filter((h) => h > z0 + 1e-5 && h < Math.min(ta, tb) - 1e-5)
+      .sort((p, q) => p - q)
+      .filter((h, k, arr) => k === 0 || h - arr[k - 1] > 1e-5);
+    // Bands between the breaks; the last one reaches the (possibly sloped) top.
+    let lo = z0;
+    for (const h of cut) {
+      acc.face([V(a, lo), V(b, lo), V(b, h), V(a, h)], normal, [
+        [u0, lo],
+        [u1, lo],
+        [u1, h],
+        [u0, h],
+      ]);
+      lo = h;
+    }
+    acc.face([V(a, lo), V(b, lo), V(b, tb), V(a, ta)], normal, [
+      [u0, lo],
+      [u1, lo],
       [u1, tb],
       [u0, ta],
     ]);
@@ -146,6 +177,17 @@ export function buildWallGeometry(g: WallGeometry, cutHeight?: number): THREE.Bu
   const right = new Acc();
   const other = new Acc();
   let any = false;
+  // Heights at each piece boundary (piece bottoms and tops), so side faces can share vertices there.
+  const key = (v: number) => Math.round(v * 1e5);
+  const levels = new Map<number, number[]>();
+  for (const piece of g.pieces) {
+    const topOf = (s0: number) => (piece.kind === 'below' ? piece.z1 : g.sloped ? g.topAt(s0) : piece.z1);
+    for (const sv of [piece.s0, piece.s1]) {
+      const k = key(sv);
+      if (!levels.has(k)) levels.set(k, []);
+      levels.get(k)!.push(piece.z0, topOf(sv));
+    }
+  }
   for (const piece of g.pieces) {
     const z0 = piece.z0;
     // Below-sill pieces end at the sill; others follow the (possibly sloped) wall top.
@@ -153,18 +195,31 @@ export function buildWallGeometry(g: WallGeometry, cutHeight?: number): THREE.Bu
     const top = (s: number) => (cutHeight !== undefined ? Math.min(rawTop(s), cutHeight) : rawTop(s));
     if (Math.max(top(piece.s0), top(piece.s1)) - z0 < 1e-4) continue;
     any = true;
-    addPiece(piece, z0, g.sloped || cutHeight !== undefined ? top : top(piece.s0), g, left, right, other);
+    addPiece(piece, z0, g.sloped || cutHeight !== undefined ? top : top(piece.s0), g, left, right, other, {
+      start: levels.get(key(piece.s0)) ?? [],
+      end: levels.get(key(piece.s1)) ?? [],
+    });
   }
   return any ? mergeGroups([left, right, other]) : null;
 }
 
 /** Wall styles built as a solid body (the others are frames/infill from wallExtras.ts). */
-export const hasSolidBody = (style: WallGeometry['wall']['style']): boolean => !style || style === 'solid' || style === 'half';
+export const hasSolidBody = (style: WallGeometry['wall']['style']): boolean =>
+  !style || style === 'solid' || style === 'half';
 
-function addPiece(piece: WallPiece, z0: number, z1: TopFn, g: WallGeometry, left: Acc, right: Acc, other: Acc) {
+function addPiece(
+  piece: WallPiece,
+  z0: number,
+  z1: TopFn,
+  g: WallGeometry,
+  left: Acc,
+  right: Acc,
+  other: Acc,
+  breaks?: { start: number[]; end: number[] },
+) {
   const topAt = (s: number) => (typeof z1 === 'number' ? z1 : z1(s));
-  addSide(left, piece.left, z0, z1, 1, piece.s0, piece.s1);
-  addSide(right, piece.right, z0, z1, -1, piece.s0, piece.s1);
+  addSide(left, piece.left, z0, z1, 1, piece.s0, piece.s1, breaks);
+  addSide(right, piece.right, z0, z1, -1, piece.s0, piece.s1, breaks);
   const poly = [...piece.left, ...[...piece.right].reverse()];
   if (typeof z1 === 'number') addCap(other, poly, z1, true);
   else {
@@ -179,7 +234,14 @@ function addPiece(piece: WallPiece, z0: number, z1: TopFn, g: WallGeometry, left
   const t0 = pointAt(g.path, piece.s0).tangent;
   const t1 = pointAt(g.path, piece.s1).tangent;
   addEnd(other, piece.left[0], piece.right[0], z0, topAt(piece.s0), { x: -t0.x, y: -t0.y });
-  addEnd(other, piece.left[piece.left.length - 1], piece.right[piece.right.length - 1], z0, topAt(piece.s1), t1);
+  addEnd(
+    other,
+    piece.left[piece.left.length - 1],
+    piece.right[piece.right.length - 1],
+    z0,
+    topAt(piece.s1),
+    t1,
+  );
 }
 
 /** Top face with per-vertex heights (sloped wall tops); normal from the first triangle. */
@@ -208,7 +270,10 @@ export function buildHubGeometry(hub: JunctionHub, cutHeight?: number): THREE.Bu
   addCap(acc, hub.polygon, z1, true);
   const n = hub.polygon.length;
   // Exposed sides (e.g. bevelled outside corners); hidden sides are enclosed by walls.
-  const area = hub.polygon.reduce((s, p, i) => s + p.x * hub.polygon[(i + 1) % n].y - hub.polygon[(i + 1) % n].x * p.y, 0);
+  const area = hub.polygon.reduce(
+    (s, p, i) => s + p.x * hub.polygon[(i + 1) % n].y - hub.polygon[(i + 1) % n].x * p.y,
+    0,
+  );
   for (let i = 0; i < n; i++) {
     const a = hub.polygon[i];
     const b = hub.polygon[(i + 1) % n];
@@ -221,7 +286,12 @@ export function buildHubGeometry(hub: JunctionHub, cutHeight?: number): THREE.Bu
 }
 
 /** Horizontal polygon (floor or ceiling) with metre-based UVs. */
-export function buildSlabGeometry(outer: Vec2[], holes: Vec2[][], y: number, facingUp: boolean): THREE.BufferGeometry {
+export function buildSlabGeometry(
+  outer: Vec2[],
+  holes: Vec2[][],
+  y: number,
+  facingUp: boolean,
+): THREE.BufferGeometry {
   const all = [...outer, ...holes.flat()];
   const tris = triangulate(outer, holes);
   const acc = new Acc();
@@ -372,7 +442,12 @@ export function partGeometry(part: Part): THREE.BufferGeometry {
       break;
     }
     case 'cylinder': {
-      geo = new THREE.CylinderGeometry(Math.max(0, part.radiusTop), Math.max(0, part.radiusBottom), Math.max(0.001, part.height), part.segments ?? 24);
+      geo = new THREE.CylinderGeometry(
+        Math.max(0, part.radiusTop),
+        Math.max(0, part.radiusBottom),
+        Math.max(0.001, part.height),
+        part.segments ?? 24,
+      );
       scaleUVs(geo, 2 * Math.PI * Math.max(part.radiusTop, part.radiusBottom), part.height);
       break;
     }
@@ -400,7 +475,10 @@ export function partGeometry(part: Part): THREE.BufferGeometry {
       addCap(acc, outline, part.height, true);
       addCap(acc, outline, 0, false);
       const n = outline.length;
-      const area = outline.reduce((s, p, i) => s + p.x * outline[(i + 1) % n].y - outline[(i + 1) % n].x * p.y, 0);
+      const area = outline.reduce(
+        (s, p, i) => s + p.x * outline[(i + 1) % n].y - outline[(i + 1) % n].x * p.y,
+        0,
+      );
       for (let i = 0; i < n; i++) {
         const a = outline[i];
         const b = outline[(i + 1) % n];
@@ -434,9 +512,17 @@ function bakedPart(part: Part): THREE.BufferGeometry {
   g.userData = {};
   for (const name of Object.keys(g.attributes)) if (!MERGE_ATTRS.has(name)) g.deleteAttribute(name);
   if (!g.getAttribute('normal')) g.computeVertexNormals();
-  if (!g.getAttribute('uv')) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.getAttribute('position').count * 2), 2));
+  if (!g.getAttribute('uv'))
+    g.setAttribute(
+      'uv',
+      new THREE.Float32BufferAttribute(new Float32Array(g.getAttribute('position').count * 2), 2),
+    );
   g.morphAttributes = {};
   g.clearGroups();
+  if (part.uv && (part.uv[0] || part.uv[1])) {
+    const uv = g.getAttribute('uv');
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) + part.uv[0], uv.getY(i) + part.uv[1]);
+  }
   const m = new THREE.Matrix4().compose(
     new THREE.Vector3(...part.position),
     new THREE.Quaternion().setFromEuler(new THREE.Euler(...(part.rotation ?? [0, 0, 0]))),
@@ -451,7 +537,10 @@ function bakedPart(part: Part): THREE.BufferGeometry {
  * detailed asset costs one draw call per slot instead of one per part. Cached and shared by all
  * objects with the same asset and size (flagged `userData.cached`: never dispose them).
  */
-export function assetSlotGeometries(asset: AssetDefinition, size: Size3): { slot: string; geometry: THREE.BufferGeometry }[] {
+export function assetSlotGeometries(
+  asset: AssetDefinition,
+  size: Size3,
+): { slot: string; geometry: THREE.BufferGeometry }[] {
   const model = asset.model ? assetModelSlots(asset) : null;
   const key = `${asset.id}|${r4(size.w)}|${r4(size.d)}|${r4(size.h)}${model ? `|m${asset.model!.hash}` : ''}`;
   const hit = slotGeoCache.get(key);
@@ -461,7 +550,11 @@ export function assetSlotGeometries(asset: AssetDefinition, size: Size3): { slot
     const box = new THREE.Box3();
     for (const { geometry } of model) box.union(geometry.boundingBox!);
     const dims = box.getSize(new THREE.Vector3());
-    const k = Math.min(size.w / Math.max(dims.x, 1e-4), size.d / Math.max(dims.z, 1e-4), size.h / Math.max(dims.y, 1e-4));
+    const k = Math.min(
+      size.w / Math.max(dims.x, 1e-4),
+      size.d / Math.max(dims.z, 1e-4),
+      size.h / Math.max(dims.y, 1e-4),
+    );
     const out = model.map(({ slot, geometry }) => {
       const g = geometry.clone();
       g.scale(k, k, k);
@@ -518,7 +611,7 @@ export function buildObject(obj: PlacedObject, ctx: BuildContext): THREE.Group {
   group.rotation.y = -obj.rotation;
   if (obj.mirrored) group.scale.x = -1;
   group.userData = { kind: 'object', id: obj.id };
-  const asset = getAsset(ctx.project, obj.assetId);
+  const asset = getObjectAsset(ctx.project, obj);
   const shadows = ctx.shadows ?? true;
   if (!asset) {
     group.add(placeholderBox(obj));
@@ -537,7 +630,11 @@ export function buildObject(obj: PlacedObject, ctx: BuildContext): THREE.Group {
     const holder = new THREE.Group();
     holder.add(clone);
     clone.position.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
-    holder.scale.set(obj.width / Math.max(size.x, 1e-4), obj.height / Math.max(size.y, 1e-4), obj.depth / Math.max(size.z, 1e-4));
+    holder.scale.set(
+      obj.width / Math.max(size.x, 1e-4),
+      obj.height / Math.max(size.y, 1e-4),
+      obj.depth / Math.max(size.z, 1e-4),
+    );
     clone.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) {
         o.castShadow = shadows;
@@ -547,28 +644,40 @@ export function buildObject(obj: PlacedObject, ctx: BuildContext): THREE.Group {
     group.add(holder);
     return group;
   }
-  for (const { slot, geometry } of assetSlotGeometries(asset, { w: obj.width, d: obj.depth, h: obj.height })) {
-    const mat = ctx.registry.get(ctx.project, objectSlotMaterialId(obj, asset, slot));
-    group.add(slotMesh(geometry, mat, shadows));
-  }
+  const meshes = assetSlotGeometries(asset, { w: obj.width, d: obj.depth, h: obj.height }).map(
+    ({ slot, geometry }) =>
+      slotMesh(geometry, ctx.registry.get(ctx.project, objectSlotMaterialId(obj, asset, slot)), shadows),
+  );
+  biasSlotsBySize(meshes);
+  meshes.forEach((m) => group.add(m));
   return group;
 }
 
 function placeholderBox(obj: PlacedObject): THREE.Mesh {
   const geo = new THREE.BoxGeometry(obj.width, obj.height, obj.depth);
-  const mat = new THREE.MeshStandardMaterial({ color: '#8fa3b5', transparent: true, opacity: 0.5, wireframe: false });
+  const mat = new THREE.MeshStandardMaterial({
+    color: '#8fa3b5',
+    transparent: true,
+    opacity: 0.5,
+    wireframe: false,
+  });
   const m = new THREE.Mesh(geo, mat);
   m.position.y = obj.height / 2;
   return m;
 }
 
 /** Asset preview group at its default size (thumbnails). */
-export function buildAssetPreview(asset: AssetDefinition, project: Project | null, registry: MaterialRegistry): THREE.Group {
+export function buildAssetPreview(
+  asset: AssetDefinition,
+  project: Project | null,
+  registry: MaterialRegistry,
+): THREE.Group {
   const group = new THREE.Group();
-  for (const { slot, geometry } of assetSlotGeometries(asset, asset.defaultSize)) {
-    const slotMat = asset.slots.find((s) => s.id === slot)?.defaultMaterial;
-    group.add(slotMesh(geometry, registry.get(project, slotMat), false));
-  }
+  const meshes = assetSlotGeometries(asset, asset.defaultSize).map(({ slot, geometry }) =>
+    slotMesh(geometry, registry.get(project, asset.slots.find((s) => s.id === slot)?.defaultMaterial), false),
+  );
+  biasSlotsBySize(meshes);
+  meshes.forEach((m) => group.add(m));
   return group;
 }
 
@@ -588,7 +697,10 @@ export function ceilingHeightFor(room: Room | null, face: RoomFace, project: Pro
 }
 
 export function buildFloor(face: RoomFace, room: Room | null, ctx: BuildContext): THREE.Mesh {
-  const mesh = new THREE.Mesh(buildSlabGeometry(face.inner, face.holes, 0.002, true), ctx.registry.get(ctx.project, room?.floorMaterialId ?? 'wood-oak-natural'));
+  const mesh = new THREE.Mesh(
+    buildSlabGeometry(face.inner, face.holes, 0.002, true),
+    ctx.registry.get(ctx.project, room?.floorMaterialId ?? 'wood-oak-natural'),
+  );
   mesh.receiveShadow = ctx.shadows ?? true;
   mesh.userData = { kind: 'room', id: room?.id };
   mesh.name = room ? `Floor: ${room.name}` : 'Floor';
@@ -600,6 +712,9 @@ export function buildCeiling(face: RoomFace, room: Room | null, ctx: BuildContex
   const mat = ctx.registry.get(ctx.project, room?.ceilingMaterialId ?? 'paint-ceiling-white');
   const mesh = new THREE.Mesh(buildSlabGeometry(face.inner, face.holes, h - 0.002, false), mat);
   mesh.receiveShadow = ctx.shadows ?? true;
+  // A shown ceiling keeps the sun out of the room (only its back face is drawn into the shadow map,
+  // so lamps below it are not shadowed by it).
+  mesh.castShadow = ctx.shadows ?? true;
   mesh.userData = { kind: 'ceiling', id: room?.id };
   mesh.name = room ? `Ceiling: ${room.name}` : 'Ceiling';
   return mesh;
@@ -617,7 +732,11 @@ export function wallGeometryKey(g: WallGeometry, cut?: number): string {
   return s;
 }
 
-export function wallMaterials(project: Project, g: WallGeometry, registry: MaterialRegistry): THREE.Material[] {
+export function wallMaterials(
+  project: Project,
+  g: WallGeometry,
+  registry: MaterialRegistry,
+): THREE.Material[] {
   return [
     registry.get(project, g.wall.materials.left),
     registry.get(project, g.wall.materials.right),

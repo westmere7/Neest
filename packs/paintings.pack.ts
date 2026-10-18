@@ -9,7 +9,9 @@
  * public/art/ and lists them in src/data/assets/paintings.json, with credits in
  * public/art/CREDITS.md. Each image sits on a square tile rolled by half, so a canvas exactly
  * w × h with texture scale max(w, h) shows the painting once, edge to edge (box faces are
- * UV-mapped in metres about their centre). Sizes are fixed for that reason.
+ * UV-mapped in metres about their centre). Resized paintings keep that: the artwork panel is built
+ * at the painting's real size and stretched to the new canvas by its part scale (UVs come from the
+ * unscaled box), while the frame, liner and mount are built at the new size.
  *
  * Frames by kind: abstracts float in a slim gallery frame, landscapes and Western animal
  * paintings get a wide gilt frame with a linen liner, and prints sit behind a white mount.
@@ -123,12 +125,19 @@ function border(style: Style, p: Painting): { b: number; d: number; mat: number 
 
 const r3 = (x: number) => Math.round(x * 1000) / 1000;
 
-function build(style: Style, p: Painting): Part[] {
+/** The artwork panel: the real-size picture stretched onto a canvas of cw × ch (see the header). */
+function artPanel(p: Painting, cw: number, ch: number, b: number, z0: number, z1: number): Part {
+  return { ...span('art', [-p.w / 2, p.w / 2], [-p.h / 2, p.h / 2], [z0, z1]), position: [0, b + ch / 2, (z0 + z1) / 2], scale: [cw / p.w, ch / p.h, 1] };
+}
+
+function build(style: Style, p: Painting, size: { w: number; h: number }): Part[] {
   const { b, d, mat } = border(style, p);
-  const W = p.w + 2 * b;
-  const H = p.h + 2 * b;
-  const cx: [number, number] = [-p.w / 2, p.w / 2];
-  const cy: [number, number] = [b, b + p.h];
+  const W = size.w;
+  const H = size.h;
+  const cw = Math.max(0.02, W - 2 * b);
+  const ch = Math.max(0.02, H - 2 * b);
+  const cx: [number, number] = [-cw / 2, cw / 2];
+  const cy: [number, number] = [b, b + ch];
   const z0 = -d / 2;
   const z1 = d / 2;
   if (style === 'gallery') {
@@ -139,7 +148,7 @@ function build(style: Style, p: Painting): Part[] {
       ...frame4('frame', [-W / 2, W / 2], [0, H], [z0, z1], t, { plan: true }),
       span('frame', [-W / 2 + t, W / 2 - t], [t, H - t], [z0, z0 + 0.006]),
       span('liner', cx, cy, [z0 + 0.006, zc - 0.001]),
-      span('art', cx, cy, [zc - 0.001, zc]),
+      artPanel(p, cw, ch, b, zc - 0.001, zc),
     ];
   }
   if (style === 'gilt') {
@@ -150,9 +159,9 @@ function build(style: Style, p: Painting): Part[] {
       ...frame4('frame', [-W / 2, W / 2], [0, H], [z0, z1 - 0.012], f * 0.55, { plan: true }),
       ...frame4('frame', [-W / 2 + f * 0.45, W / 2 - f * 0.45], [f * 0.45, H - f * 0.45], [z0, z1], f * 0.3),
       ...frame4('frame', [-W / 2 + f * 0.75, W / 2 - f * 0.75], [f * 0.75, H - f * 0.75], [z0, z1 - 0.018], f * 0.25),
-      ...frame4('liner', [-p.w / 2 - mat, p.w / 2 + mat], [b - mat, b + p.h + mat], [z0, zArt + 0.006], mat),
+      ...frame4('liner', [-cw / 2 - mat, cw / 2 + mat], [b - mat, b + ch + mat], [z0, zArt + 0.006], mat),
       span('liner', cx, cy, [z0, zArt - 0.001]),
-      span('art', cx, cy, [zArt - 0.001, zArt]),
+      artPanel(p, cw, ch, b, zArt - 0.001, zArt),
     ];
   }
   // Print behind a white bevelled mount and a slim frame.
@@ -161,8 +170,8 @@ function build(style: Style, p: Painting): Part[] {
   return [
     ...frame4('frame', [-W / 2, W / 2], [0, H], [z0, z1], f, { plan: true }),
     span('liner', [-W / 2 + f, W / 2 - f], [f, H - f], [z0, zm - 0.003]),
-    ...frame4('liner', [-p.w / 2 - mat, p.w / 2 + mat], [b - mat, b + p.h + mat], [zm - 0.003, zm], mat),
-    span('art', cx, cy, [zm - 0.0045, zm - 0.003]),
+    ...frame4('liner', [-cw / 2 - mat, cw / 2 + mat], [b - mat, b + ch + mat], [zm - 0.003, zm], mat),
+    artPanel(p, cw, ch, b, zm - 0.0045, zm - 0.003),
   ];
 }
 
@@ -193,16 +202,17 @@ function item(p: Painting): PackItem {
     type: 'decor',
     group: GROUP[p.kind],
     tags: ['painting', 'wall art', kindWord[p.kind], surname, style === 'mount' ? 'print' : 'canvas', 'art'],
-    description: `${artist}, ${date}. A ${kindWord[p.kind]} work at its real size (${Math.round(p.w * 100)} × ${Math.round(p.h * 100)} cm), ${frameWords[style]}. Public domain.`,
+    description: `${artist}, ${date}. A ${kindWord[p.kind]} work at its real size (${Math.round(p.w * 100)} × ${Math.round(p.h * 100)} cm; resizable), ${frameWords[style]}. Public domain.`,
     defaultSize: size,
-    minSize: size,
-    maxSize: size,
-    resizable: { w: false, d: false, h: false },
+    // Resizable (the picture stretches to fill the canvas); depth stays the frame's.
+    minSize: { w: r3(Math.max(2 * b + 0.05, size.w * 0.4)), d, h: r3(Math.max(2 * b + 0.05, size.h * 0.4)) },
+    maxSize: { w: r3(size.w * 2.5), d, h: r3(size.h * 2.5) },
+    resizable: { w: true, d: false, h: true },
     mount: 'wall',
     defaultElevation: r3(Math.max(0.9, 1.55 - size.h / 2)),
     slots: [matSlot('frame', 'Frame', frame), matSlot('liner', style === 'mount' ? 'Mount' : 'Liner', liner), matSlot('art', 'Artwork', `art-${p.id}`)],
     variants,
-    build: () => build(style, p),
+    build: (sz) => build(style, p, sz),
   });
 }
 

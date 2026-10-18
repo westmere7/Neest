@@ -23,10 +23,14 @@ describe('colour variant families', () => {
 });
 
 describe('generated colour variants', () => {
-  it('gives most items variants, and none to branded products', () => {
+  it('gives most items variants, and branded products only the finishes the maker sells', () => {
     const withVariants = assets.filter((a) => assetVariants(a).length > 0);
     expect(withVariants.length / assets.length).toBeGreaterThan(0.6);
-    for (const a of assets.filter((x) => x.brand)) expect(assetVariants(a), a.id).toEqual([]);
+    for (const a of assets.filter((x) => x.brand)) {
+      const vs = assetVariants(a);
+      if (!a.variants?.length) expect(vs, a.id).toEqual([]);
+      else for (const v of vs.slice(1)) expect(a.variants.some((p) => p.id === v.id), `${a.id}: ${v.id} is not a factory finish`).toBe(true);
+    }
   });
 
   it.each(assets.filter((a) => assetVariants(a).length).map((a) => [a.id, a] as const))('%s has valid, distinct variants', (_id, asset) => {

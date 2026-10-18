@@ -180,6 +180,34 @@ export function computeWallNetwork(project: Pick<Project, 'walls' | 'nodes' | 'o
         }
       }
     }
+    // T-junctions: a wall running straight through the node (two collinear ends of the same
+    // thickness) stays one continuous surface with square, flush ends, and every other wall butts
+    // against its face. Mitring the through-wall instead left slanted ends and a triangular hub
+    // between them, which showed as a spike in the plan and hairline seams in 3D.
+    const through = ends.length >= 3 ? throughPair(ends) : null;
+    if (through) {
+      const [a, b] = through;
+      for (const e of [a, b]) {
+        const ln = leftNormal(e.dir);
+        e.oLeft = add(N, scale(ln, e.h));
+        e.oRight = add(N, scale(ln, -e.h));
+        e.beveled = false;
+      }
+      const an = leftNormal(a.dir);
+      for (const e of ends) {
+        if (e === a || e === b) continue;
+        const side = Math.sign(dot(e.dir, an)) || 1;
+        const face = add(N, scale(an, side * a.h));
+        const ln = leftNormal(e.dir);
+        const l = lineIntersection(add(N, scale(ln, e.h)), e.dir, face, a.dir);
+        const r = lineIntersection(add(N, scale(ln, -e.h)), e.dir, face, a.dir);
+        if (l && r && dist(l, N) <= MITER_LIMIT * Math.max(a.h, e.h) && dist(r, N) <= MITER_LIMIT * Math.max(a.h, e.h)) {
+          e.oLeft = l;
+          e.oRight = r;
+          e.beveled = false;
+        }
+      }
+    }
     for (const e of ends) {
       const key = `${e.wallId}:${e.atStart ? 's' : 'e'}`;
       // Oriented left/right (leaving the node) → global left/right (a→b).
@@ -187,7 +215,9 @@ export function computeWallNetwork(project: Pick<Project, 'walls' | 'nodes' | 'o
       const right = e.atStart ? e.oRight! : e.oLeft!;
       corners.set(key, { left, right, free: ends.length === 1 });
     }
-    if (ends.length >= 3 || (ends.length === 2 && ends.some((e) => e.beveled))) {
+    // Branches on both sides of a through-wall would each need their own fill; only build a hub when
+    // the junction isn't a clean T (or cross) on a straight wall.
+    if (!through && (ends.length >= 3 || (ends.length === 2 && ends.some((e) => e.beveled)))) {
       const poly: Vec2[] = [];
       for (const e of ends) {
         for (const p of [e.oLeft!, e.oRight!]) {
@@ -389,4 +419,21 @@ export function wallSideInfo(geom: WallGeometry, side: 'left' | 'right') {
   const n = leftNormal(tangent);
   const sign = side === 'left' ? 1 : -1;
   return { point: add(p, scale(n, sign * geom.h)), normal: scale(n, sign), tangent };
+}
+
+/**
+ * The two ends at a junction that form one straight wall passing through it (opposite directions,
+ * same thickness within a millimetre), the thickest such pair; null when there is none.
+ */
+function throughPair(ends: EndInfo[]): [EndInfo, EndInfo] | null {
+  let best: [EndInfo, EndInfo] | null = null;
+  for (let i = 0; i < ends.length; i++)
+    for (let j = i + 1; j < ends.length; j++) {
+      const a = ends[i];
+      const b = ends[j];
+      if (Math.abs(a.h - b.h) > 0.0005) continue;
+      if (Math.abs(angleDelta(a.angle, b.angle) - Math.PI) > 0.01) continue;
+      if (!best || a.h > best[0].h) best = [a, b];
+    }
+  return best;
 }

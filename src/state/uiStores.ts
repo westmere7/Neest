@@ -26,11 +26,15 @@ export interface SavedGroup {
     height: number;
     mirrored: boolean;
     materials: Record<string, string>;
+    /** Model variant (absent = default). */
+    model?: string;
   }[];
   /** Plan footprint (metres). */
   size: { w: number; d: number };
   /** Copies of project-only or edited materials used by the items. */
   defs?: Record<string, MaterialDefinition>;
+  /** Place the items without grouping them (a duplicated selection that was not a group). */
+  ungrouped?: boolean;
 }
 
 // ───────────── Theme & preferences ─────────────
@@ -71,6 +75,8 @@ interface PrefsState {
   onboardingDismissed: boolean;
   /** Mirror projects into the repository projects/ folder when served by the dev server. */
   repoSync: boolean;
+  /** 3D view: the orbit pivot eases to the selected objects (off by default). */
+  focusSelection: boolean;
   /** Colour variants the user saved, by asset id. */
   assetVariants: Record<string, UserVariant[]>;
   libraryDensity: LibraryDensity;
@@ -85,6 +91,7 @@ interface PrefsState {
   pushRecentMaterial(id: string): void;
   dismissOnboarding(): void;
   setRepoSync(on: boolean): void;
+  setFocusSelection(on: boolean): void;
   saveAssetVariant(assetId: string, variant: UserVariant): void;
   deleteAssetVariant(assetId: string, id: string): void;
   setLibraryDensity(d: LibraryDensity): void;
@@ -109,6 +116,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   recentMaterials: [],
   onboardingDismissed: false,
   repoSync: true,
+  focusSelection: false,
   assetVariants: {},
   libraryDensity: 'normal',
   savedGroups: [],
@@ -160,6 +168,10 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
     set({ repoSync: on });
     persist('repoSync', on);
   },
+  setFocusSelection(on) {
+    set({ focusSelection: on });
+    persist('focusSelection', on);
+  },
   saveAssetVariant(assetId, variant) {
     const cur = get().assetVariants;
     const next = { ...cur, [assetId]: [...(cur[assetId] ?? []).filter((v) => v.id !== variant.id), variant] };
@@ -181,7 +193,9 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
     persist('savedGroups', next);
   },
   renameSavedGroup(id, name) {
-    const next = get().savedGroups.map((g) => (g.id === id && name.trim() ? { ...g, name: name.trim().slice(0, 60) } : g));
+    const next = get().savedGroups.map((g) =>
+      g.id === id && name.trim() ? { ...g, name: name.trim().slice(0, 60) } : g,
+    );
     set({ savedGroups: next });
     persist('savedGroups', next);
   },
@@ -208,7 +222,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   },
   async hydrate() {
     try {
-      const [fa, ra, fm, rm, ob, rs, av, ld, sg] = await Promise.all([
+      const [fa, ra, fm, rm, ob, rs, av, ld, sg, fs] = await Promise.all([
         preferenceRepository.get<string[]>('favouriteAssets'),
         preferenceRepository.get<string[]>('recentAssets'),
         preferenceRepository.get<string[]>('favouriteMaterials'),
@@ -218,6 +232,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         preferenceRepository.get<Record<string, UserVariant[]>>('assetVariants'),
         preferenceRepository.get<LibraryDensity>('libraryDensity'),
         preferenceRepository.get<SavedGroup[]>('savedGroups'),
+        preferenceRepository.get<boolean>('focusSelection'),
       ]);
       set({
         favouriteAssets: fa ?? [],
@@ -226,6 +241,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         recentMaterials: rm ?? [],
         onboardingDismissed: ob ?? false,
         repoSync: rs ?? true,
+        focusSelection: fs ?? false,
         assetVariants: av && typeof av === 'object' ? av : {},
         libraryDensity: ld && LIBRARY_DENSITIES.includes(ld) ? ld : 'normal',
         savedGroups: Array.isArray(sg) ? sg : [],
@@ -270,9 +286,12 @@ export const useToastStore = create<ToastState>((set, get) => ({
 
 export const toast = {
   info: (title: string, message?: string) => useToastStore.getState().push({ kind: 'info', title, message }),
-  success: (title: string, message?: string) => useToastStore.getState().push({ kind: 'success', title, message }),
-  warning: (title: string, message?: string) => useToastStore.getState().push({ kind: 'warning', title, message }),
-  error: (title: string, message?: string) => useToastStore.getState().push({ kind: 'error', title, message }),
+  success: (title: string, message?: string) =>
+    useToastStore.getState().push({ kind: 'success', title, message }),
+  warning: (title: string, message?: string) =>
+    useToastStore.getState().push({ kind: 'warning', title, message }),
+  error: (title: string, message?: string) =>
+    useToastStore.getState().push({ kind: 'error', title, message }),
 };
 
 // ───────────── Confirm / prompt dialogs ─────────────

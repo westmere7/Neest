@@ -167,13 +167,16 @@
   aspect-ratio: 1.25;
   margin: 4px;
   border-radius: 5px;
-  background: linear-gradient(180deg, var(--surface-2), var(--surface-3));
+  /* A slightly deeper studio backdrop than the card, so white items (baths, basins) still read. */
+  background: radial-gradient(ellipse at 50% 38%, var(--surface-2) 0%, color-mix(in srgb, var(--surface-3) 86%, var(--text) 14%) 100%);
   overflow: hidden;
 }
 .asset-thumb img {
   width: 92%;
   height: 92%;
   object-fit: contain;
+  /* The shadow follows the transparent render's outline: a soft contact shadow and a hairline edge. */
+  filter: drop-shadow(0 2px 5px rgb(0 0 0 / 0.1)) drop-shadow(0 0 0.5px rgb(0 0 0 / 0.22));
 }
 .asset-plan-thumb {
   width: 80%;
@@ -276,6 +279,40 @@
 .fav-filter-btn.active svg {
   fill: currentColor;
 }
+/* Browse switch on the left; favourites and collections buttons together on the right. */
+/* Search, then the favourites and collections buttons. */
+.lib-browse-row > .search-box {
+  flex: 1;
+  min-width: 0;
+}
+.collections-btn {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+/* The collection shown in the library: name, count, description, edit and delete. */
+.collection-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 4px 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.collection-head-text {
+  flex: 1;
+  min-width: 0;
+  padding-top: 5px;
+  font-size: 12.5px;
+}
+.collection-head-text strong {
+  margin-right: 6px;
+  overflow-wrap: anywhere;
+}
+.collection-head-text .field-hint {
+  margin: 3px 0 0;
+}
 /* Content-pack provenance */
 .asset-thumb {
   position: relative;
@@ -353,7 +390,7 @@
   height: 176px;
   margin: 6px 6px 0;
   border-radius: var(--radius-sm);
-  background: radial-gradient(ellipse at 50% 38%, var(--surface-solid), var(--surface-2) 75%);
+  background: radial-gradient(ellipse at 50% 38%, var(--surface-2) 0%, color-mix(in srgb, var(--surface-3) 86%, var(--text) 14%) 100%);
   overflow: hidden;
   cursor: grab;
   touch-action: none;
@@ -589,4 +626,81 @@
 }
 .asset-card.revealed {
   animation: asset-reveal 1.8s var(--ease) 1;
+}
+
+/* Expand button on the hover card's preview, and the large viewer (AssetViewerDialog). */
+.aic-preview-wrap {
+  position: relative;
+}
+.aic-expand {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--surface-solid) 88%, transparent);
+  color: var(--text-2);
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+.aic-preview-wrap:hover .aic-expand,
+.aic-expand:focus-visible {
+  opacity: 1;
+}
+.aic-expand:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+.asset-viewer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: 18px;
+  min-height: 0;
+}
+.aic-preview-wrap.viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.aic-preview.viewer {
+  height: min(62vh, 560px);
+  margin: 0;
+}
+.aic-view-hint {
+  margin: 0;
+  color: var(--text-3);
+  font-size: 11.5px;
+  text-align: center;
+}
+.asset-viewer-info {
+  max-height: min(66vh, 600px);
+  overflow: auto;
+  /* Room for the swatches' selection rings, which a scroll box would clip. */
+  padding: 6px 6px 6px 8px;
+}
+.asset-viewer-info .aic-body {
+  padding: 0;
+}
+@media (max-width: 760px) {
+  .asset-viewer {
+    grid-template-columns: 1fr;
+  }
+  .aic-preview.viewer {
+    height: 46vh;
+  }
+}
+/* The Inspector's object preview reuses the expand button. */
+.object-preview-wrap {
+  position: relative;
+}
+.object-preview-wrap:hover .aic-expand {
+  opacity: 1;
 }

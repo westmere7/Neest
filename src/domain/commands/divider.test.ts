@@ -42,8 +42,8 @@ describe('invisible room dividers', () => {
     const area = (n: ReturnType<typeof computeWallNetwork>) =>
       [...n.walls.values()].filter((g) => !g.wall.style).reduce((s, g) => s + g.path.length * g.h * 2, 0);
     expect(area(net)).toBeCloseTo(area(computeWallNetwork(plain)), 6);
-    // A built wall in the same place does make hubs at the T-junctions.
-    expect(computeWallNetwork(splitRoom(false).p).hubs.length).toBeGreaterThan(0);
+    // A built wall in the same place butts against the straight walls: T-junctions need no hub.
+    expect(computeWallNetwork(splitRoom(false).p).hubs).toHaveLength(0);
   });
 
   it('refuse doors and windows, and lose them when a wall becomes a divider', () => {

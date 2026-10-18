@@ -24,6 +24,10 @@ export interface GhostObject {
   width: number;
   depth: number;
   height: number;
+  /** Model variant of the item being placed. */
+  model?: string;
+  /** Height it stands at (on a table or counter it is placed over). */
+  elevation?: number;
 }
 
 export interface ToolOverlay {

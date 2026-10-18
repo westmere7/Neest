@@ -138,7 +138,17 @@ export function WallTrims({ project, wallId }: { project: Project; wallId: strin
       const wall = d.walls[wallId];
       if (!wall) return;
       const other = side === 'left' ? 'right' : 'left';
-      wall.finishes = { ...(wall.finishes ?? {}), [other]: structuredClone(wall.finishes?.[side] ?? EMPTY) };
+      wall.finishes = { ...(wall.finishes ?? {}), [other]: JSON.parse(JSON.stringify(wall.finishes?.[side] ?? EMPTY)) as WallSideFinish };
+    });
+  // Skirting, cornice, rail and band move to the other face of the wall (and back).
+  const swapFaces = () =>
+    exec('Swap trims between faces', (d) => {
+      const wall = d.walls[wallId];
+      if (!wall) return;
+      const { left, right } = wall.finishes ?? {};
+      // Plain copies: structuredClone cannot copy Immer drafts.
+      const copy = (x: unknown) => JSON.parse(JSON.stringify(x)) as WallSideFinish;
+      wall.finishes = { ...(right ? { left: copy(right) } : {}), ...(left ? { right: copy(left) } : {}) };
     });
   return (
     <Section title="Trim & finishes">
@@ -195,9 +205,14 @@ export function WallTrims({ project, wallId }: { project: Project; wallId: strin
           </div>
         );
       })}
-      <Button size="sm" variant="subtle" onClick={copyToOther}>
-        Copy to the {side === 'left' ? 'right' : 'left'} face
-      </Button>
+      <div className="trim-actions">
+        <Button size="sm" variant="subtle" onClick={copyToOther}>
+          Copy to the {side === 'left' ? 'right' : 'left'} face
+        </Button>
+        <Button size="sm" variant="subtle" onClick={swapFaces} data-testid="swap-trim-faces">
+          Swap faces
+        </Button>
+      </div>
     </Section>
   );
 }

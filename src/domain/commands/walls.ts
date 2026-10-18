@@ -850,3 +850,85 @@ export function clampOpenings(d: D, wallIds?: string[]): void {
     o.offset = Math.min(Math.max(o.offset, lo), hi);
   }
 }
+
+/** The node two walls share, if they meet at one. */
+export function sharedNode(d: D | Project, w1: string, w2: string): string | null {
+  const a = d.walls[w1];
+  const b = d.walls[w2];
+  if (!a || !b || w1 === w2) return null;
+  for (const n of [a.a, a.b]) if (n === b.a || n === b.b) return n;
+  return null;
+}
+
+/**
+ * Largest corner radius that fits at a node joining exactly two straight walls (each wall keeps at
+ * least 5 cm), or null when the corner cannot be rounded (curved walls, other walls at the node,
+ * the walls in line).
+ */
+export function maxCornerRadius(d: D | Project, nodeId: string): number | null {
+  const c = cornerAt(d, nodeId);
+  if (!c) return null;
+  const room = Math.min(c.len1, c.len2) - 0.05;
+  return room > 0.01 ? room * Math.tan(c.theta / 2) : null;
+}
+
+function cornerAt(d: D | Project, nodeId: string) {
+  const ws = Object.values(d.walls).filter((w) => w.a === nodeId || w.b === nodeId);
+  if (ws.length !== 2 || ws.some((w) => w.curve || w.a === w.b)) return null;
+  const node = d.nodes[nodeId];
+  const leg = (w: WallSegment) => {
+    const other = d.nodes[w.a === nodeId ? w.b : w.a];
+    const len = dist(node, other);
+    return { w, len, u: len > 1e-6 ? scale(sub(other, node), 1 / len) : null };
+  };
+  const [l1, l2] = ws.map(leg);
+  if (!l1.u || !l2.u) return null;
+  const theta = Math.acos(Math.max(-1, Math.min(1, l1.u.x * l2.u.x + l1.u.y * l2.u.y)));
+  if (theta < 0.05 || theta > Math.PI - 0.05) return null;
+  return { node, theta, w1: l1.w.id, w2: l2.w.id, u1: l1.u, u2: l2.u, len1: l1.len, len2: l2.len };
+}
+
+/**
+ * Rounds the corner where two straight walls meet: both walls are cut back from the corner and a
+ * curved wall (a circular arc of `radius`, tangent to both, in the first wall's construction and
+ * finishes) joins them. Openings keep their place. The radius is capped so each wall keeps at
+ * least 5 cm. Returns the new wall's id, or null when the corner cannot be rounded.
+ */
+export function roundCorner(d: D, nodeId: string, radius: number): string | null {
+  const c = cornerAt(d, nodeId);
+  const max = maxCornerRadius(d, nodeId);
+  if (!c || max === null) return null;
+  const R = Math.max(0.01, Math.min(radius, max));
+  const t = R / Math.tan(c.theta / 2);
+  const p1 = add(c.node, scale(c.u1, t));
+  const p2 = add(c.node, scale(c.u2, t));
+  const n1 = addNode(d, p1);
+  const n2 = addNode(d, p2);
+  for (const [wallId, n] of [
+    [c.w1, n1],
+    [c.w2, n2],
+  ] as const) {
+    const w = d.walls[wallId];
+    if (w.a === nodeId) {
+      w.a = n;
+      // Offsets run from the start node, which moved t along the wall.
+      for (const o of Object.values(d.openings)) if (o.wallId === wallId) o.offset -= t;
+    } else w.b = n;
+  }
+  const src = d.walls[c.w1];
+  const id = newId('w');
+  // Circular arc: each handle along its end's tangent (towards the old corner), (4/3)·tan(φ/4)·R long.
+  const h = (4 / 3) * Math.tan((Math.PI - c.theta) / 4) * R;
+  d.walls[id] = {
+    ...JSON.parse(JSON.stringify(plain(src as WallSegment))),
+    id,
+    a: n1,
+    b: n2,
+    curve: add(p1, scale(c.u1, -h)),
+    curveEnd: add(p2, scale(c.u2, -h)),
+    heightEnd: null,
+  };
+  delete d.nodes[nodeId];
+  clampOpenings(d, [c.w1, c.w2]);
+  return id;
+}

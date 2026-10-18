@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 import type { AssetDefinition, Part, PlanStroke } from '@/data/assets/types';
 import { getAsset, setAssetResolver } from '@/data/assets/registry';
+import { currentItem, withModel } from '@/data/assets/models';
 import { partBounds } from '@/data/assets/plantParts';
 import { usePrefsStore, type SavedGroup } from '@/state/uiStores';
 import { readyGroupById } from '@/data/groups/readyGroups';
+import { useProjectStore } from '@/state/projectStore';
 
 /**
  * Saved groups as library items: a group (prefs `savedGroups`) becomes a read-only asset with the
@@ -31,12 +33,13 @@ export function savedGroupAsset(g: SavedGroup): AssetDefinition {
   const slots: AssetDefinition['slots'] = [];
   const parts: Part[] = [];
   g.items.forEach((it, i) => {
-    const a = getAsset(null, it.assetId);
+    const cur = currentItem(it.assetId, it.model);
+    const a = withModel(getAsset(null, cur.assetId), cur.model);
     if (!a || a.id.startsWith(SAVED_GROUP_PREFIX)) return;
     for (const s of a.slots) slots.push({ id: `${i}:${s.id}`, label: `${a.name}: ${s.label}`, defaultMaterial: it.materials[s.id] ?? s.defaultMaterial });
     let built: Part[] = [];
     try {
-      built = a.build({ w: it.width, d: it.depth, h: it.height });
+      built = a.build({ w: it.width, d: it.depth, h: it.height - (cur.dh ?? 0) });
     } catch {
       built = [];
     }
@@ -82,11 +85,23 @@ export function savedGroupAsset(g: SavedGroup): AssetDefinition {
 /** Library items for every saved group. */
 export const savedGroupAssets = (groups: SavedGroup[]): AssetDefinition[] => groups.map(savedGroupAsset);
 
-/** The saved group behind a `savedgroup:<id>` asset id, if any. */
+/**
+ * The saved group behind a `savedgroup:<id>` asset id, if any: the user's own, a ready-made one, or
+ * the copy kept in one of the project's collections (a group saved on another machine).
+ */
 export function savedGroupOf(assetId: string): SavedGroup | undefined {
   if (!assetId.startsWith(SAVED_GROUP_PREFIX)) return undefined;
   const id = assetId.slice(SAVED_GROUP_PREFIX.length);
-  return usePrefsStore.getState().savedGroups.find((g) => g.id === id) ?? readyGroupById(id);
+  return transientGroups.get(id) ?? usePrefsStore.getState().savedGroups.find((g) => g.id === id) ?? readyGroupById(id) ?? collectionGroup(id);
+}
+
+/** Groups that live only for this session (a duplicated selection being placed), by id. */
+export const transientGroups = new Map<string, SavedGroup>();
+
+/** A group copy from the open project's collections. */
+function collectionGroup(id: string): SavedGroup | undefined {
+  for (const c of useProjectStore.getState().project?.collections ?? []) if (c.groups[id]) return c.groups[id] as SavedGroup;
+  return undefined;
 }
 
 setAssetResolver((id) => {

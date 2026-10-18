@@ -7,7 +7,7 @@ import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
 import { boundsOf, unionBounds, type Bounds } from '@/domain/geometry/vec';
 import { pointAt } from '@/domain/geometry/wallPath';
-import { clampOpenings, curveHandleFraction, fitCurveToJoins, flipCurve, joinTangent, makeCircularArc, setCurveHandleFraction, setCurveHandles, setWallAngle, setWallLength, splitWallAt, updateWalls } from '@/domain/commands/walls';
+import { clampOpenings, curveHandleFraction, maxCornerRadius, roundCorner, sharedNode, fitCurveToJoins, flipCurve, joinTangent, makeCircularArc, setCurveHandleFraction, setCurveHandles, setWallAngle, setWallLength, splitWallAt, updateWalls } from '@/domain/commands/walls';
 import { assignMaterial, normalizeRotation, setOpeningDesign, suggestedFloor, updateObjects, updateOpening, updateRoom } from '@/domain/commands/entities';
 import { defaultDesign, designFitsKind, OPENING_DESIGNS_BY_ID, resolveOpeningDesign } from '@/domain/model/openingDesigns';
 import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
@@ -22,7 +22,8 @@ import { MaterialSlotRow } from '@/features/materials/MaterialUI';
 import { deleteSelection, duplicateSelection, flipOpening, reverseWall, rotateSelection, toggleLockSelection, describeSelection } from './actions';
 import { DrawPresetSelect, WallConstruction, WallPresetPicker, WallTrims, isLightWall, LightWallFinishes } from './WallExtras';
 import { WallMultiEdit } from './WallMultiEdit';
-import { SelectSameTypeButton, WallTypesSection } from './WallTypes';
+import { SelectSameTypeButton } from './WallTypes';
+import { AnnotationToggles } from './AnnotationToggles';
 import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
@@ -30,6 +31,9 @@ import { ObjectPreview } from './ObjectPreview';
 import { PlantCare } from '@/features/library/PlantCare';
 import { OpeningFinishes, OpeningToolFinish } from './OpeningFinishes';
 import { ObjectVariants } from './ObjectVariants';
+import { ObjectModels } from './ObjectModels';
+import { scalePct, scaledSize } from './objectScale';
+import { withModel } from '@/data/assets/models';
 
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
   useProjectStore.getState().execute(label, fn);
@@ -538,6 +542,8 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
 function ObjectInspector({ project, objectId, isMobile }: { project: Project; objectId: string; isMobile: boolean }) {
   const o = project.objects[objectId];
   const asset = getAsset(project, o.assetId);
+  // Finishes list the slots of the item's model (a bare model has no book or decor slots).
+  const shown = withModel(asset, o.model);
   const u = project.settings;
   const upd = (label: string, patch: Parameters<typeof updateObjects>[2]) => exec(label, (d) => updateObjects(d, [objectId], patch));
   const min = asset?.minSize ?? { w: 0.02, d: 0.02, h: 0.02 };
@@ -555,17 +561,7 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
       <Section title="Item">
         {asset && <ObjectPreview project={project} objectId={objectId} />}
         <TextField label="Label" value={o.name ?? asset?.name ?? ''} onCommit={(name) => upd('Rename object', { name })} />
-        {asset && (
-          <p className="field-hint">
-            {asset.name} · {ASSET_CATEGORY_LABELS[asset.category]}
-          </p>
-        )}
-        {asset?.pack && (
-          <p className="field-hint pack-source" data-testid="pack-source">
-            From the {asset.pack.name} pack{asset.pack.version ? ` v${asset.pack.version}` : ''}
-            {asset.pack.author ? ` by ${asset.pack.author}` : ''} · {asset.source.license}
-          </p>
-        )}
+        {asset && <ObjectModels project={project} objectId={objectId} asset={asset} />}
         {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
       </Section>
       {asset?.plant && (
@@ -581,9 +577,22 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
           <LengthField label="Height" value={o.height} unit={u.units} precision={u.precision} min={min.h} max={max.h} disabled={locked || asset?.resizable.h === false} onCommit={(v) => upd('Resize object', { height: v })} />
         </div>
         {asset && (
-          <Button size="sm" variant="subtle" disabled={locked} onClick={() => upd('Reset size', { width: asset.defaultSize.w, depth: asset.defaultSize.d, height: asset.defaultSize.h })}>
-            Reset to default size
-          </Button>
+          <div className="size-scale-row">
+            <NumberField
+              label="Scale"
+              value={Math.round(scalePct(o, asset))}
+              min={1}
+              max={1000}
+              step={5}
+              suffix="%"
+              decimals={0}
+              disabled={locked || !(asset.resizable.w || asset.resizable.d || asset.resizable.h)}
+              onCommit={(pct) => upd('Scale object', scaledSize(o, asset, pct / Math.max(1e-6, scalePct(o, asset)), min, max))}
+            />
+            <Button size="sm" variant="subtle" disabled={locked} onClick={() => upd('Reset size', { width: asset.defaultSize.w, depth: asset.defaultSize.d, height: asset.defaultSize.h })}>
+              Reset to default size
+            </Button>
+          </div>
         )}
       </Section>
       <Section title="Position">
@@ -604,14 +613,14 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
         </div>
         {!isMobile && <Toggle label="Mirrored" checked={o.mirrored} onChange={(v) => upd(v ? 'Mirror object' : 'Unmirror object', { mirrored: v })} />}
       </Section>
-      {asset && asset.slots.length > 0 && (
+      {shown && shown.slots.length > 0 && (
         <Section title="Finishes">
-          {asset.slots.map((slot) => (
+          {shown.slots.map((slot) => (
             <MaterialSlotRow
               key={slot.id}
               label={slot.label}
               target={{ kind: 'object-slot', objectId, slot: slot.id }}
-              materialId={objectSlotMaterialId(o, asset, slot.id)}
+              materialId={objectSlotMaterialId(o, shown, slot.id)}
             />
           ))}
         </Section>
@@ -731,6 +740,7 @@ function MultiInspector({ project }: { project: Project }) {
           </Button>
         </div>
       </Section>
+      {walls.length === 2 && <RoundCornerSection project={project} walls={walls} />}
       {walls.length > 0 && (
         <>
           <WallMultiEdit project={project} wallIds={walls} />
@@ -740,6 +750,36 @@ function MultiInspector({ project }: { project: Project }) {
         </>
       )}
     </>
+  );
+}
+
+/** Two walls meeting at a corner: replace the corner with a curved wall of a chosen radius. */
+function RoundCornerSection({ project, walls }: { project: Project; walls: string[] }) {
+  const node = sharedNode(project, walls[0], walls[1]);
+  const max = node ? maxCornerRadius(project, node) : null;
+  const [radius, setRadius] = useState(0.5);
+  if (!node || max === null) return null;
+  const r = Math.min(radius, max);
+  const u = project.settings;
+  return (
+    <Section title="Corner">
+      <LengthField label="Radius" value={r} unit={u.units} precision={u.precision} min={0.02} max={max} onCommit={setRadius} />
+      <div className="btn-row">
+        <Button
+          size="sm"
+          variant="primary"
+          data-testid="round-corner"
+          onClick={() => {
+            let arc: string | null = null;
+            useProjectStore.getState().execute('Round corner', (d) => void (arc = roundCorner(d, node, r)));
+            if (arc) useEditorStore.getState().setSelection([{ kind: 'wall', id: arc }]);
+          }}
+        >
+          Round corner
+        </Button>
+      </div>
+      <p className="field-hint">Joins the two walls with a curved wall, tangent to both. Up to {formatLength(max, u.units, 2)} here.</p>
+    </Section>
   );
 }
 
@@ -913,19 +953,9 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
           })}
         </div>
       </Section>
-      {categories.length > 0 && (
-        <Section title="Items by category">
-          <div className="room-list">
-            {categories.map(([label, count]) => (
-              <div key={label} className="list-row static">
-                <span>{label}</span>
-                <span className="num">{count}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-      <WallTypesSection project={project} />
+      <Section title="Annotations">
+        <AnnotationToggles />
+      </Section>
       <Section title="Layers">
         {(
           [
@@ -952,13 +982,18 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
           </div>
         ))}
       </Section>
-      <Section title="Annotations">
-        <Toggle label="Room names" checked={u.showRoomLabels} onChange={(v) => exec('Toggle room names', (d) => void (d.settings.showRoomLabels = v))} />
-        <Toggle label="Room areas" checked={u.showRoomAreas} onChange={(v) => exec('Toggle room areas', (d) => void (d.settings.showRoomAreas = v))} />
-        <Toggle label="Overall dimensions" checked={u.dimensions.overall} onChange={(v) => exec('Toggle dimensions', (d) => void (d.settings.dimensions.overall = v))} />
-        <Toggle label="Wall lengths" checked={u.dimensions.walls} onChange={(v) => exec('Toggle dimensions', (d) => void (d.settings.dimensions.walls = v))} />
-        <Toggle label="Room dimensions" checked={u.dimensions.rooms} onChange={(v) => exec('Toggle dimensions', (d) => void (d.settings.dimensions.rooms = v))} />
-      </Section>
+      {categories.length > 0 && (
+        <Section title="Items by category">
+          <div className="room-list">
+            {categories.map(([label, count]) => (
+              <div key={label} className="list-row static">
+                <span>{label}</span>
+                <span className="num">{count}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
     </>
   );
 }

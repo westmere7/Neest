@@ -4,6 +4,7 @@ import { FALLBACK_MATERIAL, MATERIAL_CATALOG_BY_ID } from '../materials/catalog'
 import { ASSETS_BY_ID } from './catalog';
 import type { AssetDefinition, Part, PlanStroke, Size3 } from './types';
 import { dropPackKeys, subscribePacks } from '@/packs/events';
+import { slotDefaultMaterial, withModel } from './models';
 
 /** Asset lookup across the built-in catalogue and the project's imported models. */
 export function getAsset(project: Pick<Project, 'customAssets'> | null, assetId: string): AssetDefinition | null {
@@ -12,6 +13,11 @@ export function getAsset(project: Pick<Project, 'customAssets'> | null, assetId:
   const custom = project?.customAssets[assetId];
   if (custom) return customAssetDefinition(custom);
   return extraResolver?.(assetId) ?? null;
+}
+
+/** The asset a placed item shows: its asset in the item's model variant (see ./models). */
+export function getObjectAsset(project: Pick<Project, 'customAssets'> | null, obj: Pick<PlacedObject, 'assetId' | 'model'>): AssetDefinition | null {
+  return withModel(getAsset(project, obj.assetId), obj.model);
 }
 
 /** Extra asset source installed by the app (saved groups as library items: `savedgroup:<id>`). */
@@ -60,11 +66,11 @@ export function resolveMaterial(project: Pick<Project, 'materials'> | null, id: 
 }
 
 export function objectSlotMaterialId(obj: PlacedObject, asset: AssetDefinition | null, slot: string): string {
-  return obj.materials[slot] ?? asset?.slots.find((s) => s.id === slot)?.defaultMaterial ?? FALLBACK_MATERIAL.id;
+  return obj.materials[slot] ?? slotDefaultMaterial(asset, slot) ?? FALLBACK_MATERIAL.id;
 }
 
 export function assetSlotDefault(assetId: string, slot: string): string | undefined {
-  return ASSETS_BY_ID[assetId]?.slots.find((s) => s.id === slot)?.defaultMaterial;
+  return slotDefaultMaterial(ASSETS_BY_ID[assetId], slot);
 }
 
 // ───────────── Plan footprints ─────────────
@@ -194,7 +200,9 @@ export function assetPlan(asset: AssetDefinition, size: Size3, custom?: CustomAs
       .sort((a, b) => a.top - b.top);
     plan = { shapes, strokes: asset.planDetail?.(size) ?? [] };
   }
-  if (planCache.size > 800) planCache.clear();
+  // Big enough for the whole library plus a project's sizes: when it fills up it is cleared, and an
+  // open library would then rebuild every card's item on each render.
+  if (planCache.size > 5000) planCache.clear();
   planCache.set(key, plan);
   return plan;
 }

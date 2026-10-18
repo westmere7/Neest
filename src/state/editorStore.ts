@@ -48,6 +48,19 @@ export interface SnapSettings {
   guides: boolean;
 }
 
+/** What a duplicated item is placed with (see `EditorState.placeTemplate`). */
+export interface PlaceTemplate {
+  assetId: string;
+  width: number;
+  depth: number;
+  height: number;
+  elevation: number;
+  mirrored: boolean;
+  materials: Record<string, string>;
+  model?: string;
+  name: string | null;
+}
+
 export interface EditorState {
   tool: ToolId;
   wallRole: WallRole;
@@ -64,8 +77,15 @@ export interface EditorState {
   windowFinish: string | null;
   placeAssetId: string | null;
   placeRotation: number;
+  /**
+   * Placement of a copy (Duplicate): the item's own size, elevation, finishes, model and name, used
+   * while `placeAssetId` is its asset. Cleared whenever something else sets `placeAssetId`.
+   */
+  placeTemplate: PlaceTemplate | null;
   /** Colour variant chosen per asset in the library (asset id → variant id); new items are placed in it. */
   variantChoice: Record<string, string>;
+  /** Model variant chosen per asset in the library (used for new items). */
+  modelChoice: Record<string, string>;
   selection: SelItem[];
   hover: SelItem | null;
   workspace: Workspace;
@@ -75,6 +95,8 @@ export interface EditorState {
   libraryTab: LibraryTab;
   /** Asks the library to show an item's card (Inspector → Show in library); the nonce re-triggers it. */
   libraryReveal: { assetId: string; nonce: number } | null;
+  /** Library: show this collection in the furniture tab (set after creating one). */
+  libraryCollection: { id: string; nonce: number } | null;
   buildGroup: BuildGroup;
   libraryWidth: number;
   /** Desktop 3D view settings panel shown; when false it is stashed behind the rail's View button (P). */
@@ -120,7 +142,9 @@ export const useEditorStore = create<EditorState>((set) => ({
   windowFinish: null,
   placeAssetId: null,
   placeRotation: 0,
+  placeTemplate: null,
   variantChoice: {},
+  modelChoice: {},
   selection: [],
   hover: null,
   workspace: 'plan',
@@ -129,6 +153,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   libraryOpen: true,
   libraryTab: 'furniture',
   libraryReveal: null,
+  libraryCollection: null,
   buildGroup: 'walls',
   libraryWidth: 300,
   // Opened on demand (top-bar button or P), not every time the 3D view is shown.
@@ -158,7 +183,8 @@ export const useEditorStore = create<EditorState>((set) => ({
     }),
   clearSelection: () => set({ selection: [] }),
   setHover: (hover) => set((s) => (s.hover?.id === hover?.id ? s : { hover })),
-  set: (partial) => set(partial),
+  // Picking another item to place drops a Duplicate's template.
+  set: (partial) => set('placeAssetId' in partial && !('placeTemplate' in partial) ? { ...partial, placeTemplate: null } : partial),
   requestFit: () => set((s) => ({ fitRequest: s.fitRequest + 1 })),
   requestCamera: (view) => set({ cameraRequest: { view, nonce: Math.random() } }),
 }));

@@ -340,6 +340,7 @@ export function Launcher() {
                     <h3 title={p.name}>{p.name}</h3>
                     <p className="num">
                       {p.roomCount} room{p.roomCount === 1 ? '' : 's'} · {formatArea(p.area, 'm2', 1)} · {p.objectCount} items
+                      {(p.optionCount ?? 0) > 1 && <> · {p.optionCount} options</>}
                     </p>
                     {(() => {
                       const r = repo.entries.find((e) => e.id === p.id);

@@ -9,6 +9,8 @@ import { checkPlantInfo } from '@/data/assets/plantInfo';
 import type { AssetCategory, AssetDefinition, AssetType, Part, Size3 } from '@/data/assets/types';
 import type { PackSpec } from './kit';
 import { notifyPacksChanged } from './events';
+import { clearModelExtensions, setModelExtensions, type ModelExtension } from '@/data/assets/models';
+import type { AssetModelVariant } from '@/data/assets/types';
 
 /**
  * Merges content packs (/packs/<pack-id>.pack.ts) into the built-in catalogues. Pack ids are
@@ -52,6 +54,27 @@ function removeAll(): void {
   for (const id of Object.keys(MATERIAL_CATALOG_BY_ID)) if (id.includes(':')) delete MATERIAL_CATALOG_BY_ID[id];
 }
 
+/** Valid model variants (lowercase unique ids, names); their own slots' materials resolved like the item's. */
+function checkModels(list: AssetModelVariant[], where: string, report: (msg: string) => void, matId: (id: string) => string): AssetModelVariant[] {
+  const out: AssetModelVariant[] = [];
+  for (const m of list) {
+    if (!m || !LOCAL_ID.test(m.id ?? '') || !m.name?.trim()) {
+      report(`${where}: each model needs a lowercase id and a name.`);
+      continue;
+    }
+    if (out.some((x) => x.id === m.id)) {
+      report(`${where}: model id "${m.id}" is used twice.`);
+      continue;
+    }
+    if (m.props !== undefined && typeof m.props !== 'function') {
+      report(`${where}: model "${m.id}" props must be a function of the size.`);
+      continue;
+    }
+    out.push({ ...m, slots: m.slots?.map((s) => ({ ...s, defaultMaterial: matId(s.defaultMaterial) })) });
+  }
+  return out;
+}
+
 /** Box standing in for an item whose build() threw, so a broken pack item stays visible and selectable. */
 const fallbackParts = ({ w, d, h }: Size3, slot: string): Part[] => [
   { shape: 'box', size: [Math.max(w, 0.01), Math.max(h, 0.01), Math.max(d, 0.01)], position: [0, h / 2, 0], slot },
@@ -59,6 +82,8 @@ const fallbackParts = ({ w, d, h }: Size3, slot: string): Part[] => [
 
 export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
   removeAll();
+  clearModelExtensions();
+  const extensionsBySource: [string, Record<string, ModelExtension>][] = [];
   const items: AssetDefinition[] = [];
   const materials: MaterialDefinition[] = [];
   const patterns: TexturePattern[] = [];
@@ -191,6 +216,7 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
           plant: plantErrors.length ? undefined : item.plant,
           slots: item.slots.map((s) => ({ ...s, defaultMaterial: matId(s.defaultMaterial) })),
           variantOf: item.variantOf ? (spec.items.some((x) => x.id === item.variantOf) ? ns(item.variantOf) : item.variantOf) : undefined,
+          models: item.models ? checkModels(item.models, `Item "${item.id}"`, report, matId) : undefined,
           variants: item.variants?.map((v) => ({ ...v, materials: Object.fromEntries(Object.entries(v.materials ?? {}).map(([k, m]) => [k, matId(m)])) })),
           build: (size) => {
             try {
@@ -220,6 +246,21 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
       }
     }
 
+    // Models added to other items.
+    if (spec.models && typeof spec.models === 'object') {
+      const byAsset: Record<string, ModelExtension> = {};
+      for (const [target, ext] of Object.entries(spec.models)) {
+        const assetId = spec.items.some((x) => x.id === target) ? ns(target) : target;
+        if (!ext || typeof ext.original !== 'string' || !ext.original.trim() || !Array.isArray(ext.models)) {
+          report(`Models for "${target}" need an "original" name and a "models" list.`);
+          continue;
+        }
+        const models = checkModels(ext.models, `Models for "${target}"`, report, matId);
+        if (models.length) byAsset[assetId] = { original: ext.original.trim(), models };
+      }
+      extensionsBySource.push([folder, byAsset]);
+    }
+
     for (const msg of errors) console.warn(`[packs] ${folder}: ${msg}`);
     result.push({
       ...info,
@@ -241,6 +282,7 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
     ASSET_CATALOG.push(a);
     ASSETS_BY_ID[a.id] = a;
   }
+  for (const [source, byAsset] of extensionsBySource) setModelExtensions(source, byAsset);
   setPackPatterns(patterns);
   setPackPhotoSets(photoSets);
   loaded = result;

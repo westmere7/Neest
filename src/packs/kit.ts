@@ -18,7 +18,7 @@ export { PLANT_SPECIES, type PlantSpeciesId } from '@/data/assets/plantSpecies';
 export { builtInAsset } from '@/data/assets/catalog';
 /** Baked realistic people (npm run people): figure id → GLB file, hash, size [w, d, h] and slots. */
 export { default as PEOPLE_MODELS } from '@/data/assets/peopleModels.json';
-export type { AssetBrand, AssetCategory, AssetModel, AssetPresetVariant, AssetType, Part, PlanStroke, PlantInfo, Size3, MaterialSlot } from '@/data/assets/types';
+export type { AssetBrand, AssetCategory, AssetModel, AssetModelVariant, AssetPresetVariant, AssetType, Part, PlanStroke, PlantInfo, Size3, MaterialSlot } from '@/data/assets/types';
 
 /** An item (furniture/object) in a pack: the same fields as a built-in asset. */
 export type PackItem = AssetSpec;
@@ -77,6 +77,13 @@ export interface PackSpec {
    */
   textures?: Record<string, string>;
   patterns?: PackPattern[];
+  /**
+   * Model variants this pack adds to other items (built-in ids like "bookcase", or another pack's
+   * "<pack>:<id>"): `original` names the item's own look as the first model, e.g.
+   *   models: { bookcase: { original: 'Styled', models: [{ id: 'empty', name: 'Empty', hide: ['books'] }] } }
+   * A pack's own items list their models in `models` on the item instead.
+   */
+  models?: Record<string, { original: string; models: import('@/data/assets/types').AssetModelVariant[] }>;
 }
 
 /** Identity helper with type checking; a pack module must `export default definePack({...})`. */

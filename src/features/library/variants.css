@@ -106,3 +106,119 @@
 .object-variants .vs-caption {
   margin-top: 0;
 }
+
+/* Model variants (ModelPicker.tsx): a small pill that opens the list of models, and the library
+   card corner button. */
+.model-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.model-picker svg:first-child {
+  color: var(--accent-strong);
+}
+.model-picker .mp-chevron {
+  color: var(--text-3);
+}
+.model-picker:hover {
+  border-color: var(--border-strong);
+}
+.model-picker:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+.model-picker-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.model-picker.open {
+  border-color: var(--accent);
+}
+.model-picker.open .mp-chevron {
+  transform: rotate(180deg);
+}
+.mp-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-sm);
+}
+.mp-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.mp-item svg:first-child {
+  color: var(--accent-strong);
+}
+.mp-item:hover,
+.mp-item:focus-visible {
+  background: var(--surface-3);
+  outline: none;
+}
+.mp-item.on {
+  font-weight: 600;
+}
+.mp-check {
+  margin-left: auto;
+  color: var(--accent-strong);
+}
+.card-model-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--accent-strong);
+  cursor: pointer;
+  z-index: 1;
+}
+.card-model-btn:hover {
+  border-color: var(--accent);
+}
+.card-model-btn:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+.object-models {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 8px;
+}
+.aic-models {
+  margin-top: 2px;
+}

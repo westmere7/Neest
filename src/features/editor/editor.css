@@ -633,6 +633,13 @@
   grid-template-columns: 1fr 1fr;
   gap: 18px 24px;
 }
+/* Two independent columns, so short sections never leave gaps beside tall ones. */
+.settings-col {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
 .settings-grid section {
   display: flex;
   flex-direction: column;
@@ -1004,5 +1011,79 @@
   font-size: 12.5px;
 }
 .wall-type-text strong {
+  font-weight: 600;
+}
+.trim-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* Inspector › Size: proportional scale beside the reset button. */
+.size-scale-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+/* Plan annotations (Project panel, Project settings) */
+.annotation-toggles .annotation-head {
+  margin: 10px 0 2px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+.annotation-toggles .btn-row {
+  margin-top: 8px;
+}
+
+/* View button: quick quality switch on hover (3D) */
+.view-quick {
+  position: relative;
+}
+.view-quick-pop {
+  position: fixed;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  min-width: 110px;
+  z-index: 1000;
+}
+/* Bridges the gap, so the pointer can travel from the button to the list. */
+.view-quick-pop::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+}
+.view-quick-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  padding: 2px 8px 4px;
+}
+.view-quick-pop button {
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.view-quick-pop button:hover {
+  background: var(--surface-2);
+}
+.view-quick-pop button.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
   font-weight: 600;
 }

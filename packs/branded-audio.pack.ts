@@ -1,9 +1,9 @@
 /**
- * Branded audio — eight speakers popular in Vietnam, at their published sizes.
+ * Branded audio — six speakers popular in Vietnam, at their published sizes.
  *
- * Portable Bluetooth: JBL Flip 6 and JBL Charge 5. Party / karaoke: JBL PartyBox 110 with its light
+ * Portable Bluetooth: JBL Flip 6. Party / karaoke: JBL PartyBox 110 with its light
  * show, and the Acnos Acoustic 3 karaoke speaker (a Vietnamese brand). Home: Marshall Stanmore III
- * and Acton III, and the Samsung HW-Q600C soundbar with its wireless subwoofer.
+ * and the Samsung HW-Q600C soundbar with its wireless subwoofer.
  *
  * Original procedural shapes: fabric or tolex bodies, rings for drivers and passive radiators,
  * no logos or trademark artwork. Fixed products, so nothing resizes.
@@ -80,24 +80,6 @@ const flip6 = defineItem({
   brand: brand('JBL', 'Flip 6', 'Portable Bluetooth speaker', 'https://priceoye.pk/bluetooth-speakers/compare/jbl-charge-5-portable-bluetooth-speaker-vs-jbl-flip-6-portable-bluetooth-speaker', [
     ['Size', '178 × 68 × 72 mm'],
     ['Weight', '0.55 kg'],
-    ['Water and dust', 'IP67'],
-  ]),
-});
-
-const charge5 = defineItem({
-  id: 'jbl-charge-5',
-  name: 'JBL Charge 5',
-  category: 'living',
-  type: 'electronics',
-  group: 'TV & audio',
-  tags: [...TAGS, 'jbl', 'charge 5', 'portable speaker', 'loa bluetooth', 'power bank'],
-  description: 'Bigger JBL capsule speaker on a flat rubber foot, with a power-bank USB port.',
-  ...fixed(0.223, 0.0965, 0.094),
-  slots: [matSlot('fabric', 'Fabric', 'solid-red'), matSlot('caps', 'Rubber ends & foot', 'rubber-black'), matSlot('radiator', 'Passive radiators', 'metal-anthracite')],
-  build: ({ w, d, h }) => capsule(w, d, h, true),
-  brand: brand('JBL', 'Charge 5', 'Portable Bluetooth speaker', 'https://priceoye.pk/bluetooth-speakers/compare/jbl-charge-5-portable-bluetooth-speaker-vs-jbl-flip-6-portable-bluetooth-speaker', [
-    ['Size', '223 × 96.5 × 94 mm'],
-    ['Weight', '0.96 kg'],
     ['Water and dust', 'IP67'],
   ]),
 });
@@ -199,24 +181,6 @@ const stanmore = defineItem({
   ]),
 });
 
-const acton = defineItem({
-  id: 'marshall-acton-iii',
-  name: 'Marshall Acton III',
-  category: 'living',
-  type: 'electronics',
-  group: 'TV & audio',
-  tags: [...TAGS, 'marshall', 'acton', 'home speaker', 'vintage'],
-  description: 'The smallest Marshall home speaker: tolex, grille cloth and a brass control panel.',
-  ...fixed(0.26, 0.15, 0.178),
-  slots: MARSHALL_SLOTS,
-  build: ({ w, d, h }) => marshall(w, d, h - 0.008, 4),
-  brand: brand('Marshall', 'Acton III', 'Home speakers', 'https://altitude.ph/products/marshall-acton-iii-bluetooth-speaker-system-black', [
-    ['Size (W × H × D)', '260 × 170 × 150 mm'],
-    ['Weight', '2.85 kg'],
-    ['Output', '60 W'],
-  ]),
-});
-
 const soundbar = defineItem({
   id: 'samsung-hw-q600c-soundbar',
   name: 'Samsung HW-Q600C soundbar',
@@ -272,9 +236,9 @@ export default definePack({
   name: 'Branded audio',
   version: '1.0.0',
   author: 'Neest team',
-  description: 'Eight speakers popular in Vietnam at their published sizes: JBL Flip 6, Charge 5 and PartyBox 110, Acnos Acoustic 3 karaoke, Marshall Stanmore III and Acton III, and the Samsung HW-Q600C soundbar and subwoofer.',
+  description: 'Six speakers popular in Vietnam at their published sizes: JBL Flip 6 and PartyBox 110, Acnos Acoustic 3 karaoke, Marshall Stanmore III, and the Samsung HW-Q600C soundbar and subwoofer.',
   license: 'CC0 (made for Neest); brand names belong to their owners',
-  items: [flip6, charge5, partyBox, acnos, stanmore, acton, soundbar, subwoofer],
+  items: [flip6, partyBox, acnos, stanmore, soundbar, subwoofer],
   materials: [
     { id: 'partybox-glow', name: 'Party light', color: '#ff4fc3', roughness: 0.4, emissive: '#ff3cbe', emissiveIntensity: 2.2 },
     { id: 'marshall-grille', name: 'Marshall grille cloth', category: 'fabric', color: '#2b2a28', roughness: 0.9, pattern: { id: 'weave', scale: 0.03 } },

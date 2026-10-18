@@ -255,6 +255,8 @@ export const PlacedObjectSchema = z.object({
   hidden: z.boolean().default(false),
   /** Group this item belongs to (`Project.groups`); members are selected and moved together. */
   groupId: Id.optional(),
+  /** Model variant of the asset (`AssetDefinition.models`); absent = the asset's default model. */
+  model: z.string().max(60).optional(),
 });
 
 /** A named group of placed items (Ctrl+G). Older builds ignore it and keep the items. */
@@ -382,6 +384,10 @@ export const RenderSettingsSchema = z.object({
   showCeilings: z.boolean().default(false),
   showRoomLabels: z.boolean().default(false),
   hiddenCategories: z.array(z.string()).default([]),
+  /** Vertical field of view of the 3D perspective camera, in degrees. */
+  fov: num.min(15).max(110).default(45),
+  /** Field of view in the first-person walkthrough. */
+  walkFov: num.min(40).max(110).default(70),
 });
 
 export const ProjectSettingsSchema = z.object({
@@ -404,8 +410,14 @@ export const ProjectSettingsSchema = z.object({
       overall: z.boolean(),
       walls: z.boolean(),
       rooms: z.boolean(),
+      /** Door and window widths along their wall. */
+      openings: z.boolean().default(false),
+      /** Wall thickness labels. */
+      thickness: z.boolean().default(false),
+      /** Width and depth of every item. */
+      objects: z.boolean().default(false),
     })
-    .default({ overall: true, walls: false, rooms: true }),
+    .default({ overall: true, walls: false, rooms: true, openings: false, thickness: false, objects: false }),
 });
 
 export const LayerStateSchema = z.object({ visible: z.boolean(), locked: z.boolean() });
@@ -454,6 +466,49 @@ export const LayoutOptionSchema = z.object({
   plan: OptionPlanSchema.nullable().default(null),
 });
 
+/** A copy of a saved library group kept in a collection, so the group places on any machine. */
+export const GroupSnapshotSchema = z.object({
+  id: Id,
+  name: z.string().min(1).max(80),
+  description: z.string().max(500).optional(),
+  createdAt: num.default(0),
+  items: z
+    .array(
+      z.object({
+        assetId: z.string().min(1).max(200),
+        name: z.string().max(80).nullable().default(null),
+        dx: num,
+        dy: num,
+        elevation: num,
+        rotation: num,
+        width: num,
+        depth: num,
+        height: num,
+        mirrored: z.boolean().default(false),
+        materials: z.record(z.string(), z.string()).default({}),
+        model: z.string().max(60).optional(),
+      }),
+    )
+    .max(400),
+  size: z.object({ w: num, d: num }),
+  defs: z.record(z.string(), MaterialSchema).optional(),
+});
+
+/**
+ * A named collection of library items the user picked (like favourites, but many lists): items
+ * by asset id, and groups as `savedgroup:<id>`. Kept on the project, outside the option plans, so
+ * every layout option shares them (and teammates get them with the project).
+ */
+export const CollectionSchema = z.object({
+  id: Id,
+  name: z.string().min(1).max(60),
+  description: z.string().max(500).optional(),
+  /** Library item ids in order (asset ids, `savedgroup:<id>` for groups). */
+  items: z.array(z.string().min(1).max(200)).max(500).default([]),
+  /** Copies of the user's own saved groups in `items`, by group id. */
+  groups: z.record(z.string(), GroupSnapshotSchema).default({}),
+});
+
 export const ProjectSchema = z.object({
   format: z.literal(PROJECT_FORMAT).default(PROJECT_FORMAT),
   schemaVersion: z.literal(SCHEMA_VERSION),
@@ -474,6 +529,8 @@ export const ProjectSchema = z.object({
   render: RenderSettingsSchema.default({}),
   layers: LayersSchema,
   guest: GuestSettingsSchema,
+  /** Library collections, shared by all layout options. */
+  collections: z.array(CollectionSchema).default([]),
   /** Layout options; absent or empty means the project has a single, unnamed layout. */
   options: z.array(LayoutOptionSchema).optional(),
   /** Id of the option whose plan is in the fields above. */
@@ -515,6 +572,8 @@ export type RenderSettings = z.infer<typeof RenderSettingsSchema>;
 export type ProjectSettings = z.infer<typeof ProjectSettingsSchema>;
 export type Layers = z.infer<typeof LayersSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
+export type Collection = z.infer<typeof CollectionSchema>;
+export type GroupSnapshot = z.infer<typeof GroupSnapshotSchema>;
 export type OptionPlan = z.infer<typeof OptionPlanSchema>;
 export type LayoutOption = z.infer<typeof LayoutOptionSchema>;
 

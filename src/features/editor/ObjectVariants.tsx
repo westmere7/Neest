@@ -23,13 +23,13 @@ export function ObjectVariants({ project, objectId, asset }: { project: Project;
   const saved = usePrefsStore((s) => s.assetVariants[asset.id]);
   const selection = useEditorStore((s) => s.selection);
   const [naming, setNaming] = useState<string | null>(null);
-  if (hasFixedFinish(asset)) return null;
   const obj = project.objects[objectId];
   if (!obj) return null;
   const variants = variantsFor(asset, saved);
   const current = matchingVariant(asset, obj.materials, variants);
   const overrides = materialOverrides(asset, obj.materials);
-  const canSave = !current && Object.keys(overrides).length > 0;
+  // Branded items keep to the maker's own finishes: nothing to save.
+  const canSave = !current && Object.keys(overrides).length > 0 && !hasFixedFinish(asset);
 
   const apply = (variantId: string) => {
     const v = variants.find((x) => x.id === variantId);

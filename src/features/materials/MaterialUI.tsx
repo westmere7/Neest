@@ -15,7 +15,7 @@ import {
 import { MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID, MATERIAL_CATEGORY_LABELS } from '@/data/materials/catalog';
 import { allPatternIds, patternInfo } from '@/data/materials/patterns';
 import { PHOTO_SETS, PHOTO_SETS_BY_ID, PHOTO_SOURCE_NAMES, photoSetUrl } from '@/data/materials/photoSets';
-import { assetSlotDefault, getAsset, resolveMaterial } from '@/data/assets/registry';
+import { assetSlotDefault, getObjectAsset, resolveMaterial } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { confirmAction, toast, usePrefsStore, useDialogStore } from '@/state/uiStores';
@@ -454,7 +454,7 @@ export function MaterialEditor({ material, inPanel = false }: { material: Materi
       if (s.kind === 'room') targets.push({ kind: 'room-floor', roomId: s.id });
       if (s.kind === 'object') {
         const o = p.objects[s.id];
-        const slot = o ? getAsset(p, o.assetId)?.slots[0]?.id : undefined;
+        const slot = o ? getObjectAsset(p, o)?.slots[0]?.id : undefined;
         if (slot) targets.push({ kind: 'object-slot', objectId: s.id, slot });
       }
     }

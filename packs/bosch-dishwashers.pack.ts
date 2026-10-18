@@ -1,9 +1,9 @@
 /**
- * Bosch dishwashers — six real Bosch models, built to their published dimensions.
+ * Bosch dishwashers — five real Bosch models, built to their published dimensions.
  *
  * Freestanding (Serie 4 60 cm inox, Serie 2 45 cm slimline white), a Serie 4 table-top compact,
  * a Serie 6 fully integrated with a kitchen door panel, a Serie 6 semi-integrated with a stainless
- * control band, and a US 800 Series with hidden top controls and a pocket handle.
+ * control band.
  *
  * Each item carries `brand` metadata (model, line, published specs and their source). The shapes
  * are original procedural approximations: no logos or trademark artwork are drawn. Sizes are fixed
@@ -418,83 +418,15 @@ const smi6 = defineItem({
   planDetail: ({ w, d }) => [line([-w / 2, d / 2 - 0.019], [w / 2, d / 2 - 0.019])],
 });
 
-// ---------------------------------------------------------------------------
-// 6. 800 Series SHPM88Z75N — US 24″, stainless, pocket handle, top controls
-// ---------------------------------------------------------------------------
-
-const shpm88 = defineItem({
-  id: 'shpm88z75n',
-  name: 'Bosch 800 Series SHPM88Z75N dishwasher',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Cleaning',
-  tags: [...TAGS, 'SHPM88Z75N', '800 series', '24 inch', 'built-in', 'stainless', 'pocket handle', 'infolight'],
-  ...sizes(0.598, 0.603, 0.86),
-  wallSnap: true,
-  description:
-    'Bosch 800 Series 24″ built-in dishwasher in stainless steel, with its controls hidden on the top edge of the door and a recessed pocket handle. Holds 16 place settings.',
-  brand: bosch('SHPM88Z75N', '800 Series', 'https://www.bosch-home.com/us/en/product/SHPM88Z75N', [
-    ['Place settings', '16'],
-    ['Noise', '40 dB'],
-    ['Weight', '116 lb'],
-    ['Cutout', '33 7/8″ × 23 5/8″ × 24″'],
-    ['Dimensions (H × W × D)', '33 7/8″ × 23 9/16″ × 23 3/4″ (860 × 598 × 603 mm)'],
-  ]),
-  slots: [
-    matSlot('body', 'Door & toe kick', 'bosch-inox'),
-    matSlot('cabinet', 'Tub & frame', 'bosch-steel'),
-    matSlot('controls', 'Top controls & pocket', 'bosch-black-glass'),
-    matSlot('info', 'InfoLight & readout', 'bosch-infolight'),
-  ],
-  build: ({ w, d, h }) => {
-    const zF = d / 2;
-    const zD = zF - 0.05;
-    const yK = 0.1; // toe-kick height
-    const yTop = h - 0.004;
-    // Pocket handle: a recess across the top centre of the door.
-    const pw = Math.min(0.3, w * 0.5);
-    const p1 = yTop - 0.032;
-    const p0 = p1 - 0.042;
-    const pd = 0.024;
-    const xs: V2 = [-w / 2 + 0.0015, w / 2 - 0.0015];
-    const parts: Part[] = [
-      // Tub/frame and the dark control strip on the door's top edge.
-      span('cabinet', [-w / 2, w / 2], [yK, h], [-d / 2, zD]),
-      span('controls', [-w / 2 + 0.004, w / 2 - 0.004], [yTop, h], [zD, zF - 0.003], { bevel: 0.0012, plan: false }),
-      // Door around the pocket.
-      span('body', xs, [yK + 0.004, p0], [zD, zF], { bevel: 0.003, plan: false }),
-      span('body', xs, [p1, yTop], [zD, zF], { bevel: 0.002, plan: false }),
-      span('body', [xs[0], -pw / 2], [p0 - 0.002, p1 + 0.002], [zD, zF], o),
-      span('body', [pw / 2, xs[1]], [p0 - 0.002, p1 + 0.002], [zD, zF], o),
-      // Pocket: stainless back, shadowed ceiling where the fingers go.
-      span('body', [-pw / 2, pw / 2], [p0, p1], [zD, zF - pd], o),
-      span('controls', [-pw / 2 + 0.002, pw / 2 - 0.002], [p1 - 0.008, p1], [zF - pd, zF - pd + 0.012], o),
-      // Stainless toe kick, slightly recessed, over the base and feet.
-      span('body', [-w / 2 + 0.004, w / 2 - 0.004], [0.006, yK], [zF - 0.04, zF - 0.025], { bevel: 0.0015, plan: false }),
-      span('cabinet', [-w / 2 + 0.01, w / 2 - 0.01], [0.03, yK], [-d / 2 + 0.03, zF - 0.045], o),
-      ...legs4('cabinet', w - 0.02, d - 0.12, 0.02, 0, 0.03, 0.028, { round: true }),
-      // InfoLight dot on the floor.
-      span('info', [-0.01, 0.01], [0, 0.0015], [zF - 0.02, zF - 0.008], { bevel: 0.0006, plan: false }),
-    ];
-    // Top-edge controls: a row of tiny touch keys and a short readout facing up.
-    for (let i = 0; i < 7; i++) {
-      const x = -w / 2 + 0.06 + i * 0.045;
-      parts.push(span('cabinet', [x - 0.006, x + 0.006], [h - 0.0004, h + 0.0004], [zF - 0.03, zF - 0.022], o));
-    }
-    parts.push(span('info', [0.13, 0.18], [h - 0.0004, h + 0.0004], [zF - 0.032, zF - 0.02], o));
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2, d / 2 - 0.05], [w / 2, d / 2 - 0.05])],
-});
 
 export default definePack({
   name: 'Bosch dishwashers',
   version: '1.0.0',
   author: 'Neest team',
   description:
-    'Six real Bosch dishwashers built to their published dimensions: Serie 4 and Serie 2 freestanding, a Serie 4 table-top compact, Serie 6 fully integrated and semi-integrated, and a US 800 Series. Brand and spec data is in each item’s info card; no logos are drawn.',
+    'Five real Bosch dishwashers built to their published dimensions: Serie 4 and Serie 2 freestanding, a Serie 4 table-top compact, and Serie 6 fully integrated and semi-integrated. Brand and spec data is in each item’s info card; no logos are drawn.',
   license: 'CC0 geometry (made for Neest); Bosch is a trademark of its owner',
-  items: [sms4, sps2, sks62, smv6, smi6, shpm88],
+  items: [sms4, sps2, sks62, smv6, smi6],
   materials: [
     { id: 'bosch-inox', name: 'Bosch stainless (inox)', category: 'metal', color: '#c7cacd', roughness: 0.28, metalness: 0.9, pattern: { id: 'brushed', scale: 0.35, contrast: 0.55 } },
     { id: 'bosch-silver', name: 'Silver painted metal', category: 'metal', color: '#aeb2b6', roughness: 0.4, metalness: 0.6 },

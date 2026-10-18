@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { openContextMenu } from '@/components/ContextMenu';
 import { copyReadyGroup, editSavedGroupDetails, removeSavedGroup } from './SavedGroups';
 import { renameGenericSavedGroups } from '@/features/editor/groups';
 import { READY_GROUP_SHELVES, readyGroupById, readyGroups } from '@/data/groups/readyGroups';
 import { SAVED_GROUP_PREFIX, savedGroupAssets } from './savedGroupAssets';
-import { Grid2x2, Grid3x3, LayoutGrid, PanelLeftClose, Search, Star, Upload } from 'lucide-react';
+import { collectionMenuItems, editCollection, newCollection, removeCollection } from './collections';
+import { FolderHeart, Grid2x2, Grid3x3, LayoutGrid, PanelLeftClose, Pencil, Search, Star, Trash2, Upload } from 'lucide-react';
 import type { OpeningKind, WallRole } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { formatLength } from '@/domain/model/units';
 import {
   ASSET_CATALOG,
   ASSET_CATEGORY_LABELS,
-  ASSET_CATEGORY_ORDER,
   ASSET_TYPE_LABELS,
   ASSET_TYPE_ORDER,
   groupRank,
@@ -27,6 +27,8 @@ import { IconButton, Segmented } from '@/components/ui';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
 import { MaterialLibrary } from '@/features/materials/MaterialUI';
 import { useAssetThumbnail } from './thumbnails';
+import { CardModelButton, useChosenModel } from './ModelPicker';
+import { withModel } from '@/data/assets/models';
 import { AssetInfoCard, InfoCardControl } from './AssetInfoCard';
 import { DOOR_KINDS, WINDOW_KINDS, WallPresetCards, extraOpeningIcon } from './BuildExtras';
 import { OpeningBuildOptions } from './OpeningBuildOptions';
@@ -60,7 +62,11 @@ function DensityButton() {
   );
 }
 
-export function LibraryPanel({ isMobile }: { isMobile: boolean }) {
+/**
+ * Memoised: the editor shell re-renders on every project change (each pointer move while dragging),
+ * and the library, with hundreds of cards, only depends on its own store slices.
+ */
+export const LibraryPanel = memo(function LibraryPanel({ isMobile }: { isMobile: boolean }) {
   const tab = useEditorStore((s) => s.libraryTab);
   const buildGroup = useEditorStore((s) => s.buildGroup);
   const width = useEditorStore((s) => s.libraryWidth);
@@ -131,7 +137,7 @@ export function LibraryPanel({ isMobile }: { isMobile: boolean }) {
       )}
     </aside>
   );
-}
+});
 
 // ───────────── Build tab (grouped by toolrail icon) ─────────────
 
@@ -288,8 +294,11 @@ function BuildTab() {
 
 // ───────────── Furniture tab ─────────────
 
-type Browse = 'room' | 'type' | 'groups';
-type CatFilter = AssetCategory | AssetType | 'all' | 'recent';
+
+/** Dropdown filter: a room or type, all, recent, the groups, or a collection (`col:<id>`). */
+type CatFilter = AssetCategory | AssetType | 'all' | 'recent' | 'groups' | `col:${string}`;
+
+const isCollectionFilter = (c: CatFilter): c is `col:${string}` => c.startsWith('col:');
 
 interface Shelf {
   key: string;
@@ -314,7 +323,8 @@ function besideBase(items: AssetDefinition[]): AssetDefinition[] {
   return out;
 }
 
-function shelves(list: AssetDefinition[], browse: Browse, cat: CatFilter): Shelf[] {
+/** The library is browsed by type (seating, beds, storage…): one shelf per type, or per group within one type. */
+function shelves(list: AssetDefinition[], cat: CatFilter): Shelf[] {
   if (cat === 'recent') return [{ key: cat, title: '', items: list }];
   const byKey = new Map<string, Shelf & { rank: number }>();
   const add = (key: string, title: string, rank: number, a: AssetDefinition) => {
@@ -324,17 +334,11 @@ function shelves(list: AssetDefinition[], browse: Browse, cat: CatFilter): Shelf
   };
   for (const a of list) {
     if (cat === 'all') {
-      // Whole catalogue: one shelf per room (or type).
-      if (browse === 'room') {
-        const i = ASSET_CATEGORY_ORDER.indexOf(a.category);
-        add(a.category, ASSET_CATEGORY_LABELS[a.category], i < 0 ? 999 : i, a);
-      } else {
-        add(a.type, ASSET_TYPE_LABELS[a.type], ASSET_TYPE_ORDER.indexOf(a.type), a);
-      }
+      // Whole catalogue: one shelf per type.
+      add(a.type, ASSET_TYPE_LABELS[a.type], ASSET_TYPE_ORDER.indexOf(a.type), a);
     } else {
-      // One room or type: shelves by group, ordered as in ASSET_GROUPS.
-      const typeRank = browse === 'room' ? ASSET_TYPE_ORDER.indexOf(a.type) * 100 : 0;
-      add(`${a.type}|${a.group}`, a.group, typeRank + groupRank(a.type, a.group), a);
+      // One type: shelves by group, ordered as in ASSET_GROUPS.
+      add(`${a.type}|${a.group}`, a.group, groupRank(a.type, a.group), a);
     }
   }
   return [...byKey.values()]
@@ -343,19 +347,34 @@ function shelves(list: AssetDefinition[], browse: Browse, cat: CatFilter): Shelf
 }
 
 function FurnitureTab({ isMobile }: { isMobile: boolean }) {
-  const project = useProjectStore((s) => s.project!);
+  // Only the parts of the project the library shows: moving furniture must not re-render every card.
+  const customAssets = useProjectStore((s) => s.project!.customAssets);
+  const collections = useProjectStore((s) => s.project!.collections);
+  const project = useMemo(() => ({ customAssets }), [customAssets]);
   const favourites = usePrefsStore((s) => s.favouriteAssets);
   const recents = usePrefsStore((s) => s.recentAssets);
   const savedGroups = usePrefsStore((s) => s.savedGroups);
   const packs = usePackVersion();
   const [query, setQuery] = useState('');
-  const [browse, setBrowse] = useState<Browse>('room');
   const [favOnly, setFavOnly] = useState(false);
   const [cat, setCat] = useState<CatFilter>('all');
   // Saved groups still called "Group 3" get names from their contents once their items resolve.
   useEffect(() => {
-    if (browse === 'groups') renameGenericSavedGroups();
-  }, [browse, packs, savedGroups]);
+    if (cat === 'groups') renameGenericSavedGroups();
+  }, [cat, packs, savedGroups]);
+  // A new collection (or the Collections menu) asks to show one.
+  const showCol = useEditorStore((s) => s.libraryCollection);
+  useEffect(() => {
+    if (!showCol) return;
+    setQuery('');
+    setFavOnly(false);
+    setCat(`col:${showCol.id}`);
+  }, [showCol]);
+  const collection = isCollectionFilter(cat) ? collections.find((c) => `col:${c.id}` === cat) : undefined;
+  // A deleted collection (or one removed by undo) falls back to everything.
+  useEffect(() => {
+    if (isCollectionFilter(cat) && !collection) setCat('all');
+  }, [cat, collection]);
   // Inspector → Show in library: open the item's room (or Imported models), clear filters, then
   // scroll its card into view and flash it.
   const reveal = useEditorStore((s) => s.libraryReveal);
@@ -366,8 +385,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     if (!asset) return;
     setQuery('');
     setFavOnly(false);
-    setBrowse('room');
-    setCat(asset.category as CatFilter);
+    setCat(asset.type as CatFilter);
     // The shelf re-renders after the filter change: retry until the card exists.
     let tries = 0;
     const t = window.setInterval(() => {
@@ -390,8 +408,8 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   // One hover/focus info card for the whole listing (desktop only: touch has no hover).
   const info = useMemo(() => (isMobile ? null : new InfoCardControl()), [isMobile]);
   const custom = useMemo(
-    () => Object.values(project.customAssets).map(customAssetDefinition),
-    [project.customAssets],
+    () => Object.values(customAssets).map(customAssetDefinition),
+    [customAssets],
   );
   const all = useMemo(
     () => [...ASSET_CATALOG, ...custom],
@@ -400,11 +418,17 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     [custom, packs],
   );
   const q = query.trim().toLowerCase();
-  // Groups tab: the user's saved groups, then the ready-made ones by shelf, as ordinary item cards.
+  // Groups: the user's saved groups, then the ready-made ones by shelf, as ordinary item cards —
+  // under the Groups entry of the dropdown, and among the results when searching everything.
   const groupMatch = (a: { name: string; tags: string[]; description?: string; group: string }) =>
     !q || `${a.name} ${a.tags.join(' ')} ${a.description ?? ''} ${a.group}`.toLowerCase().includes(q);
-  const groupItems = browse === 'groups' ? savedGroupAssets(savedGroups).filter(groupMatch) : [];
-  const readyItems = browse === 'groups' ? savedGroupAssets(readyGroups()).filter(groupMatch) : [];
+  const showGroups = cat === 'groups' || (cat === 'all' && !!q && !favOnly);
+  const groupItems = showGroups ? savedGroupAssets(savedGroups).filter(groupMatch) : [];
+  const readyItems = showGroups ? savedGroupAssets(readyGroups()).filter(groupMatch) : [];
+  // A collection: its items and groups in order (search narrows it); items whose pack is gone are counted.
+  const collectionAll = collection ? collection.items.map((id) => getAsset(project, id)) : [];
+  const collectionMissing = collectionAll.filter((a) => !a).length;
+  const collectionItems = (collectionAll.filter(Boolean) as AssetDefinition[]).filter((a) => groupMatch({ ...a, description: a.description }) && (!favOnly || favourites.includes(a.id)));
   const list = all.filter((a) => {
     if (q) {
       const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''} ${a.plant ? plantSearchText(a.plant) : ''}`;
@@ -413,67 +437,50 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     if (favOnly && !favourites.includes(a.id)) return false;
     if (cat === 'all') return true;
     if (cat === 'recent') return recents.includes(a.id);
-    return browse === 'room' ? a.category === cat : a.type === cat;
+    if (cat === 'groups' || isCollectionFilter(cat)) return false;
+    return a.type === cat;
   });
   if (cat === 'recent') list.sort((a, b) => recents.indexOf(a.id) - recents.indexOf(b.id));
-  const present = new Set<string>(all.map((a) => (browse === 'room' ? a.category : a.type)));
-  const cats: { value: CatFilter; label: string }[] = [
-    { value: 'all', label: 'All' },
-    { value: 'recent', label: 'Recent' },
-    ...(browse === 'room'
-      ? ASSET_CATEGORY_ORDER.filter((c) => present.has(c)).map((c) => ({
-          value: c as CatFilter,
-          label: ASSET_CATEGORY_LABELS[c],
-        }))
-      : ASSET_TYPE_ORDER.filter((t) => present.has(t)).map((t) => ({
-          value: t as CatFilter,
-          label: ASSET_TYPE_LABELS[t],
-        }))),
-    ...(browse === 'room' && custom.length
-      ? [{ value: 'custom' as CatFilter, label: ASSET_CATEGORY_LABELS.custom }]
-      : []),
+  const present = new Set<string>(all.map((a) => a.type));
+  // The dropdown: All and Recent, then the types, then groups and collections.
+  const catGroups: { label: string | null; items: { value: CatFilter; label: string }[] }[] = [
+    { label: 'Types', items: ASSET_TYPE_ORDER.filter((t) => present.has(t)).map((t) => ({ value: t as CatFilter, label: ASSET_TYPE_LABELS[t] })) },
   ];
-  const groups =
-    browse === 'groups'
-      ? [
-          ...(groupItems.length ? [{ key: 'saved-groups', title: 'Your groups', items: groupItems }] : []),
-          ...READY_GROUP_SHELVES.map((title) => ({
-            key: `ready-${title}`,
-            title,
-            items: readyItems.filter((a) => a.group === title),
-          })).filter((s) => s.items.length),
-        ]
-      : shelves(list, browse, cat);
+  const groupShelves = [
+    ...(groupItems.length ? [{ key: 'saved-groups', title: 'Your groups', items: groupItems }] : []),
+    ...READY_GROUP_SHELVES.map((title) => ({
+      key: `ready-${title}`,
+      title,
+      items: readyItems.filter((a) => a.group === title),
+    })).filter((sh) => sh.items.length),
+  ];
+  const groups = collection
+    ? collectionItems.length
+      ? [{ key: `col-${collection.id}`, title: '', items: collectionItems }]
+      : []
+    : cat === 'groups'
+      ? groupShelves
+      : [
+          ...shelves(list, cat),
+          // Searching everything also finds groups.
+          ...(showGroups && (groupItems.length || readyItems.length) ? [{ key: 'search-groups', title: 'Groups', items: [...groupItems, ...readyItems] }] : []),
+        ];
   return (
     <div className="furniture-tab">
       <div className="lib-filters">
-        <div className="search-box">
-          <Search size={13} aria-hidden />
-          <input
-            className="input"
-            placeholder={`Search ${all.length} items…`}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.stopPropagation()}
-            aria-label="Search library"
-            data-testid="library-search"
-          />
-        </div>
         <div className="lib-browse-row">
-          <Segmented
-            label="Browse by"
-            size="sm"
-            value={browse}
-            onChange={(v) => {
-              setBrowse(v);
-              setCat((c) => (c === 'recent' ? c : 'all'));
-            }}
-            options={[
-              { value: 'room', label: 'By room', testId: 'browse-room' },
-              { value: 'type', label: 'By type', testId: 'browse-type' },
-              { value: 'groups', label: 'Groups', testId: 'browse-groups' },
-            ]}
-          />
+          <div className="search-box">
+            <Search size={13} aria-hidden />
+            <input
+              className="input"
+              placeholder={`Search ${all.length} items…`}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
+              aria-label="Search library"
+              data-testid="library-search"
+            />
+          </div>
           <IconButton
             label="Favourites"
             active={favOnly}
@@ -483,21 +490,72 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
           >
             <Star size={16} />
           </IconButton>
-        </div>
-        {browse !== 'groups' && (
-          <select
-            className="input select"
-            aria-label={browse === 'room' ? 'Filter by room' : 'Filter by type'}
-            value={cat}
-            onChange={(e) => setCat(e.target.value as CatFilter)}
-            data-testid="library-category-select"
+          <IconButton
+            label="Collections"
+            active={!!collection}
+            onClick={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              openContextMenu(r.left, r.bottom + 4, [
+                ...collections.map((c) => ({ label: `${c.name} (${c.items.length})`, checked: `col:${c.id}` === cat, run: () => setCat(`col:${c.id}`) })),
+                ...(collections.length ? [{ separator: true, label: '' }] : []),
+                { label: 'New collection…', run: () => newCollection() },
+              ]);
+            }}
+            className="collections-btn"
+            data-testid="library-collections"
           >
-            {cats.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
+            <FolderHeart size={16} />
+          </IconButton>
+        </div>
+        <select
+          className="input select"
+          aria-label="Filter by type, groups or collection"
+          value={cat}
+          onChange={(e) => {
+            if (e.target.value === '__new-collection') newCollection();
+            else setCat(e.target.value as CatFilter);
+          }}
+          data-testid="library-category-select"
+        >
+          <option value="all">All</option>
+          <option value="recent">Recent</option>
+          {catGroups
+            .filter((g) => g.items.length)
+            .map((g) => (
+              <optgroup key={g.label} label={g.label ?? ''}>
+                {g.items.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          <optgroup label="Groups">
+            <option value="groups">Groups — yours & ready-made</option>
+          </optgroup>
+          <optgroup label="Collections">
+            {collections.map((c) => (
+              <option key={c.id} value={`col:${c.id}`}>
+                {c.name} ({c.items.length})
               </option>
             ))}
-          </select>
+            <option value="__new-collection">New collection…</option>
+          </optgroup>
+        </select>
+        {collection && (
+          <div className="collection-head" data-testid="collection-head">
+            <div className="collection-head-text">
+              <strong>{collection.name}</strong>
+              <span className="shelf-count">{collection.items.length}</span>
+              {collection.description && <p className="field-hint">{collection.description}</p>}
+            </div>
+            <IconButton label="Edit collection" onClick={() => editCollection(collection.id)} data-testid="collection-edit">
+              <Pencil size={14} />
+            </IconButton>
+            <IconButton label="Delete collection" onClick={() => void removeCollection(collection.id)} data-testid="collection-delete">
+              <Trash2 size={14} />
+            </IconButton>
+          </div>
         )}
       </div>
       <div className="asset-shelves" data-testid="asset-grid">
@@ -515,16 +573,28 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
             </div>
           </section>
         ))}
-        {browse === 'groups' && groupItems.length === 0 && readyItems.length === 0 && (
+        {collection && collectionItems.length === 0 && (
+          <p className="field-hint pad">
+            {collection.items.length
+              ? 'Nothing in this collection matches your search.'
+              : 'Right-click any item or group in the library and choose “Add to” this collection.'}
+          </p>
+        )}
+        {collection && collectionMissing > 0 && (
+          <p className="field-hint pad">
+            {collectionMissing} item{collectionMissing > 1 ? 's are' : ' is'} not available here (their content pack is not installed).
+          </p>
+        )}
+        {cat === 'groups' && groupItems.length === 0 && readyItems.length === 0 && (
           <p className="field-hint pad">No groups match your search.</p>
         )}
-        {browse === 'groups' && !q && savedGroups.length === 0 && (
+        {cat === 'groups' && !q && savedGroups.length === 0 && (
           <p className="field-hint pad">
             Your own groups: select placed items, right-click and choose “Save to library as a group”. They
             appear here in every project.
           </p>
         )}
-        {list.length === 0 && browse !== 'groups' && (
+        {list.length === 0 && groups.length === 0 && cat !== 'groups' && !collection && (
           <p className="field-hint pad">
             {favOnly
               ? 'Star items to collect them here.'
@@ -549,9 +619,9 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
 }
 
 export function AssetPlanThumb({ asset }: { asset: AssetDefinition }) {
-  const project = useProjectStore((s) => s.project);
+  const custom = useProjectStore((s) => s.project?.customAssets[asset.id]);
   const size = asset.defaultSize;
-  const plan = assetPlan(asset, size, project?.customAssets[asset.id]);
+  const plan = assetPlan(asset, size, custom);
   const m = Math.max(size.w, size.d) * 0.62;
   return (
     <svg viewBox={`${-m} ${-m} ${m * 2} ${m * 2}`} className="asset-plan-thumb" aria-hidden>
@@ -608,10 +678,13 @@ function AssetCard({
   const fav = usePrefsStore((s) => s.favouriteAssets.includes(asset.id));
   const placing = useEditorStore((s) => s.tool === 'place' && s.placeAssetId === asset.id);
   const units = useProjectStore((s) => s.project!.settings.units);
-  const [thumbRef, thumb] = useAssetThumbnail<HTMLDivElement>(asset);
+  // Items with model variants show the chosen model (toggle in the card corner).
+  const { chosen: model } = useChosenModel(asset);
+  const shown = useMemo(() => withModel(asset, model?.id), [asset, model]);
+  const [thumbRef, thumb] = useAssetThumbnail<HTMLDivElement>(shown);
   const size = asset.defaultSize;
   const dims = `${formatLength(size.w, units, 0, { suffix: false })} × ${formatLength(size.d, units, 0)}`;
-  let preview: ReactNode = <AssetPlanThumb asset={asset} />;
+  let preview: ReactNode = <AssetPlanThumb asset={shown} />;
   if (thumb) preview = <img src={thumb} alt="" draggable={false} />;
   useEffect(() => {
     const el = thumbRef.current;
@@ -640,6 +713,15 @@ function AssetCard({
         openContextMenu(e.clientX, e.clientY, [
           { label: 'Place…', run: () => startPlacing(asset.id) },
           { label: 'Place in view', run: () => placeInView(asset.id) },
+          // From search results, Recent or a collection: jump to the item's own shelf.
+          ...(groupId
+            ? []
+            : [
+                {
+                  label: `Show in ${ASSET_TYPE_LABELS[asset.type]} › ${asset.group}`,
+                  run: () => useEditorStore.getState().set({ libraryReveal: { assetId: asset.id, nonce: Date.now() } }),
+                },
+              ]),
           ...(ready
             ? [{ label: 'Copy to my groups', run: () => copyReadyGroup(ready) }]
             : groupId
@@ -654,6 +736,7 @@ function AssetCard({
                     run: () => prefs.toggleFavouriteAsset(asset.id),
                   },
                 ]),
+          ...collectionMenuItems(asset.id, asset.name),
         ]);
       }}
     >
@@ -707,6 +790,7 @@ function AssetCard({
         <span className="asset-name">{asset.name}</span>
         <span className="asset-dims num">{dims}</span>
       </button>
+      <CardModelButton asset={asset} />
       <button
         type="button"
         className={`fav-btn${fav ? ' on' : ''}`}

@@ -2,11 +2,13 @@ import type { MaterialDefinition, Project, Vec2 } from '@/domain/model/schema';
 import { groupObjects, placeObject, prepareVariantMaterials, ungroupObjects, updateObjects, withGroupMates } from '@/domain/commands/entities';
 import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { getAsset } from '@/data/assets/registry';
+import { currentItem } from '@/data/assets/models';
 import { rotate } from '@/domain/geometry/vec';
 import { useProjectStore } from '@/state/projectStore';
 import { setSelectionExpander, useEditorStore, type SelItem } from '@/state/editorStore';
 import { toast, usePrefsStore, type SavedGroup } from '@/state/uiStores';
 import { readyGroupById } from '@/data/groups/readyGroups';
+import { transientGroups } from '@/features/library/savedGroupAssets';
 
 /**
  * Groups of placed items: selecting one member selects the whole group (installed into the editor
@@ -106,6 +108,15 @@ export function ungroupSelection(): void {
 
 /** Saves the selected items (relative positions, sizes and finishes) to the library's Saved groups. */
 export function saveSelectionToLibrary(name?: string): SavedGroup | null {
+  const group = groupFromSelection(name);
+  if (!group) return null;
+  usePrefsStore.getState().saveGroup(group);
+  toast.success(`Saved “${group.name}”`, 'Find it under Furniture → Groups (in the type list), in every project.');
+  return group;
+}
+
+/** The selected items as a group (relative positions, sizes, finishes, models), without saving it. */
+export function groupFromSelection(name?: string): SavedGroup | null {
   const p = useProjectStore.getState().project;
   if (!p) return null;
   const objs = selectedObjectIds(p)
@@ -149,6 +160,7 @@ export function saveSelectionToLibrary(name?: string): SavedGroup | null {
       height: o.height,
       mirrored: o.mirrored,
       materials: { ...o.materials },
+      ...(o.model ? { model: o.model } : {}),
     })),
     size: {
       w: Math.max(...objs.map((o) => o.x + extent(o))) - Math.min(...objs.map((o) => o.x - extent(o))),
@@ -156,8 +168,6 @@ export function saveSelectionToLibrary(name?: string): SavedGroup | null {
     },
     ...(Object.keys(defs).length ? { defs } : {}),
   };
-  usePrefsStore.getState().saveGroup(group);
-  toast.success(`Saved “${group.name}”`, 'Find it under Furniture → Saved groups, in every project.');
   return group;
 }
 
@@ -166,10 +176,11 @@ export function placeSavedGroup(group: SavedGroup, at: Vec2, rotation = 0): void
   const ps = useProjectStore.getState();
   const p = ps.project;
   if (!p) return;
-  const missing = group.items.filter((it) => !getAsset(p, it.assetId)).length;
+  const missing = group.items.filter((it) => !getAsset(p, currentItem(it.assetId).assetId)).length;
   const ids = ps.execute(`Place ${group.name}`, (d) => {
     const out: string[] = [];
-    for (const it of group.items) {
+    for (const saved of group.items) {
+      const it = { ...saved, ...currentItem(saved.assetId, saved.model) };
       if (!getAsset(p, it.assetId)) continue;
       const materials = prepareVariantMaterials(d, it.materials, group.defs);
       // The whole group turns about its centre.
@@ -181,15 +192,16 @@ export function placeSavedGroup(group: SavedGroup, at: Vec2, rotation = 0): void
         rotation: it.rotation + rotation,
         width: it.width,
         depth: it.depth,
-        height: it.height,
+        height: it.height - (it.dh ?? 0),
         elevation: it.elevation,
         materials,
         name: it.name ?? undefined,
+        model: it.model,
       });
       if (it.mirrored) updateObjects(d, [id], { mirrored: true });
       out.push(id);
     }
-    if (out.length >= 2) groupObjects(d, out, group.name, group.description);
+    if (out.length >= 2 && !group.ungrouped) groupObjects(d, out, group.name, group.description);
     return out;
   });
   if (missing) toast.warning(`${missing} item${missing > 1 ? 's' : ''} skipped`, 'Their content pack is not installed.');
@@ -201,5 +213,9 @@ export function savedGroupFromDragId(dragId: string): SavedGroup | undefined {
   // Library cards of saved groups use their asset id, `savedgroup:<id>`.
   if (!dragId.startsWith('savedgroup:')) return undefined;
   const id = dragId.slice('savedgroup:'.length);
-  return usePrefsStore.getState().savedGroups.find((g) => g.id === id) ?? readyGroupById(id);
+  const own = transientGroups.get(id) ?? usePrefsStore.getState().savedGroups.find((g) => g.id === id) ?? readyGroupById(id);
+  if (own) return own;
+  // A group saved on another machine: the copy kept in one of the project's collections.
+  for (const c of useProjectStore.getState().project?.collections ?? []) if (c.groups[id]) return c.groups[id] as SavedGroup;
+  return undefined;
 }

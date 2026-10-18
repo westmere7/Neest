@@ -17,6 +17,9 @@ import {
   type PhotoMap,
 } from '@/features/materials/photoTextures';
 
+/** Largest photo map (px) used live; exports bake their own sizes. */
+const LIVE_PHOTO_MAX = 1024;
+
 type MeshMat = THREE.MeshStandardMaterial;
 type Entry = { mat: MeshMat; def: MaterialDefinition; texKey: string };
 /** A material's photo state: `entry` is set once the manifest knows the set; `pending` while maps load. */
@@ -167,6 +170,12 @@ export class MaterialRegistry {
       t = new THREE.CanvasTexture(canvas);
       t.userData.neestBaked = true;
       if (this.bakePhotoSize > 0) t.userData.mimeType = 'image/jpeg';
+    } else if (image.width > LIVE_PHOTO_MAX) {
+      // 2K sets are drawn at 1K for the live view: a quarter of the pixels to upload to the GPU (the
+      // first frame of a project used to spend seconds uploading 2K colour, normal and roughness maps).
+      const canvas = bakePhotoCanvas(image, entry, LIVE_PHOTO_MAX, 1, null);
+      if (!canvas) return null;
+      t = new THREE.CanvasTexture(canvas);
     } else {
       t = new THREE.Texture(image);
       t.needsUpdate = true;

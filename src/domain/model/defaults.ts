@@ -50,7 +50,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       exteriorThickness: opts.exteriorThickness ?? 0.3,
       showRoomLabels: true,
       showRoomAreas: true,
-      dimensions: { overall: true, walls: false, rooms: true },
+      dimensions: { overall: true, walls: false, rooms: true, openings: false, thickness: false, objects: false },
     },
     nodes: {},
     walls: {},
@@ -60,6 +60,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
     materials: defaultMaterialSet(),
     customAssets: {},
     groups: {},
+    collections: [],
     cameras: [],
     render: {
       quality: 'balanced',
@@ -76,6 +77,8 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       showCeilings: false,
       showRoomLabels: false,
       hiddenCategories: [],
+      fov: 45,
+      walkFov: 70,
     },
     layers: {
       construction: { visible: true, locked: false },

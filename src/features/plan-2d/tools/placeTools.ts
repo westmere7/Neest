@@ -14,8 +14,16 @@ import type { AssetDefinition } from '@/data/assets/types';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { usePrefsStore } from '@/state/uiStores';
-import { placementMaterials } from '@/features/library/variantChoice';
+import { placementMaterials, placementModel } from '@/features/library/variantChoice';
 import type { Tool, ToolEnv } from './types';
+import { surfaceUnder } from './surfaces';
+
+/**
+ * Range for floor items with wallSnap while they are moved: the gap between their back and the
+ * wall face. Kept small, so an item in a narrow space (a balcony) is not held by whichever wall is
+ * near and dragged along it; placing a new item uses a wider range.
+ */
+export const WALL_HUG_MOVE = 0.08;
 
 /**
  * Snaps an object's back against the nearest wall face (front facing into the
@@ -182,6 +190,22 @@ export function createPlaceTool(): Tool {
     const id = env.editor().placeAssetId;
     return id ? getAsset(env.project(), id) : null;
   };
+  /** A Duplicate's template for this asset, if any. */
+  const templateOf = (env: ToolEnv, asset: AssetDefinition) => {
+    const t = env.editor().placeTemplate;
+    return t && t.assetId === asset.id ? t : null;
+  };
+  /** Where the item stands: on the table, counter or cabinet under it, else its usual height. */
+  const elevationAt = (env: ToolEnv, asset: AssetDefinition, x: number, y: number): number => {
+    const t = templateOf(env, asset);
+    const size = t ? { w: t.width, d: t.depth, h: t.height } : asset.defaultSize;
+    return surfaceUnder(env.project(), asset, size, x, y) ?? t?.elevation ?? asset.defaultElevation;
+  };
+  /** The asset sized like the template (placement snaps and hugs walls with the copy's size). */
+  const sizedLike = (env: ToolEnv, asset: AssetDefinition): AssetDefinition => {
+    const t = templateOf(env, asset);
+    return t ? { ...asset, defaultSize: { w: t.width, d: t.depth, h: t.height }, defaultElevation: t.elevation } : asset;
+  };
   const render = (env: ToolEnv, hugged: boolean) => {
     const asset = assetOf(env);
     if (!asset || !ghost) {
@@ -189,15 +213,18 @@ export function createPlaceTool(): Tool {
       return;
     }
     env.setSnapLabel(hugged ? 'Against wall' : null);
+    const t = templateOf(env, asset);
     env.setOverlay({
       ghostObject: {
         assetId: asset.id,
+        model: t ? t.model : placementModel(asset),
         x: ghost.x,
         y: ghost.y,
         rotation: ghost.rotation,
-        width: asset.defaultSize.w,
-        depth: asset.defaultSize.d,
-        height: asset.defaultSize.h,
+        width: t?.width ?? asset.defaultSize.w,
+        depth: t?.depth ?? asset.defaultSize.d,
+        height: t?.height ?? asset.defaultSize.h,
+        elevation: elevationAt(env, asset, ghost.x, ghost.y),
       },
     });
   };
@@ -208,7 +235,7 @@ export function createPlaceTool(): Tool {
     onPointerMove(e, env) {
       const asset = assetOf(env);
       if (!asset) return;
-      const pl = placementFor(asset, e.world, env.editor().placeRotation, env, e.alt);
+      const pl = placementFor(sizedLike(env, asset), e.world, env.editor().placeRotation, env, e.alt);
       ghost = { x: pl.x, y: pl.y, rotation: pl.rotation };
       render(env, pl.hugged);
     },
@@ -216,7 +243,7 @@ export function createPlaceTool(): Tool {
       if (e.button !== 0) return;
       const asset = assetOf(env);
       if (!asset) return;
-      const pl = placementFor(asset, e.world, env.editor().placeRotation, env, e.alt);
+      const pl = placementFor(sizedLike(env, asset), e.world, env.editor().placeRotation, env, e.alt);
       // A saved group: place its items as a new group, turned with the ghost.
       const group = savedGroupFromDragId(asset.id);
       if (group) {
@@ -228,19 +255,24 @@ export function createPlaceTool(): Tool {
         }
         return;
       }
-      const id = useProjectStore.getState().execute(`Place ${asset.name.toLowerCase()}`, (d) =>
-        placeObject(d, {
+      const t = templateOf(env, asset);
+      const id = useProjectStore.getState().execute(t ? `Duplicate ${asset.name.toLowerCase()}` : `Place ${asset.name.toLowerCase()}`, (d) => {
+        const nid = placeObject(d, {
           assetId: asset.id,
           x: pl.x,
           y: pl.y,
           rotation: pl.rotation,
-          width: asset.defaultSize.w,
-          depth: asset.defaultSize.d,
-          height: asset.defaultSize.h,
-          elevation: asset.defaultElevation,
-          materials: placementMaterials(d, asset),
-        }),
-      );
+          width: t?.width ?? asset.defaultSize.w,
+          depth: t?.depth ?? asset.defaultSize.d,
+          height: t?.height ?? asset.defaultSize.h,
+          elevation: elevationAt(env, asset, pl.x, pl.y),
+          materials: t ? { ...t.materials } : placementMaterials(d, asset),
+          model: t ? t.model : placementModel(asset),
+          name: t?.name ?? undefined,
+        });
+        if (t?.mirrored) d.objects[nid].mirrored = true;
+        return nid;
+      });
       usePrefsStore.getState().pushRecentAsset(asset.id);
       if (id) keepPlacedSelection();
       if (!e.shift && id) {

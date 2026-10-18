@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { ASSET_GROUPS, ASSET_TYPE_ORDER } from './catalog';
 import type { AssetDefinition, Part, PlanStroke, Size3 } from './types';
+import { assetModels, withModel } from './models';
 
 /**
  * Per-asset validation shared by catalog.test.ts (whole catalogue) and any focused test of a
@@ -19,6 +20,8 @@ export const TOL = 0.02;
 export const CEILING = 2.7;
 /** Parts per asset. Objects render as one merged mesh per material slot, so detail is cheap. */
 export const MAX_PARTS = 160;
+/** How far a model's props may rise above the item (a lamp on a sideboard, a vase on a table). */
+export const PROPS_ABOVE = 1.0;
 
 /** Rotate by Euler XYZ angles using the three.js convention (R = Rx · Ry · Rz). */
 function rotate(v: Vec3, [ax, ay, az]: Vec3): Vec3 {
@@ -275,5 +278,50 @@ export function describeAssetChecks(assets: AssetDefinition[]): void {
         }
       }
     });
+    const models = assetModels(asset);
+    if (models.length) {
+      it('has well-formed model variants', () => {
+        const ids = new Set<string>();
+        for (const m of models) {
+          expect(m.id, 'model id').toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+          expect(m.name.trim(), m.id).not.toBe('');
+          expect(ids.has(m.id), `model ${m.id} twice`).toBe(false);
+          ids.add(m.id);
+          for (const h of m.hide ?? []) expect(slotIds.has(h), `model ${m.id} hides unknown slot ${h}`).toBe(true);
+          for (const sl of m.slots ?? []) expect(MATERIAL_CATALOG_BY_ID[sl.defaultMaterial], `${m.id}: ${sl.id} → ${sl.defaultMaterial}`).toBeDefined();
+        }
+      });
+
+      it.each(models.flatMap((m) => sizesFor(asset).map(([label, size]) => [m.id, label, size] as const)))(
+        'model %s keeps the outline and size at %s',
+        (modelId, _label, size) => {
+          const look = withModel(asset, modelId);
+          const parts = look.build(size);
+          const lookSlots = new Set(look.slots.map((s) => s.id));
+          expect(parts.length).toBeGreaterThan(0);
+          expect(parts.length).toBeLessThanOrEqual(MAX_PARTS * 2);
+          // The plan outline only ever comes from the item's own parts, never from props.
+          const outline = (ps: Part[]) => ps.filter((p) => p.plan !== false).map((p) => JSON.stringify(p));
+          const own = new Set(outline(asset.build(size)));
+          const shown = outline(parts);
+          expect(shown.length, 'some part is in the plan').toBeGreaterThan(0);
+          for (const p of shown) expect(own.has(p), `plan part not from the item: ${p.slice(0, 80)}`).toBe(true);
+          const { w, d, h } = size;
+          for (const [i, p] of parts.entries()) {
+            const where = `model ${modelId} part #${i} (${p.shape}, slot '${p.slot}') at ${w}×${d}×${h}`;
+            expect(lookSlots.has(p.slot), where).toBe(true);
+            expect(collectNumbers(p).every(Number.isFinite), where).toBe(true);
+            expect(dimensionsValid(p), where).toBe(true);
+            const b = worldBounds(p);
+            expect(b.min[0], `${where} x-min`).toBeGreaterThanOrEqual(-w / 2 - TOL);
+            expect(b.max[0], `${where} x-max`).toBeLessThanOrEqual(w / 2 + TOL);
+            expect(b.min[2], `${where} z-min`).toBeGreaterThanOrEqual(-d / 2 - TOL);
+            expect(b.max[2], `${where} z-max`).toBeLessThanOrEqual(d / 2 + TOL);
+            expect(b.min[1], `${where} y-min`).toBeGreaterThanOrEqual(-TOL);
+            expect(b.max[1], `${where} y-max`).toBeLessThanOrEqual(h + PROPS_ABOVE);
+          }
+        },
+      );
+    }
   });
 }

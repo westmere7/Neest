@@ -73,6 +73,18 @@ export function snapPoint(p: Vec2, ctx: SnapContext): SnapResult {
   const { tol, settings, project, network } = ctx;
   const exN = ctx.excludeNodes ?? new Set<string>();
   const exW = ctx.excludeWalls ?? new Set<string>();
+  // Direction of the angle constraint from the anchor, when it applies at this pointer position.
+  const angleDir = (): Vec2 | null => {
+    if (!ctx.anchor || !(settings.angle || ctx.forceAngle)) return null;
+    const v = sub(p, ctx.anchor);
+    const l = Math.hypot(v.x, v.y);
+    if (l <= 1e-6) return null;
+    const step = ctx.angleStep ?? Math.PI / 4;
+    const ang = angleOf(v);
+    const snapped = Math.round(ang / step) * step;
+    const ok = ctx.forceAngle || Math.abs(snapped - ang) <= Math.max(Math.atan2(tol, l), (3 * Math.PI) / 180);
+    return ok ? fromAngle(snapped) : null;
+  };
 
   if (settings.geometry) {
     // 1. Endpoints / nodes.
@@ -99,23 +111,35 @@ export function snapPoint(p: Vec2, ctx: SnapContext): SnapResult {
     if (bestMid) return result(bestMid.p, 'midpoint', { refId: bestMid.id, s: bestMid.s });
 
     // 3. Wall centrelines (T-junctions) and faces.
-    let bestWall: { id: string; p: Vec2; d: number; s: number; kind: SnapKind } | null = null;
+    let bestWall: { id: string; p: Vec2; d: number; s: number; kind: SnapKind; line: [Vec2, Vec2] } | null = null;
     for (const g of network.walls.values()) {
       if (exW.has(g.wall.id) || exN.has(g.wall.a) || exN.has(g.wall.b)) continue;
       const proj = projectOnPath(g.path, p);
       if (proj.dist <= tol && (!bestWall || proj.dist < bestWall.d))
-        bestWall = { id: g.wall.id, p: proj.point, d: proj.dist, s: proj.s, kind: 'wall' };
+        bestWall = { id: g.wall.id, p: proj.point, d: proj.dist, s: proj.s, kind: 'wall', line: [proj.point, add(proj.point, proj.tangent)] };
       if (ctx.edges) {
         for (const edge of [g.left, g.right]) {
           for (let i = 0; i < edge.length - 1; i++) {
             const cp = closestPointOnSegment(p, edge[i], edge[i + 1]);
             if (cp.dist <= tol && (!bestWall || cp.dist < bestWall.d))
-              bestWall = { id: g.wall.id, p: cp.point, d: cp.dist, s: proj.s, kind: 'edge' };
+              bestWall = { id: g.wall.id, p: cp.point, d: cp.dist, s: proj.s, kind: 'edge', line: [edge[i], edge[i + 1]] };
           }
         }
       }
     }
-    if (bestWall) return result(bestWall.p, bestWall.kind, { refId: bestWall.id, s: bestWall.s });
+    if (bestWall) {
+      // Constrained to an angle from the anchor: land where that ray crosses the wall or face, so the
+      // line stays straight and still ends exactly on it.
+      const dir = angleDir();
+      if (dir && ctx.anchor) {
+        const [q0, q1] = bestWall.line;
+        const hit = lineIntersection(ctx.anchor, dir, q0, sub(q1, q0));
+        if (hit && dist(hit, p) <= tol * 2) {
+          return result(hit, bestWall.kind, { refId: bestWall.id, s: bestWall.s, guides: [{ a: ctx.anchor, b: hit }] });
+        }
+      }
+      return result(bestWall.p, bestWall.kind, { refId: bestWall.id, s: bestWall.s });
+    }
   }
 
   const guidePoints: Vec2[] = [];

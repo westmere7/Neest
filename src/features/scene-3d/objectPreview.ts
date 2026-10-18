@@ -97,7 +97,7 @@ export interface PreviewHandle {
   show(obj: PlacedObject, project: Project): Promise<PreviewResult>;
   /** Shows a library asset at its default size with its default materials. */
   /** An asset at its default size, optionally in a colour variant (slot → material id). */
-  showAsset(asset: AssetDefinition, project: Project, materials?: Record<string, string>): Promise<PreviewResult>;
+  showAsset(asset: AssetDefinition, project: Project, materials?: Record<string, string>, model?: string): Promise<PreviewResult>;
   /** Stops rendering and releases the canvas (the renderer itself is kept for the next preview). */
   detach(): void;
 }
@@ -106,11 +106,15 @@ interface Options {
   reducedMotion: boolean;
   /** WebGL went away (context lost): show a 2D fallback instead. */
   onFail: () => void;
+  /** Free view (the large viewer): scroll to zoom, double-click to reset the view. */
+  zoom?: boolean;
 }
 
 class Controller implements PreviewHandle {
   private yaw = DEFAULT_YAW;
   private pitch = DEFAULT_PITCH;
+  /** Camera distance factor (free view only): < 1 is closer. */
+  private zoom = 1;
   private objectId: string | null = null;
   private token = 0;
   private hasModel = false;
@@ -151,6 +155,27 @@ class Controller implements PreviewHandle {
     host.addEventListener('pointermove', move);
     host.addEventListener('pointerup', up);
     host.addEventListener('pointercancel', up);
+    if (opts.zoom) {
+      const wheel = (e: WheelEvent) => {
+        if (!this.hasModel) return;
+        e.preventDefault();
+        this.zoom = Math.min(3, Math.max(0.25, this.zoom * Math.exp(e.deltaY * 0.0015)));
+        this.pauseAutoRotate();
+        this.invalidate();
+      };
+      const reset = () => {
+        this.yaw = DEFAULT_YAW;
+        this.pitch = DEFAULT_PITCH;
+        this.zoom = 1;
+        this.invalidate();
+      };
+      host.addEventListener('wheel', wheel, { passive: false });
+      host.addEventListener('dblclick', reset);
+      this.cleanups.push(() => {
+        host.removeEventListener('wheel', wheel);
+        host.removeEventListener('dblclick', reset);
+      });
+    }
     this.cleanups.push(
       () => ro.disconnect(),
       () => io.disconnect(),
@@ -205,6 +230,7 @@ class Controller implements PreviewHandle {
       this.objectId = obj.id;
       this.yaw = DEFAULT_YAW;
       this.pitch = DEFAULT_PITCH;
+      this.zoom = 1;
       this.resumeAt = 0;
     }
     this.hasModel = true;
@@ -221,7 +247,7 @@ class Controller implements PreviewHandle {
     return 'fallback';
   }
 
-  showAsset(asset: AssetDefinition, project: Project, materials: Record<string, string> = {}): Promise<PreviewResult> {
+  showAsset(asset: AssetDefinition, project: Project, materials: Record<string, string> = {}, model?: string): Promise<PreviewResult> {
     const s = asset.defaultSize;
     return this.show(
       {
@@ -239,6 +265,8 @@ class Controller implements PreviewHandle {
         materials,
         locked: false,
         hidden: false,
+        // The item itself plus its model (a derived "<id>@model:<m>" asset is not in the catalogue).
+        ...(model ? { model } : {}),
       },
       project,
     );
@@ -344,7 +372,7 @@ class Controller implements PreviewHandle {
     if (!gl || !scene) return;
     this.dirty = false;
     pivot.rotation.y = this.yaw;
-    const d = this.fitDistance();
+    const d = this.fitDistance() * this.zoom;
     camera.near = d / 50;
     camera.far = d + this.halfDiag * 4 + this.halfH * 4;
     camera.updateProjectionMatrix();
@@ -375,6 +403,14 @@ class Controller implements PreviewHandle {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     this.invalidate();
+  }
+
+  /** Stops auto-rotation for a while after the user moved the view. */
+  private pauseAutoRotate() {
+    clearTimeout(this.resumeTimer);
+    this.resumeAt = performance.now() + RESUME_AFTER_MS;
+    this.lastFrame = performance.now();
+    if (!this.opts.reducedMotion) this.resumeTimer = window.setTimeout(() => this.wake(), RESUME_AFTER_MS + 20);
   }
 
   private pointerDown(e: PointerEvent) {

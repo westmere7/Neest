@@ -1,9 +1,9 @@
 /**
- * Branded washing machines — six real front loaders from Bosch, Miele, LG and Samsung, built to their
+ * Branded washing machines — four real front loaders from Bosch, LG and Samsung, built to their
  * published dimensions.
  *
- * Washers: Bosch Serie 6 WGG254Z0GB, Miele WWD320 WCS, Samsung Bespoke AI WW11DB8B95GBU3.
- * Washer-dryers: LG FWY996WCTN4 and Miele WTD160 WCS. And the LG WashTower WT1210BBF, a washer and a
+ * Washers: Bosch Serie 6 WGG254Z0GB, Samsung Bespoke AI WW11DB8B95GBU3.
+ * Washer-dryer: LG FWY996WCTN4. And the LG WashTower WT1210BBF, a washer and a
  * heat-pump dryer in one tower with the controls in the middle.
  *
  * Each item carries `brand` metadata (model, line, published specs and their source). Depth is the
@@ -236,74 +236,6 @@ const boschWgg = defineItem({
 });
 
 // ---------------------------------------------------------------------------
-// 2. Miele WWD320 WCS — 8 kg W1 washer, lotus white, chrome door
-// ---------------------------------------------------------------------------
-
-const mieleWwd = defineItem({
-  id: 'miele-wwd320-wcs',
-  name: 'Miele W1 WWD320 WCS washing machine',
-  category: 'laundry',
-  type: 'appliances',
-  group: 'Laundry',
-  tags: [...TAGS, 'miele', 'WWD320', 'W1', '8 kg', 'lotus white', 'chrome', 'powerwash'],
-  ...sizes(0.596, 0.643, 0.85),
-  wallSnap: true,
-  description:
-    'Miele W1 WWD320 WCS front loader in lotus white with the classic chrome-finish porthole door, 8 kg at 1400 rpm with PowerWash. Rotary selector and a single-line display.',
-  brand: brand('Miele', 'WWD320 WCS', 'W1 Classic', 'https://www.winnings.com.au/p/miele-8kg-front-load-washing-machine-wwd320', [
-    ['Capacity', '8 kg'],
-    ['Spin', '1400 rpm'],
-    ['Drum', 'Honeycomb drum'],
-    ['Installation', 'Freestanding (allow 150 mm behind for hoses)'],
-    ['Dimensions (H × W × D)', '850 × 596 × 643 mm'],
-  ]),
-  slots: SLOTS_WHITE('washer-chrome', 'Chrome door, dial & feet'),
-  build: (s) =>
-    frontLoader(s, {
-      fascia: { panelH: 0.12, slot: 'body', drawerW: 0.16, dialX: -0.07, dialR: 0.034, dispX: 0.085, dispW: 0.13, text: '2:49', buttons: 3 },
-      door: { R: 0.205, style: 'ring', tube: 0.028, handle: false },
-      doorFrame: 'trim',
-      doorProj: 0.05,
-      top: 0.02,
-    }),
-  planDetail: plan(0.05),
-});
-
-// ---------------------------------------------------------------------------
-// 3. Miele WTD160 WCS — 8/5 kg washer-dryer, lotus white
-// ---------------------------------------------------------------------------
-
-const mieleWtd = defineItem({
-  id: 'miele-wtd160-wcs',
-  name: 'Miele W1 WTD160 WCS washer-dryer',
-  category: 'laundry',
-  type: 'appliances',
-  group: 'Laundry',
-  tags: [...TAGS, ...DRYER_TAGS, 'miele', 'WTD160', 'W1', '8 kg', 'lotus white'],
-  ...sizes(0.596, 0.637, 0.85),
-  wallSnap: true,
-  description:
-    'Miele W1 WTD160 WCS washer-dryer in lotus white: washes 8 kg and dries 5 kg in one machine, with a chrome door ring, rotary selector and touch display.',
-  brand: brand('Miele', 'WTD160 WCS', 'W1 washer-dryer', 'https://shop.miele.com.au/en/product-zid11679820', [
-    ['Wash / dry capacity', '8 kg / 5 kg'],
-    ['Spin', '1500 rpm'],
-    ['Depth with door open', '1055 mm'],
-    ['Installation', 'Freestanding'],
-    ['Dimensions (H × W × D)', '850 × 596 × 637 mm'],
-  ]),
-  slots: SLOTS_WHITE('washer-chrome', 'Chrome door, dial & feet'),
-  build: (s) =>
-    frontLoader(s, {
-      fascia: { panelH: 0.12, slot: 'body', drawerW: 0.16, dialX: -0.07, dialR: 0.034, dispX: 0.09, dispW: 0.15, text: '4:10', buttons: 2 },
-      door: { R: 0.205, style: 'ring', tube: 0.026, handle: false },
-      doorFrame: 'trim',
-      doorProj: 0.047,
-      top: 0.02,
-    }),
-  planDetail: plan(0.047),
-});
-
-// ---------------------------------------------------------------------------
 // 4. LG FWY996WCTN4 — 9/6 kg washer-dryer, white with a black door
 // ---------------------------------------------------------------------------
 
@@ -452,9 +384,9 @@ export default definePack({
   version: '1.0.0',
   author: 'Neest team',
   description:
-    'Six real front loaders built to their published dimensions: Bosch Serie 6, Miele W1 and Samsung Bespoke AI washers, LG and Miele washer-dryers, and the LG WashTower. Brand and spec data is in each item’s info card; no logos are drawn.',
-  license: 'CC0 geometry (made for Neest); Bosch, Miele, LG and Samsung are trademarks of their owners',
-  items: [boschWgg, mieleWwd, mieleWtd, lgFwy, samsungWw, washTower],
+    'Four real front loaders built to their published dimensions: Bosch Serie 6 and Samsung Bespoke AI washers, an LG washer-dryer and the LG WashTower. Brand and spec data is in each item’s info card; no logos are drawn.',
+  license: 'CC0 geometry (made for Neest); Bosch, LG and Samsung are trademarks of their owners',
+  items: [boschWgg, lgFwy, samsungWw, washTower],
   materials: [
     { id: 'washer-white', name: 'Appliance white (gloss)', color: '#f5f5f2', roughness: 0.25 },
     { id: 'washer-black', name: 'Appliance black', color: '#1d1e21', roughness: 0.35, metalness: 0.2 },

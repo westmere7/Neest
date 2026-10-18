@@ -27,6 +27,8 @@ import { buildWallExtras, disposeWallExtras, wallExtrasKey, wallHasExtras } from
 import { buildOpening } from './openingBuilder';
 import { usePackVersion } from '@/packs/events';
 import { LampLights } from './LampLights';
+import { reflectiveMaterial, registerReflectiveFloor } from './floorReflections';
+import { WALL_DEPTH_BIAS, biasDepth } from './depthBias';
 
 export interface SceneOptions {
   wallDisplay: WallDisplay;
@@ -48,11 +50,17 @@ export interface SceneOptions {
 const WARMEST = new THREE.Color('#ff9a52');
 const COOLEST = new THREE.Color('#bcd2ff');
 
-export function sunFromSettings(r: Pick<RenderSettings, 'timeOfDay' | 'sunAzimuth' | 'sunIntensity'> & { sunWarmth?: number }) {
+export function sunFromSettings(
+  r: Pick<RenderSettings, 'timeOfDay' | 'sunAzimuth' | 'sunIntensity'> & { sunWarmth?: number },
+) {
   const t = Math.min(1, Math.max(0, (r.timeOfDay - 6) / 14));
   const elevation = Math.max(4, 64 * Math.sin(Math.PI * t)) * (Math.PI / 180);
   const az = (r.sunAzimuth * Math.PI) / 180;
-  const dir = new THREE.Vector3(Math.sin(az) * Math.cos(elevation), Math.sin(elevation), -Math.cos(az) * Math.cos(elevation));
+  const dir = new THREE.Vector3(
+    Math.sin(az) * Math.cos(elevation),
+    Math.sin(elevation),
+    -Math.cos(az) * Math.cos(elevation),
+  );
   const warm = new THREE.Color('#ffc58f');
   const noon = new THREE.Color('#fffcf7');
   const color = warm.lerp(noon, Math.min(1, Math.sin(elevation) * 1.6));
@@ -64,7 +72,17 @@ export function sunFromSettings(r: Pick<RenderSettings, 'timeOfDay' | 'sunAzimut
   return { dir, color, intensity, elevation };
 }
 
-export function Lighting({ project, derived, shadows, quality }: { project: Project; derived: DerivedPlan; shadows: boolean; quality: RenderSettings['quality'] }) {
+export function Lighting({
+  project,
+  derived,
+  shadows,
+  quality,
+}: {
+  project: Project;
+  derived: DerivedPlan;
+  shadows: boolean;
+  quality: RenderSettings['quality'];
+}) {
   const { gl, scene } = useThree();
   const r = project.render;
   const lightRef = useRef<THREE.DirectionalLight>(null);
@@ -95,9 +113,15 @@ export function Lighting({ project, derived, shadows, quality }: { project: Proj
   const sun = sunFromSettings(r);
   // The shadow area covers the plan plus how far a wall-height shadow reaches at this sun
   // elevation (long morning/evening shadows were cut off at the plan's edge).
-  const reach = Math.min(14, (2.8 * Math.sqrt(Math.max(0, 1 - sun.dir.y * sun.dir.y))) / Math.max(0.12, sun.dir.y));
+  const reach = Math.min(
+    14,
+    (2.8 * Math.sqrt(Math.max(0, 1 - sun.dir.y * sun.dir.y))) / Math.max(0.12, sun.dir.y),
+  );
   const radius = Math.max(4, Math.hypot(b.maxX - b.minX, b.maxY - b.minY) / 2 + 1.5) + reach;
-  const pos = sun.dir.clone().multiplyScalar(radius * 2.5).add(new THREE.Vector3(cx, 0, cz));
+  const pos = sun.dir
+    .clone()
+    .multiplyScalar(radius * 2.5)
+    .add(new THREE.Vector3(cx, 0, cz));
   const mapSize = quality === 'high' || quality === 'ultra' ? 4096 : quality === 'balanced' ? 2048 : 1024;
   useEffect(() => {
     const l = lightRef.current;
@@ -122,7 +146,13 @@ export function Lighting({ project, derived, shadows, quality }: { project: Proj
   return (
     <>
       <hemisphereLight args={['#f7f9fb', '#888c90', 0.35 * r.envIntensity]} />
-      <directionalLight ref={lightRef} position={pos} color={sun.color} intensity={sun.intensity} castShadow={shadows} />
+      <directionalLight
+        ref={lightRef}
+        position={pos}
+        color={sun.color}
+        intensity={sun.intensity}
+        castShadow={shadows}
+      />
       <LampLights project={project} quality={quality} />
     </>
   );
@@ -170,6 +200,11 @@ function WallMesh({
   );
   useEffect(() => () => faded?.forEach((m) => m.dispose()), [faded]);
   const meshRef = useRef<THREE.Mesh>(null);
+  // Walls win depth ties: anything touching a wall face (a railing end, a shelf back) never flickers through it.
+  useEffect(() => {
+    const mesh = meshRef.current;
+    if (mesh) biasDepth(mesh, WALL_DEPTH_BIAS);
+  }, [geometry]);
   const mid = useMemo(() => {
     const { p, tangent } = pointAt(g.path, g.path.length / 2);
     return { p: new THREE.Vector3(p.x, 0, p.y), n: new THREE.Vector3(tangent.y, 0, -tangent.x) };
@@ -239,8 +274,11 @@ function WallExtrasNode({
 }) {
   const key = wallExtrasKey(g, cut);
   // Rebuild when the wall's extras change or materials are edited (materials resolve at build time).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const group = useMemo(() => buildWallExtras(g, { project, registry, shadows }, cut), [key, shadows, project.materials]);
+  const group = useMemo(
+    () => buildWallExtras(g, { project, registry, shadows }, cut),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key, shadows, project.materials],
+  );
   useEffect(() => () => disposeWallExtras(group), [group]);
   if (!group) return null;
   return (
@@ -267,7 +305,17 @@ function WallExtrasNode({
   );
 }
 
-function HubMesh({ hub, material, cut, shadows }: { hub: JunctionHub; material: THREE.Material; cut?: number; shadows: boolean }) {
+function HubMesh({
+  hub,
+  material,
+  cut,
+  shadows,
+}: {
+  hub: JunctionHub;
+  material: THREE.Material;
+  cut?: number;
+  shadows: boolean;
+}) {
   const key = `${hub.polygon.map((p) => `${p.x.toFixed(4)},${p.y.toFixed(4)}`).join(';')}|${hub.z0}|${hub.z1}|${cut}`;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const geometry = useMemo(() => buildHubGeometry(hub, cut), [key]);
@@ -278,7 +326,13 @@ function HubMesh({ hub, material, cut, shadows }: { hub: JunctionHub; material: 
 
 // ───────────────────────── Objects, openings, rooms ─────────────────────────
 
-function ObjectNode({ obj, ctx, modelsVersion, onPick, onPointerDown }: {
+function ObjectNode({
+  obj,
+  ctx,
+  modelsVersion,
+  onPick,
+  onPointerDown,
+}: {
   obj: PlacedObject;
   ctx: BuildContext;
   modelsVersion: number;
@@ -287,8 +341,11 @@ function ObjectNode({ obj, ctx, modelsVersion, onPick, onPointerDown }: {
 }) {
   const packs = usePackVersion();
   const assetModels = useAssetModelsVersion();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const group = useMemo(() => buildObject(obj, ctx), [obj, modelsVersion, ctx.shadows, ctx.project.customAssets, packs, assetModels]);
+  const group = useMemo(
+    () => buildObject(obj, ctx),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [obj, modelsVersion, ctx.shadows, ctx.project.customAssets, packs, assetModels],
+  );
   return (
     <primitive
       object={group}
@@ -374,7 +431,21 @@ function ClippedMaterialSync() {
   return null;
 }
 
-function OpeningNode({ g, spanId, project, ctx, cut, onPick }: { g: WallGeometry; spanId: string; project: Project; ctx: BuildContext; cut?: number; onPick?: SceneOptions['onPick'] }) {
+function OpeningNode({
+  g,
+  spanId,
+  project,
+  ctx,
+  cut,
+  onPick,
+}: {
+  g: WallGeometry;
+  spanId: string;
+  project: Project;
+  ctx: BuildContext;
+  cut?: number;
+  onPick?: SceneOptions['onPick'];
+}) {
   const o = project.openings[spanId];
   const span = g.spans.find((s) => s.id === spanId)!;
   // Arched/round openings fill their corners with the wall's own finishes, so wall materials are part of the key.
@@ -385,7 +456,10 @@ function OpeningNode({ g, spanId, project, ctx, cut, onPick }: { g: WallGeometry
     if (cut !== undefined)
       grp.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
-        if (mesh.isMesh) mesh.material = Array.isArray(mesh.material) ? mesh.material.map((m) => clippedMaterial(m, cut)) : clippedMaterial(mesh.material, cut);
+        if (mesh.isMesh)
+          mesh.material = Array.isArray(mesh.material)
+            ? mesh.material.map((m) => clippedMaterial(m, cut))
+            : clippedMaterial(mesh.material, cut);
       });
     return grp;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -414,23 +488,49 @@ function OpeningNode({ g, spanId, project, ctx, cut, onPick }: { g: WallGeometry
   );
 }
 
-function RoomSlabs({ derived, ctx, showCeilings, onPick }: { derived: DerivedPlan; ctx: BuildContext; showCeilings: boolean; onPick?: SceneOptions['onPick'] }) {
+function RoomSlabs({
+  derived,
+  ctx,
+  showCeilings,
+  reflect,
+  onPick,
+}: {
+  derived: DerivedPlan;
+  ctx: BuildContext;
+  showCeilings: boolean;
+  /** Ultra: floors draw with reflective copies of their materials (see floorReflections.tsx). */
+  reflect: boolean;
+  onPick?: SceneOptions['onPick'];
+}) {
   const floors = useMemo(
     () => derived.faces.map((f, i) => buildFloor(f, derived.faceRooms[i], ctx)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [derived.faces, derived.faceRooms.map((r) => `${r?.id}:${r?.floorMaterialId}`).join(), ctx.shadows],
   );
+  const ceilingKey = derived.faceRooms
+    .map((r) => `${r?.id}:${r?.ceilingMaterialId}:${r?.ceilingHeight}:${r?.showCeiling}`)
+    .join();
   const ceilings = useMemo(
     () =>
       showCeilings
         ? derived.faces
-            .map((f, i) => (derived.faceRooms[i]?.showCeiling === false ? null : buildCeiling(f, derived.faceRooms[i], ctx)))
+            .map((f, i) =>
+              derived.faceRooms[i]?.showCeiling === false ? null : buildCeiling(f, derived.faceRooms[i], ctx),
+            )
             .filter((x): x is THREE.Mesh => !!x)
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showCeilings, derived.faces, derived.faceRooms.map((r) => `${r?.id}:${r?.ceilingMaterialId}:${r?.ceilingHeight}:${r?.showCeiling}`).join(), ctx.project.walls],
+    [showCeilings, derived.faces, ceilingKey, ctx.project.walls],
   );
   useEffect(() => () => floors.forEach((m) => m.geometry.dispose()), [floors]);
+  useEffect(() => {
+    const unregister = floors.map((m) => {
+      const base = (m.userData.baseMaterial ??= m.material) as THREE.Material;
+      m.material = reflect ? reflectiveMaterial(base) : base;
+      return reflect ? registerReflectiveFloor(m) : () => undefined;
+    });
+    return () => unregister.forEach((u) => u());
+  }, [floors, reflect]);
   useEffect(() => () => ceilings.forEach((m) => m.geometry.dispose()), [ceilings]);
   return (
     <>
@@ -506,7 +606,17 @@ function textSprite(lines: { text: string; size: number; weight: number; color: 
   return sprite;
 }
 
-function Labels({ project, derived, rooms, dims }: { project: Project; derived: DerivedPlan; rooms: boolean; dims: boolean }) {
+function Labels({
+  project,
+  derived,
+  rooms,
+  dims,
+}: {
+  project: Project;
+  derived: DerivedPlan;
+  rooms: boolean;
+  dims: boolean;
+}) {
   const u = project.settings;
   const sprites = useMemo(() => {
     const out: THREE.Sprite[] = [];
@@ -525,7 +635,14 @@ function Labels({ project, derived, rooms, dims }: { project: Project; derived: 
       for (const g of derived.network.walls.values()) {
         if (g.path.length < 0.4 || isDividerWall(g.wall)) continue;
         const { p } = pointAt(g.path, g.path.length / 2);
-        const s = textSprite([{ text: formatLength(g.path.length, u.units, u.precision), size: 12, weight: 600, color: '#9cc6f2' }]);
+        const s = textSprite([
+          {
+            text: formatLength(g.path.length, u.units, u.precision),
+            size: 12,
+            weight: 600,
+            color: '#9cc6f2',
+          },
+        ]);
         s.position.set(p.x, g.z1 + 0.2, p.y);
         s.scale.multiplyScalar(0.8);
         out.push(s);
@@ -550,8 +667,21 @@ function Labels({ project, derived, rooms, dims }: { project: Project; derived: 
 }
 
 /** Everything generated from the project model. Shared by the editor 3D view and guest view. */
-export function SceneContent({ project, derived, registry, options }: { project: Project; derived: DerivedPlan; registry: MaterialRegistry; options: SceneOptions }) {
-  const [models, setModels] = useState<{ map: Map<string, THREE.Object3D>; version: number }>({ map: new Map(), version: 0 });
+export function SceneContent({
+  project,
+  derived,
+  registry,
+  options,
+}: {
+  project: Project;
+  derived: DerivedPlan;
+  registry: MaterialRegistry;
+  options: SceneOptions;
+}) {
+  const [models, setModels] = useState<{ map: Map<string, THREE.Object3D>; version: number }>({
+    map: new Map(),
+    version: 0,
+  });
   const customKey = Object.values(project.customAssets)
     .map((a) => a.blobId)
     .join();
@@ -577,7 +707,10 @@ export function SceneContent({ project, derived, registry, options }: { project:
   );
   const cut = options.wallDisplay === 'cutaway' ? options.cutawayHeight : undefined;
   const b = derived.bounds;
-  const center = useMemo(() => new THREE.Vector3(b ? (b.minX + b.maxX) / 2 : 0, 0, b ? (b.minY + b.maxY) / 2 : 0), [b]);
+  const center = useMemo(
+    () => new THREE.Vector3(b ? (b.minX + b.maxX) / 2 : 0, 0, b ? (b.minY + b.maxY) / 2 : 0),
+    [b],
+  );
   const constructionVisible = project.layers.construction.visible;
   const hubMat = registry.get(project, 'plaster-white');
   const objects = Object.values(project.objects).filter((o) => {
@@ -608,7 +741,15 @@ export function SceneContent({ project, derived, registry, options }: { project:
           {[...derived.network.walls.values()]
             .filter((g) => !g.wall.hidden && wallHasExtras(g))
             .map((g) => (
-              <WallExtrasNode key={`x-${g.wall.id}`} g={g} project={project} registry={registry} cut={cut} shadows={shadows} onPick={options.onPick} />
+              <WallExtrasNode
+                key={`x-${g.wall.id}`}
+                g={g}
+                project={project}
+                registry={registry}
+                cut={cut}
+                shadows={shadows}
+                onPick={options.onPick}
+              />
             ))}
           {derived.network.hubs.map((h) => (
             <HubMesh key={h.nodeId} hub={h} material={hubMat} cut={cut} shadows={shadows} />
@@ -619,19 +760,50 @@ export function SceneContent({ project, derived, registry, options }: { project:
         <group name="openings">
           {[...derived.network.walls.values()]
             .filter((g) => !g.wall.hidden)
-            .flatMap((g) => g.spans.map((sp) => <OpeningNode key={sp.id} g={g} spanId={sp.id} project={project} ctx={ctx} cut={cut} onPick={options.onPick} />))}
+            .flatMap((g) =>
+              g.spans.map((sp) => (
+                <OpeningNode
+                  key={sp.id}
+                  g={g}
+                  spanId={sp.id}
+                  project={project}
+                  ctx={ctx}
+                  cut={cut}
+                  onPick={options.onPick}
+                />
+              )),
+            )}
         </group>
       )}
       <group name="rooms">
-        <RoomSlabs derived={derived} ctx={ctx} showCeilings={options.showCeilings} onPick={options.onPick} />
+        <RoomSlabs
+          derived={derived}
+          ctx={ctx}
+          showCeilings={options.showCeilings}
+          reflect={options.quality === 'ultra'}
+          onPick={options.onPick}
+        />
       </group>
       <group name="objects">
         {objects.map((o) => (
-          <ObjectNode key={o.id} obj={o} ctx={ctx} modelsVersion={models.version} onPick={options.onPick} onPointerDown={options.onObjectPointerDown} />
+          <ObjectNode
+            key={o.id}
+            obj={o}
+            ctx={ctx}
+            modelsVersion={models.version}
+            onPick={options.onPick}
+            onPointerDown={options.onObjectPointerDown}
+          />
         ))}
       </group>
-      {(options.showRoomLabels || options.showDimensions) && <Labels project={project} derived={derived} rooms={options.showRoomLabels} dims={options.showDimensions} />}
+      {(options.showRoomLabels || options.showDimensions) && (
+        <Labels
+          project={project}
+          derived={derived}
+          rooms={options.showRoomLabels}
+          dims={options.showDimensions}
+        />
+      )}
     </group>
   );
 }
-

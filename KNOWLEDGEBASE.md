@@ -564,7 +564,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
    - The item name includes the maker.
    - Put them in a `branded-*.pack.ts` file. Every item in such a file must carry `brand`.
    - Any item whose name mentions a known brand must carry `brand`.
-   - Branded items get no colour variants (automatic).
+   - Branded items get no automatic colour variants and users cannot save their own. When the maker sells several
+     finishes (white/black fan, grey/silver vacuum), list them as hand-made `variants`; only those are offered.
 8. **Materials:**
    - Procedural patterns tile seamlessly and stay near-white unless `colored`.
    - Photo sets go in `photoSets.json` + `PHOTOS`, then `npm run textures`. Stay under 60 MB, and every set must be used.
@@ -633,6 +634,45 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Items: base units, runs from 1.8 to 3 m, a Vietnamese tiled masonry counter (bếp xây), islands, a peninsula,
     and eight sink units including a stainless sink with drainer.
   - Sink units include the tap in their height.
+- **Structures** (`packs/structures.pack.ts`, 54, type `structure`): placeable building parts on all five structure
+  shelves. The front faces +z, wall items stand on -z, and staircases climb from +z towards -z.
+  - Local helpers: `panelXY`/`panelZY` (prisms in the front or side plane), `bar` (a box between two points),
+    `arcBand` (arch mouldings) and `band` (a sloped strip clipped to the floor and the top).
+  - A `Flight` kit (`steps`, `stairString`, `balusters`, `handrail`, `newel`, `treadLines`) builds straight, L and U
+    stairs. Rails and strings stop at the item height, as if they continue into the upper floor.
+  - Stairs draw riser lines and an arrow in plan (`planDetail`).
+
+### Model variants (filled / empty …) and collections
+
+- **Model variants** (`AssetDefinition.models`, `src/data/assets/models.ts`): the same item with different contents —
+  a bookcase Filled or Empty, a table bare or set for dinner. Unlike colour variants they change parts, not materials;
+  unlike `variantOf` versions they keep one item, one size and one outline. The first model is the default; a placed
+  item stores a non-default one in `PlacedObject.model` (optional; absent = default, unknown ids fall back).
+  - A model can `hide` slots of the item's own parts and/or add `props(size)` (with its own `slots`). Props are forced
+    to `plan: false`, may rise above the item's box (up to `PROPS_ABOVE` = 1 m, e.g. a lamp on a sideboard) but must
+    stay inside its footprint. Size, outline, collisions and dimensions never depend on the model.
+  - `withModel(asset, id)` returns the asset as that model builds it (derived id `<id>@model:<model>`, memoised per
+    asset object, dropped on pack reload). Every geometry user goes through `getObjectAsset(project, obj)`: 3D build,
+    plan symbols, DXF, report, Inspector finishes, ghosts, saved-group thumbnails. Slot defaults of model-only slots
+    resolve through `slotDefaultMaterial`.
+  - Packs: items list `models`; a pack can also add models to other items with `PackSpec.models` ({ assetId:
+    { original, models } }) — the unmodified item becomes the first model under the `original` name (`model-variants`
+    pack does this for 27 built-ins). Pack items here use a `filled()` / `filledVanity()` helper: contents are marked
+    with `F()` (or sit in fill slots) and become the default "Filled" model's props, with an "Empty" model beside it.
+  - The old separate "…, empty" / "…, styled" items are retired: `RETIRED_MODEL_ITEMS` maps them to the original item
+    and model (with `dh`, the height the old styled item added); `repairProject` upgrades placed items on load and
+    saved/ready groups follow them via `currentItem`.
+  - UI: a corner button on library cards (opens the model list), a small pill in the info card and the Inspector
+    (`ModelPicker`, expands its list inline so the hover card stays open and the place tool stays armed). The library
+    choice is `editorStore.modelChoice[assetId]`; thumbnails follow it (`npm run thumbs` renders every model).
+  - Checks (`assetChecks.ts`): every model builds valid parts, its plan parts all come from the item's own build, props
+    stay within the footprint and ≤ 1 m above it; built-ins extended by packs are checked in `packs.test.ts`.
+- **Collections** (`Project.collections`, built in a parallel session): named lists of library items and groups
+  (`savedgroup:<id>`), a top-level project field (not in `PLAN_KEYS`) so every option shares them and they sync with the
+  project file. `groups` keeps copies of the user's own saved groups so they resolve on other machines. Commands in
+  `domain/commands/collections.ts`, UI actions in `features/library/collections.ts`. The Furniture dropdown lists rooms
+  or types, then "Groups" (`groups`), then each collection (`col:<id>`); the old Groups browse tab is gone. Card menus
+  offer Add to / Remove from each collection.
 
 ### Content packs (`/packs`)
 - **One file per pack**: `packs/<pack-id>.pack.ts` must `export default definePack({ name, version?, author?, description?, license?, items, materials?, patterns?, textures? })`. It imports everything it needs from `@/packs/kit`, which re-exports the asset helpers and types.
@@ -669,7 +709,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   fixed (glass, lights, screens, soil, sanitary ceramic, printed patterns, baskets…). Six themes (Natural, Dark, Light,
   Warm, Cool, Bold) pick one catalogue material per family (`FAMILY_THEMES`), so variants are coordinated sets;
   appliances use realistic metals only; plants vary only leaves (other greens: same leaf texture first, limited
-  lightness jumps), flowers and pots. Branded and imported items get none (`hasFixedFinish`). ~580 of ~675 items
+  lightness jumps), flowers and pots. Branded and imported items get no themes and no saved user variants
+  (`hasFixedFinish`); a branded item may list the maker's own finishes as hand-made `variants`. ~580 of ~675 items
   have variants. Users save their own from an edited item (Inspector → "Save as variant"): `UserVariant`s live in
   prefs (`assetVariants`, IndexedDB) and carry copies of project-only/edited materials; `prepareVariantMaterials`
   adds them under a new id when the target project already has a different material with that id.
@@ -846,6 +887,27 @@ construction documents.
 18. **Shared repo files get rewritten by every open browser**: a browser running an older build saved
     `photo: null` into a repo project during development, which is why the load-time photo fill treats
     `null` like "not set".
+
+- **3D first frame stalls for seconds**: it used to upload every texture at once (60LTN: ~115 textures, ~124 MP, mostly
+  raw 2K photo sets × 3 maps). Live photo maps are now capped at 1K (`LIVE_PHOTO_MAX` in materialRegistry; exports bake
+  their own sizes) and `FirstFrames` uploads textures in time-sliced batches after `compileAsync`. Dev builds log
+  `[3d] ready: scene … · materials … · first frames …` and keep it in `window.__NEEST_LOAD__`.
+- **Z-fighting (flickering coplanar faces)**: depth ties are settled per mesh with a constant polygon offset, switched on
+  only during that mesh's own draw calls (`depthBias.ts`; materials are shared). Walls draw nearest (-6 units), so
+  objects touching them lose; wall trim (glass frames, railings, mouldings) draws farther (+3, slope 1.5), so it loses
+  to anything it runs into (a glass frame into a column); inside an item, smaller slots win over bigger ones (a grille
+  over the body). Never a slope term on a mesh pulled nearer: it brings hidden end faces seen edge-on through the
+  surface in front (the old hairline wall seams). Assets: `coplanar.ts` + the asset rule keep new items free of
+  coplanar faces between slots (legacy offenders in `legacyCoplanar.json`, a list that may only shrink): lift the
+  smaller part ~1 mm proud.
+- **Something re-renders on every drag move**: the editor shell re-renders on each project change (pointer moves are
+  store previews). Panels must subscribe to the slices they show and be memoised (`LibraryPanel` is `memo`; its cards
+  must not read the whole project). Profile with a CDP CPU profile in headless Playwright with the UI showing.
+- **A browser with an older copy of a project overwrites `projects/` when it opens it** (repo sync on). Before scripting
+  edits to a project file, make sure no open tab holds a stale copy, or apply the change through the running app
+  (`window.__NEEST__.project.getState().execute`) so it merges with the live state.
+- **Hidden Browser pane pauses rendering**: rAF stops, so 3D loading never finishes there; measure in a headless
+  Playwright page instead (repo sync off first).
 
 ## 17. Recipes
 
@@ -1036,3 +1098,66 @@ Known limitations (also in README):
 69. "5 more 60LTN studio options with kitchen near the balcony, bed and sofa, cozy with a palette; lovebird cage,
     washer-dryer stack with the AC unit on top on the balcony; a shared desk with laptops for two" → options C–G and
     updates to A–G (done).
+70. "Fill the shelves, racks, tables and desks with a lot more stuff; more detailed cabinets, wardrobes and shelves"
+    → `styled-storage` pack (17 items with varied contents) and decor added to 60LTN options A–G (done).
+71. "Allow a FOV setting for the camera" → View panel field of view (orbit and walkthrough) (done).
+72. "Girl stuff: makeup table, makeup, sets of lotions and more" → `beauty` pack (21 items) (done).
+73. "Randomize the filled assets, some look too repetitive" → per-part texture offsets (`Part.uv`) and varied shelf
+    styling (done).
+74. "Turn the filled version into a model variant system beside the colour variants, picked when browsing or after
+    placing; contents must not affect outline or size; more than two models possible, unobtrusive" → model variants
+    (§12) (done).
+75. "A collection system, groups in the Furniture dropdown, shared between options" → collections (§12) (done).
+76. "Make the AC outdoor units much more detailed" → Panasonic CU-XU9ZKH-8 rebuilt (fan, grille, coil, valves) (done).
+77. "Let the wall win texture fights" → wall polygon offset (done). "The sink looks wrong" → sink bays stop below the
+    bowl (done).
+78. "More dynamic 3D loading animation; what takes so long" → staged loading screen, texture cap and batched uploads
+    (done). "Keep the info card open when changing the model" (done).
+79. "Move the theme into settings" → Settings → Appearance (the editor top bar no longer has it) (done).
+80. "White items blend into the library background" → deeper thumbnail backdrop and a soft outline shadow (done).
+81. "A lot more electronic appliances: Xiaomi standing fans, stick and robot vacuums, other home electronics" →
+    `branded-home-electronics` pack (34 items at published sizes): Xiaomi Smart Standing Fan 2 / 2 Lite / 2 Pro and Smart
+    Tower Fan; Dyson V15 Detect and V12 Detect Slim and Xiaomi G11 on wall docks, Dreame H12 Pro wet-dry on its base,
+    Hitachi CV-SF16A canister; robots with docks (Xiaomi S10, Xiaomi X10+, Roborock S8 Pro Ultra, Ecovacs T30 Omni);
+    Xiaomi Air Purifier 4 Lite / 4 Pro, Sharp KC-G40EV-W, Daikin MCK55TVM6, Dyson TP07, Xiaomi Humidifier 2 and
+    Dehumidifier 22L; Xiaomi Space Heater S, FujiE OFR4411 radiator; Google Nest Audio / Mini / Hub, Apple HomePod mini /
+    HomePod; Xiaomi AX3000T, TP-Link Archer AX73 and Deco X50; Xiaomi Kettle 2, Philips HD9252 and Xiaomi 6.5 L air
+    fryers, Philips HR2041 blender. Branded items may now list the maker's own finishes as hand-made `variants`
+    (Nest fabrics, HomePod colours, Roborock black/white, Dyson gold, TP07 black/nickel); no themes or saved variants (done).
+    Pitfall: a pack `build()` that throws falls back to a plain box and still passes `npx vitest run src/packs`; look at
+    the renders (the stick vacuums did this until a variable-order bug was fixed).
+82. "Many more structure items, detailed and realistic" → `structures` pack (54 items; §12):
+    - Columns: reeded classical, Tuscan, panelled pilaster, oak slat-clad, steel H, board-formed mushroom,
+      marble with brass inlays, mirror-tiled, timber post and beam, downstand beam, ceiling joists, steel I-beam.
+    - Built-ins: coffered and LED-cove tray ceilings, kitchen soffit with downlights, pipe riser boxing, L duct chase,
+      window seat with bookcases, storage window seat, banquette, wardrobe wall, media wall, alcove cupboard, desk
+      nook, raised platform with drawers, entryway bench.
+    - Heating: chimney breast with log burner, linear electric fire, cast-iron radiator, double-panel radiator,
+      radiator cover, wood stove with flue.
+    - Partitions: half walls (oak cap, columns, spindles), archway, reeded-glass arched door, barn doors, breeze
+      blocks (gạch thông gió), curved glass block, serpentine slats, arched cane panels.
+    - Stairs & steps: straight, floating with glass, steel spine, L, U, spiral, loft ladder, alternating tread,
+      split-level steps, bullnose steps, glass and spindle balustrades. All items are resizable and have finish
+      variants (done).
+    Pitfall: a `containParts` guard silently shrinks parts that leave the box, so the size checks pass while the
+    geometry is wrong. Check a pack with the guard turned off (compare the output parts by identity) before relying on it.
+83. "Fix the texture fighting in general, also in objects (Xiaomi Air Purifier 4 Pro top)" → per-mesh depth bias for
+    walls, wall trim and item slots (§16), glass frames and railings stop at the faces of walls they meet, purifier
+    grilles stand proud, a coplanar-faces asset rule (done).
+84. "Moving objects is sluggish (only with the library open)" → the library re-rendered every card per move and its
+    footprint cache (800) kept clearing: subscriptions narrowed, `LibraryPanel` memoised, cache 5000 (300–870 ms →
+    ~35 ms per move in 60LTN). Wall-snapping items no longer stick to every wall in narrow rooms while moved
+    (`WALL_HUG_MOVE` 8 cm) (done).
+85. "Centring the camera on the selected object: a setting, off by default" → Settings → 3D view (done).
+86. "Floor reflections by roughness, ultra only" → `floorReflections.tsx`: a half-resolution mirror pass of the
+    scene in the floor plane; floors use reflective material copies that blend it by Fresnel × gloss and blur it with
+    the mip level from roughness (none above 0.75) (done).
+87. "More annotation dimensions (basic and detailed), Annotations under the overview, Items by category last, no wall
+    types" → door & window widths, wall thickness and item sizes (`settings.dimensions.openings/thickness/objects`),
+    shared `AnnotationToggles` in the Project panel and Project settings (done).
+88. "Quality quick switch on hovering the View button" (portal flyout, above the panels) (done). "Shown ceilings must
+    stop the sun" → ceilings cast shadows (done).
+89. "Measure: the snapped end point loses its straight angle" → wall and face snaps land where the angle-constrained
+    ray crosses them (`snapPoint`) (done). "Show the number of options on project cards" (done).
+90. "Join two walls with a rounded corner" → select the two walls → Corner → Round corner (`roundCorner`: both walls
+    cut back, a tangent circular-arc wall joins them, openings stay put, radius capped by the shorter wall) (done).

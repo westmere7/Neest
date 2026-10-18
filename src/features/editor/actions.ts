@@ -4,6 +4,8 @@ import { clampOpenings, flipWall, insertJunctions, translateNodes, updateWalls }
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type SelItem } from '@/state/editorStore';
 import { confirmAction, toast } from '@/state/uiStores';
+import { groupFromSelection } from './groups';
+import { transientGroups } from '@/features/library/savedGroupAssets';
 
 const ps = () => useProjectStore.getState();
 const es = () => useEditorStore.getState();
@@ -66,6 +68,11 @@ export async function deleteSelection(): Promise<void> {
   es().clearSelection();
 }
 
+/**
+ * Duplicate. Furniture is not copied on the spot: the place tool starts with the copy following the
+ * pointer (same size, height, finishes, model and turn) until a click puts it down — several items
+ * move as one, kept as a group only if they were one. Doors and windows are copied beside the original.
+ */
 export function duplicateSelection(): void {
   const project = ps().project;
   const sel = es().selection.filter((s) => s.kind === 'object' || s.kind === 'opening');
@@ -73,6 +80,7 @@ export function duplicateSelection(): void {
     if (es().selection.length) toast.info('Only furniture and openings can be duplicated');
     return;
   }
+  if (sel.every((s) => s.kind === 'object') && placeCopies(project, sel.map((s) => s.id))) return;
   const grid = Math.max(project.settings.gridSize, 0.1) * 3;
   const ids = ps().execute('Duplicate', (d) =>
     duplicateEntities(
@@ -85,6 +93,36 @@ export function duplicateSelection(): void {
     const p = ps().project!;
     es().setSelection(ids.map((id) => ({ kind: p.objects[id] ? 'object' : 'opening', id }) as SelItem));
   }
+}
+
+/** Starts the place tool with copies of these items; false when they can't be placed that way. */
+function placeCopies(project: NonNullable<ReturnType<typeof ps>['project']>, ids: string[]): boolean {
+  const objs = ids.map((id) => project.objects[id]).filter(Boolean);
+  if (!objs.length || objs.some((o) => project.customAssets[o.assetId])) return false;
+  const workspace = es().workspace === 'walk' ? '3d' : es().workspace;
+  if (objs.length === 1) {
+    const o = objs[0];
+    es().set({
+      tool: 'place',
+      workspace,
+      placeAssetId: o.assetId,
+      placeRotation: o.rotation,
+      placeTemplate: { assetId: o.assetId, width: o.width, depth: o.depth, height: o.height, elevation: o.elevation, mirrored: o.mirrored, materials: { ...o.materials }, ...(o.model ? { model: o.model } : {}), name: o.name },
+      selection: [],
+    });
+    toast.info('Click to place the copy', 'R turns it, Shift-click places more, Esc cancels.');
+    return true;
+  }
+  const group = groupFromSelection();
+  if (!group) return false;
+  const gid = objs[0].groupId;
+  group.id = `dup-${Date.now().toString(36)}`;
+  group.ungrouped = !gid || objs.some((o) => o.groupId !== gid);
+  transientGroups.clear();
+  transientGroups.set(group.id, group);
+  es().set({ tool: 'place', workspace, placeAssetId: `savedgroup:${group.id}`, placeRotation: 0, selection: [] });
+  toast.info(`Click to place the ${objs.length} copies`, 'R turns them, Shift-click places more, Esc cancels.');
+  return true;
 }
 
 export function rotateSelection(delta = Math.PI / 2): void {

@@ -917,6 +917,7 @@ export interface AssetSpec {
   brand?: AssetDefinition['brand'];
   plant?: AssetDefinition['plant'];
   variants?: AssetDefinition['variants'];
+  models?: AssetDefinition['models'];
   model?: AssetDefinition['model'];
   variantOf?: AssetDefinition['variantOf'];
 }

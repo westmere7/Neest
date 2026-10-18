@@ -201,6 +201,7 @@ export const ASSET_GROUPS: Record<AssetType, string[]> = {
     'Cushions & throws',
     'Ornaments',
     'Candles & tabletop',
+    'Beauty & makeup',
     'Screens & dividers',
     'Fireplaces',
   ],
