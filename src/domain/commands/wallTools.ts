@@ -75,7 +75,7 @@ export function findExtension(p: ProjectLike, wallId: string, end: 'a' | 'b', ma
     const a = p.nodes[o.a];
     const b = p.nodes[o.b];
     if (!a || !b) continue;
-    const pts = buildWallPath(a, b, o.curve).samples.map((s) => s.p);
+    const pts = buildWallPath(a, b, o.curve, o.curveEnd).samples.map((s) => s.p);
     for (let i = 0; i < pts.length - 1; i++) {
       const hit = segmentIntersection(from, far, pts[i], pts[i + 1]);
       if (!hit || hit.t <= minT) continue;

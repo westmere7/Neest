@@ -512,6 +512,13 @@ function SelectionLayer({ px, hoverId }: { px: number; hoverId: string | null })
   for (const s of selection) draw(s, true);
 
   const handles = selectionHandles(project, derived, selection, px);
+  const handleLines: ReactNode[] = [];
+  for (const { handle, p } of handles) {
+    if (handle.type !== 'curve' || handle.end === 'mid') continue;
+    const w = project.walls[handle.wallId];
+    const n = w && project.nodes[handle.end === 'a' ? w.a : w.b];
+    if (n) handleLines.push(<line key={`hl-${handle.wallId}-${handle.end}`} x1={n.x} y1={n.y} x2={p.x} y2={p.y} className="handle-line" strokeWidth={px} />);
+  }
   const handleEls = handles.map(({ handle, p }, i) => {
     const r = 5 * px;
     if (handle.type === 'object-rotate') {
@@ -549,6 +556,7 @@ function SelectionLayer({ px, hoverId }: { px: number; hoverId: string | null })
     <g className="selection-layer" pointerEvents="none">
       {items}
       {dims}
+      {handleLines}
       {handleEls}
     </g>
   );
@@ -645,7 +653,7 @@ function OverlayLayer({ overlay, px }: { overlay: ToolOverlay; px: number }) {
     const { a, b, c, mid } = overlay.curveHandle;
     els.push(
       <g key="curve">
-        <path d={`M${a.x} ${a.y}L${c.x} ${c.y}L${b.x} ${b.y}`} className="ov-line guide" strokeWidth={px} strokeDasharray={`${4 * px} ${3 * px}`} />
+        <path d={`M${a.x} ${a.y}L${c.x} ${c.y}L${b.x} ${b.y}`} className="ov-line guide" fill="none" strokeWidth={px} strokeDasharray={`${4 * px} ${3 * px}`} />
         <circle cx={mid.x} cy={mid.y} r={5 * px} className="handle curve" strokeWidth={1.5 * px} />
       </g>,
     );

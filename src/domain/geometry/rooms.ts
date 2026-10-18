@@ -68,7 +68,7 @@ export function detectRoomFaces(project: Pick<Project, 'walls' | 'nodes'>): Room
     const b = project.nodes[w.b];
     if (!a || !b) continue;
     halfThickness.set(w.id, w.thickness / 2);
-    const path = buildWallPath(a, b, w.curve);
+    const path = buildWallPath(a, b, w.curve, w.curveEnd);
     if (path.samples.length === 2) {
       addEdge(w.a, w.b, w.id);
     } else {

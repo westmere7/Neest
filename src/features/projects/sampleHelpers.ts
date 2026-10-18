@@ -11,7 +11,7 @@ import { ASSETS_BY_ID } from '@/data/assets/catalog';
 export function wallAt(d: D, p: Vec2): { wallId: string; offset: number } | null {
   let best: { wallId: string; offset: number; dist: number } | null = null;
   for (const w of Object.values(d.walls)) {
-    const path = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve);
+    const path = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve, w.curveEnd);
     const proj = projectOnPath(path, p);
     if (proj.dist < 0.05 && (!best || proj.dist < best.dist)) best = { wallId: w.id, offset: proj.s, dist: proj.dist };
   }
@@ -59,7 +59,7 @@ export function paintWallFacing(d: D, wallPoint: Vec2, inside: Vec2, materialId:
   const hit = wallAt(d, wallPoint);
   if (!hit) return;
   const w = d.walls[hit.wallId];
-  const path = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve);
+  const path = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve, w.curveEnd);
   const proj = projectOnPath(path, inside);
   const n = { x: proj.tangent.y, y: -proj.tangent.x };
   const side = (inside.x - proj.point.x) * n.x + (inside.y - proj.point.y) * n.y >= 0 ? 'left' : 'right';

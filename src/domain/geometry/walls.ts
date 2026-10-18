@@ -97,7 +97,7 @@ export function wallPathFor(wall: WallSegment, nodes: Record<string, WallNode>):
   const a = nodes[wall.a];
   const b = nodes[wall.b];
   if (!a || !b) return null;
-  return buildWallPath(a, b, wall.curve);
+  return buildWallPath(a, b, wall.curve, wall.curveEnd);
 }
 
 export function wallLength(wall: WallSegment, nodes: Record<string, WallNode>): number {

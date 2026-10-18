@@ -246,7 +246,7 @@ export function wallExtrasKey(g: WallGeometry, cut?: number): string {
   const spans = g.spans.map((s) => `${r(s.s0)},${r(s.s1)},${r(s.sill)},${r(s.head)}`).join(';');
   const edge = [g.startLeft, g.startRight, g.endLeft, g.endRight].map((p) => `${r(p.x)},${r(p.y)}`).join(';');
   const w = g.wall;
-  return `${cut ?? ''}|${w.style ?? ''}|${w.thickness}|${w.height}|${w.heightEnd ?? ''}|${w.baseElevation}|${JSON.stringify(w.finishes ?? null)}|${w.materials.top}|${w.styleMaterialId ?? ''}|${JSON.stringify(w.curve)}|${edge}|${spans}`;
+  return `${cut ?? ''}|${w.style ?? ''}|${w.thickness}|${w.height}|${w.heightEnd ?? ''}|${w.baseElevation}|${JSON.stringify(w.finishes ?? null)}|${w.materials.top}|${w.styleMaterialId ?? ''}|${JSON.stringify(w.curve)}|${JSON.stringify(w.curveEnd ?? null)}|${edge}|${spans}`;
 }
 
 /** The extras group for a wall, or null when it has none. Caller disposes geometries (see disposeWallExtras). */

@@ -42,6 +42,20 @@ const PART_LABELS: Record<WallTrimPart, string> = {
   band: 'Lower band (wainscot / tile)',
 };
 
+/** Glass walls and railings: no left/right faces, just infill and frame. */
+export const isLightWall = (style: WallStyle | undefined): boolean => style === 'glass' || style === 'railing-glass' || style === 'railing-bars';
+
+/** Finishes of a glass wall or railing: the glazing (or bars) and the frame, posts or handrail. */
+export function LightWallFinishes({ wall, wallId }: { wall: Project['walls'][string]; wallId: string }) {
+  const style = wall.style ?? 'solid';
+  return (
+    <>
+      <MaterialSlotRow label={style === 'railing-bars' ? 'Bars' : 'Glazing'} target={{ kind: 'wall-style', wallId }} materialId={wall.styleMaterialId ?? 'glass-clear'} />
+      <MaterialSlotRow label={style === 'glass' ? 'Frame & mullions' : 'Posts & handrail'} target={{ kind: 'wall-side', wallId, side: 'top' }} materialId={wall.materials.top} />
+    </>
+  );
+}
+
 export function WallConstruction({ project, wallId, locked }: { project: Project; wallId: string; locked: boolean }) {
   const w = project.walls[wallId];
   const u = project.settings;
@@ -71,13 +85,7 @@ export function WallConstruction({ project, wallId, locked }: { project: Project
         }
         options={STYLE_OPTIONS}
       />
-      {light && (
-        <>
-          <MaterialSlotRow label={style === 'railing-bars' ? 'Bars' : 'Glazing'} target={{ kind: 'wall-style', wallId }} materialId={w.styleMaterialId ?? 'glass-clear'} />
-          <MaterialSlotRow label={style === 'glass' ? 'Frame & mullions' : 'Posts & handrail'} target={{ kind: 'wall-side', wallId, side: 'top' }} materialId={w.materials.top} />
-        </>
-      )}
-      {style === 'half' && <MaterialSlotRow label="Cap" target={{ kind: 'wall-side', wallId, side: 'top' }} materialId={w.materials.top} />}
+      {light && <p className="field-hint">Glazing and frame finishes are under Finishes.</p>}
       <Toggle
         label="Sloped top"
         hint="Different height at each end (attic knee walls, walls under stairs)"

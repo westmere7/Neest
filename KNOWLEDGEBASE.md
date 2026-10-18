@@ -326,6 +326,27 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **Hover card variants**: picking a variant also arms the place tool with that item. The card stays open.
 
 ### Walls: styles, trims, slopes and drawing tools
+- **Curved wall handles**:
+  - Model: `WallSegment.curve` alone is a quadratic Bézier (one bend handle, drawn on the curve's midpoint). Adding
+    `curveEnd` makes it a cubic: `curve` sets the start tangent and `curveEnd` the end tangent.
+  - `buildWallPath(a, b, curve, curveEnd)` samples both kinds (`WallPath.control2`).
+  - Commands that keep both handles: split (de Casteljau), node moves, length changes and reversal (`flipWall` swaps
+    the handles). `updateWalls({ curve: null })` clears both.
+  - Commands in walls.ts:
+    - `joinTangent` gives the direction of the wall joined at an end.
+    - `fitCurveToJoins` makes the curve tangent at both ends. One handle goes to the corner where the joined walls'
+      lines meet; two handles get circle-sized lengths, so two perpendicular walls get a quarter round.
+    - `setCurveHandles` converts exactly between one and two handles.
+    - `makeCircularArc` gives a true round arc through the ends and the current peak.
+    - `setCurveHandleFraction` / `curveHandleFraction` set and read both handle lengths as a fraction of the span.
+    - `flipCurve` mirrors the bulge across the chord.
+  - Inspector → Curve: Fit to joined walls, Two handles / One handle, Circular arc, Flip bulge, and a handle-length
+    (top fullness) slider.
+  - Dragging snaps: the bend handle to the tangent fit; an end handle to the joined wall's direction and 45° steps.
+    Alt drags freely.
+- **Glass walls and railings** have no left/right faces: their Finishes section shows only Glazing (or Bars) and
+  Frame & mullions (or Posts & handrail), via `WallExtras.LightWallFinishes` / `isLightWall`. The two-sided slots,
+  wall presets and per-face trims are hidden for them.
 - **Schema** (all optional, so old projects are unchanged):
   - `WallSegment.style`: 'solid' | 'half' | 'glass' | 'railing-glass' | 'railing-bars'.
   - `heightEnd`: the height at node b; `height` applies at node a, which makes a sloped top.
@@ -934,3 +955,8 @@ Known limitations (also in README):
 50. "A Ceiling category that hides ceiling-attached objects but keeps their lighting" (done).
 51. "Don't open the view settings automatically in 3D; merge the door/window tool settings into browsing" → view panel
     closed by default; design and finish under the Doors / Windows Build cards (done).
+52. "More controls for curved walls, e.g. a curve between two perpendicular walls; a bigger round peak" → two-handle
+    curves, Fit to joined walls, Circular arc, handle-length slider, tangent snapping; curve-tool preview no longer
+    filled black (done).
+53. "Two-sided material slots make no sense for a glass wall" → glass walls and railings show only glazing and frame
+    finishes (done).

@@ -1,5 +1,5 @@
 import type { PlacedObject, Vec2 } from '@/domain/model/schema';
-import { clampOpenings, insertJunctions, setNodePositions, settleNode, updateWalls } from '@/domain/commands/walls';
+import { clampOpenings, insertJunctions, joinTangent, setNodePositions, settleNode, updateWalls } from '@/domain/commands/walls';
 import { clampOpening, normalizeRotation, updateObjects, updateOpening } from '@/domain/commands/entities';
 import { projectOnPath } from '@/domain/geometry/wallPath';
 import { add, angleOf, dist, dot, leftNormal, rotate, round, scale, sub } from '@/domain/geometry/vec';
@@ -24,13 +24,23 @@ type Gesture =
     }
   | { type: 'slide-opening'; openingId: string }
   | { type: 'node'; nodeId: string; anchor: Vec2 | null; excludeWalls: Set<string> }
-  | { type: 'curve'; wallId: string }
+  | { type: 'curve'; wallId: string; end: 'mid' | 'a' | 'b' }
   | { type: 'opening-end'; openingId: string; end: 'start' | 'end' }
   | { type: 'rotate'; objectId: string; base: PlacedObject }
   | { type: 'resize'; objectId: string; sx: -1 | 0 | 1; sy: -1 | 0 | 1; base: PlacedObject }
   | { type: 'label'; roomId: string; start: Vec2; base: Vec2 };
 
 const DRAG_THRESHOLD_PX = 4;
+
+/** Where the rays p + s·u and q − r·v meet in front of both ends (s, r > 0), or null. */
+function rayCorner(p: Vec2, u: Vec2, q: Vec2, v: Vec2): Vec2 | null {
+  const den = u.x * v.y - u.y * v.x;
+  if (Math.abs(den) < 1e-6) return null;
+  const w = sub(q, p);
+  const s = (w.x * v.y - w.y * v.x) / den;
+  const r = (u.x * w.y - u.y * w.x) / den;
+  return s > 1e-4 && r > 1e-4 ? add(p, scale(u, s)) : null;
+}
 
 function isLockedItem(env: ToolEnv, item: SelItem): boolean {
   const p = env.project();
@@ -152,7 +162,7 @@ export function createSelectTool(): Tool {
           gesture = { type: 'node', nodeId: h.nodeId, anchor, excludeWalls: new Set(walls.map((w) => w.id)) };
         } else if (h.type === 'curve') {
           store().begin('Bend wall');
-          gesture = { type: 'curve', wallId: h.wallId };
+          gesture = { type: 'curve', wallId: h.wallId, end: h.end };
         } else if (h.type === 'opening-end') {
           store().begin('Resize opening');
           gesture = { type: 'opening-end', openingId: h.openingId, end: h.end };
@@ -305,11 +315,50 @@ export function createSelectTool(): Tool {
           if (!w) return;
           const a = project.nodes[w.a];
           const b = project.nodes[w.b];
-          const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-          // Handle sits at the curve's midpoint; derive the Bézier control point.
-          const c = { x: 2 * e.world.x - mid.x, y: 2 * e.world.y - mid.y };
           const wid = gesture.wallId;
-          store().preview((d) => updateWalls(d, [wid], { curve: c }));
+          const snapOn = !e.alt;
+          if (gesture.end === 'mid') {
+            const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+            // Handle sits at the curve's midpoint; derive the Bézier control point.
+            let c = { x: 2 * e.world.x - mid.x, y: 2 * e.world.y - mid.y };
+            let label: string | null = null;
+            // Snap to the bend that flows smoothly into the walls joined at both ends.
+            const ta = joinTangent(project, wid, 'a');
+            const tb = joinTangent(project, wid, 'b');
+            const fit = snapOn && ta && tb ? rayCorner(a, ta, b, tb) : null;
+            if (fit && dist({ x: (a.x + 2 * fit.x + b.x) / 4, y: (a.y + 2 * fit.y + b.y) / 4 }, e.world) < env.tol() * 2) {
+              c = fit;
+              label = 'Tangent to joined walls';
+            }
+            store().preview((d) => updateWalls(d, [wid], { curve: c }));
+            env.setSnapLabel(label);
+            return;
+          }
+          // End handle of a two-handle curve: snap its direction to the joined wall or 45° steps.
+          const origin = gesture.end === 'a' ? a : b;
+          let p = e.world;
+          let label: string | null = null;
+          if (snapOn) {
+            const v = sub(e.world, origin);
+            const len = Math.hypot(v.x, v.y);
+            const t = joinTangent(project, wid, gesture.end);
+            const dirs: { u: Vec2; label: string }[] = [];
+            if (t) dirs.push({ u: gesture.end === 'a' ? t : scale(t, -1), label: 'Tangent to joined wall' });
+            if (editor().snap.angle) for (let k = 0; k < 8; k++) dirs.push({ u: { x: Math.cos((k * Math.PI) / 4), y: Math.sin((k * Math.PI) / 4) }, label: `${k * 45}°` });
+            let best: { u: Vec2; label: string; cos: number } | null = null;
+            for (const dd of dirs) {
+              const cos = len > 1e-6 ? dot(v, dd.u) / len : -1;
+              if (cos > Math.cos((6 * Math.PI) / 180) && (!best || cos > best.cos + 1e-9)) best = { ...dd, cos };
+            }
+            if (best) {
+              p = add(origin, scale(best.u, dot(v, best.u)));
+              label = best.label;
+            }
+          }
+          const patch = gesture.end === 'a' ? { curve: p } : { curveEnd: p };
+          store().preview((d) => updateWalls(d, [wid], patch));
+          env.setSnapLabel(label);
+          env.setOverlay({ lines: [{ a: origin, b: p, kind: 'guide' as const }] });
           return;
         }
         case 'opening-end': {

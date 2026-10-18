@@ -79,6 +79,11 @@ export const WallSegmentSchema = z.object({
   role: WallRoleSchema.default('interior'),
   /** Quadratic Bézier control point for curved walls, or null for straight walls. */
   curve: Vec2Schema.nullable().default(null),
+  /**
+   * Second control point (near the end node): the curve becomes a cubic Bézier where `curve` sets
+   * the start tangent and `curveEnd` the end tangent. Only meaningful when `curve` is set.
+   */
+  curveEnd: Vec2Schema.nullable().optional(),
   materials: WallMaterialsSchema,
   locked: z.boolean().default(false),
   hidden: z.boolean().default(false),

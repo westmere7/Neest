@@ -9,7 +9,8 @@ import type { SelItem } from '@/state/editorStore';
 
 export type Handle =
   | { type: 'node'; nodeId: string }
-  | { type: 'curve'; wallId: string }
+  /** `mid`: the bend handle of a one-handle curve (on the curve); `a` / `b`: the end handles of a two-handle curve. */
+  | { type: 'curve'; wallId: string; end: 'mid' | 'a' | 'b' }
   | { type: 'opening-end'; openingId: string; end: 'start' | 'end' }
   | { type: 'object-rotate'; objectId: string }
   | { type: 'object-resize'; objectId: string; sx: -1 | 0 | 1; sy: -1 | 0 | 1 }
@@ -38,7 +39,15 @@ export function selectionHandles(project: Project, derived: DerivedPlan, selecti
     if (w && g && !w.locked) {
       out.push({ handle: { type: 'node', nodeId: w.a }, p: project.nodes[w.a] });
       out.push({ handle: { type: 'node', nodeId: w.b }, p: project.nodes[w.b] });
-      if (w.curve) out.push({ handle: { type: 'curve', wallId: w.id }, p: w.curve });
+      if (w.curve && w.curveEnd) {
+        out.push({ handle: { type: 'curve', wallId: w.id, end: 'a' }, p: w.curve });
+        out.push({ handle: { type: 'curve', wallId: w.id, end: 'b' }, p: w.curveEnd });
+      } else if (w.curve) {
+        // The bend handle sits on the curve (its midpoint), where dragging moves it.
+        const a = project.nodes[w.a];
+        const b = project.nodes[w.b];
+        out.push({ handle: { type: 'curve', wallId: w.id, end: 'mid' }, p: { x: (a.x + 2 * w.curve.x + b.x) / 4, y: (a.y + 2 * w.curve.y + b.y) / 4 } });
+      }
     }
   } else if (s.kind === 'node') {
     const n = project.nodes[s.id];

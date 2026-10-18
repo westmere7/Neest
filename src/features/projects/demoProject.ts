@@ -72,7 +72,7 @@ export function buildDemoProject(): Project {
           // Paint the wall sides facing into this room.
           for (const wid of face.wallIds) {
             const w = d.walls[wid];
-            const path = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve);
+            const path = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve, w.curveEnd);
             const proj = projectOnPath(path, spec.p);
             const n = { x: proj.tangent.y, y: -proj.tangent.x };
             const side = (spec.p.x - proj.point.x) * n.x + (spec.p.y - proj.point.y) * n.y >= 0 ? 'left' : 'right';

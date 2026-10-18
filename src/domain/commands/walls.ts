@@ -2,9 +2,9 @@ import { current, isDraft, type Draft } from 'immer';
 import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
 import { newId } from '../model/ids';
 import type { Project, Vec2, WallRole, WallSegment } from '../model/schema';
-import { buildWallPath, paramAt, pointAt, projectOnPath, splitBezier } from '../geometry/wallPath';
+import { buildWallPath, paramAt, pointAt, projectOnPath, splitBezier, splitCubic } from '../geometry/wallPath';
 import { computeWallNetwork } from '../geometry/walls';
-import { add, angleDelta, angleOf, closestPointOnSegment, dist, scale, segmentIntersection, sub } from '../geometry/vec';
+import { add, angleDelta, angleOf, closestPointOnSegment, dist, normalize, scale, segmentIntersection, sub } from '../geometry/vec';
 
 export type D = Draft<Project>;
 
@@ -76,7 +76,7 @@ export function findWallAt(d: D | Project, p: Vec2, tol = NODE_MERGE_TOL, exclud
     const a = d.nodes[w.a];
     const b = d.nodes[w.b];
     if (!a || !b) continue;
-    const path = buildWallPath(a, b, w.curve);
+    const path = buildWallPath(a, b, w.curve, w.curveEnd);
     const proj = projectOnPath(path, p);
     if (proj.dist <= tol && proj.s > NODE_MERGE_TOL && proj.s < path.length - NODE_MERGE_TOL) {
       if (!best || proj.dist < best.dist) best = { wallId: w.id, s: proj.s, dist: proj.dist };
@@ -97,7 +97,7 @@ export function splitWallAt(d: D, wallId: string, sRequested: number): string {
   const w = d.walls[wallId];
   const a = d.nodes[w.a];
   const b = d.nodes[w.b];
-  const path = buildWallPath(a, b, w.curve);
+  const path = buildWallPath(a, b, w.curve, w.curveEnd);
   let s = Math.max(0, Math.min(path.length, sRequested));
   const openings = Object.values(d.openings).filter((o) => o.wallId === wallId);
   for (const o of openings) {
@@ -112,7 +112,17 @@ export function splitWallAt(d: D, wallId: string, sRequested: number): string {
   const newWallId = newId('w');
   let firstCurve: Vec2 | null = null;
   let secondCurve: Vec2 | null = null;
-  if (path.control) {
+  let firstEnd: Vec2 | null = null;
+  let secondEnd: Vec2 | null = null;
+  if (path.control && path.control2) {
+    const parts = splitCubic(a, path.control, path.control2, b, paramAt(path, s));
+    firstCurve = parts.first.c1;
+    firstEnd = parts.first.c2;
+    secondCurve = parts.second.c1;
+    secondEnd = parts.second.c2;
+    d.nodes[mid].x = parts.first.b.x;
+    d.nodes[mid].y = parts.first.b.y;
+  } else if (path.control) {
     const t = paramAt(path, s);
     const parts = splitBezier(a, path.control, b, t);
     firstCurve = parts.first.c;
@@ -128,9 +138,11 @@ export function splitWallAt(d: D, wallId: string, sRequested: number): string {
     a: mid,
     b: oldB,
     curve: secondCurve,
+    curveEnd: secondEnd,
   };
   w.b = mid;
   w.curve = firstCurve;
+  w.curveEnd = firstEnd;
   if (w.heightEnd != null) {
     // Sloped top: both parts keep the same slope line.
     const hMid = w.height + ((w.heightEnd - w.height) * s) / path.length;
@@ -455,6 +467,7 @@ export function setNodePositions(d: D, positions: Record<string, Vec2>): void {
     const a1 = positions[w.a] ?? d.nodes[w.a];
     const b1 = positions[w.b] ?? d.nodes[w.b];
     w.curve = transformControl(w.curve, a0, b0, a1, b1);
+    if (w.curveEnd) w.curveEnd = transformControl(w.curveEnd, a0, b0, a1, b1);
   }
   for (const [id, p] of Object.entries(positions)) {
     const n = d.nodes[id];
@@ -483,15 +496,17 @@ export function setWallLength(d: D, wallId: string, length: number, anchor: 'sta
   if (!w || length < 0.02) return;
   const a = d.nodes[w.a];
   const b = d.nodes[w.b];
-  const path = buildWallPath(a, b, w.curve);
+  const path = buildWallPath(a, b, w.curve, w.curveEnd);
   if (path.length < 1e-9) return;
   const k = length / path.length;
   const fixed = anchor === 'start' ? a : b;
   const moving = anchor === 'start' ? b : a;
   const np = add(fixed, scale(sub(moving, fixed), k));
   const newCurve = w.curve ? add(fixed, scale(sub(w.curve, fixed), k)) : null;
+  const newEnd = w.curveEnd ? add(fixed, scale(sub(w.curveEnd, fixed), k)) : null;
   setNodePositions(d, { [moving.id]: np });
   if (newCurve) d.walls[wallId].curve = newCurve;
+  if (newEnd) d.walls[wallId].curveEnd = newEnd;
   // Openings measured from node a keep their distance from the anchored end.
   if (anchor === 'end') {
     const delta = length - path.length;
@@ -527,7 +542,7 @@ export function joinNodeToWall(d: D, nodeId: string, wallId: string): void {
   const w = d.walls[wallId];
   const n = d.nodes[nodeId];
   if (!w || !n || w.a === nodeId || w.b === nodeId) return;
-  const path = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve);
+  const path = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve, w.curveEnd);
   const proj = projectOnPath(path, n);
   const mid = splitWallAt(d, wallId, proj.s);
   if (mid !== nodeId) {
@@ -567,17 +582,202 @@ export function updateWalls(d: D, ids: string[], patch: Partial<Omit<WallSegment
     if (patch.materials) w.materials = { ...w.materials, ...patch.materials };
     const { materials: _m, ...rest } = patch;
     Object.assign(w, rest);
+    // A straight wall has no handles at all.
+    if (patch.curve === null) w.curveEnd = null;
   }
+}
+
+// ───────────── Curve handles ─────────────
+
+/**
+ * Direction a curved wall should have at one end to flow smoothly into the walls joined there
+ * (the joined wall's own direction through the shared node), or null when nothing is joined.
+ * With several joined walls (a T-junction) the one pointing most along the curve's chord wins.
+ */
+export function joinTangent(d: D | Project, wallId: string, end: 'a' | 'b'): Vec2 | null {
+  const w = d.walls[wallId];
+  if (!w) return null;
+  const node = end === 'a' ? w.a : w.b;
+  const chord = normalize(sub(d.nodes[w.b], d.nodes[w.a]));
+  let best: { t: Vec2; score: number } | null = null;
+  for (const o of Object.values(d.walls)) {
+    if (o.id === wallId || (o.a !== node && o.b !== node)) continue;
+    const path = buildWallPath(d.nodes[o.a], d.nodes[o.b], o.curve, o.curveEnd);
+    const n = path.samples.length - 1;
+    // Unit vector pointing from the node into the joined wall.
+    const away = o.a === node ? path.samples[0].tangent : scale(path.samples[n].tangent, -1);
+    // At the start the curve continues the joined wall (leaves opposite to it); at the end it runs into it.
+    const t = end === 'a' ? scale(away, -1) : away;
+    const score = t.x * chord.x + t.y * chord.y;
+    if (!best || score > best.score) best = { t, score };
+  }
+  return best && best.score > -0.999 ? best.t : null;
+}
+
+/** Intersection of the rays p + s·u and q - r·v (s, r ≥ 0), or null when parallel or behind. */
+function tangentCorner(p: Vec2, u: Vec2, q: Vec2, v: Vec2): { x: Vec2; s: number; r: number } | null {
+  const den = u.x * v.y - u.y * v.x;
+  if (Math.abs(den) < 1e-6) return null;
+  const w = sub(q, p);
+  const sP = (w.x * v.y - w.y * v.x) / den;
+  const rQ = (u.x * w.y - u.y * w.x) / den;
+  if (sP <= 1e-4 || rQ <= 1e-4) return null;
+  return { x: add(p, scale(u, sP)), s: sP, r: rQ };
+}
+
+/**
+ * Bends a curved wall so it leaves and enters the walls joined at its ends smoothly (tangent).
+ * Two handles: each handle lies along its end's tangent, sized for a near-circular arc (a quarter
+ * circle between two perpendicular walls). One handle: the control point moves to where the two
+ * tangent lines meet. A free end keeps pointing at the other end. Returns false if nothing changed.
+ */
+export function fitCurveToJoins(d: D, wallId: string): boolean {
+  const w = d.walls[wallId];
+  if (!w) return false;
+  const a = d.nodes[w.a];
+  const b = d.nodes[w.b];
+  const chord = sub(b, a);
+  const L = Math.hypot(chord.x, chord.y);
+  if (L < 1e-6) return false;
+  const ta = joinTangent(d, wallId, 'a');
+  const tb = joinTangent(d, wallId, 'b');
+  if (!ta && !tb) return false;
+  const c = normalize(chord);
+  const corner = ta && tb ? tangentCorner(a, ta, b, tb) : null;
+  if (!w.curveEnd) {
+    if (corner) w.curve = corner.x;
+    else if (ta) w.curve = add(a, scale(ta, L / 2));
+    else w.curve = sub(b, scale(tb!, L / 2));
+    return true;
+  }
+  if (corner) {
+    // Circular-arc handle length: (4/3)·tan(θ/4)·R, with R·tan(θ/2) the distance to the corner.
+    const theta = Math.acos(Math.max(-1, Math.min(1, ta!.x * tb!.x + ta!.y * tb!.y)));
+    const k = theta < 1e-3 ? 1 / 3 : ((4 / 3) * Math.tan(theta / 4)) / Math.tan(theta / 2);
+    w.curve = add(a, scale(ta!, corner.s * k));
+    w.curveEnd = sub(b, scale(tb!, corner.r * k));
+  } else {
+    w.curve = add(a, scale(ta ?? c, L / 3));
+    w.curveEnd = sub(b, scale(tb ?? c, L / 3));
+  }
+  return true;
+}
+
+/** Switches a curved wall between one bend handle (quadratic) and two end handles (cubic), keeping its shape. */
+export function setCurveHandles(d: D, wallId: string, two: boolean): void {
+  const w = d.walls[wallId];
+  if (!w?.curve) return;
+  const a = d.nodes[w.a];
+  const b = d.nodes[w.b];
+  if (two && !w.curveEnd) {
+    // Exact degree elevation.
+    const c = w.curve;
+    w.curve = add(a, scale(sub(c, a), 2 / 3));
+    w.curveEnd = add(b, scale(sub(c, b), 2 / 3));
+  } else if (!two && w.curveEnd) {
+    // Closest quadratic: (3·(c1 + c2) − (a + b)) / 4.
+    const c1 = w.curve;
+    const c2 = w.curveEnd;
+    w.curve = { x: (3 * (c1.x + c2.x) - (a.x + b.x)) / 4, y: (3 * (c1.y + c2.y) - (a.y + b.y)) / 4 };
+    w.curveEnd = null;
+  }
+}
+
+/**
+ * Reshapes a curved wall into a circular arc through its two ends and its current peak (the
+ * point halfway along it): a round top of constant diameter instead of a pointed parabola. The
+ * wall gets two handles sized for a circle ((4/3)·tan(θ/4)·R along each end's tangent). Returns
+ * false when the wall is straight or its peak lies on the chord.
+ */
+export function makeCircularArc(d: D, wallId: string): boolean {
+  const w = d.walls[wallId];
+  if (!w?.curve) return false;
+  const a = d.nodes[w.a];
+  const b = d.nodes[w.b];
+  const path = buildWallPath(a, b, w.curve, w.curveEnd);
+  const P = pointAt(path, path.length / 2).p;
+  // Circle through a, P, b.
+  const ax = a.x;
+  const ay = a.y;
+  const bx = P.x;
+  const by = P.y;
+  const cx = b.x;
+  const cy = b.y;
+  const den = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+  if (Math.abs(den) < 1e-9) return false;
+  const a2 = ax * ax + ay * ay;
+  const b2 = bx * bx + by * by;
+  const c2 = cx * cx + cy * cy;
+  const O = { x: (a2 * (by - cy) + b2 * (cy - ay) + c2 * (ay - by)) / den, y: (a2 * (cx - bx) + b2 * (ax - cx) + c2 * (bx - ax)) / den };
+  const R = dist(O, a);
+  // Direction of travel round the centre (left or right turn from a through P to b).
+  const turn = Math.sign((P.x - a.x) * (b.y - P.y) - (P.y - a.y) * (b.x - P.x));
+  const perp = (v: Vec2): Vec2 => normalize({ x: -v.y * turn, y: v.x * turn });
+  const ta = perp(sub(a, O));
+  const tb = perp(sub(b, O));
+  let sweep = Math.atan2(b.y - O.y, b.x - O.x) - Math.atan2(a.y - O.y, a.x - O.x);
+  if (turn < 0) sweep = -sweep;
+  while (sweep <= 0) sweep += 2 * Math.PI;
+  const h = (4 / 3) * Math.tan(sweep / 4) * R;
+  w.curve = add(a, scale(ta, h));
+  w.curveEnd = sub(b, scale(tb, h));
+  return true;
+}
+
+/** Average handle length of a two-handle curve as a fraction of its chord. */
+export function curveHandleFraction(d: D | Project, wallId: string): number | null {
+  const w = d.walls[wallId];
+  if (!w?.curve || !w.curveEnd) return null;
+  const a = d.nodes[w.a];
+  const b = d.nodes[w.b];
+  const L = dist(a, b);
+  return L > 1e-6 ? (dist(a, w.curve) + dist(b, w.curveEnd)) / (2 * L) : null;
+}
+
+/**
+ * Sets both handles of a two-handle curve to `frac` × chord length, keeping their directions:
+ * longer handles make a fuller, wider top; shorter ones a pointier top.
+ */
+export function setCurveHandleFraction(d: D, wallId: string, frac: number): void {
+  const w = d.walls[wallId];
+  if (!w?.curve || !w.curveEnd) return;
+  const a = d.nodes[w.a];
+  const b = d.nodes[w.b];
+  const L = dist(a, b) * Math.max(0.02, frac);
+  const ua = normalize(sub(w.curve, a));
+  const ub = normalize(sub(w.curveEnd, b));
+  if ((ua.x || ua.y) && (ub.x || ub.y)) {
+    w.curve = add(a, scale(ua, L));
+    w.curveEnd = add(b, scale(ub, L));
+  }
+}
+
+/** Mirrors a curved wall's handles across its chord (the bulge flips to the other side). */
+export function flipCurve(d: D, wallId: string): void {
+  const w = d.walls[wallId];
+  if (!w?.curve) return;
+  const a = d.nodes[w.a];
+  const b = d.nodes[w.b];
+  const u = normalize(sub(b, a));
+  const mirror = (p: Vec2): Vec2 => {
+    const v = sub(p, a);
+    const along = scale(u, v.x * u.x + v.y * u.y);
+    return add(a, sub(scale(along, 2), v));
+  };
+  w.curve = mirror(w.curve);
+  if (w.curveEnd) w.curveEnd = mirror(w.curveEnd);
 }
 
 /** Reverses a wall's direction (swaps sides) while keeping openings in place. */
 export function flipWall(d: D, wallId: string): void {
   const w = d.walls[wallId];
   if (!w) return;
-  const L = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve).length;
+  const L = buildWallPath(d.nodes[w.a], d.nodes[w.b], w.curve, w.curveEnd).length;
   const { a, b } = w;
   w.a = b;
   w.b = a;
+  // A reversed cubic swaps its two handles.
+  if (w.curve && w.curveEnd) [w.curve, w.curveEnd] = [w.curveEnd, w.curve];
   const { left, right } = w.materials;
   w.materials.left = right;
   w.materials.right = left;

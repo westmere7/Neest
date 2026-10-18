@@ -7,7 +7,7 @@ import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
 import { boundsOf, unionBounds, type Bounds } from '@/domain/geometry/vec';
 import { pointAt } from '@/domain/geometry/wallPath';
-import { setWallAngle, setWallLength, splitWallAt, updateWalls, clampOpenings } from '@/domain/commands/walls';
+import { clampOpenings, curveHandleFraction, fitCurveToJoins, flipCurve, joinTangent, makeCircularArc, setCurveHandleFraction, setCurveHandles, setWallAngle, setWallLength, splitWallAt, updateWalls } from '@/domain/commands/walls';
 import { assignMaterial, normalizeRotation, setOpeningDesign, suggestedFloor, updateObjects, updateOpening, updateRoom } from '@/domain/commands/entities';
 import { defaultDesign, designFitsKind, OPENING_DESIGNS_BY_ID, resolveOpeningDesign } from '@/domain/model/openingDesigns';
 import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
@@ -20,7 +20,7 @@ import { thumbnailSrc } from '@/features/projects/thumbnails';
 import { Button, IconButton, LengthField, NumberField, Section, Select, Slider, TextField, Toggle, Segmented } from '@/components/ui';
 import { MaterialSlotRow } from '@/features/materials/MaterialUI';
 import { deleteSelection, duplicateSelection, flipOpening, reverseWall, rotateSelection, toggleLockSelection, describeSelection } from './actions';
-import { DrawPresetSelect, WallConstruction, WallPresetPicker, WallTrims } from './WallExtras';
+import { DrawPresetSelect, WallConstruction, WallPresetPicker, WallTrims, isLightWall, LightWallFinishes } from './WallExtras';
 import { WallMultiEdit } from './WallMultiEdit';
 import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
@@ -319,18 +319,77 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
             <FlipHorizontal2 size={13} /> Swap sides
           </Button>
         </div>
+        {w.curve && (
+          <>
+            <div className="field-label">Curve</div>
+            <div className="btn-row">
+              <Button
+                size="sm"
+                disabled={locked || (!joinTangent(project, wallId, 'a') && !joinTangent(project, wallId, 'b'))}
+                title="Bend the wall so it flows smoothly out of and into the walls joined at its ends (a quarter round between two perpendicular walls)"
+                onClick={() => exec('Fit curve to joined walls', (d) => void (fitCurveToJoins(d, wallId) && clampOpenings(d)))}
+              >
+                Fit to joined walls
+              </Button>
+              <Button
+                size="sm"
+                disabled={locked}
+                title={w.curveEnd ? 'Back to one bend handle' : 'A handle at each end: set each end’s direction separately (S-curves, smooth joins)'}
+                onClick={() => exec(w.curveEnd ? 'One curve handle' : 'Two curve handles', (d) => setCurveHandles(d, wallId, !w.curveEnd))}
+              >
+                {w.curveEnd ? 'One handle' : 'Two handles'}
+              </Button>
+              <Button
+                size="sm"
+                disabled={locked}
+                title="A true round arc through both ends and the current peak (constant diameter instead of a pointed top)"
+                onClick={() => exec('Make circular arc', (d) => void (makeCircularArc(d, wallId) && clampOpenings(d)))}
+              >
+                Circular arc
+              </Button>
+              <Button size="sm" disabled={locked} title="Mirror the bulge to the other side" onClick={() => exec('Flip curve', (d) => flipCurve(d, wallId))}>
+                Flip bulge
+              </Button>
+            </div>
+            {w.curveEnd && (
+              <Slider
+                label="Handle length (top fullness)"
+                value={Math.round((curveHandleFraction(project, wallId) ?? 0.33) * 100)}
+                min={5}
+                max={120}
+                step={1}
+                format={(v) => `${v}% of span`}
+                onCommit={(v) => exec('Set curve fullness', (d) => { setCurveHandleFraction(d, wallId, v / 100); clampOpenings(d); })}
+              />
+            )}
+            <p className="field-hint">
+              {w.curveEnd
+                ? 'Drag a handle to set the direction at that end; it snaps to the joined wall and 45° steps (hold Alt for free).'
+                : 'Drag the handle on the curve to bend it; it snaps to a smooth join with the walls at both ends (hold Alt for free).'}
+            </p>
+          </>
+        )}
       </Section>
       <WallConstruction project={project} wallId={wallId} locked={locked} />
-      <Section title="Finishes">
-        <WallPresetPicker wallIds={[wallId]} />
-        <MaterialSlotRow label="Left side" target={{ kind: 'wall-side', wallId, side: 'left' }} materialId={w.materials.left} testId="wall-mat-left" />
-        <MaterialSlotRow label="Right side" target={{ kind: 'wall-side', wallId, side: 'right' }} materialId={w.materials.right} />
-        <MaterialSlotRow label="Top & ends" target={{ kind: 'wall-side', wallId, side: 'top' }} materialId={w.materials.top} />
-        <Button size="sm" variant="subtle" onClick={() => exec('Match both sides', (d) => assignMaterial(d, [{ kind: 'wall-side', wallId, side: 'right' }], w.materials.left))}>
-          Use left finish on both sides
-        </Button>
-      </Section>
-      <WallTrims project={project} wallId={wallId} />
+      {isLightWall(w.style) ? (
+        // Glass walls and railings have no faces to finish: their glazing (or bars) and frame instead.
+        <Section title="Finishes">
+          <LightWallFinishes wall={w} wallId={wallId} />
+        </Section>
+      ) : (
+        <>
+          <Section title="Finishes">
+            <WallPresetPicker wallIds={[wallId]} />
+            <MaterialSlotRow label="Left side" target={{ kind: 'wall-side', wallId, side: 'left' }} materialId={w.materials.left} testId="wall-mat-left" />
+            <MaterialSlotRow label="Right side" target={{ kind: 'wall-side', wallId, side: 'right' }} materialId={w.materials.right} />
+            <MaterialSlotRow label={w.style === 'half' ? 'Cap & ends' : 'Top & ends'} target={{ kind: 'wall-side', wallId, side: 'top' }} materialId={w.materials.top} />
+            <Button size="sm" variant="subtle" onClick={() => exec('Match both sides', (d) => assignMaterial(d, [{ kind: 'wall-side', wallId, side: 'right' }], w.materials.left))}>
+              Use left finish on both sides
+            </Button>
+          </Section>
+          <WallTrims project={project} wallId={wallId} />
+        </>
+      )}
       {openings.length > 0 && (
         <Section title={`Openings (${openings.length})`}>
           {openings.map((o) => (
