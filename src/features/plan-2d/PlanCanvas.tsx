@@ -21,6 +21,7 @@ import { createExtendTool } from './tools/extendTool';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './tools/types';
 import { openContextMenu } from '@/components/ContextMenu';
 import { floatingInsets } from '@/components/layoutInsets';
+import { selectionBounds } from '@/features/editor/selectionBounds';
 import { usePackVersion } from '@/packs/events';
 import { planContextMenuItems } from './contextMenu';
 import './plan.css';
@@ -124,6 +125,28 @@ export function PlanCanvas() {
   useEffect(() => {
     if (fitRequest > 0) fit();
   }, [fitRequest, fit]);
+
+  // Focus: centre on the selection, zoomed so it fills about a third of the free area.
+  const focusRequest = useEditorStore((s) => s.focusRequest);
+  useEffect(() => {
+    if (!focusRequest) return;
+    const { derived: dv, size: sz } = stateRef.current;
+    const b = selectionBounds(useProjectStore.getState().project!, dv, useEditorStore.getState().selection);
+    if (!b) return;
+    const host = containerRef.current?.getBoundingClientRect();
+    const W = host?.width || sz.w;
+    const Hh = host?.height || sz.h;
+    const insets = host ? floatingInsets(host) : { l: 0, r: 0, t: 0, b: 0 };
+    const availW = Math.max(120, W - insets.l - insets.r);
+    const availH = Math.max(120, Hh - insets.t - insets.b);
+    const bw = Math.max(0.6, b.maxX - b.minX);
+    const bh = Math.max(0.6, b.maxY - b.minY);
+    const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(availW / bw, availH / bh) / 3));
+    const offX = (insets.l - insets.r) / 2 / zoom;
+    const offY = (insets.t - insets.b) / 2 / zoom;
+    userMoved.current = true;
+    useEditorStore.getState().set({ planCamera: { cx: (b.minX + b.maxX) / 2 - offX, cy: (b.minY + b.maxY) / 2 - offY, zoom } });
+  }, [focusRequest]);
 
   const px = 1 / camera.zoom;
   const vb = {

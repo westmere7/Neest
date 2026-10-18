@@ -1161,3 +1161,13 @@ Known limitations (also in README):
     ray crosses them (`snapPoint`) (done). "Show the number of options on project cards" (done).
 90. "Join two walls with a rounded corner" → select the two walls → Corner → Round corner (`roundCorner`: both walls
     cut back, a tangent circular-arc wall joins them, openings stay put, radius capped by the shorter wall) (done).
+91. "Duplicating doors and windows should switch into placement mode" → Duplicate on an opening starts the door/window
+    tool with `openingTemplate` (every setting of the original); the ghost and the inserted copy use it (done).
+92. "An icon on any selection to close in and orbit around it" → Focus button in the Inspector header (`requestFocus`,
+    `selectionBounds`): the plan centres and zooms in, 3D eases the orbit pivot and camera to it (done).
+93. "Glass walls: full glass, top and bottom frames etc." → `wall.glassFrame`: framed, rails, bottom channel, top
+    track, posts only, frameless (butt-jointed panes); single and multi-wall inspectors (done).
+94. "Adjust the radius of a rounded corner" → Curve → Corner radius on the arc wall (`cornerArc`, `setCornerRadius`);
+    the curve section was tidied (actions as icons, handles as a segmented choice, short hint) (done).
+95. "Door/window placement is invisible in some areas" → the ghost was flush with the wall faces and lost the walls'
+    depth bias; it now stands 12 mm proud (done).

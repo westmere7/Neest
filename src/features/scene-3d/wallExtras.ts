@@ -267,6 +267,10 @@ function clipPiece(g: WallGeometry, s0: number, s1: number): [number, number] | 
 function addGlassWall(frame: Quads, glass: Quads, g: WallGeometry, cut?: number) {
   const hw = Math.min(g.h, 0.035);
   const post = 0.05;
+  const kind = g.wall.glassFrame ?? 'framed';
+  const bottomRail = kind === 'framed' || kind === 'rails' || kind === 'bottom';
+  const topRail = kind === 'framed' || kind === 'rails' || kind === 'top';
+  const posts = kind === 'framed' || kind === 'posts';
   for (const raw of g.pieces) {
     const clipped = clipPiece(g, raw.s0, raw.s1);
     if (!clipped) continue;
@@ -276,29 +280,45 @@ function addGlassWall(frame: Quads, glass: Quads, g: WallGeometry, cut?: number)
     const hi = (s: number) => (cut !== undefined ? Math.min(hiRaw(s), cut) : hiRaw(s));
     if (Math.max(hi(pc.s0), hi(pc.s1)) - lo < 0.02) continue;
     const rail = Math.min(0.05, (hi(pc.s0) - lo) / 4);
-    centreStrip(
-      frame,
-      g,
-      pc.s0,
-      pc.s1,
-      hw,
-      () => lo,
-      () => lo + rail,
-    );
-    if (cut === undefined || hiRaw(pc.s0) <= cut)
+    // A bottom channel is a little taller than a rail; a top track sits under the ceiling or head.
+    const bottom = kind === 'bottom' ? Math.min(0.1, (hi(pc.s0) - lo) / 4) : rail;
+    if (bottomRail)
+      centreStrip(
+        frame,
+        g,
+        pc.s0,
+        pc.s1,
+        hw,
+        () => lo,
+        () => lo + bottom,
+      );
+    if (topRail && (cut === undefined || hiRaw(pc.s0) <= cut))
       centreStrip(frame, g, pc.s0, pc.s1, hw, (s) => hi(s) - rail, hi);
-    for (const s of [pc.s0 + post / 2, pc.s1 - post / 2, ...divisions(pc.s0, pc.s1, 1.2)]) {
-      centreStrip(frame, g, s - post / 2, s + post / 2, hw, () => lo, hi);
+    const mullions = divisions(pc.s0, pc.s1, 1.2);
+    if (posts) {
+      for (const s of [pc.s0 + post / 2, pc.s1 - post / 2, ...mullions]) {
+        centreStrip(frame, g, s - post / 2, s + post / 2, hw, () => lo, hi);
+      }
     }
-    centreStrip(
-      glass,
-      g,
-      pc.s0,
-      pc.s1,
-      0.006,
-      () => lo + rail,
-      (s) => hi(s) - rail,
-    );
+    const g0 = bottomRail ? lo + bottom : lo;
+    const g1 = (s: number) => (topRail ? hi(s) - rail : hi(s));
+    if (posts || !mullions.length) {
+      centreStrip(glass, g, pc.s0, pc.s1, 0.006, () => g0, g1);
+    } else {
+      // Unframed sides: separate panes about 1.2 m wide with thin butt joints between them.
+      const edges = [pc.s0, ...mullions, pc.s1];
+      for (let i = 0; i < edges.length - 1; i++) {
+        centreStrip(
+          glass,
+          g,
+          edges[i] + (i ? 0.002 : 0),
+          edges[i + 1] - (i < edges.length - 2 ? 0.002 : 0),
+          0.006,
+          () => g0,
+          g1,
+        );
+      }
+    }
   }
 }
 
@@ -398,7 +418,7 @@ export function wallExtrasKey(g: WallGeometry, cut?: number): string {
   const spans = g.spans.map((s) => `${r(s.s0)},${r(s.s1)},${r(s.sill)},${r(s.head)}`).join(';');
   const edge = [g.startLeft, g.startRight, g.endLeft, g.endRight].map((p) => `${r(p.x)},${r(p.y)}`).join(';');
   const w = g.wall;
-  return `${cut ?? ''}|${w.style ?? ''}|${w.thickness}|${w.height}|${w.heightEnd ?? ''}|${w.baseElevation}|${JSON.stringify(w.finishes ?? null)}|${w.materials.top}|${w.styleMaterialId ?? ''}|${JSON.stringify(w.curve)}|${JSON.stringify(w.curveEnd ?? null)}|${edge}|${spans}`;
+  return `${cut ?? ''}|${w.style ?? ''}|${w.thickness}|${w.height}|${w.heightEnd ?? ''}|${w.baseElevation}|${JSON.stringify(w.finishes ?? null)}|${w.materials.top}|${w.styleMaterialId ?? ''}|${w.glassFrame ?? ''}|${JSON.stringify(w.curve)}|${JSON.stringify(w.curveEnd ?? null)}|${edge}|${spans}`;
 }
 
 /** The extras group for a wall, or null when it has none. Caller disposes geometries (see disposeWallExtras). */

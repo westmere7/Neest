@@ -323,9 +323,12 @@ function ToolOverlay3D({ overlay }: { overlay: ToolOverlay }) {
   }
   if (overlay.ghostObject) els.push(<GhostObject3D key="ghost" ghost={overlay.ghostObject} />);
   if (overlay.ghostOpening) {
-    const preset = OPENING_PRESETS[useEditorStore.getState().openingKind];
-    const sill = preset.sill;
-    const head = Math.min(wallH, preset.sill + preset.height);
+    const ed = useEditorStore.getState();
+    const preset = OPENING_PRESETS[ed.openingKind];
+    // A Duplicate shows the original's sill and height.
+    const tpl = ed.openingTemplate?.kind === ed.openingKind ? ed.openingTemplate : null;
+    const sill = tpl ? tpl.sillHeight : preset.sill;
+    const head = Math.min(wallH, sill + (tpl ? tpl.height : preset.height));
     els.push(
       <Prism key="gop" points={overlay.ghostOpening.pts} y0={sill - 0.01} height={head - sill + 0.02} material={overlay.ghostOpening.valid ? previewMat : invalidMat} />,
     );

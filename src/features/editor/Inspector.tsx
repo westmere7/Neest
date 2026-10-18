@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, LibraryBig, Lock, PanelRightClose, RotateCw, Trash2, Unlock, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Focus, LibraryBig, Lock, Minus, PanelRightClose, RotateCw, Scissors, Spline, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
 import { isDividerWall, isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
@@ -7,7 +7,7 @@ import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
 import { boundsOf, unionBounds, type Bounds } from '@/domain/geometry/vec';
 import { pointAt } from '@/domain/geometry/wallPath';
-import { clampOpenings, curveHandleFraction, maxCornerRadius, roundCorner, sharedNode, fitCurveToJoins, flipCurve, joinTangent, makeCircularArc, setCurveHandleFraction, setCurveHandles, setWallAngle, setWallLength, splitWallAt, updateWalls } from '@/domain/commands/walls';
+import { clampOpenings, cornerArc, curveHandleFraction, maxCornerRadius, roundCorner, setCornerRadius, sharedNode, fitCurveToJoins, flipCurve, joinTangent, makeCircularArc, setCurveHandleFraction, setCurveHandles, setWallAngle, setWallLength, splitWallAt, updateWalls } from '@/domain/commands/walls';
 import { assignMaterial, normalizeRotation, setOpeningDesign, suggestedFloor, updateObjects, updateOpening, updateRoom } from '@/domain/commands/entities';
 import { defaultDesign, designFitsKind, OPENING_DESIGNS_BY_ID, resolveOpeningDesign } from '@/domain/model/openingDesigns';
 import { DEFAULT_MATERIALS } from '@/data/materials/catalog';
@@ -157,6 +157,11 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
           <h2 title={title}>{title}</h2>
         )}
         <div className="inspector-actions">
+          {!isProject && selection.length > 0 && (
+            <IconButton label="Focus camera on selection" onClick={() => useEditorStore.getState().requestFocus()} data-testid="focus-selection">
+              <Focus size={15} />
+            </IconButton>
+          )}
           {!folded && actions}
           {isProject ? (
             <IconButton label="Hide project panel" onClick={() => useEditorStore.getState().set({ projectPanelOpen: false })} data-testid="stash-project-panel">
@@ -300,12 +305,12 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
           options={ROLE_OPTIONS}
         />
         <SelectSameTypeButton project={project} wall={w} />
-        <p className="field-hint num">
-          Faces: left {formatLength(leftLen, u.units, u.precision)} · right {formatLength(rightLen, u.units, u.precision)}
-        </p>
-        <div className="btn-row">
-          <Button
-            size="sm"
+        <div className="wall-actions">
+          <span className="field-hint num">
+            Faces {formatLength(leftLen, u.units, u.precision)} · {formatLength(rightLen, u.units, u.precision)}
+          </span>
+          <IconButton
+            label={w.curve ? 'Make straight' : 'Make curved'}
             disabled={locked}
             onClick={() =>
               exec(w.curve ? 'Straighten wall' : 'Curve wall', (d) => {
@@ -319,66 +324,64 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
               })
             }
           >
-            {w.curve ? 'Make straight' : 'Make curved'}
-          </Button>
-          <Button size="sm" disabled={locked} onClick={() => exec('Split wall', (d) => void splitWallAt(d, wallId, g.path.length / 2))}>
-            Split in half
-          </Button>
-          <Button size="sm" onClick={() => reverseWall(wallId)} title="Reverse direction (swaps left/right finishes)">
-            <FlipHorizontal2 size={13} /> Swap sides
-          </Button>
+            {w.curve ? <Minus size={15} /> : <Spline size={15} />}
+          </IconButton>
+          <IconButton label="Split in half" disabled={locked} onClick={() => exec('Split wall', (d) => void splitWallAt(d, wallId, g.path.length / 2))}>
+            <Scissors size={15} />
+          </IconButton>
+          <IconButton label="Swap sides (reverse direction and left/right finishes)" onClick={() => reverseWall(wallId)}>
+            <FlipHorizontal2 size={15} />
+          </IconButton>
         </div>
-        {w.curve && (
-          <>
-            <div className="field-label">Curve</div>
-            <div className="btn-row">
-              <Button
-                size="sm"
-                disabled={locked || (!joinTangent(project, wallId, 'a') && !joinTangent(project, wallId, 'b'))}
-                title="Bend the wall so it flows smoothly out of and into the walls joined at its ends (a quarter round between two perpendicular walls)"
-                onClick={() => exec('Fit curve to joined walls', (d) => void (fitCurveToJoins(d, wallId) && clampOpenings(d)))}
-              >
-                Fit to joined walls
-              </Button>
-              <Button
-                size="sm"
-                disabled={locked}
-                title={w.curveEnd ? 'Back to one bend handle' : 'A handle at each end: set each end’s direction separately (S-curves, smooth joins)'}
-                onClick={() => exec(w.curveEnd ? 'One curve handle' : 'Two curve handles', (d) => setCurveHandles(d, wallId, !w.curveEnd))}
-              >
-                {w.curveEnd ? 'One handle' : 'Two handles'}
-              </Button>
-              <Button
-                size="sm"
-                disabled={locked}
-                title="A true round arc through both ends and the current peak (constant diameter instead of a pointed top)"
-                onClick={() => exec('Make circular arc', (d) => void (makeCircularArc(d, wallId) && clampOpenings(d)))}
-              >
-                Circular arc
-              </Button>
-              <Button size="sm" disabled={locked} title="Mirror the bulge to the other side" onClick={() => exec('Flip curve', (d) => flipCurve(d, wallId))}>
-                Flip bulge
-              </Button>
-            </div>
-            {w.curveEnd && (
-              <Slider
-                label="Handle length (top fullness)"
-                value={Math.round((curveHandleFraction(project, wallId) ?? 0.33) * 100)}
-                min={5}
-                max={120}
-                step={1}
-                format={(v) => `${v}% of span`}
-                onCommit={(v) => exec('Set curve fullness', (d) => { setCurveHandleFraction(d, wallId, v / 100); clampOpenings(d); })}
-              />
-            )}
-            <p className="field-hint">
-              {w.curveEnd
-                ? 'Drag a handle to set the direction at that end; it snaps to the joined wall and 45° steps (hold Alt for free).'
-                : 'Drag the handle on the curve to bend it; it snaps to a smooth join with the walls at both ends (hold Alt for free).'}
-            </p>
-          </>
-        )}
       </Section>
+      {w.curve && (
+        <Section title="Curve">
+          <CornerRadiusField project={project} wallId={wallId} locked={locked} />
+          <Segmented<'one' | 'two'>
+            label="Handles"
+            size="sm"
+            value={w.curveEnd ? 'two' : 'one'}
+            onChange={(v) => exec(v === 'two' ? 'Two curve handles' : 'One curve handle', (d) => setCurveHandles(d, wallId, v === 'two'))}
+            options={[
+              { value: 'one', label: 'One bend' },
+              { value: 'two', label: 'One per end' },
+            ]}
+          />
+          <div className="btn-row compact">
+            <Button
+              size="sm"
+              disabled={locked || (!joinTangent(project, wallId, 'a') && !joinTangent(project, wallId, 'b'))}
+              title="Bend the wall so it flows smoothly out of and into the walls joined at its ends"
+              onClick={() => exec('Fit curve to joined walls', (d) => void (fitCurveToJoins(d, wallId) && clampOpenings(d)))}
+            >
+              Fit to joins
+            </Button>
+            <Button
+              size="sm"
+              disabled={locked}
+              title="A true round arc through both ends and the current peak"
+              onClick={() => exec('Make circular arc', (d) => void (makeCircularArc(d, wallId) && clampOpenings(d)))}
+            >
+              Circular
+            </Button>
+            <Button size="sm" disabled={locked} title="Mirror the bulge to the other side" onClick={() => exec('Flip curve', (d) => flipCurve(d, wallId))}>
+              Flip
+            </Button>
+          </div>
+          {w.curveEnd && (
+            <Slider
+              label="Fullness"
+              value={Math.round((curveHandleFraction(project, wallId) ?? 0.33) * 100)}
+              min={5}
+              max={120}
+              step={1}
+              format={(v) => `${v}%`}
+              onCommit={(v) => exec('Set curve fullness', (d) => { setCurveHandleFraction(d, wallId, v / 100); clampOpenings(d); })}
+            />
+          )}
+          <p className="field-hint">Drag the handles in the plan; Alt drags without snapping.</p>
+        </Section>
+      )}
       <WallConstruction project={project} wallId={wallId} locked={locked} />
       {w.style === 'separator' ? null : isLightWall(w.style) ? (
         // Glass walls and railings have no faces to finish: their glazing (or bars) and frame instead.
@@ -750,6 +753,26 @@ function MultiInspector({ project }: { project: Project }) {
         </>
       )}
     </>
+  );
+}
+
+/** A rounded corner (a curved wall between two straight walls): its radius, adjustable. */
+function CornerRadiusField({ project, wallId, locked }: { project: Project; wallId: string; locked: boolean }) {
+  const c = cornerArc(project, wallId);
+  if (!c || c.max <= 0.01) return null;
+  const u = project.settings;
+  return (
+    <LengthField
+      label="Corner radius"
+      value={c.radius}
+      unit={u.units}
+      precision={u.precision}
+      min={0.02}
+      max={c.max}
+      disabled={locked}
+      testId="corner-radius"
+      onCommit={(v) => useProjectStore.getState().execute('Set corner radius', (d) => void setCornerRadius(d, wallId, v))}
+    />
   );
 }
 

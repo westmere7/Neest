@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyProject } from '../model/defaults';
 import type { Project } from '../model/schema';
 import { buildWallPath, pointAt } from '../geometry/wallPath';
-import { addWallChain, maxCornerRadius, roundCorner, sharedNode, type D } from './walls';
+import { addWallChain, cornerArc, maxCornerRadius, roundCorner, setCornerRadius, sharedNode, type D } from './walls';
 
 const W = { thickness: 0.1, height: 2.7, role: 'interior' as const };
 const edit = (p: Project, fn: (d: D) => void): Project => produce(p, fn);
@@ -62,6 +62,22 @@ describe('roundCorner', () => {
     const big = edit(p, (d) => void roundCorner(d, corner, 10));
     const arc = Object.values(big.walls).find((x) => x.curve)!;
     expect(Math.min(...[big.nodes[arc.a], big.nodes[arc.b]].map((n) => Math.max(n.x, n.y)))).toBeCloseTo(1.95, 5);
+  });
+
+  it('changes the radius of a rounded corner afterwards', () => {
+    const { p, corner } = ell();
+    let arcId = '';
+    const q = edit(p, (d) => void (arcId = roundCorner(d, corner, 0.5)!));
+    expect(cornerArc(q, arcId)?.radius).toBeCloseTo(0.5, 6);
+    const r = edit(q, (d) => void expect(setCornerRadius(d, arcId, 0.8)).toBe(true));
+    const c = cornerArc(r, arcId)!;
+    expect(c.radius).toBeCloseTo(0.8, 6);
+    expect(c.corner.x).toBeCloseTo(0, 6);
+    expect(c.corner.y).toBeCloseTo(0, 6);
+    // The door 2 m from the corner stays there.
+    expect(r.openings.o1.offset).toBeCloseTo(1.2, 6);
+    const mid = pointAt(buildWallPath(r.nodes[r.walls[arcId].a], r.nodes[r.walls[arcId].b], r.walls[arcId].curve, r.walls[arcId].curveEnd), 0);
+    expect(Math.hypot(mid.p.x, mid.p.y)).toBeCloseTo(0.8, 6);
   });
 
   it('refuses corners it cannot round', () => {

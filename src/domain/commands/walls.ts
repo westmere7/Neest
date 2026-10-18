@@ -932,3 +932,63 @@ export function roundCorner(d: D, nodeId: string, radius: number): string | null
   clampOpenings(d, [c.w1, c.w2]);
   return id;
 }
+
+/**
+ * A rounded corner made by `roundCorner` (or drawn the same way): a curved wall whose ends each
+ * join exactly one straight wall, the two straight walls' lines meeting behind it. Returns the
+ * corner geometry and current radius, or null.
+ */
+export function cornerArc(d: D | Project, arcId: string) {
+  const arc = d.walls[arcId];
+  if (!arc?.curve) return null;
+  const leg = (nodeId: string) => {
+    const others = Object.values(d.walls).filter((w) => w.id !== arcId && (w.a === nodeId || w.b === nodeId));
+    if (others.length !== 1 || others[0].curve) return null;
+    const w = others[0];
+    const node = d.nodes[nodeId];
+    const far = d.nodes[w.a === nodeId ? w.b : w.a];
+    const len = dist(node, far);
+    return len > 1e-6 ? { wall: w, nodeId, node, far, u: scale(sub(far, node), 1 / len) } : null;
+  };
+  const l1 = leg(arc.a);
+  const l2 = leg(arc.b);
+  if (!l1 || !l2) return null;
+  // Corner: where the two straight walls' lines meet, behind both arc ends.
+  const den = l1.u.x * l2.u.y - l1.u.y * l2.u.x;
+  if (Math.abs(den) < 1e-6) return null;
+  const w = sub(l2.node, l1.node);
+  const t1 = (w.x * l2.u.y - w.y * l2.u.x) / den;
+  const t2 = (w.x * l1.u.y - w.y * l1.u.x) / den;
+  if (t1 > 1e-4 || t2 > 1e-4) return null;
+  const corner = add(l1.node, scale(l1.u, t1));
+  const theta = Math.acos(Math.max(-1, Math.min(1, l1.u.x * l2.u.x + l1.u.y * l2.u.y)));
+  if (theta < 0.05 || theta > Math.PI - 0.05) return null;
+  const k = Math.tan(theta / 2);
+  const radius = ((dist(corner, l1.node) + dist(corner, l2.node)) / 2) * k;
+  const max = (Math.min(dist(corner, l1.far), dist(corner, l2.far)) - 0.05) * k;
+  return { corner, theta, radius, max, legs: [l1, l2] as const };
+}
+
+/** Changes the radius of a rounded corner (see `cornerArc`): its ends slide along the straight walls. */
+export function setCornerRadius(d: D, arcId: string, radius: number): boolean {
+  const c = cornerArc(d, arcId);
+  if (!c || c.max <= 0.01) return false;
+  const R = Math.max(0.01, Math.min(radius, c.max));
+  const t = R / Math.tan(c.theta / 2);
+  for (const l of c.legs) {
+    const next = add(c.corner, scale(l.u, t));
+    const moved = dist(c.corner, next) - dist(c.corner, l.node);
+    const n = d.nodes[l.nodeId];
+    n.x = next.x;
+    n.y = next.y;
+    // Openings measure from the start node: when it moved along the wall, they shift back by as much.
+    if (l.wall.a === l.nodeId) for (const o of Object.values(d.openings)) if (o.wallId === l.wall.id) o.offset -= moved;
+  }
+  const arc = d.walls[arcId];
+  const [l1, l2] = arc.a === c.legs[0].nodeId ? c.legs : [c.legs[1], c.legs[0]];
+  const h = (4 / 3) * Math.tan((Math.PI - c.theta) / 4) * R;
+  arc.curve = add(d.nodes[arc.a], scale(l1.u, -h));
+  arc.curveEnd = add(d.nodes[arc.b], scale(l2.u, -h));
+  clampOpenings(d, [c.legs[0].wall.id, c.legs[1].wall.id]);
+  return true;
+}

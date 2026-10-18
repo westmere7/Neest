@@ -1087,3 +1087,20 @@
   color: var(--accent-strong);
   font-weight: 600;
 }
+
+/* Wall inspector: face lengths and the wall actions on one line */
+.wall-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.wall-actions .field-hint {
+  flex: 1;
+  margin: 0;
+}
+.btn-row.compact {
+  flex-wrap: nowrap;
+}
+.btn-row.compact .btn {
+  flex: 1;
+}

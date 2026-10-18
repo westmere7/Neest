@@ -71,7 +71,8 @@ export async function deleteSelection(): Promise<void> {
 /**
  * Duplicate. Furniture is not copied on the spot: the place tool starts with the copy following the
  * pointer (same size, height, finishes, model and turn) until a click puts it down — several items
- * move as one, kept as a group only if they were one. Doors and windows are copied beside the original.
+ * move as one, kept as a group only if they were one. A door or window starts the door/window tool
+ * with a copy of it, inserted where the next click on a wall puts it.
  */
 export function duplicateSelection(): void {
   const project = ps().project;
@@ -81,6 +82,13 @@ export function duplicateSelection(): void {
     return;
   }
   if (sel.every((s) => s.kind === 'object') && placeCopies(project, sel.map((s) => s.id))) return;
+  if (sel.length === 1 && sel[0].kind === 'opening' && project.openings[sel[0].id]) {
+    const { id: _id, wallId: _wall, offset: _offset, ...template } = project.openings[sel[0].id];
+    const workspace = es().workspace === 'walk' ? '3d' : es().workspace;
+    es().set({ tool: 'opening', workspace, openingKind: template.kind, openingTemplate: JSON.parse(JSON.stringify(template)), selection: [] });
+    toast.info(`Click a wall to insert the copy`, 'Shift-click inserts more, Esc cancels.');
+    return;
+  }
   const grid = Math.max(project.settings.gridSize, 0.1) * 3;
   const ids = ps().execute('Duplicate', (d) =>
     duplicateEntities(

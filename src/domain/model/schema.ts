@@ -35,6 +35,11 @@ export const WallMaterialsSchema = z.object({ left: Id, right: Id, top: Id });
  * masonry/drywall; 'glass' is a framed glass wall with mullions; the railings are balustrades.
  */
 export const WallStyleSchema = z.enum(['solid', 'half', 'glass', 'railing-glass', 'railing-bars', 'separator']);
+/**
+ * How a glass wall is framed: all round with mullions (framed), top and bottom rails only, a bottom
+ * channel, a top track, end posts and mullions only, or none (frameless, butt-jointed panes).
+ */
+export const GlassFrameSchema = z.enum(['framed', 'rails', 'bottom', 'top', 'posts', 'frameless']);
 
 /** A moulding running along a wall face (skirting at the floor, cornice at the top). */
 export const WallTrimSchema = z.object({
@@ -95,6 +100,8 @@ export const WallSegmentSchema = z.object({
   heightEnd: num.min(0.2).max(12).nullable().optional(),
   /** Glazing / railing infill material for glass and railing styles (frames use materials.top). */
   styleMaterialId: Id.optional(),
+  /** Glass walls: how the glass is framed; absent = 'framed'. */
+  glassFrame: GlassFrameSchema.optional(),
   /** Mouldings and finish bands per face. */
   finishes: z
     .object({ left: WallSideFinishSchema.optional(), right: WallSideFinishSchema.optional() })
@@ -561,6 +568,7 @@ export type PhotoTextureRef = z.infer<typeof PhotoTextureRefSchema>;
 export type MaterialDefinition = z.infer<typeof MaterialSchema>;
 export type CustomAsset = z.infer<typeof CustomAssetSchema>;
 export type WallStyle = z.infer<typeof WallStyleSchema>;
+export type GlassFrame = z.infer<typeof GlassFrameSchema>;
 export type WallTrim = z.infer<typeof WallTrimSchema>;
 export type WallRail = z.infer<typeof WallRailSchema>;
 export type WallBand = z.infer<typeof WallBandSchema>;

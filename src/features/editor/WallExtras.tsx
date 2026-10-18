@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Project, WallSideFinish, WallStyle } from '@/domain/model/schema';
+import type { GlassFrame, Project, WallSideFinish, WallStyle } from '@/domain/model/schema';
 import { WALL_PRESETS, presetMaterialIds } from '@/domain/model/wallPresets';
 import { clampOpenings, setWallStyle, updateWalls } from '@/domain/commands/walls';
 import { ensureMaterial, type WallTrimPart } from '@/domain/commands/entities';
@@ -26,6 +26,15 @@ const STYLE_OPTIONS: { value: WallStyle; label: string }[] = [
   { value: 'separator', label: 'Invisible room divider' },
 ];
 
+export const GLASS_FRAMES: { value: GlassFrame; label: string }[] = [
+  { value: 'framed', label: 'Framed (frame and mullions)' },
+  { value: 'rails', label: 'Top and bottom rails' },
+  { value: 'bottom', label: 'Bottom channel' },
+  { value: 'top', label: 'Top track' },
+  { value: 'posts', label: 'Posts and mullions only' },
+  { value: 'frameless', label: 'Frameless (full glass)' },
+];
+
 const EMPTY: WallSideFinish = { skirting: null, cornice: null, rail: null, band: null };
 
 /** Default layer when a trim is switched on. */
@@ -44,20 +53,37 @@ const PART_LABELS: Record<WallTrimPart, string> = {
 };
 
 /** Glass walls and railings: no left/right faces, just infill and frame. */
-export const isLightWall = (style: WallStyle | undefined): boolean => style === 'glass' || style === 'railing-glass' || style === 'railing-bars';
+export const isLightWall = (style: WallStyle | undefined): boolean =>
+  style === 'glass' || style === 'railing-glass' || style === 'railing-bars';
 
 /** Finishes of a glass wall or railing: the glazing (or bars) and the frame, posts or handrail. */
 export function LightWallFinishes({ wall, wallId }: { wall: Project['walls'][string]; wallId: string }) {
   const style = wall.style ?? 'solid';
   return (
     <>
-      <MaterialSlotRow label={style === 'railing-bars' ? 'Bars' : 'Glazing'} target={{ kind: 'wall-style', wallId }} materialId={wall.styleMaterialId ?? 'glass-clear'} />
-      <MaterialSlotRow label={style === 'glass' ? 'Frame & mullions' : 'Posts & handrail'} target={{ kind: 'wall-side', wallId, side: 'top' }} materialId={wall.materials.top} />
+      <MaterialSlotRow
+        label={style === 'railing-bars' ? 'Bars' : 'Glazing'}
+        target={{ kind: 'wall-style', wallId }}
+        materialId={wall.styleMaterialId ?? 'glass-clear'}
+      />
+      <MaterialSlotRow
+        label={style === 'glass' ? 'Frame & mullions' : 'Posts & handrail'}
+        target={{ kind: 'wall-side', wallId, side: 'top' }}
+        materialId={wall.materials.top}
+      />
     </>
   );
 }
 
-export function WallConstruction({ project, wallId, locked }: { project: Project; wallId: string; locked: boolean }) {
+export function WallConstruction({
+  project,
+  wallId,
+  locked,
+}: {
+  project: Project;
+  wallId: string;
+  locked: boolean;
+}) {
   const w = project.walls[wallId];
   const u = project.settings;
   const style = w.style ?? 'solid';
@@ -72,7 +98,8 @@ export function WallConstruction({ project, wallId, locked }: { project: Project
             const wall = d.walls[wallId];
             if (!wall) return;
             setWallStyle(d, [wallId], next);
-            if ((next === 'glass' || next === 'railing-glass') && !wall.styleMaterialId) wall.styleMaterialId = 'glass-clear';
+            if ((next === 'glass' || next === 'railing-glass') && !wall.styleMaterialId)
+              wall.styleMaterialId = 'glass-clear';
             if (next === 'railing-bars' && !wall.styleMaterialId) wall.styleMaterialId = 'metal-black-matte';
             if (next !== 'solid' && next !== 'half' && next !== 'separator') {
               if (wall.materials.top === 'plaster-white') wall.materials.top = 'metal-black-matte';
@@ -83,10 +110,24 @@ export function WallConstruction({ project, wallId, locked }: { project: Project
         }
         options={STYLE_OPTIONS}
       />
+      {style === 'glass' && (
+        <Select<GlassFrame>
+          label="Framing"
+          value={w.glassFrame ?? 'framed'}
+          onChange={(v) =>
+            exec('Set glass framing', (d) => {
+              const wall = d.walls[wallId];
+              if (wall) wall.glassFrame = v;
+            })
+          }
+          options={GLASS_FRAMES}
+        />
+      )}
       {light && <p className="field-hint">Glazing and frame finishes are under Finishes.</p>}
       {style === 'separator' && (
         <p className="field-hint">
-          Not built: it only splits the space into two rooms, so each side can have its own floor, ceiling and name. Hidden in 3D and the walkthrough; doors and windows cannot go in it.
+          Not built: it only splits the space into two rooms, so each side can have its own floor, ceiling and
+          name. Hidden in 3D and the walkthrough; doors and windows cannot go in it.
         </p>
       )}
       <Toggle
@@ -97,7 +138,7 @@ export function WallConstruction({ project, wallId, locked }: { project: Project
           exec(on ? 'Slope wall top' : 'Level wall top', (d) => {
             const wall = d.walls[wallId];
             if (!wall) return;
-            wall.heightEnd = on ? Math.max(0.2, Math.round((wall.height * 0.5) * 100) / 100) : null;
+            wall.heightEnd = on ? Math.max(0.2, Math.round(wall.height * 0.5 * 100) / 100) : null;
             if (!on) delete wall.heightEnd;
             clampOpenings(d, [wallId]);
           })
@@ -105,8 +146,36 @@ export function WallConstruction({ project, wallId, locked }: { project: Project
       />
       {w.heightEnd != null && (
         <div className="grid-2">
-          <LengthField label="Height at start" value={w.height} unit={u.units} precision={u.precision} min={0.2} max={12} disabled={locked} onCommit={(v) => exec('Set wall height', (d) => { updateWalls(d, [wallId], { height: v }); clampOpenings(d, [wallId]); })} />
-          <LengthField label="Height at end" value={w.heightEnd} unit={u.units} precision={u.precision} min={0.2} max={12} disabled={locked} onCommit={(v) => exec('Set wall end height', (d) => { updateWalls(d, [wallId], { heightEnd: v }); clampOpenings(d, [wallId]); })} />
+          <LengthField
+            label="Height at start"
+            value={w.height}
+            unit={u.units}
+            precision={u.precision}
+            min={0.2}
+            max={12}
+            disabled={locked}
+            onCommit={(v) =>
+              exec('Set wall height', (d) => {
+                updateWalls(d, [wallId], { height: v });
+                clampOpenings(d, [wallId]);
+              })
+            }
+          />
+          <LengthField
+            label="Height at end"
+            value={w.heightEnd}
+            unit={u.units}
+            precision={u.precision}
+            min={0.2}
+            max={12}
+            disabled={locked}
+            onCommit={(v) =>
+              exec('Set wall end height', (d) => {
+                updateWalls(d, [wallId], { heightEnd: v });
+                clampOpenings(d, [wallId]);
+              })
+            }
+          />
         </div>
       )}
     </Section>
@@ -129,7 +198,11 @@ export function WallTrims({ project, wallId }: { project: Project; wallId: strin
       (f as Record<WallTrimPart, unknown>)[part] = value;
       if (value) ensureMaterial(d, value.materialId);
     });
-  const patch = <K extends WallTrimPart>(part: K, label: string, p: Partial<NonNullable<WallSideFinish[K]>>) => {
+  const patch = <K extends WallTrimPart>(
+    part: K,
+    label: string,
+    p: Partial<NonNullable<WallSideFinish[K]>>,
+  ) => {
     const cur = fin[part];
     if (cur) setLayer(label, part, { ...cur, ...p } as WallSideFinish[K]);
   };
@@ -138,7 +211,10 @@ export function WallTrims({ project, wallId }: { project: Project; wallId: strin
       const wall = d.walls[wallId];
       if (!wall) return;
       const other = side === 'left' ? 'right' : 'left';
-      wall.finishes = { ...(wall.finishes ?? {}), [other]: JSON.parse(JSON.stringify(wall.finishes?.[side] ?? EMPTY)) as WallSideFinish };
+      wall.finishes = {
+        ...(wall.finishes ?? {}),
+        [other]: JSON.parse(JSON.stringify(wall.finishes?.[side] ?? EMPTY)) as WallSideFinish,
+      };
     });
   // Skirting, cornice, rail and band move to the other face of the wall (and back).
   const swapFaces = () =>
@@ -169,13 +245,27 @@ export function WallTrims({ project, wallId }: { project: Project; wallId: strin
             <Toggle
               label={PART_LABELS[part]}
               checked={!!layer}
-              onChange={(on) => setLayer(on ? `Add ${PART_LABELS[part].toLowerCase()}` : `Remove ${PART_LABELS[part].toLowerCase()}`, part, on ? structuredClone(DEFAULT_LAYER[part]) : null)}
+              onChange={(on) =>
+                setLayer(
+                  on ? `Add ${PART_LABELS[part].toLowerCase()}` : `Remove ${PART_LABELS[part].toLowerCase()}`,
+                  part,
+                  on ? structuredClone(DEFAULT_LAYER[part]) : null,
+                )
+              }
             />
             {layer && (
               <>
                 <div className="grid-2">
                   {part === 'rail' && 'y' in layer && (
-                    <LengthField label="Height above floor" value={layer.y} unit={u.units} precision={u.precision} min={0.1} max={6} onCommit={(v) => patch('rail', 'Set rail height', { y: v })} />
+                    <LengthField
+                      label="Height above floor"
+                      value={layer.y}
+                      unit={u.units}
+                      precision={u.precision}
+                      min={0.1}
+                      max={6}
+                      onCommit={(v) => patch('rail', 'Set rail height', { y: v })}
+                    />
                   )}
                   <LengthField
                     label={part === 'band' ? 'Band height' : 'Profile height'}
@@ -184,7 +274,9 @@ export function WallTrims({ project, wallId }: { project: Project; wallId: strin
                     precision={u.precision}
                     min={0.005}
                     max={part === 'band' ? 6 : 1}
-                    onCommit={(v) => patch(part, `Set ${PART_LABELS[part].toLowerCase()} height`, { height: v })}
+                    onCommit={(v) =>
+                      patch(part, `Set ${PART_LABELS[part].toLowerCase()} height`, { height: v })
+                    }
                   />
                   <LengthField
                     label="Depth"
@@ -193,13 +285,23 @@ export function WallTrims({ project, wallId }: { project: Project; wallId: strin
                     precision={3}
                     min={0.001}
                     max={0.2}
-                    onCommit={(v) => patch(part, `Set ${PART_LABELS[part].toLowerCase()} depth`, { depth: v })}
+                    onCommit={(v) =>
+                      patch(part, `Set ${PART_LABELS[part].toLowerCase()} depth`, { depth: v })
+                    }
                   />
                 </div>
                 {part === 'band' && 'cap' in layer && (
-                  <Toggle label="Cap rail on top" checked={layer.cap} onChange={(v) => patch('band', 'Toggle band cap', { cap: v })} />
+                  <Toggle
+                    label="Cap rail on top"
+                    checked={layer.cap}
+                    onChange={(v) => patch('band', 'Toggle band cap', { cap: v })}
+                  />
                 )}
-                <MaterialSlotRow label={`${PART_LABELS[part]} finish`} target={{ kind: 'wall-trim', wallId, side, part }} materialId={layer.materialId} />
+                <MaterialSlotRow
+                  label={`${PART_LABELS[part]} finish`}
+                  target={{ kind: 'wall-trim', wallId, side, part }}
+                  materialId={layer.materialId}
+                />
               </>
             )}
           </div>
@@ -246,7 +348,10 @@ export function WallPresetPicker({ wallIds }: { wallIds: string[] }) {
       label="Apply a wall type"
       value=""
       onChange={(id) => id && applyWallPreset(wallIds, id)}
-      options={[{ value: '', label: 'Choose…' }, ...WALL_PRESETS.map((p) => ({ value: p.id, label: p.label }))]}
+      options={[
+        { value: '', label: 'Choose…' },
+        ...WALL_PRESETS.map((p) => ({ value: p.id, label: p.label })),
+      ]}
     />
   );
 }
@@ -260,9 +365,18 @@ export function DrawPresetSelect() {
       value={preset ?? ''}
       onChange={(id) => {
         const p = WALL_PRESETS.find((x) => x.id === id);
-        useEditorStore.getState().set(p ? { wallPreset: p.id, wallRole: p.role, wallThickness: p.thickness } : { wallPreset: null, wallThickness: null });
+        useEditorStore
+          .getState()
+          .set(
+            p
+              ? { wallPreset: p.id, wallRole: p.role, wallThickness: p.thickness }
+              : { wallPreset: null, wallThickness: null },
+          );
       }}
-      options={[{ value: '', label: 'Plain wall' }, ...WALL_PRESETS.map((p) => ({ value: p.id, label: p.label }))]}
+      options={[
+        { value: '', label: 'Plain wall' },
+        ...WALL_PRESETS.map((p) => ({ value: p.id, label: p.label })),
+      ]}
     />
   );
 }

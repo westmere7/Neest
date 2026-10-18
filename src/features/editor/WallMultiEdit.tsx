@@ -1,11 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import type { LengthUnit, Project, WallRole, WallSegment, WallStyle } from '@/domain/model/schema';
+import type { GlassFrame, LengthUnit, Project, WallRole, WallSegment, WallStyle } from '@/domain/model/schema';
 import { formatLengthValue, parseLength } from '@/domain/model/units';
 import { clampOpenings, setWallStyle, updateWalls } from '@/domain/commands/walls';
 import { matchWallFinishes } from '@/domain/commands/wallTools';
 import { useProjectStore } from '@/state/projectStore';
 import { Button, Section, Select } from '@/components/ui';
 import { MaterialSlotRow } from '@/features/materials/MaterialUI';
+import { GLASS_FRAMES } from './WallExtras';
 
 const MIXED = '__mixed__';
 
@@ -145,6 +146,12 @@ export function WallMultiEdit({ project, wallIds }: { project: Project; wallIds:
   const base = common(walls, (w) => w.baseElevation, near);
   const role = common(walls, (w) => w.role);
   const style = common(walls, (w) => w.style ?? 'solid');
+  // Framing of the selected glass walls (the others have none).
+  const glassIds = walls.filter((w) => w.style === 'glass').map((w) => w.id);
+  const framing = common(
+    walls.filter((w) => w.style === 'glass'),
+    (w) => w.glassFrame ?? 'framed',
+  );
   const first = walls[0];
   // Faces to finish: built walls only (not glass, railings or invisible dividers).
   const builtWalls = walls.filter((w) => !w.style || w.style === 'solid' || w.style === 'half');
@@ -210,6 +217,19 @@ export function WallMultiEdit({ project, wallIds }: { project: Project; wallIds:
         }}
         options={style ? STYLE_OPTIONS : [{ value: MIXED, label: 'Mixed' }, ...STYLE_OPTIONS]}
       />
+      {glassIds.length > 0 && (
+        <Select<GlassFrame | typeof MIXED>
+          label={glassIds.length < walls.length ? `Glass framing (${glassIds.length} glass walls)` : 'Glass framing'}
+          value={framing ?? MIXED}
+          onChange={(v) => {
+            if (v !== MIXED)
+              exec('Set glass framing', (d) => {
+                for (const id of glassIds) if (d.walls[id]) d.walls[id].glassFrame = v;
+              });
+          }}
+          options={framing ? GLASS_FRAMES : [{ value: MIXED, label: 'Mixed' }, ...GLASS_FRAMES]}
+        />
+      )}
       {built.length > 0 && (
         <>
           <MaterialSlotRow label={`Left sides${mixedNote('left')}`} target={{ kind: 'walls-side', wallIds: built, side: 'left' }} materialId={firstBuilt.materials.left} />

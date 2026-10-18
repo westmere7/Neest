@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { OpeningDesign, OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
+import type { Opening, OpeningDesign, OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
 import type { MaterialTarget } from '@/domain/commands/entities';
 
 export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend';
@@ -48,6 +48,9 @@ export interface SnapSettings {
   guides: boolean;
 }
 
+/** What a duplicated door or window is inserted as (see `EditorState.openingTemplate`). */
+export type OpeningTemplate = Omit<Opening, 'id' | 'wallId' | 'offset'>;
+
 /** What a duplicated item is placed with (see `EditorState.placeTemplate`). */
 export interface PlaceTemplate {
   assetId: string;
@@ -82,6 +85,11 @@ export interface EditorState {
    * while `placeAssetId` is its asset. Cleared whenever something else sets `placeAssetId`.
    */
   placeTemplate: PlaceTemplate | null;
+  /**
+   * Insertion of a copied door or window (Duplicate): every setting of the original, used while
+   * `openingKind` is its kind. Cleared whenever something else sets `openingKind`.
+   */
+  openingTemplate: OpeningTemplate | null;
   /** Colour variant chosen per asset in the library (asset id → variant id); new items are placed in it. */
   variantChoice: Record<string, string>;
   /** Model variant chosen per asset in the library (used for new items). */
@@ -108,6 +116,8 @@ export interface EditorState {
   planCamera: PlanCamera;
   /** Request for the plan canvas to fit the plan on next render. */
   fitRequest: number;
+  /** Bumped by Focus: the plan and the 3D view close in on the selection (3D also orbits around it). */
+  focusRequest: number;
   cursor: Vec2 | null;
   snapLabel: string | null;
   hint: string | null;
@@ -126,6 +136,7 @@ export interface EditorState {
   setHover(item: SelItem | null): void;
   set(partial: Partial<EditorState>): void;
   requestFit(): void;
+  requestFocus(): void;
   requestCamera(view: string): void;
 }
 
@@ -143,6 +154,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   placeAssetId: null,
   placeRotation: 0,
   placeTemplate: null,
+  openingTemplate: null,
   variantChoice: {},
   modelChoice: {},
   selection: [],
@@ -163,6 +175,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   gridVisible: true,
   planCamera: { cx: 0, cy: 0, zoom: 60 },
   fitRequest: 0,
+  focusRequest: 0,
   cursor: null,
   snapLabel: null,
   hint: null,
@@ -183,9 +196,15 @@ export const useEditorStore = create<EditorState>((set) => ({
     }),
   clearSelection: () => set({ selection: [] }),
   setHover: (hover) => set((s) => (s.hover?.id === hover?.id ? s : { hover })),
-  // Picking another item to place drops a Duplicate's template.
-  set: (partial) => set('placeAssetId' in partial && !('placeTemplate' in partial) ? { ...partial, placeTemplate: null } : partial),
+  // Picking another item, door or window to place drops a Duplicate's template.
+  set: (partial) =>
+    set({
+      ...partial,
+      ...('placeAssetId' in partial && !('placeTemplate' in partial) ? { placeTemplate: null } : {}),
+      ...('openingKind' in partial && !('openingTemplate' in partial) ? { openingTemplate: null } : {}),
+    }),
   requestFit: () => set((s) => ({ fitRequest: s.fitRequest + 1 })),
+  requestFocus: () => set((s) => ({ focusRequest: s.focusRequest + 1 })),
   requestCamera: (view) => set({ cameraRequest: { view, nonce: Math.random() } }),
 }));
 

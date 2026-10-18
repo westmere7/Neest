@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1792338140315,
+  "updatedAt": 1792338906080,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -251,7 +251,8 @@
         "top": "plaster-white"
       },
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "glassFrame": "rails"
     },
     "w_f2wrra87el": {
       "id": "w_f2wrra87el",
@@ -329,8 +330,12 @@
       "baseElevation": 0,
       "role": "interior",
       "curve": {
-        "x": 3.21,
+        "x": 3.209999999999997,
         "y": 8.583857625084603
+      },
+      "curveEnd": {
+        "x": 3.433857625084604,
+        "y": 8.35999999999999
       },
       "materials": {
         "left": "paint-warm-white",
@@ -339,11 +344,8 @@
       },
       "locked": false,
       "hidden": false,
-      "curveEnd": {
-        "x": 3.4338576250846033,
-        "y": 8.36
-      },
-      "heightEnd": null
+      "heightEnd": null,
+      "glassFrame": "rails"
     }
   },
   "openings": {
@@ -386,6 +388,21 @@
       "height": 2.6,
       "sillHeight": 0,
       "swingSide": "left",
+      "hinge": "start",
+      "openAngle": 0,
+      "style": "flush",
+      "frameMaterialId": "paint-satin-white",
+      "panelMaterialId": "paint-satin-white"
+    },
+    "door_nieotejjlf": {
+      "id": "door_nieotejjlf",
+      "wallId": "w_dogbv452x7",
+      "kind": "door-single",
+      "offset": 2.6,
+      "width": 0.96,
+      "height": 2.2,
+      "sillHeight": 0,
+      "swingSide": "right",
       "hinge": "start",
       "openAngle": 0,
       "style": "flush",
@@ -2699,10 +2716,10 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": {
-        "rotation": 0,
-        "contrast": 0.35,
         "patternId": "granite",
-        "scale": 0.6
+        "scale": 0.6,
+        "rotation": 0,
+        "contrast": 0.35
       },
       "photo": null,
       "overrideOf": null,

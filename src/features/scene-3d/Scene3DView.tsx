@@ -36,6 +36,7 @@ import { Button, IconButton, Segmented, Slider, Toggle } from '@/components/ui';
 import { useIsMobile } from '@/components/hooks';
 import { WALL_HUG_MOVE, hugWall } from '@/features/plan-2d/tools/placeTools';
 import { FloorReflections } from './floorReflections';
+import { selectionBounds } from '@/features/editor/selectionBounds';
 import { WalkControls, toggleWalkFly, useWalkFly } from '@/features/walkthrough/WalkControls';
 import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
@@ -224,6 +225,48 @@ function CameraDirector({ view }: { view: { v: CameraView; nonce: number } | nul
     const e = 1 - Math.pow(1 - a.t, 3);
     camera.position.lerpVectors(a.from, a.to, e);
     ctrl.target.lerpVectors(a.tFrom, a.tTo, e);
+    ctrl.update();
+    if (a.t >= 1) anim.current = null;
+  });
+  return null;
+}
+
+/**
+ * Focus (Inspector header): the orbit pivot eases to the selection's centre and the camera closes in
+ * along its current view direction until the selection fills a good part of the view.
+ */
+function FocusSelection() {
+  const get = useThree((s) => s.get);
+  const request = useEditorStore((s) => s.focusRequest);
+  const anim = useRef<{ p0: THREE.Vector3; p1: THREE.Vector3; t0: THREE.Vector3; t1: THREE.Vector3; t: number } | null>(null);
+  useEffect(() => {
+    if (!request) return;
+    const project = useProjectStore.getState().project;
+    const ctrl = get().controls as unknown as OrbitControlsImpl | null;
+    const camera = get().camera as THREE.PerspectiveCamera;
+    if (!project || !ctrl) return;
+    const b = selectionBounds(project, derivePlan(project), useEditorStore.getState().selection);
+    if (!b) return;
+    const centre = new THREE.Vector3((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, (b.minY + b.maxY) / 2);
+    const radius = Math.max(0.35, 0.5 * Math.hypot(b.maxX - b.minX, b.maxY - b.minY, b.maxZ - b.minZ));
+    const dir = camera.position.clone().sub(ctrl.target);
+    if (dir.lengthSq() < 1e-6) dir.set(1, 1, 1);
+    dir.normalize();
+    const fov = camera.isPerspectiveCamera ? THREE.MathUtils.degToRad(camera.fov) : Math.PI / 4;
+    const distance = Math.max(0.8, (radius / Math.sin(fov / 2)) * 1.25);
+    const p1 = centre.clone().addScaledVector(dir, distance);
+    p1.y = Math.max(p1.y, centre.y + 0.2);
+    anim.current = { p0: camera.position.clone(), p1, t0: ctrl.target.clone(), t1: centre, t: 0 };
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) anim.current.t = 0.999;
+  }, [request, get]);
+  useFrame((_, dt) => {
+    const a = anim.current;
+    const ctrl = get().controls as unknown as OrbitControlsImpl | null;
+    if (!a || !ctrl) return;
+    a.t = Math.min(1, a.t + dt / 0.45);
+    const e = 1 - Math.pow(1 - a.t, 3);
+    get().camera.position.lerpVectors(a.p0, a.p1, e);
+    ctrl.target.lerpVectors(a.t0, a.t1, e);
     ctrl.update();
     if (a.t >= 1) anim.current = null;
   });
@@ -645,6 +688,7 @@ export default function Scene3DView({ mode }: { mode: 'orbit' | 'walk' }) {
         {!walk && <CameraDirector view={view} />}
         {!walk && projection === 'perspective' && <NearPlaneSync bounds={derived.bounds} />}
         {!walk && <SelectionPivot />}
+        {!walk && <FocusSelection />}
         {!walk && <FreeAreaOffset />}
         {walk && <WalkControls project={project} derived={derived} onExit={exitWalk} />}
         <Lighting

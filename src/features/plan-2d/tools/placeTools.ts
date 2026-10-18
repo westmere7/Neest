@@ -1,7 +1,7 @@
 import { isDividerWall } from '@/domain/model/schema';
 import type { Vec2 } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
-import { addOpening, placeObject } from '@/domain/commands/entities';
+import { addOpening, clampOpening, placeObject } from '@/domain/commands/entities';
 import { chosenOpeningFinish } from '@/features/editor/openingFinishChoice';
 import { placeSavedGroup, savedGroupFromDragId } from '@/features/editor/groups';
 import { openingOffsetRange } from '@/domain/geometry/walls';
@@ -65,6 +65,8 @@ export function createOpeningTool(): Tool {
       const derived = env.derived();
       const kind = env.editor().openingKind;
       const preset = OPENING_PRESETS[kind];
+      const tpl = env.editor().openingTemplate;
+      const copyWidth = tpl && tpl.kind === kind ? tpl.width : preset.width;
       let best: { wallId: string; s: number; d: number; side: 'left' | 'right' } | null = null;
       for (const g of derived.network.walls.values()) {
         if (g.wall.hidden || isDividerWall(g.wall)) continue;
@@ -80,7 +82,7 @@ export function createOpeningTool(): Tool {
         return;
       }
       const g = derived.network.walls.get(best.wallId)!;
-      const width = Math.min(preset.width, Math.max(0.3, g.clearEnd - g.clearStart));
+      const width = Math.min(copyWidth, Math.max(0.3, g.clearEnd - g.clearStart));
       const [lo, hi] = openingOffsetRange(g, width);
       const grid = env.project().settings.gridSize;
       let s = best.s;
@@ -96,7 +98,8 @@ export function createOpeningTool(): Tool {
       const units = env.project().settings;
       env.setSnapLabel('On wall');
       env.setOverlay({
-        ghostOpening: { pts: [at(s0, g.h), at(s1, g.h), at(s1, -g.h), at(s0, -g.h)], valid: hi >= lo },
+        // A little proud of both wall faces: in 3D, walls win depth ties and would hide a flush ghost.
+        ghostOpening: { pts: [at(s0, g.h + 0.012), at(s1, g.h + 0.012), at(s1, -g.h - 0.012), at(s0, -g.h - 0.012)], valid: hi >= lo },
         labels: [
           {
             p: at(s, 0),
@@ -113,11 +116,19 @@ export function createOpeningTool(): Tool {
       const kind = ed.openingKind;
       const design = kind.startsWith('window') ? ed.windowDesign : ed.doorDesign;
       const finish = chosenOpeningFinish(kind);
-      const id = useProjectStore
-        .getState()
-        .execute(`Add ${OPENING_PRESETS[kind].label.toLowerCase()}`, (d) =>
-          addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, design, finish: finish ?? undefined }),
-        );
+      const tpl = ed.openingTemplate && ed.openingTemplate.kind === kind ? ed.openingTemplate : null;
+      const id = useProjectStore.getState().execute(`Add ${OPENING_PRESETS[kind].label.toLowerCase()}`, (d) => {
+        if (tpl) {
+          // A Duplicate: the original's every setting, on the wall and side clicked.
+          const nid = addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, width: tpl.width });
+          if (nid) {
+            Object.assign(d.openings[nid], JSON.parse(JSON.stringify(tpl)), { swingSide: t.side });
+            clampOpening(d, nid);
+          }
+          return nid;
+        }
+        return addOpening(d, { wallId: t.wallId, kind, offset: t.offset, swingSide: t.side, design, finish: finish ?? undefined });
+      });
       if (id && !e.shift) {
         useEditorStore.getState().setSelection([{ kind: 'opening', id }]);
       }
