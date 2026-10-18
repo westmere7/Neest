@@ -315,7 +315,11 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
     windows (frame only: uPVC, aluminium incl. Xingfa champagne and wood-grain, steel, bronze, timber).
   - `applyOpeningFinish` keeps glass leaves.
   - UI: swatches in the Inspector (`OpeningFinishes`, applies to all selected openings of the family) and in the
-    door/window tool options (for the next opening placed: `editor.doorFinish/windowFinish`).
+    Build panel (for the next opening placed: `editor.doorFinish/windowFinish`).
+  - Placing: the Build panel's Doors / Windows sections hold the type cards, then design and finish
+    (`library/OpeningBuildOptions.tsx`): browse, pick a design, place. Change them later in the Inspector. The
+    Inspector's "Door & window tool" panel only shows on mobile, where the Build panel is hidden.
+- **3D view settings panel** starts closed (`editor.viewPanelOpen` defaults to false). The top-bar button or P opens it.
   - Users save their own under prefs `assetVariants['@door' | '@window']`.
 - **Library card size**: three densities (Large / Medium / Small), from prefs `libraryDensity` and the header
   button, through `data-density` CSS.
@@ -928,3 +932,5 @@ Known limitations (also in README):
     Saved groups shelf, 2D/3D/library context menus, Alt and native-menu suppression (done).
 49. "Picking a variant should enter place mode (keep the hover card)" (done).
 50. "A Ceiling category that hides ceiling-attached objects but keeps their lighting" (done).
+51. "Don't open the view settings automatically in 3D; merge the door/window tool settings into browsing" → view panel
+    closed by default; design and finish under the Doors / Windows Build cards (done).

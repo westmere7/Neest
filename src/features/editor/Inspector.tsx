@@ -124,7 +124,8 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
   } else if (tool === 'wall' || tool === 'curve' || tool === 'room') {
     title = tool === 'room' ? 'Room tool' : tool === 'curve' ? 'Curved wall tool' : 'Wall tool';
     body = <WallToolOptions project={project} />;
-  } else if (tool === 'opening') {
+  } else if (tool === 'opening' && isMobile) {
+    // Desktop: type, design and finish are chosen in the Build panel (OpeningBuildOptions).
     title = 'Door & window tool';
     body = <OpeningToolOptions />;
   }

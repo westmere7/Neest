@@ -128,7 +128,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   libraryTab: 'furniture',
   buildGroup: 'walls',
   libraryWidth: 300,
-  viewPanelOpen: true,
+  // Opened on demand (top-bar button or P), not every time the 3D view is shown.
+  viewPanelOpen: false,
   projectPanelOpen: true,
   snap: { grid: true, geometry: true, angle: true, guides: true },
   gridVisible: true,

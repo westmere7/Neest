@@ -26,6 +26,7 @@ import { MaterialLibrary } from '@/features/materials/MaterialUI';
 import { useAssetThumbnail } from './thumbnails';
 import { AssetInfoCard, InfoCardControl } from './AssetInfoCard';
 import { DOOR_KINDS, WINDOW_KINDS, WallPresetCards, extraOpeningIcon } from './BuildExtras';
+import { OpeningBuildOptions } from './OpeningBuildOptions';
 import './library.css';
 
 const BUILD_GROUP_TITLES = {
@@ -231,6 +232,7 @@ function BuildTab() {
               </button>
             ))}
           </div>
+          <OpeningBuildOptions kinds={DOOR_KINDS} />
         </>
       )}
       {buildGroup === 'windows' && (
@@ -250,6 +252,7 @@ function BuildTab() {
               </button>
             ))}
           </div>
+          <OpeningBuildOptions kinds={WINDOW_KINDS} />
         </>
       )}
     </div>

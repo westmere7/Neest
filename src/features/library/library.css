@@ -573,3 +573,11 @@
 .library[data-density='dense'] .mat-row-text {
   font-size: 11.5px;
 }
+
+/* Door / window design and finish under the Build cards. */
+.opening-build-options .pad-x {
+  padding: 0 10px;
+}
+.opening-build-options .lib-h {
+  margin-top: 16px;
+}
