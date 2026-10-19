@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1792349034949,
+  "updatedAt": 1792420291185,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -2795,6 +2795,22 @@
       "materials": {},
       "locked": false,
       "hidden": false
+    },
+    "obj_nnsr6bkga2": {
+      "id": "obj_nnsr6bkga2",
+      "assetId": "branded-fitness:kingsmith-walkingpad-c2",
+      "name": null,
+      "x": 4.05,
+      "y": 6.8500000000000005,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 0.518,
+      "depth": 1.445,
+      "height": 0.125,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
     }
   },
   "groups": {
@@ -2909,7 +2925,7 @@
       },
       "photo": {
         "setId": "oak-planks",
-        "scale": 1.8,
+        "scale": 2,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -2940,7 +2956,7 @@
       },
       "photo": {
         "setId": "porcelain-large",
-        "scale": 4.8,
+        "scale": 3.2,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -3128,7 +3144,7 @@
       },
       "photo": {
         "setId": "terrazzo",
-        "scale": 1.2,
+        "scale": 0.65,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -3207,7 +3223,7 @@
       },
       "photo": {
         "setId": "tile-mosaic",
-        "scale": 0.4,
+        "scale": 0.5,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -3300,7 +3316,7 @@
       },
       "photo": {
         "setId": "marble-beige",
-        "scale": 2,
+        "scale": 1,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -3329,7 +3345,13 @@
         "rotation": 0,
         "contrast": 1
       },
-      "photo": null,
+      "photo": {
+        "setId": "pebbles",
+        "scale": 0.15,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "decorative-plants:gravel",
       "source": {
@@ -3487,7 +3509,13 @@
         "rotation": 0,
         "contrast": 1
       },
-      "photo": null,
+      "photo": {
+        "setId": "terracotta-floor",
+        "scale": 2.08,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "tile-terracotta-rustic",
       "source": {
@@ -3537,7 +3565,7 @@
       },
       "photo": {
         "setId": "dark-oak-planks",
-        "scale": 2,
+        "scale": 2.03,
         "rotation": 0,
         "contrast": 0.7,
         "enabled": true
@@ -3592,7 +3620,7 @@
       },
       "photo": {
         "setId": "dark-oak-planks",
-        "scale": 2,
+        "scale": 2.03,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -3621,7 +3649,13 @@
         "rotation": 0,
         "contrast": 1
       },
-      "photo": null,
+      "photo": {
+        "setId": "polished-plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 0.55,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "venetian-grey",
       "source": {
@@ -3724,7 +3758,13 @@
         "rotation": 0,
         "contrast": 1
       },
-      "photo": null,
+      "photo": {
+        "setId": "cloudy-plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "limewash-sage",
       "source": {
@@ -3819,7 +3859,7 @@
       },
       "photo": {
         "setId": "ash-wood",
-        "scale": 0.8,
+        "scale": 1,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -3886,7 +3926,13 @@
         "rotation": 0,
         "contrast": 0.9
       },
-      "photo": null,
+      "photo": {
+        "setId": "smoked-walnut-veneer",
+        "scale": 1,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "wood-acacia",
       "source": {
@@ -3931,7 +3977,7 @@
       },
       "photo": {
         "setId": "birch-wood",
-        "scale": 0.8,
+        "scale": 0.5,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -4067,7 +4113,13 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": null,
-      "photo": null,
+      "photo": {
+        "setId": "leaf-blade",
+        "scale": 0.05,
+        "rotation": 0,
+        "contrast": 0.3,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "houseplants:leaf-zz",
       "source": {
@@ -4143,7 +4195,13 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": null,
-      "photo": null,
+      "photo": {
+        "setId": "leaf-blade",
+        "scale": 0.25,
+        "rotation": 0,
+        "contrast": 0.35,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "houseplants:leaf-polly",
       "source": {
@@ -4191,7 +4249,13 @@
         "rotation": 0,
         "contrast": 0.35
       },
-      "photo": null,
+      "photo": {
+        "setId": "aggregate",
+        "scale": 0.6,
+        "rotation": 0,
+        "contrast": 0.45,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "stone-quartz-white",
       "source": {
@@ -4234,7 +4298,13 @@
         "rotation": 0,
         "contrast": 0.3
       },
-      "photo": null,
+      "photo": {
+        "setId": "velvet",
+        "scale": 0.28,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "fabric-velvet-rust",
       "source": {
@@ -4320,7 +4390,13 @@
         "rotation": 0,
         "contrast": 0.3
       },
-      "photo": null,
+      "photo": {
+        "setId": "velvet",
+        "scale": 0.28,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "fabric-velvet-mustard",
       "source": {
@@ -4401,7 +4477,7 @@
       },
       "photo": {
         "setId": "brick-red",
-        "scale": 1.05,
+        "scale": 1,
         "rotation": 0,
         "contrast": 1,
         "enabled": true
@@ -4572,7 +4648,13 @@
         "rotation": 0,
         "contrast": 1
       },
-      "photo": null,
+      "photo": {
+        "setId": "cloudy-plaster",
+        "scale": 2,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
       "overrideOf": null,
       "catalogId": "limewash-grey",
       "source": {
@@ -5154,10 +5236,10 @@
       "emissive": null,
       "emissiveIntensity": 0,
       "texture": {
-        "rotation": 0,
-        "contrast": 1,
         "patternId": "subway",
-        "scale": 0.6
+        "scale": 0.6,
+        "rotation": 0,
+        "contrast": 1
       },
       "photo": {
         "setId": "tile-glazed-subway",
@@ -5178,7 +5260,7 @@
   "customAssets": {},
   "cameras": [],
   "render": {
-    "quality": "ultra",
+    "quality": "high",
     "exposure": 1,
     "timeOfDay": 13.75,
     "sunAzimuth": 240,
