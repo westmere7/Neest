@@ -229,6 +229,10 @@
    "file": "14783077246cad39.webp",
    "tile": false
   },
+  "156408a95b7b5fdb": {
+   "file": "156408a95b7b5fdb.webp",
+   "tile": true
+  },
   "1625129d66a3b1e2": {
    "file": "1625129d66a3b1e2.webp",
    "tile": true
@@ -247,6 +251,10 @@
   },
   "1736354c1f70c087": {
    "file": "1736354c1f70c087.webp",
+   "tile": true
+  },
+  "17670025f63662e3": {
+   "file": "17670025f63662e3.webp",
    "tile": true
   },
   "1794a7e317d7b713": {
@@ -1007,6 +1015,10 @@
   },
   "5f25b339dfcf130b": {
    "file": "5f25b339dfcf130b.webp",
+   "tile": true
+  },
+  "5f388ba980420d08": {
+   "file": "5f388ba980420d08.webp",
    "tile": true
   },
   "5f4c6f947e8846fe": {
@@ -2301,6 +2313,10 @@
    "file": "cbddbda4bd647c65.webp",
    "tile": true
   },
+  "cc0f250fa10a2909": {
+   "file": "cc0f250fa10a2909.webp",
+   "tile": true
+  },
   "cc98caa501b4ed8a": {
    "file": "cc98caa501b4ed8a.webp",
    "tile": true
@@ -3026,6 +3042,8 @@
   "chinese-home:wujin-stone": "e4e08c6ee2afef2b",
   "chinese-home:xuan-paper": "62b6a8bbfaf410cb",
   "chinese-home:yixing-clay": "60b4b410fa99ff08",
+  "compact-living:knit-oat": "cc0f250fa10a2909",
+  "compact-living:ticking-blue": "5f388ba980420d08",
   "concrete-grey": "0e62c24a481bd8e7",
   "cork": "34b37da4856b5cf9",
   "curtain-collection:blackout-black": "c48a61376feb3828",
@@ -3475,6 +3493,9 @@
   "stone-quartz-white": "a705f70123fa0a21",
   "stone-slate": "52dee6a5b1a9760a",
   "stone-travertine": "c25711e0f18bd6b1",
+  "studio-beds:pallet-pine": "17670025f63662e3",
+  "studio-beds:sheer-voile": "93e4545e5d26e99f",
+  "studio-beds:tatami-igusa": "156408a95b7b5fdb",
   "studio-living:duvet-charcoal": "14016506f4daa297",
   "studio-living:encaustic-tile": "27e24047684c397e",
   "studio-living:pillow-grey": "682e2277e1813e29",

@@ -163,7 +163,7 @@ export const ASSET_GROUPS: Record<AssetType, string[]> = {
     'Desk chairs',
     'Outdoor seating',
   ],
-  beds: ['Beds', 'Bunk & loft beds', 'Daybeds & sofa beds', 'Cots & kids beds'],
+  beds: ['Beds', 'Wall beds', 'Bunk & loft beds', 'Daybeds & sofa beds', 'Cots & kids beds'],
   surfaces: [
     'Coffee tables',
     'End tables',

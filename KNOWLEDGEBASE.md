@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-10-18 (houseplants with care guides, bathroom and Vietnam branded packs, materials, colour variants).
+Last updated: 2026-10-19 (studio & apartment beds, compact living pack, Studio setups groups).
 
 ---
 
@@ -273,7 +273,9 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   Pitfall: immer does not draft plain values assigned into a draft, so `putPlan` deep-copies any non-draft plan;
   otherwise editing a just-duplicated option in the same recipe wrote into the original option and undo history.
 - **Ready-made groups** (`src/data/groups/readyGroups.ts`): furnished setups shipped with Neest (bedrooms, living rooms,
-  kitchens, L-shaped kitchens from the `lKitchen` generator, dining, bathrooms, kids, office, balcony, entry), written in
+  kitchens, L-shaped kitchens from the `lKitchen` generator, dining, bathrooms, kids, office, balcony, entry, and **Studio
+  setups** built from the studio-beds and compact-living packs: wall bed with sofa, loft-bed office, Murphy bedroom,
+  daybed lounge, compact lounge, fold-down dining wall, small entry), written in
   plan metres with the back of the setup at y = 0. Built into `SavedGroup`s on demand (rebuilt when packs change) and
   shown in the Groups tab by shelf under "Your groups"; ids `ready-…`, asset ids `savedgroup:ready-…`. They place
   like saved groups; "Copy to my groups" makes an editable copy. Tests check items exist, names are unique and every
@@ -648,6 +650,34 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   angles) so a cushion can face any side of a corner. Right-hand sectionals mirror the parts (`mirrorX`).
 - **L-shaped desks** (`packs/l-desks.pack.ts`, 12): main run along the back, return down the left (corner at the back
   left); `lPair` adds the mirrored return-right version as `variantOf`.
+- **Studio & apartment beds** (`packs/studio-beds.pack.ts`, 22): wall beds on their own beds shelf **Wall beds**
+  (vertical Murphy queen open + folded, side-tilt single open + folded, with a sofa, with a fold-over desk, between
+  wardrobes under a bridge cabinet), loft beds (adult steel loft with models "Desk / Sofa / Open underneath"; stair loft
+  with drawer steps and a wardrobe), raised platform with drawers and a step (bục ngủ), tatami with shoji headboard,
+  steel spindle, oak-legged (no headboard), cane, arched bouclé, wrap-around nightstands, steel canopy with sheers,
+  pallet, and guest beds (pull-out sofa bed opened — `variantOf` the couches pack's closed sleeper —, foam chair bed,
+  rollaway, box daybed). Mattresses use Vietnamese sizes (1.0–1.8 × 2.0 m).
+  - Pack-local `dressBed(Dress)`: bedding in bed space (`a` across, `l` along from the head); `axis: 'x'` for beds
+    whose long side is on the wall (head at −x: loft and side-tilt beds). Pillows shrink to stay under `yMax`
+    (`fitPillow` / `pillowY`, accounting for the lean); `flat` pillows for beds without a headboard, `euro` shams when
+    there is headroom, `stacked` folded blanket for guest beds, `overFoot` keeps the duvet inside a foot rail.
+  - Wall-bed kit: `wallCabinet` (no sides between wardrobes: back and crown stay between them, or the crown is
+    coplanar with the doors), `wallBedFace` (the folded face is recessed 12 mm so bar pulls stay inside the item box),
+    `wallBedBox` (the lowered box with fold-down leg boards), `openWallBed`. Folded and open versions are separate items
+    (the depth changes) linked with `variantOf`.
+  - The mattress sits 3 cm inside a bed box's rails: at 2.6 cm the duvet drop shared the rails' inner face plane and
+    failed the coplanar rule.
+- **Compact living** (`packs/compact-living.pack.ts`, 32 = 24 designs + 8 open/closed versions): space-saving pieces
+  across living, dining, kitchen, storage and laundry, on the existing shelves. Living: lift-top coffee table (lowered /
+  raised), round nesting coffee tables, C-shaped sofa table, storage ottoman cube (closed / lid open), slatted storage
+  bench, loveseat with storage arms, armless two-seater, cube ottoman with four hidden stools, sofa-back console and
+  tension-pole shelf (models Styled / Bare), folding floor table (bàn xếp), swivel TV stand, floating media unit with a
+  fold-down desk (closed / open). Dining & kitchen: wall drop-leaf table (open / folded), tuck-away table with four
+  stools, extending console table (closed / extended), wall breakfast ledge with stools, island cart with a drop leaf
+  (down / up), slim gap cart (models Filled / Empty), stackable stools, folding chairs on a wall rail. Storage &
+  laundry: wall entry organiser, ironing-board cabinet (closed / open), drop-down drying rack (open / folded).
+  Wall-hung pieces use `mount: 'wall'` with a default elevation (a drop-leaf table top ends at 0.75 m). Items that
+  already existed were skipped (tilt-out shoe cabinet, clothes rails, corner shelves).
 - **Kitchen counters** (`packs/kitchen-counters.pack.ts`, 28): a counter is a row of bays (door, doors, drawers,
   open, pull-out, oven, dishwasher, hob, sinks). The worktop is cut into strips around the sink openings, and bowls
   hang in them (inset rim, undermount or apron).
@@ -953,7 +983,7 @@ Done and verified in the browser:
   editor plan modes (`draft`, `furnished`), no-interface mode, and a start-up fit to the free canvas area.
 - Inspector editing with validation.
 - Materials with linked/override semantics.
-- Furniture library: 270 built-in assets in 16 rooms (Sims-style room/type shelves), ~400 more in content packs in /packs
+- Furniture library: 270 built-in assets in 16 rooms (Sims-style room/type shelves), ~920 more in content packs in /packs
   (incl. houseplants with care guides, bathroom collection and Vietnam branded packs), colour variants with saved user
   variants
   (Halloween example), favourites, recents, search, drag and drop.
@@ -1262,3 +1292,7 @@ Known limitations (also in README):
      shared (done). While shipping thumbnails: `renderSwatchesForExport` preloaded only `swatch` maps, so pack bitmap
      sets (paintings, halloween: colour map only) lost their swatch files whenever `npm run thumbs` rendered few items
      (the colour maps had not been loaded by item renders); it now also preloads `color` for sets without a swatch map.
+110. "Add a lot more bed options, those often used in studio, modern apartments" + "add a big set of compact living
+     furnitures as well" → `packs/studio-beds.pack.ts` (22 beds, new beds shelf "Wall beds") and
+     `packs/compact-living.pack.ts` (32 space-saving pieces), seven ready-made groups on a new "Studio setups" shelf,
+     shipped thumbnails (done).

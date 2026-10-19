@@ -1222,9 +1222,113 @@ READY_GROUP_SPECS.push(
   },
 );
 
+// ───────── Studio setups ─────────
+
+const STUDIO = 'Studio setups';
+
+READY_GROUP_SPECS.push(
+  {
+    id: 'ready-studio-wall-bed-sofa',
+    name: 'Wall bed & sofa studio wall',
+    shelf: STUDIO,
+    room: 'living',
+    description:
+      'A queen wall bed folded behind its sofa, a round coffee table on a rug and a floor lamp beside it. Move the table aside and the bed comes down over the sofa: keep about 2.2 m clear in front of the wall.',
+    items: [
+      { a: 'studio-beds:wall-bed-sofa', x: 0, y: 0.5 },
+      { a: 'rug-rect', x: 0, y: 1.6, w: 2.0, d: 1.4 },
+      { a: 'coffee-table-round', x: 0, y: 1.65, w: 0.8, d: 0.8 },
+      { a: 'floor-lamp', x: 1.2, y: 0.3 },
+    ],
+  },
+  {
+    id: 'ready-studio-loft-office',
+    name: 'Steel loft bed home office',
+    shelf: STUDIO,
+    room: 'bedroom',
+    description:
+      'An adult steel loft bed with a desk and a bookshelf underneath and a desk chair pulled up to it: a double bed and a home office in one 2.1 × 1.5 m footprint.',
+    items: [
+      { a: 'studio-beds:loft-bed-steel', x: 0, y: 0.75, md: 'desk' },
+      { a: 'office-chair', x: -0.35, y: 0.95, r: UP },
+    ],
+  },
+  {
+    id: 'ready-studio-murphy-bedroom',
+    name: 'Murphy bed with bedside tables & lamps',
+    shelf: STUDIO,
+    room: 'bedroom',
+    description:
+      'A vertical queen wall bed, shown lowered, between two bedside tables with lamps, on a rug. Folded, the bed wall is only 45 cm deep and the floor in front is free for living.',
+    items: [
+      { a: 'studio-beds:wall-bed-vertical-open', x: 0, y: 1.075 },
+      { a: 'bedside-table', x: -1.15, y: 0.2 },
+      { a: 'bedside-table', x: 1.15, y: 0.2 },
+      { a: 'table-lamp-mushroom', x: -1.15, y: 0.2, e: 0.5 },
+      { a: 'table-lamp-mushroom', x: 1.15, y: 0.2, e: 0.5 },
+      { a: 'rug-rect', x: 0, y: 1.75, w: 2.4, d: 1.6 },
+    ],
+  },
+  {
+    id: 'ready-studio-daybed-lounge',
+    name: 'Box daybed lounge corner',
+    shelf: STUDIO,
+    room: 'living',
+    description:
+      'An upholstered box daybed along the wall as the sofa, a side table and a floor lamp at one end and a rug in front: sleeps a guest without opening anything.',
+    items: [
+      { a: 'studio-beds:upholstered-daybed', x: 0, y: 0.49 },
+      { a: 'side-table', x: 1.3, y: 0.3 },
+      { a: 'floor-lamp', x: -1.3, y: 0.3 },
+      { a: 'rug-rect', x: 0, y: 1.45, w: 2.0, d: 1.2 },
+    ],
+  },
+  {
+    id: 'ready-studio-compact-lounge',
+    name: 'Apartment loveseat with lift-top coffee table',
+    shelf: STUDIO,
+    room: 'living',
+    description:
+      'A 1.4 m loveseat with storage arms, a lift-top coffee table that rises for laptop work or a meal, a C-shaped side table slid under the arm and a storage ottoman, on a rug. A full living room in about 2.4 × 1.9 m.',
+    items: [
+      { a: 'compact-living:storage-arm-loveseat', x: 0, y: 0.4 },
+      { a: 'rug-rect', x: 0, y: 1.25, w: 2.0, d: 1.4 },
+      { a: 'compact-living:lift-top-coffee-table', x: 0, y: 1.45 },
+      { a: 'compact-living:c-shaped-sofa-table', x: 0.92, y: 0.5, r: FACE_LEFT },
+      { a: 'compact-living:storage-ottoman-cube', x: -0.95, y: 1.45 },
+    ],
+  },
+  {
+    id: 'ready-studio-fold-down-dining',
+    name: 'Fold-down dining wall for two',
+    shelf: STUDIO,
+    room: 'dining',
+    description:
+      'A wall-mounted drop-leaf table and two folding chairs hung on a rail beside it: a dining spot for two that folds back to about 14 cm deep when it is not in use.',
+    items: [
+      { a: 'compact-living:wall-drop-leaf-table', x: -0.3, y: 0.3 },
+      { a: 'compact-living:wall-hung-folding-chairs', x: 0.75, y: 0.06 },
+    ],
+  },
+  {
+    id: 'ready-studio-entry-wall',
+    name: 'Small entry with storage bench & shoe cabinet',
+    shelf: STUDIO,
+    room: 'storage',
+    description:
+      'A slatted oak storage bench to sit on while putting on shoes, a wall organiser with a mirror, hooks and a key shelf above it, and a 24 cm deep tilt-out shoe cabinet beside it. Fits a 2 m stretch of hallway wall.',
+    items: [
+      { a: 'compact-living:slatted-storage-bench', x: -0.35, y: 0.2 },
+      { a: 'compact-living:entry-wall-organiser', x: -0.35, y: 0.075 },
+      { a: 'shoe-cabinet', x: 0.65, y: 0.12 },
+    ],
+  },
+);
+
 /** Shelf order in the library's Groups list. */
 export const READY_GROUP_SHELVES = [
   BED,
+  STUDIO,
   LIVING,
   KITCHEN,
   L_KITCHENS,

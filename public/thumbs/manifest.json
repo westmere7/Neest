@@ -1345,6 +1345,146 @@
    "file": "column-square.webp",
    "fp": "a1eb77210eb42242"
   },
+  "compact-living:armless-two-seat-sofa": {
+   "file": "compact-living_armless-two-seat-sofa.webp",
+   "fp": "c8674df4401a6c04"
+  },
+  "compact-living:c-shaped-sofa-table": {
+   "file": "compact-living_c-shaped-sofa-table.webp",
+   "fp": "46f7d976ccf97fc5"
+  },
+  "compact-living:entry-wall-organiser": {
+   "file": "compact-living_entry-wall-organiser.webp",
+   "fp": "15a0aefe0e903251"
+  },
+  "compact-living:extending-console-table": {
+   "file": "compact-living_extending-console-table.webp",
+   "fp": "9daad1ed298ec857"
+  },
+  "compact-living:extending-console-table-extended": {
+   "file": "compact-living_extending-console-table-extended.webp",
+   "fp": "17b76476d871d5e7"
+  },
+  "compact-living:folding-floor-table": {
+   "file": "compact-living_folding-floor-table.webp",
+   "fp": "7a08c2c7b95f12c4"
+  },
+  "compact-living:island-cart-drop-leaf": {
+   "file": "compact-living_island-cart-drop-leaf.webp",
+   "fp": "50a6dbbe94bb977d"
+  },
+  "compact-living:island-cart-drop-leaf-up": {
+   "file": "compact-living_island-cart-drop-leaf-up.webp",
+   "fp": "ce2dbbd797381f09"
+  },
+  "compact-living:lift-top-coffee-table": {
+   "file": "compact-living_lift-top-coffee-table.webp",
+   "fp": "9743ed97a42e2109"
+  },
+  "compact-living:lift-top-coffee-table-raised": {
+   "file": "compact-living_lift-top-coffee-table-raised.webp",
+   "fp": "5f7ecf0ef903ea3a"
+  },
+  "compact-living:media-unit-fold-desk": {
+   "file": "compact-living_media-unit-fold-desk.webp",
+   "fp": "363f276fd6ec847f"
+  },
+  "compact-living:media-unit-fold-desk-open": {
+   "file": "compact-living_media-unit-fold-desk-open.webp",
+   "fp": "18e85caf68556bd3"
+  },
+  "compact-living:ottoman-hidden-stools": {
+   "file": "compact-living_ottoman-hidden-stools.webp",
+   "fp": "673bd01251624fd1"
+  },
+  "compact-living:round-nesting-coffee-tables": {
+   "file": "compact-living_round-nesting-coffee-tables.webp",
+   "fp": "a6f99018c066e3f6"
+  },
+  "compact-living:slatted-storage-bench": {
+   "file": "compact-living_slatted-storage-bench.webp",
+   "fp": "c58268d4ad76af95"
+  },
+  "compact-living:slim-gap-cart": {
+   "file": "compact-living_slim-gap-cart.webp",
+   "fp": "10c506216a6e69f4"
+  },
+  "compact-living:slim-gap-cart@model:filled": {
+   "file": "compact-living_slim-gap-cart_model_filled.webp",
+   "fp": "6a891496af3ceb17"
+  },
+  "compact-living:sofa-back-console": {
+   "file": "compact-living_sofa-back-console.webp",
+   "fp": "8ec4c6a9a2092ccc"
+  },
+  "compact-living:sofa-back-console@model:styled": {
+   "file": "compact-living_sofa-back-console_model_styled.webp",
+   "fp": "2aa2896ffd0255f1"
+  },
+  "compact-living:stackable-birch-stools": {
+   "file": "compact-living_stackable-birch-stools.webp",
+   "fp": "db2bf0808dce2be2"
+  },
+  "compact-living:storage-arm-loveseat": {
+   "file": "compact-living_storage-arm-loveseat.webp",
+   "fp": "8802fe6ef0f31d03"
+  },
+  "compact-living:storage-ottoman-cube": {
+   "file": "compact-living_storage-ottoman-cube.webp",
+   "fp": "037d114ca936ef26"
+  },
+  "compact-living:storage-ottoman-cube-open": {
+   "file": "compact-living_storage-ottoman-cube-open.webp",
+   "fp": "4e561390ce46be6e"
+  },
+  "compact-living:swivel-tv-stand": {
+   "file": "compact-living_swivel-tv-stand.webp",
+   "fp": "bdd71fc14d776b27"
+  },
+  "compact-living:tension-pole-shelf": {
+   "file": "compact-living_tension-pole-shelf.webp",
+   "fp": "08ccc69f677a596a"
+  },
+  "compact-living:tension-pole-shelf@model:styled": {
+   "file": "compact-living_tension-pole-shelf_model_styled.webp",
+   "fp": "4e366fa87fa8a68e"
+  },
+  "compact-living:tuck-away-dining-set": {
+   "file": "compact-living_tuck-away-dining-set.webp",
+   "fp": "f5c12c1959258876"
+  },
+  "compact-living:wall-breakfast-ledge": {
+   "file": "compact-living_wall-breakfast-ledge.webp",
+   "fp": "5f3a2dd623c90b9a"
+  },
+  "compact-living:wall-drop-drying-rack": {
+   "file": "compact-living_wall-drop-drying-rack.webp",
+   "fp": "863315999e3f2a5d"
+  },
+  "compact-living:wall-drop-drying-rack-folded": {
+   "file": "compact-living_wall-drop-drying-rack-folded.webp",
+   "fp": "3a37cee064146e8f"
+  },
+  "compact-living:wall-drop-leaf-table": {
+   "file": "compact-living_wall-drop-leaf-table.webp",
+   "fp": "03944cc83de30978"
+  },
+  "compact-living:wall-drop-leaf-table-folded": {
+   "file": "compact-living_wall-drop-leaf-table-folded.webp",
+   "fp": "f2534eabf7a616ed"
+  },
+  "compact-living:wall-hung-folding-chairs": {
+   "file": "compact-living_wall-hung-folding-chairs.webp",
+   "fp": "14be25d77e5ad426"
+  },
+  "compact-living:wall-ironing-cabinet": {
+   "file": "compact-living_wall-ironing-cabinet.webp",
+   "fp": "ca4806567e0b4772"
+  },
+  "compact-living:wall-ironing-cabinet-open": {
+   "file": "compact-living_wall-ironing-cabinet-open.webp",
+   "fp": "66788e44d54b365f"
+  },
   "computer-tower": {
    "file": "computer-tower.webp",
    "fp": "eff6bb6fa5c12ae9"
@@ -4024,6 +4164,106 @@
   "structures:wood-stove-with-flue": {
    "file": "structures_wood-stove-with-flue.webp",
    "fp": "e3444f0e4286ad24"
+  },
+  "studio-beds:arch-headboard-bed": {
+   "file": "studio-beds_arch-headboard-bed.webp",
+   "fp": "6667ac5af8383d8a"
+  },
+  "studio-beds:cane-headboard-bed": {
+   "file": "studio-beds_cane-headboard-bed.webp",
+   "fp": "f77c52ade1b82bab"
+  },
+  "studio-beds:chair-bed-foldout": {
+   "file": "studio-beds_chair-bed-foldout.webp",
+   "fp": "0b8a8fe153ffacd1"
+  },
+  "studio-beds:folding-guest-bed": {
+   "file": "studio-beds_folding-guest-bed.webp",
+   "fp": "47b0f8d59ad956d4"
+  },
+  "studio-beds:legged-mattress-bed": {
+   "file": "studio-beds_legged-mattress-bed.webp",
+   "fp": "d7e030bd21d613c6"
+  },
+  "studio-beds:loft-bed-stairs-wardrobe": {
+   "file": "studio-beds_loft-bed-stairs-wardrobe.webp",
+   "fp": "859ae66767237011"
+  },
+  "studio-beds:loft-bed-steel": {
+   "file": "studio-beds_loft-bed-steel.webp",
+   "fp": "51f384cb609bf61c"
+  },
+  "studio-beds:loft-bed-steel@model:desk": {
+   "file": "studio-beds_loft-bed-steel_model_desk.webp",
+   "fp": "ed363cc9adf0cec7"
+  },
+  "studio-beds:loft-bed-steel@model:sofa": {
+   "file": "studio-beds_loft-bed-steel_model_sofa.webp",
+   "fp": "a389c090b0ec9dc1"
+  },
+  "studio-beds:pallet-bed": {
+   "file": "studio-beds_pallet-bed.webp",
+   "fp": "c010a8f92e7151df"
+  },
+  "studio-beds:raised-platform-bed": {
+   "file": "studio-beds_raised-platform-bed.webp",
+   "fp": "54f51c434ced9482"
+  },
+  "studio-beds:sofa-bed-pullout-open": {
+   "file": "studio-beds_sofa-bed-pullout-open.webp",
+   "fp": "6ca5780b99805ccd"
+  },
+  "studio-beds:steel-canopy-bed": {
+   "file": "studio-beds_steel-canopy-bed.webp",
+   "fp": "14448d6324a57e98"
+  },
+  "studio-beds:steel-spindle-bed": {
+   "file": "studio-beds_steel-spindle-bed.webp",
+   "fp": "7a6748f5c5566e58"
+  },
+  "studio-beds:tatami-platform-bed": {
+   "file": "studio-beds_tatami-platform-bed.webp",
+   "fp": "00643837e9a36d76"
+  },
+  "studio-beds:upholstered-daybed": {
+   "file": "studio-beds_upholstered-daybed.webp",
+   "fp": "28890692a6ba9e8a"
+  },
+  "studio-beds:wall-bed-desk": {
+   "file": "studio-beds_wall-bed-desk.webp",
+   "fp": "ca63b14d7f8d2e0c"
+  },
+  "studio-beds:wall-bed-side-tilt-closed": {
+   "file": "studio-beds_wall-bed-side-tilt-closed.webp",
+   "fp": "2ef46757d9a26815"
+  },
+  "studio-beds:wall-bed-side-tilt-closed@model:styled": {
+   "file": "studio-beds_wall-bed-side-tilt-closed_model_styled.webp",
+   "fp": "2df131c519de84fc"
+  },
+  "studio-beds:wall-bed-side-tilt-open": {
+   "file": "studio-beds_wall-bed-side-tilt-open.webp",
+   "fp": "92305c0d5ba37672"
+  },
+  "studio-beds:wall-bed-sofa": {
+   "file": "studio-beds_wall-bed-sofa.webp",
+   "fp": "90020932f5988a79"
+  },
+  "studio-beds:wall-bed-vertical-closed": {
+   "file": "studio-beds_wall-bed-vertical-closed.webp",
+   "fp": "209cb29ff077c223"
+  },
+  "studio-beds:wall-bed-vertical-open": {
+   "file": "studio-beds_wall-bed-vertical-open.webp",
+   "fp": "1380ed6ecdbcad62"
+  },
+  "studio-beds:wall-bed-wardrobes": {
+   "file": "studio-beds_wall-bed-wardrobes.webp",
+   "fp": "d92a92036599016d"
+  },
+  "studio-beds:wrap-nightstand-bed": {
+   "file": "studio-beds_wrap-nightstand-bed.webp",
+   "fp": "f00fea3cc4af4e47"
   },
   "studio-living:black-glass-fridge": {
    "file": "studio-living_black-glass-fridge.webp",
