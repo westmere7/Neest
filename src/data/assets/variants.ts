@@ -2,24 +2,28 @@ import type { MaterialDefinition } from '@/domain/model/schema';
 import { MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { dropPackKeys, subscribePacks } from '@/packs/events';
 import type { AssetDefinition, Part } from './types';
+import { LEAD_ROLES, LOOKS, ROLE_FALLBACK, TONES, archetypeOf, hsl, lookName, materialKind, resolveTone, slotRoles, toneAllowed, toneLabel, type Look, type Role } from './variantLooks';
+
+export { archetypeOf, hsl, isGreen, slotRole } from './variantLooks';
 
 /**
  * Colour variants: ready-made material combinations for an item, like the colour swatches of
  * Sims buy mode.
  *
- * Each material slot is sorted into a family (wood, fabric, metal, foliage…) from its label and its
- * default material, or kept fixed (glass, lights, screens, soil, sanitary ceramic, printed art).
- * Six coordinated themes then pick one material per family, so a variant is a matching set — dark
- * wood with charcoal fabric and black metal — rather than a random mix. Foliage only moves between
- * greens and flowers between flower colours, so a plant never turns red. Branded products keep their
- * real finishes and get no variants.
+ * Generated variants come from curated looks per kind of object (variantLooks.ts): a bed gets
+ * "Hotel white", "Sage & oak" or "Walnut & navy" with its sheets kept light; a kitchen unit gets
+ * painted or oak fronts with a worktop and pulls that suit them; a tap gets the finishes taps are
+ * sold in. Each slot plays a role (frame, top, fronts, hardware, upholstery, sheets…) and a look
+ * gives each role a tone that resolves to a material of the slot's own kind. Props, colour-coded
+ * parts, prints, glass and lights never change. Branded products keep their real finishes; items
+ * with hand-made `variants` show exactly those.
  *
  * Users can also save their own combination of an edited item (`UserVariant`, kept in preferences);
  * it carries copies of any project-only materials so it works in other projects too.
  */
 
 export interface AssetVariant {
-  /** 'original', a theme id, or `user:<id>`. */
+  /** 'original', a look id, or `user:<id>`. */
   id: string;
   name: string;
   /** Slot → material id for every slot that differs from the asset defaults. */
@@ -39,233 +43,35 @@ export interface UserVariant {
   defs?: Record<string, MaterialDefinition>;
 }
 
-export type MaterialFamily =
-  | 'wood'
-  | 'planks'
-  | 'painted'
-  | 'fabric'
-  | 'velvet'
-  | 'leather'
-  | 'metal'
-  | 'stone'
-  | 'pottery'
-  | 'plastic'
-  | 'rug'
-  | 'foliage'
-  | 'flower';
-
-export const THEMES = ['natural', 'dark', 'light', 'warm', 'cool', 'bold'] as const;
-export type Theme = (typeof THEMES)[number];
-
-export const THEME_LABELS: Record<Theme, string> = {
-  natural: 'Natural',
-  dark: 'Dark',
-  light: 'Light',
-  warm: 'Warm',
-  cool: 'Cool',
-  bold: 'Bold',
-};
-
-/** Catalogue materials per family and theme (every id must exist in the catalogue; tests check). */
-export const FAMILY_THEMES: Record<Exclude<MaterialFamily, 'foliage' | 'flower'>, Record<Theme, string>> = {
-  wood: { natural: 'wood-oak-light', dark: 'wood-walnut', light: 'wood-ash-white', warm: 'wood-acacia', cool: 'wood-plywood', bold: 'wood-ebony' },
-  planks: { natural: 'wood-oak-natural', dark: 'wood-dark-oak-planks', light: 'wood-whitewashed', warm: 'wood-oak-wide', cool: 'wood-grey-oak', bold: 'wood-herringbone-dark' },
-  painted: { natural: 'laminate-white-matte', dark: 'laminate-black', light: 'wood-painted-white', warm: 'laminate-greige', cool: 'laminate-sage', bold: 'laminate-navy' },
-  fabric: { natural: 'fabric-linen', dark: 'fabric-charcoal', light: 'fabric-cream', warm: 'fabric-terracotta', cool: 'fabric-navy', bold: 'fabric-mustard' },
-  velvet: { natural: 'fabric-velvet-green', dark: 'fabric-velvet-navy', light: 'fabric-velvet-blush', warm: 'fabric-velvet-rust', cool: 'fabric-velvet-teal', bold: 'fabric-velvet-mustard' },
-  leather: { natural: 'leather-cognac', dark: 'leather-black', light: 'leather-white', warm: 'leather-tan', cool: 'leather-olive', bold: 'leather-burgundy' },
-  metal: { natural: 'metal-brushed-steel', dark: 'metal-black-matte', light: 'metal-chrome', warm: 'metal-brass', cool: 'metal-gunmetal', bold: 'metal-copper' },
-  stone: { natural: 'stone-marble-carrara', dark: 'stone-marble-nero', light: 'stone-quartz-white', warm: 'stone-travertine', cool: 'stone-granite', bold: 'stone-marble-green' },
-  pottery: { natural: 'terracotta-pot', dark: 'ceramic-black', light: 'ceramic-white', warm: 'terracotta-pot', cool: 'ceramic-sage', bold: 'ceramic-blue' },
-  plastic: { natural: 'plastic-white', dark: 'plastic-black', light: 'plastic-mint', warm: 'plastic-yellow', cool: 'plastic-blue', bold: 'plastic-red' },
-  rug: { natural: 'rug-jute', dark: 'carpet-navy', light: 'rug-wool-cream', warm: 'rug-berber', cool: 'rug-blue-geometric', bold: 'rug-cement-tile' },
-};
-
-// ───────────── Colour helpers ─────────────
-
-function hexRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '');
-  const n = parseInt(h.length === 3 ? h.replace(/./g, (c) => c + c) : h.slice(0, 6), 16);
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
-}
-
-/** Hue (degrees), saturation and lightness (HSL) of a hex colour. */
-export function hsl(hex: string): { h: number; s: number; l: number } {
-  const [r, g, b] = hexRgb(hex);
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const d = max - min;
-  if (d < 1e-6) return { h: 0, s: 0, l };
-  const s = d / (1 - Math.abs(2 * l - 1));
-  let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-  h *= 60;
-  if (h < 0) h += 360;
-  return { h, s, l };
-}
-
-/** A green that reads as foliage: hue 70–170°, not grey. */
-export const isGreen = (hex: string): boolean => {
-  const c = hsl(hex);
-  return c.h >= 70 && c.h <= 170 && c.s >= 0.12 && c.l > 0.06 && c.l < 0.85;
-};
-
-// ───────────── Slot classification ─────────────
-
-const FIXED_WORDS =
-  /\bskin\b|\bhair\b|\beyes?\b|soil|gravel|\bgrit\b|\bsand\b|water|screen|display|glass|mirror|\blens|bulb|flame|\bwick|\bbooks?\b|\bart\b|artwork|canvas|\bprints?\b|picture|photo|label|\bdials?\b|button|\bled\b|\blights?\b|\blamps?\b|\bcords?\b|cable|\bwires?\b|\bchains?\b|\bropes?\b|hinge|\btyres?\b|\btires?\b|\bsoles?\b|\bink\b|paper|chalk|\bice\b|snow|food|fruit|cake|bread|candle|\bkeys\b|keyboard|\bvents?\b|grille|outlet|drain|spout|basket|wicker|rattan|\bcane\b|mattress|bedding/;
-const FOLIAGE_WORDS = /leaf|leaves|foliage|frond|fern|moss|grass|needles|leaflet|hedge|shrub|\bivy\b|vines?\b|succulent|cactus|pearls|\bpads\b|rosette/;
-const FLOWER_WORDS = /flower|petal|bloom|blossom|spathe|tulip|\broses?\b|\blil(y|ies)\b|orchid|hydrangea|sunflower|lavender/;
-const MULTICOLOUR_FLOWERS = /orchid|phalaenopsis|tulip|\broses?\b|hydrangea|violet|wildflower|bouquet|hyacinth|anthurium|kalanchoe|cyclamen|geranium|petunia|window box|\bflowers\b/;
-const SINGLE_COLOUR_FLOWERS = /peace lily|spathiphyllum|sunflower|lavender|bird of paradise|strelitzia|frangipani|cherry blossom/;
-const POT_WORDS =/\bpots?\b|planter|vase|\burns?\b|\bjars?\b|\bjugs?\b|\bbowl/;
-
-/** Appliances and electronics: realistic finishes only (no brass fridges). */
-const APPLIANCE_METAL: Record<Theme, string> = {
-  natural: 'metal-brushed-steel',
-  dark: 'metal-black-matte',
-  light: 'metal-white-powder',
-  warm: 'metal-brushed-steel',
-  cool: 'metal-anthracite',
-  bold: 'metal-stainless-polished',
-};
-
 const materialOf = (id: string): MaterialDefinition | undefined => MATERIAL_CATALOG_BY_ID[id];
-const PLANK_PATTERNS = new Set(['wood-planks', 'wood-planks-wide', 'herringbone', 'chevron', 'parquet-basket']);
 
-/** Family of one slot of an asset, or null when the slot keeps its material. */
-export function slotFamily(asset: AssetDefinition, slotId: string): MaterialFamily | null {
-  const slot = asset.slots.find((s) => s.id === slotId);
-  if (!slot) return null;
-  const m = materialOf(slot.defaultMaterial);
-  if (!m) return null;
-  if (m.emissive || slotId === 'light') return null;
-  const words = `${slot.id} ${slot.label}`.toLowerCase();
-  const mid = m.id.toLowerCase();
-  if (FOLIAGE_WORDS.test(words) && isGreen(m.color)) return 'foliage';
-  // Flowers change colour only on species sold in many colours (orchids, tulips, roses…); a peace lily stays white.
-  if (FLOWER_WORDS.test(words)) return MULTICOLOUR_FLOWERS.test(`${asset.id} ${asset.name} ${asset.tags.join(' ')}`.toLowerCase()) && !SINGLE_COLOUR_FLOWERS.test(`${asset.id} ${asset.name}`.toLowerCase()) && !(m.color.toLowerCase() === '#ffffff' && m.texture) ? 'flower' : null;
-  if (FIXED_WORDS.test(words)) return null;
-  // Plants vary only their leaves, flowers and pots (never trunks, stems or stands).
-  if (asset.type === 'plants') return POT_WORDS.test(words) && !['fabric', 'wood', 'glass', 'metal'].includes(m.category) ? 'pottery' : null;
-  // Printed or multi-coloured patterns (art, books, wallpaper prints) and photo-like bitmaps keep their look.
-  if (m.texture && m.color.toLowerCase() === '#ffffff') return null;
-  if (m.category === 'glass' || m.category === 'tile') return null;
-  const sanitary = asset.type === 'plumbing' || asset.category === 'bathroom';
-  if (POT_WORDS.test(words) && m.category !== 'wood' && m.category !== 'fabric' && m.category !== 'metal') return 'pottery';
-  switch (m.category) {
-    case 'wood':
-      if (/rattan|wicker|cane|bamboo|cork/.test(mid)) return null;
-      if (mid === 'wood-painted-white') return 'painted';
-      return m.texture && PLANK_PATTERNS.has(m.texture.patternId) ? 'planks' : 'wood';
-    case 'fabric':
-      return /velvet/.test(mid) ? 'velvet' : /mattress|felt/.test(mid) ? null : 'fabric';
-    case 'leather':
-      return 'leather';
-    case 'metal':
-      return 'metal';
-    case 'stone':
-      return /terracotta|ceramic|glaze/.test(mid) ? 'pottery' : 'stone';
-    case 'rug':
-      return 'rug';
-    case 'laminate':
-    case 'paint':
-      return 'painted';
-    case 'plaster':
-      return null;
-    case 'solid': {
-      if (/^ceramic-|terracotta|glaze/.test(mid)) return sanitary ? null : 'pottery';
-      if (/^plastic-/.test(mid)) return 'plastic';
-      if (/^solid-(white|black|light-grey|mid-grey)$/.test(mid)) return sanitary ? null : 'painted';
-      return null;
-    }
-  }
-  return null;
-}
+// ───────────── Flowers ─────────────
 
-// ───────────── Foliage and flowers ─────────────
-
-let pools: { foliage: MaterialDefinition[]; flower: MaterialDefinition[] } | null = null;
+let flowers: MaterialDefinition[] | null = null;
 subscribePacks(() => {
-  pools = null;
+  flowers = null;
 });
-const foliagePool = (): MaterialDefinition[] => (pools ??= { foliage: computeFoliage(), flower: computeFlowers() }).foliage;
-const flowerPool = (): MaterialDefinition[] => (pools ??= { foliage: computeFoliage(), flower: computeFlowers() }).flower;
 
-/** Patterns that make a leaf a particular species (stripes, bands, variegation): never swapped in. */
-const SPECIES_PATTERN = /stripe|band|zebra|variegat|cream|silver|gold|margin/;
-
-const computeFoliage = (): MaterialDefinition[] =>
-  MATERIAL_CATALOG.filter((m) => {
-    if (m.emissive || /^solid-/.test(m.id)) return false;
-    const text = `${m.id} ${m.name}`.toLowerCase();
-    if (!/leaf|foliage|frond|fern|palm/.test(text) || /stem|stalk|trunk|vein|edge|underside|marking/.test(text)) return false;
-    if (m.texture && (SPECIES_PATTERN.test(m.texture.patternId) || m.color.toLowerCase() === '#ffffff')) return false;
-    const c = hsl(m.color);
-    return c.h >= 80 && c.h <= 160 && c.s >= 0.2 && c.l > 0.08 && c.l < 0.7;
-  });
-
-const computeFlowers = (): MaterialDefinition[] =>
-  MATERIAL_CATALOG.filter((m) => {
+const flowerPool = (): MaterialDefinition[] =>
+  (flowers ??= MATERIAL_CATALOG.filter((m) => {
     if (m.emissive) return false;
     if (!/flower|petal|blossom|bloom|spathe|orchid|tulip|rose|lily|lavender|hydrangea|strelitzia/.test(`${m.id} ${m.name}`.toLowerCase())) return false;
     const c = hsl(m.color);
     return c.s > 0.25 || c.l > 0.85;
-  });
+  }));
 
-const packOf = (id: string): string => (id.includes(':') ? id.split(':')[0] : '');
-
-/** A green for a theme: darker, lighter, yellower or bluer than the default, preferring the item's own pack. */
-function pickFoliage(defaultId: string, theme: Theme): string {
-  const base = materialOf(defaultId);
-  if (!base || theme === 'natural' || theme === 'bold') return defaultId;
-  const b = hsl(base.color);
-  const pool = foliagePool().filter((m) => m.id !== defaultId);
-  const want = (m: MaterialDefinition): number | null => {
-    const c = hsl(m.color);
-    const dh = c.h - b.h;
-    const dl = c.l - b.l;
-    switch (theme) {
-      case 'dark':
-        return dl < -0.04 ? -dl * 2 - Math.abs(dh) / 180 : null;
-      case 'light':
-        return dl > 0.04 ? dl * 2 - Math.abs(dh) / 180 : null;
-      case 'warm':
-        return dh < -8 ? -dh / 60 - Math.abs(dl) : null;
-      case 'cool':
-        return dh > 8 ? dh / 60 - Math.abs(dl) : null;
-    }
-    return null;
-  };
-  let best: { id: string; score: number } | null = null;
-  for (const m of pool) {
-    const w = want(m);
-    if (w === null) continue;
-    const c = hsl(m.color);
-    // Stay a believable sibling: limited jumps in lightness and saturation.
-    if (Math.abs(c.l - b.l) > 0.22 || Math.abs(c.s - b.s) > 0.35) continue;
-    // Same leaf texture first (veins stay veins), then the same pack.
-    const sameTex = (m.texture?.patternId ?? '') === (base.texture?.patternId ?? '') ? 1 : 0;
-    const score = sameTex * 1.5 + (packOf(m.id) === packOf(defaultId) ? 0.5 : 0) + Math.min(w, 0.8);
-    if (!best || score > best.score) best = { id: m.id, score };
-  }
-  return best?.id ?? defaultId;
-}
-
-function pickFlower(defaultId: string, theme: Theme): string {
-  const pool = flowerPool();
-  const pick = (test: (h: { h: number; s: number; l: number }) => boolean) => pool.find((m) => m.id !== defaultId && test(hsl(m.color)))?.id ?? defaultId;
-  switch (theme) {
+/** A flower colour for a look: white, warm reds, cool pinks and purples, or bold yellows. */
+function pickFlower(defaultId: string, tone: NonNullable<Look['flower']>): string {
+  const pick = (test: (h: { h: number; s: number; l: number }) => boolean) => flowerPool().find((m) => m.id !== defaultId && test(hsl(m.color)))?.id ?? defaultId;
+  switch (tone) {
     case 'light':
       return pick((c) => c.l > 0.85);
     case 'warm':
-      return pick((c) => (c.h < 50 || c.h > 330) && c.s > 0.4);
+      return pick((c) => (c.h < 30 || c.h > 330) && c.s > 0.4);
     case 'cool':
       return pick((c) => c.h > 240 && c.h < 330 && c.s > 0.25);
     case 'bold':
       return pick((c) => c.h >= 40 && c.h < 70 && c.s > 0.5);
-    default:
-      return defaultId;
   }
 }
 
@@ -352,10 +158,13 @@ function slotWeightsCached(asset: AssetDefinition): Record<string, number> {
 /** True for assets that keep their own finishes (branded products and imported models). */
 export const hasFixedFinish = (asset: AssetDefinition): boolean => !!asset.brand || asset.category === 'custom';
 
+/** Most looks an item shows next to its original. */
+export const MAX_LOOKS = 6;
+
 /**
- * The built-in colour variants of an asset: the original first, then up to six themes that change
- * at least one slot. Branded items offer only the finishes the maker sells (their hand-made
- * `variants`); imported items and items with nothing to vary get none.
+ * The built-in colour variants of an asset: the original first, then the looks of its kind of
+ * object that change one of its main slots. Branded items offer only the finishes the maker sells
+ * (their hand-made `variants`); imported items and items with nothing to vary get none.
  */
 export function assetVariants(asset: AssetDefinition): AssetVariant[] {
   const hit = variantCache.get(asset.id);
@@ -365,35 +174,136 @@ export function assetVariants(asset: AssetDefinition): AssetVariant[] {
   return out;
 }
 
+/** Tones a look gives a role, falling back to a related role (seat → upholstery, legs → frame…). */
+function tonesFor(look: Look, role: Role): string | string[] | undefined {
+  if (role === 'foliage' || role === 'flower') return undefined;
+  const own = look.roles[role];
+  if (own !== undefined) return own;
+  const alt = ROLE_FALLBACK[role];
+  return alt && alt !== 'foliage' && alt !== 'flower' ? look.roles[alt] : undefined;
+}
+
+/** Two materials that look the same (a pack's satin stainless and the catalogue's brushed steel). */
+function nearlySame(a: MaterialDefinition | undefined, b: MaterialDefinition | undefined): boolean {
+  if (!a || !b || materialKind(a) !== materialKind(b)) return false;
+  const pa = parseInt(a.color.slice(1, 7), 16);
+  const pb = parseInt(b.color.slice(1, 7), 16);
+  const d = Math.max(...[16, 8, 0].map((sh) => Math.abs(((pa >> sh) & 255) - ((pb >> sh) & 255)) / 255));
+  return d < 0.05;
+}
+
+/** True when an appliance's own body is a colour, so retro looks (cream, sage, red…) make sense. */
+function colourfulBody(slots: { role: Role; material?: MaterialDefinition }[], weights: Record<string, number>, ids: string[]): boolean {
+  let best: MaterialDefinition | undefined;
+  let bestW = -1;
+  slots.forEach((s, i) => {
+    if ((s.role === 'body' || s.role === 'frame') && (weights[ids[i]] ?? 0) > bestW) {
+      bestW = weights[ids[i]] ?? 0;
+      best = s.material;
+    }
+  });
+  if (!best || best.category === 'metal') return false;
+  const c = hsl(best.color);
+  return c.s > 0.2 && c.l > 0.15 && c.l < 0.9;
+}
+
 function buildVariants(asset: AssetDefinition): AssetVariant[] {
   if (asset.variants?.length && asset.category !== 'custom') return presetVariants(asset);
   if (hasFixedFinish(asset)) return [];
-  const families = asset.slots.map((s) => [s, slotFamily(asset, s.id)] as const).filter(([, f]) => f !== null);
-  if (!families.length) return [];
-  const original: AssetVariant = { id: 'original', name: 'Original', materials: {}, swatch: swatchColors(asset, {}) };
-  const out: AssetVariant[] = [original];
+  const arche = archetypeOf(asset);
+  if (arche === 'none') return [];
+  const roles = slotRoles(asset, arche);
+  const slots = asset.slots
+    .map((slot, i) => {
+      const material = materialOf(slot.defaultMaterial);
+      return { slot, material, kind: materialKind(material), role: roles[i] };
+    })
+    .filter((s): s is typeof s & { role: Role } => s.role !== null);
+  if (!slots.length) return [];
+  const weights = slotWeightsCached(asset);
+  // The slots that make an item's look: the most visible ones it can change (three on busy items).
+  // Props and trimmings (crockery on a shelf, a throw, piping) never decide it.
+  const body = slots.filter((s) => s.role !== 'crockery' && s.role !== 'accent' && s.role !== 'trim');
+  const ranked = body.length ? body : slots;
+  const total = ranked.reduce((sum, s) => sum + (weights[s.slot.id] ?? 0), 0);
+  const main = new Set(
+    [...ranked]
+      .sort((a, b) => (weights[b.slot.id] ?? 0) - (weights[a.slot.id] ?? 0))
+      .slice(0, ranked.length >= 4 ? 3 : 2)
+      .map((s) => s.slot.id),
+  );
+  const retroOk = arche === 'appliance' && colourfulBody(slots, weights, slots.map((s) => s.slot.id));
+  // The roles that carry a look on this item: a bed's duvet, a sofa's upholstery, a table's top — or,
+  // for cabinets, lamps, objects, kitchens and rugs, any of their main parts (a shelving unit's frame
+  // or its shelves). The most visible of them names the look when its other words drop out.
+  const several = arche === 'storage' || arche === 'lighting' || arche === 'tech-light' || arche === 'object' || arche === 'kitchen' || arche === 'rug';
+  const first = LEAD_ROLES[arche].find((r) => slots.some((s) => s.role === r));
+  const leadRoles = new Set<Role>(several ? LEAD_ROLES[arche].filter((r) => slots.some((s) => s.role === r)) : first ? [first] : []);
+  const lead = leadRoles.size ? [...leadRoles][0] : undefined;
+  const out: AssetVariant[] = [{ id: 'original', name: 'Original', materials: {}, swatch: swatchColors(asset, {}) }];
   const seen = new Set<string>(['']);
-  for (const theme of THEMES) {
+  for (const look of LOOKS[arche]) {
+    if (out.length > MAX_LOOKS) break;
+    if (look.retro && !retroOk) continue;
+    if (look.requires && !slots.some((s) => s.role === look.requires && s.kind && resolveTone(look.roles[look.requires as Exclude<Role, 'foliage' | 'flower'>], s.kind))) continue;
     const materials: Record<string, string> = {};
-    for (const [slot, family] of families) {
-      const appliance = family === 'metal' && (asset.type === 'appliances' || asset.type === 'electronics');
-      const id =
-        family === 'foliage'
-          ? pickFoliage(slot.defaultMaterial, theme)
-          : family === 'flower'
-            ? pickFlower(slot.defaultMaterial, theme)
-            : appliance
-              ? APPLIANCE_METAL[theme]
-              : FAMILY_THEMES[family!][theme];
-      if (id !== slot.defaultMaterial && materialOf(id)) materials[slot.id] = id;
+    const used: { tones: string[]; tone?: string }[] = [];
+    let leadFits = !lead;
+    let leadTone: string | undefined;
+    for (const s of slots) {
+      let id: string | undefined;
+      if (s.role === 'flower' || !s.kind) {
+        // Flowers pick a colour of their own; `used` stays aligned with `slots`.
+        id = s.role === 'flower' && look.flower ? pickFlower(s.slot.defaultMaterial, look.flower) : undefined;
+        used.push({ tones: [] });
+        if (id && leadRoles.has(s.role)) leadFits = true;
+      } else {
+        const offered = tonesFor(look, s.role);
+        const tones = offered === undefined ? [] : Array.isArray(offered) ? offered : [offered];
+        const tone = tones.find((t) => {
+          const m = TONES[t]?.[s.kind!];
+          return !!m && !!materialOf(m) && toneAllowed(asset, t, s.kind!);
+        });
+        if (tone) id = TONES[tone][s.kind];
+        used.push({ tones, tone });
+        if (tone && leadRoles.has(s.role)) {
+          leadFits = true;
+          leadTone ??= tone;
+        }
+      }
+      if (id && id !== s.slot.defaultMaterial && materialOf(id) && !nearlySame(s.material, materialOf(id))) materials[s.slot.id] = id;
     }
-    const key = Object.keys(materials)
+    // The look's lead colour has to fit the item (no "Sage & oak" without anything sage) and change it:
+    // a sofa look that keeps the upholstery and only swaps the feet is not worth a swatch.
+    if (!leadFits) continue;
+    if (lead && !slots.some((s) => leadRoles.has(s.role) && materials[s.slot.id])) continue;
+    const changed = Object.keys(materials);
+    if (!changed.length) continue;
+    // A look must recolour one of the main slots or its lead part (or most of the surface), not just a knob.
+    const weight = changed.reduce((sum, id) => sum + (weights[id] ?? 0), 0);
+    const leadChanged = slots.some((s) => leadRoles.has(s.role) && materials[s.slot.id]);
+    if (!leadChanged && !changed.some((id) => main.has(id)) && weight < 0.3 * total) continue;
+    const key = changed
       .sort()
       .map((k) => `${k}=${materials[k]}`)
       .join('|');
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ id: theme, name: variantName(asset, materials, THEME_LABELS[theme]), materials, swatch: swatchColors(asset, materials) });
+    let name = lookName(look.name, used);
+    if (!name) name = leadTone ? toneLabel(leadTone).replace(/^./, (c) => c.toUpperCase()) : look.name;
+    // Two looks that read the same ("Black" and "Black"): drop the second when it only differs in a
+    // small part, otherwise name the finish that tells them apart.
+    const twin = out.find((v) => v.name === name);
+    if (twin) {
+      const finish = (v: Record<string, string>, id: string, def: string) => v[id] ?? def;
+      const diff = slots.filter((s) => finish(materials, s.slot.id, s.slot.defaultMaterial) !== finish(twin.materials, s.slot.id, s.slot.defaultMaterial));
+      if (!diff.some((s) => main.has(s.slot.id))) continue;
+      const s = diff[0];
+      const tone = used[slots.indexOf(s)]?.tone;
+      const label = tone && !name.toLowerCase().includes(toneLabel(tone)) ? toneLabel(tone) : (materialOf(finish(materials, s.slot.id, s.slot.defaultMaterial))?.name ?? '').toLowerCase();
+      if (label) name = `${name} & ${label}`;
+    }
+    out.push({ id: look.id, name, materials, swatch: swatchColors(asset, materials) });
   }
   return out.length > 1 ? out : [];
 }
@@ -410,17 +320,6 @@ function presetVariants(asset: AssetDefinition): AssetVariant[] {
     out.push({ id: v.id, name: v.name, materials, swatch: swatchColors(asset, materials) });
   }
   return out.length > 1 ? out : [];
-}
-
-/** "Dark · Walnut, Charcoal weave": the theme plus the materials of the two most visible changed slots. */
-function variantName(asset: AssetDefinition, materials: Record<string, string>, theme: string): string {
-  const weights = slotWeightsCached(asset);
-  const names = Object.keys(materials)
-    .sort((a, b) => (weights[b] ?? 0) - (weights[a] ?? 0))
-    .slice(0, 2)
-    .map((slot) => materialOf(materials[slot])?.name)
-    .filter((n, i, all): n is string => !!n && all.indexOf(n) === i);
-  return names.length ? `${theme} · ${names.join(', ')}` : theme;
 }
 
 /** User variants as swatch-ready variants (materials that no longer exist are dropped). */

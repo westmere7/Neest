@@ -315,6 +315,22 @@ const DEFS: Def[] = [
   { id: 'laminate-olive', name: 'Olive laminate', category: 'laminate', color: '#7c7f5a', roughness: 0.55 },
   { id: 'laminate-gloss-grey', name: 'Grey gloss laminate', category: 'laminate', color: '#8d8f93', roughness: 0.15 },
   { id: 'laminate-terrazzo', name: 'Terrazzo-effect laminate', category: 'laminate', color: '#ece8e2', roughness: 0.4, texture: tex('terrazzo', 0.8, 0.8) },
+
+  // Colour-variant palette (2026-10-19): light grey bedding, grey and cream velvets and bouclé, cream and
+  // forest-green cabinetry, a cream glaze — finishes the per-object looks in data/assets/variantLooks.ts use.
+  { id: 'fabric-dove-grey', name: 'Dove grey cotton', category: 'fabric', color: '#c6c5c1', roughness: 0.95, texture: tex('weave', 0.1, 0.5) },
+  { id: 'fabric-stone', name: 'Stone weave', category: 'fabric', color: '#b3a998', roughness: 0.95, texture: tex('weave', 0.12, 0.6) },
+  { id: 'fabric-forest', name: 'Forest green weave', category: 'fabric', color: '#3d5345', roughness: 0.92, texture: tex('weave', 0.12, 0.6) },
+  { id: 'fabric-boucle-grey', name: 'Grey bouclé', category: 'fabric', color: '#b4b0a9', roughness: 1, texture: tex('boucle', 0.2, 0.9) },
+  { id: 'fabric-boucle-sage', name: 'Sage bouclé', category: 'fabric', color: '#a2ab93', roughness: 1, texture: tex('boucle', 0.2, 0.9) },
+  { id: 'fabric-boucle-charcoal', name: 'Charcoal bouclé', category: 'fabric', color: '#5b5a58', roughness: 1, texture: tex('boucle', 0.2, 0.9) },
+  { id: 'fabric-boucle-rust', name: 'Rust bouclé', category: 'fabric', color: '#ad6e4e', roughness: 1, texture: tex('boucle', 0.2, 0.9) },
+  { id: 'fabric-velvet-grey', name: 'Grey velvet', category: 'fabric', color: '#717378', roughness: 0.78, texture: tex('weave', 0.08, 0.3) },
+  { id: 'fabric-velvet-oat', name: 'Oat velvet', category: 'fabric', color: '#c7b79e', roughness: 0.78, texture: tex('weave', 0.08, 0.3) },
+  { id: 'fabric-velvet-sage', name: 'Sage velvet', category: 'fabric', color: '#7c8b6f', roughness: 0.78, texture: tex('weave', 0.08, 0.3) },
+  { id: 'laminate-cream', name: 'Cream matte laminate', category: 'laminate', color: '#ebe3d2', roughness: 0.6 },
+  { id: 'laminate-forest', name: 'Forest green laminate', category: 'laminate', color: '#3e5245', roughness: 0.55 },
+  { id: 'ceramic-cream', name: 'Cream glaze', category: 'solid', color: '#e8dfcd', roughness: 0.25 },
 ];
 
 /**
@@ -413,6 +429,17 @@ const PHOTOS: Record<string, { set: string; scale?: number; contrast?: number; r
   'carpet-grey': { set: 'carpet-plain' },
   'carpet-navy': { set: 'carpet-plain' },
   'carpet-beige': { set: 'carpet-plain' },
+  // Colour-variant palette (2026-10-19)
+  'fabric-dove-grey': { set: 'cotton' },
+  'fabric-stone': { set: 'upholstery-weave' },
+  'fabric-forest': { set: 'upholstery-weave' },
+  'fabric-boucle-grey': { set: 'boucle', scale: 0.35 },
+  'fabric-boucle-sage': { set: 'boucle', scale: 0.35 },
+  'fabric-boucle-charcoal': { set: 'boucle', scale: 0.35 },
+  'fabric-boucle-rust': { set: 'boucle', scale: 0.35 },
+  'fabric-velvet-grey': { set: 'velvet' },
+  'fabric-velvet-oat': { set: 'velvet' },
+  'fabric-velvet-sage': { set: 'velvet' },
 };
 
 function photoFor(id: string): PhotoTextureRef | null {

@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-10-19 (studio & apartment beds, compact living pack, Studio setups groups).
+Last updated: 2026-10-19 (object-aware colour variants, studio & apartment beds, compact living pack).
 
 ---
 
@@ -754,19 +754,45 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   basket, cube, hanging), `plantStand`, `hangingCords`, `fitGroup`/`containParts` (keep every part in the box at
   any size). `leafPanel` does not re-centre outlines, so texture u = 0 stays on the midrib (leaf patterns draw it on
   the tile edge) and `along` continues the pattern across a blade's panels.
-- **Colour variants** (`data/assets/variants.ts`): every slot is sorted into a family (wood, planks, painted, fabric,
-  velvet, leather, metal, stone, pottery, plastic, rug, foliage, flower) from its label and default material, or kept
-  fixed (glass, lights, screens, soil, sanitary ceramic, printed patterns, baskets…). Six themes (Natural, Dark, Light,
-  Warm, Cool, Bold) pick one catalogue material per family (`FAMILY_THEMES`), so variants are coordinated sets;
-  appliances use realistic metals only; plants vary only leaves (other greens: same leaf texture first, limited
-  lightness jumps), flowers and pots. Branded and imported items get no themes and no saved user variants
-  (`hasFixedFinish`); a branded item may list the maker's own finishes as hand-made `variants`. ~580 of ~675 items
-  have variants. Users save their own from an edited item (Inspector → "Save as variant"): `UserVariant`s live in
-  prefs (`assetVariants`, IndexedDB) and carry copies of project-only/edited materials; `prepareVariantMaterials`
-  adds them under a new id when the target project already has a different material with that id.
-  UI: `VariantSwatches` in the hover card (choice in `editor.variantChoice`, shown in the live preview and used by
-  both placement paths via `features/library/variantChoice.ts`) and `editor/ObjectVariants.tsx` (apply to every
-  selected item of the kind, save, delete saved ones).
+- **Colour variants** (`data/assets/variants.ts` generates, `data/assets/variantLooks.ts` holds the rules and data):
+  curated, real-world looks per kind of object instead of global themes. (The old system gave every slot of a family
+  the same theme material, e.g. "Dark" made a bed's headboard and duvet charcoal.)
+  - **Roles**: each slot gets a role from its label (first segment before "&"), id, default material and archetype:
+    frame, legs, top, fronts, hardware, tap, body, upholstery, seat, mesh, accent, trim, sheets, duvet, curtain, shade,
+    towel, rug, pot, crockery, flower — or `null` (kept). Never recoloured: props and food (books, clothes, toiletries,
+    fruit…), colour-coded parts (a label naming a colour: "Red team", "Black keys", "Light squares"), prints and art
+    colours, mounts, glass, lights, castors, sanitary ceramic incl. toilet seats and bath panels, appliance parts in a
+    kitchen unit (hob, sink, grates), natural weaves and fibres (rattan, cane, seagrass, sisal, sheepskin, tatami).
+    `slotRoles` also turns contrasting cushions into accents and makes a table's wood body lead when it has no top.
+  - **Archetypes** (`archetypeOf`, from type/shelf/room): bed, kids, soft, chair, office, outdoor, table, storage,
+    kitchen, bath, appliance, lighting, tech-light, rug, curtain, cushion, frame-decor, object, fireplace, plant,
+    activity, pet, structure, basic, none. Wood-cased electronics count as activity (vary by wood); a bed with no
+    bedding (wall bed shown folded) counts as soft or storage. `ARCHETYPE_OVERRIDES` / `ROLE_OVERRIDES` fix the rest
+    (cultural and folk pieces → none).
+  - **Looks** (`LOOKS[archetype]`, 4–8 each): tones per role, e.g. bed "Walnut & navy" = walnut frame, white sheets,
+    navy duvet, mustard throw. A tone list is a preference order; `TONES[tone][kind]` resolves per material kind
+    (grain, planks, fluted, slats, painted, fabric, velvet, bouclé, leather, rug, metal, stone, pottery, plastic), so
+    oak is oak grain, oak planks or oak laminate and leather stays leather. Painted tones are refused on natural-wood
+    pieces (`toneAllowed`: live-edge, carved, inlaid, barrels, hongmu, keyaki…). Retro appliance colours only on items
+    whose own body is a colour; "Classic red" needs a plastic body (`requires`).
+  - **Selection**: a look must fit and change the item's lead role (`LEAD_ROLES`: a bed's duvet, a sofa's upholstery,
+    a table's top; any main part for storage, lamps, objects, kitchens, rugs) and touch a main slot; near-identical
+    materials count as unchanged; duplicates and same-named minor variations are dropped; at most 6 looks.
+  - **Names** (`lookName`): a name word stays when its colour shows on the item, otherwise follows the slots it was
+    written for ("Sage & oak" on metal legs → "Sage & brass"; leather "Oat" → "White"); missing parts drop out.
+  - Hand-made `variants` (sofas, couches, desks, curtains, paintings, people, structures, branded finishes) and users'
+    saved variants are unchanged. 13 palette materials were added for the looks (dove grey cotton, stone and forest
+    weaves, grey/sage/charcoal/rust bouclé, grey/oat/sage velvet, cream and forest laminates, cream glaze).
+  - `variants.test.ts` checks: tone/look tables, valid distinct well-named variants, sheets stay light (L > 0.72),
+    appliance and tap finishes, no painted natural wood, fixed props and colour-coded parts, plants change only pots and
+    flowers, sanitary/glass/lights fixed. Placed items store materials, not variant ids, so projects are unaffected.
+  - Users save their own from an edited item (Inspector → "Save as variant"): `UserVariant`s live in prefs
+    (`assetVariants`, IndexedDB) and carry copies of project-only/edited materials; `prepareVariantMaterials` adds them
+    under a new id when the target project already has a different material with that id. Branded and imported items
+    get no generated looks and no saved user variants (`hasFixedFinish`).
+  - UI: `VariantSwatches` in the hover card (choice in `editor.variantChoice`, shown in the live preview and used by
+    both placement paths via `features/library/variantChoice.ts`) and `editor/ObjectVariants.tsx` (apply to every
+    selected item of the kind, save, delete saved ones).
 - **Tests**: `src/packs/packs.test.ts` loads the real `/packs`, runs `describeAssetChecks` on every pack item, and checks namespacing, textures, reload replacement and the build fallback. Run it with `npx vitest run src/packs`.
 - **Materials** (`data/materials/catalog.ts`): ≈230 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
   no new category, so older builds still load projects); defaults in `DEFAULT_MATERIALS`. 45 procedural patterns
@@ -1296,3 +1322,8 @@ Known limitations (also in README):
      furnitures as well" → `packs/studio-beds.pack.ts` (22 beds, new beds shelf "Wall beds") and
      `packs/compact-living.pack.ts` (32 space-saving pieces), seven ready-made groups on a new "Studio setups" shelf,
      shipped thumbnails (done).
+111. "Revise the entire color variant system for all assets … a full black palette for a bed set … tailor each variant
+     set to the object so it makes sense in real life and is aesthetically pleasing; don't touch custom variants" →
+     generated variants rebuilt as curated looks per kind of object (`variantLooks.ts`): slot roles, archetypes, tones
+     resolved per material kind, lead-role and naming rules, natural-wood and fixed-prop protection, 13 new palette
+     materials; hand-made `variants` and users' saved variants untouched; new tests in `variants.test.ts` (done).

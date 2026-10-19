@@ -129,6 +129,10 @@
    "file": "0c4a92228090e166.webp",
    "tile": true
   },
+  "0c6f4e35dfd1560f": {
+   "file": "0c6f4e35dfd1560f.webp",
+   "tile": false
+  },
   "0c8c238737fd3e5f": {
    "file": "0c8c238737fd3e5f.webp",
    "tile": true
@@ -365,6 +369,10 @@
    "file": "20c82c05e617c859.webp",
    "tile": false
   },
+  "21856490c0c6a474": {
+   "file": "21856490c0c6a474.webp",
+   "tile": false
+  },
   "21bae767c5be1ac6": {
    "file": "21bae767c5be1ac6.webp",
    "tile": true
@@ -517,6 +525,10 @@
    "file": "2d8bd8f39e08ce7f.webp",
    "tile": true
   },
+  "2df344a50e890586": {
+   "file": "2df344a50e890586.webp",
+   "tile": false
+  },
   "2e0f42a1dea11957": {
    "file": "2e0f42a1dea11957.webp",
    "tile": true
@@ -573,6 +585,10 @@
    "file": "357205eacc698a20.webp",
    "tile": true
   },
+  "36977713035e248d": {
+   "file": "36977713035e248d.webp",
+   "tile": false
+  },
   "36a94cf9e6d65f08": {
    "file": "36a94cf9e6d65f08.webp",
    "tile": true
@@ -603,6 +619,10 @@
   },
   "392d854d90a11848": {
    "file": "392d854d90a11848.webp",
+   "tile": false
+  },
+  "39671e54c81ed554": {
+   "file": "39671e54c81ed554.webp",
    "tile": false
   },
   "3a1ee83498ce2a7e": {
@@ -920,6 +940,10 @@
   "5778513feaee9c09": {
    "file": "5778513feaee9c09.webp",
    "tile": true
+  },
+  "57b74257e2cc3272": {
+   "file": "57b74257e2cc3272.webp",
+   "tile": false
   },
   "582932480ab46341": {
    "file": "582932480ab46341.webp",
@@ -1395,6 +1419,10 @@
   },
   "7dba0b8ff209d11f": {
    "file": "7dba0b8ff209d11f.webp",
+   "tile": false
+  },
+  "7dc6143b88a08a9f": {
+   "file": "7dc6143b88a08a9f.webp",
    "tile": false
   },
   "7e905b46009d4c45": {
@@ -2113,6 +2141,10 @@
    "file": "bd76e4119ba116c4.webp",
    "tile": true
   },
+  "bdd83a22884bd64c": {
+   "file": "bdd83a22884bd64c.webp",
+   "tile": false
+  },
   "bdfbfaff593e4340": {
    "file": "bdfbfaff593e4340.webp",
    "tile": true
@@ -2356,6 +2388,10 @@
   "ce6b6e1bf7dac40a": {
    "file": "ce6b6e1bf7dac40a.webp",
    "tile": true
+  },
+  "cea2074bfd684061": {
+   "file": "cea2074bfd684061.webp",
+   "tile": false
   },
   "cfe21914a430a687": {
    "file": "cfe21914a430a687.webp",
@@ -2821,6 +2857,10 @@
    "file": "f71afb72d068df5b.webp",
    "tile": false
   },
+  "f7334cf6924364ea": {
+   "file": "f7334cf6924364ea.webp",
+   "tile": false
+  },
   "f897cf71042cc4a6": {
    "file": "f897cf71042cc4a6.webp",
    "tile": false
@@ -3132,13 +3172,19 @@
   "decorative-plants:window-box-paint": "dcf00d785809794d",
   "fabric-blush": "761b3d5e7a302012",
   "fabric-boucle": "b8a7957c253a4671",
+  "fabric-boucle-charcoal": "7dc6143b88a08a9f",
+  "fabric-boucle-grey": "2df344a50e890586",
   "fabric-boucle-oat": "d8e061d29473aa10",
+  "fabric-boucle-rust": "39671e54c81ed554",
+  "fabric-boucle-sage": "57b74257e2cc3272",
   "fabric-charcoal": "ed9818cb8bcf9842",
   "fabric-corduroy-camel": "65a130e4381ca73a",
   "fabric-corduroy-olive": "f700a0c165082b1e",
   "fabric-cream": "4beb413f91a0aa7c",
   "fabric-damask-cream": "8d3044db85be4a48",
+  "fabric-dove-grey": "cea2074bfd684061",
   "fabric-floral-print": "cb9686230cb5df6a",
+  "fabric-forest": "bdd83a22884bd64c",
   "fabric-linen": "5c563d93e2bb2fcc",
   "fabric-linen-rust": "bac2b8bec6afaaaf",
   "fabric-linen-sage": "c555a082ddb091be",
@@ -3146,12 +3192,16 @@
   "fabric-navy": "9abfb98dc1eb1a8d",
   "fabric-olive": "4bcc4c7bd281f4b2",
   "fabric-sky": "89fd231e20c688cc",
+  "fabric-stone": "f7334cf6924364ea",
   "fabric-terracotta": "50174fe721c5df88",
   "fabric-velvet-blush": "f897cf71042cc4a6",
   "fabric-velvet-green": "b17700eb89c41577",
+  "fabric-velvet-grey": "0c6f4e35dfd1560f",
   "fabric-velvet-mustard": "94e8ef2baeb087a8",
   "fabric-velvet-navy": "93b9dc2d620eea91",
+  "fabric-velvet-oat": "36977713035e248d",
   "fabric-velvet-rust": "e3c2a6b5581e1cca",
+  "fabric-velvet-sage": "21856490c0c6a474",
   "fabric-velvet-teal": "d06b4a5ab62fb807",
   "fabric-white-cotton": "be1eb6a32b0afbed",
   "fabric-wool-grey": "67fb579720ea76dd",
