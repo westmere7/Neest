@@ -43,6 +43,7 @@ The format:
 - **Materials:**
   - `pattern: { id, scale }` uses a built-in procedural pattern (such as `weave`, `wood-grain`, `marble`, `leather`, `jute`) or one of the pack's own `patterns`.
   - `image: { color, normal?, roughness?, scale }` names textures in the pack's `textures` map. Textures are embedded as `data:image/png;base64,…` (or jpeg/webp) strings, so the pack stays a single file. Use a white `color` to show a bitmap as painted; other colours tint it.
+  - `photo: { set, scale?, contrast? }` uses one of Neest's shared CC0 photo sets (ids in `src/data/materials/photoSets.json`, such as `leaf-blade`, `bark-furrowed`, `potting-soil`, `moss`), tinted by `color`. Keep a `pattern` too: it shows until the photo has loaded and wherever photo files are missing.
   - Keep embedded images small (256–512 px, seamless) so the file stays light.
 - **Patterns:** `draw(ctx, size, rand)` paints one seamless tile. Use near-white luminance (the material colour tints it) unless `colored: true`, and use `rand` instead of `Math.random` so it renders the same every time.
 - Mistakes don't break the app. A pack that fails to load, or an item whose `build` throws, is reported in the browser console, and broken items show as plain boxes.

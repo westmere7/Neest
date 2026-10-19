@@ -22,6 +22,7 @@
  */
 import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import dns from 'node:dns';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,6 +41,8 @@ const PIPELINE = 2;
 /** Average linear value of a procedural near-white tile (sRGB ≈ 0.8). */
 const TARGET_LINEAR = 0.6;
 const UA = { 'User-Agent': 'Neest-texture-fetch/1.0 (+https://github.com/westmere7/Neest)' };
+// Some networks resolve IPv6 addresses that never connect; Node's fetch then times out where curl works.
+dns.setDefaultResultOrder('ipv4first');
 
 const args = process.argv.slice(2);
 const force = args.includes('--force');
@@ -87,7 +90,7 @@ async function cached(url, name) {
 
 /** ambientCG: one zip per resolution with *_Color, *_NormalGL, *_Roughness JPGs. */
 async function sourceAmbientCG(set) {
-  const res = set.resolution >= 2048 ? '2K' : '1K';
+  const res = `${Math.round((set.sourceResolution ?? (set.resolution >= 2048 ? 2048 : 1024)) / 1024)}K`;
   const api = `https://ambientcg.com/api/v2/full_json?type=Material&id=${encodeURIComponent(set.assetId)}&include=downloadData`;
   const json = await (await fetchOk(api, `${set.assetId} metadata`)).json();
   const asset = json.foundAssets?.find((a) => a.assetId === set.assetId);
@@ -199,7 +202,49 @@ async function encodeColor(buf, size, file) {
   return hex(mean.map(linearToSrgb));
 }
 
-async function encode(buf, map, size, file) {
+/**
+ * Cuts a repeating tile out of a photo that is not one (a single leaf): rotate by `rotate`°, crop
+ * `x, y, w, h` (pixels of the rotated source), cross-fade the last `blendY` of the rows into the
+ * first so it repeats vertically, then roll it sideways by `rollX` of its width. A leaf cut along
+ * its midrib and rolled by half lands the midrib on the tile edge, where leaf UVs put it.
+ */
+async function cutTile(buf, t) {
+  const { data, info } = await sharp(buf)
+    .rotate(t.rotate ?? 0, { background: '#000000' })
+    .extract({ left: t.x, top: t.y, width: t.w, height: t.h })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const ch = info.channels;
+  const ov = Math.round(t.h * (t.blendY ?? 0));
+  const H = t.h - ov;
+  const shift = Math.round(t.w * (t.rollX ?? 0));
+  const out = Buffer.alloc(t.w * H * ch);
+  for (let r = 0; r < H; r++) {
+    const k = r < ov ? r / ov : 1;
+    for (let c = 0; c < t.w; c++) {
+      const to = (r * t.w + ((c + shift) % t.w)) * ch;
+      for (let i = 0; i < ch; i++) {
+        const a = data[(r * t.w + c) * ch + i];
+        out[to + i] = k < 1 ? Math.round(k * a + (1 - k) * data[((r + H) * t.w + c) * ch + i]) : a;
+      }
+    }
+  }
+  return sharp(out, { raw: { width: t.w, height: H, channels: ch } }).png().toBuffer();
+}
+
+/** Flattens a normal map toward straight up by `k` (0 = flat, 1 = as scanned). */
+async function softenNormal(buf, k) {
+  const { data, info } = await sharp(buf).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < data.length; i += 3) {
+    data[i] = Math.round(128 + (data[i] - 128) * k);
+    data[i + 1] = Math.round(128 + (data[i + 1] - 128) * k);
+    data[i + 2] = Math.round(255 - (255 - data[i + 2]) * k);
+  }
+  return sharp(data, { raw: info }).png().toBuffer();
+}
+
+async function encode(buf, map, size, file, set = {}) {
+  if (map === 'normal' && set.normalStrength !== undefined) buf = await softenNormal(buf, set.normalStrength);
   let img = sharp(buf).resize(size, size, { fit: 'fill' });
   if (map === 'roughness') img = img.greyscale();
   await img.webp({ quality: QUALITY[map], effort: 5, smartSubsample: map === 'color' }).toFile(file);
@@ -219,6 +264,8 @@ async function processSet(set, previous) {
     previous.assetId === set.assetId &&
     previous.resolution === set.resolution &&
     previous.pipeline === PIPELINE &&
+    JSON.stringify(previous.tile ?? null) === JSON.stringify(set.tile ?? null) &&
+    (previous.normalStrength ?? null) === (set.normalStrength ?? null) &&
     previous.maps.color &&
     Object.values(previous.maps).every((file) => existsSync(path.join(dir, file)));
   let meta;
@@ -234,9 +281,10 @@ async function processSet(set, previous) {
     let photoColor = null;
     for (const m of MAPS) {
       if (!src[m]) continue;
+      if (set.tile) src[m] = await cutTile(src[m], set.tile);
       const file = path.join(dir, `${m}.webp`);
       if (m === 'color') photoColor = await encodeColor(src[m], set.resolution, file);
-      else await encode(src[m], m, set.resolution, file);
+      else await encode(src[m], m, set.resolution, file, set);
       maps[m] = `${m}.webp`;
     }
     meta = { url: src.url, download: src.download, maps, photoColor };
@@ -259,6 +307,8 @@ async function processSet(set, previous) {
     size: set.size,
     resolution: set.resolution,
     pipeline: PIPELINE,
+    ...(set.tile ? { tile: set.tile } : {}),
+    ...(set.normalStrength !== undefined ? { normalStrength: set.normalStrength } : {}),
     maps: meta.maps,
     /** Average colour of the original photo (the processed map is near-neutral). */
     photoColor: meta.photoColor,

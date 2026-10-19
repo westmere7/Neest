@@ -45,6 +45,11 @@ export interface PackMaterial {
   pattern?: { id: string; scale: number; contrast?: number; rotation?: number };
   /** Bitmap texture: names from this pack's `textures` (or data:/https: URLs). `scale` = metres per tile. */
   image?: { color: string; normal?: string; roughness?: string; scale: number; contrast?: number; rotation?: number };
+  /**
+   * One of Neest's shared CC0 photo sets (src/data/materials/photoSets.json), tinted by `color`.
+   * `scale` defaults to the set's size. `pattern` stays the fallback until the photo has loaded.
+   */
+  photo?: { set: string; scale?: number; contrast?: number; rotation?: number };
 }
 
 /** A procedural texture drawn on a square canvas. Draw near-white luminance unless `colored`. */

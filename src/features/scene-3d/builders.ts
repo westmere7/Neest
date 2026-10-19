@@ -408,6 +408,18 @@ function scaleUVs(geo: THREE.BufferGeometry, su: number, sv: number) {
   uv.needsUpdate = true;
 }
 
+/**
+ * Flat cylinder caps get planar UVs in metres. CylinderGeometry gives them a unit disc, which the
+ * side's circumference × height scaling squashed into streaks on thin discs (pot soil, round tops).
+ */
+function capUVs(geo: THREE.BufferGeometry) {
+  const pos = geo.getAttribute('position');
+  const nrm = geo.getAttribute('normal');
+  const uv = geo.getAttribute('uv');
+  for (let i = 0; i < pos.count; i++) if (Math.abs(nrm.getY(i)) > 0.999) uv.setXY(i, pos.getX(i), pos.getZ(i));
+  uv.needsUpdate = true;
+}
+
 export function partGeometry(part: Part): THREE.BufferGeometry {
   let key: string;
   switch (part.shape) {
@@ -449,6 +461,7 @@ export function partGeometry(part: Part): THREE.BufferGeometry {
         part.segments ?? 24,
       );
       scaleUVs(geo, 2 * Math.PI * Math.max(part.radiusTop, part.radiusBottom), part.height);
+      capUVs(geo);
       break;
     }
     case 'sphere':

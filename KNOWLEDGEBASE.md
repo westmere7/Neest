@@ -584,7 +584,12 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
      finishes (white/black fan, grey/silver vacuum), list them as hand-made `variants`; only those are offered.
 8. **Materials:**
    - Procedural patterns tile seamlessly and stay near-white unless `colored`.
+   - Part UVs are in metres. Cylinder caps are planar (x, z) since 2026-10-19 (`capUVs` in builders.ts); before, the
+     side scaling squashed CylinderGeometry's unit-disc cap UVs into streaks on thin discs (pot soil, round tops).
    - Photo sets go in `photoSets.json` + `PHOTOS`, then `npm run textures`. Stay under 60 MB, and every set must be used.
+   - New photo sets must be real scans: Poly Haven, or ambientCG assets whose `creationMethod` is PBRPhotogrammetry,
+     PBRApproximated or PBRMultiAngle, never PBRProcedural (Substance-generated). Pick square sources: the script
+     squashes every map to a square tile.
 9. **Thumbnails:**
    - After adding or changing items or materials, run `npm run thumbs` and keep the files it writes:
      `public/thumbs/` for items, `public/swatches/` for textured materials. Then the library never renders while
@@ -733,6 +738,7 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **Textures**:
   - `materials[].pattern` uses a built-in pattern or the pack's own `patterns` (`draw(ctx, size, rand)`, seamless, near-white unless `colored`). These are registered via `setPackPatterns` in a map separate from the 28 built-ins; use `patternInfo` / `allPatternIds` rather than `TEXTURE_PATTERNS`.
   - `materials[].image` names entries of the pack's `textures` map (data URLs, so the pack stays one file). These register as photo sets via `setPackPhotoSets` with a neutral mean (gain 1: a white base colour shows the bitmap as painted).
+  - `materials[].photo: { set, scale?, contrast?, rotation? }` points at a shared set from `photoSets.json` (not namespaced; unknown ids are reported). The plant packs use it for scanned leaves, bark, soil, moss and pebbles, with their `pattern` kept as the fallback. `photoTextures.test.ts` loads the packs, so a set used only by packs still counts as used.
 - **Runtime** (`src/packs/runtime.ts › applyPacks`): removes everything a previous run added, then validates and merges packs into `ASSET_CATALOG`/`ASSETS_BY_ID` and `MATERIAL_CATALOG`/`_BY_ID`, **in place**. Problems are collected per pack (`installedPacks()[i].errors`) and logged; they are never fatal. A throwing `build()` renders as a plain box. Pack items carry `pack: { id, name, version, author }` and `source` "<Name> pack by <author>".
 - **Live loading**:
   - `src/packs/loader.ts` (imported first in `main.tsx`) globs `/packs/*.pack.ts` eagerly and self-accepts HMR, so editing a pack re-runs it.
@@ -794,19 +800,19 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
     both placement paths via `features/library/variantChoice.ts`) and `editor/ObjectVariants.tsx` (apply to every
     selected item of the kind, save, delete saved ones).
 - **Tests**: `src/packs/packs.test.ts` loads the real `/packs`, runs `describeAssetChecks` on every pack item, and checks namespacing, textures, reload replacement and the build fallback. Run it with `npx vitest run src/packs`.
-- **Materials** (`data/materials/catalog.ts`): ≈230 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
+- **Materials** (`data/materials/catalog.ts`): ≈260 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
   no new category, so older builds still load projects); defaults in `DEFAULT_MATERIALS`. 45 procedural patterns
   (wallpapers incl. coloured tropical/floral, gạch bông cement tile, chevron/basketweave parquet, terracotta, fish-scale,
-  penny, limewash, Venetian plaster, fluted, wood slats, cane webbing) and 55 CC0 photo sets (31 MB of the 60 MB budget).
+  penny, limewash, Venetian plaster, fluted, wood slats, cane webbing) and 92 CC0 photo sets (48 MB of the 60 MB budget).
   Two texture sources per material, same **texture × colour (multiply) model**:
   - **Procedural** (`texture`, `patterns.ts`): 28 seamless tiles drawn with wrap-around maths, deterministic seeds,
     normal maps derived by Sobel. Tiles are near-white luminance; `art`, `books`, `rug-geometric` are coloured.
     Detail layers: wood pore channels, ray flecks and figure, plank micro-bevels/end grain/wear, tile edge chips,
     pinholes and grout grime, brick spalls and recessed mortar, plaster pits and crazing, marble hair veins and
     sparkle, fabric fibres and pills, leather pores and creases. Always kept as the **fallback**.
-  - **Photo** (`photo`, optional): CC0 PBR sets from ambientCG / Poly Haven listed in `photoSets.json` (39 sets,
-    ≈26 MB in `public/textures/<set>/`: `color.webp` sRGB, `normal.webp` OpenGL, `roughness.webp`, `swatch.webp`
-    256 px). `PHOTOS` in catalog.ts maps ~60 catalogue materials to sets (several share one set; the base colour
+  - **Photo** (`photo`, optional): CC0 PBR sets from ambientCG / Poly Haven listed in `photoSets.json` (92 sets,
+    ≈48 MB in `public/textures/<set>/`: `color.webp` sRGB, `normal.webp` OpenGL, `roughness.webp`, `swatch.webp`
+    256 px). `PHOTOS` in catalog.ts maps ~135 catalogue materials to sets (several share one set; the base colour
     tints it). `photo = { setId, scale m/tile, rotation°, contrast, enabled }`; `enabled: false` = use procedural.
   - **Colour normalisation**: `tools/fetch-textures.mjs` stores colour maps as near-neutral *variation* maps
     (luminance + a little of the photo's own chroma, less for saturated photos, scaled toward linear 0.6). At
@@ -826,6 +832,16 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Refresh/extend: edit `photoSets.json` (+ `PHOTOS`), run `npm run textures` (`--force` re-encodes from the
     download cache in the OS temp dir, `--only a,b`, `--prune`). Bump `PIPELINE` in the script when processing
     changes. Tests (`photoTextures.test.ts`) check the mapping, manifest consistency and the < 60 MB budget.
+    The script resolves IPv4 first (`dns.setDefaultResultOrder`): on some networks Node's fetch timed out over IPv6.
+    Optional per-set fields: `sourceResolution` (download size, e.g. 4096 for a crop), `normalStrength` (flattens the
+    normal map) and `tile: { rotate, x, y, w, h, blendY, rollX }`, which cuts a repeating tile out of a photo that is not
+    one. `leaf-blade` is cut from ambientCG Leaf001 (a photographed leaf): midrib turned vertical, cropped inside the blade,
+    bottom rows blended into the top, rolled half a width so the midrib sits on the tile edge, where `leafPanel` UVs
+    (u = 0 on the midrib, `leaf-veins` convention) expect it. Changing `tile`/`normalStrength` re-encodes the set.
+  - Sources: the 30 sets added on 2026-10-19 are all scans (Poly Haven veneers, fabrics, plaster, tiles; ambientCG
+    photogrammetry). Many of the first 55 ambientCG sets are Substance-procedural (e.g. WoodFloor051/052/040/064,
+    Marble012/014/016, Plaster001, Tiles032/052/107, Fabric036/061, Leather027, Wicker001/005/010A); swapping them
+    for scans is open.
 - **Shipped swatches** (`features/materials/swatchFiles.ts`): `npm run thumbs` also writes one 96 px WebP per
   distinct swatch look to `public/swatches/`. Each file is keyed by a fingerprint of colour + pattern code + contrast,
   or photo set + crop + tint, not by material id, so project copies that look the same reuse it. The manifest maps
@@ -1327,3 +1343,20 @@ Known limitations (also in README):
      generated variants rebuilt as curated looks per kind of object (`variantLooks.ts`): slot roles, archetypes, tones
      resolved per material kind, lead-role and naming rules, natural-wood and fixed-prop protection, 13 new palette
      materials; hand-made `variants` and users' saved variants untouched; new tests in `variants.test.ts` (done).
+112. "Find on the internet and add more PBR textures (not generative)" → 30 new CC0 scanned sets, all 1K (Poly Haven
+     scans; ambientCG photogrammetry/photo-approximated only, checked by `creationMethod`): veneers (rosewood, sapele,
+     teak, smoked/black walnut, white oak, maple, smoked oak), oak and laminate planks, Japanese cedar cladding, woven
+     bamboo, cloudy and polished plaster, white stucco, terracotta/granite/stone floor tiles, rounded mosaic, speckled
+     aggregate, rough linen, corduroy, jacquard, herringbone wool, terry, waffle cotton, teddy fleece, hessian, suede,
+     woven sisal. They give photo textures to ~30 materials that only had procedural ones (limewash, Venetian,
+     tadelakt, exotic woods, terracotta tile, quartz, linen/velvet/corduroy/damask colours, leathers, suede, sisal;
+     teak moved off the cherry photo) and to 15 new materials (stucco, white oak, maple, smoked oak, cedar planks,
+     woven bamboo, laminate floor, granite/stone/mosaic tiles, herringbone wool, teddy, terry, waffle, hessian).
+     43 MB of 60 MB used (done).
+113. "I want the plants in this app to look realistic, replace their textures with organic ones" → 7 scanned CC0
+     sets: `leaf-blade` (a real leaf's veins cut into a midrib-on-edge tile by the new `tile` step in fetch-textures),
+     potting soil, moss, furrowed/scaly/smooth bark, small pebbles. Pack materials got a `photo` field for shared
+     sets; 46 materials in houseplants/indoor-plants/decorative-plants now use them (broad net-veined leaves, trunks,
+     soil, moss, gravel). Ferns, strap/parallel-veined leaves, succulents, cacti, variegated leaves and petals keep
+     their procedural patterns. Built-in `plant-leaf*` and `plant-soil` map to the leaf and soil sets. Fixed squashed
+     cylinder-cap UVs (streaky soil). 48 MB of 60 MB used (done).

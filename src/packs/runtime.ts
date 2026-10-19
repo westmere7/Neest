@@ -1,6 +1,7 @@
 import type { MaterialDefinition } from '@/domain/model/schema';
 import { MaterialCategorySchema } from '@/domain/model/schema';
 import { MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
+import { PHOTO_SETS_BY_ID } from '@/data/materials/photoSets';
 import { setPackPatterns, type TexturePattern } from '@/data/materials/patterns';
 import { setPackPhotoSets, type PhotoManifestEntry } from '@/features/materials/photoTextures';
 import { ASSET_CATALOG, ASSET_CATEGORY_ORDER, ASSET_TYPE_ORDER, ASSETS_BY_ID } from '@/data/assets/catalog';
@@ -162,6 +163,10 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
           });
           photo = { setId, scale: m.image.scale, rotation: m.image.rotation ?? 0, contrast: m.image.contrast ?? 1, enabled: true };
         }
+      } else if (m.photo) {
+        const set = PHOTO_SETS_BY_ID[m.photo.set];
+        if (!set) report(`Material "${m.id}": unknown photo set "${m.photo.set}".`);
+        else photo = { setId: set.id, scale: m.photo.scale ?? set.size, rotation: m.photo.rotation ?? 0, contrast: m.photo.contrast ?? 1, enabled: true };
       }
       if (m.pattern && !localPatterns.has(m.pattern.id) && m.pattern.id.includes(':')) report(`Material "${m.id}": unknown pattern "${m.pattern.id}".`);
       materials.push({

@@ -17,6 +17,12 @@ export interface PhotoSet {
   size: number;
   /** Pixels per side of the stored maps. */
   resolution: number;
+  /** Download resolution when it differs from `resolution` (ambientCG; a `tile` cut needs detail). */
+  sourceResolution?: number;
+  /** Flattens the normal map (0 = flat, 1 = as scanned), e.g. a small leaf scaled up to a houseplant leaf. */
+  normalStrength?: number;
+  /** Cut a repeating tile out of a photo that is not one (see cutTile in tools/fetch-textures.mjs). */
+  tile?: { rotate?: number; x: number; y: number; w: number; h: number; blendY?: number; rollX?: number };
 }
 
 export const PHOTO_SETS: PhotoSet[] = data.sets as PhotoSet[];

@@ -1486,6 +1486,1015 @@
       "meanColor": "#cbcbcb",
       "meanRoughness": 0.603,
       "bytes": 609414
+    },
+    "cloudy-plaster": {
+      "id": "cloudy-plaster",
+      "name": "Cloudy plaster",
+      "source": "Poly Haven",
+      "assetId": "white_plaster_02",
+      "url": "https://polyhaven.com/a/white_plaster_02",
+      "download": "https://api.polyhaven.com/files/white_plaster_02",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#8e887b",
+      "meanLinear": [
+        0.5957,
+        0.5978,
+        0.5951
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.908,
+      "bytes": 458614
+    },
+    "polished-plaster": {
+      "id": "polished-plaster",
+      "name": "Polished plaster",
+      "source": "ambientCG",
+      "assetId": "Concrete036",
+      "url": "https://ambientcg.com/a/Concrete036",
+      "download": "https://ambientcg.com/get?file=Concrete036_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#999489",
+      "meanLinear": [
+        0.5377,
+        0.5399,
+        0.5371
+      ],
+      "meanColor": "#c2c2c2",
+      "meanRoughness": 0.53,
+      "bytes": 289618
+    },
+    "white-stucco": {
+      "id": "white-stucco",
+      "name": "White stucco",
+      "source": "Poly Haven",
+      "assetId": "white_stucco",
+      "url": "https://polyhaven.com/a/white_stucco",
+      "download": "https://api.polyhaven.com/files/white_stucco",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#d7d3d0",
+      "meanLinear": [
+        0.6023,
+        0.6024,
+        0.602
+      ],
+      "meanColor": "#cccccc",
+      "meanRoughness": 0.882,
+      "bytes": 241700
+    },
+    "rosewood-veneer": {
+      "id": "rosewood-veneer",
+      "name": "Rosewood veneer",
+      "source": "Poly Haven",
+      "assetId": "rosewood_veneer1",
+      "url": "https://polyhaven.com/a/rosewood_veneer1",
+      "download": "https://api.polyhaven.com/files/rosewood_veneer1",
+      "license": "CC0 1.0 Universal",
+      "size": 2.43,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#6e3411",
+      "meanLinear": [
+        0.5534,
+        0.5546,
+        0.5519
+      ],
+      "meanColor": "#c4c4c4",
+      "meanRoughness": 0.313,
+      "bytes": 322174
+    },
+    "sapele-veneer": {
+      "id": "sapele-veneer",
+      "name": "Sapele mahogany veneer",
+      "source": "Poly Haven",
+      "assetId": "sapele_veneer_02",
+      "url": "https://polyhaven.com/a/sapele_veneer_02",
+      "download": "https://api.polyhaven.com/files/sapele_veneer_02",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#b37458",
+      "meanLinear": [
+        0.6002,
+        0.601,
+        0.6005
+      ],
+      "meanColor": "#cbcccb",
+      "meanRoughness": 0.602,
+      "bytes": 102926
+    },
+    "teak-veneer": {
+      "id": "teak-veneer",
+      "name": "Teak veneer",
+      "source": "Poly Haven",
+      "assetId": "teak_veneer",
+      "url": "https://polyhaven.com/a/teak_veneer",
+      "download": "https://api.polyhaven.com/files/teak_veneer",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#b08257",
+      "meanLinear": [
+        0.598,
+        0.5998,
+        0.5974
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.655,
+      "bytes": 244630
+    },
+    "smoked-walnut-veneer": {
+      "id": "smoked-walnut-veneer",
+      "name": "Smoked walnut veneer",
+      "source": "Poly Haven",
+      "assetId": "smoked_walnut_veneer",
+      "url": "https://polyhaven.com/a/smoked_walnut_veneer",
+      "download": "https://api.polyhaven.com/files/smoked_walnut_veneer",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#bc9b7f",
+      "meanLinear": [
+        0.5985,
+        0.6006,
+        0.5981
+      ],
+      "meanColor": "#cbcccb",
+      "meanRoughness": 0.707,
+      "bytes": 101956
+    },
+    "black-walnut-veneer": {
+      "id": "black-walnut-veneer",
+      "name": "Black walnut veneer",
+      "source": "Poly Haven",
+      "assetId": "black_walnut_veneer_02",
+      "url": "https://polyhaven.com/a/black_walnut_veneer_02",
+      "download": "https://api.polyhaven.com/files/black_walnut_veneer_02",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#9e7c61",
+      "meanLinear": [
+        0.5986,
+        0.5993,
+        0.5979
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.557,
+      "bytes": 201594
+    },
+    "white-oak-veneer": {
+      "id": "white-oak-veneer",
+      "name": "White oak veneer",
+      "source": "Poly Haven",
+      "assetId": "white_oak_veneer",
+      "url": "https://polyhaven.com/a/white_oak_veneer",
+      "download": "https://api.polyhaven.com/files/white_oak_veneer",
+      "license": "CC0 1.0 Universal",
+      "size": 0.5,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#907963",
+      "meanLinear": [
+        0.5985,
+        0.6004,
+        0.5981
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.734,
+      "bytes": 200150
+    },
+    "maple-veneer": {
+      "id": "maple-veneer",
+      "name": "Maple veneer",
+      "source": "Poly Haven",
+      "assetId": "white_maple_veneer",
+      "url": "https://polyhaven.com/a/white_maple_veneer",
+      "download": "https://api.polyhaven.com/files/white_maple_veneer",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#e3d4b9",
+      "meanLinear": [
+        0.6016,
+        0.6027,
+        0.6001
+      ],
+      "meanColor": "#cccccb",
+      "meanRoughness": 0.768,
+      "bytes": 165166
+    },
+    "smoked-oak-veneer": {
+      "id": "smoked-oak-veneer",
+      "name": "Smoked oak veneer",
+      "source": "Poly Haven",
+      "assetId": "black_oak_veneer",
+      "url": "https://polyhaven.com/a/black_oak_veneer",
+      "download": "https://api.polyhaven.com/files/black_oak_veneer",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#6b6258",
+      "meanLinear": [
+        0.598,
+        0.5988,
+        0.5974
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.663,
+      "bytes": 224352
+    },
+    "oak-planks-clean": {
+      "id": "oak-planks-clean",
+      "name": "Oak planks (scanned)",
+      "source": "Poly Haven",
+      "assetId": "oak_wood_planks",
+      "url": "https://polyhaven.com/a/oak_wood_planks",
+      "download": "https://api.polyhaven.com/files/oak_wood_planks",
+      "license": "CC0 1.0 Universal",
+      "size": 1.2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#a37654",
+      "meanLinear": [
+        0.5932,
+        0.5948,
+        0.5925
+      ],
+      "meanColor": "#cacbca",
+      "meanRoughness": 0.443,
+      "bytes": 380660
+    },
+    "cedar-planks": {
+      "id": "cedar-planks",
+      "name": "Japanese cedar planks",
+      "source": "Poly Haven",
+      "assetId": "japanese_cedar_planks",
+      "url": "https://polyhaven.com/a/japanese_cedar_planks",
+      "download": "https://api.polyhaven.com/files/japanese_cedar_planks",
+      "license": "CC0 1.0 Universal",
+      "size": 1.13,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#ae630c",
+      "meanLinear": [
+        0.5978,
+        0.598,
+        0.597
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.635,
+      "bytes": 325916
+    },
+    "laminate-planks": {
+      "id": "laminate-planks",
+      "name": "Laminate floor planks",
+      "source": "Poly Haven",
+      "assetId": "laminate_floor_02",
+      "url": "https://polyhaven.com/a/laminate_floor_02",
+      "download": "https://api.polyhaven.com/files/laminate_floor_02",
+      "license": "CC0 1.0 Universal",
+      "size": 1.7,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#9c8164",
+      "meanLinear": [
+        0.5972,
+        0.5989,
+        0.5963
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.377,
+      "bytes": 282202
+    },
+    "bamboo-weave": {
+      "id": "bamboo-weave",
+      "name": "Woven bamboo",
+      "source": "ambientCG",
+      "assetId": "Wicker013",
+      "url": "https://ambientcg.com/a/Wicker013",
+      "download": "https://ambientcg.com/get?file=Wicker013_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.5,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#b37f41",
+      "meanLinear": [
+        0.5297,
+        0.5314,
+        0.5278
+      ],
+      "meanColor": "#c0c1c0",
+      "meanRoughness": 0.544,
+      "bytes": 256284
+    },
+    "terracotta-floor": {
+      "id": "terracotta-floor",
+      "name": "Terracotta floor tiles",
+      "source": "Poly Haven",
+      "assetId": "terracotta_floor_tiles",
+      "url": "https://polyhaven.com/a/terracotta_floor_tiles",
+      "download": "https://api.polyhaven.com/files/terracotta_floor_tiles",
+      "license": "CC0 1.0 Universal",
+      "size": 2.08,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#4e271a",
+      "meanLinear": [
+        0.5931,
+        0.5967,
+        0.5951
+      ],
+      "meanColor": "#cacbcb",
+      "meanRoughness": 0.751,
+      "bytes": 327176
+    },
+    "granite-tiles": {
+      "id": "granite-tiles",
+      "name": "Granite floor tiles",
+      "source": "Poly Haven",
+      "assetId": "granite_tile",
+      "url": "https://polyhaven.com/a/granite_tile",
+      "download": "https://api.polyhaven.com/files/granite_tile",
+      "license": "CC0 1.0 Universal",
+      "size": 2.3,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#4e4f4f",
+      "meanLinear": [
+        0.5963,
+        0.598,
+        0.5958
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.544,
+      "bytes": 405044
+    },
+    "marble-tiles": {
+      "id": "marble-tiles",
+      "name": "Marble floor tiles",
+      "source": "Poly Haven",
+      "assetId": "marble_01",
+      "url": "https://polyhaven.com/a/marble_01",
+      "download": "https://api.polyhaven.com/files/marble_01",
+      "license": "CC0 1.0 Universal",
+      "size": 1.5,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#b29d7a",
+      "meanLinear": [
+        0.5998,
+        0.6011,
+        0.5988
+      ],
+      "meanColor": "#cbcccb",
+      "meanRoughness": 0.506,
+      "bytes": 85142
+    },
+    "square-mosaic": {
+      "id": "square-mosaic",
+      "name": "Rounded square mosaic",
+      "source": "Poly Haven",
+      "assetId": "rounded_square_tiled_wall",
+      "url": "https://polyhaven.com/a/rounded_square_tiled_wall",
+      "download": "https://api.polyhaven.com/files/rounded_square_tiled_wall",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#887967",
+      "meanLinear": [
+        0.5547,
+        0.5562,
+        0.5552
+      ],
+      "meanColor": "#c4c5c5",
+      "meanRoughness": 0.574,
+      "bytes": 418358
+    },
+    "aggregate": {
+      "id": "aggregate",
+      "name": "Speckled aggregate",
+      "source": "ambientCG",
+      "assetId": "Concrete025",
+      "url": "https://ambientcg.com/a/Concrete025",
+      "download": "https://ambientcg.com/get?file=Concrete025_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#bab8b7",
+      "meanLinear": [
+        0.5413,
+        0.5424,
+        0.5404
+      ],
+      "meanColor": "#c2c2c2",
+      "meanRoughness": 0.532,
+      "bytes": 1021124
+    },
+    "rough-linen": {
+      "id": "rough-linen",
+      "name": "Rough linen",
+      "source": "Poly Haven",
+      "assetId": "rough_linen",
+      "url": "https://polyhaven.com/a/rough_linen",
+      "download": "https://api.polyhaven.com/files/rough_linen",
+      "license": "CC0 1.0 Universal",
+      "size": 0.27,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#92abce",
+      "meanLinear": [
+        0.5978,
+        0.5986,
+        0.598
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.719,
+      "bytes": 799130
+    },
+    "corduroy": {
+      "id": "corduroy",
+      "name": "Ribbed corduroy",
+      "source": "Poly Haven",
+      "assetId": "ribbed_corduroy",
+      "url": "https://polyhaven.com/a/ribbed_corduroy",
+      "download": "https://api.polyhaven.com/files/ribbed_corduroy",
+      "license": "CC0 1.0 Universal",
+      "size": 0.27,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#8d9481",
+      "meanLinear": [
+        0.5969,
+        0.5982,
+        0.5958
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.737,
+      "bytes": 788272
+    },
+    "jacquard": {
+      "id": "jacquard",
+      "name": "Quatrefoil jacquard",
+      "source": "Poly Haven",
+      "assetId": "quatrefoil_jacquard_fabric",
+      "url": "https://polyhaven.com/a/quatrefoil_jacquard_fabric",
+      "download": "https://api.polyhaven.com/files/quatrefoil_jacquard_fabric",
+      "license": "CC0 1.0 Universal",
+      "size": 0.28,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#930320",
+      "meanLinear": [
+        0.6015,
+        0.6015,
+        0.6015
+      ],
+      "meanColor": "#cccccc",
+      "meanRoughness": 0.717,
+      "bytes": 452328
+    },
+    "herringbone-wool": {
+      "id": "herringbone-wool",
+      "name": "Herringbone wool",
+      "source": "Poly Haven",
+      "assetId": "poly_wool_herringbone",
+      "url": "https://polyhaven.com/a/poly_wool_herringbone",
+      "download": "https://api.polyhaven.com/files/poly_wool_herringbone",
+      "license": "CC0 1.0 Universal",
+      "size": 0.27,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#7a7672",
+      "meanLinear": [
+        0.5804,
+        0.5815,
+        0.5802
+      ],
+      "meanColor": "#c8c9c8",
+      "meanRoughness": 0.861,
+      "bytes": 805986
+    },
+    "terry-cloth": {
+      "id": "terry-cloth",
+      "name": "Terry towelling",
+      "source": "Poly Haven",
+      "assetId": "terry_cloth",
+      "url": "https://polyhaven.com/a/terry_cloth",
+      "download": "https://api.polyhaven.com/files/terry_cloth",
+      "license": "CC0 1.0 Universal",
+      "size": 0.37,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#054996",
+      "meanLinear": [
+        0.5956,
+        0.5957,
+        0.5957
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.688,
+      "bytes": 749390
+    },
+    "waffle-cotton": {
+      "id": "waffle-cotton",
+      "name": "Waffle cotton",
+      "source": "Poly Haven",
+      "assetId": "waffle_pique_cotton",
+      "url": "https://polyhaven.com/a/waffle_pique_cotton",
+      "download": "https://api.polyhaven.com/files/waffle_pique_cotton",
+      "license": "CC0 1.0 Universal",
+      "size": 0.28,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#e19c05",
+      "meanLinear": [
+        0.6007,
+        0.6007,
+        0.6007
+      ],
+      "meanColor": "#cccccc",
+      "meanRoughness": 0.696,
+      "bytes": 434948
+    },
+    "teddy-fleece": {
+      "id": "teddy-fleece",
+      "name": "Teddy fleece",
+      "source": "Poly Haven",
+      "assetId": "curly_teddy_natural",
+      "url": "https://polyhaven.com/a/curly_teddy_natural",
+      "download": "https://api.polyhaven.com/files/curly_teddy_natural",
+      "license": "CC0 1.0 Universal",
+      "size": 0.34,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#e9d3bc",
+      "meanLinear": [
+        0.5996,
+        0.6002,
+        0.598
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.702,
+      "bytes": 328446
+    },
+    "hessian": {
+      "id": "hessian",
+      "name": "Hessian",
+      "source": "Poly Haven",
+      "assetId": "hessian_230",
+      "url": "https://polyhaven.com/a/hessian_230",
+      "download": "https://api.polyhaven.com/files/hessian_230",
+      "license": "CC0 1.0 Universal",
+      "size": 0.27,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#907b5c",
+      "meanLinear": [
+        0.5106,
+        0.5134,
+        0.5101
+      ],
+      "meanColor": "#bdbebd",
+      "meanRoughness": 0.585,
+      "bytes": 725180
+    },
+    "suede": {
+      "id": "suede",
+      "name": "Suede",
+      "source": "ambientCG",
+      "assetId": "Leather039",
+      "url": "https://ambientcg.com/a/Leather039",
+      "download": "https://ambientcg.com/get?file=Leather039_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.4,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#fcc478",
+      "meanLinear": [
+        0.6017,
+        0.6021,
+        0.6009
+      ],
+      "meanColor": "#cccccc",
+      "meanRoughness": 0.593,
+      "bytes": 404484
+    },
+    "sisal-weave": {
+      "id": "sisal-weave",
+      "name": "Woven sisal",
+      "source": "ambientCG",
+      "assetId": "Carpet015",
+      "url": "https://ambientcg.com/a/Carpet015",
+      "download": "https://ambientcg.com/get?file=Carpet015_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.4,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#9e5f48",
+      "meanLinear": [
+        0.2785,
+        0.2767,
+        0.274
+      ],
+      "meanColor": "#908f8f",
+      "meanRoughness": 0.693,
+      "bytes": 798666
+    },
+    "leaf-blade": {
+      "id": "leaf-blade",
+      "name": "Leaf blade (scanned leaf)",
+      "source": "ambientCG",
+      "assetId": "Leaf001",
+      "url": "https://ambientcg.com/a/Leaf001",
+      "download": "https://ambientcg.com/get?file=Leaf001_4K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "tile": {
+        "rotate": 4.6,
+        "x": 672,
+        "y": 1560,
+        "w": 1000,
+        "h": 1250,
+        "blendY": 0.18,
+        "rollX": 0.5
+      },
+      "normalStrength": 0.35,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#5e7a23",
+      "meanLinear": [
+        0.4488,
+        0.4493,
+        0.4465
+      ],
+      "meanColor": "#b3b3b2",
+      "meanRoughness": 0.454,
+      "bytes": 144874
+    },
+    "potting-soil": {
+      "id": "potting-soil",
+      "name": "Potting soil",
+      "source": "ambientCG",
+      "assetId": "Ground048",
+      "url": "https://ambientcg.com/a/Ground048",
+      "download": "https://ambientcg.com/get?file=Ground048_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1.4,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#5b4337",
+      "meanLinear": [
+        0.2074,
+        0.2091,
+        0.2097
+      ],
+      "meanColor": "#7e7e7e",
+      "meanRoughness": 0.67,
+      "bytes": 1106512
+    },
+    "moss": {
+      "id": "moss",
+      "name": "Moss",
+      "source": "ambientCG",
+      "assetId": "Moss001",
+      "url": "https://ambientcg.com/a/Moss001",
+      "download": "https://ambientcg.com/get?file=Moss001_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.45,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#8b8a67",
+      "meanLinear": [
+        0.2208,
+        0.2217,
+        0.2179
+      ],
+      "meanColor": "#818281",
+      "meanRoughness": 0.516,
+      "bytes": 1181170
+    },
+    "bark-furrowed": {
+      "id": "bark-furrowed",
+      "name": "Furrowed bark",
+      "source": "Poly Haven",
+      "assetId": "bark_brown_01",
+      "url": "https://polyhaven.com/a/bark_brown_01",
+      "download": "https://api.polyhaven.com/files/bark_brown_01",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#78633d",
+      "meanLinear": [
+        0.2504,
+        0.2513,
+        0.2484
+      ],
+      "meanColor": "#898989",
+      "meanRoughness": 0.906,
+      "bytes": 763660
+    },
+    "bark-scaly": {
+      "id": "bark-scaly",
+      "name": "Scaly bark",
+      "source": "Poly Haven",
+      "assetId": "bark_platanus",
+      "url": "https://polyhaven.com/a/bark_platanus",
+      "download": "https://api.polyhaven.com/files/bark_platanus",
+      "license": "CC0 1.0 Universal",
+      "size": 1.5,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#584a3e",
+      "meanLinear": [
+        0.3409,
+        0.3414,
+        0.3387
+      ],
+      "meanColor": "#9e9e9d",
+      "meanRoughness": 0.877,
+      "bytes": 761128
+    },
+    "bark-smooth": {
+      "id": "bark-smooth",
+      "name": "Smooth bark",
+      "source": "ambientCG",
+      "assetId": "Bark005",
+      "url": "https://ambientcg.com/a/Bark005",
+      "download": "https://ambientcg.com/get?file=Bark005_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 1,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#555744",
+      "meanLinear": [
+        0.5992,
+        0.6011,
+        0.5986
+      ],
+      "meanColor": "#cbcccb",
+      "meanRoughness": 0.514,
+      "bytes": 245638
+    },
+    "pebbles": {
+      "id": "pebbles",
+      "name": "Small pebbles",
+      "source": "ambientCG",
+      "assetId": "Rocks022",
+      "url": "https://ambientcg.com/a/Rocks022",
+      "download": "https://ambientcg.com/get?file=Rocks022_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.5,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#9d9790",
+      "meanLinear": [
+        0.338,
+        0.3383,
+        0.3365
+      ],
+      "meanColor": "#9d9d9d",
+      "meanRoughness": 0.561,
+      "bytes": 689840
     }
   }
 }

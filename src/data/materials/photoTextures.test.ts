@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import '@/packs/loader';
 import { MaterialSchema } from '@/domain/model/schema';
 import { createEmptyProject } from '@/domain/model/defaults';
 import { CATALOG_PHOTO_IDS, MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
@@ -38,7 +39,7 @@ describe('photo texture sets', () => {
       expect(m.source.license).toMatch(/CC0/);
       expect(m.source.url).toMatch(/^https:\/\/(ambientcg\.com|polyhaven\.com)\/a\//);
     }
-    // Every set is used by at least one material.
+    // Every set is used by at least one material (catalogue or content pack: packs/*.pack.ts `photo`).
     const used = new Set(MATERIAL_CATALOG.flatMap((m) => (m.photo ? [m.photo.setId] : [])));
     for (const s of PHOTO_SETS) expect(used.has(s.id), `unused set ${s.id}`).toBe(true);
   });

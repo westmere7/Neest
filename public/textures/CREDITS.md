@@ -61,3 +61,40 @@ Maps were resized and re-encoded as WebP. Delete this folder to fall back to Nee
 | leather-smooth | ambientCG | [Leather027](https://ambientcg.com/a/Leather027) | 0.5 m | 1024 |
 | carpet-plain | ambientCG | [Carpet012](https://ambientcg.com/a/Carpet012) | 1 m | 1024 |
 | wicker-fine | ambientCG | [Wicker005](https://ambientcg.com/a/Wicker005) | 0.4 m | 1024 |
+| cloudy-plaster | Poly Haven | [white_plaster_02](https://polyhaven.com/a/white_plaster_02) | 1 m | 1024 |
+| polished-plaster | ambientCG | [Concrete036](https://ambientcg.com/a/Concrete036) | 2 m | 1024 |
+| white-stucco | Poly Haven | [white_stucco](https://polyhaven.com/a/white_stucco) | 2 m | 1024 |
+| rosewood-veneer | Poly Haven | [rosewood_veneer1](https://polyhaven.com/a/rosewood_veneer1) | 2.43 m | 1024 |
+| sapele-veneer | Poly Haven | [sapele_veneer_02](https://polyhaven.com/a/sapele_veneer_02) | 1 m | 1024 |
+| teak-veneer | Poly Haven | [teak_veneer](https://polyhaven.com/a/teak_veneer) | 1 m | 1024 |
+| smoked-walnut-veneer | Poly Haven | [smoked_walnut_veneer](https://polyhaven.com/a/smoked_walnut_veneer) | 1 m | 1024 |
+| black-walnut-veneer | Poly Haven | [black_walnut_veneer_02](https://polyhaven.com/a/black_walnut_veneer_02) | 1 m | 1024 |
+| white-oak-veneer | Poly Haven | [white_oak_veneer](https://polyhaven.com/a/white_oak_veneer) | 0.5 m | 1024 |
+| maple-veneer | Poly Haven | [white_maple_veneer](https://polyhaven.com/a/white_maple_veneer) | 1 m | 1024 |
+| smoked-oak-veneer | Poly Haven | [black_oak_veneer](https://polyhaven.com/a/black_oak_veneer) | 1 m | 1024 |
+| oak-planks-clean | Poly Haven | [oak_wood_planks](https://polyhaven.com/a/oak_wood_planks) | 1.2 m | 1024 |
+| cedar-planks | Poly Haven | [japanese_cedar_planks](https://polyhaven.com/a/japanese_cedar_planks) | 1.13 m | 1024 |
+| laminate-planks | Poly Haven | [laminate_floor_02](https://polyhaven.com/a/laminate_floor_02) | 1.7 m | 1024 |
+| bamboo-weave | ambientCG | [Wicker013](https://ambientcg.com/a/Wicker013) | 0.5 m | 1024 |
+| terracotta-floor | Poly Haven | [terracotta_floor_tiles](https://polyhaven.com/a/terracotta_floor_tiles) | 2.08 m | 1024 |
+| granite-tiles | Poly Haven | [granite_tile](https://polyhaven.com/a/granite_tile) | 2.3 m | 1024 |
+| marble-tiles | Poly Haven | [marble_01](https://polyhaven.com/a/marble_01) | 1.5 m | 1024 |
+| square-mosaic | Poly Haven | [rounded_square_tiled_wall](https://polyhaven.com/a/rounded_square_tiled_wall) | 2 m | 1024 |
+| aggregate | ambientCG | [Concrete025](https://ambientcg.com/a/Concrete025) | 1 m | 1024 |
+| rough-linen | Poly Haven | [rough_linen](https://polyhaven.com/a/rough_linen) | 0.27 m | 1024 |
+| corduroy | Poly Haven | [ribbed_corduroy](https://polyhaven.com/a/ribbed_corduroy) | 0.27 m | 1024 |
+| jacquard | Poly Haven | [quatrefoil_jacquard_fabric](https://polyhaven.com/a/quatrefoil_jacquard_fabric) | 0.28 m | 1024 |
+| herringbone-wool | Poly Haven | [poly_wool_herringbone](https://polyhaven.com/a/poly_wool_herringbone) | 0.27 m | 1024 |
+| terry-cloth | Poly Haven | [terry_cloth](https://polyhaven.com/a/terry_cloth) | 0.37 m | 1024 |
+| waffle-cotton | Poly Haven | [waffle_pique_cotton](https://polyhaven.com/a/waffle_pique_cotton) | 0.28 m | 1024 |
+| teddy-fleece | Poly Haven | [curly_teddy_natural](https://polyhaven.com/a/curly_teddy_natural) | 0.34 m | 1024 |
+| hessian | Poly Haven | [hessian_230](https://polyhaven.com/a/hessian_230) | 0.27 m | 1024 |
+| suede | ambientCG | [Leather039](https://ambientcg.com/a/Leather039) | 0.4 m | 1024 |
+| sisal-weave | ambientCG | [Carpet015](https://ambientcg.com/a/Carpet015) | 0.4 m | 1024 |
+| leaf-blade | ambientCG | [Leaf001](https://ambientcg.com/a/Leaf001) | 0.1 m | 1024 |
+| potting-soil | ambientCG | [Ground048](https://ambientcg.com/a/Ground048) | 1.4 m | 1024 |
+| moss | ambientCG | [Moss001](https://ambientcg.com/a/Moss001) | 0.45 m | 1024 |
+| bark-furrowed | Poly Haven | [bark_brown_01](https://polyhaven.com/a/bark_brown_01) | 1 m | 1024 |
+| bark-scaly | Poly Haven | [bark_platanus](https://polyhaven.com/a/bark_platanus) | 1.5 m | 1024 |
+| bark-smooth | ambientCG | [Bark005](https://ambientcg.com/a/Bark005) | 1 m | 1024 |
+| pebbles | ambientCG | [Rocks022](https://ambientcg.com/a/Rocks022) | 0.5 m | 1024 |
