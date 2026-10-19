@@ -81,6 +81,10 @@
    "file": "081361aecd94cd5e.webp",
    "tile": true
   },
+  "0863a4e856ffd35f": {
+   "file": "0863a4e856ffd35f.webp",
+   "tile": true
+  },
   "087c2d1b886c4d49": {
    "file": "087c2d1b886c4d49.webp",
    "tile": false
@@ -617,6 +621,10 @@
    "file": "3916739b18f351ac.webp",
    "tile": false
   },
+  "39549ec879320e17": {
+   "file": "39549ec879320e17.webp",
+   "tile": true
+  },
   "39671e54c81ed554": {
    "file": "39671e54c81ed554.webp",
    "tile": false
@@ -947,6 +955,10 @@
   },
   "5778513feaee9c09": {
    "file": "5778513feaee9c09.webp",
+   "tile": true
+  },
+  "577b5bb7cdf4df1c": {
+   "file": "577b5bb7cdf4df1c.webp",
    "tile": true
   },
   "57b74257e2cc3272": {
@@ -2269,6 +2281,10 @@
    "file": "c1c21b8a9379fc1a.webp",
    "tile": true
   },
+  "c1c59bc20a2ec830": {
+   "file": "c1c59bc20a2ec830.webp",
+   "tile": true
+  },
   "c1ff0e40d9ee1cee": {
    "file": "c1ff0e40d9ee1cee.webp",
    "tile": false
@@ -2387,6 +2403,10 @@
   },
   "c8d3c258bc79507e": {
    "file": "c8d3c258bc79507e.webp",
+   "tile": true
+  },
+  "c930746b0892e941": {
+   "file": "c930746b0892e941.webp",
    "tile": true
   },
   "c9a3052e26fc01a5": {
@@ -2619,6 +2639,10 @@
   },
   "dcf00d785809794d": {
    "file": "dcf00d785809794d.webp",
+   "tile": true
+  },
+  "dd18499fa2e95b9a": {
+   "file": "dd18499fa2e95b9a.webp",
    "tile": true
   },
   "de6b0020ab16d4fa": {
@@ -3504,6 +3528,12 @@
   "metal-champagne": "6964013748e36c43",
   "metal-gunmetal": "85b9cde9cc9d3f4c",
   "microcement": "c189f346b6d03813",
+  "modern-vietnamese:cnc-oak": "c1c59bc20a2ec830",
+  "modern-vietnamese:go-lacquer": "dd18499fa2e95b9a",
+  "modern-vietnamese:lotus-gilt": "0863a4e856ffd35f",
+  "modern-vietnamese:thanh-hoa": "c930746b0892e941",
+  "modern-vietnamese:zebra-band": "39549ec879320e17",
+  "modern-vietnamese:zebra-sheer": "577b5bb7cdf4df1c",
   "paint-blush": "b90b03360b3a13b9",
   "paint-butter": "7be1d9fea4bfb7ee",
   "paint-charcoal": "fd4205ecb2d02cc5",

@@ -696,6 +696,20 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - A `Flight` kit (`steps`, `stairString`, `balusters`, `handrail`, `newel`, `treadLines`) builds straight, L and U
     stairs. Rails and strings stop at the item height, as if they continue into the upper floor.
   - Stairs draw riser lines and an arrow in plan (`planDetail`).
+- **Modern Vietnamese apartment** (`packs/modern-vietnamese.pack.ts`, 10): what photos of today's Vietnamese flats
+  show and the library lacked (picked from Archdaily projects in Hanoi/Saigon and Vietnamese news features on
+  renovated apartments, 2026-10-19). Ancestral altar cabinet (tủ thờ) with a gilded lotus backdrop, raised offering
+  step, incense bowl, candlesticks, blue-and-white vases and jars; wall-hung altar shelf (bàn thờ treo, 81 × 48 cm
+  at 1.4 m, LED strip under the canopy); Thần Tài shrine (red lacquer, gilt figures of Thần Tài with the winged hat
+  and Ông Địa with belly and fan, red altar lamps that glow); zebra blind (rèm cầu vồng: two layers of opaque and
+  sheer bands); iron window grille with a ring band (hoa sắt); balcony safety cables (lưới an toàn, 5 cm apart,
+  ≤ 140 cables); CNC lattice partition; layered lotus-leaf pendant; backlit wall disc; tear-off block calendar (lịch
+  bloc, the date is `segmentText`).
+  - Patterns: `lotus-gilt` (gilded lotus relief on lacquer, coloured), `thanh-hoa` (blue-and-white porcelain) and
+    `hoa-van`, a **cutout** interlocking-coin lattice (hoa văn đồng tiền): the CNC screen is one 12 mm box with that
+    material, so the holes cost no parts.
+  - Pitfall met: two seven-segment digits are 1.38 × their height wide; size them by the page width too or a tall,
+    narrow calendar breaks the box check.
 
 ### Model variants (filled / empty …) and collections
 
@@ -1382,3 +1396,8 @@ Known limitations (also in README):
      beige marble, terrazzo, matte plaster, painted and red brick, textured wallpaper, linen, cotton, smooth leather),
      set ids kept. Older projects get the new real tile size via `PHOTO_SCALE_UPDATES` in `migrateProject`. The other
      20 stay procedural because no scan matches their layout or look (list in §12). Still 48 MB of 60 MB (done).
+115. "Look at Vietnamese apartment photos, add more modern Vietnamese stuff" → looked at ~70 photos (Archdaily
+     Hanoi/Saigon apartments, renovated condos and a tập thể flat in Vietnamese news); new `modern-vietnamese` pack with
+     the 10 pieces that kept showing up and were missing: altar cabinet with gilded lotus backdrop, wall-hung altar
+     shelf, Thần Tài shrine, zebra blind, iron window grille, balcony safety cables, CNC coin-lattice partition,
+     lotus-leaf pendant, backlit wall disc, tear-off block calendar (done).
