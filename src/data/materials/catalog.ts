@@ -382,11 +382,11 @@ const PHOTOS: Record<string, { set: string; scale?: number; contrast?: number; r
   // Tile & mosaic
   'tile-white-square': { set: 'tile-square' },
   'tile-subway-white': { set: 'tile-glazed-subway', scale: 0.7 },
-  'tile-hex-terracotta': { set: 'tile-hex', scale: 1.2 },
-  'tile-large-grey': { set: 'porcelain-large', scale: 4.8 },
+  'tile-hex-terracotta': { set: 'tile-hex', scale: 1.8 },
+  'tile-large-grey': { set: 'porcelain-large', scale: 3.2 },
   'tile-checker': { set: 'checker-marble' },
   'tile-terrazzo': { set: 'terrazzo' },
-  'tile-mosaic-blue': { set: 'tile-mosaic', scale: 0.4 },
+  'tile-mosaic-blue': { set: 'tile-mosaic', scale: 0.5, contrast: 0.8 },
   'tile-zellige-green': { set: 'tile-glazed-subway', scale: 0.7 },
   // Natural stone
   'stone-marble-carrara': { set: 'marble-white' },
@@ -508,6 +508,30 @@ const PHOTOS: Record<string, { set: string; scale?: number; contrast?: number; r
   'plant-leaf-dark': { set: 'leaf-blade', scale: 0.12, contrast: 0.4 },
   'plant-leaf-light': { set: 'leaf-blade', scale: 0.12, contrast: 0.4 },
   'plant-soil': { set: 'potting-soil', scale: 0.35 },
+};
+
+/**
+ * Sets whose Substance-generated source was swapped for a scan with a different real-world
+ * tile size (2026-10-19). Saved materials still at an old default scale (`from`: the old set
+ * size or catalogue scale) get the new one when a project loads (`migrateProject`), so older
+ * projects show the scan at its real size; scales a user changed are kept.
+ */
+export const PHOTO_SCALE_UPDATES: Record<string, [from: number, to: number][]> = {
+  'oak-planks': [[1.8, 2]],
+  'oak-wide-boards': [[1.9, 1.7]],
+  'oak-herringbone': [[1.8, 3.4]],
+  'dark-oak-planks': [[2, 2.03]],
+  'ash-wood': [[0.8, 1]],
+  'birch-wood': [[0.8, 0.5]],
+  'porcelain-large': [[2.4, 1.8], [4.8, 3.2]],
+  'tile-mosaic': [[1, 0.75], [0.4, 0.5]],
+  'tile-hex': [[0.45, 2.3], [1.2, 1.8]],
+  'marble-beige': [[2, 1]],
+  terrazzo: [[1.2, 0.65]],
+  'brick-painted': [[1.05, 1.1]],
+  'brick-red': [[1.05, 1]],
+  'woodchip-wallpaper': [[1, 2]],
+  'leather-smooth': [[0.5, 0.3]],
 };
 
 function photoFor(id: string): PhotoTextureRef | null {

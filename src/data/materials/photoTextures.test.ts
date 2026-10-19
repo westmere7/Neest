@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '@/packs/loader';
 import { MaterialSchema } from '@/domain/model/schema';
 import { createEmptyProject } from '@/domain/model/defaults';
-import { CATALOG_PHOTO_IDS, MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
+import { CATALOG_PHOTO_IDS, MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID, PHOTO_SCALE_UPDATES } from '@/data/materials/catalog';
 import { PHOTO_SETS, PHOTO_SETS_BY_ID } from '@/data/materials/photoSets';
 import { TEXTURE_PATTERNS } from '@/data/materials/patterns';
 import { migrateProject } from '@/storage/migrations';
@@ -105,6 +105,29 @@ describe('photo references in projects', () => {
     expect(project.materials.mat_override.photo?.setId).toBe('oak-planks');
     expect(project.materials['tile-checker'].photo?.setId).toBe('checker-marble'); // null = never set
     expect(project.materials['tile-terrazzo'].photo?.enabled).toBe(false); // switched to procedural: kept
+  });
+
+  it('moves old default scales of swapped sets to the scan size, keeping user scales', () => {
+    const p = createEmptyProject({ name: 'Scale migration' });
+    const raw = JSON.parse(JSON.stringify(p)) as Record<string, unknown>;
+    const withPhoto = (id: string, photo: Record<string, unknown>) => ({
+      ...MATERIAL_CATALOG_BY_ID[id],
+      photo: { ...MATERIAL_CATALOG_BY_ID[id].photo!, ...photo },
+    });
+    raw.materials = {
+      'wood-herringbone': withPhoto('wood-herringbone', { scale: 1.8 }),
+      'tile-large-grey': withPhoto('tile-large-grey', { scale: 4.8 }),
+      'brick-red': withPhoto('brick-red', { scale: 2.5 }),
+    };
+    const { project } = migrateProject(raw);
+    expect(project.materials['wood-herringbone'].photo?.scale).toBe(PHOTO_SETS_BY_ID['oak-herringbone'].size);
+    expect(project.materials['tile-large-grey'].photo?.scale).toBe(MATERIAL_CATALOG_BY_ID['tile-large-grey'].photo?.scale);
+    expect(project.materials['brick-red'].photo?.scale).toBe(2.5);
+    for (const [setId, pairs] of Object.entries(PHOTO_SCALE_UPDATES)) {
+      expect(PHOTO_SETS_BY_ID[setId], setId).toBeDefined();
+      const froms = new Set(pairs.map(([from]) => from));
+      for (const [, to] of pairs) expect(froms.has(to), `${setId} ${to} would be moved again`).toBe(false);
+    }
   });
 });
 

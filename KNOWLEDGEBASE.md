@@ -838,10 +838,26 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
     one. `leaf-blade` is cut from ambientCG Leaf001 (a photographed leaf): midrib turned vertical, cropped inside the blade,
     bottom rows blended into the top, rolled half a width so the midrib sits on the tile edge, where `leafPanel` UVs
     (u = 0 on the midrib, `leaf-veins` convention) expect it. Changing `tile`/`normalStrength` re-encodes the set.
-  - Sources: the 30 sets added on 2026-10-19 are all scans (Poly Haven veneers, fabrics, plaster, tiles; ambientCG
-    photogrammetry). Many of the first 55 ambientCG sets are Substance-procedural (e.g. WoodFloor051/052/040/064,
-    Marble012/014/016, Plaster001, Tiles032/052/107, Fabric036/061, Leather027, Wicker001/005/010A); swapping them
-    for scans is open.
+  - Sources: everything added on 2026-10-19 is a scan (Poly Haven, or ambientCG photogrammetry/approximated/
+    multi-angle). Of the first 55 sets, 38 were ambientCG Substance-procedural; 18 of those were swapped for scans the
+    same day, keeping their set ids so saved projects pick them up: oak-planks (old_wooden_floor_01), oak-wide-boards
+    (wood_floor), oak-herringbone (herringbone_parquet), dark-oak-planks (old_wooden_floor_02), ash-wood (ash_veneer),
+    birch-wood (plywood), porcelain-large (anti_skid_tiles), plaster (painted_plaster_wall), brick-red (red_brick_03),
+    woodchip-wallpaper (ceiling_interior, a textured paint), leather-smooth (leather_white), all Poly Haven; tile-mosaic
+    (Tiles073), tile-hex (PavingStones130, hex pavers), marble-beige (Marble026), terrazzo (Terrazzo019M),
+    brick-painted (Bricks038), linen (Fabric031), cotton (Fabric032), ambientCG.
+    **Still procedural, on purpose** (no scan with the same layout or look): checker-marble (only a grey-on-grey marble
+    checker scan; `contrast` cannot exceed 1), tile-glazed-subway (Poly Haven has only stacked finger tiles),
+    tile-square (no clean light glazed square tile; dark tiles with light grout turn grey under a white tint),
+    azulejo-border/floral, versailles-parquet, herringbone-dark (diagonal runs), marble-white/black, onyx-white,
+    travertine, granite (scans have grout lines), terrazzo-colour (coloured chips), painted-wood (scans are grooved
+    planks, wrong on furniture), bamboo-panel (bamboo veneer loses the nodes), carpet-plain, jute-weave, rattan,
+    wicker-fine, brushed-metal (no scans of these in either library).
+  - Swapping a set's source for one with a different real size: change `size` and add `[oldDefault, newDefault]`
+    pairs to `PHOTO_SCALE_UPDATES` (catalog.ts; old set size and any old `PHOTOS` scale). `migrateProject` moves
+    saved materials still at an old default to the new one; edited scales stay. A pair's `to` must not be another
+    `from` of the same set (tested). Review candidates as tinted colour maps (base colour × gain), not raw photos:
+    leftover chroma (blue paint on brick) and dark tiles with light grout only show up tinted.
 - **Shipped swatches** (`features/materials/swatchFiles.ts`): `npm run thumbs` also writes one 96 px WebP per
   distinct swatch look to `public/swatches/`. Each file is keyed by a fingerprint of colour + pattern code + contrast,
   or photo set + crop + tint, not by material id, so project copies that look the same reuse it. The manifest maps
@@ -1360,3 +1376,9 @@ Known limitations (also in README):
      soil, moss, gravel). Ferns, strap/parallel-veined leaves, succulents, cacti, variegated leaves and petals keep
      their procedural patterns. Built-in `plant-leaf*` and `plant-soil` map to the leaf and soil sets. Fixed squashed
      cylinder-cap UVs (streaky soil). 48 MB of 60 MB used (done).
+114. "Replace the older photo sets that are actually Substance-procedural with real scans, keeping look and set ids"
+     → 18 of the 38 procedural ambientCG sets swapped for Poly Haven scans or ambientCG photogrammetry/approximated/
+     multi-angle sets (oak planks, wide boards, herringbone, dark oak, ash, plywood, large porcelain, square mosaic, hex,
+     beige marble, terrazzo, matte plaster, painted and red brick, textured wallpaper, linen, cotton, smooth leather),
+     set ids kept. Older projects get the new real tile size via `PHOTO_SCALE_UPDATES` in `migrateProject`. The other
+     20 stay procedural because no scan matches their layout or look (list in §12). Still 48 MB of 60 MB (done).

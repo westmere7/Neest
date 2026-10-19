@@ -6,36 +6,36 @@ Maps were resized and re-encoded as WebP. Delete this folder to fall back to Nee
 
 | Set | Source | Asset | Tile size | Pixels |
 | --- | --- | --- | --- | --- |
-| oak-planks | ambientCG | [WoodFloor051](https://ambientcg.com/a/WoodFloor051) | 1.8 m | 2048 |
-| oak-wide-boards | ambientCG | [WoodFloor040](https://ambientcg.com/a/WoodFloor040) | 1.9 m | 2048 |
-| oak-herringbone | ambientCG | [WoodFloor052](https://ambientcg.com/a/WoodFloor052) | 1.8 m | 2048 |
-| porcelain-large | ambientCG | [Tiles052](https://ambientcg.com/a/Tiles052) | 2.4 m | 2048 |
-| terrazzo | ambientCG | [Terrazzo005](https://ambientcg.com/a/Terrazzo005) | 1.2 m | 2048 |
+| oak-planks | Poly Haven | [old_wooden_floor_01](https://polyhaven.com/a/old_wooden_floor_01) | 2 m | 2048 |
+| oak-wide-boards | Poly Haven | [wood_floor](https://polyhaven.com/a/wood_floor) | 1.7 m | 2048 |
+| oak-herringbone | Poly Haven | [herringbone_parquet](https://polyhaven.com/a/herringbone_parquet) | 3.4 m | 2048 |
+| porcelain-large | Poly Haven | [anti_skid_tiles](https://polyhaven.com/a/anti_skid_tiles) | 1.8 m | 2048 |
+| terrazzo | ambientCG | [Terrazzo019M](https://ambientcg.com/a/Terrazzo019M) | 0.65 m | 2048 |
 | marble-white | ambientCG | [Marble012](https://ambientcg.com/a/Marble012) | 2 m | 2048 |
 | travertine | ambientCG | [Travertine009](https://ambientcg.com/a/Travertine009) | 1.2 m | 2048 |
 | slate-floor | Poly Haven | [slate_floor](https://polyhaven.com/a/slate_floor) | 2.29 m | 2048 |
 | microcement | ambientCG | [Concrete034](https://ambientcg.com/a/Concrete034) | 1.1 m | 2048 |
 | board-concrete | Poly Haven | [wood_textured_concrete](https://polyhaven.com/a/wood_textured_concrete) | 1.8 m | 2048 |
-| plaster | ambientCG | [Plaster001](https://ambientcg.com/a/Plaster001) | 2 m | 2048 |
+| plaster | Poly Haven | [painted_plaster_wall](https://polyhaven.com/a/painted_plaster_wall) | 2 m | 2048 |
 | checker-marble | ambientCG | [Tiles074](https://ambientcg.com/a/Tiles074) | 2.1 m | 2048 |
-| brick-painted | ambientCG | [Bricks060](https://ambientcg.com/a/Bricks060) | 1.05 m | 1024 |
-| brick-red | ambientCG | [Bricks059](https://ambientcg.com/a/Bricks059) | 1.05 m | 1024 |
+| brick-painted | ambientCG | [Bricks038](https://ambientcg.com/a/Bricks038) | 1.1 m | 1024 |
+| brick-red | Poly Haven | [red_brick_03](https://polyhaven.com/a/red_brick_03) | 1 m | 1024 |
 | tile-square | ambientCG | [Tiles107](https://ambientcg.com/a/Tiles107) | 1 m | 1024 |
 | tile-glazed-subway | ambientCG | [Tiles032](https://ambientcg.com/a/Tiles032) | 1 m | 1024 |
-| tile-hex | ambientCG | [Tiles066](https://ambientcg.com/a/Tiles066) | 0.45 m | 1024 |
-| tile-mosaic | ambientCG | [Tiles133A](https://ambientcg.com/a/Tiles133A) | 1 m | 1024 |
+| tile-hex | ambientCG | [PavingStones130](https://ambientcg.com/a/PavingStones130) | 2.3 m | 1024 |
+| tile-mosaic | ambientCG | [Tiles073](https://ambientcg.com/a/Tiles073) | 0.75 m | 1024 |
 | marble-black | ambientCG | [Marble016](https://ambientcg.com/a/Marble016) | 2 m | 1024 |
 | granite | ambientCG | [Granite005A](https://ambientcg.com/a/Granite005A) | 1 m | 1024 |
 | oak-veneer | Poly Haven | [oak_veneer_01](https://polyhaven.com/a/oak_veneer_01) | 1.83 m | 1024 |
-| ash-wood | ambientCG | [Wood048](https://ambientcg.com/a/Wood048) | 0.8 m | 1024 |
-| birch-wood | ambientCG | [Wood050](https://ambientcg.com/a/Wood050) | 0.8 m | 1024 |
+| ash-wood | Poly Haven | [ash_veneer](https://polyhaven.com/a/ash_veneer) | 1 m | 1024 |
+| birch-wood | Poly Haven | [plywood](https://polyhaven.com/a/plywood) | 0.5 m | 1024 |
 | walnut-veneer | Poly Haven | [walnut_veneer](https://polyhaven.com/a/walnut_veneer) | 1.8 m | 1024 |
 | cherry-wood | ambientCG | [Wood066](https://ambientcg.com/a/Wood066) | 0.4 m | 1024 |
 | pine-wood | ambientCG | [Wood096](https://ambientcg.com/a/Wood096) | 0.5 m | 1024 |
 | painted-wood | ambientCG | [PaintedWood009C](https://ambientcg.com/a/PaintedWood009C) | 1 m | 1024 |
-| linen | ambientCG | [Fabric061](https://ambientcg.com/a/Fabric061) | 0.4 m | 1024 |
+| linen | ambientCG | [Fabric031](https://ambientcg.com/a/Fabric031) | 0.4 m | 1024 |
 | upholstery-weave | ambientCG | [Fabric030](https://ambientcg.com/a/Fabric030) | 0.5 m | 1024 |
-| cotton | ambientCG | [Fabric036](https://ambientcg.com/a/Fabric036) | 0.5 m | 1024 |
+| cotton | ambientCG | [Fabric032](https://ambientcg.com/a/Fabric032) | 0.5 m | 1024 |
 | velvet | Poly Haven | [velour_velvet](https://polyhaven.com/a/velour_velvet) | 0.28 m | 1024 |
 | boucle | ambientCG | [Carpet014](https://ambientcg.com/a/Carpet014) | 0.5 m | 1024 |
 | felt | ambientCG | [Fabric034](https://ambientcg.com/a/Fabric034) | 0.5 m | 1024 |
@@ -46,7 +46,7 @@ Maps were resized and re-encoded as WebP. Delete this folder to fall back to Nee
 | cork | ambientCG | [Cork002](https://ambientcg.com/a/Cork002) | 0.5 m | 1024 |
 | brushed-metal | ambientCG | [Metal009](https://ambientcg.com/a/Metal009) | 1 m | 1024 |
 | versailles-parquet | ambientCG | [WoodFloor055](https://ambientcg.com/a/WoodFloor055) | 2 m | 1024 |
-| dark-oak-planks | ambientCG | [WoodFloor064](https://ambientcg.com/a/WoodFloor064) | 2 m | 1024 |
+| dark-oak-planks | Poly Haven | [old_wooden_floor_02](https://polyhaven.com/a/old_wooden_floor_02) | 2.03 m | 1024 |
 | herringbone-dark | ambientCG | [WoodFloor014](https://ambientcg.com/a/WoodFloor014) | 1.6 m | 1024 |
 | basketweave-parquet | ambientCG | [WoodFloor070](https://ambientcg.com/a/WoodFloor070) | 1.5 m | 1024 |
 | diagonal-parquet | Poly Haven | [diagonal_parquet](https://polyhaven.com/a/diagonal_parquet) | 2.36 m | 1024 |
@@ -55,10 +55,10 @@ Maps were resized and re-encoded as WebP. Delete this folder to fall back to Nee
 | azulejo-floral | ambientCG | [Tiles103](https://ambientcg.com/a/Tiles103) | 0.9 m | 1024 |
 | terrazzo-colour | ambientCG | [Terrazzo013](https://ambientcg.com/a/Terrazzo013) | 1 m | 1024 |
 | onyx-white | ambientCG | [Onyx015](https://ambientcg.com/a/Onyx015) | 2 m | 1024 |
-| marble-beige | ambientCG | [Marble014](https://ambientcg.com/a/Marble014) | 2 m | 1024 |
-| woodchip-wallpaper | ambientCG | [Wallpaper001A](https://ambientcg.com/a/Wallpaper001A) | 1 m | 1024 |
+| marble-beige | ambientCG | [Marble026](https://ambientcg.com/a/Marble026) | 1 m | 1024 |
+| woodchip-wallpaper | Poly Haven | [ceiling_interior](https://polyhaven.com/a/ceiling_interior) | 2 m | 1024 |
 | painted-plaster | ambientCG | [PaintedPlaster017](https://ambientcg.com/a/PaintedPlaster017) | 2 m | 1024 |
-| leather-smooth | ambientCG | [Leather027](https://ambientcg.com/a/Leather027) | 0.5 m | 1024 |
+| leather-smooth | Poly Haven | [leather_white](https://polyhaven.com/a/leather_white) | 0.3 m | 1024 |
 | carpet-plain | ambientCG | [Carpet012](https://ambientcg.com/a/Carpet012) | 1 m | 1024 |
 | wicker-fine | ambientCG | [Wicker005](https://ambientcg.com/a/Wicker005) | 0.4 m | 1024 |
 | cloudy-plaster | Poly Haven | [white_plaster_02](https://polyhaven.com/a/white_plaster_02) | 1 m | 1024 |

@@ -5,12 +5,12 @@
     "oak-planks": {
       "id": "oak-planks",
       "name": "Oak floor planks",
-      "source": "ambientCG",
-      "assetId": "WoodFloor051",
-      "url": "https://ambientcg.com/a/WoodFloor051",
-      "download": "https://ambientcg.com/get?file=WoodFloor051_2K-JPG.zip",
+      "source": "Poly Haven",
+      "assetId": "old_wooden_floor_01",
+      "url": "https://polyhaven.com/a/old_wooden_floor_01",
+      "download": "https://api.polyhaven.com/files/old_wooden_floor_01",
       "license": "CC0 1.0 Universal",
-      "size": 1.8,
+      "size": 2,
       "resolution": 2048,
       "pipeline": 2,
       "maps": {
@@ -19,25 +19,25 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#9b7c5f",
+      "photoColor": "#9c6837",
       "meanLinear": [
-        0.5485,
-        0.5472,
-        0.547
+        0.5468,
+        0.5469,
+        0.5463
       ],
       "meanColor": "#c3c3c3",
-      "meanRoughness": 0.352,
-      "bytes": 714060
+      "meanRoughness": 0.317,
+      "bytes": 1317496
     },
     "oak-wide-boards": {
       "id": "oak-wide-boards",
       "name": "Wide oak boards",
-      "source": "ambientCG",
-      "assetId": "WoodFloor040",
-      "url": "https://ambientcg.com/a/WoodFloor040",
-      "download": "https://ambientcg.com/get?file=WoodFloor040_2K-JPG.zip",
+      "source": "Poly Haven",
+      "assetId": "wood_floor",
+      "url": "https://polyhaven.com/a/wood_floor",
+      "download": "https://api.polyhaven.com/files/wood_floor",
       "license": "CC0 1.0 Universal",
-      "size": 1.9,
+      "size": 1.7,
       "resolution": 2048,
       "pipeline": 2,
       "maps": {
@@ -46,23 +46,50 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#b78856",
+      "photoColor": "#816043",
       "meanLinear": [
-        0.5958,
-        0.5961,
-        0.5953
+        0.5937,
+        0.5944,
+        0.5942
       ],
-      "meanColor": "#cbcbcb",
-      "meanRoughness": 0.604,
-      "bytes": 814018
+      "meanColor": "#cacbcb",
+      "meanRoughness": 0.472,
+      "bytes": 1179036
     },
     "oak-herringbone": {
       "id": "oak-herringbone",
       "name": "Oak herringbone",
-      "source": "ambientCG",
-      "assetId": "WoodFloor052",
-      "url": "https://ambientcg.com/a/WoodFloor052",
-      "download": "https://ambientcg.com/get?file=WoodFloor052_2K-JPG.zip",
+      "source": "Poly Haven",
+      "assetId": "herringbone_parquet",
+      "url": "https://polyhaven.com/a/herringbone_parquet",
+      "download": "https://api.polyhaven.com/files/herringbone_parquet",
+      "license": "CC0 1.0 Universal",
+      "size": 3.4,
+      "resolution": 2048,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#94714e",
+      "meanLinear": [
+        0.5705,
+        0.57,
+        0.5708
+      ],
+      "meanColor": "#c7c7c7",
+      "meanRoughness": 0.098,
+      "bytes": 1204528
+    },
+    "porcelain-large": {
+      "id": "porcelain-large",
+      "name": "Large porcelain tiles",
+      "source": "Poly Haven",
+      "assetId": "anti_skid_tiles",
+      "url": "https://polyhaven.com/a/anti_skid_tiles",
+      "download": "https://api.polyhaven.com/files/anti_skid_tiles",
       "license": "CC0 1.0 Universal",
       "size": 1.8,
       "resolution": 2048,
@@ -73,52 +100,25 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#9a7a5d",
+      "photoColor": "#866b54",
       "meanLinear": [
-        0.5387,
-        0.5382,
-        0.537
+        0.6011,
+        0.5995,
+        0.5996
       ],
-      "meanColor": "#c2c2c2",
-      "meanRoughness": 0.354,
-      "bytes": 1036948
-    },
-    "porcelain-large": {
-      "id": "porcelain-large",
-      "name": "Large porcelain tiles",
-      "source": "ambientCG",
-      "assetId": "Tiles052",
-      "url": "https://ambientcg.com/a/Tiles052",
-      "download": "https://ambientcg.com/get?file=Tiles052_2K-JPG.zip",
-      "license": "CC0 1.0 Universal",
-      "size": 2.4,
-      "resolution": 2048,
-      "pipeline": 2,
-      "maps": {
-        "color": "color.webp",
-        "normal": "normal.webp",
-        "roughness": "roughness.webp",
-        "swatch": "swatch.webp"
-      },
-      "photoColor": "#282829",
-      "meanLinear": [
-        0.049,
-        0.049,
-        0.0497
-      ],
-      "meanColor": "#3f3f3f",
-      "meanRoughness": 0.557,
-      "bytes": 1669202
+      "meanColor": "#cccbcb",
+      "meanRoughness": 0.545,
+      "bytes": 1028940
     },
     "terrazzo": {
       "id": "terrazzo",
       "name": "Terrazzo",
       "source": "ambientCG",
-      "assetId": "Terrazzo005",
-      "url": "https://ambientcg.com/a/Terrazzo005",
-      "download": "https://ambientcg.com/get?file=Terrazzo005_2K-JPG.zip",
+      "assetId": "Terrazzo019M",
+      "url": "https://ambientcg.com/a/Terrazzo019M",
+      "download": "https://ambientcg.com/get?file=Terrazzo019M_2K-JPG.zip",
       "license": "CC0 1.0 Universal",
-      "size": 1.2,
+      "size": 0.65,
       "resolution": 2048,
       "pipeline": 2,
       "maps": {
@@ -127,15 +127,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#ccc7c3",
+      "photoColor": "#a18f76",
       "meanLinear": [
-        0.5552,
-        0.554,
-        0.5534
+        0.5948,
+        0.5926,
+        0.5923
       ],
-      "meanColor": "#c5c4c4",
-      "meanRoughness": 0.25,
-      "bytes": 1495584
+      "meanColor": "#cbcaca",
+      "meanRoughness": 0.276,
+      "bytes": 725912
     },
     "marble-white": {
       "id": "marble-white",
@@ -275,10 +275,10 @@
     "plaster": {
       "id": "plaster",
       "name": "Matte plaster",
-      "source": "ambientCG",
-      "assetId": "Plaster001",
-      "url": "https://ambientcg.com/a/Plaster001",
-      "download": "https://ambientcg.com/get?file=Plaster001_2K-JPG.zip",
+      "source": "Poly Haven",
+      "assetId": "painted_plaster_wall",
+      "url": "https://polyhaven.com/a/painted_plaster_wall",
+      "download": "https://api.polyhaven.com/files/painted_plaster_wall",
       "license": "CC0 1.0 Universal",
       "size": 2,
       "resolution": 2048,
@@ -289,15 +289,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#d7d3d0",
+      "photoColor": "#aba3a0",
       "meanLinear": [
-        0.599,
-        0.5996,
-        0.5993
+        0.5983,
+        0.5988,
+        0.5976
       ],
       "meanColor": "#cbcbcb",
-      "meanRoughness": 0.791,
-      "bytes": 1886624
+      "meanRoughness": 0.919,
+      "bytes": 1904308
     },
     "checker-marble": {
       "id": "checker-marble",
@@ -330,11 +330,11 @@
       "id": "brick-painted",
       "name": "Painted brick",
       "source": "ambientCG",
-      "assetId": "Bricks060",
-      "url": "https://ambientcg.com/a/Bricks060",
-      "download": "https://ambientcg.com/get?file=Bricks060_1K-JPG.zip",
+      "assetId": "Bricks038",
+      "url": "https://ambientcg.com/a/Bricks038",
+      "download": "https://ambientcg.com/get?file=Bricks038_1K-JPG.zip",
       "license": "CC0 1.0 Universal",
-      "size": 1.05,
+      "size": 1.1,
       "resolution": 1024,
       "pipeline": 2,
       "maps": {
@@ -343,25 +343,25 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#ddd8d4",
+      "photoColor": "#c0bca9",
       "meanLinear": [
-        0.5986,
-        0.6003,
-        0.5976
+        0.5961,
+        0.5978,
+        0.5949
       ],
       "meanColor": "#cbcbcb",
-      "meanRoughness": 0.586,
-      "bytes": 395408
+      "meanRoughness": 0.517,
+      "bytes": 595928
     },
     "brick-red": {
       "id": "brick-red",
       "name": "Red brick",
-      "source": "ambientCG",
-      "assetId": "Bricks059",
-      "url": "https://ambientcg.com/a/Bricks059",
-      "download": "https://ambientcg.com/get?file=Bricks059_1K-JPG.zip",
+      "source": "Poly Haven",
+      "assetId": "red_brick_03",
+      "url": "https://polyhaven.com/a/red_brick_03",
+      "download": "https://api.polyhaven.com/files/red_brick_03",
       "license": "CC0 1.0 Universal",
-      "size": 1.05,
+      "size": 1,
       "resolution": 1024,
       "pipeline": 2,
       "maps": {
@@ -370,15 +370,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#a27c65",
+      "photoColor": "#6e5951",
       "meanLinear": [
-        0.2427,
-        0.2401,
-        0.2383
+        0.1882,
+        0.1865,
+        0.185
       ],
-      "meanColor": "#878686",
-      "meanRoughness": 0.585,
-      "bytes": 445120
+      "meanColor": "#787877",
+      "meanRoughness": 0.532,
+      "bytes": 628396
     },
     "tile-square": {
       "id": "tile-square",
@@ -438,11 +438,11 @@
       "id": "tile-hex",
       "name": "Hexagon tiles",
       "source": "ambientCG",
-      "assetId": "Tiles066",
-      "url": "https://ambientcg.com/a/Tiles066",
-      "download": "https://ambientcg.com/get?file=Tiles066_1K-JPG.zip",
+      "assetId": "PavingStones130",
+      "url": "https://ambientcg.com/a/PavingStones130",
+      "download": "https://ambientcg.com/get?file=PavingStones130_1K-JPG.zip",
       "license": "CC0 1.0 Universal",
-      "size": 0.45,
+      "size": 2.3,
       "resolution": 1024,
       "pipeline": 2,
       "maps": {
@@ -451,25 +451,25 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#a36950",
+      "photoColor": "#9e8d7e",
       "meanLinear": [
-        0.2233,
-        0.2222,
-        0.218
+        0.5031,
+        0.5029,
+        0.5008
       ],
-      "meanColor": "#828281",
-      "meanRoughness": 0.455,
-      "bytes": 607456
+      "meanColor": "#bcbcbc",
+      "meanRoughness": 0.606,
+      "bytes": 684452
     },
     "tile-mosaic": {
       "id": "tile-mosaic",
       "name": "Square mosaic",
       "source": "ambientCG",
-      "assetId": "Tiles133A",
-      "url": "https://ambientcg.com/a/Tiles133A",
-      "download": "https://ambientcg.com/get?file=Tiles133A_1K-JPG.zip",
+      "assetId": "Tiles073",
+      "url": "https://ambientcg.com/a/Tiles073",
+      "download": "https://ambientcg.com/get?file=Tiles073_1K-JPG.zip",
       "license": "CC0 1.0 Universal",
-      "size": 1,
+      "size": 0.75,
       "resolution": 1024,
       "pipeline": 2,
       "maps": {
@@ -478,15 +478,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#d2dfe2",
+      "photoColor": "#62595c",
       "meanLinear": [
-        0.5976,
-        0.5988,
-        0.5962
+        0.1568,
+        0.1526,
+        0.1541
       ],
-      "meanColor": "#cbcbcb",
-      "meanRoughness": 0.237,
-      "bytes": 158882
+      "meanColor": "#6e6d6d",
+      "meanRoughness": 0.304,
+      "bytes": 263920
     },
     "marble-black": {
       "id": "marble-black",
@@ -572,12 +572,12 @@
     "ash-wood": {
       "id": "ash-wood",
       "name": "Pale ash",
-      "source": "ambientCG",
-      "assetId": "Wood048",
-      "url": "https://ambientcg.com/a/Wood048",
-      "download": "https://ambientcg.com/get?file=Wood048_1K-JPG.zip",
+      "source": "Poly Haven",
+      "assetId": "ash_veneer",
+      "url": "https://polyhaven.com/a/ash_veneer",
+      "download": "https://api.polyhaven.com/files/ash_veneer",
       "license": "CC0 1.0 Universal",
-      "size": 0.8,
+      "size": 1,
       "resolution": 1024,
       "pipeline": 2,
       "maps": {
@@ -586,25 +586,25 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#b29167",
+      "photoColor": "#ac957d",
       "meanLinear": [
-        0.5284,
-        0.5298,
-        0.5268
+        0.5987,
+        0.5996,
+        0.5982
       ],
-      "meanColor": "#c0c0c0",
-      "meanRoughness": 0.553,
-      "bytes": 437964
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.62,
+      "bytes": 289250
     },
     "birch-wood": {
       "id": "birch-wood",
-      "name": "Birch",
-      "source": "ambientCG",
-      "assetId": "Wood050",
-      "url": "https://ambientcg.com/a/Wood050",
-      "download": "https://ambientcg.com/get?file=Wood050_1K-JPG.zip",
+      "name": "Birch plywood",
+      "source": "Poly Haven",
+      "assetId": "plywood",
+      "url": "https://polyhaven.com/a/plywood",
+      "download": "https://api.polyhaven.com/files/plywood",
       "license": "CC0 1.0 Universal",
-      "size": 0.8,
+      "size": 0.5,
       "resolution": 1024,
       "pipeline": 2,
       "maps": {
@@ -613,15 +613,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#d5a37e",
+      "photoColor": "#7f6242",
       "meanLinear": [
-        0.5981,
-        0.5993,
-        0.5978
+        0.5303,
+        0.5318,
+        0.5275
       ],
-      "meanColor": "#cbcbcb",
-      "meanRoughness": 0.549,
-      "bytes": 390836
+      "meanColor": "#c1c1c0",
+      "meanRoughness": 0.749,
+      "bytes": 557868
     },
     "walnut-veneer": {
       "id": "walnut-veneer",
@@ -735,9 +735,9 @@
       "id": "linen",
       "name": "Linen",
       "source": "ambientCG",
-      "assetId": "Fabric061",
-      "url": "https://ambientcg.com/a/Fabric061",
-      "download": "https://ambientcg.com/get?file=Fabric061_1K-JPG.zip",
+      "assetId": "Fabric031",
+      "url": "https://ambientcg.com/a/Fabric031",
+      "download": "https://ambientcg.com/get?file=Fabric031_1K-JPG.zip",
       "license": "CC0 1.0 Universal",
       "size": 0.4,
       "resolution": 1024,
@@ -748,15 +748,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#938d86",
+      "photoColor": "#727277",
       "meanLinear": [
-        0.4434,
-        0.4462,
-        0.4432
+        0.5971,
+        0.5987,
+        0.5972
       ],
-      "meanColor": "#b2b2b2",
-      "meanRoughness": 0.84,
-      "bytes": 700852
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.61,
+      "bytes": 586812
     },
     "upholstery-weave": {
       "id": "upholstery-weave",
@@ -787,11 +787,11 @@
     },
     "cotton": {
       "id": "cotton",
-      "name": "Cotton",
+      "name": "Cotton canvas",
       "source": "ambientCG",
-      "assetId": "Fabric036",
-      "url": "https://ambientcg.com/a/Fabric036",
-      "download": "https://ambientcg.com/get?file=Fabric036_1K-JPG.zip",
+      "assetId": "Fabric032",
+      "url": "https://ambientcg.com/a/Fabric032",
+      "download": "https://ambientcg.com/get?file=Fabric032_1K-JPG.zip",
       "license": "CC0 1.0 Universal",
       "size": 0.5,
       "resolution": 1024,
@@ -802,15 +802,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#bababa",
+      "photoColor": "#e5dfde",
       "meanLinear": [
-        0.5991,
-        0.5991,
-        0.5991
+        0.5999,
+        0.6,
+        0.5998
       ],
       "meanColor": "#cbcbcb",
-      "meanRoughness": 0.83,
-      "bytes": 858058
+      "meanRoughness": 0.544,
+      "bytes": 847626
     },
     "velvet": {
       "id": "velvet",
@@ -1085,12 +1085,12 @@
     "dark-oak-planks": {
       "id": "dark-oak-planks",
       "name": "Dark oak planks",
-      "source": "ambientCG",
-      "assetId": "WoodFloor064",
-      "url": "https://ambientcg.com/a/WoodFloor064",
-      "download": "https://ambientcg.com/get?file=WoodFloor064_1K-JPG.zip",
+      "source": "Poly Haven",
+      "assetId": "old_wooden_floor_02",
+      "url": "https://polyhaven.com/a/old_wooden_floor_02",
+      "download": "https://api.polyhaven.com/files/old_wooden_floor_02",
       "license": "CC0 1.0 Universal",
-      "size": 2,
+      "size": 2.03,
       "resolution": 1024,
       "pipeline": 2,
       "maps": {
@@ -1099,15 +1099,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#6d4315",
+      "photoColor": "#54330c",
       "meanLinear": [
-        0.5964,
-        0.5984,
-        0.595
+        0.3611,
+        0.3621,
+        0.3605
       ],
-      "meanColor": "#cbcbcb",
-      "meanRoughness": 0.403,
-      "bytes": 138408
+      "meanColor": "#a2a2a2",
+      "meanRoughness": 0.465,
+      "bytes": 340816
     },
     "herringbone-dark": {
       "id": "herringbone-dark",
@@ -1329,36 +1329,9 @@
       "id": "marble-beige",
       "name": "Beige marble",
       "source": "ambientCG",
-      "assetId": "Marble014",
-      "url": "https://ambientcg.com/a/Marble014",
-      "download": "https://ambientcg.com/get?file=Marble014_1K-JPG.zip",
-      "license": "CC0 1.0 Universal",
-      "size": 2,
-      "resolution": 1024,
-      "pipeline": 2,
-      "maps": {
-        "color": "color.webp",
-        "normal": "normal.webp",
-        "roughness": "roughness.webp",
-        "swatch": "swatch.webp"
-      },
-      "photoColor": "#d1c4b1",
-      "meanLinear": [
-        0.598,
-        0.5987,
-        0.597
-      ],
-      "meanColor": "#cbcbcb",
-      "meanRoughness": 0.07,
-      "bytes": 198868
-    },
-    "woodchip-wallpaper": {
-      "id": "woodchip-wallpaper",
-      "name": "Woodchip wallpaper",
-      "source": "ambientCG",
-      "assetId": "Wallpaper001A",
-      "url": "https://ambientcg.com/a/Wallpaper001A",
-      "download": "https://ambientcg.com/get?file=Wallpaper001A_1K-JPG.zip",
+      "assetId": "Marble026",
+      "url": "https://ambientcg.com/a/Marble026",
+      "download": "https://ambientcg.com/get?file=Marble026_1K-JPG.zip",
       "license": "CC0 1.0 Universal",
       "size": 1,
       "resolution": 1024,
@@ -1369,15 +1342,42 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#e0e1dc",
+      "photoColor": "#c4ad89",
       "meanLinear": [
-        0.6037,
-        0.6037,
-        0.6037
+        0.5986,
+        0.6,
+        0.5977
       ],
-      "meanColor": "#cccccc",
-      "meanRoughness": 0.657,
-      "bytes": 228316
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.332,
+      "bytes": 228970
+    },
+    "woodchip-wallpaper": {
+      "id": "woodchip-wallpaper",
+      "name": "Woodchip wallpaper",
+      "source": "Poly Haven",
+      "assetId": "ceiling_interior",
+      "url": "https://polyhaven.com/a/ceiling_interior",
+      "download": "https://api.polyhaven.com/files/ceiling_interior",
+      "license": "CC0 1.0 Universal",
+      "size": 2,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#7c6f65",
+      "meanLinear": [
+        0.5994,
+        0.5997,
+        0.5988
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.762,
+      "bytes": 563536
     },
     "painted-plaster": {
       "id": "painted-plaster",
@@ -1409,12 +1409,12 @@
     "leather-smooth": {
       "id": "leather-smooth",
       "name": "Smooth leather",
-      "source": "ambientCG",
-      "assetId": "Leather027",
-      "url": "https://ambientcg.com/a/Leather027",
-      "download": "https://ambientcg.com/get?file=Leather027_1K-JPG.zip",
+      "source": "Poly Haven",
+      "assetId": "leather_white",
+      "url": "https://polyhaven.com/a/leather_white",
+      "download": "https://api.polyhaven.com/files/leather_white",
       "license": "CC0 1.0 Universal",
-      "size": 0.5,
+      "size": 0.3,
       "resolution": 1024,
       "pipeline": 2,
       "maps": {
@@ -1423,15 +1423,15 @@
         "roughness": "roughness.webp",
         "swatch": "swatch.webp"
       },
-      "photoColor": "#101010",
+      "photoColor": "#969380",
       "meanLinear": [
-        0.3838,
-        0.3838,
-        0.3835
+        0.5996,
+        0.5997,
+        0.599
       ],
-      "meanColor": "#a6a6a6",
-      "meanRoughness": 0.451,
-      "bytes": 425648
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.618,
+      "bytes": 345816
     },
     "carpet-plain": {
       "id": "carpet-plain",

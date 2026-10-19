@@ -1,5 +1,5 @@
 import { PROJECT_FORMAT, ProjectSchema, SCHEMA_VERSION, type Project } from '@/domain/model/schema';
-import { MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
+import { MATERIAL_CATALOG_BY_ID, PHOTO_SCALE_UPDATES } from '@/data/materials/catalog';
 import { upgradeRetiredItem } from '@/data/assets/models';
 
 export class ProjectImportError extends Error {
@@ -86,6 +86,15 @@ function attachCatalogPhotos(raw: RawProject): void {
     const pattern = (m.texture as { patternId?: unknown } | null | undefined)?.patternId ?? null;
     if (pattern !== (cat.texture?.patternId ?? null)) continue;
     m.photo = { ...cat.photo };
+  }
+  // Swapped photo sets with a new real-world size: move old default scales to the new ones.
+  for (const value of Object.values(all)) {
+    const photo = value && typeof value === 'object' ? (value as Record<string, unknown>).photo : null;
+    if (!photo || typeof photo !== 'object') continue;
+    const p = photo as { setId?: unknown; scale?: unknown };
+    const updates = typeof p.setId === 'string' ? PHOTO_SCALE_UPDATES[p.setId] : undefined;
+    const hit = updates?.find(([from]) => typeof p.scale === 'number' && Math.abs(p.scale - from) < 1e-6);
+    if (hit) p.scale = hit[1];
   }
 }
 
