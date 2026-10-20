@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1792508335463,
+  "updatedAt": 1792510192776,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -5434,12 +5434,84 @@
         "license": "CC0 1.0 (photo texture); procedural fallback original",
         "url": "https://polyhaven.com/a/rough_linen"
       }
+    },
+    "paint-greige": {
+      "id": "paint-greige",
+      "name": "Greige",
+      "category": "paint",
+      "color": "#cfc6b8",
+      "roughness": 0.9,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 0.35,
+        "patternId": "paint",
+        "scale": 1.2
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-greige",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
+    },
+    "modern-vietnamese:glass-block-grid": {
+      "id": "modern-vietnamese:glass-block-grid",
+      "name": "Checkered glass block (vân ô vuông)",
+      "category": "glass",
+      "color": "#c6d3d7",
+      "roughness": 0.18,
+      "metalness": 0.08,
+      "opacity": 0.64,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "modern-vietnamese:glass-block-grid",
+        "scale": 0.19,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "modern-vietnamese:glass-block-grid",
+      "source": {
+        "name": "Modern Vietnamese apartment pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
+    },
+    "modern-vietnamese:glass-block-wave": {
+      "id": "modern-vietnamese:glass-block-wave",
+      "name": "Wave glass block (vân sóng nước)",
+      "category": "glass",
+      "color": "#cad7db",
+      "roughness": 0.14,
+      "metalness": 0.08,
+      "opacity": 0.55,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "modern-vietnamese:glass-block-wave",
+        "scale": 0.19,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "modern-vietnamese:glass-block-wave",
+      "source": {
+        "name": "Modern Vietnamese apartment pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
     }
   },
   "customAssets": {},
   "cameras": [],
   "render": {
-    "quality": "high",
+    "quality": "balanced",
     "exposure": 1,
     "timeOfDay": 13.75,
     "sunAzimuth": 240,
