@@ -87,12 +87,6 @@ export function EditorShell() {
     return () => clearTimeout(t);
   }, []);
 
-  // The pan tool has no meaning in 3D (orbit/pan are on the mouse buttons).
-  useEffect(() => {
-    const ed = useEditorStore.getState();
-    if (workspace === '3d' && ed.tool === 'pan') ed.setTool('select');
-  }, [workspace]);
-
   const showPlan = workspace === 'plan' || workspace === 'split';
   const show3d = workspace === '3d' || workspace === 'split' || workspace === 'walk';
   // Once opened, the 3D view stays mounted (hidden and paused) on desktop, so coming back is instant
@@ -425,7 +419,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
 
       {/* Group 2: Select & Pan */}
       <div className="tool-rail-group floating" role="group" aria-label="Selection and navigation">
-        {NAV_TOOLS.filter((t) => !in3d || t.id !== 'pan').map((t) => (
+        {NAV_TOOLS.map((t) => (
           <IconButton
             key={t.id}
             label={t.label}

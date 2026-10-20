@@ -9,6 +9,7 @@ import { buildObject } from './builders';
 import { loadCustomModel } from './customModels';
 import { GI_OFF_Y } from './globalIllumination';
 import { sharedRegistry } from './sceneRuntime';
+import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
 
 /**
  * Live 3D preview of one placed object (Inspector › Item).
@@ -156,13 +157,34 @@ class Controller implements PreviewHandle {
     host.addEventListener('pointerup', up);
     host.addEventListener('pointercancel', up);
     if (opts.zoom) {
+      const classifier = createWheelClassifier();
       const wheel = (e: WheelEvent) => {
         if (!this.hasModel) return;
         e.preventDefault();
-        this.zoom = Math.min(3, Math.max(0.25, this.zoom * Math.exp(e.deltaY * 0.0015)));
+        const kind = classifier.classify(e);
+        if (kind === 'ignore') return;
+        if (kind === 'trackpad' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          this.yaw -= e.deltaX * 0.008;
+          this.pitch = Math.min(PITCH_MAX, Math.max(PITCH_MIN, this.pitch + e.deltaY * 0.008));
+        } else {
+          const speed = kind === 'pinch' ? 0.01 : 0.0015;
+          this.zoom = Math.min(3, Math.max(0.25, this.zoom * Math.exp(e.deltaY * speed)));
+        }
         this.pauseAutoRotate();
         this.invalidate();
       };
+      const detachSafari = attachSafariGesture(host, ({ scaleRatio, rotationDeg }) => {
+        if (!this.hasModel) return;
+        if (Math.abs(scaleRatio - 1) > 1e-4) {
+          classifier.markSafariPinch();
+          this.zoom = Math.min(3, Math.max(0.25, this.zoom / scaleRatio));
+        }
+        if (Math.abs(rotationDeg) > 0.05) {
+          this.yaw -= THREE.MathUtils.degToRad(rotationDeg);
+        }
+        this.pauseAutoRotate();
+        this.invalidate();
+      });
       const reset = () => {
         this.yaw = DEFAULT_YAW;
         this.pitch = DEFAULT_PITCH;
@@ -172,6 +194,7 @@ class Controller implements PreviewHandle {
       host.addEventListener('wheel', wheel, { passive: false });
       host.addEventListener('dblclick', reset);
       this.cleanups.push(() => {
+        detachSafari();
         host.removeEventListener('wheel', wheel);
         host.removeEventListener('dblclick', reset);
       });

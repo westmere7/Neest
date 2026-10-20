@@ -28,7 +28,10 @@ const previous = await readFile(manifestPath, 'utf8')
 const server = await createServer({ root, logLevel: 'error', server: { port: 5310, strictPort: false } });
 await server.listen();
 const url = server.resolvedUrls?.local[0] ?? 'http://localhost:5310/';
-const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const launchArgs = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+const browser = await chromium
+  .launch({ args: launchArgs })
+  .catch(() => chromium.launch({ channel: 'chrome', args: launchArgs }));
 
 try {
   const page = await browser.newPage();

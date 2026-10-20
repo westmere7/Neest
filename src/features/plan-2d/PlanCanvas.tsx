@@ -21,6 +21,7 @@ import { createExtendTool } from './tools/extendTool';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './tools/types';
 import { openContextMenu } from '@/components/ContextMenu';
 import { floatingInsets } from '@/components/layoutInsets';
+import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
 import { selectionBounds } from '@/features/editor/selectionBounds';
 import { usePackVersion } from '@/packs/events';
 import { planContextMenuItems } from './contextMenu';
@@ -64,7 +65,7 @@ export function PlanCanvas() {
   const tools = useMemo<Record<ToolId, Tool>>(
     () => ({
       select: createSelectTool(),
-      pan: { id: 'pan', cursor: 'grab', hint: 'Drag to pan the plan.' },
+      pan: { id: 'pan', cursor: 'grab', hint: 'Drag or two-finger swipe to pan · pinch or scroll to zoom.' },
       wall: createWallTool(),
       curve: createCurveTool(),
       room: createRoomTool(),
@@ -241,24 +242,62 @@ export function PlanCanvas() {
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      userMoved.current = true;
+    const classifier = createWheelClassifier();
+    const zoomAt = (clientX: number, clientY: number, factor: number) => {
       const cam = useEditorStore.getState().planCamera;
-      const { world } = toWorld(e.clientX, e.clientY);
-      if (e.shiftKey && !e.ctrlKey) {
-        useEditorStore.getState().set({ planCamera: { ...cam, cx: cam.cx + e.deltaY / cam.zoom } });
-        return;
-      }
-      const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));
+      const { world } = toWorld(clientX, clientY);
       const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, cam.zoom * factor));
       const k = cam.zoom / zoom;
       useEditorStore.getState().set({
         planCamera: { zoom, cx: world.x - (world.x - cam.cx) * k, cy: world.y - (world.y - cam.cy) * k },
       });
     };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      userMoved.current = true;
+      const kind = classifier.classify(e);
+      if (kind === 'ignore') return;
+      const cam = useEditorStore.getState().planCamera;
+      if (kind === 'trackpad' && !e.metaKey && !e.altKey) {
+        const dx = e.shiftKey
+          ? e.deltaX === 0
+            ? e.deltaY
+            : Math.abs(e.deltaX) >= Math.abs(e.deltaY)
+              ? e.deltaX
+              : 0
+          : e.deltaX;
+        const dy = e.shiftKey
+          ? e.deltaX === 0
+            ? 0
+            : Math.abs(e.deltaY) > Math.abs(e.deltaX)
+              ? e.deltaY
+              : 0
+          : e.deltaY;
+        useEditorStore.getState().set({
+          planCamera: { ...cam, cx: cam.cx + dx / cam.zoom, cy: cam.cy + dy / cam.zoom },
+        });
+        return;
+      }
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        useEditorStore.getState().set({
+          planCamera: { ...cam, cx: cam.cx + (e.deltaX || e.deltaY) / cam.zoom },
+        });
+        return;
+      }
+      const speed = e.ctrlKey ? 0.01 : kind === 'trackpad' ? 0.0045 : 0.0015;
+      zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * speed));
+    };
+    const detachSafari = attachSafariGesture(svg, ({ scaleRatio, clientX, clientY }) => {
+      if (Math.abs(scaleRatio - 1) <= 1e-4) return;
+      classifier.markSafariPinch();
+      userMoved.current = true;
+      zoomAt(clientX, clientY, scaleRatio);
+    });
     svg.addEventListener('wheel', onWheel, { passive: false });
-    return () => svg.removeEventListener('wheel', onWheel);
+    return () => {
+      detachSafari();
+      svg.removeEventListener('wheel', onWheel);
+    };
   }, [toWorld]);
 
   const info = (e: React.PointerEvent | React.MouseEvent): PointerInfo => {

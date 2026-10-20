@@ -16,7 +16,18 @@ import { navigate } from '@/app/App';
 import { WalkControls } from './WalkControls';
 import { TouchControls } from './TouchControls';
 import { CanvasMeasureKick, clientCompute } from '@/features/scene-3d/useCanvasMeasureFix';
+import { attachTrackpadOrbit, type OrbitLike } from '@/features/scene-3d/trackpadOrbit';
 import '@/features/scene-3d/scene3d.css';
+
+function TrackpadGuestBridge() {
+  const gl = useThree((s) => s.gl);
+  const get = useThree((s) => s.get);
+  useEffect(
+    () => attachTrackpadOrbit(gl.domElement, () => (get().controls as unknown as OrbitLike | null) ?? null),
+    [gl, get],
+  );
+  return null;
+}
 
 function ApplyView({ view }: { view: { v: CameraView; n: number } }) {
   const { camera, controls, size } = useThree();
@@ -95,6 +106,7 @@ export default function GuestPage({ projectId }: { projectId: string }) {
           <PerspectiveCamera makeDefault position={view.v.position} fov={walk ? 70 : view.v.fov} near={0.05} far={600} />
         )}
         {!walk && <OrbitControls makeDefault enableDamping maxPolarAngle={Math.PI / 2 - 0.02} />}
+        {!walk && <TrackpadGuestBridge />}
         {!walk && <ApplyView view={view} />}
         {walk && <WalkControls project={project} derived={derived} onExit={() => setWalk(false)} />}
         <Lighting project={project} derived={derived} shadows={r.shadows} quality={r.quality === 'draft' ? 'balanced' : r.quality} />
@@ -144,10 +156,10 @@ export default function GuestPage({ projectId }: { projectId: string }) {
         {walk
           ? isMobile
             ? 'Left pad to move · drag right side to look'
-            : 'Click to look around · WASD to move · Shift to run · Esc to stop'
+            : 'Click or two-finger swipe to look · WASD or pinch to move · Shift to run · Esc to stop'
           : isMobile
             ? 'Drag to orbit · pinch to zoom'
-            : 'Drag to orbit · right-drag to pan · scroll to zoom'}
+            : 'Drag or two-finger swipe to orbit · Shift-swipe or Space-drag to pan · pinch to zoom'}
       </div>
       {walk && isMobile && <TouchControls />}
     </div>

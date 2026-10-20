@@ -22,7 +22,10 @@ export const TOOL_SHORTCUTS: Record<string, ToolId> = {
 
 export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'V', action: 'Select / move' },
-  { keys: 'H or Space-drag', action: 'Pan' },
+  { keys: 'H or Space-drag', action: 'Pan (2D & 3D)' },
+  { keys: 'Two-finger swipe (trackpad)', action: 'Pan (2D) · Orbit camera (3D) · Look around (Walk)' },
+  { keys: 'Shift + two-finger swipe', action: 'Pan camera (3D) · Move (Walk)' },
+  { keys: 'Pinch / Option-scroll', action: 'Zoom in 2D & 3D · Walk forward/back' },
   { keys: 'W', action: 'Draw walls (chain)' },
   { keys: 'C', action: 'Draw curved wall' },
   { keys: 'R', action: 'Draw rectangular room' },
@@ -166,7 +169,6 @@ export function useEditorShortcuts(isMobile: boolean) {
       const tool = TOOL_SHORTCUTS[key];
       if (tool && editActive) {
         if (isMobile && tool !== 'select' && tool !== 'pan') return;
-        if (ed.workspace === '3d' && tool === 'pan') return;
         ed.setTool(tool);
       }
     };

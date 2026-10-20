@@ -12,6 +12,7 @@
  * the interlocking-coin lattice (hoa văn đồng tiền) cut out of the partition.
  */
 import {
+  box,
   clamp,
   cyl,
   defineItem,
@@ -214,10 +215,85 @@ function drawHoaVan(ctx: CanvasRenderingContext2D, size: number): void {
   }
 }
 
+/**
+ * Shared rim profile of a 190 × 190 mm hollow glass block (`u, v` in [0, 1]): a chamfered outer edge,
+ * a thick pillowed glass rim with internal reflection band, a bright inner refraction ridge and a
+ * deep recessed step around `inner(u, v)`.
+ */
+function drawGlassBlockTile(ctx: CanvasRenderingContext2D, size: number, innerFn: (u: number, v: number) => number): void {
+  const img = ctx.createImageData(size, size);
+  const d = img.data;
+  const sstep = (a: number, b: number, x: number) => {
+    const t = clamp((x - a) / (b - a), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  for (let py = 0, p = 0; py < size; py++) {
+    const v = (py + 0.5) / size;
+    const dy = Math.abs(v - 0.5) * 2;
+    for (let px = 0; px < size; px++, p += 4) {
+      const u = (px + 0.5) / size;
+      const dx = Math.abs(u - 0.5) * 2;
+      // Slightly rounded square Chebyshev distance so the inner frame corners have a realistic glass radius.
+      const overX = Math.max(0, dx - 0.62);
+      const overY = Math.max(0, dy - 0.62);
+      const edge = Math.max(dx, dy) * 0.72 + (0.62 + Math.hypot(overX, overY)) * 0.28;
+      // Outer glass rim: chamfered edge, internal-reflection band, bright inner step ridge and deep recess groove.
+      const outerChamfer = 1 - 0.34 * sstep(0.91, 1.0, Math.max(dx, dy));
+      const rimBand = 0.84 - 0.14 * Math.sin(clamp((edge - 0.75) / 0.17, 0, 1) * Math.PI);
+      const outerHighlight = Math.exp(-Math.pow((edge - 0.91) / 0.022, 2)) * 0.14;
+      const stepRidge = Math.exp(-Math.pow((edge - 0.74) / 0.022, 2)) * 0.2;
+      const stepGroove = Math.exp(-Math.pow((edge - 0.69) / 0.024, 2)) * 0.34;
+      const rimL = clamp((rimBand + outerHighlight + stepRidge) * outerChamfer, 0, 1);
+      const fieldL = clamp(innerFn(u, v) - stepGroove, 0, 1);
+      const mask = sstep(0.68, 0.73, edge);
+      const L = clamp(fieldL * (1 - mask) + rimL * mask, 0, 1);
+      const c = Math.round(L * 255);
+      d[p] = c;
+      d[p + 1] = c;
+      d[p + 2] = c;
+      d[p + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+/** Wavy water-cloud glass block (gạch kính vân sóng nước / vân mây). */
+function drawGlassBlockWave(ctx: CanvasRenderingContext2D, size: number): void {
+  drawGlassBlockTile(ctx, size, (u, v) => {
+    const wx = (u - 0.5) * TAU;
+    const wy = (v - 0.5) * TAU;
+    const p = wx + 0.78 * Math.sin(wy * 2 + 0.4) + 0.42 * Math.cos((wx + wy) * 2 - 0.6);
+    const q = wy + 0.78 * Math.cos(wx * 2 - 0.3) + 0.42 * Math.sin((wx - wy) * 2 + 0.5);
+    const wave =
+      0.44 * Math.sin(p * 2 + q) +
+      0.34 * Math.cos(q * 2 - p * 0.6) +
+      0.22 * Math.sin((p + q) * 3 + 0.8);
+    const caustic = Math.pow(0.5 + 0.5 * Math.sin(p * 4 - q * 3), 2) * 0.08;
+    const ridge = Math.pow(0.5 + 0.5 * wave, 1.35);
+    return 0.48 + 0.48 * ridge + caustic;
+  });
+}
+
+/** Cross-reeded checkered glass block (gạch kính vân ô vuông caro). */
+function drawGlassBlockGrid(ctx: CanvasRenderingContext2D, size: number): void {
+  drawGlassBlockTile(ctx, size, (u, v) => {
+    const cells = 14;
+    const gx = Math.abs(((u * cells) % 1) * 2 - 1);
+    const gy = Math.abs(((v * cells) % 1) * 2 - 1);
+    const facet = (1 - Math.pow(gx, 2.1)) * (1 - Math.pow(gy, 2.1));
+    const reed = 0.04 * (Math.cos(u * cells * TAU * 2) + Math.cos(v * cells * TAU * 2));
+    return 0.44 + 0.52 * facet + reed;
+  });
+}
+
+const BLOCK_SCALE = 0.19;
+
 const patterns: PackPattern[] = [
   { id: 'lotus-gilt', name: 'Gilded lotus relief', normalStrength: 0.7, colored: true, draw: drawLotusGilt },
   { id: 'thanh-hoa', name: 'Blue-and-white porcelain', normalStrength: 0.1, colored: true, draw: drawThanhHoa },
   { id: 'hoa-van', name: 'Coin lattice (hoa văn đồng tiền)', normalStrength: 0.6, cutout: true, draw: drawHoaVan },
+  { id: 'glass-block-wave', name: 'Wave glass block (vân sóng nước)', normalStrength: 1.15, draw: drawGlassBlockWave },
+  { id: 'glass-block-grid', name: 'Checkered glass block (vân ô vuông)', normalStrength: 1.15, draw: drawGlassBlockGrid },
 ];
 
 const materials: PackMaterial[] = [
@@ -231,6 +307,10 @@ const materials: PackMaterial[] = [
   { id: 'zebra-sheer', name: 'Zebra blind sheer', category: 'fabric', color: '#f6f2ea', roughness: 0.9, opacity: 0.28, pattern: { id: 'weave', scale: 0.04, contrast: 0.5 } },
   { id: 'grille-iron', name: 'Powder-coated iron', category: 'metal', color: '#2d2b29', roughness: 0.5, metalness: 0.45 },
   { id: 'cnc-oak', name: 'CNC-cut oak lattice', category: 'wood', color: '#c49a68', roughness: 0.6, pattern: { id: 'hoa-van', scale: 0.48 } },
+  { id: 'glass-block-wave', name: 'Wave glass block (vân sóng nước)', category: 'glass', color: '#cad7db', roughness: 0.14, metalness: 0.08, opacity: 0.78, pattern: { id: 'glass-block-wave', scale: BLOCK_SCALE, contrast: 1 } },
+  { id: 'glass-block-grid', name: 'Checkered glass block (vân ô vuông)', category: 'glass', color: '#c6d3d7', roughness: 0.18, metalness: 0.08, opacity: 0.8, pattern: { id: 'glass-block-grid', scale: BLOCK_SCALE, contrast: 1 } },
+  { id: 'glass-block-amber', name: 'Warm amber wave glass block', category: 'glass', color: '#dccab0', roughness: 0.14, metalness: 0.08, opacity: 0.78, pattern: { id: 'glass-block-wave', scale: BLOCK_SCALE, contrast: 1 } },
+  { id: 'glass-block-amber-grid', name: 'Warm amber checkered glass block', category: 'glass', color: '#d8c5aa', roughness: 0.18, metalness: 0.08, opacity: 0.8, pattern: { id: 'glass-block-grid', scale: BLOCK_SCALE, contrast: 1 } },
   { id: 'lotus-shade', name: 'Matte lotus-leaf shade', color: '#f2ede3', roughness: 0.85 },
   { id: 'lich-red', name: 'Calendar board red', color: '#b5191c', roughness: 0.45 },
   { id: 'calendar-paper', name: 'Newsprint paper', category: 'fabric', color: '#f6f2e9', roughness: 0.95 },
@@ -752,6 +832,120 @@ const cncPartition = defineItem({
   },
 });
 
+const glassBlockPartition = defineItem({
+  id: 'glass-block-daylight-partition',
+  name: 'Alternating glass block daylighting partition (vách gạch kính lấy sáng)',
+  category: 'construction',
+  type: 'structure',
+  group: 'Partitions',
+  tags: [
+    'glass block',
+    'gạch kính lấy sáng',
+    'gach kinh',
+    'vách gạch kính',
+    'tấm lấy sáng',
+    'tam lay sang',
+    'daylighting panel',
+    'glass brick',
+    'wave glass',
+    'checkered glass',
+    'partition',
+    'vietnamese',
+  ],
+  description:
+    'A floor-to-ceiling daylighting partition of square 19 cm hollow glass blocks set in white mortar joints on a stepped skirting plinth, alternating courses of wavy water-ripple glass and cross-reeded checkered glass to bring soft daylight into a corridor or bedroom.',
+  defaultSize: { w: 0.6, d: 0.1, h: 2.5 },
+  minSize: { w: 0.4, d: 0.08, h: 0.6 },
+  maxSize: { w: 2.4, d: 0.2, h: 3.2 },
+  slots: [
+    matSlot('wave', 'Wave glass blocks', 'glass-block-wave'),
+    matSlot('grid', 'Checkered glass blocks', 'glass-block-grid'),
+    matSlot('mortar', 'Mortar joints', 'paint-pure-white'),
+    matSlot('trim', 'Base skirting', 'paint-cream'),
+  ],
+  variants: [
+    { id: 'warm-amber', name: 'Warm backlit amber', materials: { wave: 'glass-block-amber', grid: 'glass-block-amber-grid' } },
+    { id: 'white-skirting', name: 'Crisp white skirting', materials: { trim: 'paint-satin-white' } },
+    { id: 'all-wave', name: 'All wave glass (vân sóng)', materials: { grid: 'glass-block-wave' } },
+    { id: 'all-grid', name: 'All checkered glass (vân ô vuông)', materials: { wave: 'glass-block-grid' } },
+    { id: 'greige-trim', name: 'Greige skirting', materials: { trim: 'paint-greige' } },
+  ],
+  build: ({ w, d, h }) => {
+    const base = h >= 1.2 ? 0.1 : clamp(h * 0.08, 0.03, 0.08);
+    const skT = clamp(d * 0.1, 0.008, 0.014);
+    const stepH = Math.min(0.012, base * 0.15);
+    const H = h - base;
+    let pitch = 0.2;
+    let nx = Math.max(1, Math.round(w / pitch));
+    let ny = Math.max(1, Math.round(H / pitch));
+    while ((nx + 1) * (ny + 1) > 150) {
+      pitch *= 1.06;
+      nx = Math.max(1, Math.round(w / pitch));
+      ny = Math.max(1, Math.round(H / pitch));
+    }
+    const cw = w / nx;
+    const ch = H / ny;
+    const m = clamp(Math.min(cw, ch) * 0.048, 0.006, 0.012);
+    const bz = Math.max(0.025, d / 2 - skT - 0.002);
+    const mz = Math.max(0.018, bz - 0.005);
+    const parts: Part[] = [
+      // Stepped skirting plinth at the floor (carries the full plan footprint).
+      span('trim', [-w / 2, w / 2], [0, base - stepH], [-d / 2, d / 2]),
+      span('trim', [-w / 2, w / 2], [base - stepH, base], [-d / 2 + skT, d / 2 - skT], NP),
+    ];
+    // Recessed white mortar joints between and around the glass blocks.
+    for (const i of range(nx + 1)) {
+      const x = -w / 2 + i * cw;
+      const xa = i === 0 ? -w / 2 + 0.001 : x - m / 2;
+      const xb = i === nx ? w / 2 - 0.001 : x + m / 2;
+      parts.push(span('mortar', [xa, xb], [base, h], [-mz, mz], NP));
+    }
+    for (const j of range(ny + 1)) {
+      const y = base + j * ch;
+      const ya = j === 0 ? base : y - m / 2;
+      const yb = j === ny ? h : y + m / 2;
+      parts.push(span('mortar', [-w / 2 + 0.001, w / 2 - 0.001], [ya, yb], [-mz + 0.0005, mz - 0.0005], NP));
+    }
+    // Individual bevelled hollow glass blocks, alternating checkered and wave courses from bottom to top.
+    for (const j of range(ny)) {
+      const slot = j % 2 === 0 ? 'grid' : 'wave';
+      const y0 = base + j * ch + (j === 0 ? m * 0.85 : m / 2);
+      const y1 = base + (j + 1) * ch - (j === ny - 1 ? m * 0.85 : m / 2);
+      const bh = y1 - y0;
+      const cy = (y0 + y1) / 2;
+      for (const i of range(nx)) {
+        const x0 = -w / 2 + i * cw + (i === 0 ? m * 0.85 : m / 2);
+        const x1 = -w / 2 + (i + 1) * cw - (i === nx - 1 ? m * 0.85 : m / 2);
+        const bw = x1 - x0;
+        const cx = (x0 + x1) / 2;
+        parts.push(
+          box(slot, [cx, cy, 0], [BLOCK_SCALE, BLOCK_SCALE, 2 * bz], {
+            scale: [bw / BLOCK_SCALE, bh / BLOCK_SCALE, 1],
+            uv: [BLOCK_SCALE / 2, BLOCK_SCALE / 2],
+            plan: false,
+          }),
+        );
+      }
+    }
+    return parts;
+  },
+  planDetail: ({ w, d }) => {
+    const skT = clamp(d * 0.1, 0.008, 0.014);
+    const bz = Math.max(0.025, d / 2 - skT - 0.002);
+    const nx = clamp(Math.round(w / 0.2), 1, 12);
+    const cw = w / nx;
+    return [
+      line([-w / 2, -bz], [w / 2, -bz]),
+      line([-w / 2, bz], [w / 2, bz]),
+      line([-w / 2, 0], [w / 2, 0]),
+      ...range(nx - 1).map((i) => {
+        const x = -w / 2 + (i + 1) * cw;
+        return line([x, -bz], [x, bz]);
+      }),
+    ];
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Lighting
 // ---------------------------------------------------------------------------
@@ -893,12 +1087,24 @@ const blockCalendar = defineItem({
 
 export default definePack({
   name: 'Modern Vietnamese apartment',
-  version: '1.0.0',
+  version: '1.1.0',
   author: 'Neest team',
   description:
-    'Altar cabinet and wall altar, Thần Tài shrine, zebra blinds, window grilles, balcony safety cables, a CNC lattice screen, a lotus-leaf pendant, a backlit wall disc and the Tết block calendar: what photos of today’s Vietnamese apartments keep showing.',
+    'Altar cabinet and wall altar, Thần Tài shrine, zebra blinds, window grilles, balcony safety cables, a CNC lattice screen, an alternating wave/checkered glass block daylighting partition, a lotus-leaf pendant, a backlit wall disc and the Tết block calendar: what photos of today’s Vietnamese apartments keep showing.',
   license: 'CC0 (made for Neest)',
-  items: [altarCabinet, hangingAltar, thanTaiShrine, zebraBlind, windowGrille, safetyCables, cncPartition, lotusPendant, wallDisc, blockCalendar],
+  items: [
+    altarCabinet,
+    hangingAltar,
+    thanTaiShrine,
+    zebraBlind,
+    windowGrille,
+    safetyCables,
+    cncPartition,
+    glassBlockPartition,
+    lotusPendant,
+    wallDisc,
+    blockCalendar,
+  ],
   patterns,
   materials,
 });

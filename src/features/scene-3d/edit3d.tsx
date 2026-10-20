@@ -26,7 +26,7 @@ import { sharedRegistry } from './sceneRuntime';
 import { canScale, scalePct, scaledSize } from '@/features/editor/objectScale';
 
 /** Tools available directly in the 3D view (selection uses mesh picking instead). */
-export const TOOLS_3D: ToolId[] = ['select', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place'];
+export const TOOLS_3D: ToolId[] = ['select', 'pan', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place'];
 
 const ACCENT = '#2a8a78'; // brand teal, bright enough to read over floors
 const SNAP = '#d0a650'; // brass
@@ -103,9 +103,23 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
 
   // Keyboard routing and hints while a 3D tool is active.
   useEffect(() => {
-    if (!active) return;
+    if (!enabled) return;
+    if (!active) {
+      gl.domElement.style.cursor = tool === 'pan' ? 'grab' : '';
+      useEditorStore.getState().set({
+        hint:
+          tool === 'pan'
+            ? 'Drag or Shift-swipe to pan · two-finger swipe or Shift-drag to orbit · pinch or scroll to zoom.'
+            : 'Drag or two-finger swipe to orbit · Shift-swipe or Space-drag to pan · pinch or scroll to zoom.',
+      });
+      return () => {
+        gl.domElement.style.cursor = '';
+      };
+    }
     gl.domElement.style.cursor = active.cursor;
-    useEditorStore.getState().set({ hint: `${active.hint} Right-drag to orbit, middle-drag to pan.` });
+    useEditorStore
+      .getState()
+      .set({ hint: `${active.hint} Two-finger swipe or Alt-drag to orbit, Space-drag to pan.` });
     const keys = (e: KeyboardEvent) => active.onKeyDown?.(e, env) ?? false;
     const cancel = () => active.cancel?.(env) ?? false;
     planKeyRouter.current = keys;
@@ -118,7 +132,7 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
       if (planKeyRouter.current === keys) planKeyRouter.current = null;
       if (planKeyRouter.cancel === cancel) planKeyRouter.cancel = null;
     };
-  }, [active, env, gl]);
+  }, [enabled, active, tool, env, gl]);
 
   // Pointer → plan-space projection.
   useEffect(() => {

@@ -45,6 +45,7 @@ import { GlobalIllumination } from './globalIllumination';
 import { namedView, presetView, type CameraView, type NamedView } from './cameraViews';
 import { liveScene, sharedRegistry } from './sceneRuntime';
 import { axisLockFeedback3D, hitsGizmo, TransformGizmo, ToolBridge3D } from './edit3d';
+import { attachTrackpadOrbit, type OrbitLike } from './trackpadOrbit';
 import { createAxisLock, onAxis, snapOnAxis } from '@/domain/geometry/axisLock';
 import { clientCompute, useCanvasMeasureFix } from './useCanvasMeasureFix';
 import { floatingInsets } from '@/components/layoutInsets';
@@ -524,7 +525,8 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
 
   // A drafting tool is active in 3D: left button belongs to the tool, orbit moves to the right button.
   const drawing = !walk && workspace === '3d' && tool !== 'select' && tool !== 'pan';
-  const drag = useObjectDrag(project, derived, !walk && !drawing);
+  const panning3d = !walk && tool === 'pan';
+  const drag = useObjectDrag(project, derived, !walk && !drawing && !panning3d);
   const selectedIds = useMemo(() => new Set(selection.map((s) => s.id)), [selection]);
   // Right-click: the same menu as in the plan, for the item under the pointer (not after a right-drag orbit/pan).
   const rightDown = useRef<{ x: number; y: number } | null>(null);
@@ -700,10 +702,13 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
             mouseButtons={
               drawing
                 ? { LEFT: -1 as THREE.MOUSE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.ROTATE }
-                : { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN }
+                : panning3d
+                  ? { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.ROTATE }
+                  : { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN }
             }
           />
         )}
+        {!walk && <TrackpadOrbitBridge drawing={drawing} active={active} />}
         {!walk && <CameraDirector view={view} />}
         {!walk && projection === 'perspective' && <NearPlaneSync bounds={derived.bounds} />}
         {!walk && <SelectionPivot />}
@@ -971,6 +976,29 @@ function FovSync({ fov }: { fov: number }) {
   return null;
 }
 
+/** Connects Mac trackpad gestures (two-finger orbit/pan, pinch zoom, Space/Option drag) to OrbitControls. */
+function TrackpadOrbitBridge({ drawing, active }: { drawing: boolean; active: boolean }) {
+  const gl = useThree((s) => s.gl);
+  const get = useThree((s) => s.get);
+  const drawingRef = useRef(drawing);
+  drawingRef.current = drawing;
+  useEffect(() => {
+    if (!active) return;
+    return attachTrackpadOrbit(
+      gl.domElement,
+      () => (get().controls as unknown as OrbitLike | null) ?? null,
+      {
+        isDrawing: () => drawingRef.current,
+        canKeyNavigate: () =>
+          useEditorStore.getState().selection.length === 0 &&
+          !useDialogStore.getState().openDialog &&
+          !useDialogStore.getState().confirm,
+      },
+    );
+  }, [gl, get, active]);
+  return null;
+}
+
 function WalkHud({ onExit, isMobile }: { onExit: () => void; isMobile: boolean }) {
   const flying = useWalkFly();
   return (
@@ -980,10 +1008,10 @@ function WalkHud({ onExit, isMobile }: { onExit: () => void; isMobile: boolean }
           <span>Use the left pad to move and drag on the right to look around.</span>
         ) : (
           <span>
-            Click to look around · <kbd>W</kbd>
+            Click or two-finger swipe to look · <kbd>W</kbd>
             <kbd>A</kbd>
             <kbd>S</kbd>
-            <kbd>D</kbd> to move · <kbd>Shift</kbd> to run · <kbd>F</kbd> {flying ? 'walk again' : 'free-fly'}
+            <kbd>D</kbd> or pinch to move · <kbd>Shift</kbd> to run · <kbd>F</kbd> {flying ? 'walk again' : 'free-fly'}
             {flying && (
               <>
                 {' '}

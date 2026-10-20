@@ -9,6 +9,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { moveWithCollisions, type Collider } from '@/domain/walkthrough/collision';
+import { attachTrackpadOrbit } from '@/features/scene-3d/trackpadOrbit';
+import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
 
 export interface GuestCamera {
   name: string;
@@ -93,6 +95,7 @@ function start(data: GuestData) {
   const controls = new OrbitControls(persp, renderer.domElement);
   controls.enableDamping = true;
   controls.maxPolarAngle = Math.PI / 2 - 0.02;
+  attachTrackpadOrbit(renderer.domElement, () => (controls.enabled ? controls : null));
 
   const status = el('div', 'ng-loading', 'Loading model…');
   root.appendChild(status);
@@ -136,6 +139,7 @@ function start(data: GuestData) {
   const keys = new Set<string>();
   const move = { x: 0, y: 0 };
   const look = { dx: 0, dy: 0 };
+  const wheelWalk = { fwd: 0, strafe: 0 };
 
   const resizeOrtho = () => {
     const aspect = window.innerWidth / window.innerHeight;
@@ -226,10 +230,10 @@ function start(data: GuestData) {
     help.textContent = on
       ? touch
         ? 'Left pad: move · drag right side: look'
-        : 'Click to look around · W A S D to move · Shift to run · Esc to exit'
+        : 'Click or two-finger swipe to look · W A S D or pinch to move · Shift to run · Esc to exit'
       : touch
         ? 'Drag to orbit · pinch to zoom'
-        : 'Drag to orbit · right-drag to pan · scroll to zoom';
+        : 'Drag or two-finger swipe to orbit · Shift-swipe or right-drag to pan · pinch to zoom';
     if (on) {
       camera = persp;
       persp.fov = 70;
@@ -240,8 +244,66 @@ function start(data: GuestData) {
     } else if (document.pointerLockElement) document.exitPointerLock();
   }
   modeBtn.onclick = () => setWalking(!walking);
+  const walkClassifier = createWheelClassifier();
+  let walkDrag: { id: number; x: number; y: number; moved: boolean } | null = null;
+  let suppressLockUntil = -Infinity;
   renderer.domElement.addEventListener('click', () => {
-    if (walking && !touch && document.pointerLockElement !== renderer.domElement) renderer.domElement.requestPointerLock();
+    if (walking && !touch && performance.now() >= suppressLockUntil && document.pointerLockElement !== renderer.domElement)
+      renderer.domElement.requestPointerLock();
+  });
+  renderer.domElement.addEventListener('pointerdown', (e) => {
+    if (!walking || e.button !== 0 || document.pointerLockElement === renderer.domElement) return;
+    walkDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    renderer.domElement.setPointerCapture?.(e.pointerId);
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!walking || !walkDrag || walkDrag.id !== e.pointerId || document.pointerLockElement === renderer.domElement) return;
+    const dx = e.clientX - walkDrag.x;
+    const dy = e.clientY - walkDrag.y;
+    if (Math.hypot(dx, dy) > 3) walkDrag.moved = true;
+    walkDrag.x = e.clientX;
+    walkDrag.y = e.clientY;
+    yaw -= dx * 0.0035;
+    pitch = Math.max(-1.3, Math.min(1.3, pitch - dy * 0.0035));
+  });
+  const endWalkDrag = (e: PointerEvent) => {
+    if (!walkDrag || walkDrag.id !== e.pointerId) return;
+    if (walkDrag.moved) suppressLockUntil = performance.now() + 120;
+    walkDrag = null;
+    renderer.domElement.releasePointerCapture?.(e.pointerId);
+  };
+  window.addEventListener('pointerup', endWalkDrag);
+  window.addEventListener('pointercancel', endWalkDrag);
+  renderer.domElement.addEventListener(
+    'wheel',
+    (e) => {
+      if (!walking) return;
+      e.preventDefault();
+      const kind = walkClassifier.classify(e);
+      if (kind === 'ignore') return;
+      if (kind === 'pinch' || e.altKey) {
+        wheelWalk.fwd += -e.deltaY * 0.015;
+      } else if (e.shiftKey || e.metaKey) {
+        wheelWalk.fwd += -e.deltaY * 0.008;
+        wheelWalk.strafe += e.deltaX * 0.008;
+      } else if (kind === 'trackpad') {
+        yaw -= e.deltaX * 0.003;
+        pitch = Math.max(-1.3, Math.min(1.3, pitch - e.deltaY * 0.003));
+      } else {
+        wheelWalk.fwd += -Math.sign(e.deltaY) * 0.35;
+      }
+    },
+    { passive: false },
+  );
+  attachSafariGesture(renderer.domElement, ({ scaleRatio, rotationDeg }) => {
+    if (!walking) return;
+    if (Math.abs(scaleRatio - 1) > 1e-4) {
+      walkClassifier.markSafariPinch();
+      wheelWalk.fwd += (scaleRatio - 1) * 2.5;
+    }
+    if (Math.abs(rotationDeg) > 0.05) {
+      yaw -= THREE.MathUtils.degToRad(rotationDeg);
+    }
   });
   document.addEventListener('mousemove', (e) => {
     if (!walking || document.pointerLockElement !== renderer.domElement) return;
@@ -279,11 +341,15 @@ function start(data: GuestData) {
         f /= l;
         s /= l;
       }
+      const wf = wheelWalk.fwd;
+      const ws = wheelWalk.strafe;
+      wheelWalk.fwd = 0;
+      wheelWalk.strafe = 0;
       const speed = 1.5 * (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 2 : 1) * dt;
       const fx = -Math.sin(yaw);
       const fz = -Math.cos(yaw);
-      const dx = (fx * f - fz * s) * speed;
-      const dz = (fz * f + fx * s) * speed;
+      const dx = fx * (f * speed + wf) - fz * (s * speed + ws);
+      const dz = fz * (f * speed + wf) + fx * (s * speed + ws);
       if (dx || dz) {
         const next = moveWithCollisions({ x: persp.position.x, y: persp.position.z }, { x: dx, y: dz }, 0.22, colliders);
         persp.position.x = next.x;

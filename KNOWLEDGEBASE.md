@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-10-19 (object-aware colour variants, studio & apartment beds, compact living pack).
+Last updated: 2026-10-20 (Mac trackpad navigation across 2D, 3D, walkthrough and previews).
 
 ---
 
@@ -696,18 +696,21 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - A `Flight` kit (`steps`, `stairString`, `balusters`, `handrail`, `newel`, `treadLines`) builds straight, L and U
     stairs. Rails and strings stop at the item height, as if they continue into the upper floor.
   - Stairs draw riser lines and an arrow in plan (`planDetail`).
-- **Modern Vietnamese apartment** (`packs/modern-vietnamese.pack.ts`, 10): what photos of today's Vietnamese flats
+- **Modern Vietnamese apartment** (`packs/modern-vietnamese.pack.ts`, 11): what photos of today's Vietnamese flats
   show and the library lacked (picked from Archdaily projects in Hanoi/Saigon and Vietnamese news features on
   renovated apartments, 2026-10-19). Ancestral altar cabinet (tủ thờ) with a gilded lotus backdrop, raised offering
   step, incense bowl, candlesticks, blue-and-white vases and jars; wall-hung altar shelf (bàn thờ treo, 81 × 48 cm
   at 1.4 m, LED strip under the canopy); Thần Tài shrine (red lacquer, gilt figures of Thần Tài with the winged hat
   and Ông Địa with belly and fan, red altar lamps that glow); zebra blind (rèm cầu vồng: two layers of opaque and
   sheer bands); iron window grille with a ring band (hoa sắt); balcony safety cables (lưới an toàn, 5 cm apart,
-  ≤ 140 cables); CNC lattice partition; layered lotus-leaf pendant; backlit wall disc; tear-off block calendar (lịch
-  bloc, the date is `segmentText`).
-  - Patterns: `lotus-gilt` (gilded lotus relief on lacquer, coloured), `thanh-hoa` (blue-and-white porcelain) and
-    `hoa-van`, a **cutout** interlocking-coin lattice (hoa văn đồng tiền): the CNC screen is one 12 mm box with that
-    material, so the holes cost no parts.
+  ≤ 140 cables); CNC lattice partition; alternating glass block daylighting partition (vách gạch kính lấy sáng:
+  3 × 12 grid of 19 cm hollow glass blocks on a stepped skirting plinth with recessed white mortar joints,
+  alternating wavy water-ripple and checkered cross-reeded courses); layered lotus-leaf pendant; backlit wall disc;
+  tear-off block calendar (lịch bloc, the date is `segmentText`).
+  - Patterns: `lotus-gilt` (gilded lotus relief on lacquer, coloured), `thanh-hoa` (blue-and-white porcelain),
+    `hoa-van` (a **cutout** interlocking-coin lattice, hoa văn đồng tiền: the CNC screen is one 12 mm box with that
+    material, so the holes cost no parts), `glass-block-wave` (wavy water-cloud glass block with outer chamfer,
+    internal reflection band and recessed step) and `glass-block-grid` (10 × 10 cross-reeded checkered glass block).
   - Pitfall met: two seven-segment digits are 1.38 × their height wide; size them by the page width too or a tall,
     narrow calendar breaks the box check.
 
@@ -1401,3 +1404,17 @@ Known limitations (also in README):
      the 10 pieces that kept showing up and were missing: altar cabinet with gilded lotus backdrop, wall-hung altar
      shelf, Thần Tài shrine, zebra blind, iron window grille, balcony safety cables, CNC coin-lattice partition,
      lotus-leaf pendant, backlit wall disc, tear-off block calendar (done).
+116. "Full Mac trackpad navigation support, including rotating the camera" → `src/components/trackpad.ts`
+     (`createWheelClassifier`, `attachSafariGesture`) and `src/features/scene-3d/trackpadOrbit.ts`
+     (`attachTrackpadOrbit`, `orbitCamera`, `panCamera`, `dollyCamera`):
+     - **2D plan (`PlanCanvas`)**: two-finger swipe pans in X/Y (Shift locks to the dominant axis); two-finger pinch
+       (`ctrlKey` wheel or Safari `gesturechange`) and `Cmd`/`Option` + scroll zoom around the pointer; physical mouse
+       wheels still zoom.
+     - **3D orbit (`Scene3DView`, `GuestPage`, `guest-viewer`)**: two-finger swipe orbits (rotates) the camera smoothly;
+       `Shift`/`Cmd`/`Space` + two-finger swipe pans; two-finger pinch or `Option` + scroll (or physical mouse wheel)
+       dollies/zooms smoothly; Safari two-finger twist orbits horizontally; `Space` + 1-finger drag pans and
+       `Alt`/`Cmd` + 1-finger drag orbits even while a 3D drafting tool is active; the `Pan (H)` tool and unmodified
+       arrow/`+`/`-` keys (when nothing is selected) also work in 3D.
+     - **Walkthrough (`WalkControls`, `guest-viewer`)**: two-finger swipe or 1-finger drag (without pointer lock) looks
+       around; pinch or `Shift` + two-finger swipe walks/strafes with collision detection.
+     - **3D object preview (`objectPreview`)**: two-finger swipe rotates the model, pinch zooms (done).

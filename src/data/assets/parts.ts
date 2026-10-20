@@ -52,6 +52,8 @@ export interface PartOpts {
   scale?: V3;
   /** false = hide from the derived 2D plan footprint. */
   plan?: boolean;
+  /** Texture offset in metres (u, v). */
+  uv?: V2;
 }
 
 export interface BoxOpts extends PartOpts {
@@ -71,6 +73,8 @@ function finish(part: Part, opts: PartOpts | undefined): Part {
   const s = opts?.scale;
   if (s && (s[0] !== 1 || s[1] !== 1 || s[2] !== 1)) part.scale = [s[0], s[1], s[2]];
   if (opts?.plan === false) part.plan = false;
+  const uv = opts?.uv;
+  if (uv && (uv[0] !== 0 || uv[1] !== 0)) part.uv = [uv[0], uv[1]];
   return part;
 }
 

@@ -81,6 +81,10 @@
    "file": "081361aecd94cd5e.webp",
    "tile": true
   },
+  "08380b0aa592d958": {
+   "file": "08380b0aa592d958.webp",
+   "tile": true
+  },
   "0863a4e856ffd35f": {
    "file": "0863a4e856ffd35f.webp",
    "tile": true
@@ -707,6 +711,10 @@
   },
   "3ebca32172b6bef7": {
    "file": "3ebca32172b6bef7.webp",
+   "tile": true
+  },
+  "40857b769ea3e6e8": {
+   "file": "40857b769ea3e6e8.webp",
    "tile": true
   },
   "413e2dc800b3b14f": {
@@ -1805,6 +1813,10 @@
    "file": "9abfb98dc1eb1a8d.webp",
    "tile": false
   },
+  "9adf8141c71d1725": {
+   "file": "9adf8141c71d1725.webp",
+   "tile": true
+  },
   "9af5720def5d696e": {
    "file": "9af5720def5d696e.webp",
    "tile": true
@@ -2367,6 +2379,10 @@
   },
   "c6b6a49125903e76": {
    "file": "c6b6a49125903e76.webp",
+   "tile": true
+  },
+  "c6c5bb9ae4beacd8": {
+   "file": "c6c5bb9ae4beacd8.webp",
    "tile": true
   },
   "c6f578ba00dd873b": {
@@ -3529,6 +3545,10 @@
   "metal-gunmetal": "85b9cde9cc9d3f4c",
   "microcement": "c189f346b6d03813",
   "modern-vietnamese:cnc-oak": "c1c59bc20a2ec830",
+  "modern-vietnamese:glass-block-amber": "40857b769ea3e6e8",
+  "modern-vietnamese:glass-block-amber-grid": "08380b0aa592d958",
+  "modern-vietnamese:glass-block-grid": "9adf8141c71d1725",
+  "modern-vietnamese:glass-block-wave": "c6c5bb9ae4beacd8",
   "modern-vietnamese:go-lacquer": "dd18499fa2e95b9a",
   "modern-vietnamese:lotus-gilt": "0863a4e856ffd35f",
   "modern-vietnamese:thanh-hoa": "c930746b0892e941",

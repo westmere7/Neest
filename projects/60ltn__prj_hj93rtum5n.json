@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1792420291185,
+  "updatedAt": 1792508335463,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -520,7 +520,7 @@
         "w_r96boupwen",
         "w_yh679e85vf"
       ],
-      "floorMaterialId": "wood-oak-wide",
+      "floorMaterialId": "wood-oak-natural",
       "ceilingMaterialId": "paint-ceiling-white",
       "showCeiling": true,
       "ceilingHeight": null,
@@ -2667,7 +2667,7 @@
       "id": "obj_h61lpsju3q",
       "assetId": "partition-slatted",
       "name": null,
-      "x": 0.8500000000000001,
+      "x": 0.25,
       "y": 5.770778307702727,
       "elevation": 0,
       "rotation": 0,
@@ -5254,6 +5254,185 @@
         "name": "Neest starter library · photo: ambientCG Tiles032",
         "license": "CC0 1.0 (photo texture); procedural fallback original",
         "url": "https://ambientcg.com/a/Tiles032"
+      }
+    },
+    "wood-cedar-planks": {
+      "id": "wood-cedar-planks",
+      "name": "Japanese cedar planks",
+      "category": "wood",
+      "color": "#c48a5a",
+      "roughness": 0.6,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "wood-planks",
+        "scale": 1.2,
+        "rotation": 90,
+        "contrast": 0.8
+      },
+      "photo": {
+        "setId": "cedar-planks",
+        "scale": 1.13,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-cedar-planks",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven japanese_cedar_planks",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/japanese_cedar_planks"
+      }
+    },
+    "wood-diagonal-parquet": {
+      "id": "wood-diagonal-parquet",
+      "name": "Diagonal parquet",
+      "category": "wood",
+      "color": "#b88a5c",
+      "roughness": 0.5,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "chevron",
+        "scale": 2,
+        "rotation": 45,
+        "contrast": 0.8
+      },
+      "photo": {
+        "setId": "diagonal-parquet",
+        "scale": 2.36,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-diagonal-parquet",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven diagonal_parquet",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/diagonal_parquet"
+      }
+    },
+    "cafe-dining:pine-weathered": {
+      "id": "cafe-dining:pine-weathered",
+      "name": "Weathered pine planks",
+      "category": "wood",
+      "color": "#c9975a",
+      "roughness": 0.72,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "cafe-dining:pine-planks",
+        "scale": 0.9,
+        "rotation": 0,
+        "contrast": 0.9
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "cafe-dining:pine-weathered",
+      "source": {
+        "name": "Café dining set pack by Neest team",
+        "license": "CC0 (made for Neest)"
+      }
+    },
+    "wood-herringbone": {
+      "id": "wood-herringbone",
+      "name": "Oak herringbone",
+      "category": "wood",
+      "color": "#be9266",
+      "roughness": 0.55,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "herringbone",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 1
+      },
+      "photo": {
+        "setId": "oak-herringbone",
+        "scale": 3.4,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "wood-herringbone",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven herringbone_parquet",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/herringbone_parquet"
+      }
+    },
+    "fabric-dove-grey": {
+      "id": "fabric-dove-grey",
+      "name": "Dove grey cotton",
+      "category": "fabric",
+      "color": "#c6c5c1",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.1,
+        "rotation": 0,
+        "contrast": 0.5
+      },
+      "photo": {
+        "setId": "cotton",
+        "scale": 0.5,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "fabric-dove-grey",
+      "source": {
+        "name": "Neest starter library · photo: ambientCG Fabric032",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://ambientcg.com/a/Fabric032"
+      }
+    },
+    "fabric-linen-sage": {
+      "id": "fabric-linen-sage",
+      "name": "Sage linen",
+      "category": "fabric",
+      "color": "#a7b39c",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.15,
+        "rotation": 0,
+        "contrast": 0.7
+      },
+      "photo": {
+        "setId": "rough-linen",
+        "scale": 0.27,
+        "rotation": 0,
+        "contrast": 1,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "fabric-linen-sage",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven rough_linen",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/rough_linen"
       }
     }
   },
@@ -9659,7 +9838,12 @@
             "depth": 2.15,
             "height": 1.1,
             "mirrored": false,
-            "materials": {},
+            "materials": {
+              "frame": "fabric-linen-sage",
+              "bedding": "fabric-cream",
+              "duvet": "fabric-linen-sage",
+              "accent": "fabric-cream"
+            },
             "locked": false,
             "hidden": false
           },
