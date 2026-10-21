@@ -98,27 +98,6 @@ const brand = (name: string, model: string, line: string, url: string, specs: [s
 // Laptops
 // ---------------------------------------------------------------------------
 
-const AIR: LaptopSpec = { W: 0.3041, D: 0.215, T: 0.0113, lid: 0.42, bezel: 0.008, chin: 0.012, r: 0.012, kb: { w: 0.86, d0: 0.06, d1: 0.48 }, notch: true };
-const macbookAir = defineItem({
-  id: 'macbook-air-13-m3',
-  name: 'Apple MacBook Air 13" (M3)',
-  category: 'office',
-  type: 'electronics',
-  group: 'Computers',
-  tags: [...TAGS, 'apple', 'macbook', 'macbook air', 'm3'],
-  description: 'Thin wedge-free aluminium MacBook Air with a notched 13.6" Liquid Retina display, open on the desk.',
-  ...fixed(openSize(AIR)),
-  slots: SLOTS('metal-brushed-steel'),
-  build: (size) => laptop(AIR, size),
-  planDetail: plan(AIR),
-  brand: brand('Apple', 'MacBook Air 13" (M3, 2024)', 'MacBook Air', 'https://support.apple.com/118551', [
-    ['Display', '13.6" Liquid Retina, 2560 × 1664'],
-    ['Closed size (W × D × H)', '304.1 × 215 × 11.3 mm'],
-    ['Weight', '1.24 kg'],
-    ['Chip', 'Apple M3'],
-  ]),
-});
-
 const PRO: LaptopSpec = { W: 0.3126, D: 0.2212, T: 0.0155, lid: 0.38, bezel: 0.008, chin: 0.011, r: 0.012, kb: { w: 0.84, d0: 0.06, d1: 0.48 }, notch: true };
 const macbookPro = defineItem({
   id: 'macbook-pro-14-m4',
@@ -216,7 +195,7 @@ export default definePack({
   author: 'Neest team',
   description: 'Four laptops sold widely in Vietnam at their published sizes: MacBook Air 13 and MacBook Pro 14, Dell Inspiron 15 and ASUS Vivobook 15.',
   license: 'CC0 (made for Neest); brand names belong to their owners',
-  items: [macbookAir, macbookPro, inspiron, vivobook],
+  items: [macbookPro, inspiron, vivobook],
   patterns: [wallpaper],
   materials: [{ id: 'wallpaper', name: 'Laptop screen', category: 'glass', color: '#ffffff', roughness: 0.15, emissive: '#3a4a7a', emissiveIntensity: 0.35, pattern: { id: 'wallpaper', scale: 0.3 } }],
 });

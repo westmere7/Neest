@@ -9,14 +9,6 @@
    "file": "ac-outdoor-units_ac-wall-bracket.webp",
    "fp": "b001d8e35604b1c8"
   },
-  "ac-outdoor-units:outdoor-unit-12000btu": {
-   "file": "ac-outdoor-units_outdoor-unit-12000btu.webp",
-   "fp": "88059e5c744a4723"
-  },
-  "ac-outdoor-units:outdoor-unit-18000btu": {
-   "file": "ac-outdoor-units_outdoor-unit-18000btu.webp",
-   "fp": "a15307c266ffbe0c"
-  },
   "ac-outdoor-units:outdoor-unit-24000btu": {
    "file": "ac-outdoor-units_outdoor-unit-24000btu.webp",
    "fp": "5d05ba4c9625b698"
@@ -569,10 +561,6 @@
    "file": "bedroom-collection_fluted-dresser.webp",
    "fp": "d25fd5290e57b458"
   },
-  "bedroom-collection:hollywood-vanity": {
-   "file": "bedroom-collection_hollywood-vanity.webp",
-   "fp": "478dacb1de207946"
-  },
   "bedroom-collection:hotel-headboard-bed": {
    "file": "bedroom-collection_hotel-headboard-bed.webp",
    "fp": "b9850f86018eb5f6"
@@ -901,10 +889,6 @@
    "file": "branded-home-electronics_dyson-purifier-cool-tp07.webp",
    "fp": "6580d972da7312c7"
   },
-  "branded-home-electronics:dyson-v12-detect-slim": {
-   "file": "branded-home-electronics_dyson-v12-detect-slim.webp",
-   "fp": "3417fc04b22ae196"
-  },
   "branded-home-electronics:dyson-v15-detect": {
    "file": "branded-home-electronics_dyson-v15-detect.webp",
    "fp": "311f0fe07eda5447"
@@ -1001,14 +985,6 @@
    "file": "branded-home-electronics_xiaomi-smart-standing-fan-2.webp",
    "fp": "04008131ec52c8da"
   },
-  "branded-home-electronics:xiaomi-smart-standing-fan-2-lite": {
-   "file": "branded-home-electronics_xiaomi-smart-standing-fan-2-lite.webp",
-   "fp": "fa71c006a5d91538"
-  },
-  "branded-home-electronics:xiaomi-smart-standing-fan-2-pro": {
-   "file": "branded-home-electronics_xiaomi-smart-standing-fan-2-pro.webp",
-   "fp": "65924fe4061daf34"
-  },
   "branded-home-electronics:xiaomi-smart-tower-fan": {
    "file": "branded-home-electronics_xiaomi-smart-tower-fan.webp",
    "fp": "567591e19281533c"
@@ -1024,10 +1000,6 @@
   "branded-laptops:dell-inspiron-15-3530": {
    "file": "branded-laptops_dell-inspiron-15-3530.webp",
    "fp": "cdd5fe241457a39b"
-  },
-  "branded-laptops:macbook-air-13-m3": {
-   "file": "branded-laptops_macbook-air-13-m3.webp",
-   "fp": "ac57e06521914f56"
   },
   "branded-laptops:macbook-pro-14-m4": {
    "file": "branded-laptops_macbook-pro-14-m4.webp",
@@ -1057,10 +1029,6 @@
    "file": "branded-tvs_sony-k-75xr90.webp",
    "fp": "a408ee86704f9dca"
   },
-  "branded-washers:aqua-aqh-h1000j-ps": {
-   "file": "branded-washers_aqua-aqh-h1000j-ps.webp",
-   "fp": "ce1a9f1aef3f7bda"
-  },
   "branded-washers:aqua-aqh-h900g-ps": {
    "file": "branded-washers_aqua-aqh-h900g-ps.webp",
    "fp": "beaf9c131777056c"
@@ -1068,14 +1036,6 @@
   "branded-washers:aqua-aqh-v700fw": {
    "file": "branded-washers_aqua-aqh-v700fw.webp",
    "fp": "46337c55090ea9e6"
-  },
-  "branded-washers:aqua-aqh-v800h-ss": {
-   "file": "branded-washers_aqua-aqh-v800h-ss.webp",
-   "fp": "94844251f19eb399"
-  },
-  "branded-washers:aqua-aqh-v901k-ps": {
-   "file": "branded-washers_aqua-aqh-v901k-ps.webp",
-   "fp": "046b21661a9a7c15"
   },
   "branded-washers:bosch-wgg254z0gb": {
    "file": "branded-washers_bosch-wgg254z0gb.webp",
@@ -1148,10 +1108,6 @@
   "cabinets-wardrobes:vanity-cabinet-wall": {
    "file": "cabinets-wardrobes_vanity-cabinet-wall.webp",
    "fp": "28e870fb9c5ad176"
-  },
-  "cabinets-wardrobes:vitrine": {
-   "file": "cabinets-wardrobes_vitrine.webp",
-   "fp": "33fe4c44450c1ee8"
   },
   "cabinets-wardrobes:walk-in-closet": {
    "file": "cabinets-wardrobes_walk-in-closet.webp",
@@ -1508,10 +1464,6 @@
   "couches:chaise-sectional-piped-right": {
    "file": "couches_chaise-sectional-piped-right.webp",
    "fp": "3663a9e63c56df29"
-  },
-  "couches:chesterfield-rolled-arm": {
-   "file": "couches_chesterfield-rolled-arm.webp",
-   "fp": "7174ed496bb79fd9"
   },
   "couches:click-clack-sofa-bed": {
    "file": "couches_click-clack-sofa-bed.webp",
@@ -2473,10 +2425,6 @@
    "file": "kitchen-collection_open-corner-shelves.webp",
    "fp": "283439d3774de6c9"
   },
-  "kitchen-collection:oven-microwave-tower": {
-   "file": "kitchen-collection_oven-microwave-tower.webp",
-   "fp": "524db65d705503d4"
-  },
   "kitchen-collection:pantry-pullout": {
    "file": "kitchen-collection_pantry-pullout.webp",
    "fp": "06d567df3891eb9c"
@@ -2521,10 +2469,6 @@
    "file": "kitchen-counters_base-dishwasher.webp",
    "fp": "397c4ac9bb32ecd9"
   },
-  "kitchen-counters:base-door-60": {
-   "file": "kitchen-counters_base-door-60.webp",
-   "fp": "716599b6cba704fb"
-  },
   "kitchen-counters:base-doors-90": {
    "file": "kitchen-counters_base-doors-90.webp",
    "fp": "a9c36fbf7d163ec4"
@@ -2532,10 +2476,6 @@
   "kitchen-counters:base-drawer-door": {
    "file": "kitchen-counters_base-drawer-door.webp",
    "fp": "724872e3bb935d99"
-  },
-  "kitchen-counters:base-drawers-3": {
-   "file": "kitchen-counters_base-drawers-3.webp",
-   "fp": "76637db310d1d33e"
   },
   "kitchen-counters:base-handleless-drawers": {
    "file": "kitchen-counters_base-handleless-drawers.webp",
@@ -2560,10 +2500,6 @@
   "kitchen-counters:base-pullout-narrow": {
    "file": "kitchen-counters_base-pullout-narrow.webp",
    "fp": "c4366f91133e6585"
-  },
-  "kitchen-counters:base-shaker-doors": {
-   "file": "kitchen-counters_base-shaker-doors.webp",
-   "fp": "a0387b59b1c4aeb7"
   },
   "kitchen-counters:island-hob": {
    "file": "kitchen-counters_island-hob.webp",
@@ -2601,25 +2537,13 @@
    "file": "kitchen-counters_sink-bar-prep-45.webp",
    "fp": "5349f8f752eb854e"
   },
-  "kitchen-counters:sink-double-bowl-120": {
-   "file": "kitchen-counters_sink-double-bowl-120.webp",
-   "fp": "169f6ab23525b0b4"
-  },
   "kitchen-counters:sink-drainer-vn": {
    "file": "kitchen-counters_sink-drainer-vn.webp",
    "fp": "3b39422fbad90dcd"
   },
-  "kitchen-counters:sink-farmhouse-shaker": {
-   "file": "kitchen-counters_sink-farmhouse-shaker.webp",
-   "fp": "177571cb04d1a745"
-  },
   "kitchen-counters:sink-granite-black": {
    "file": "kitchen-counters_sink-granite-black.webp",
    "fp": "6171bf5378f332ec"
-  },
-  "kitchen-counters:sink-inset-80": {
-   "file": "kitchen-counters_sink-inset-80.webp",
-   "fp": "94ae961dcdbc2aad"
   },
   "kitchen-counters:sink-laundry-counter": {
    "file": "kitchen-counters_sink-laundry-counter.webp",
@@ -3849,10 +3773,6 @@
    "file": "shelving_office-shelving.webp",
    "fp": "5381cb925209980f"
   },
-  "shelving:over-toilet-shelf": {
-   "file": "shelving_over-toilet-shelf.webp",
-   "fp": "15d91125190b9bef"
-  },
   "shelving:pegboard": {
    "file": "shelving_pegboard.webp",
    "fp": "f0b7a84d2ce27847"
@@ -3937,17 +3857,9 @@
    "file": "sofas_bridgewater-skirted.webp",
    "fp": "44267476d746db6e"
   },
-  "sofas:camelback": {
-   "file": "sofas_camelback.webp",
-   "fp": "e3f4b3ea85bb306e"
-  },
   "sofas:channel-velvet": {
    "file": "sofas_channel-velvet.webp",
    "fp": "5c25f2813b004239"
-  },
-  "sofas:chesterfield-tufted": {
-   "file": "sofas_chesterfield-tufted.webp",
-   "fp": "ba34de7972e2629f"
   },
   "sofas:cloud-deep": {
    "file": "sofas_cloud-deep.webp",
@@ -3973,29 +3885,9 @@
    "file": "sofas_leather-recliner-sofa.webp",
    "fp": "d63268ace233ac03"
   },
-  "sofas:mid-century-tufted-bench": {
-   "file": "sofas_mid-century-tufted-bench.webp",
-   "fp": "574c6ec5935acb52"
-  },
   "sofas:modular-four-seat": {
    "file": "sofas_modular-four-seat.webp",
    "fp": "9c72620a3863bc9c"
-  },
-  "sofas:sectional-chaise-left": {
-   "file": "sofas_sectional-chaise-left.webp",
-   "fp": "8b218f79b992a963"
-  },
-  "sofas:sectional-chaise-right": {
-   "file": "sofas_sectional-chaise-right.webp",
-   "fp": "8233f17c83b6f17e"
-  },
-  "sofas:track-arm-loveseat": {
-   "file": "sofas_track-arm-loveseat.webp",
-   "fp": "32bacf458dafe233"
-  },
-  "sofas:tuxedo": {
-   "file": "sofas_tuxedo.webp",
-   "fp": "661048f72a8f5354"
   },
   "sofas:wooden-frame-sofa": {
    "file": "sofas_wooden-frame-sofa.webp",
@@ -4220,10 +4112,6 @@
   "structures:built-in-media-wall": {
    "file": "structures_built-in-media-wall.webp",
    "fp": "d4b5eb4bc396c939"
-  },
-  "structures:built-in-wardrobe-wall": {
-   "file": "structures_built-in-wardrobe-wall.webp",
-   "fp": "871907c234d3aa4f"
   },
   "structures:cane-panel-room-divider": {
    "file": "structures_cane-panel-room-divider.webp",
@@ -4565,14 +4453,6 @@
    "file": "styled-storage_open-wardrobe-clothes_model_filled.webp",
    "fp": "76ffb838b50eadc7"
   },
-  "styled-storage:styled-bookcase": {
-   "file": "styled-storage_styled-bookcase.webp",
-   "fp": "e446690e7f9f2c01"
-  },
-  "styled-storage:styled-bookcase@model:filled": {
-   "file": "styled-storage_styled-bookcase_model_filled.webp",
-   "fp": "93fd75a2a3dead7d"
-  },
   "styled-storage:styled-clothes-rail": {
    "file": "styled-storage_styled-clothes-rail.webp",
    "fp": "056eec53f4cde577"
@@ -4620,14 +4500,6 @@
   "styled-storage:styled-kitchen-wall-shelves@model:filled": {
    "file": "styled-storage_styled-kitchen-wall-shelves_model_filled.webp",
    "fp": "7d9ae76f22c9312f"
-  },
-  "styled-storage:styled-ladder-shelf": {
-   "file": "styled-storage_styled-ladder-shelf.webp",
-   "fp": "b46122e0ccb2779b"
-  },
-  "styled-storage:styled-ladder-shelf@model:filled": {
-   "file": "styled-storage_styled-ladder-shelf_model_filled.webp",
-   "fp": "78950127146a1ebb"
   },
   "styled-storage:styled-pantry-cabinet": {
    "file": "styled-storage_styled-pantry-cabinet.webp",
@@ -5160,10 +5032,6 @@
   "workspace:boucle-swivel-desk-chair": {
    "file": "workspace_boucle-swivel-desk-chair.webp",
    "fp": "31f087530e96301b"
-  },
-  "workspace:computer-desk-hutch": {
-   "file": "workspace_computer-desk-hutch.webp",
-   "fp": "10086e48a3d6e437"
   },
   "workspace:desk-essentials": {
    "file": "workspace_desk-essentials.webp",

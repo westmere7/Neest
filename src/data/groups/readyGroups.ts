@@ -779,7 +779,7 @@ const MODULES = {
   gas: { a: 'kitchen-collection:hob-gas', w: 0.9 },
   cooktop: { a: 'kitchen-cooktop', w: 0.6 },
   tall: { a: 'kitchen-tall-cabinet', w: 0.6, tall: true },
-  oven: { a: 'kitchen-collection:oven-microwave-tower', w: 0.6, tall: true },
+  oven: { a: 'kitchen-oven-tower', w: 0.6, tall: true },
   pantry: { a: 'kitchen-collection:pantry-pullout', w: 0.3, tall: true },
   fridge: { a: 'fridge', w: 0.7, tall: true },
 } as const;

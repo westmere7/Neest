@@ -25,7 +25,6 @@ import {
   lerp,
   line,
   matSlot,
-  pot,
   prism,
   range,
   rectPoly,
@@ -1086,104 +1085,6 @@ const narrowChest = defineItem({
 // ---------------------------------------------------------------------------
 // Display & living room cabinets
 // ---------------------------------------------------------------------------
-
-/** A shelf's worth of ceramics (and the odd glass vase) along x at floor height y0. */
-function ceramicsRow(
-  slots: { ceramic: string; glass: string },
-  x: V2,
-  y0: number,
-  gap: number,
-  zBack: number,
-  zFront: number,
-  seed: number,
-): Part[] {
-  const rand = rng(seed);
-  const parts: Part[] = [];
-  const k = clamp(Math.floor((x[1] - x[0]) / 0.16), 1, 6);
-  const room = (zFront - zBack) / 2 - 0.008;
-  const zc = (zBack + zFront) / 2;
-  const hmax = gap - 0.02;
-  if (hmax < 0.05) return parts;
-  for (const [i, cx] of spaced(k, x[0] + (x[1] - x[0]) / (2 * k), x[1] - (x[1] - x[0]) / (2 * k)).entries()) {
-    const kind = Math.floor(rand() * 5);
-    const r = Math.min(room, 0.06, (x[1] - x[0]) / (2 * k) - 0.01);
-    if (kind === 0 || kind === 1) {
-      parts.push(vase(slots.ceramic, cx, y0, zc, r * lerp(0.75, 1, rand()), Math.min(hmax, 0.3) * lerp(0.7, 1, rand()), kind + i));
-    } else if (kind === 2) {
-      // Plate standing against the back with a small bowl in front.
-      const pr = Math.min(0.11, hmax * 0.45, (x[1] - x[0]) / (2 * k) - 0.01);
-      parts.push(discZ(slots.ceramic, [cx, y0 + pr, zBack + 0.012], pr, 0.012, NP));
-      parts.push(pot(slots.ceramic, [cx, y0, Math.min(zFront - r * 0.8, zBack + 0.03 + r * 0.8)], r * 0.75, Math.min(hmax, r * 0.7), 'bowl', NP));
-    } else if (kind === 3) {
-      parts.push(pot(slots.ceramic, [cx, y0, zc], r * 0.85, Math.min(hmax, 0.2) * lerp(0.7, 1, rand()), 'belly', NP));
-    } else {
-      parts.push(vase(slots.glass, cx, y0, zc, r * 0.8, Math.min(hmax, 0.26) * lerp(0.7, 1, rand()), 2));
-    }
-  }
-  return parts;
-}
-
-const vitrine = defineItem({
-  id: 'vitrine',
-  name: 'Glass vitrine cabinet',
-  category: 'living',
-  type: 'storage',
-  group: 'Sideboards & cabinets',
-  tags: ['vitrine', 'display cabinet', 'glass', 'curio', 'ceramics', 'showcase', 'hinged doors'],
-  defaultSize: { w: 0.9, d: 0.42, h: 1.8 },
-  minSize: { w: 0.5, d: 0.32, h: 1.2 },
-  maxSize: { w: 1.6, d: 0.55, h: 2.2 },
-  wallSnap: true,
-  slots: [
-    matSlot('frame', 'Frame', 'oak-veneer'),
-    matSlot('glass', 'Glass', 'glass-clear'),
-    matSlot('ceramic', 'Ceramics', 'ceramic-white'),
-    matSlot('metal', 'Hinges & knobs', 'metal-brass'),
-  ],
-  build: ({ w, d, h }) => {
-    const baseH = 0.1;
-    const topH = 0.06;
-    const post = 0.03;
-    const t = 0.022;
-    const zC = d / 2 - t - 0.016;
-    const yTop = h - topH - 0.02;
-    const parts: Part[] = [
-      span('frame', [-w / 2, w / 2], [0, baseH], [-d / 2, d / 2 - 0.01], { bevel: 0.005 }),
-      span('frame', [-w / 2, w / 2], [h - topH, h], [-d / 2, d / 2], { bevel: 0.006 }),
-      sp('frame', [-w / 2 + 0.008, w / 2 - 0.008], [yTop, h - topH], [-d / 2, d / 2 - 0.012]),
-      sp('frame', [-w / 2 + post, w / 2 - post], [baseH, yTop], [-d / 2, -d / 2 + 0.012]),
-    ];
-    for (const sx of [-1, 1]) {
-      const xo = sx * (w / 2 - post / 2);
-      parts.push(
-        span('frame', [xo - post / 2, xo + post / 2], [baseH, yTop], [-d / 2, -d / 2 + post]),
-        span('frame', [xo - post / 2, xo + post / 2], [baseH, yTop], [zC - post, zC]),
-        sp('glass', sx < 0 ? [-w / 2 + 0.006, -w / 2 + 0.012] : [w / 2 - 0.012, w / 2 - 0.006], [baseH, yTop], [-d / 2 + post, zC - post]),
-      );
-    }
-    // Glass shelves, evenly spaced.
-    const ns = clamp(Math.round((yTop - baseH) / 0.38) - 1, 2, 5);
-    const levels = [baseH, ...range(ns).map((k) => baseH + ((k + 1) * (yTop - baseH)) / (ns + 1))];
-    for (const y of levels.slice(1)) parts.push(sp('glass', [-w / 2 + 0.014, w / 2 - 0.014], [y - 0.004, y + 0.004], [-d / 2 + 0.014, zC - 0.01]));
-    for (const [k, y] of levels.entries()) {
-      const next = k + 1 < levels.length ? levels[k + 1] - 0.004 : yTop;
-      const floor = k === 0 ? y : y + 0.004;
-      parts.push(...ceramicsRow({ ceramic: 'ceramic', glass: 'glass' }, [-w / 2 + 0.04, w / 2 - 0.04], floor, next - floor, -d / 2 + 0.014, zC - 0.012, 21 + k * 5));
-    }
-    // Glazed doors with visible hinges.
-    const n = clamp(Math.round(w / 0.45), 1, 3);
-    const dy: V2 = [baseH + 0.004, yTop - 0.002];
-    for (const [i, [a, b]] of cellSpans(n, -w / 2 + 0.004, w / 2 - 0.004).entries()) {
-      parts.push(...framedFront('frame', 'glass', [a, b], dy, zC, t, 0.035, 0.5));
-      const hingeLeft = n === 1 || i % 2 === 0;
-      const kx = hingeLeft ? b - 0.03 : a + 0.03;
-      parts.push(...hinges('metal', hingeLeft ? a + 0.002 : b - 0.002, dy, zC + t + 0.003));
-      parts.push(...knob('metal', [kx, (dy[0] + dy[1]) / 2, zC + t], 0.01));
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => [rectPoly(-w / 2 + 0.03, -d / 2 + 0.03, w / 2 - 0.03, d / 2 - 0.05)],
-});
 
 const barCabinet = defineItem({
   id: 'bar-cabinet',
@@ -2271,7 +2172,6 @@ export default definePack({
     kidsWardrobe,
     tallboy,
     narrowChest,
-    vitrine,
     barCabinet,
     caneSideboard,
     wallMedia,

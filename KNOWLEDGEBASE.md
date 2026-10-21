@@ -1480,3 +1480,10 @@ Known limitations (also in README):
      one lobe (styled-storage shelves and wardrobes, WalkingPad, arcade, bunk/loft beds and cot, ladders, cages, trolley,
      mirror, radiator, fire, pumpkins, crates, caddy, kneeling chair, tripod lamp), and overhead items now outline their
      full extent (done).
+120. "Review and remove items that look too much like each other" → scored every same-type pair by thumbnail silhouette,
+     colour, size and name, reviewed ~340 pairs by eye, removed 31 true duplicates (chesterfields, tuxedo/camelback/
+     mid-century/track-arm sofas, chaise sectionals, kitchen-counters base and sink units that matched kitchen ones,
+     oven tower, vitrine, over-toilet shelf, built-in wardrobe wall, styled bookcase and ladder shelf, desk hutch,
+     Hollywood vanity, Xiaomi fan Lite/Pro, Dyson V12, AQUA dryers V800H/V901K/H1000J, MacBook Air, generic 12k/18k
+     AC units). Each redirects in `RETIRED_MODEL_ITEMS` (`keepModel` keeps the placed model); kept generic vs real
+     branded pairs and size presets (Double/Queen/King) on purpose. 60LTN and Ngan's project migrate cleanly (done).

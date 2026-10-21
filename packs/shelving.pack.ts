@@ -1538,57 +1538,6 @@ const plantStandTiered = defineItem({
   },
 });
 
-const overToiletShelf = defineItem({
-  id: 'over-toilet-shelf',
-  name: 'Over-toilet shelf unit',
-  category: 'bathroom',
-  type: 'storage',
-  group: 'Bathroom & laundry storage',
-  tags: ['over the toilet', 'space saver', 'bathroom shelf', 'towels', 'toiletries', 'etagere'],
-  defaultSize: { w: 0.65, d: 0.26, h: 1.75 },
-  minSize: { w: 0.55, d: 0.2, h: 1.4 },
-  maxSize: { w: 0.9, d: 0.35, h: 2.0 },
-  wallSnap: true,
-  slots: [
-    matSlot('frame', 'Frame', 'wood-painted-white'),
-    matSlot('towels', 'Towels', 'terry-towel'),
-    matSlot('decor', 'Jars & bottles', 'speckled-stoneware'),
-  ],
-  build: ({ w, d, h }) => {
-    const leg = 0.03;
-    const st = 0.02;
-    const yb = Math.min(0.95, h - 0.5);
-    const ns = clamp(Math.round((h - yb) / 0.3) + 1, 2, 4);
-    const ys = range(ns).map((i) => yb + (i * (h - st - yb)) / (ns - 1));
-    const parts: Part[] = [];
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        const x0 = sx < 0 ? -w / 2 : w / 2 - leg;
-        const z0 = sz < 0 ? -d / 2 : d / 2 - leg;
-        parts.push(span('frame', [x0, x0 + leg], [0, h], [z0, z0 + leg]));
-      }
-      const xr = sx < 0 ? -w / 2 : w / 2 - leg;
-      parts.push(span('frame', [xr, xr + leg], [0.1, 0.13], [-d / 2 + leg, d / 2 - leg], NP));
-    }
-    ys.forEach((y, i) => {
-      parts.push(span('frame', [-w / 2 + 0.002, w / 2 - 0.002], [y, y + st], [-d / 2 + 0.002, d / 2 - 0.002], { bevel: 0.003 }));
-      if (i < ns - 1) parts.push(span('frame', [-w / 2 + leg, w / 2 - leg], [y + st + 0.03, y + st + 0.05], [-d / 2 + 0.004, -d / 2 + leg - 0.004], NP));
-    });
-    parts.push(rodX('frame', -w / 2 + leg, w / 2 - leg, yb - 0.06, d / 2 - 0.022, 0.009, NP));
-    parts.push(...hangTowel('towels', [-w * 0.2, w * 0.2], yb - 0.06, d / 2 - 0.022, 0.009, Math.min(0.4, yb - 0.08), 0.75));
-    const zones: Zone[] = range(ns - 1).map((i) => ({
-      x: [-w / 2 + leg + 0.008, w / 2 - leg - 0.008],
-      y0: ys[i] + st,
-      clear: ys[i + 1] - ys[i] - st - 0.012,
-      z: [-d / 2 + leg, d / 2 - 0.008],
-      seed: 1301 + i * 17,
-      kinds: ['towels', 'rolls', 'bottles', 'jar', 'vase', 'towels', 'bowl'],
-    }));
-    return [...parts, ...dressZones({ towels: 'towels', decor: 'decor' }, zones, MAXP - parts.length)];
-  },
-  planDetail: ({ w, d }) => [rectPoly(-w / 2 + 0.03, -d / 2 + 0.03, w / 2 - 0.03, d / 2 - 0.03)],
-});
-
 const bathWallShelf = defineItem({
   id: 'bath-wall-shelf',
   name: 'Bathroom wall shelf with towels',
@@ -2486,7 +2435,6 @@ export default definePack({
     bookcaseWall,
     displayLedges,
     plantStandTiered,
-    overToiletShelf,
     bathWallShelf,
     showerCaddy,
     pegboard,

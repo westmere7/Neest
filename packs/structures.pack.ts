@@ -1042,49 +1042,6 @@ const banquette = defineItem({
   },
 });
 
-const builtInWardrobe = defineItem({
-  id: 'built-in-wardrobe-wall',
-  name: 'Floor-to-ceiling built-in wardrobe wall',
-  category: 'bedroom',
-  type: 'storage',
-  group: 'Wardrobes',
-  tags: ['built-in wardrobe', 'fitted wardrobe', 'closet', 'tủ âm tường', 'joinery', 'shaker'],
-  description: 'Wall-to-wall fitted wardrobes with tall shaker doors and long brass bar handles, top-box cupboards above, a recessed plinth, scribe fillers and a cornice.',
-  defaultSize: { w: 3.0, d: 0.62, h: 2.7 },
-  minSize: { w: 1.2, d: 0.45, h: 2.1 },
-  maxSize: { w: 6.0, d: 0.75, h: 3.2 },
-  wallSnap: true,
-  slots: [matSlot('doors', 'Doors', 'paint-warm-white'), matSlot('carcass', 'Fillers, plinth & cornice', 'paint-warm-white'), matSlot('handles', 'Handles', 'metal-brass')],
-  variants: [
-    { id: 'sage', name: 'Sage', materials: { doors: 'paint-sage', carcass: 'paint-sage' } },
-    { id: 'navy', name: 'Navy & brass', materials: { doors: 'paint-navy', carcass: 'paint-navy' } },
-    { id: 'oak', name: 'Oak & black', materials: { doors: 'wood-oak-natural', carcass: 'wood-oak-natural', handles: 'metal-black-matte' } },
-  ],
-  build: ({ w, d, h }) => {
-    const fill = 0.05;
-    const plinth = 0.1;
-    const cornice = 0.05;
-    const top = clamp(h - 2.25, 0.3, 0.7);
-    const yT = h - cornice - top;
-    const zf = d / 2 - 0.06;
-    const parts: Part[] = [
-      span('carcass', [-w / 2, -w / 2 + fill], [0, h], [-d / 2, zf + 0.022]),
-      span('carcass', [w / 2 - fill, w / 2], [0, h], [-d / 2, zf + 0.022]),
-      span('carcass', [-w / 2 + fill, w / 2 - fill], [0, plinth], [-d / 2, zf - 0.05], o),
-      span('carcass', [-w / 2 + fill, w / 2 - fill], [plinth, h - cornice], [-d / 2, zf]),
-      span('carcass', [-w / 2, w / 2], [h - cornice, h], [-d / 2, d / 2 - 0.02], o),
-    ];
-    const n = clamp(Math.round((w - 2 * fill) / 0.5), 2, 10);
-    for (const [i, [x0, x1]] of cellSpans(n, -w / 2 + fill, w / 2 - fill).entries()) {
-      parts.push(...shakerFront('doors', [x0, x1], [plinth, yT], zf, 0.022, { rail: 0.07 }));
-      parts.push(span('doors', [x0 + 0.0015, x1 - 0.0015], [yT + 0.003, h - cornice - 0.0015], [zf, zf + 0.022], o));
-      const hx = i % 2 === 0 ? x1 - 0.045 : x0 + 0.045;
-      parts.push(...barPull('handles', [hx, Math.min(1.1, yT - 0.3), zf + 0.022], 0.3, { vertical: true }));
-    }
-    return parts;
-  },
-});
-
 const mediaWall = defineItem({
   id: 'built-in-media-wall',
   name: 'Built-in media wall with fluted panel',
@@ -2818,7 +2775,6 @@ export default definePack({
     windowSeatBookcases,
     storageWindowSeat,
     banquette,
-    builtInWardrobe,
     mediaWall,
     alcoveCupboard,
     deskNook,

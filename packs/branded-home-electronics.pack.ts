@@ -203,44 +203,6 @@ const fan2 = defineItem({
   ]),
 });
 
-const fan2Lite = defineItem({
-  id: 'xiaomi-smart-standing-fan-2-lite',
-  name: 'Xiaomi Smart Standing Fan 2 Lite',
-  category: 'bedroom',
-  type: 'electronics',
-  group: 'Climate',
-  tags: [...FAN_TAGS, 'quạt đứng', 'quạt cây', 'stand fan', 'pedestal fan', 'budget'],
-  description: 'Entry Xiaomi pedestal fan: seven 28.5 cm blades in a white round cage, a rocker control on the back of the motor and an adjustable white pole on a round base.',
-  ...fixed(0.343, 0.33, 1.0),
-  slots: FAN_SLOTS,
-  build: (size) => xiaomiStandFan(size, { blades: 7, panel: 'back' }),
-  brand: brand('Xiaomi', 'PYV4007GL', 'Smart Standing Fan 2 Lite', 'https://fptshop.com.vn/quat/quat-may-dung-xiaomi-smart-fan-2-lite-pyv4007gl', [
-    ['Size (W × D × H)', '343 × 330 × 1000 mm (adjustable 642–1000 mm)'],
-    ['Weight', '3.5 kg'],
-    ['Blades', '7, 285 mm'],
-    ['Power', '38 W, 3 speeds'],
-  ]),
-});
-
-const fan2Pro = defineItem({
-  id: 'xiaomi-smart-standing-fan-2-pro',
-  name: 'Xiaomi Smart Standing Fan 2 Pro',
-  category: 'living',
-  type: 'electronics',
-  group: 'Climate',
-  tags: [...FAN_TAGS, 'quạt đứng', 'quạt tích điện', 'battery fan', 'cordless fan', 'stand fan', 'pedestal fan'],
-  description: 'Cordless Xiaomi DC pedestal fan with a battery in its deeper round base (charge lights and port on the front), a twin-layer 7 + 5 blade rotor and touch controls on the head.',
-  ...fixed(0.343, 0.33, 1.001),
-  slots: FAN_SLOTS,
-  build: (size) => xiaomiStandFan(size, { blades: 7, outer: 5, battery: true, panel: 'top' }),
-  brand: brand('Xiaomi', 'BPLDS03DM', 'Smart Standing Fan 2 Pro', 'https://www.mi.com/global/product/xiaomi-smart-standing-fan-2-pro/specs/', [
-    ['Size (W × D × H)', '343 × 330 × 1001 mm'],
-    ['Weight', '3.2 kg'],
-    ['Battery', '2800 mAh (33.6 Wh), up to ≈ 18 h'],
-    ['Rotor', 'Twin layer 7 + 5 blades, 100 speeds'],
-  ]),
-});
-
 const towerFan = defineItem({
   id: 'xiaomi-smart-tower-fan',
   name: 'Xiaomi Smart Tower Fan',
@@ -387,25 +349,6 @@ const dysonV15 = defineItem({
     ['Size (W × D × H)', '250 × 266 × 1260 mm'],
     ['Weight', '≈ 3.1 kg'],
     ['Bin', '0.76 L'],
-    ['Run time', 'up to 60 min'],
-  ]),
-});
-
-const dysonV12 = defineItem({
-  id: 'dyson-v12-detect-slim',
-  name: 'Dyson V12 Detect Slim cordless vacuum on wall dock',
-  category: 'laundry',
-  type: 'appliances',
-  group: 'Cleaning',
-  tags: [...VAC_TAGS, 'dyson', 'máy hút bụi cầm tay', 'cordless', 'stick vacuum', 'không dây', 'slim'],
-  description: 'Lighter Dyson V12 Detect Slim on its wall dock: slim wand and motorbar head, a smaller clear bin with nickel cyclones, rear LCD and pistol grip.',
-  ...fixed(0.25, 0.252, 1.234),
-  wallSnap: true,
-  slots: DYSON_SLOTS,
-  build: (size) => stickVacuum(size, { binR: 0.048, binH: 0.13, motorR: 0.04, head: 'motorbar', headD: 0.13, screen: true, cyclones: 11, slim: true }).map(fixSlots),
-  brand: brand('Dyson', 'SV20', 'V12 Detect Slim', 'https://cellphones.com.vn/may-hut-bui-cam-tay-dyson-v12-detect-slim.html', [
-    ['Size (H × W × D)', '1234 × 252 × 250 mm'],
-    ['Weight', '2.2 kg'],
     ['Run time', 'up to 60 min'],
   ]),
 });
@@ -1557,11 +1500,8 @@ export default definePack({
   license: 'CC0 (made for Neest); brand names belong to their owners',
   items: [
     fan2,
-    fan2Lite,
-    fan2Pro,
     towerFan,
     dysonV15,
-    dysonV12,
     xiaomiG11,
     dreameH12,
     hitachiCanister,

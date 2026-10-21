@@ -308,43 +308,6 @@ function styleBay(s: { books: string; decor: string; plant: string; box?: string
 
 // ───────────────────────── Shelves ─────────────────────────
 
-const styledBookcase = filled(defineItem({
-  id: 'styled-bookcase',
-  name: 'Open bookcase',
-  category: 'living',
-  type: 'storage',
-  group: 'Bookcases & shelves',
-  tags: ['bookcase', 'bookshelf', 'books', 'decor', 'styled', 'kệ sách'],
-  description: 'A tall open bookcase arranged like a real home: rows of books, vases, a plant, baskets, leaning frames and candles on five shelves.',
-  defaultSize: { w: 0.9, d: 0.32, h: 1.9 },
-  minSize: { w: 0.6, d: 0.25, h: 1.2 },
-  maxSize: { w: 1.6, d: 0.42, h: 2.4 },
-  slots: [matSlot('frame', 'Bookcase', 'wood-oak-light'), matSlot('books', 'Books', 'book-mix'), matSlot('decor', 'Ornaments & baskets', 'stoneware-mix'), matSlot('plant', 'Plants', 'plant-leaf')],
-  build: (size) => {
-    const { w, d, h } = size;
-    const t = 0.02;
-    const n = clamp(Math.round(h / 0.38), 3, 6);
-    const cols = w > 1.1 ? 2 : 1;
-    const z0 = -d / 2;
-    const parts: Part[] = [
-      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, d / 2], o),
-      span('frame', [w / 2 - t, w / 2], [0, h], [z0, d / 2], o),
-      span('frame', [-w / 2, w / 2], [h - t, h], [z0, d / 2], { plan: true }),
-      span('frame', [-w / 2 + t, w / 2 - t], [0, 0.06], [z0, d / 2], o),
-      span('frame', [-w / 2 + t, w / 2 - t], [0.06, h - t], [z0, z0 + 0.008], o),
-    ];
-    if (cols === 2) parts.push(span('frame', [-t / 2, t / 2], [0.06, h - t], [z0, d / 2], o));
-    const ys = range(n).map((i) => 0.06 + ((h - t - 0.06) * i) / n);
-    const bayH = (h - t - 0.06) / n;
-    ys.forEach((y, i) => {
-      if (i > 0) parts.push(span('frame', [-w / 2 + t, w / 2 - t], [y - t, y], [z0, d / 2], o));
-      const bays: V2[] = cols === 2 ? [[-w / 2 + t, -t / 2], [t / 2, w / 2 - t]] : [[-w / 2 + t, w / 2 - t]];
-      bays.forEach(([a, b], k) => parts.push(...styleBay({ books: 'books', decor: 'decor', plant: 'plant' }, a, b, y, bayH - t, z0 + 0.01, d - 0.02, 11 + i * 7 + k * 3)));
-    });
-    return parts;
-  },
-}), ['books', 'decor', 'plant']);
-
 const styledCubes = filled(defineItem({
   id: 'styled-cube-shelf',
   name: 'Cube shelf with baskets',
@@ -444,39 +407,6 @@ const styledDivider = filled(defineItem({
     return parts;
   },
 }), ['books', 'plant']);
-
-const styledLadder = filled(defineItem({
-  id: 'styled-ladder-shelf',
-  name: 'Leaning ladder shelf, walnut',
-  category: 'living',
-  type: 'storage',
-  group: 'Bookcases & shelves',
-  tags: ['ladder shelf', 'leaning shelf', 'plants', 'books', 'decor'],
-  description: 'A leaning ladder shelf with shelves getting deeper towards the floor, styled with plants, a stack of books, baskets and a throw over the top rung.',
-  defaultSize: { w: 0.6, d: 0.42, h: 1.8 },
-  minSize: { w: 0.45, d: 0.34, h: 1.4 },
-  maxSize: { w: 0.9, d: 0.5, h: 2.0 },
-  slots: [matSlot('wood', 'Ladder', 'wood-walnut'), matSlot('books', 'Books', 'book-mix'), matSlot('decor', 'Pots & baskets', 'jute-basket'), matSlot('plant', 'Plants', 'plant-leaf')],
-  build: (size) => {
-    const { w, d, h } = size;
-    const zF = d / 2 - 0.02;
-    const zB = -d / 2 + 0.02;
-    const at = (y: number) => zF + (zB - zF) * (y / h);
-    const parts: Part[] = [];
-    for (const s of [-1, 1]) parts.push({ ...span('wood', [-0.015, 0.015], [0, Math.hypot(h, zF - zB)], [-0.02, 0.02], { plan: true }), position: [s * (w / 2 - 0.02), h / 2, (zF + zB) / 2], rotation: [-Math.atan2(zF - zB, h), 0, 0] } as Part);
-    const ys = [0.35, 0.8, 1.22, h - 0.12];
-    ys.forEach((y, i) => {
-      const zf = at(y) + 0.02;
-      parts.push(span('wood', [-w / 2 + 0.035, w / 2 - 0.035], [y - 0.018, y], [zB - 0.01, zf], { plan: i === 0 }));
-      const depth = zf - zB;
-      if (i === 0) parts.push(span('decor', [-w / 2 + 0.06, w / 2 - 0.06], [y, y + 0.24], [zB, zB + Math.min(0.3, depth - 0.02)], { bevel: 0.012, plan: false }));
-      else if (i === 1) parts.push(...plant('decor', 'plant', -w * 0.18, y, zB + depth * 0.5, 0.3), ...bookStack('books', w * 0.2, y, zB + depth * 0.5, 4, 0.17, Math.min(0.16, depth * 0.8)));
-      else if (i === 2) parts.push(...trailing('decor', 'plant', 0, y, zB + depth * 0.45));
-      else parts.push(bookBlock('books', -w / 2 + 0.05, 0.05, y, 0.2, zB, Math.min(0.14, depth)));
-    });
-    return parts;
-  },
-}), ['books', 'decor', 'plant']);
 
 const kitchenShelves = filled(defineItem({
   id: 'styled-kitchen-wall-shelves',
@@ -967,11 +897,9 @@ const utilityRack = filled(defineItem({
 }), ['bins', 'towels', 'basket']);
 
 const items: PackItem[] = [
-  styledBookcase,
   styledCubes,
   styledWallShelves,
   styledDivider,
-  styledLadder,
   kitchenShelves,
   openWardrobe,
   glassWardrobe,

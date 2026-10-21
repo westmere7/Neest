@@ -152,7 +152,7 @@ export function withAllModels(assets: AssetDefinition[]): AssetDefinition[] {
  * that replace it (project loading rewrites placed items; see storage/migrations). `dh` is the
  * height the old item added above the furniture for its props (models do not count props).
  */
-export const RETIRED_MODEL_ITEMS: Record<string, { assetId: string; model?: string; dh?: number }> = {
+export const RETIRED_MODEL_ITEMS: Record<string, { assetId: string; model?: string; dh?: number; keepModel?: boolean }> = {
   'model-variants:bookcase-empty': { assetId: 'bookcase', model: 'empty' },
   'model-variants:shelf-ladder-empty': { assetId: 'shelf-ladder', model: 'empty' },
   'model-variants:shelving-unit-empty': { assetId: 'shelving-unit', model: 'empty' },
@@ -191,12 +191,47 @@ export const RETIRED_MODEL_ITEMS: Record<string, { assetId: string; model?: stri
   'branded-bathroom-vn:inax-ac-902vn': { assetId: 'branded-bathroom-vn:toto-ms885de2' },
   'branded-bathroom-vn:grohe-euphoria-smartcontrol-310': { assetId: 'branded-bathroom-vn:american-standard-wf-1772' },
   'branded-climate-vn:daikin-ftkb25xvmv': { assetId: 'branded-climate-vn:panasonic-cs-xu9zkh-8' },
+  // Look-alike items removed on 2026-10-21 (same shape and look as the item kept). Placed items keep their
+  // size, materials and, where the kept item has it, their model.
+  'styled-storage:styled-bookcase': { assetId: 'bookcase', keepModel: true },
+  'styled-storage:styled-ladder-shelf': { assetId: 'shelf-ladder', keepModel: true },
+  'sofas:chesterfield-tufted': { assetId: 'sofa-chesterfield', keepModel: true },
+  'couches:chesterfield-rolled-arm': { assetId: 'sofa-chesterfield', keepModel: true },
+  'sofas:mid-century-tufted-bench': { assetId: 'sofa-mid-century', keepModel: true },
+  'sofas:sectional-chaise-right': { assetId: 'couches:chaise-sectional-piped-right', keepModel: true },
+  'sofas:sectional-chaise-left': { assetId: 'couches:chaise-sectional-piped-left', keepModel: true },
+  'sofas:camelback': { assetId: 'couches:camelback-show-wood', keepModel: true },
+  'sofas:tuxedo': { assetId: 'couches:tufted-tuxedo-3-seat', keepModel: true },
+  'sofas:track-arm-loveseat': { assetId: 'couches:piped-track-arm-2-seat', keepModel: true },
+  'kitchen-counters:base-shaker-doors': { assetId: 'kitchen-counters:base-doors-90', keepModel: true },
+  'kitchen-counters:base-door-60': { assetId: 'kitchen-base-cabinet', keepModel: true },
+  'kitchen-counters:base-drawers-3': { assetId: 'kitchen-collection:base-drawer-unit', keepModel: true },
+  'kitchen-counters:sink-farmhouse-shaker': { assetId: 'kitchen-collection:sink-base-farmhouse', keepModel: true },
+  'kitchen-counters:sink-inset-80': { assetId: 'kitchen-sink-unit', keepModel: true },
+  'kitchen-counters:sink-double-bowl-120': { assetId: 'kitchen-collection:sink-double', keepModel: true },
+  'branded-home-electronics:xiaomi-smart-standing-fan-2-lite': { assetId: 'branded-home-electronics:xiaomi-smart-standing-fan-2', keepModel: true },
+  'branded-home-electronics:xiaomi-smart-standing-fan-2-pro': { assetId: 'branded-home-electronics:xiaomi-smart-standing-fan-2', keepModel: true },
+  'kitchen-collection:oven-microwave-tower': { assetId: 'kitchen-oven-tower', keepModel: true },
+  'cabinets-wardrobes:vitrine': { assetId: 'display-cabinet', keepModel: true },
+  'shelving:over-toilet-shelf': { assetId: 'bathroom-collection:over-toilet-shelving', keepModel: true },
+  'structures:built-in-wardrobe-wall': { assetId: 'cabinets-wardrobes:wardrobe-builtin', keepModel: true },
+  'branded-home-electronics:dyson-v12-detect-slim': { assetId: 'branded-home-electronics:dyson-v15-detect', keepModel: true },
+  'branded-washers:aqua-aqh-v800h-ss': { assetId: 'branded-washers:aqua-aqh-v700fw', keepModel: true },
+  'branded-washers:aqua-aqh-v901k-ps': { assetId: 'branded-washers:aqua-aqh-v700fw', keepModel: true },
+  'branded-washers:aqua-aqh-h1000j-ps': { assetId: 'branded-washers:aqua-aqh-h900g-ps', keepModel: true },
+  'branded-laptops:macbook-air-13-m3': { assetId: 'branded-laptops:macbook-pro-14-m4', keepModel: true },
+  'workspace:computer-desk-hutch': { assetId: 'desk-hutch', keepModel: true },
+  'bedroom-collection:hollywood-vanity': { assetId: 'beauty:hollywood-vanity-set-up', keepModel: true },
+  'ac-outdoor-units:outdoor-unit-12000btu': { assetId: 'ac-outdoor-units:outdoor-unit-9000btu', keepModel: true },
+  'ac-outdoor-units:outdoor-unit-18000btu': { assetId: 'ac-outdoor-units:outdoor-unit-9000btu', keepModel: true },
 };
 
 /** The item and model to use for an asset id, following retired version items to their replacement. */
 export function currentItem(assetId: string, model?: string): { assetId: string; model?: string; dh?: number } {
   const r = RETIRED_MODEL_ITEMS[assetId];
-  return r ? { assetId: r.assetId, ...(r.model ? { model: r.model } : {}), ...(r.dh ? { dh: r.dh } : {}) } : { assetId, ...(model ? { model } : {}) };
+  if (!r) return { assetId, ...(model ? { model } : {}) };
+  const m = r.model ?? (r.keepModel ? model : undefined);
+  return { assetId: r.assetId, ...(m ? { model: m } : {}), ...(r.dh ? { dh: r.dh } : {}) };
 }
 
 /** Moves a placed item off a retired item onto its replacement (and model, if any); true when changed. */
@@ -205,7 +240,7 @@ export function upgradeRetiredItem(o: { assetId: string; model?: string; height:
   if (!r) return false;
   o.assetId = r.assetId;
   if (r.model) o.model = r.model;
-  else delete o.model;
+  else if (!r.keepModel) delete o.model;
   if (r.dh) o.height = Math.max(0.005, Math.round((o.height - r.dh) * 1e4) / 1e4);
   return true;
 }

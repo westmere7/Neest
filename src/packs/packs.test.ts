@@ -112,7 +112,7 @@ describe('pack models', () => {
   });
 
   it('gives filled storage and vanities a Filled (default) and an Empty model', () => {
-    for (const id of ['styled-storage:styled-bookcase', 'styled-storage:open-wardrobe-clothes', 'beauty:hollywood-vanity-set-up']) {
+    for (const id of ['styled-storage:styled-display-cabinet', 'styled-storage:open-wardrobe-clothes', 'beauty:hollywood-vanity-set-up']) {
       const a = ASSETS_BY_ID[id];
       expect(assetModels(a).map((m) => m.id), id).toEqual(['filled', 'empty']);
       const full = withModel(a, 'filled').build(a.defaultSize).length;

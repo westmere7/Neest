@@ -36,7 +36,6 @@ import {
   matSlot,
   mirrorZ,
   pillow,
-  poly,
   pot,
   prism,
   range,
@@ -1118,120 +1117,6 @@ const bedsideCart = defineItem({
 });
 
 // ---------------------------------------------------------------------------
-// 11. Hollywood vanity with a bulb-ringed mirror and stool
-// ---------------------------------------------------------------------------
-
-function vanityGeom(w: number, d: number, h: number) {
-  const mw = Math.min(w - 0.1, 0.9);
-  const y0 = 0.78;
-  return { mw, y0, ymid: (y0 + h) / 2, zf: -d / 2 + 0.03 };
-}
-
-const hollywoodVanity = defineItem({
-  id: 'hollywood-vanity',
-  name: 'Hollywood vanity with lit mirror & stool',
-  category: 'bedroom',
-  type: 'surfaces',
-  group: 'Vanity & dressing tables',
-  tags: [
-    'vanity',
-    'dressing table',
-    'makeup',
-    'hollywood mirror',
-    'bulbs',
-    'lighted mirror',
-    'stool',
-    'bàn trang điểm',
-    'gương đèn',
-    'gương trang điểm có đèn',
-    'ghế đôn',
-  ],
-  defaultSize: { w: 1.1, d: 0.55, h: 1.6 },
-  minSize: { w: 0.8, d: 0.45, h: 1.4 },
-  maxSize: { w: 1.5, d: 0.65, h: 1.9 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Desk & frame', 'laminate-white-gloss'),
-    matSlot('mirror', 'Mirror & glass', 'glass-mirror'),
-    matSlot('light', 'Bulbs', 'bulb-glow'),
-    matSlot('upholstery', 'Stool & tray', 'fabric-velvet-blush'),
-  ],
-  light: {
-    color: '#ffe7c4',
-    intensity: 0.45,
-    distance: 2.5,
-    y: 1.19,
-    heads: [
-      { x: -0.415, y: 1.19, z: -0.23 },
-      { x: 0.415, y: 1.19, z: -0.23 },
-      { x: 0, y: 1.555, z: -0.23 },
-    ],
-  },
-  build: ({ w, d, h }) => {
-    const { mw, y0, zf } = vanityGeom(w, d, h);
-    const dd = d - 0.08;
-    const zFront = -d / 2 + dd;
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0.72, 0.755], [-d / 2, zFront], { bevel: 0.006 }),
-      sp('body', [-w / 2 + 0.03, w / 2 - 0.03], [0.62, 0.72], [-d / 2 + 0.01, zFront - 0.02]),
-    ];
-    // Two drawers either side of the knee space, with crystal knobs.
-    const dx = Math.max(0.2, w * 0.3);
-    for (const s of [-1, 1]) {
-      const xs: V2 = s < 0 ? [-w / 2 + 0.03, -w / 2 + 0.03 + dx] : [w / 2 - 0.03 - dx, w / 2 - 0.03];
-      parts.push(sp('body', [xs[0] + 0.003, xs[1] - 0.003], [0.625, 0.715], [zFront - 0.02, zFront], 0.003));
-      parts.push(...knob('mirror', [(xs[0] + xs[1]) / 2, 0.67, zFront], 0.012));
-    }
-    // Slim tapered legs.
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        parts.push(vcyl('body', sx * (w / 2 - 0.05), sz < 0 ? -d / 2 + 0.05 : zFront - 0.04, 0, 0.62, 0.012, { rTop: 0.02, plan: false }));
-      }
-    }
-    // Mirror: frame board, glass and the ring of bulbs.
-    const mx0 = -mw / 2;
-    const mx1 = mw / 2;
-    parts.push(
-      sp('body', [mx0, mx1], [y0 - 0.025, h - 0.01], [-d / 2, zf], 0.008),
-      sp('body', [mx0 + 0.02, mx1 - 0.02], [0.755, y0 - 0.02], [-d / 2 + 0.005, zf - 0.005]),
-      sp('mirror', [mx0 + 0.075, mx1 - 0.075], [y0 + 0.02, h - 0.085], [zf, zf + 0.004]),
-    );
-    const nV = clamp(Math.round((h - 0.08 - y0) / 0.14), 4, 9);
-    for (const y of spaced(nV, y0 + 0.04, h - 0.1)) {
-      for (const s of [-1, 1]) {
-        const bx = s * (mw / 2 - 0.035);
-        parts.push(discZ('body', [bx, y, zf + 0.004], 0.014, 0.008, NP), sphere('light', [bx, y, zf + 0.026], 0.022, NP));
-      }
-    }
-    const nT = clamp(Math.round((mw - 0.14) / 0.14), 3, 7);
-    for (const x of spaced(nT, mx0 + 0.12, mx1 - 0.12)) {
-      parts.push(discZ('body', [x, h - 0.045, zf + 0.004], 0.014, 0.008, NP), sphere('light', [x, h - 0.045, zf + 0.026], 0.022, NP));
-    }
-    // On the desk: a velvet jewellery tray and two perfume bottles.
-    parts.push(
-      sp('upholstery', [mx1 - 0.25, mx1 - 0.05], [0.755, 0.775], [zf + 0.05, zf + 0.17], 0.004),
-      vcyl('mirror', mx0 + 0.12, zf + 0.1, 0.755, 0.85, 0.025, NP),
-      sphere('mirror', [mx0 + 0.12, 0.865, zf + 0.1], 0.016, NP),
-      vcyl('mirror', mx0 + 0.18, zf + 0.12, 0.755, 0.82, 0.02, { rTop: 0.016, plan: false }),
-    );
-    // Velvet stool tucked under the desk on a tulip base.
-    const sr = Math.min(0.17, d / 2 - 0.02);
-    const sz = d / 2 - sr - 0.005;
-    parts.push(
-      lathe('body', [0, 0, sz], [[0, 0], [sr * 0.8, 0], [sr * 0.8, 0.012], [0.03, 0.06], [0.025, 0.36], [sr * 0.6, 0.4], [0, 0.4]], { segments: 24 }),
-      cyl('upholstery', [0, 0.435, sz], sr, 0.07, { rTop: sr - 0.012, segments: 28 }),
-      ring('upholstery', [0, 0.402, sz], sr - 0.004, 0.006, NP),
-    );
-    return parts;
-  },
-  planDetail: ({ w, d }) => [rectPoly(-w / 2, -d / 2, w / 2, -d / 2 + d - 0.08), circle0(0, d / 2 - Math.min(0.17, d / 2 - 0.02) - 0.005, Math.min(0.17, d / 2 - 0.02))],
-});
-
-function circle0(x: number, z: number, r: number) {
-  return poly(range(20).map((i) => [x + Math.cos((i / 20) * TAU) * r, z + Math.sin((i / 20) * TAU) * r] as V2));
-}
-
-// ---------------------------------------------------------------------------
 // 12. Walk-in closet island with a glass-topped jewellery display
 // ---------------------------------------------------------------------------
 
@@ -1923,7 +1808,6 @@ export default definePack({
     floatingNightstand,
     caneNightstand,
     bedsideCart,
-    hollywoodVanity,
     closetIsland,
     flutedDresser,
     chaise,

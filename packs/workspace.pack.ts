@@ -132,38 +132,6 @@ const writingDesk = defineItem({
   },
 });
 
-const hutchDesk = defineItem({
-  ...desk,
-  id: 'computer-desk-hutch',
-  name: 'Computer desk with hutch',
-  tags: ['computer desk', 'hutch', 'shelves', 'desk', 'study', 'bàn máy tính'],
-  description: 'A white computer desk with an open hutch of two shelves above the work surface and a keyboard-height gap underneath.',
-  defaultSize: { w: 1.2, d: 0.6, h: 1.45 },
-  minSize: { w: 0.9, d: 0.5, h: 1.2 },
-  maxSize: { w: 1.6, d: 0.7, h: 1.8 },
-  slots: [matSlot('body', 'Desk', 'paint-pure-white'), matSlot('shelf', 'Hutch shelves', 'wood-oak-light')],
-  build: (size) => {
-    const { w, d, h } = size;
-    const y = 0.75;
-    const hz0 = -d / 2;
-    const hz1 = -d / 2 + 0.24;
-    return keep(
-      [
-        top('body', [-w / 2, w / 2], [-d / 2, d / 2], y, 0.025),
-        panelLeg('body', -w / 2 + 0.011, [-d / 2, d / 2], y - 0.025),
-        panelLeg('body', w / 2 - 0.011, [-d / 2, d / 2], y - 0.025),
-        span('body', [-w / 2 + 0.022, w / 2 - 0.022], [0.1, y - 0.1], [-d / 2, -d / 2 + 0.015], o),
-        span('body', [-w / 2, -w / 2 + 0.02], [y, h], [hz0, hz1], o),
-        span('body', [w / 2 - 0.02, w / 2], [y, h], [hz0, hz1], o),
-        span('body', [-w / 2, w / 2], [h - 0.02, h], [hz0, hz1], o),
-        span('shelf', [-w / 2 + 0.02, w / 2 - 0.02], [y + (h - y) * 0.48, y + (h - y) * 0.48 + 0.02], [hz0, hz1], o),
-        span('body', [-w / 2 + 0.02, w / 2 - 0.02], [y, h], [hz0, hz0 + 0.008], o),
-      ],
-      size,
-    );
-  },
-});
-
 /**
  * L-shaped corner desk, corner at the back left: the main run along the back (full width, depth
  * `run`) and the return down the left side (full depth, width `ret`). `right` mirrors it.
@@ -640,7 +608,6 @@ materials.push({ id: 'sisal-desk', name: 'Paper cord', category: 'fabric', color
 const items: PackItem[] = [
   slimDesk,
   writingDesk,
-  hutchDesk,
   lDeskLeft,
   lDeskRight,
   lDeskPedestal,

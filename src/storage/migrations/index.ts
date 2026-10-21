@@ -128,7 +128,7 @@ export function repairProject(project: Project): MigrationResult {
   let upgraded = 0;
   for (const o of Object.values(p.objects)) if (upgradeRetiredItem(o)) upgraded++;
   for (const opt of p.options ?? []) for (const o of Object.values(opt.plan?.objects ?? {})) if (upgradeRetiredItem(o)) upgraded++;
-  if (upgraded) warnings.push(`${upgraded} retired item(s) replaced: empty or styled versions now use the original item with a model variant, look-alike branded items the one kept.`);
+  if (upgraded) warnings.push(`${upgraded} retired item(s) replaced: empty or styled versions now use the original item with a model variant, look-alike items the one kept.`);
   for (const [key, r] of Object.entries(p.rooms)) if (r.id !== key) r.id = key;
   for (const [key, m] of Object.entries(p.materials)) if (m.id !== key) m.id = key;
   const camIds = new Set<string>();

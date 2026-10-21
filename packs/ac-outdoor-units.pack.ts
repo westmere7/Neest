@@ -56,26 +56,6 @@ const unit9k = unit(
   'Small wall-split condenser for a bedroom unit: a domed ring-and-spoke wire grille over a four-blade fan, aluminium coil behind guards at the side and back, the valve cover with copper valves on the right, on two base rails.',
 );
 
-const unit12k = unit(
-  'outdoor-unit-12000btu',
-  'Outdoor unit, 12,000 BTU',
-  { w: 0.78, d: 0.27, h: 0.53 },
-  [0.08, 0.05, 0.03],
-  { fanX: 0.38, fanR: 0.41, guard: 'spiral' },
-  ['1.5 hp', '12000 btu', 'split ac', 'balcony'],
-  'Mid-size wall-split condenser with a spiral wire fan guard, aluminium coil behind guards, a ribbed steel top, copper service valves and the insulated pipe run under the right-hand cover.',
-);
-
-const unit18k = unit(
-  'outdoor-unit-18000btu',
-  'Outdoor unit, 18,000 BTU',
-  { w: 0.84, d: 0.3, h: 0.6 },
-  [0.08, 0.06, 0.03],
-  { fanX: 0.38, fanR: 0.41, guard: 'hbars', blades: 3 },
-  ['2 hp', '18000 btu', 'split ac', 'living room'],
-  'Living-room size condenser: horizontal wire bars across a round opening over a three-blade fan, aluminium coil on the side and back, valve cover and copper valves on the right, on rubber-padded rails.',
-);
-
 const unit24k = unit(
   'outdoor-unit-24000btu',
   'Large outdoor unit, 24,000 BTU',
@@ -171,7 +151,7 @@ export default definePack({
   description:
     'Generic air-conditioner outdoor units from 9,000 to 24,000 BTU, a twin-fan multi-split unit, a twin-fan side-discharge VRF cabinet and a window air conditioner, plus a wall bracket and a rooftop stand to put them on.',
   license: 'CC0 (made for Neest)',
-  items: [unit9k, unit12k, unit18k, unit24k, twinMulti, vrfTwin, windowAc, bracket, stand],
+  items: [unit9k, unit24k, twinMulti, vrfTwin, windowAc, bracket, stand],
   patterns: AC_PATTERNS,
   materials: AC_MATERIALS,
 });

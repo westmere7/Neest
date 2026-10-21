@@ -1006,64 +1006,6 @@ const gasHob = defineItem({
   },
 });
 
-const ovenTower = defineItem({
-  id: 'oven-microwave-tower',
-  name: 'Oven and microwave tower',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Cooking',
-  tags: ['oven', 'microwave', 'tall unit', 'housing', 'warming drawer', 'built-in', 'appliance tower'],
-  defaultSize: { w: 0.6, d: 0.6, h: 2.2 },
-  minSize: { w: 0.56, d: 0.55, h: 1.9 },
-  maxSize: { w: 0.9, d: 0.7, h: 2.5 },
-  wallSnap: true,
-  slots: [FRONT, matSlot('glass', 'Appliance glass', 'screen-black'), matSlot('steel', 'Appliance steel', 'stainless'), BRASS],
-  build: ({ w, d, h }) => {
-    const zf = faceZ(d);
-    const zs = zf + FRONT_T;
-    const X: V2 = [-w / 2, w / 2];
-    const XI: V2 = [-w / 2 + 0.0015, w / 2 - 0.0015];
-    const cr = 0.03;
-    const dr: V2 = [PLINTH, 0.42];
-    const parts: Part[] = [
-      ...baseCarcass(w, d, h - cr),
-      span('front', [-w / 2, w / 2], [h - cr, h], [-d / 2, zs + 0.008], { bevel: 0.004, plan: false }),
-      // Deep pan drawer.
-      ...panel('shaker', 'front', X, dr, zf),
-      ...drawerPulls('cup', 'handle', X, dr, zs),
-      // Warming drawer.
-      span('steel', XI, [0.4215, 0.5585], [zf, zs], { bevel: 0.003, plan: false }),
-      span('glass', [-w / 2 + 0.03, w / 2 - 0.03], [0.44, 0.47], [zs, zs + 0.002], NP),
-      ...barPull('steel', [0, 0.525, zs], w * 0.55, { stand: 0.02 }),
-      // Oven: control panel over a glazed door with a long bar handle.
-      span('glass', XI, [1.08, 1.1585], [zf, zs], { bevel: 0.003, plan: false }),
-      span('steel', [-0.05, 0.05], [1.105, 1.135], [zs, zs + 0.002], NP),
-      span('steel', XI, [0.5615, 1.0785], [zf, zs], { bevel: 0.004, plan: false }),
-      span('glass', [-w / 2 + 0.06, w / 2 - 0.06], [0.62, 0.99], [zs, zs + 0.002], NP),
-      ...frame4('steel', [-w / 2 + 0.055, w / 2 - 0.055], [0.615, 0.995], [zs, zs + 0.004], 0.008),
-      ...barPull('steel', [0, 1.04, zs], w * 0.72, { stand: 0.02 }),
-      // Microwave: black glass fascia, framed door window, keypad and display.
-      span('glass', XI, [1.1615, 1.5585], [zf, zs], { bevel: 0.003, plan: false }),
-    ];
-    for (const x of [-w / 2 + 0.07, w / 2 - 0.07]) {
-      parts.push(discZ('steel', [x, 1.12, zs + 0.01], 0.018, 0.02, NP));
-      parts.push(span('glass', [x - 0.002, x + 0.002], [1.125, 1.136], [zs + 0.02, zs + 0.022], NP));
-    }
-    const doorR = -w / 2 + (w - 0.03) * 0.72;
-    parts.push(...frame4('steel', [-w / 2 + 0.03, doorR], [1.19, 1.53], [zs, zs + 0.004], 0.014));
-    parts.push(...barPull('steel', [doorR - 0.022, 1.36, zs + 0.004], 0.24, { vertical: true, stand: 0.016, r: 0.005 }));
-    const kx: V2 = [doorR + 0.02, w / 2 - 0.025];
-    parts.push(span('steel', kx, [1.47, 1.51], [zs, zs + 0.002], NP));
-    for (const y of [1.42, 1.38, 1.34]) {
-      for (const x of cells(3, kx[0], kx[1])) parts.push(span('steel', [x - 0.009, x + 0.009], [y - 0.008, y + 0.008], [zs, zs + 0.003], { bevel: 0.002, plan: false }));
-    }
-    // Top storage door(s).
-    parts.push(...doors('shaker', 'front', 'handle', X, [1.56, h - cr], zf, 'bottom'));
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2, faceZ(d)], [w / 2, faceZ(d)])],
-});
-
 // ---------------------------------------------------------------------------
 // Storage units
 // ---------------------------------------------------------------------------
@@ -2035,7 +1977,6 @@ export default definePack({
     doubleSink,
     inductionHob,
     gasHob,
-    ovenTower,
     pantryPullout,
     applianceGarage,
     islandBar,
