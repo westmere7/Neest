@@ -1,13 +1,15 @@
 /**
- * Branded bathroom (Vietnam) — nine real products sold widely in Vietnam, built to their
+ * Branded bathroom (Vietnam) — twelve real products sold widely in Vietnam, built to their
  * published dimensions.
  *
- * Toilets: TOTO MS885DE2 one-piece, Caesar CD1338 two-piece. Basins: American
- * Standard Active 0955 wall-hung with semi-pedestal, TOTO LT710CSR and Caesar L5225 counter-top.
- * Showers: American Standard Signature WF-1772 rain column.
- * Water heating: Ariston SL2 20 RS 2.5 FE storage heater (bình nóng lạnh).
+ * Toilets: TOTO MS885DE2 one-piece, Caesar CD1338 two-piece, American Standard VF-0100 squat pan,
+ * INAX AC-952VN wall-hung. Basins: American Standard Active 0955 wall-hung with semi-pedestal,
+ * TOTO LT710CSR and Caesar L5225 counter-top, TOTO LPT236CS on a long pedestal.
+ * Showers and baths: American Standard Signature WF-1772 rain column, Caesar AT0150 built-in bath.
+ * Water heating: Ariston SL2 20 RS 2.5 FE storage heater (bình nóng lạnh), Panasonic DH-4RL1VW
+ * instant heater (máy nước nóng trực tiếp).
  *
- * Specs come from Vietnamese retailer listings (meta.vn) and the makers' pro catalogues, linked in
+ * Specs come from Vietnamese retailer listings (meta.vn and others) and the makers' sites, linked in
  * each item's `brand.url`. The shapes are original procedural approximations: no logos or
  * trademark artwork are drawn. They are fixed products, so nothing resizes.
  */
@@ -383,13 +385,249 @@ const aristonSl2 = defineItem({
   ]),
 });
 
+// ---------------------------------------------------------------------------
+// Everyday Vietnamese bathroom: squat pan, pedestal basin, instant heater, bath, wall-hung WC
+// ---------------------------------------------------------------------------
+
+/**
+ * Like ringPrisms, with separate roundness for the outer and inner outlines. Both halves show in
+ * the plan unless `plan` is false.
+ */
+function ringPrismsN(slot: string, outer: [number, number, number, number], nOut: number, inner: [number, number, number, number], nIn: number, y0: number, h: number, plan = true): Part[] {
+  const [cx, cz, ao, bo] = outer;
+  const [, czIn, ai, bi] = inner;
+  const A = [...superPts(cx, cz, ao, bo, nOut, -Math.PI / 2, Math.PI / 2), ...superPts(cx, czIn, ai, bi, nIn, Math.PI / 2, -Math.PI / 2)];
+  const B = [...superPts(cx, cz, ao, bo, nOut, Math.PI / 2, (3 * Math.PI) / 2), ...superPts(cx, czIn, ai, bi, nIn, (3 * Math.PI) / 2, Math.PI / 2)];
+  const opt = plan ? undefined : o;
+  return [prism(slot, A, y0, h, opt), prism(slot, B, y0, h, opt)];
+}
+
+/** Closed superellipse outline (for a filled prism). */
+const superOutline = (cx: number, cz: number, a: number, b: number, n: number, seg = 40): V2[] => superPts(cx, cz, a, b, n, 0, 2 * Math.PI, seg).slice(0, -1);
+
+const amstdVf0100 = defineItem({
+  id: 'american-standard-vf-0100',
+  name: 'American Standard VF-0100 squat toilet',
+  category: 'bathroom',
+  type: 'plumbing',
+  group: 'Toilets',
+  tags: tags('american standard', 'xí xổm', 'bồn cầu xổm', 'bệ xí xổm', 'squat toilet', 'squat pan', 'vf-0100'),
+  description: 'Vitreous china squat pan (bệ xí xổm) made in Vietnam: a wide flat rim with ribbed foot treads, a narrow oval bowl and the flushing hood at the back. It is set flush into a raised tiled floor.',
+  ...fixed(0.398, 0.503, 0.241),
+  wallSnap: true,
+  slots: [matSlot('ceramic', 'Ceramic', 'ceramic-white'), matSlot('drain', 'Outlet', 'solid-black')],
+  build: ({ w, d, h }) => {
+    const top = h - 0.04;
+    const ft = 0.025;
+    const ai = 0.1;
+    const bi = d / 2 - 0.05;
+    const cz = 0.01;
+    const y0 = 0.03;
+    const yT = top - ft - y0;
+    const parts: Part[] = [
+      // Flat rim around an oval opening.
+      ...ringPrismsN('ceramic', [0, 0, w / 2, d / 2], 2.6, [0, cz, ai, bi], 2, top - ft, ft),
+      // Bowl: tapering underside, sloping down to the outlet.
+      lathe('ceramic', [0, y0, cz], [[0, 0], [0.3, 0], [0.55, yT * 0.35], [0.85, yT * 0.75], [1, yT], [0.97, yT - 0.006], [0.75, yT - 0.045], [0.45, yT - 0.085], [0.22, yT - 0.105], [0, yT - 0.11]], { segments: 36, scale: [ai, 1, bi] }),
+      cyl('drain', [0, y0 + yT - 0.106, cz + 0.02], ai * 0.3, 0.006, { segments: 24, scale: [1, 1, 1.8], plan: false }),
+      vcyl('ceramic', 0, cz, 0, y0 + 0.005, 0.03, o),
+      // Flushing hood over the back of the bowl, with the inlet spigot behind it.
+      sphere('ceramic', [0, top, -0.17], 1, { scale: [ai + 0.03, h - top, 0.075], plan: false }),
+      rod('ceramic', [0, top - 0.012, -d / 2 + 0.004], [0, top - 0.012, -0.2], 0.018, o),
+    ];
+    // Ribbed foot treads either side of the bowl.
+    for (const s of [-1, 1]) {
+      for (const z of [-0.05, 0, 0.05, 0.1, 0.15]) {
+        const x: V2 = s < 0 ? [-0.165, -0.115] : [0.115, 0.165];
+        parts.push(span('ceramic', x, [top, top + 0.005], [z - 0.012, z + 0.012], { bevel: 0.002, plan: false }));
+      }
+    }
+    return parts;
+  },
+  planDetail: () => [poly(ellipsePoints(0, 0.01, 0.1, 0.2015)), circle([0, 0.03], 0.03), line([-0.13, -0.095], [0.13, -0.095])],
+  brand: brand('American Standard', 'VF-0100', 'Squat pan (bệ xí xổm)', 'http://noithatphongtamvn.com/san-pham/be-xi-xom-american-standard-vf-0100-16014', [
+    ['Size (L × W × H)', '503 × 398 × 241 mm'],
+    ['Drain centre (tâm xả)', '300 mm'],
+    ['Flush', 'Straight-through (xả thẳng), separate valve or cistern'],
+    ['Glaze', 'Anti-stick glaze'],
+    ['Made in', 'Vietnam'],
+  ]),
+});
+
+const totoLpt236 = defineItem({
+  id: 'toto-lpt236cs',
+  name: 'TOTO LPT236CS pedestal basin',
+  category: 'bathroom',
+  type: 'plumbing',
+  group: 'Sinks',
+  tags: tags('toto', 'lavabo chân dài', 'chậu rửa chân dài', 'lavabo treo tường', 'chậu rửa mặt', 'pedestal basin', 'washbasin', 'lpt236cs', 'lpt236cr'),
+  description: 'Rounded-rectangle TOTO wall basin on its full-height ceramic pedestal, which hides the trap. It has a deep bowl, an overflow and a single Ø35 mm tap hole; the tap is sold separately.',
+  ...fixed(0.53, 0.465, 0.81),
+  wallSnap: true,
+  slots: [matSlot('ceramic', 'Ceramic', 'ceramic-white'), matSlot('waste', 'Waste', 'metal-chrome'), matSlot('hole', 'Tap hole & overflow', 'solid-black')],
+  build: ({ w, d, h }) => {
+    const zb = -d / 2;
+    const top = h - 0.002;
+    const bh = 0.17;
+    const y0 = top - bh;
+    const inner: [number, number, number, number] = [0, 0.035, w / 2 - 0.05, d / 2 - 0.1];
+    const floorY = top - 0.135;
+    return [
+      // Long pedestal (column) against the wall.
+      lathe('ceramic', [0, 0, zb + 0.13], [[0, 0], [0.115, 0], [0.12, 0.012], [0.1, 0.05], [0.082, 0.3], [0.085, y0 - 0.05], [0.1, y0 + 0.02], [0, y0 + 0.02]], { segments: 36, scale: [1, 1, 0.8], plan: false }),
+      // Basin: underside, walls and the bowl floor.
+      prism('ceramic', superOutline(0, 0, w / 2 - 0.004, d / 2 - 0.004, 4), y0, 0.012),
+      ...ringPrismsN('ceramic', [0, 0, w / 2, d / 2], 4, inner, 3.2, y0 + 0.003, top - y0 - 0.003, false),
+      prism('ceramic', superOutline(0, inner[1], inner[2], inner[3], 3.2, 32), floorY, 0.01, o),
+      cyl('waste', [0, floorY + 0.012, inner[1]], 0.021, 0.004, o),
+      // Overflow slot in the front wall and the tap hole on the back deck.
+      span('hole', [-0.025, 0.025], [top - 0.05, top - 0.04], [inner[1] + inner[3] - 0.008, inner[1] + inner[3] - 0.002], { bevel: 0.003, plan: false }),
+      cyl('hole', [0, h - 0.0015, -0.165], 0.0175, 0.003, o),
+    ];
+  },
+  planDetail: ({ w, d }) => [poly(superOutline(0, 0.035, w / 2 - 0.05, d / 2 - 0.1, 3.2, 32)), circle([0, -0.165], 0.0175)],
+  brand: brand('TOTO', 'LPT236CS', 'Wall basin with long pedestal (chân dài)', 'https://home.gachhaiyen.com/chau-lavabo-treo-tuong-toto-lpt236cs', [
+    ['Size (W × D × H)', '530 × 465 × 810 mm'],
+    ['Mounting', 'Wall-hung on a full-height pedestal'],
+    ['Tap hole', '1 × Ø35 mm'],
+    ['Overflow', 'Yes'],
+    ['Material', 'Vitreous china, anti-stain glaze'],
+  ]),
+});
+
+const panasonicDh4rl1 = defineItem({
+  id: 'panasonic-dh-4rl1vw',
+  name: 'Panasonic DH-4RL1VW instant water heater',
+  category: 'bathroom',
+  type: 'plumbing',
+  group: 'Water heating',
+  tags: tags('panasonic', 'máy nước nóng trực tiếp', 'máy nước nóng', 'bình nóng lạnh trực tiếp', 'instant water heater', 'shower heater', 'elcb', '4500w', 'dh-4rl1vw'),
+  description: 'Slim white 4.5 kW instant shower heater (máy nước nóng trực tiếp) with an ELCB. It has a power button and lamp above a large temperature knob, and the pipes enter at the bottom. The hand shower is not shown.',
+  ...fixed(0.19, 0.093, 0.38),
+  mount: 'wall',
+  wallSnap: true,
+  defaultElevation: 1.25,
+  slots: [matSlot('body', 'Casing', 'plastic-white'), matSlot('panel', 'Panel & trim', 'solid-light-grey'), matSlot('metal', 'Fittings', 'metal-chrome'), matSlot('lamp', 'Lamp & test button', 'solid-red')],
+  build: ({ w, d, h }) => {
+    const zb = -d / 2;
+    const zf = d / 2;
+    const ky = 0.215;
+    return [
+      span('body', [-w / 2, w / 2], [0.025, h], [zb, zf - 0.016], { bevel: 0.03 }),
+      // Domed front cover.
+      span('body', [-w / 2 + 0.01, w / 2 - 0.01], [0.035, h - 0.012], [zf - 0.03, zf - 0.008], { bevel: 0.016, plan: false }),
+      // Control window: power button with lamp, temperature knob with its pointer.
+      span('panel', [-0.06, 0.06], [0.16, 0.33], [zf - 0.012, zf - 0.005], { bevel: 0.004, plan: false }),
+      span('body', [-0.026, 0.026], [0.278, 0.302], [zf - 0.008, zf - 0.002], { bevel: 0.003, plan: false }),
+      sphere('lamp', [0.04, 0.29, zf - 0.006], 0.004, o),
+      discZ('body', [0, ky, zf - 0.006], 0.034, 0.01, { segments: 32, plan: false }),
+      span('panel', [-0.003, 0.003], [ky + 0.012, ky + 0.03], [zf - 0.001, zf], o),
+      // Name plate near the top and the ELCB with its test button near the bottom.
+      span('panel', [-0.035, 0.035], [h - 0.04, h - 0.03], [zf - 0.01, zf - 0.006], o),
+      span('panel', [-0.032, 0.032], [0.07, 0.1], [zf - 0.012, zf - 0.005], { bevel: 0.003, plan: false }),
+      discZ('lamp', [0.016, 0.085, zf - 0.004], 0.006, 0.004, o),
+      // Inlet, outlet and cable gland underneath.
+      ...[-0.045, 0.045].flatMap((x) => [vcyl('metal', x, -0.005, 0, 0.03, 0.009, o), vcyl('metal', x, -0.005, 0, 0.012, 0.013, o)]),
+      vcyl('panel', 0, -0.015, 0.006, 0.03, 0.008, o),
+    ];
+  },
+  planDetail: ({ w, d }) => [rectPoly(-w / 2 + 0.02, -d / 2 + 0.01, w / 2 - 0.02, d / 2 - 0.02)],
+  brand: brand('Panasonic', 'DH-4RL1VW', 'Instant water heater (no pump)', 'https://www.panasonic.com/vn/consumer/home-appliances/home-shower/instant-water-heater/dh-4rl1vw.html', [
+    ['Power', '4500 W, 220 V'],
+    ['Size (H × W × D)', '380 × 190 × 93 mm'],
+    ['Weight', '2.9 kg'],
+    ['Safety', 'ELCB earth-leakage breaker, flow sensor, IP25'],
+    ['Controls', 'Power button, rotary temperature knob'],
+  ]),
+});
+
+const caesarAt0150 = defineItem({
+  id: 'caesar-at0150',
+  name: 'Caesar AT0150 built-in bathtub',
+  category: 'bathroom',
+  type: 'plumbing',
+  group: 'Showers & tubs',
+  tags: tags('caesar', 'bồn tắm', 'bồn tắm xây', 'bồn tắm nằm', 'bathtub', 'built-in', 'drop-in', 'acrylic', '1.5m', 'at0150'),
+  description: 'A 1.5 m white acrylic Caesar bath without legs or apron (không chân, không yếm), made to be built into a tiled surround. It has a flat rim, a sloped backrest at one end and the drain and overflow at the foot.',
+  ...fixed(1.5, 0.75, 0.44),
+  wallSnap: true,
+  slots: [matSlot('tub', 'Acrylic', 'ceramic-white'), matSlot('metal', 'Drain & overflow', 'metal-chrome')],
+  build: ({ w, d, h }) => {
+    const ft = 0.03;
+    const A = w / 2 - 0.075;
+    const B = d / 2 - 0.07;
+    const fy = 0.05;
+    const wallTop = h - ft;
+    const th = 0.45;
+    const L = (wallTop - fy) / Math.cos(th);
+    return [
+      // Rim, the shell's walls and the floor.
+      ...ringPrismsN('tub', [0, 0, w / 2, d / 2], 10, [0, 0, A, B], 5, wallTop, ft),
+      ...ringPrismsN('tub', [0, 0, w / 2 - 0.03, d / 2 - 0.03], 6, [0, 0, A, B], 5, 0, wallTop, false),
+      prism('tub', superOutline(0, 0, A, B, 5), 0, fy),
+      // Sloped backrest at the head end.
+      span('tub', [-A + 0.08, -A + 0.12], [(fy + wallTop) / 2 - L / 2, (fy + wallTop) / 2 + L / 2], [-B + 0.04, B - 0.04], { rotation: [0, 0, th], plan: false }),
+      // Drain and overflow at the foot end.
+      cyl('metal', [A - 0.15, fy + 0.002, 0], 0.03, 0.004, o),
+      cyl('metal', [A - 0.002, h - 0.13, 0], 0.028, 0.006, { rotation: [0, 0, Math.PI / 2], plan: false }),
+    ];
+  },
+  planDetail: ({ w, d }) => [poly(superOutline(0, 0, w / 2 - 0.075, d / 2 - 0.07, 5)), circle([w / 2 - 0.225, 0], 0.03), line([-w / 2 + 0.2, -d / 2 + 0.11], [-w / 2 + 0.2, d / 2 - 0.11])],
+  brand: brand('Caesar', 'AT0150', 'Built-in bathtub without legs or apron', 'https://caesar.com.vn/zh/san-pham/chi-tiet/181/bon-tam-khong-chan-khong-yem-at0150', [
+    ['Size (L × W × H)', '1500 × 750 × 440 mm'],
+    ['Capacity', '205 L'],
+    ['Material', 'Acrylic'],
+    ['Installation', 'Drop-in, built into a tiled surround'],
+    ['Colour', 'Pure White'],
+  ]),
+});
+
+const inaxAc952 = defineItem({
+  id: 'inax-ac-952vn',
+  name: 'INAX AC-952VN wall-hung toilet',
+  category: 'bathroom',
+  type: 'plumbing',
+  group: 'Toilets',
+  tags: tags('inax', 'bồn cầu treo tường', 'bồn cầu inax', 'két âm tường', 'wall hung', 'concealed cistern', 'rimless', 'ac-952vn'),
+  description: 'Compact rimless INAX wall-hung bowl with smooth skirted sides and a slim soft-close lid. It hangs from a concealed in-wall cistern frame; the flush plate on the wall is not shown.',
+  ...fixed(0.362, 0.55, 0.363),
+  mount: 'wall',
+  wallSnap: true,
+  defaultElevation: 0.05,
+  slots: [matSlot('ceramic', 'Ceramic', 'ceramic-white'), matSlot('seat', 'Seat & lid', 'plastic-white')],
+  build: ({ w, d, h }) => {
+    const zb = -d / 2;
+    const H = h - 0.04;
+    const rx = w / 2 - 0.003;
+    const rz = 0.2;
+    const bz = d / 2 - rz;
+    return [
+      lathe('ceramic', [0, 0, bz], [[0, 0.02], [0.5, 0], [0.8, 0.04], [0.93, 0.12], [0.98, 0.22], [1, H], [0.86, H], [0.6, H - 0.08], [0, H - 0.12]], { segments: 40, scale: [rx, 1, rz] }),
+      // Back of the bowl, flat against the wall.
+      span('ceramic', [-0.15, 0.15], [0.07, H - 0.003], [zb, bz - rz + 0.02], { bevel: 0.03 }),
+      // Seat ring, closed lid and the hinge cover.
+      cyl('seat', [0, H + 0.008, bz + 0.005], rx - 0.006, 0.014, { segments: 40, scale: [1, 1, (rz - 0.01) / (rx - 0.006)], plan: false }),
+      cyl('seat', [0, H + 0.026, bz + 0.01], rx - 0.01, 0.022, { segments: 40, rTop: rx - 0.025, scale: [1, 1, (rz - 0.02) / (rx - 0.01)], plan: false }),
+      span('seat', [-0.1, 0.1], [H - 0.003, H + 0.03], [bz - rz - 0.02, bz - rz + 0.035], { bevel: 0.01, plan: false }),
+    ];
+  },
+  planDetail: ({ d }) => [poly(ellipsePoints(0, d / 2 - 0.19, 0.13, 0.14)), line([-0.1, d / 2 - 0.42], [0.1, d / 2 - 0.42])],
+  brand: brand('INAX', 'AC-952VN', 'Wall-hung toilet for a concealed cistern', 'https://www.inax.com.vn/vi/products/toilet/bon-cau-treo-tuong-ac-952vn/', [
+    ['Size (L × W × H)', '550 × 362 × 363 mm'],
+    ['Flush', 'Powerful Vortex, dual 4.5 / 3 L'],
+    ['Rim', 'Rimless'],
+    ['Glaze', 'Aqua Ceramic'],
+    ['Lid', 'Soft-close'],
+  ]),
+});
+
 export default definePack({
   name: 'Branded bathroom (Vietnam)',
-  version: '1.0.0',
+  version: '1.1.0',
   author: 'Neest team',
   description:
-    'Seven bathroom products sold widely in Vietnam at their published sizes: TOTO and Caesar toilets; American Standard, TOTO and Caesar basins; an American Standard shower column; and an Ariston storage water heater.',
+    'Twelve bathroom products sold widely in Vietnam at their published sizes: TOTO, Caesar, INAX and American Standard toilets (including a squat pan and a wall-hung bowl); American Standard, TOTO and Caesar basins; an American Standard shower column; a Caesar built-in bath; and Ariston and Panasonic water heaters.',
   license: 'CC0 (made for Neest); brand names belong to their owners',
-  items: [totoMs885, caesarCd1338, amstdActive, totoLt710, caesarL5225, amstdWf1772, aristonSl2],
+  items: [totoMs885, caesarCd1338, amstdVf0100, inaxAc952, amstdActive, totoLt710, caesarL5225, totoLpt236, amstdWf1772, caesarAt0150, aristonSl2, panasonicDh4rl1],
 });
 

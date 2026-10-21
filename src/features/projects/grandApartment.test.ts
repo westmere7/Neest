@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import '@/packs/loader';
 import { ProjectSchema, type PlacedObject, type Vec2 } from '@/domain/model/schema';
 import { computeWallNetwork } from '@/domain/geometry/walls';
 import { detectRoomFaces, pointInFace } from '@/domain/geometry/rooms';

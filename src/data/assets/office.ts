@@ -541,65 +541,6 @@ function swivelBase(baseSlot: string, frameSlot: string, R: number, topY: number
   return parts;
 }
 
-const officeChair = defineAsset({
-  id: 'office-chair',
-  name: 'Office chair',
-  category: 'office',
-  type: 'seating',
-  group: 'Desk chairs',
-  tags: ['chair', 'desk chair', 'task chair', 'swivel', 'seating'],
-  defaultSize: { w: 0.65, d: 0.65, h: 1.05 },
-  minSize: { w: 0.55, d: 0.55, h: 0.85 },
-  maxSize: { w: 0.8, d: 0.8, h: 1.3 },
-  slots: [
-    matSlot('upholstery', 'Upholstery', 'fabric-wool-grey'),
-    matSlot('frame', 'Shell, arms & casters', 'metal-black-matte'),
-    matSlot('base', 'Base & gas lift', 'metal-chrome'),
-  ],
-  build: ({ w, d, h }) => {
-    const R = starRadius(w, d);
-    const seatY = clamp(h * 0.45, 0.42, 0.52);
-    const sw = Math.min(0.48, w - 0.17);
-    const sd = Math.min(0.46, d - 0.15);
-    const zs0 = -sd / 2 + 0.03;
-    const zs1 = sd / 2 + 0.03;
-    const parts: Part[] = swivelBase('base', 'frame', R, seatY - 0.11);
-    // Tilt mechanism with height and tension levers.
-    parts.push(span('frame', [-0.1, 0.1], [seatY - 0.11, seatY - 0.075], [-0.12, 0.12], { bevel: 0.008, plan: false }));
-    parts.push(rodX('frame', 0.1, 0.16, seatY - 0.095, 0.06, 0.005, { plan: false }));
-    parts.push(sphere('frame', [0.165, seatY - 0.095, 0.06], 0.012, { plan: false }));
-    parts.push(rod('frame', [-0.08, seatY - 0.09, 0.1], [-0.08, seatY - 0.11, 0.17], 0.006, { plan: false }));
-    // Seat: moulded shell, contoured cushion with a waterfall front edge.
-    parts.push(span('frame', [-sw / 2 + 0.01, sw / 2 - 0.01], [seatY - 0.08, seatY - 0.06], [zs0 + 0.01, zs1 - 0.01], { bevel: 0.008 }));
-    parts.push(span('upholstery', [-sw / 2, sw / 2], [seatY - 0.065, seatY], [zs0, zs1 - 0.03], { bevel: 0.025 }));
-    parts.push(rodX('upholstery', -sw / 2 + 0.02, sw / 2 - 0.02, seatY - 0.035, zs1 - 0.032, 0.03, { segments: 16, plan: false }));
-    parts.push(span('frame', [-sw / 2 + 0.03, sw / 2 - 0.03], [seatY - 0.003, seatY + 0.001], [zs0 + 0.06, zs0 + 0.064], { plan: false }));
-    // Back: spine, shell, cushion with lumbar roll and a seam.
-    const by0 = seatY + 0.08;
-    const by1 = h - 0.01;
-    parts.push(span('frame', [-0.03, 0.03], [seatY - 0.1, by0 + 0.12], [zs0 - 0.07, zs0 - 0.04], { bevel: 0.008, plan: false }));
-    parts.push(span('frame', [-0.03, 0.03], [seatY - 0.1, seatY - 0.07], [zs0 - 0.07, -0.08], { plan: false }));
-    parts.push(span('frame', [-sw * 0.47, sw * 0.47], [by0, by1], [zs0 - 0.075, zs0 - 0.05], { bevel: 0.015, plan: false }));
-    parts.push(span('upholstery', [-sw * 0.44, sw * 0.44], [by0 + 0.015, by1 - 0.01], [zs0 - 0.055, zs0 - 0.01], { bevel: 0.02 }));
-    parts.push(rodX('upholstery', -sw * 0.36, sw * 0.36, by0 + 0.1, zs0 - 0.012, 0.022, { segments: 16, plan: false }));
-    parts.push(span('frame', [-sw * 0.4, sw * 0.4], [by1 - 0.12, by1 - 0.115], [zs0 - 0.012, zs0 - 0.008], { plan: false }));
-    // Height-adjustable T-arms.
-    for (const side of [-1, 1]) {
-      const ax = side * (sw / 2 + 0.025);
-      parts.push(span('frame', [Math.min(side * 0.1, ax), Math.max(side * 0.1, ax)], [seatY - 0.1, seatY - 0.08], [-0.03, 0.03], { plan: false }));
-      parts.push(span('frame', [ax - 0.014, ax + 0.014], [seatY - 0.1, seatY + 0.19], [-0.025, 0.025], { bevel: 0.005, plan: false }));
-      parts.push(span('base', [ax - 0.01, ax + 0.01], [seatY + 0.1, seatY + 0.19], [-0.02, 0.02], { plan: false }));
-      parts.push(span('frame', [ax - 0.035, ax + 0.035], [seatY + 0.19, seatY + 0.225], [-0.13, 0.11], { bevel: 0.012 }));
-    }
-    return parts;
-  },
-  // Casters mark the five-star base, which the seat mostly hides from above.
-  planDetail: ({ w, d }) => {
-    const R = starRadius(w, d);
-    return STAR_ANGLES.map((a) => circle([R * Math.cos(a), R * Math.sin(a)], 0.025));
-  },
-});
-
 const chairGaming = defineAsset({
   id: 'chair-gaming',
   name: 'Gaming chair',
@@ -761,48 +702,6 @@ const taskLamp = defineAsset({
   },
 });
 
-const filingCabinet = defineAsset({
-  id: 'filing-cabinet',
-  name: 'Filing cabinet',
-  category: 'office',
-  type: 'storage',
-  group: 'Office storage',
-  tags: ['filing', 'cabinet', 'drawers', 'archive', 'office storage'],
-  defaultSize: { w: 0.47, d: 0.62, h: 1.02 },
-  minSize: { w: 0.38, d: 0.45, h: 0.5 },
-  maxSize: { w: 0.9, d: 0.75, h: 1.4 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body', 'metal-anthracite'),
-    matSlot('handle', 'Handles & lock', 'metal-chrome'),
-    matSlot('label', 'Labels', 'solid-white'),
-  ],
-  build: ({ w, d, h }) => {
-    const zf = d / 2 - 0.04;
-    const plinth = 0.04;
-    const n = clamp(Math.round(h / 0.3), 1, 5);
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [plinth, h - 0.012], [-d / 2, zf]),
-      span('body', [-w / 2, w / 2], [h - 0.012, h], [-d / 2, zf + 0.018], { bevel: 0.004 }),
-      span('body', [-w / 2 + 0.02, w / 2 - 0.02], [0, plinth], [-d / 2 + 0.02, zf - 0.02], { plan: false }),
-      // Lock barrel top right.
-      cyl('handle', [w / 2 - 0.045, h - 0.035, zf + 0.022], 0.009, 0.008, { rotation: [Math.PI / 2, 0, 0], plan: false }),
-    ];
-    const rows = cellSpans(n, plinth + 0.004, h - 0.016);
-    parts.push(...fronts('body', 'handle', rows.map((y) => ({ x: [-w / 2 + 0.008, w / 2 - 0.008] as V2, y })), zf, 0.018, 0));
-    for (const [y0, y1] of rows) {
-      const rh = y1 - y0;
-      const hy = y0 + rh * 0.55;
-      parts.push(...barPull('handle', [0, hy, zf + 0.018], Math.min(0.2, w * 0.45), { stand: 0.022, r: 0.005 }));
-      // Label holder frame with a card.
-      const ly = Math.min(y1 - 0.035, hy + 0.06);
-      parts.push(...frame4('handle', [-0.045, 0.045], [ly - 0.014, ly + 0.014], [zf + 0.018, zf + 0.022], 0.004));
-      parts.push(span('label', [-0.041, 0.041], [ly - 0.01, ly + 0.01], [zf + 0.018, zf + 0.0205], { plan: false }));
-    }
-    return parts;
-  },
-});
-
 const pinboard = defineAsset({
   id: 'pinboard',
   name: 'Cork pinboard',
@@ -851,65 +750,6 @@ const pinboard = defineAsset({
     }
     return parts;
   },
-});
-
-const printer = defineAsset({
-  id: 'printer',
-  name: 'Printer',
-  category: 'office',
-  type: 'electronics',
-  group: 'Computers',
-  tags: ['printer', 'scanner', 'all-in-one', 'inkjet', 'copier', 'office'],
-  defaultSize: { w: 0.45, d: 0.38, h: 0.24 },
-  minSize: { w: 0.38, d: 0.32, h: 0.18 },
-  maxSize: { w: 0.6, d: 0.5, h: 0.35 },
-  // Sits on a desk top by default.
-  defaultElevation: 0.75,
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body', 'plastic-white'),
-    matSlot('trim', 'Trim & buttons', 'plastic-black'),
-    matSlot('paper', 'Paper', 'solid-white'),
-    matSlot('screen', 'Display', 'screen-glow'),
-  ],
-  build: ({ w, d, h }) => {
-    const yb = h * 0.68;
-    const zf = d / 2 - 0.02;
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0.008, yb], [-d / 2 + 0.01, zf], { bevel: 0.012 }),
-      // Scanner lid with a dark seam.
-      span('trim', [-w / 2 + 0.004, w / 2 - 0.004], [yb - 0.004, yb], [-d / 2 + 0.09, zf - 0.055], { plan: false }),
-      span('body', [-w / 2 + 0.004, w / 2 - 0.004], [yb, yb + 0.024], [-d / 2 + 0.09, zf - 0.055], { bevel: 0.006, plan: false }),
-      // Paper cassette seam and finger pull at the bottom front.
-      span('trim', [-w / 2 + 0.03, w / 2 - 0.03], [0.012 + yb * 0.3, 0.015 + yb * 0.3], [zf - 0.002, zf + 0.001], { plan: false }),
-      span('trim', [-0.05, 0.05], [0.025, 0.04], [zf - 0.002, zf + 0.002], { bevel: 0.003, plan: false }),
-      // Output slot, extended tray and a printed page.
-      span('trim', [-w * 0.36, w * 0.36], [yb * 0.46, yb * 0.64], [zf - 0.003, zf + 0.001], { plan: false }),
-      span('body', [-w * 0.3, w * 0.3], [yb * 0.44, yb * 0.46], [zf - 0.01, d / 2], { plan: false }),
-      span('paper', [-0.105, 0.105], [yb * 0.46, yb * 0.46 + 0.002], [zf - 0.06, d / 2 - 0.002], { plan: false }),
-    ];
-    // Tilted control panel with display and buttons.
-    const px = w / 2 - 0.1;
-    const pz = zf - 0.025;
-    const py = yb + 0.012;
-    parts.push(box('trim', [px, py, pz], [0.15, 0.012, 0.05], { rotation: [0.35, 0, 0], bevel: 0.003, plan: false }));
-    parts.push(box('screen', [px - 0.025, py + 0.006, pz + 0.002], [0.06, 0.003, 0.032], { rotation: [0.35, 0, 0], plan: false }));
-    for (const bx of [0.025, 0.05]) parts.push(cyl('body', [px + bx, py + 0.008, pz + 0.004], 0.006, 0.004, { rotation: [0.35, 0, 0], plan: false }));
-    parts.push(sphere('screen', [-w / 2 + 0.03, py + 0.003, pz + 0.01], 0.004, { plan: false }));
-    // Rear paper feed: a tray leaning back with a stack of sheets.
-    const ft = 0.3;
-    const len = (h - yb - 0.006) / Math.cos(ft);
-    const hz = -d / 2 + 0.075;
-    const at = (u: number, v: number): V3 => [0, yb + u * Math.cos(ft) + v * Math.sin(ft), hz - u * Math.sin(ft) + v * Math.cos(ft)];
-    parts.push(box('body', at(len / 2, 0), [Math.min(0.24, w * 0.6), len, 0.006], { rotation: [-ft, 0, 0], plan: false }));
-    parts.push(box('paper', at(len * 0.45, 0.009), [0.21, len * 0.9, 0.012], { rotation: [-ft, 0, 0], plan: false }));
-    // Feet.
-    for (const x of [-w / 2 + 0.04, w / 2 - 0.04]) {
-      for (const z of [-d / 2 + 0.05, zf - 0.04]) parts.push(vcyl('trim', x, z, 0, 0.008, 0.012, { plan: false }));
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2, -d / 2 + 0.09], [w / 2, -d / 2 + 0.09]), rectPoly(w / 2 - 0.175, d / 2 - 0.07, w / 2 - 0.025, d / 2 - 0.02)],
 });
 
 const globeDesk = defineAsset({
@@ -1015,11 +855,8 @@ export const OFFICE_ASSETS: AssetDefinition[] = [
   deskExecutive,
   deskStanding,
   deskHutch,
-  officeChair,
   chairGaming,
   taskLamp,
-  filingCabinet,
   pinboard,
-  printer,
   globeDesk,
 ];

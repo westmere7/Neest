@@ -613,6 +613,10 @@
    "file": "3709765efc702427.webp",
    "tile": true
   },
+  "372874a0be6800f7": {
+   "file": "372874a0be6800f7.webp",
+   "tile": true
+  },
   "37e2bd9cba5259d7": {
    "file": "37e2bd9cba5259d7.webp",
    "tile": true
@@ -1169,6 +1173,10 @@
    "file": "64b0119e4aff6b1e.webp",
    "tile": true
   },
+  "6503548df614ea88": {
+   "file": "6503548df614ea88.webp",
+   "tile": true
+  },
   "6522c0f7c5c83c3b": {
    "file": "6522c0f7c5c83c3b.webp",
    "tile": true
@@ -1219,6 +1227,10 @@
   },
   "6773d6c43212b59f": {
    "file": "6773d6c43212b59f.webp",
+   "tile": true
+  },
+  "67e8065d997bf4dc": {
+   "file": "67e8065d997bf4dc.webp",
    "tile": true
   },
   "67fb579720ea76dd": {
@@ -1653,6 +1665,10 @@
    "file": "8be31a8d047c9b3f.webp",
    "tile": true
   },
+  "8be3d5e8ac0d010c": {
+   "file": "8be3d5e8ac0d010c.webp",
+   "tile": true
+  },
   "8bf617c01329de82": {
    "file": "8bf617c01329de82.webp",
    "tile": true
@@ -1777,6 +1793,10 @@
    "file": "9430a57ddcbf5b1d.webp",
    "tile": true
   },
+  "947d7273d093af9b": {
+   "file": "947d7273d093af9b.webp",
+   "tile": true
+  },
   "9495a0054d6f2ec2": {
    "file": "9495a0054d6f2ec2.webp",
    "tile": true
@@ -1875,6 +1895,10 @@
   },
   "9db9efbde07b492e": {
    "file": "9db9efbde07b492e.webp",
+   "tile": true
+  },
+  "9ec8aa39bf20080c": {
+   "file": "9ec8aa39bf20080c.webp",
    "tile": true
   },
   "9f0d6d4c79843b4b": {
@@ -2829,6 +2853,10 @@
    "file": "e758464798afcc0c.webp",
    "tile": true
   },
+  "e7629aed4f260455": {
+   "file": "e7629aed4f260455.webp",
+   "tile": true
+  },
   "e8218644c2d503d7": {
    "file": "e8218644c2d503d7.webp",
    "tile": false
@@ -2856,6 +2884,10 @@
   "e9e04b7c8d2575df": {
    "file": "e9e04b7c8d2575df.webp",
    "tile": false
+  },
+  "ea3a4a9cc313331d": {
+   "file": "ea3a4a9cc313331d.webp",
+   "tile": true
   },
   "ea4be6411e3e3bc0": {
    "file": "ea4be6411e3e3bc0.webp",
@@ -3189,6 +3221,7 @@
   "branded-climate-vn:climate-coil-gold": "b30f5ce4abc81b1b",
   "branded-climate-vn:climate-coil-louvre": "25aee79cfbd327df",
   "branded-climate-vn:climate-galvanised": "b0dcb00c0815017a",
+  "branded-climate-vn:cooling-pad": "3dc938e3d333634c",
   "branded-climate-vn:purifier-perforated": "0d510498f16c5096",
   "branded-fitness:walkingpad-belt": "1c4067ba9ea01990",
   "branded-fridges:fridge-inox": "81991a47f7a3f61d",
@@ -3215,10 +3248,18 @@
   "branded-home-electronics:hx-perforated-silver": "71502b11e5043f1f",
   "branded-home-electronics:hx-perforated-white": "2342bae7d9dc91da",
   "branded-laptops:wallpaper": "247df32593941836",
+  "branded-music:td-mesh": "e7629aed4f260455",
+  "branded-music:ym-mahogany": "947d7273d093af9b",
+  "branded-music:ym-meranti": "372874a0be6800f7",
+  "branded-music:ym-spruce": "67e8065d997bf4dc",
+  "branded-music:ym-sunburst": "9ec8aa39bf20080c",
+  "branded-tech-vn:bt-mesh-black": "8be3d5e8ac0d010c",
+  "branded-tech-vn:bt-mesh-grey": "6503548df614ea88",
   "branded-tvs:frame-art-mat": "3e211331f18f73e9",
   "branded-tvs:screen-aurora-mat": "0c0a965a60caac80",
   "branded-tvs:screen-dusk-mat": "5bce018b3bea108f",
   "branded-tvs:tv-titan-silver": "081361aecd94cd5e",
+  "branded-vehicles-vn:tn-basket": "ea3a4a9cc313331d",
   "brick-red": "ff1c91fb2cb93a1c",
   "brick-white": "c56071ce2927f973",
   "cabinets-wardrobes:cane-ebonised": "705872463ab1d7c9",

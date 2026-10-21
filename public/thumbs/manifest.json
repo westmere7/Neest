@@ -49,10 +49,6 @@
    "file": "appliances_bread-maker.webp",
    "fp": "58e86f8c17ca1656"
   },
-  "appliances:chest-freezer": {
-   "file": "appliances_chest-freezer.webp",
-   "fp": "75acbfcc96823f5c"
-  },
   "appliances:coffee-grinder": {
    "file": "appliances_coffee-grinder.webp",
    "fp": "8e08a539d1c0395d"
@@ -81,10 +77,6 @@
    "file": "appliances_fridge-side-by-side.webp",
    "fp": "45b7bcc3c486cd61"
   },
-  "appliances:garment-steamer": {
-   "file": "appliances_garment-steamer.webp",
-   "fp": "1de56cb521a79708"
-  },
   "appliances:hair-dryer-wall": {
    "file": "appliances_hair-dryer-wall.webp",
    "fp": "f5c6d5ec252b528d"
@@ -92,14 +84,6 @@
   "appliances:juicer": {
    "file": "appliances_juicer.webp",
    "fp": "e2a576a70ab9f6af"
-  },
-  "appliances:mini-fridge": {
-   "file": "appliances_mini-fridge.webp",
-   "fp": "c349c549646504a0"
-  },
-  "appliances:pressure-cooker": {
-   "file": "appliances_pressure-cooker.webp",
-   "fp": "ede3a6f92ea45270"
   },
   "appliances:sandwich-press": {
    "file": "appliances_sandwich-press.webp",
@@ -120,10 +104,6 @@
   "appliances:steam-mop": {
    "file": "appliances_steam-mop.webp",
    "fp": "8e7dd039b20dc2be"
-  },
-  "appliances:toaster-oven": {
-   "file": "appliances_toaster-oven.webp",
-   "fp": "d89367ccd980ba47"
   },
   "appliances:tower-fan": {
    "file": "appliances_tower-fan.webp",
@@ -181,10 +161,6 @@
    "file": "artwork-framed.webp",
    "fp": "d2358cf13b37851a"
   },
-  "asian-everyday:air-cooler": {
-   "file": "asian-everyday_air-cooler.webp",
-   "fp": "25643385c8c751c1"
-  },
   "asian-everyday:ceiling-drying-rack": {
    "file": "asian-everyday_ceiling-drying-rack.webp",
    "fp": "c400fb3e73f715f9"
@@ -192,10 +168,6 @@
   "asian-everyday:entry-shoe-rack": {
    "file": "asian-everyday_entry-shoe-rack.webp",
    "fp": "210e83e4cbe0478f"
-  },
-  "asian-everyday:floor-fan-box": {
-   "file": "asian-everyday_floor-fan-box.webp",
-   "fp": "a82bca5b33b2bacd"
   },
   "asian-everyday:hotpot-table": {
    "file": "asian-everyday_hotpot-table.webp",
@@ -229,10 +201,6 @@
    "file": "asian-everyday_tiffin-carrier.webp",
    "fp": "47cf8d13a26a7e5f"
   },
-  "asian-everyday:water-dispenser": {
-   "file": "asian-everyday_water-dispenser.webp",
-   "fp": "f09d875056f3ec64"
-  },
   "asian-everyday:wet-bath-set": {
    "file": "asian-everyday_wet-bath-set.webp",
    "fp": "4fdb98af20b747fd"
@@ -257,10 +225,6 @@
    "file": "bar-table.webp",
    "fp": "2cc685e5e959baf6"
   },
-  "basin-pedestal": {
-   "file": "basin-pedestal.webp",
-   "fp": "e2ac421ee869984b"
-  },
   "baskets-wicker": {
    "file": "baskets-wicker.webp",
    "fp": "c95b1586525cbc08"
@@ -284,10 +248,6 @@
   "bathroom-collection:black-grid-walk-in": {
    "file": "bathroom-collection_black-grid-walk-in.webp",
    "fp": "ab9cf88e3991d666"
-  },
-  "bathroom-collection:ceiling-exhaust-fan": {
-   "file": "bathroom-collection_ceiling-exhaust-fan.webp",
-   "fp": "e4d939a97928caab"
   },
   "bathroom-collection:column-radiator": {
    "file": "bathroom-collection_column-radiator.webp",
@@ -617,10 +577,6 @@
    "file": "bench-bed-end.webp",
    "fp": "80ac4616c2fe1137"
   },
-  "bicycle": {
-   "file": "bicycle.webp",
-   "fp": "e247fbe343b444e0"
-  },
   "bidet": {
    "file": "bidet.webp",
    "fp": "0b363b660c9d3acc"
@@ -741,17 +697,49 @@
    "file": "branded-ac-outdoor-vn_toshiba-ras-h10c4kcvg-v.webp",
    "fp": "9f68ad9904c277e0"
   },
+  "branded-appliances-vn:aqua-aqr-d100fa": {
+   "file": "branded-appliances-vn_aqua-aqr-d100fa.webp",
+   "fp": "6287c20dbe030387"
+  },
+  "branded-appliances-vn:delonghi-ec685": {
+   "file": "branded-appliances-vn_delonghi-ec685.webp",
+   "fp": "e28944475e544a3f"
+  },
   "branded-appliances-vn:electrolux-ewf9024p5wb": {
    "file": "branded-appliances-vn_electrolux-ewf9024p5wb.webp",
    "fp": "81ac6705f35b1aaf"
+  },
+  "branded-appliances-vn:hafele-hh-wt70a": {
+   "file": "branded-appliances-vn_hafele-hh-wt70a.webp",
+   "fp": "0d0b27546b023e15"
+  },
+  "branded-appliances-vn:kangaroo-kg31a3": {
+   "file": "branded-appliances-vn_kangaroo-kg31a3.webp",
+   "fp": "29a2b56963fd4571"
   },
   "branded-appliances-vn:karofi-kaq-u95-pro": {
    "file": "branded-appliances-vn_karofi-kaq-u95-pro.webp",
    "fp": "41ade8301bfa3aa5"
   },
+  "branded-appliances-vn:panasonic-nb-h3203kra": {
+   "file": "branded-appliances-vn_panasonic-nb-h3203kra.webp",
+   "fp": "f41199b13ff50d10"
+  },
   "branded-appliances-vn:panasonic-nr-bx410wkvn": {
    "file": "branded-appliances-vn_panasonic-nr-bx410wkvn.webp",
    "fp": "e53cd25ff9b11ac7"
+  },
+  "branded-appliances-vn:philips-hd2151": {
+   "file": "branded-appliances-vn_philips-hd2151.webp",
+   "fp": "fa752ee57d9a8510"
+  },
+  "branded-appliances-vn:philips-ste3170": {
+   "file": "branded-appliances-vn_philips-ste3170.webp",
+   "fp": "b39e409c6a66b55a"
+  },
+  "branded-appliances-vn:sanaky-vh-2899a1": {
+   "file": "branded-appliances-vn_sanaky-vh-2899a1.webp",
+   "fp": "e67fcb2b8754e57f"
   },
   "branded-appliances-vn:sharp-r-205vn": {
    "file": "branded-appliances-vn_sharp-r-205vn.webp",
@@ -793,6 +781,10 @@
    "file": "branded-bathroom-vn_american-standard-active-0955.webp",
    "fp": "4ac2dcb6684f03f1"
   },
+  "branded-bathroom-vn:american-standard-vf-0100": {
+   "file": "branded-bathroom-vn_american-standard-vf-0100.webp",
+   "fp": "1b785ef38c5eae5b"
+  },
   "branded-bathroom-vn:american-standard-wf-1772": {
    "file": "branded-bathroom-vn_american-standard-wf-1772.webp",
    "fp": "4e67a3bdfa61b902"
@@ -800,6 +792,10 @@
   "branded-bathroom-vn:ariston-sl2-20-rs": {
    "file": "branded-bathroom-vn_ariston-sl2-20-rs.webp",
    "fp": "00f36cbaf700cb4b"
+  },
+  "branded-bathroom-vn:caesar-at0150": {
+   "file": "branded-bathroom-vn_caesar-at0150.webp",
+   "fp": "b237bf85f8e06ff4"
   },
   "branded-bathroom-vn:caesar-cd1338": {
    "file": "branded-bathroom-vn_caesar-cd1338.webp",
@@ -809,6 +805,18 @@
    "file": "branded-bathroom-vn_caesar-l5225.webp",
    "fp": "d75333361c7c9b2a"
   },
+  "branded-bathroom-vn:inax-ac-952vn": {
+   "file": "branded-bathroom-vn_inax-ac-952vn.webp",
+   "fp": "4aeb053724dd1917"
+  },
+  "branded-bathroom-vn:panasonic-dh-4rl1vw": {
+   "file": "branded-bathroom-vn_panasonic-dh-4rl1vw.webp",
+   "fp": "a003b8860ccaf121"
+  },
+  "branded-bathroom-vn:toto-lpt236cs": {
+   "file": "branded-bathroom-vn_toto-lpt236cs.webp",
+   "fp": "c7f5225316811c37"
+  },
   "branded-bathroom-vn:toto-lt710csr": {
    "file": "branded-bathroom-vn_toto-lt710csr.webp",
    "fp": "56543e289ec4c968"
@@ -816,6 +824,14 @@
   "branded-bathroom-vn:toto-ms885de2": {
    "file": "branded-bathroom-vn_toto-ms885de2.webp",
    "fp": "618382a23e24dd43"
+  },
+  "branded-climate-vn:kangaroo-kg50f100": {
+   "file": "branded-climate-vn_kangaroo-kg50f100.webp",
+   "fp": "2a7116086ffc7e78"
+  },
+  "branded-climate-vn:midea-fs40-10navn": {
+   "file": "branded-climate-vn_midea-fs40-10navn.webp",
+   "fp": "51a177523802776e"
   },
   "branded-climate-vn:panasonic-cs-xu9zkh-8": {
    "file": "branded-climate-vn_panasonic-cs-xu9zkh-8.webp",
@@ -829,9 +845,21 @@
    "file": "branded-climate-vn_panasonic-f-409kb.webp",
    "fp": "6daa7b4e6172ae5c"
   },
+  "branded-climate-vn:panasonic-f-60gfn": {
+   "file": "branded-climate-vn_panasonic-f-60gfn.webp",
+   "fp": "ec81fc9df108ab03"
+  },
   "branded-climate-vn:panasonic-f-60wwk": {
    "file": "branded-climate-vn_panasonic-f-60wwk.webp",
    "fp": "9e76d44bc934ef77"
+  },
+  "branded-climate-vn:panasonic-fv-24cu9": {
+   "file": "branded-climate-vn_panasonic-fv-24cu9.webp",
+   "fp": "97ea58433021eea6"
+  },
+  "branded-climate-vn:senko-bd1410": {
+   "file": "branded-climate-vn_senko-bd1410.webp",
+   "fp": "cbba1ea9616634ad"
   },
   "branded-climate-vn:xiaomi-air-purifier-4": {
    "file": "branded-climate-vn_xiaomi-air-purifier-4.webp",
@@ -1005,6 +1033,66 @@
    "file": "branded-laptops_macbook-pro-14-m4.webp",
    "fp": "c087969439cae4c3"
   },
+  "branded-lighting-vn:rang-dong-at04-90-7w": {
+   "file": "branded-lighting-vn_rang-dong-at04-90-7w.webp",
+   "fp": "f68a9b6e494eac76"
+  },
+  "branded-lighting-vn:rang-dong-ln12n-220-18w": {
+   "file": "branded-lighting-vn_rang-dong-ln12n-220-18w.webp",
+   "fp": "5f9a582bbfbff4e6"
+  },
+  "branded-lighting-vn:rang-dong-p06-600x600-40w": {
+   "file": "branded-lighting-vn_rang-dong-p06-600x600-40w.webp",
+   "fp": "dc33d5cae898e975"
+  },
+  "branded-music:roland-td-07kv": {
+   "file": "branded-music_roland-td-07kv.webp",
+   "fp": "7a99041a2d23ff0c"
+  },
+  "branded-music:yamaha-c3x": {
+   "file": "branded-music_yamaha-c3x.webp",
+   "fp": "96586a21bdd8010c"
+  },
+  "branded-music:yamaha-f310": {
+   "file": "branded-music_yamaha-f310.webp",
+   "fp": "be57887fc9ea91fd"
+  },
+  "branded-music:yamaha-psr-e383": {
+   "file": "branded-music_yamaha-psr-e383.webp",
+   "fp": "cd75a52507f6f677"
+  },
+  "branded-music:yamaha-u1j": {
+   "file": "branded-music_yamaha-u1j.webp",
+   "fp": "92931fcecada1f95"
+  },
+  "branded-tech-vn:canon-lbp2900": {
+   "file": "branded-tech-vn_canon-lbp2900.webp",
+   "fp": "07146e7873e8d06f"
+  },
+  "branded-tech-vn:dell-vostro-3020-mt": {
+   "file": "branded-tech-vn_dell-vostro-3020-mt.webp",
+   "fp": "839c01c715ed0a4b"
+  },
+  "branded-tech-vn:epson-eb-e01": {
+   "file": "branded-tech-vn_epson-eb-e01.webp",
+   "fp": "51fea750220d62cb"
+  },
+  "branded-tech-vn:hoa-phat-tu4f": {
+   "file": "branded-tech-vn_hoa-phat-tu4f.webp",
+   "fp": "38f8b7b83482a2ef"
+  },
+  "branded-tech-vn:samsung-s24c310": {
+   "file": "branded-tech-vn_samsung-s24c310.webp",
+   "fp": "f50b7094a842cc12"
+  },
+  "branded-tech-vn:sihoo-m57": {
+   "file": "branded-tech-vn_sihoo-m57.webp",
+   "fp": "6f828f9cbd6bdc6a"
+  },
+  "branded-tech-vn:sony-ps5-slim": {
+   "file": "branded-tech-vn_sony-ps5-slim.webp",
+   "fp": "bd94117ebe412d73"
+  },
   "branded-tvs:lg-oled65c4": {
    "file": "branded-tvs_lg-oled65c4.webp",
    "fp": "d9e156046b4e80fe"
@@ -1028,6 +1116,14 @@
   "branded-tvs:sony-k-75xr90": {
    "file": "branded-tvs_sony-k-75xr90.webp",
    "fp": "a408ee86704f9dca"
+  },
+  "branded-vehicles-vn:honda-vision-2025": {
+   "file": "branded-vehicles-vn_honda-vision-2025.webp",
+   "fp": "718a1ff6194fa6e3"
+  },
+  "branded-vehicles-vn:thong-nhat-new-26": {
+   "file": "branded-vehicles-vn_thong-nhat-new-26.webp",
+   "fp": "e2a75ab2d6af4a70"
   },
   "branded-washers:aqua-aqh-h900g-ps": {
    "file": "branded-washers_aqua-aqh-h900g-ps.webp",
@@ -1157,10 +1253,6 @@
    "file": "candle-set.webp",
    "fp": "8b75161c489016b5"
   },
-  "ceiling-fan-light": {
-   "file": "ceiling-fan-light.webp",
-   "fp": "4b72eea255af368e"
-  },
   "ceiling-light": {
    "file": "ceiling-light.webp",
    "fp": "6260891d8be13066"
@@ -1264,10 +1356,6 @@
   "coat-stand": {
    "file": "coat-stand.webp",
    "fp": "9733dda87685b5e7"
-  },
-  "coffee-machine": {
-   "file": "coffee-machine.webp",
-   "fp": "99079c3ee9aee4b1"
   },
   "coffee-table": {
    "file": "coffee-table.webp",
@@ -1440,10 +1528,6 @@
   "compact-living:wall-ironing-cabinet-open": {
    "file": "compact-living_wall-ironing-cabinet-open.webp",
    "fp": "66788e44d54b365f"
-  },
-  "computer-tower": {
-   "file": "computer-tower.webp",
-   "fp": "eff6bb6fa5c12ae9"
   },
   "console-table": {
    "file": "console-table.webp",
@@ -1917,10 +2001,6 @@
    "file": "dresser_model_styled.webp",
    "fp": "666c878c0b8e0754"
   },
-  "drum-kit": {
-   "file": "drum-kit.webp",
-   "fp": "e81b48b080b271dd"
-  },
   "drying-rack": {
    "file": "drying-rack.webp",
    "fp": "b1f1afd4b977066c"
@@ -1933,10 +2013,6 @@
    "file": "exercise-bike.webp",
    "fp": "f799182d7638ef6d"
   },
-  "filing-cabinet": {
-   "file": "filing-cabinet.webp",
-   "fp": "2411a17cc2fe9331"
-  },
   "fire-pit": {
    "file": "fire-pit.webp",
    "fp": "e85b0fc54f1f9d3c"
@@ -1948,10 +2024,6 @@
   "floor-cushion": {
    "file": "floor-cushion.webp",
    "fp": "cdc976618522c5c0"
-  },
-  "floor-fan": {
-   "file": "floor-fan.webp",
-   "fp": "ea89827ebe7b7cec"
   },
   "floor-lamp": {
    "file": "floor-lamp.webp",
@@ -1981,10 +2053,6 @@
    "file": "fruit-bowl.webp",
    "fp": "8c656658df062cf7"
   },
-  "game-console": {
-   "file": "game-console.webp",
-   "fp": "2e9d7c49ff4cd2ba"
-  },
   "garden-bench": {
    "file": "garden-bench.webp",
    "fp": "18fae2445ca68bc3"
@@ -2008,10 +2076,6 @@
   "globe-desk": {
    "file": "globe-desk.webp",
    "fp": "e09f904a182fe94b"
-  },
-  "guitar-stand": {
-   "file": "guitar-stand.webp",
-   "fp": "2b3d7237af1db4a1"
   },
   "hall-tree": {
    "file": "hall-tree.webp",
@@ -2344,10 +2408,6 @@
   "kettle": {
    "file": "kettle.webp",
    "fp": "4b7089c17d458a0f"
-  },
-  "keyboard-stand": {
-   "file": "keyboard-stand.webp",
-   "fp": "56f0ec79a9fa5a72"
   },
   "kids-book-display": {
    "file": "kids-book-display.webp",
@@ -2701,10 +2761,6 @@
    "file": "lighting-collection_island-pendant-trio.webp",
    "fp": "9df5b38b3caa4358"
   },
-  "lighting-collection:led-panel": {
-   "file": "lighting-collection_led-panel.webp",
-   "fp": "d33d683f42056476"
-  },
   "lighting-collection:linear-wall-washer": {
    "file": "lighting-collection_linear-wall-washer.webp",
    "fp": "2dbd8c676abfa836"
@@ -2977,17 +3033,9 @@
    "file": "modern-vietnamese_zebra-blind.webp",
    "fp": "5169b42a66705596"
   },
-  "monitor": {
-   "file": "monitor.webp",
-   "fp": "ff92f2cb6e4125bb"
-  },
   "niche-shelf": {
    "file": "niche-shelf.webp",
    "fp": "3db1c28288ec9fca"
-  },
-  "office-chair": {
-   "file": "office-chair.webp",
-   "fp": "7fb316792e229af2"
   },
   "oil-heater": {
    "file": "oil-heater.webp",
@@ -3473,14 +3521,6 @@
    "file": "pets_sleeping-cat.webp",
    "fp": "3a85c9b5d65376d9"
   },
-  "piano-grand": {
-   "file": "piano-grand.webp",
-   "fp": "7c2dc3b93f7b9041"
-  },
-  "piano-upright": {
-   "file": "piano-upright.webp",
-   "fp": "be9c89340a4a17cc"
-  },
   "picnic-table": {
    "file": "picnic-table.webp",
    "fp": "f5579c6fda62960f"
@@ -3633,17 +3673,9 @@
    "file": "pouf-round.webp",
    "fp": "7231aabb689e23a9"
   },
-  "printer": {
-   "file": "printer.webp",
-   "fp": "73d3f68c07d506d7"
-  },
   "projection-screen": {
    "file": "projection-screen.webp",
    "fp": "81b0d3ac4daf4366"
-  },
-  "projector-ceiling": {
-   "file": "projector-ceiling.webp",
-   "fp": "3561a4eb46d76930"
   },
   "punching-bag": {
    "file": "punching-bag.webp",
@@ -3660,10 +3692,6 @@
   "range-cooker": {
    "file": "range-cooker.webp",
    "fp": "b98566f13ad913a4"
-  },
-  "range-hood": {
-   "file": "range-hood.webp",
-   "fp": "c8bb05c407f84fbd"
   },
   "robot-vacuum": {
    "file": "robot-vacuum.webp",
@@ -4601,10 +4629,6 @@
    "file": "toilet-roll-stand.webp",
    "fp": "bdff21a2e98ec903"
   },
-  "toilet-wall-hung": {
-   "file": "toilet-wall-hung.webp",
-   "fp": "41236edda5ef5f9f"
-  },
   "towel-ladder": {
    "file": "towel-ladder.webp",
    "fp": "57b493bb75000a50"
@@ -4688,10 +4712,6 @@
   "vietnamese-home:folding-hammock": {
    "file": "vietnamese-home_folding-hammock.webp",
    "fp": "e64937fa7c24c02e"
-  },
-  "vietnamese-home:honda-scooter": {
-   "file": "vietnamese-home_honda-scooter.webp",
-   "fp": "fea3f643609f36bb"
   },
   "vietnamese-home:kumquat-tree": {
    "file": "vietnamese-home_kumquat-tree.webp",

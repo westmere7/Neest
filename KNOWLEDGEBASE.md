@@ -1487,3 +1487,15 @@ Known limitations (also in README):
      Hollywood vanity, Xiaomi fan Lite/Pro, Dyson V12, AQUA dryers V800H/V901K/H1000J, MacBook Air, generic 12k/18k
      AC units). Each redirects in `RETIRED_MODEL_ITEMS` (`keepModel` keeps the placed model); kept generic vs real
      branded pairs and size presets (Double/Queen/King) on purpose. 60LTN and Ngan's project migrate cleanly (done).
+121. "Go through everything to see which library items can be converted into a branded one, common in VN" → 35 real
+     products (researched on VN retailer and maker pages, published sizes and specs in `brand`): kitchen/laundry in
+     `branded-appliances-vn` (Hafele hood, Philips pressure cooker and steamer, Panasonic oven, AQUA mini fridge, Sanaky
+     chest freezer, Kangaroo dispenser, De'Longhi Dedica), fans in `branded-climate-vn` (Kangaroo air cooler, Senko box
+     fan, Panasonic exhaust and ceiling fans, Midea stand fan), `branded-bathroom-vn` (American Standard squat pan, TOTO
+     pedestal basin, Panasonic instant heater, Caesar bathtub, INAX wall-hung toilet), new `branded-tech-vn` (Canon
+     LBP2900, Samsung S24C310, PS5 Slim, Epson EB-E01, Dell Vostro 3020, Sihoo M57, Hòa Phát TU4F), `branded-music`
+     (Yamaha U1J, C3X, PSR-E383, F310, Roland TD-07KV), `branded-vehicles-vn` (Honda Vision 2025, Thống Nhất New 26)
+     and `branded-lighting-vn` (Rạng Đông AT04, P06 panel, LN12N). 30 generics retired into them (`RETIRED_MODEL_ITEMS`
+     with `size`: placed items take the real size); kept generics that are sets or vary in size (bathtub, flush ceiling
+     light, downlight, squat toilet with cistern, instant heater with shower rail). Groups and samples point at the
+     branded ids; grandApartment.test loads packs (done).

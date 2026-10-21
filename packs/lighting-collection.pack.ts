@@ -250,39 +250,6 @@ const downlightSet = defineItem({
   },
 });
 
-const ledPanel = defineItem({
-  id: 'led-panel',
-  name: 'Square LED panel',
-  category: 'lighting',
-  type: 'lighting',
-  group: 'Ceiling lights',
-  tags: ['led panel', 'panel light', 'office light', 'cool white', 'flat', 'ceiling', 'đèn panel', 'den led'],
-  defaultSize: { w: 0.6, d: 0.6, h: 0.035 },
-  minSize: { w: 0.3, d: 0.3, h: 0.02 },
-  maxSize: { w: 1.2, d: 1.2, h: 0.06 },
-  mount: 'ceiling',
-  defaultElevation: ceilingElevation(0.035),
-  slots: [matSlot('frame', 'Frame', 'metal-white-powder'), matSlot('light', 'Diffuser', 'led-cool')],
-  // A flat diffuser: one very wide, soft cone from the panel face.
-  light: { color: COOL, intensity: 1.5, distance: 5, y: 0.002, kind: 'spot', angle: 1.2, penumbra: 0.9 },
-  build: ({ w, d, h }) => {
-    const f = clamp(Math.min(w, d) * 0.025, 0.008, 0.02);
-    const yb = h * 0.35;
-    return [
-      span('frame', [-w / 2, w / 2], [yb, h], [-d / 2, d / 2], { bevel: 0.003 }),
-      span('frame', [-w / 2, -w / 2 + f], [0, yb], [-d / 2, d / 2], { bevel: 0.002, plan: false }),
-      span('frame', [w / 2 - f, w / 2], [0, yb], [-d / 2, d / 2], { bevel: 0.002, plan: false }),
-      span('frame', [-w / 2 + f, w / 2 - f], [0, yb], [-d / 2, -d / 2 + f], { plan: false }),
-      span('frame', [-w / 2 + f, w / 2 - f], [0, yb], [d / 2 - f, d / 2], { plan: false }),
-      span('light', [-w / 2 + f, w / 2 - f], [0.0015, yb], [-d / 2 + f, d / 2 - f], NP),
-    ];
-  },
-  planDetail: ({ w, d }) => {
-    const f = clamp(Math.min(w, d) * 0.025, 0.008, 0.02);
-    return [rectPoly(-w / 2 + f, -d / 2 + f, w / 2 - f, d / 2 - f)];
-  },
-});
-
 const drumFlush = defineItem({
   id: 'fabric-drum-flush',
   name: 'Fabric drum flush light',
@@ -1555,7 +1522,6 @@ export default definePack({
   items: [
     recessedDownlight,
     downlightSet,
-    ledPanel,
     drumFlush,
     sputnik,
     bubbleCluster,

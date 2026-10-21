@@ -912,7 +912,6 @@ export const ARCHETYPE_OVERRIDES: Record<string, Archetype> = {
   // Technical fixtures come in white, black, aluminium or graphite only.
   'lighting-collection:recessed-downlight': 'tech-light',
   'lighting-collection:downlight-set-4': 'tech-light',
-  'lighting-collection:led-panel': 'tech-light',
   'lighting-collection:monorail-spots': 'tech-light',
   'lighting-collection:linear-wall-washer': 'tech-light',
   'lighting-collection:under-cabinet-led': 'tech-light',

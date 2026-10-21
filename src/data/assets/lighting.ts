@@ -1,6 +1,5 @@
 import type { AssetDefinition, Part, Size3 } from './types';
 import {
-  box,
   cells,
   circle,
   clamp,
@@ -445,87 +444,6 @@ const pendantRattan = defineAsset({
     poly(ellipsePoints(0, 0, (w / 2) * 0.6, (d / 2) * 0.6)),
     poly(ellipsePoints(0, 0, (w / 2) * 0.85, (d / 2) * 0.85)),
   ],
-});
-
-const ceilingFanLight = defineAsset({
-  id: 'ceiling-fan-light',
-  name: 'Ceiling fan with light',
-  category: 'lighting',
-  type: 'lighting',
-  group: 'Ceiling lights',
-  tags: ['ceiling fan', 'fan', 'cooling', 'blades', 'light kit', 'ceiling'],
-  defaultSize: { w: 1.3, d: 1.3, h: 0.45 },
-  minSize: { w: 0.9, d: 0.9, h: 0.3 },
-  maxSize: { w: 1.6, d: 1.6, h: 0.8 },
-  mount: 'ceiling',
-  defaultElevation: ceilingElevation(0.45),
-  slots: [
-    matSlot('body', 'Motor & downrod', 'metal-brushed-steel'),
-    matSlot('blades', 'Blades', 'wood-walnut'),
-    matSlot('light', 'Light kit', 'light-warm'),
-  ],
-  light: { color: WARM, intensity: 1.3, distance: 6, y: 0.04 },
-  build: ({ w, d, h }) => {
-    const m = Math.min(w, d) / 2;
-    const kitH = 0.07;
-    const motorH = clamp(h * 0.28, 0.09, 0.14);
-    const motorR = 0.12;
-    const yM0 = kitH;
-    const yM1 = kitH + motorH;
-    const bladeY = yM0 + motorH * 0.45;
-    const bw = clamp(m * 0.22, 0.11, 0.16);
-    const r0 = 0.17;
-    const r1 = m - 0.012;
-    const parts: Part[] = [
-      ...canopy('body', h, 0.075),
-      vcyl('body', 0, 0, yM1, h - 0.04, 0.013, { plan: false }),
-      vcyl('body', 0, 0, yM1 - 0.005, yM1 + 0.03, 0.025, { plan: false }),
-      lathe(
-        'body',
-        [0, yM0, 0],
-        [
-          [0.05, 0],
-          [motorR * 0.9, motorH * 0.1],
-          [motorR, motorH * 0.4],
-          [motorR * 0.95, motorH * 0.7],
-          [motorR * 0.55, motorH],
-          [0, motorH],
-        ],
-        { segments: 32, plan: false },
-      ),
-      ring('body', [0, yM0 + motorH * 0.4, 0], motorR * 0.98, 0.006, { plan: false }),
-      lathe(
-        'light',
-        [0, 0, 0],
-        [
-          [0, 0],
-          [0.05, 0.005],
-          [0.09, kitH * 0.45],
-          [0.105, kitH * 0.9],
-          [0.1, kitH],
-        ],
-        { segments: 32, plan: false },
-      ),
-      ring('body', [0, kitH - 0.006, 0], 0.1, 0.006, { plan: false }),
-      sphere('body', [0, 0.008, 0], 0.01, { plan: false }),
-    ];
-    for (const i of range(5)) {
-      const a = (2 * Math.PI * i) / 5;
-      const c = Math.cos(a);
-      const s = Math.sin(a);
-      const rc = (r0 + r1) / 2;
-      parts.push(
-        // Blade iron, then the blade itself (box X axis turned to point along azimuth a).
-        box('body', [c * 0.15, bladeY + 0.01, s * 0.15], [0.12, 0.012, 0.04], { rotation: [0, -a, 0], plan: false }),
-        box('blades', [c * rc, bladeY + 0.004, s * rc], [r1 - r0, 0.012, bw], { rotation: [0, -a, 0], bevel: 0.005 }),
-      );
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => {
-    const m = Math.min(w, d) / 2;
-    return [circle([0, 0], m - 0.012), circle([0, 0], 0.12)];
-  },
 });
 
 const trackSpotlights = defineAsset({
@@ -1203,7 +1121,6 @@ export const LIGHTING_ASSETS: AssetDefinition[] = [
   chandelier,
   pendantGlobeCluster,
   pendantRattan,
-  ceilingFanLight,
   trackSpotlights,
   floorLamp,
   floorLampArc,

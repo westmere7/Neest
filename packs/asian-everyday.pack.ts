@@ -55,24 +55,6 @@ import {
 // Shared geometry helpers
 // ---------------------------------------------------------------------------
 
-/** A flat shape facing the front (+z): `pts` are [x, y] in metres, `t` thick from depth z. */
-function facePlate(slot: string, pts: V2[], z: number, t: number): Part {
-  const ys = pts.map((p) => p[1]);
-  const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
-  const xs = pts.map((p) => p[0]);
-  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-  // Prism outline lies in X/Z and extrudes along Y; rotating +90° about X turns it to face +z.
-  return {
-    shape: 'prism',
-    outline: pts.map(([x, y]) => [x - cx, -(y - mid)] as V2),
-    height: t,
-    position: [cx, mid, z],
-    rotation: [Math.PI / 2, 0, 0],
-    slot,
-    plan: false,
-  };
-}
-
 /** A shape seen from the side: `pts` are [z, y] in metres, extruded along x from x0 to x1. */
 function sidePlate(slot: string, pts: V2[], x0: number, x1: number): Part {
   const zs = pts.map((p) => p[0]);
@@ -244,79 +226,6 @@ const riceCooker = defineItem({
     const x0 = -w / 2 + R + 0.002;
     return [circle([x0, 0], R * 0.55), line([x0 - R * 0.24, 0], [x0 + R * 0.24, 0])];
   },
-});
-
-const waterDispenser = defineItem({
-  id: 'water-dispenser',
-  name: 'Water dispenser with bottle',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Small appliances',
-  tags: ['water dispenser', 'water cooler', 'bottle', 'hot', 'cold', 'drinking water', 'cay nuoc nong lanh', 'asian'],
-  defaultSize: { w: 0.32, d: 0.34, h: 1.4 },
-  minSize: { w: 0.28, d: 0.3, h: 1.1 },
-  maxSize: { w: 0.4, d: 0.42, h: 1.6 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body', 'plastic-white-textured'),
-    matSlot('bottle', 'Water bottle', 'pet-bottle-blue'),
-    matSlot('hot', 'Hot tap', 'plastic-red'),
-    matSlot('cold', 'Cold tap & cap', 'plastic-blue'),
-  ],
-  build: ({ w, d, h }) => {
-    const bodyH = Math.min(h * 0.68, h - 0.3);
-    const rb = Math.min(w, d) / 2 - 0.012;
-    const bh = h - bodyH - 0.01;
-    const zFront = d / 2 - 0.01;
-    const zIn = d / 2 - 0.075;
-    const aT = bodyH * 0.72;
-    const aB = bodyH * 0.42;
-    const o = { plan: false };
-    const neck = Math.min(0.1, bh * 0.25);
-    const parts: Part[] = [
-      // Cabinet with a recessed dispensing alcove.
-      span('body', [-w / 2, w / 2], [0, bodyH], [-d / 2, zIn], { bevel: 0.025 }),
-      span('body', [-w / 2, w / 2], [aT, bodyH], [zIn - 0.02, zFront], { bevel: 0.02 }),
-      span('body', [-w / 2, w / 2], [0, aB], [zIn - 0.02, zFront], { bevel: 0.02 }),
-      span('body', [-w / 2, -w / 2 + 0.03], [aB - 0.01, aT + 0.01], [zIn - 0.02, zFront], { bevel: 0.008, plan: false }),
-      span('body', [w / 2 - 0.03, w / 2], [aB - 0.01, aT + 0.01], [zIn - 0.02, zFront], { bevel: 0.008, plan: false }),
-      // Drip tray and grate.
-      span('body', [-w / 2 + 0.04, w / 2 - 0.04], [aB, aB + 0.02], [zIn, zFront + 0.005], { bevel: 0.006, plan: false }),
-      ...slats('cold', [-w / 2 + 0.05, w / 2 - 0.05], [aB + 0.02, aB + 0.024], [zIn + 0.008, zFront - 0.005], 8, { axis: 'x', gap: 0.5, plan: false }),
-      // Lower storage door handle and the badge/indicator lights.
-      span('body', [-w * 0.3, w * 0.3], [aB - 0.06, aB - 0.045], [zFront - 0.002, zFront + 0.008], { bevel: 0.004, plan: false }),
-      sphere('hot', [-w * 0.12, bodyH - 0.08, zFront], 0.008, o),
-      sphere('cold', [w * 0.12, bodyH - 0.08, zFront], 0.008, o),
-      span('cold', [-w * 0.2, w * 0.2], [bodyH - 0.045, bodyH - 0.035], [zFront - 0.002, zFront + 0.002], o),
-      // Bottle seat on top.
-      cyl('body', [0, bodyH + 0.012, 0], Math.min(rb * 0.6, 0.09), 0.024, { segments: 32, plan: false }),
-      // Upside-down 19 L bottle: neck down into the seat, ribs round the waist.
-      lathe('bottle', [0, bodyH + 0.01, 0], [
-        [0, 0],
-        [0.026, 0],
-        [0.026, neck * 0.45],
-        [rb * 0.5, neck],
-        [rb * 0.97, neck + 0.07],
-        [rb, neck + 0.1],
-        [rb, bh - 0.03],
-        [rb * 0.9, bh],
-        [0, bh],
-      ], { segments: 40, plan: false }),
-      cyl('cold', [0, bodyH + 0.012 + neck * 0.2, 0], 0.03, neck * 0.3, o),
-    ];
-    for (const f of [0.35, 0.55, 0.75]) {
-      parts.push(ring('bottle', [0, bodyH + 0.01 + neck + 0.1 + (bh - neck - 0.13) * f, 0], rb, 0.005, o));
-    }
-    // Hot (red, with child lock) and cold (blue) taps.
-    for (const [x, slot] of [[-w * 0.18, 'hot'], [w * 0.18, 'cold']] as const) {
-      parts.push(span(slot, [x - 0.018, x + 0.018], [aT - 0.05, aT], [zIn - 0.005, zIn + 0.035], { bevel: 0.006, plan: false }));
-      parts.push(span(slot, [x - 0.014, x + 0.014], [aT - 0.075, aT - 0.04], [zIn + 0.03, zIn + 0.042], { bevel: 0.004, plan: false }));
-      parts.push(vcyl(slot, x, zIn + 0.012, aT - 0.07, aT - 0.05, 0.006, o));
-    }
-    parts.push(sphere('hot', [-w * 0.18, aT - 0.005, zIn + 0.03], 0.007, o));
-    return parts;
-  },
-  planDetail: ({ w, d }) => [circle([0, 0], Math.min(w, d) / 2 - 0.012)],
 });
 
 const tiffinCarrier = defineItem({
@@ -859,88 +768,6 @@ const teakDaybed = defineItem({
   planDetail: ({ w, d }) => [rectPoly(-w / 2 + 0.09, -d / 2 + 0.09, w / 2 - 0.09, d / 2 - 0.05), line([-w / 2, -d / 2], [w / 2, d / 2]), line([-w / 2, d / 2], [w / 2, -d / 2])],
 });
 
-const boxFan = defineItem({
-  id: 'floor-fan-box',
-  name: 'Box fan (quạt hộp)',
-  category: 'living',
-  type: 'electronics',
-  group: 'Climate',
-  tags: ['box fan', 'quat hop', 'fan', 'electric fan', 'rotating louvre', 'cooling', 'vietnam', 'asian'],
-  defaultSize: { w: 0.4, d: 0.17, h: 0.46 },
-  minSize: { w: 0.3, d: 0.13, h: 0.36 },
-  maxSize: { w: 0.55, d: 0.22, h: 0.62 },
-  slots: [
-    matSlot('body', 'Body', 'plastic-cream-textured'),
-    matSlot('grille', 'Rotating louvre', 'plastic-sky-textured'),
-    matSlot('blades', 'Blades', 'fan-blade-clear'),
-    matSlot('knobs', 'Knobs & keys', 'plastic-black'),
-  ],
-  build: ({ w, d, h }) => {
-    const footH = 0.03;
-    const handleH = 0.035;
-    const y0 = footH;
-    const y1 = h - handleH;
-    const t = 0.028;
-    const ctrlH = 0.055;
-    const ax = w / 2 - t;
-    const ayT = y1 - t;
-    const ayB = y0 + ctrlH;
-    const R = Math.min(ax, (ayT - ayB) / 2) - 0.006;
-    const yc = (ayT + ayB) / 2;
-    const zF = d / 2 - 0.006;
-    const o = { plan: false };
-    const parts: Part[] = [
-      // Square housing.
-      span('body', [-w / 2, w / 2], [y1 - t, y1], [-d / 2 + 0.01, d / 2], { bevel: 0.01 }),
-      span('body', [-w / 2, w / 2], [y0, ayB], [-d / 2 + 0.01, d / 2], { bevel: 0.01 }),
-      span('body', [-w / 2, -ax], [ayB, ayT], [-d / 2 + 0.01, d / 2], { bevel: 0.006 }),
-      span('body', [ax, w / 2], [ayB, ayT], [-d / 2 + 0.01, d / 2], { bevel: 0.006 }),
-      span('body', [-ax, ax], [ayB, ayT], [-d / 2 + 0.01, -d / 2 + 0.024], o),
-      // Rear motor and the translucent blades.
-      discZ('body', [0, yc, -d / 2 + 0.05], R * 0.26, 0.05, o),
-      discZ('blades', [0, yc, -d / 2 + 0.085], R * 0.12, 0.03, o),
-      // Bezel and the rotating louvre: radial vanes, rings and a badge.
-      torus('body', [0, yc, zF - 0.004], R + 0.008, 0.01, o),
-      torus('grille', [0, yc, zF - 0.008], R * 0.62, 0.005, o),
-      discZ('grille', [0, yc, zF - 0.006], R * 0.2, 0.014, o),
-      discZ('knobs', [0, yc, zF + 0.002], R * 0.12, 0.004, o),
-    ];
-    // Corner fillers between the round opening and the square frame.
-    for (const [sx, sy] of [[1, 1], [-1, 1], [-1, -1], [1, -1]] as V2[]) {
-      const arc = arcPoints(0, 0, R + 0.01, 0, Math.PI / 2, 8).map(([cx, cz]) => [sx * cx, yc + sy * cz] as V2);
-      const yEdge = sy > 0 ? ayT : ayB;
-      const pts: V2[] = [[sx * ax, yc], [sx * ax, yEdge], [0, yEdge], ...arc.slice().reverse()];
-      parts.push(facePlate('body', pts, zF - 0.012, 0.012));
-    }
-    for (const k of range(4)) {
-      const a = (k / 4) * Math.PI * 2 + 0.4;
-      parts.push(sphere('blades', [Math.cos(a) * R * 0.48, yc + Math.sin(a) * R * 0.48, -d / 2 + 0.085], 0.5, { scale: [R * 0.78, R * 0.42, 0.006], rotation: [0, 0, a], plan: false }));
-    }
-    for (const k of range(14)) {
-      const a = (k / 14) * Math.PI * 2;
-      parts.push(box('grille', [Math.cos(a) * R * 0.58, yc + Math.sin(a) * R * 0.58, zF - 0.012], [R * 0.8, 0.012, 0.008], { rotation: [0, 0, a + 0.35], plan: false }));
-    }
-    // Controls along the bottom strip: piano keys and a timer knob.
-    const cy = (y0 + ayB) / 2;
-    for (const x of spaced(4, -ax + 0.02, -ax + 0.11)) {
-      parts.push(span('knobs', [x - 0.011, x + 0.011], [cy - 0.012, cy + 0.012], [d / 2 - 0.002, d / 2 + 0.006], { bevel: 0.003, plan: false }));
-    }
-    parts.push(discZ('knobs', [ax - 0.03, cy, d / 2 + 0.004], 0.019, 0.016, o));
-    parts.push(span('grille', [ax - 0.032, ax - 0.028], [cy + 0.004, cy + 0.017], [d / 2 + 0.012, d / 2 + 0.014], o));
-    parts.push(sphere('grille', [0, cy, d / 2], 0.005, o));
-    // Carry handle and feet.
-    parts.push(...rodPath('body', [
-      [-w * 0.2, y1 - 0.004, 0],
-      [-w * 0.16, h - 0.012, 0],
-      [w * 0.16, h - 0.012, 0],
-      [w * 0.2, y1 - 0.004, 0],
-    ], 0.01));
-    for (const sx of [-1, 1]) parts.push(span('body', [sx * (w / 2 - 0.06) - 0.03, sx * (w / 2 - 0.06) + 0.03], [0, footH], [-d / 2, d / 2], { bevel: 0.008, plan: false }));
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2 + 0.03, d / 2 - 0.01], [w / 2 - 0.03, d / 2 - 0.01])],
-});
-
 // ---------------------------------------------------------------------------
 // Bathroom
 // ---------------------------------------------------------------------------
@@ -1287,69 +1114,6 @@ const dryingRack = defineItem({
 // Electronics
 // ---------------------------------------------------------------------------
 
-const airCooler = defineItem({
-  id: 'air-cooler',
-  name: 'Evaporative air cooler',
-  category: 'electronics',
-  type: 'electronics',
-  group: 'Climate',
-  tags: ['air cooler', 'evaporative cooler', 'swamp cooler', 'quat dieu hoa', 'cooling', 'fan', 'water tank', 'asian'],
-  defaultSize: { w: 0.42, d: 0.34, h: 1.05 },
-  minSize: { w: 0.32, d: 0.26, h: 0.7 },
-  maxSize: { w: 0.55, d: 0.45, h: 1.3 },
-  slots: [
-    matSlot('body', 'Body', 'plastic-white-textured'),
-    matSlot('louvre', 'Louvres & buttons', 'plastic-cooler-blue'),
-    matSlot('pad', 'Cooling pads', 'cooling-pad'),
-    matSlot('dark', 'Grilles & wheels', 'plastic-black'),
-  ],
-  build: ({ w, d, h }) => {
-    const y0 = 0.05;
-    const top = h - 0.006;
-    const zf = d / 2 - 0.005;
-    const lx: V2 = [-w / 2 + 0.06, w / 2 - 0.06];
-    const ly: V2 = [h * 0.55, h - 0.12];
-    const o = { plan: false };
-    const parts: Part[] = [
-      span('body', [-w / 2 + 0.005, w / 2 - 0.005], [y0, top], [-d / 2 + 0.005, zf], { bevel: 0.04 }),
-      span('body', [-w / 2, w / 2], [y0, y0 + 0.1], [-d / 2, d / 2], { bevel: 0.03 }),
-      // Front louvres over a dark grille.
-      span('dark', [lx[0], lx[1]], [ly[0], ly[1]], [zf - 0.002, zf + 0.002], o),
-      ...slats('dark', lx, ly, [zf + 0.002, zf + 0.006], 6, { axis: 'x', gap: 0.75, plan: false }),
-      ...slats('louvre', lx, ly, [zf + 0.004, zf + 0.016], Math.max(4, Math.round((ly[1] - ly[0]) / 0.03)), { axis: 'y', gap: 0.45, bevel: 0.002, plan: false }),
-      span('louvre', [-w * 0.18, w * 0.18], [ly[0] - 0.04, ly[0] - 0.03], [zf - 0.001, zf + 0.003], o),
-      // Water tank window with level marks.
-      span('louvre', [-0.05, 0.05], [y0 + 0.13, y0 + 0.25], [zf - 0.002, zf + 0.003], { bevel: 0.004, plan: false }),
-      // Top control panel: display and buttons; handle recess at the back.
-      span('dark', [-w / 2 + 0.05, w / 2 - 0.05], [top - 0.004, top + 0.004], [d / 2 - 0.16, d / 2 - 0.04], { bevel: 0.002, plan: false }),
-      span('louvre', [-0.04, 0.04], [top + 0.003, top + 0.005], [d / 2 - 0.15, d / 2 - 0.12], o),
-      span('dark', [-0.08, 0.08], [top - 0.003, top + 0.004], [-d / 2 + 0.03, -d / 2 + 0.06], o),
-    ];
-    for (const k of range(3)) parts.push(span('dark', [-0.03, 0.03], [y0 + 0.16 + k * 0.03, y0 + 0.163 + k * 0.03], [zf + 0.003, zf + 0.005], o));
-    for (const x of spaced(4, -w / 2 + 0.08, w / 2 - 0.08)) parts.push(cyl('louvre', [x, top + 0.003, d / 2 - 0.08], 0.01, 0.006, o));
-    // Honeycomb pads behind slotted grilles on both sides and the back.
-    const py: V2 = [h * 0.28, h * 0.85];
-    for (const sx of [-1, 1]) {
-      const x0 = sx * (w / 2 - 0.004);
-      parts.push(span('pad', [Math.min(x0, x0 + sx * 0.006), Math.max(x0, x0 + sx * 0.006)], py, [-d / 2 + 0.05, d / 2 - 0.05], o));
-      parts.push(...slats('body', sx < 0 ? [-w / 2 - 0.004, -w / 2 + 0.002] : [w / 2 - 0.002, w / 2 + 0.004], py, [-d / 2 + 0.05, d / 2 - 0.05], Math.max(4, Math.round((d - 0.1) / 0.03)), { axis: 'z', gap: 0.6, plan: false }));
-    }
-    parts.push(span('pad', [-w / 2 + 0.05, w / 2 - 0.05], py, [-d / 2 - 0.002, -d / 2 + 0.006], o));
-    parts.push(...slats('body', [-w / 2 + 0.05, w / 2 - 0.05], py, [-d / 2 - 0.004, -d / 2 + 0.002], Math.max(4, Math.round((w - 0.1) / 0.03)), { axis: 'x', gap: 0.6, plan: false }));
-    // Castors.
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        const x = sx * (w / 2 - 0.05);
-        const z = sz * (d / 2 - 0.05);
-        parts.push(vcyl('dark', x, z, 0.035, y0 + 0.01, 0.012, o));
-        parts.push(cyl('dark', [x, 0.022, z], 0.022, 0.018, { rotation: [0, 0, Math.PI / 2], plan: false }));
-      }
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2 + 0.06, d / 2 - 0.02], [w / 2 - 0.06, d / 2 - 0.02])],
-});
-
 // ---------------------------------------------------------------------------
 // Outdoor
 // ---------------------------------------------------------------------------
@@ -1440,18 +1204,15 @@ export default definePack({
   items: [
     riceCooker,
     hotpotTable,
-    waterDispenser,
     shoeRack,
     massageChair,
     karaokeSet,
     squatToilet,
     wetBathSet,
     dryingRack,
-    airCooler,
     teakDaybed,
     tiffinCarrier,
     frangipani,
-    boxFan,
   ],
   patterns: [
     {

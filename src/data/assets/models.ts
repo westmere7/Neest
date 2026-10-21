@@ -152,7 +152,10 @@ export function withAllModels(assets: AssetDefinition[]): AssetDefinition[] {
  * that replace it (project loading rewrites placed items; see storage/migrations). `dh` is the
  * height the old item added above the furniture for its props (models do not count props).
  */
-export const RETIRED_MODEL_ITEMS: Record<string, { assetId: string; model?: string; dh?: number; keepModel?: boolean }> = {
+export const RETIRED_MODEL_ITEMS: Record<
+  string,
+  { assetId: string; model?: string; dh?: number; keepModel?: boolean; size?: { w: number; d: number; h: number } }
+> = {
   'model-variants:bookcase-empty': { assetId: 'bookcase', model: 'empty' },
   'model-variants:shelf-ladder-empty': { assetId: 'shelf-ladder', model: 'empty' },
   'model-variants:shelving-unit-empty': { assetId: 'shelving-unit', model: 'empty' },
@@ -224,6 +227,38 @@ export const RETIRED_MODEL_ITEMS: Record<string, { assetId: string; model?: stri
   'bedroom-collection:hollywood-vanity': { assetId: 'beauty:hollywood-vanity-set-up', keepModel: true },
   'ac-outdoor-units:outdoor-unit-12000btu': { assetId: 'ac-outdoor-units:outdoor-unit-9000btu', keepModel: true },
   'ac-outdoor-units:outdoor-unit-18000btu': { assetId: 'ac-outdoor-units:outdoor-unit-9000btu', keepModel: true },
+  // Generic items converted into the real product most common in Vietnam (2026-10-21). Branded items have one
+  // published size, so placed items take it (`size`).
+  'range-hood': { assetId: 'branded-appliances-vn:hafele-hh-wt70a' },
+  'appliances:pressure-cooker': { assetId: 'branded-appliances-vn:philips-hd2151', size: { w: 0.285, d: 0.385, h: 0.262 } },
+  'appliances:toaster-oven': { assetId: 'branded-appliances-vn:panasonic-nb-h3203kra', size: { w: 0.527, d: 0.392, h: 0.343 } },
+  'appliances:mini-fridge': { assetId: 'branded-appliances-vn:aqua-aqr-d100fa' },
+  'appliances:chest-freezer': { assetId: 'branded-appliances-vn:sanaky-vh-2899a1', size: { w: 1.08, d: 0.62, h: 0.845 } },
+  'appliances:garment-steamer': { assetId: 'branded-appliances-vn:philips-ste3170' },
+  'asian-everyday:water-dispenser': { assetId: 'branded-appliances-vn:kangaroo-kg31a3', size: { w: 0.274, d: 0.303, h: 1.52 } },
+  'coffee-machine': { assetId: 'branded-appliances-vn:delonghi-ec685', size: { w: 0.149, d: 0.33, h: 0.303 } },
+  'asian-everyday:air-cooler': { assetId: 'branded-climate-vn:kangaroo-kg50f100', size: { w: 0.465, d: 0.35, h: 1 } },
+  'asian-everyday:floor-fan-box': { assetId: 'branded-climate-vn:senko-bd1410', size: { w: 0.49, d: 0.196, h: 0.542 } },
+  'bathroom-collection:ceiling-exhaust-fan': { assetId: 'branded-climate-vn:panasonic-fv-24cu9', size: { w: 0.3, d: 0.3, h: 0.013 } },
+  'ceiling-fan-light': { assetId: 'branded-climate-vn:panasonic-f-60gfn', size: { w: 1.5, d: 1.5, h: 0.288 } },
+  'floor-fan': { assetId: 'branded-climate-vn:midea-fs40-10navn', size: { w: 0.395, d: 0.395, h: 1.305 } },
+  'basin-pedestal': { assetId: 'branded-bathroom-vn:toto-lpt236cs', size: { w: 0.53, d: 0.465, h: 0.81 } },
+  'toilet-wall-hung': { assetId: 'branded-bathroom-vn:inax-ac-952vn', size: { w: 0.362, d: 0.55, h: 0.363 } },
+  'printer': { assetId: 'branded-tech-vn:canon-lbp2900', size: { w: 0.37, d: 0.251, h: 0.217 } },
+  'monitor': { assetId: 'branded-tech-vn:samsung-s24c310', size: { w: 0.5395, d: 0.2174, h: 0.4228 } },
+  'game-console': { assetId: 'branded-tech-vn:sony-ps5-slim', size: { w: 0.358, d: 0.216, h: 0.096 } },
+  'projector-ceiling': { assetId: 'branded-tech-vn:epson-eb-e01', size: { w: 0.302, d: 0.234, h: 0.3 } },
+  'computer-tower': { assetId: 'branded-tech-vn:dell-vostro-3020-mt', size: { w: 0.154, d: 0.292, h: 0.3243 } },
+  'office-chair': { assetId: 'branded-tech-vn:sihoo-m57', size: { w: 0.64, d: 0.66, h: 1.1 } },
+  'filing-cabinet': { assetId: 'branded-tech-vn:hoa-phat-tu4f', size: { w: 0.47, d: 0.62, h: 1.28 } },
+  'piano-upright': { assetId: 'branded-music:yamaha-u1j', size: { w: 1.52, d: 0.62, h: 1.21 } },
+  'piano-grand': { assetId: 'branded-music:yamaha-c3x', size: { w: 1.49, d: 1.86, h: 1.01 } },
+  'keyboard-stand': { assetId: 'branded-music:yamaha-psr-e383', size: { w: 0.941, d: 0.42, h: 1.02 } },
+  'guitar-stand': { assetId: 'branded-music:yamaha-f310', size: { w: 0.42, d: 0.44, h: 1.1 } },
+  'drum-kit': { assetId: 'branded-music:roland-td-07kv', size: { w: 1.23, d: 1.1, h: 1.2 } },
+  'vietnamese-home:honda-scooter': { assetId: 'branded-vehicles-vn:honda-vision-2025', size: { w: 1.925, d: 0.686, h: 1.126 } },
+  'bicycle': { assetId: 'branded-vehicles-vn:thong-nhat-new-26', size: { w: 1.77, d: 0.62, h: 1.06 } },
+  'lighting-collection:led-panel': { assetId: 'branded-lighting-vn:rang-dong-p06-600x600-40w', size: { w: 0.6, d: 0.6, h: 0.035 } },
 };
 
 /** The item and model to use for an asset id, following retired version items to their replacement. */
@@ -235,12 +270,17 @@ export function currentItem(assetId: string, model?: string): { assetId: string;
 }
 
 /** Moves a placed item off a retired item onto its replacement (and model, if any); true when changed. */
-export function upgradeRetiredItem(o: { assetId: string; model?: string; height: number }): boolean {
+export function upgradeRetiredItem(o: { assetId: string; model?: string; width: number; depth: number; height: number }): boolean {
   const r = RETIRED_MODEL_ITEMS[o.assetId];
   if (!r) return false;
   o.assetId = r.assetId;
   if (r.model) o.model = r.model;
   else if (!r.keepModel) delete o.model;
   if (r.dh) o.height = Math.max(0.005, Math.round((o.height - r.dh) * 1e4) / 1e4);
+  if (r.size) {
+    o.width = r.size.w;
+    o.depth = r.size.d;
+    o.height = r.size.h;
+  }
   return true;
 }

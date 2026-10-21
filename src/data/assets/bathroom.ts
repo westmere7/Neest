@@ -160,61 +160,6 @@ const toilet = defineAsset({
   },
 });
 
-function wallToiletLayout(w: number, d: number) {
-  const rx = w / 2 - 0.01;
-  const rz = (d - 0.1) / 2 + 0.04;
-  return { rx, rz, bz: d / 2 - rz, seatY: 0.42 };
-}
-
-const wallToilet = defineAsset({
-  id: 'toilet-wall-hung',
-  name: 'Wall-hung toilet',
-  category: 'bathroom',
-  type: 'plumbing',
-  group: 'Toilets',
-  tags: ['wc', 'toilet', 'wall hung', 'floating', 'concealed cistern', 'flush plate'],
-  defaultSize: { w: 0.37, d: 0.55, h: 1.1 },
-  minSize: { w: 0.34, d: 0.5, h: 0.95 },
-  maxSize: { w: 0.42, d: 0.62, h: 1.25 },
-  wallSnap: true,
-  slots: [
-    matSlot('ceramic', 'Ceramic', 'ceramic-white'),
-    matSlot('seat', 'Seat, lid & buttons', 'ceramic-white'),
-    matSlot('flush', 'Flush plate & hinges', 'metal-chrome'),
-  ],
-  build: ({ w, d, h }) => {
-    const L = wallToiletLayout(w, d);
-    const sy = L.seatY - 0.02;
-    const y0 = L.seatY - 0.32;
-    const px = Math.min(0.12, w / 2 - 0.02);
-    const zp = -d / 2 + 0.008;
-    return [
-      span('ceramic', [-L.rx * 0.62, L.rx * 0.62], [y0 + 0.06, sy - 0.01], [-d / 2, L.bz - L.rz * 0.3], { bevel: 0.015 }),
-      lathe('ceramic', [0, y0, L.bz], [
-        [0, 0],
-        [0.45, 0],
-        [0.75, 0.04],
-        [0.92, 0.12],
-        [0.98, 0.22],
-        [1, sy - y0],
-        [0.86, sy - y0],
-        [0.6, sy - y0 - 0.08],
-        [0, sy - y0 - 0.12],
-      ], { scale: [L.rx, 1, L.rz], segments: 36 }),
-      ...seatAndLid(0, L.bz, sy, L.rx, L.rz),
-      ...seatHinges(sy, L.bz - L.rz + 0.08),
-      // Flush plate for the concealed cistern.
-      span('flush', [-px, px], [h - 0.2, h - 0.04], [-d / 2, zp], { bevel: 0.003, plan: false }),
-      span('seat', [-px + 0.02, -0.006], [h - 0.17, h - 0.07], [zp, zp + 0.004], { bevel: 0.0015, plan: false }),
-      span('seat', [0.006, px - 0.02], [h - 0.17, h - 0.07], [zp, zp + 0.004], { bevel: 0.0015, plan: false }),
-    ];
-  },
-  planDetail: ({ w, d }) => {
-    const L = wallToiletLayout(w, d);
-    return [poly(ellipsePoints(0, L.bz + 0.01, L.rx - 0.045, L.rz - 0.06))];
-  },
-});
-
 const bidet = defineAsset({
   id: 'bidet',
   name: 'Bidet',
@@ -415,68 +360,6 @@ const vanityDouble = defineAsset({
   ],
   build: (size) => vanityParts(size, true),
   planDetail: (size) => vanityPlan(size, true),
-});
-
-const basinPedestal = defineAsset({
-  id: 'basin-pedestal',
-  name: 'Pedestal basin',
-  category: 'bathroom',
-  type: 'plumbing',
-  group: 'Sinks',
-  tags: ['basin', 'sink', 'washbasin', 'pedestal', 'lavatory'],
-  defaultSize: { w: 0.55, d: 0.45, h: 0.92 },
-  minSize: { w: 0.4, d: 0.35, h: 0.8 },
-  maxSize: { w: 0.75, d: 0.6, h: 1.0 },
-  wallSnap: true,
-  slots: [matSlot('ceramic', 'Ceramic', 'ceramic-white'), matSlot('tap', 'Taps', 'metal-chrome')],
-  build: ({ w, d, h }) => {
-    const rim = h - 0.07;
-    const bowlH = 0.17;
-    const yb = rim - bowlH;
-    const pz = -d * 0.12;
-    const tz = -d / 2 + 0.035;
-    const hx = Math.min(0.08, w * 0.3 - 0.02);
-    const o = { plan: false };
-    const parts: Part[] = [
-      lathe('ceramic', [0, 0, pz], [
-        [0, 0],
-        [0.11, 0],
-        [0.115, 0.012],
-        [0.09, 0.04],
-        [0.075, yb * 0.5],
-        [0.085, yb + 0.02],
-        [0, yb + 0.02],
-      ], { segments: 32, plan: false }),
-      // Unit-radius bowl stretched to the footprint ellipse.
-      lathe('ceramic', [0, yb, 0], [
-        [0, 0],
-        [0.55, 0],
-        [0.85, 0.06],
-        [1, 0.15],
-        [1, bowlH],
-        [0.88, bowlH],
-        [0.75, 0.08],
-        [0, 0.05],
-      ], { scale: [w / 2, 1, d / 2], segments: 40 }),
-      span('ceramic', [-w * 0.3, w * 0.3], [rim - 0.1, rim + 0.012], [-d / 2, -d / 2 + 0.07], { bevel: 0.01 }),
-      cyl('tap', [0, yb + 0.052, 0], 0.017, 0.004, o),
-      // Spout between two cross-head taps.
-      vcyl('tap', 0, tz, rim + 0.012, h - 0.012, 0.012, o),
-      sphere('tap', [0, h - 0.012, tz], 0.012, o),
-      rodZ('tap', 0, h - 0.012, tz, tz + 0.1, 0.008, o),
-      vcyl('tap', 0, tz + 0.1, h - 0.03, h - 0.012, 0.009, o),
-    ];
-    for (const x of [-hx, hx]) {
-      parts.push(
-        vcyl('tap', x, tz, rim + 0.012, rim + 0.045, 0.012, o),
-        rodX('tap', x - 0.024, x + 0.024, rim + 0.05, tz, 0.005, o),
-        rodZ('tap', x, rim + 0.05, tz - 0.024, tz + 0.024, 0.005, o),
-        sphere('tap', [x, rim + 0.056, tz], 0.01, o),
-      );
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => [poly(ellipsePoints(0, 0, w * 0.44, d * 0.44)), circle([0, 0], 0.02)],
 });
 
 // ---------------------------------------------------------------------------
@@ -1104,11 +987,9 @@ const bathroomMirror = defineAsset({
 
 export const BATHROOM_ASSETS: AssetDefinition[] = [
   toilet,
-  wallToilet,
   bidet,
   vanity,
   vanityDouble,
-  basinPedestal,
   shower,
   walkInShower,
   bathtub,

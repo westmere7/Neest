@@ -151,7 +151,6 @@ describe('generated colour variants', () => {
       'chess-table': ['white', 'black', 'board'],
       'art-canvas-large': ['paint1', 'paint2', 'paint3'],
       'artwork-framed': ['mat', 'art'],
-      'piano-upright': ['keys', 'sharps'],
       'clothes-rail': ['clothesA', 'clothesB'],
     };
     for (const [id, slots] of Object.entries(fixed)) {

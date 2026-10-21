@@ -13,11 +13,9 @@ import {
   PLANT_SPECIES,
   circle,
   clamp,
-  cushion,
   cyl,
   defineItem,
   definePack,
-  discZ,
   frame4,
   lathe,
   leaf,
@@ -822,135 +820,6 @@ const thermosTea = defineItem({
 // Outdoor
 // ---------------------------------------------------------------------------
 
-const scooter = defineItem({
-  id: 'honda-scooter',
-  name: 'Motor scooter',
-  category: 'outdoor',
-  type: 'activities',
-  group: 'Bikes & scooters',
-  tags: ['motorbike', 'scooter', 'xe may', 'moped', 'helmet', 'vietnamese', 'parking', 'garage', 'hallway'],
-  defaultSize: { w: 1.85, d: 0.7, h: 1.12 },
-  minSize: { w: 1.6, d: 0.6, h: 1.0 },
-  maxSize: { w: 2.0, d: 0.8, h: 1.25 },
-  slots: [
-    matSlot('body', 'Body paint', 'scooter-paint'),
-    matSlot('dark', 'Tyres, seat & trim', 'rubber-black'),
-    matSlot('metal', 'Chrome & alloy', 'metal-chrome'),
-    matSlot('helmet', 'Helmet', 'helmet-paint'),
-  ],
-  build: ({ w, d, h }) => {
-    const R = 0.2;
-    const tube = 0.055;
-    const Ry = R + tube;
-    const xf = w / 2 - Ry - 0.005;
-    const xr = -w / 2 + Ry + 0.065;
-    const hz = Math.min(0.33, d / 2 - 0.02);
-    const yh = h - 0.2;
-    const xh = xf - 0.37;
-    const parts: Part[] = [];
-    // Wheels: tyre, alloy rim, hub and five cast spokes.
-    for (const cx of [xf, xr]) {
-      parts.push(
-        torus('dark', [cx, Ry, 0], R, tube),
-        torus('metal', [cx, Ry, 0], R - tube * 0.75, 0.012, { plan: false }),
-        discZ('metal', [cx, Ry, 0], 0.045, 0.1, { plan: false }),
-      );
-      for (const k of range(5)) {
-        const a = (k / 5) * TAU + 0.3;
-        parts.push(rod('metal', [cx + Math.cos(a) * 0.04, Ry + Math.sin(a) * 0.04, 0], [cx + Math.cos(a) * (R - tube * 0.75), Ry + Math.sin(a) * (R - tube * 0.75), 0], 0.011, { plan: false }));
-      }
-    }
-    parts.push(discZ('metal', [xf, Ry, 0.05], 0.1, 0.006, { segments: 24, plan: false }));
-    // Front fork and fender.
-    for (const zz of [-0.07, 0.07]) parts.push(rod('metal', [xf, Ry, zz], [xf - 0.13, Ry + 0.45, zz * 0.8], 0.02, { plan: false }));
-    const fr = Ry + 0.02;
-    const fa = spaced(6, 0.55, 2.0);
-    for (let i = 0; i < fa.length - 1; i++) {
-      const a: V2 = [xf + Math.cos(fa[i]) * fr, Ry + Math.sin(fa[i]) * fr];
-      const b: V2 = [xf + Math.cos(fa[i + 1]) * fr, Ry + Math.sin(fa[i + 1]) * fr];
-      parts.push(box('body', [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0], [Math.hypot(b[0] - a[0], b[1] - a[1]) + 0.01, 0.012, 0.13], { rotation: [0, 0, Math.atan2(b[1] - a[1], b[0] - a[0])], plan: false }));
-    }
-    // Leg shield (apron) raked back, with a chrome centre strip.
-    const ax = xf - 0.24;
-    const ay0 = 0.28;
-    const ay1 = yh - 0.1;
-    const rake = 0.3;
-    const ac = (ay0 + ay1) / 2;
-    parts.push(box('body', [ax, ac, 0], [0.13, ay1 - ay0, 0.4], { bevel: 0.05, rotation: [0, 0, rake] }));
-    const fc: V2 = [ax + 0.067 * Math.cos(rake), ac + 0.067 * Math.sin(rake)];
-    const dir: V2 = [-Math.sin(rake), Math.cos(rake)];
-    const half = (ay1 - ay0) * 0.38;
-    parts.push(rod('metal', [fc[0] - dir[0] * half, fc[1] - dir[1] * half, 0], [fc[0] + dir[0] * half, fc[1] + dir[1] * half, 0], 0.01, { plan: false }));
-    // Handlebar cowl with headlight, bars, grips, levers and mirrors.
-    parts.push(
-      box('body', [xh, yh, 0], [0.24, 0.12, 0.34], { bevel: 0.04, rotation: [0, 0, 0.15], plan: false }),
-      sphere('metal', [xh + 0.115, yh + 0.01, 0], 0.5, { scale: [0.05, 0.08, 0.2], plan: false }),
-      rod('dark', [xf - 0.13, Ry + 0.45, 0], [xh, yh - 0.04, 0], 0.03, { plan: false }),
-      rodZ('metal', xh - 0.03, yh + 0.05, -hz, hz, 0.011, { plan: false }),
-    );
-    for (const s of [-1, 1]) {
-      parts.push(
-        rodZ('dark', xh - 0.03, yh + 0.05, s > 0 ? hz - 0.1 : -hz, s > 0 ? hz : -hz + 0.1, 0.018, { plan: false }),
-        rod('metal', [xh - 0.02, yh + 0.065, s * (hz - 0.13)], [xh + 0.05, yh + 0.06, s * (hz - 0.03)], 0.005, { plan: false }),
-        rod('metal', [xh - 0.03, yh + 0.06, s * 0.2], [xh - 0.06, h - 0.07, s * 0.25], 0.007, { plan: false }),
-        sphere('dark', [xh - 0.065, h - 0.045, s * 0.255], 0.5, { scale: [0.025, 0.05, 0.09], plan: false }),
-      );
-    }
-    // Half-face helmet hanging from the right mirror stem by its strap.
-    const hr = 0.12;
-    const hx = xh - 0.08;
-    const hzc = Math.min(0.2, d / 2 - 0.13);
-    const yr = yh - 0.14;
-    const hook: V3 = [xh - 0.045, yh + 0.12, 0.215];
-    parts.push(
-      lathe('helmet', [hx, yr, hzc], [
-        [hr, 0],
-        [hr * 0.98, hr * 0.3],
-        [hr * 0.86, hr * 0.62],
-        [hr * 0.56, hr * 0.88],
-        [0, hr * 0.96],
-      ], { segments: 24, plan: false }),
-      ring('helmet', [hx, yr, hzc], hr, 0.008, { plan: false }),
-      box('helmet', [hx + hr * 0.95, yr + 0.012, hzc], [0.07, 0.008, hr * 1.3], { rotation: [0, 0, -0.25], plan: false }),
-      rod('dark', [hx, yr, hzc - hr * 0.95], hook, 0.004, { plan: false }),
-      rod('dark', [hx, yr, hzc + hr * 0.95], hook, 0.004, { plan: false }),
-    );
-    // Step-through floorboard, rear body, seat and grab rail.
-    parts.push(
-      span('dark', [xr + 0.42, ax - 0.06], [0.24, 0.29], [-0.17, 0.17], { bevel: 0.01 }),
-      span('body', [xr + 0.4, ax], [0.15, 0.24], [-0.15, 0.15], { bevel: 0.03, plan: false }),
-      box('body', [(-w / 2 + 0.09 + xr + 0.5) / 2, 0.535, 0], [xr + 0.5 + w / 2 - 0.09, 0.34, 0.33], { bevel: 0.1, rotation: [0, 0, -0.08] }),
-      span('body', [-w / 2 + 0.06, xr + 0.1], [0.5, 0.68], [-0.12, 0.12], { bevel: 0.05, plan: false }),
-      rodX('metal', xr - 0.12, xr + 0.42, 0.55, 0.167, 0.006, { plan: false }),
-      rodX('metal', xr - 0.12, xr + 0.42, 0.55, -0.167, 0.006, { plan: false }),
-      box('body', [xr + 0.47, 0.42, 0], [0.12, 0.3, 0.3], { bevel: 0.04, rotation: [0, 0, -0.35], plan: false }),
-      cushion('dark', [-w / 2 + 0.1, xr + 0.52], [0.72, 0.8], [-0.155, 0.155], { softness: 0.45 }),
-      ...rodPath('metal', [
-        [xr + 0.05, 0.73, -0.175],
-        [-w / 2 + 0.1, 0.74, -0.17],
-        [-w / 2 + 0.08, 0.745, 0],
-        [-w / 2 + 0.1, 0.74, 0.17],
-        [xr + 0.05, 0.73, 0.175],
-      ], 0.012),
-      span('metal', [-w / 2 + 0.05, -w / 2 + 0.075], [0.55, 0.62], [-0.08, 0.08], { bevel: 0.006, plan: false }),
-      span('metal', [-w / 2 + 0.02, -w / 2 + 0.03], [0.4, 0.51], [-0.1, 0.1], { plan: false }),
-    );
-    // Engine unit (left), exhaust (right), rear shock and centre stand.
-    parts.push(
-      span('dark', [xr - 0.05, xr + 0.42], [0.16, 0.36], [-0.17, -0.06], { bevel: 0.03, plan: false }),
-      span('dark', [xr + 0.1, xr + 0.38], [0.36, 0.45], [-0.17, -0.08], { bevel: 0.02, plan: false }),
-      rod('metal', [xr + 0.3, 0.2, 0.09], [xr - 0.02, 0.32, 0.16], 0.045, { plan: false }),
-      sphere('dark', [xr - 0.03, 0.325, 0.162], 0.03, { plan: false }),
-      rod('metal', [xr + 0.02, Ry + 0.04, 0.09], [xr + 0.16, 0.5, 0.1], 0.016, { plan: false }),
-      rod('dark', [xr + 0.38, 0.17, -0.12], [xr + 0.32, 0.015, -0.13], 0.012, { plan: false }),
-      rod('dark', [xr + 0.38, 0.17, 0.12], [xr + 0.32, 0.015, 0.13], 0.012, { plan: false }),
-      rodZ('dark', xr + 0.32, 0.015, -0.13, 0.13, 0.012, { plan: false }),
-    );
-    return parts;
-  },
-  planDetail: ({ w }) => [line([-w / 2 + 0.1, 0], [w / 2 - 0.1, 0])],
-});
-
 // ---------------------------------------------------------------------------
 // Decor & plants
 // ---------------------------------------------------------------------------
@@ -1368,7 +1237,6 @@ export default definePack({
   items: [
     stoolStack,
     lowTable,
-    scooter,
     nonLa,
     phinCoffee,
     kumquat,

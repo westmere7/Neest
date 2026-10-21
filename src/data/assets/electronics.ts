@@ -9,7 +9,6 @@ import {
   defineAsset,
   discZ,
   frame4,
-  lathe,
   line,
   matSlot,
   prism,
@@ -111,42 +110,6 @@ const tvWall = defineAsset({
       span('body', [-w * 0.16, -w * 0.13], [h * 0.25, h * 0.66], [-d / 2 + 0.005, zp - hz], { plan: false }),
       span('body', [w * 0.13, w * 0.16], [h * 0.25, h * 0.66], [-d / 2 + 0.005, zp - hz], { plan: false }),
     ];
-  },
-});
-
-const monitor = defineAsset({
-  id: 'monitor',
-  name: 'Computer monitor',
-  category: 'electronics',
-  type: 'electronics',
-  group: 'Computers',
-  tags: ['monitor', 'screen', 'display', 'computer', 'desktop'],
-  defaultSize: { w: 0.62, d: 0.22, h: 0.48 },
-  minSize: { w: 0.35, d: 0.15, h: 0.3 },
-  maxSize: { w: 1.2, d: 0.35, h: 0.7 },
-  // Sits on a desk top by default.
-  defaultElevation: 0.75,
-  slots: [SCREEN_SLOT, matSlot('body', 'Housing & stand', 'metal-anthracite'), TRIM_SLOT],
-  build: ({ w, d, h }) => {
-    const screenH = Math.min(w * 0.55, h - 0.1);
-    const y0 = h - screenH;
-    const zp = Math.min(0.02, d / 2 - 0.03);
-    const baseW = Math.min(w * 0.2, 0.13);
-    const parts: Part[] = [
-      ...flatPanel([-w / 2, w / 2], [y0, h], zp - 0.01, zp + 0.006, 0.005, 0.018),
-      span('body', [-w * 0.3, w * 0.3], [y0 + screenH * 0.15, y0 + screenH * 0.75], [zp - 0.03, zp - 0.01], { bevel: 0.01, plan: false }),
-      span('body', [-0.04, 0.04], [y0 + screenH * 0.35, y0 + screenH * 0.55], [zp - 0.045, zp - 0.03], { bevel: 0.006, plan: false }),
-      // Height-adjustable column with a cable-management loop.
-      span('body', [-0.028, 0.028], [0.012, y0 + screenH * 0.6], [zp - 0.08, zp - 0.045], { bevel: 0.008, plan: false }),
-      torus('trim', [0, 0.06 + Math.min(0.06, y0 * 0.3), zp - 0.081], 0.012, 0.003, { plan: false }),
-      prism('body', roundRectPoints(0, (-d / 2 + d / 2 - 0.02) / 2, baseW * 2, d - 0.02, 0.03), 0, 0.012),
-    ];
-    // OSD buttons under the right of the chin.
-    for (const i of range(3)) {
-      const bx = w / 2 - 0.05 - i * 0.015;
-      parts.push(span('body', [bx - 0.004, bx + 0.004], [y0 - 0.003, y0], [zp - 0.006, zp + 0.002], { plan: false }));
-    }
-    return parts;
   },
 });
 
@@ -425,79 +388,6 @@ const radioRetro = defineAsset({
 // Computers and gaming
 // ---------------------------------------------------------------------------
 
-const computerTower = defineAsset({
-  id: 'computer-tower',
-  name: 'Desktop PC tower',
-  category: 'electronics',
-  type: 'electronics',
-  group: 'Computers',
-  tags: ['computer', 'pc', 'desktop', 'tower', 'gaming pc', 'rgb', 'case'],
-  defaultSize: { w: 0.21, d: 0.45, h: 0.46 },
-  minSize: { w: 0.17, d: 0.35, h: 0.35 },
-  maxSize: { w: 0.3, d: 0.55, h: 0.6 },
-  slots: [
-    matSlot('case', 'Case', 'metal-black-matte'),
-    matSlot('glass', 'Glass panels', 'glass-tinted'),
-    matSlot('parts', 'Components', 'solid-mid-grey'),
-    matSlot('rgb', 'RGB lighting', 'screen-glow'),
-  ],
-  build: ({ w, d, h }) => {
-    const t = 0.006;
-    const yb = 0.02;
-    const zFr = d / 2 - 0.022;
-    const xi0 = -w / 2 + 0.005;
-    const xi1 = w / 2 - t;
-    const parts: Part[] = [
-      span('case', [w / 2 - t, w / 2], [yb, h], [-d / 2, zFr]),
-      span('case', [-w / 2, w / 2], [h - t, h], [-d / 2, zFr], { bevel: 0.002 }),
-      span('case', [-w / 2, w / 2], [yb, yb + t], [-d / 2, zFr]),
-      span('case', [-w / 2, w / 2 - t], [yb, h - t], [-d / 2, -d / 2 + t], { plan: false }),
-      span('glass', [-w / 2, -w / 2 + 0.004], [yb + t, h - t], [-d / 2 + t, zFr], { plan: false }),
-      // Front: frame around a glass insert, I/O on the top edge.
-      ...frame4('case', [-w / 2, w / 2], [yb, h], [zFr, d / 2], 0.018, { plan: true }),
-      span('glass', [-w / 2 + 0.018, w / 2 - 0.018], [yb + 0.018, h - 0.018], [zFr + 0.006, zFr + 0.01], { plan: false }),
-      cyl('rgb', [w * 0.25, h, d / 2 - 0.05], 0.008, 0.004, { segments: 16, plan: false }),
-      span('parts', [-w * 0.25, -w * 0.25 + 0.014], [h - 0.002, h + 0.001], [d / 2 - 0.06, d / 2 - 0.054], { plan: false }),
-      span('parts', [-w * 0.05, -w * 0.05 + 0.014], [h - 0.002, h + 0.001], [d / 2 - 0.06, d / 2 - 0.054], { plan: false }),
-      // PSU shroud and motherboard.
-      span('case', [xi0, xi1], [yb + t, 0.11], [-d / 2 + t, zFr - 0.05], { plan: false }),
-      span('parts', [xi1 - 0.004, xi1], [0.12, h - 0.02], [-d / 2 + 0.02, zFr - 0.08], { plan: false }),
-    ];
-    for (const x of [-w / 2 + 0.03, w / 2 - 0.03]) {
-      for (const z of [-d / 2 + 0.04, d / 2 - 0.05]) parts.push(span('case', [x - 0.015, x + 0.015], [0, yb], [z - 0.03, z + 0.03], { bevel: 0.004, plan: false }));
-    }
-    // Graphics card with a lit edge.
-    const gw = Math.min(0.12, (xi1 - xi0) * 0.65);
-    const gl = Math.min(0.3, d - 0.15);
-    parts.push(span('parts', [xi1 - 0.004 - gw, xi1 - 0.004], [0.15, 0.195], [-d / 2 + 0.012, -d / 2 + 0.012 + gl], { bevel: 0.004, plan: false }));
-    parts.push(span('rgb', [xi1 - 0.006 - gw, xi1 - 0.004 - gw], [0.165, 0.18], [-d / 2 + 0.05, -d / 2 + 0.05 + gl * 0.6], { plan: false }));
-    // CPU tower cooler with fan and RGB ring, RAM sticks beside it.
-    const cy = Math.max(0.24, h * 0.62);
-    const cs = Math.min(0.11, h - cy - 0.03);
-    const cz = -d / 2 + 0.1;
-    const cr = Math.min(cs / 2, (xi1 - xi0) / 2 - 0.01);
-    parts.push(span('parts', [xi1 - 0.004 - 0.11, xi1 - 0.004], [cy, cy + cs], [cz - 0.025, cz + 0.025], { plan: false }));
-    parts.push(discZ('case', [xi1 - 0.06, cy + cs / 2, cz + 0.035], cr, 0.02, { segments: 24, plan: false }));
-    parts.push(torus('rgb', [xi1 - 0.06, cy + cs / 2, cz + 0.046], cr * 0.85, 0.003, { plan: false }));
-    for (const i of range(4)) {
-      const rz = cz + 0.06 + i * 0.012;
-      parts.push(span('parts', [xi1 - 0.036, xi1 - 0.004], [cy, cy + cs], [rz, rz + 0.006], { plan: false }));
-      parts.push(span('rgb', [xi1 - 0.04, xi1 - 0.036], [cy + 0.005, cy + cs - 0.005], [rz, rz + 0.006], { plan: false }));
-    }
-    // Front intake fans and the rear exhaust fan, each with an RGB ring.
-    const fr = Math.min(0.06, (w - 0.05) / 2);
-    const nf = clamp(Math.floor((h - 0.16) / (2 * fr + 0.01)), 1, 3);
-    for (const fy of spaced(nf, 0.11 + fr + 0.01, h - 0.03 - fr)) {
-      parts.push(discZ('case', [0, fy, zFr - 0.015], fr, 0.022, { segments: 24, plan: false }));
-      parts.push(torus('rgb', [0, fy, zFr - 0.003], fr * 0.9, 0.0035, { plan: false }));
-      parts.push(discZ('parts', [0, fy, zFr - 0.002], fr * 0.3, 0.004, { segments: 16, plan: false }));
-    }
-    parts.push(discZ('case', [0, h - 0.03 - fr * 0.9, -d / 2 + t + 0.013], fr * 0.9, 0.022, { segments: 24, plan: false }));
-    parts.push(torus('rgb', [0, h - 0.03 - fr * 0.9, -d / 2 + t + 0.025], fr * 0.8, 0.003, { plan: false }));
-    return parts;
-  },
-});
-
 /** Open laptop: lid length, hinge depth and keyboard depth so the tilted lid stays in the box. */
 function laptopLayout(d: number, h: number) {
   const tau = 0.28;
@@ -578,138 +468,9 @@ const laptop = defineAsset({
   },
 });
 
-const gameConsole = defineAsset({
-  id: 'game-console',
-  name: 'Games console',
-  category: 'electronics',
-  type: 'electronics',
-  group: 'Gaming',
-  tags: ['console', 'games', 'gaming', 'playstation', 'xbox', 'controller', 'gamepad'],
-  defaultSize: { w: 0.45, d: 0.38, h: 0.1 },
-  minSize: { w: 0.32, d: 0.3, h: 0.07 },
-  maxSize: { w: 0.6, d: 0.5, h: 0.16 },
-  // Sits on a media unit by default.
-  defaultElevation: 0.5,
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Shell', 'plastic-white'),
-    matSlot('trim', 'Core & controls', 'plastic-black'),
-    matSlot('led', 'Light bar', 'screen-glow'),
-  ],
-  build: ({ w, d, h }) => {
-    const zc1 = d / 2 - 0.13;
-    const parts: Part[] = [
-      span('trim', [-w / 2 + 0.01, w / 2 - 0.01], [0.008, h - 0.008], [-d / 2 + 0.006, zc1 - 0.006], { bevel: 0.006 }),
-      span('body', [-w / 2, w / 2], [h * 0.58, h], [-d / 2, zc1], { bevel: Math.min(0.015, h * 0.15) }),
-      span('body', [-w / 2, w / 2], [0.008, h * 0.42], [-d / 2, zc1], { bevel: Math.min(0.012, h * 0.12) }),
-      span('led', [-w / 2 + 0.03, w / 2 - 0.03], [h * 0.48, h * 0.52], [zc1 - 0.007, zc1 - 0.005], { plan: false }),
-      // Disc slot, buttons and USB ports.
-      span('trim', [-w * 0.3, w * 0.1], [h * 0.76, h * 0.79], [zc1 - 0.002, zc1 + 0.001], { plan: false }),
-      cyl('trim', [w * 0.3, h * 0.78, zc1], 0.006, 0.003, { rotation: [Math.PI / 2, 0, 0], plan: false }),
-      span('trim', [-w * 0.3, -w * 0.3 + 0.014], [h * 0.22, h * 0.28], [zc1 - 0.002, zc1 + 0.001], { plan: false }),
-      span('trim', [-w * 0.3 + 0.025, -w * 0.3 + 0.039], [h * 0.22, h * 0.28], [zc1 - 0.002, zc1 + 0.001], { plan: false }),
-      ...slats('trim', [-w / 2 + 0.03, w / 2 - 0.03], [h * 0.62, h * 0.95], [-d / 2 - 0.001, -d / 2 + 0.001], clamp(Math.round(w / 0.03), 8, 18), { axis: 'x', gap: 0.5, plan: false }),
-    ];
-    for (const x of [-w / 2 + 0.05, w / 2 - 0.05]) {
-      for (const z of [-d / 2 + 0.04, zc1 - 0.04]) parts.push(vcyl('trim', x, z, 0, 0.008, 0.01, { plan: false }));
-    }
-    // Controller lying in front, turned slightly.
-    const a = 0.25;
-    const cc = Math.cos(a);
-    const sc = Math.sin(a);
-    const ox = Math.min(w * 0.15, w / 2 - 0.12);
-    const oz = d / 2 - 0.065;
-    const P = (x: number, y: number, z: number): V3 => [ox + x * cc + z * sc, y, oz - x * sc + z * cc];
-    const rot: V3 = [0, a, 0];
-    const yb = 0.022;
-    parts.push(
-      box('body', P(0, yb, -0.005), [0.15, 0.03, 0.06], { rotation: rot, bevel: 0.012, plan: false }),
-      sphere('body', P(-0.055, yb - 0.002, 0.025), 0.026, { scale: [1, 0.8, 1.5], rotation: rot, plan: false }),
-      sphere('body', P(0.055, yb - 0.002, 0.025), 0.026, { scale: [1, 0.8, 1.5], rotation: rot, plan: false }),
-      box('trim', P(0, yb + 0.015, -0.012), [0.05, 0.003, 0.03], { rotation: rot, bevel: 0.001, plan: false }),
-      box('led', P(0, yb + 0.012, -0.036), [0.04, 0.004, 0.003], { rotation: rot, plan: false }),
-      vcyl('trim', P(-0.028, 0, 0.015)[0], P(-0.028, 0, 0.015)[2], yb + 0.012, yb + 0.024, 0.009, { plan: false }),
-      vcyl('trim', P(0.028, 0, 0.015)[0], P(0.028, 0, 0.015)[2], yb + 0.012, yb + 0.024, 0.009, { plan: false }),
-      box('trim', P(-0.055, yb + 0.016, -0.008), [0.026, 0.004, 0.008], { rotation: rot, plan: false }),
-      box('trim', P(-0.055, yb + 0.016, -0.008), [0.008, 0.004, 0.026], { rotation: rot, plan: false }),
-    );
-    for (const [bx, bz] of [
-      [0.055, -0.018],
-      [0.055, 0.002],
-      [0.045, -0.008],
-      [0.065, -0.008],
-    ] as V2[]) {
-      parts.push(sphere('trim', P(bx, yb + 0.015, bz), 0.0045, { plan: false }));
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2, d / 2 - 0.13], [w / 2, d / 2 - 0.13])],
-});
-
 // ---------------------------------------------------------------------------
 // Home cinema
 // ---------------------------------------------------------------------------
-
-const projectorCeiling = defineAsset({
-  id: 'projector-ceiling',
-  name: 'Ceiling projector',
-  category: 'electronics',
-  type: 'electronics',
-  group: 'TV & audio',
-  tags: ['projector', 'home cinema', 'beamer', 'ceiling mount', 'movie'],
-  defaultSize: { w: 0.35, d: 0.32, h: 0.45 },
-  minSize: { w: 0.28, d: 0.25, h: 0.25 },
-  maxSize: { w: 0.45, d: 0.4, h: 0.8 },
-  mount: 'ceiling',
-  defaultElevation: 2.25,
-  slots: [
-    matSlot('body', 'Body', 'plastic-white'),
-    matSlot('mount', 'Mount & vents', 'metal-black-matte'),
-    matSlot('lens', 'Lens', 'glass-tinted'),
-  ],
-  build: ({ w, d, h }) => {
-    const bw = w * 0.95;
-    const bd = d * 0.82;
-    const bh = Math.min(0.12, h * 0.32);
-    const yb = 0.005;
-    const top = yb + bh;
-    const pr = Math.min(0.07, w / 2, d / 2);
-    const parts: Part[] = [
-      span('body', [-bw / 2, bw / 2], [yb, top], [-bd / 2, bd / 2], { bevel: 0.018 }),
-      span('mount', [-bw / 2 + 0.01, bw / 2 - 0.01], [yb + bh * 0.45, yb + bh * 0.5], [bd / 2 - 0.002, bd / 2 + 0.001], { plan: false }),
-      // Ceiling plate, drop pole with an adjustment collar, spider bracket.
-      cyl('mount', [0, h - 0.005, 0], pr, 0.01, { segments: 28, plan: false }),
-      vcyl('mount', 0, 0, top + 0.03, h - 0.01, 0.014, { plan: false }),
-      vcyl('mount', 0, 0, top + 0.05 + (h - top) * 0.3, top + 0.08 + (h - top) * 0.3, 0.02, { plan: false }),
-      rodX('mount', -0.03, 0.03, top + 0.065 + (h - top) * 0.3, 0, 0.004, { plan: false }),
-      cyl('mount', [0, top + 0.025, 0], 0.035, 0.012, { segments: 20, plan: false }),
-    ];
-    for (const k of range(4)) {
-      const a = Math.PI / 4 + (k * Math.PI) / 2;
-      const ex = Math.cos(a) * bw * 0.32;
-      const ez = Math.sin(a) * bd * 0.32;
-      parts.push(rod('mount', [Math.cos(a) * 0.03, top + 0.025, Math.sin(a) * 0.03], [ex, top + 0.004, ez], 0.005, { plan: false }));
-      parts.push(cyl('mount', [ex, top + 0.003, ez], 0.012, 0.006, { segments: 12, plan: false }));
-    }
-    // Offset lens with focus rings, side vents and a status light.
-    const lx = -bw * 0.22;
-    const ly = yb + bh * 0.45;
-    const lr = Math.min(0.042, bh * 0.4);
-    parts.push(
-      discZ('body', [lx, ly, bd / 2 + 0.002], lr + 0.008, 0.012, { segments: 28, plan: false }),
-      discZ('mount', [lx, ly, bd / 2 + 0.012], lr, 0.016, { segments: 28, plan: false }),
-      discZ('lens', [lx, ly, bd / 2 + 0.021], lr * 0.8, 0.003, { segments: 28, plan: false }),
-      torus('body', [lx, ly, bd / 2 + 0.016], lr + 0.001, 0.003, { plan: false }),
-      cyl('mount', [bw * 0.25, top - 0.002, bd * 0.3], 0.01, 0.005, { segments: 16, plan: false }),
-    );
-    for (const side of [-1, 1]) {
-      parts.push(
-        ...slats('mount', [side * bw / 2 - 0.001, side * bw / 2 + 0.001], [yb + bh * 0.25, yb + bh * 0.75], [-bd * 0.35, bd * 0.3], 7, { axis: 'z', gap: 0.5, plan: false }),
-      );
-    }
-    return parts;
-  },
-});
 
 const projectionScreen = defineAsset({
   id: 'projection-screen',
@@ -931,94 +692,6 @@ const airCon = defineAsset({
     spaced(5, -d / 2 + 0.04, d / 2 - 0.06).map((z) => line([-w / 2 + 0.05, z], [w / 2 - 0.05, z])),
 });
 
-const floorFan = defineAsset({
-  id: 'floor-fan',
-  name: 'Pedestal fan',
-  category: 'electronics',
-  type: 'electronics',
-  group: 'Climate',
-  tags: ['fan', 'pedestal fan', 'cooling', 'standing fan'],
-  defaultSize: { w: 0.45, d: 0.38, h: 1.25 },
-  minSize: { w: 0.3, d: 0.25, h: 0.6 },
-  maxSize: { w: 0.7, d: 0.6, h: 1.6 },
-  slots: [
-    matSlot('body', 'Body', 'metal-white-powder'),
-    matSlot('blades', 'Blades', 'glass-frosted'),
-    matSlot('guard', 'Guard & pole', 'metal-chrome'),
-  ],
-  build: ({ w, d, h }) => {
-    const tube = 0.006;
-    const R = Math.min(w / 2 - tube, h * 0.22);
-    const yh = h - R - tube;
-    const zh = d / 2 - 0.07;
-    const mz1 = zh - 0.06;
-    const mz0 = Math.max(-d / 2 + 0.005, mz1 - 0.14);
-    const zp = clamp(0, mz0 + 0.02, mz1 - 0.02);
-    const baseR = Math.min(w / 2, d / 2 - Math.abs(zp)) * 0.85;
-    const yc = 0.04 + (yh - 0.12) * 0.55;
-    const parts: Part[] = [
-      lathe(
-        'body',
-        [0, 0, zp],
-        [
-          [0, 0],
-          [baseR, 0],
-          [baseR, 0.012],
-          [baseR * 0.8, 0.035],
-          [baseR * 0.25, 0.045],
-          [0, 0.045],
-        ],
-        { segments: 32 },
-      ),
-      // Telescopic pole with a clamp collar and the yoke.
-      vcyl('body', 0, zp, 0.04, yc, 0.018, { plan: false }),
-      vcyl('guard', 0, zp, yc, yh - 0.05, 0.011, { plan: false }),
-      vcyl('body', 0, zp, yc - 0.01, yc + 0.025, 0.024, { plan: false }),
-      rodX('body', 0.02, 0.045, yc + 0.008, zp, 0.007, { plan: false }),
-      span('body', [-0.03, 0.03], [yh - 0.06, yh - 0.03], [zp - 0.02, zp + 0.02], { bevel: 0.008, plan: false }),
-      // Motor housing with rear vent rings and the tilt knob.
-      discZ('body', [0, yh, (mz0 + mz1) / 2], 0.065, mz1 - mz0, { segments: 24 }),
-      torus('guard', [0, yh, mz0 - 0.001], 0.04, 0.003, { plan: false }),
-      torus('guard', [0, yh, mz0 - 0.001], 0.022, 0.003, { plan: false }),
-      rodX('body', 0.065, 0.085, yh, (mz0 + mz1) / 2, 0.01, { plan: false }),
-      // Guard rims, rings and centre badge.
-      torus('guard', [0, yh, zh + 0.05], R, tube),
-      torus('guard', [0, yh, zh - 0.05], R, tube),
-      torus('guard', [0, yh, zh + 0.052], R * 0.66, 0.0025, { plan: false }),
-      torus('guard', [0, yh, zh + 0.054], R * 0.36, 0.0025, { plan: false }),
-      discZ('body', [0, yh, zh + 0.058], 0.04, 0.008, { segments: 24, plan: false }),
-      discZ('body', [0, yh, zh], 0.035, 0.04, { plan: false }),
-    ];
-    for (const k of range(8)) {
-      const a = Math.PI / 8 + (k * Math.PI) / 4;
-      const rx = R * Math.cos(a);
-      const ry = R * Math.sin(a);
-      parts.push(rod('guard', [0.04 * Math.cos(a), yh + 0.04 * Math.sin(a), zh + 0.056], [rx, yh + ry, zh + 0.05], 0.0018, { plan: false }));
-      parts.push(rod('guard', [0.05 * Math.cos(a), yh + 0.05 * Math.sin(a), zh - 0.056], [rx, yh + ry, zh - 0.05], 0.0018, { plan: false }));
-    }
-    for (const k of range(4)) {
-      const a = (k * Math.PI) / 2;
-      parts.push(rodZ('guard', R * Math.cos(a), yh + R * Math.sin(a), zh - 0.05, zh + 0.05, tube * 0.8, { plan: false }));
-    }
-    for (const k of range(3)) {
-      const a = Math.PI / 2 + (k * 2 * Math.PI) / 3;
-      parts.push(
-        sphere('blades', [Math.cos(a) * R * 0.48, yh + Math.sin(a) * R * 0.48, zh], 0.5, {
-          scale: [R * 0.8, R * 0.42, 0.012],
-          rotation: [0, 0, a],
-          plan: false,
-        }),
-      );
-    }
-    // Speed buttons on the base.
-    for (const i of range(3)) {
-      const bx = (i - 1) * 0.022;
-      parts.push(span('guard', [bx - 0.008, bx + 0.008], [0.036, 0.046], [zp + baseR * 0.5, zp + baseR * 0.5 + 0.014], { bevel: 0.003, plan: false }));
-    }
-    return parts;
-  },
-});
-
 const oilHeater = defineAsset({
   id: 'oil-heater',
   name: 'Oil-filled radiator heater',
@@ -1133,21 +806,16 @@ const airPurifier = defineAsset({
 export const ELECTRONICS_ASSETS: AssetDefinition[] = [
   tvStand,
   tvWall,
-  monitor,
   speaker,
   soundbar,
   turntable,
   radioRetro,
-  computerTower,
   laptop,
-  gameConsole,
-  projectorCeiling,
   projectionScreen,
   wifiRouter,
   smartSpeaker,
   robotVacuum,
   airCon,
-  floorFan,
   oilHeater,
   airPurifier,
 ];

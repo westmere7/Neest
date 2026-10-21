@@ -253,7 +253,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       'A loft bed with a built-in desk underneath and a desk chair: sleeping and homework in one footprint, for small rooms.',
     items: [
       { a: 'bed-loft-desk', x: 0, y: 0.5 },
-      { a: 'office-chair', x: 0.3, y: 1.15, r: UP },
+      { a: 'branded-tech-vn:sihoo-m57', x: 0.3, y: 1.15, r: UP },
     ],
   },
   // ───────── Living ─────────
@@ -398,7 +398,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       { a: 'kitchen-wall-cabinet', x: -1.1, y: 0.175, e: 1.45, m: { front: 'paint-satin-white' } },
       { a: 'kitchen-wall-cabinet', x: -0.5, y: 0.175, e: 1.45, m: { front: 'paint-satin-white' } },
       { a: 'kitchen-wall-cabinet', x: 0.1, y: 0.175, e: 1.45, m: { front: 'paint-satin-white' } },
-      { a: 'range-hood', x: 1.0, y: 0.25, w: 0.8, e: 1.6 },
+      { a: 'branded-appliances-vn:hafele-hh-wt70a', x: 1.0, y: 0.25, e: 1.6 },
       { a: 'kettle', x: -1.2, y: 0.25, e: 0.9 },
       { a: 'lived-in:dish-soap-sponge', x: -0.1, y: 0.1, e: 0.9 },
       { a: 'lived-in:cooking-condiments', x: 1.3, y: 0.1, r: 0, w: 0.28, d: 0.12, e: 0.9 },
@@ -429,7 +429,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       },
       { a: 'kitchen-wall-cabinet', x: -0.85, y: 0.175, e: 1.45, m: { front: SAGE, handle: 'metal-brass' } },
       { a: 'kitchen-wall-cabinet', x: -0.25, y: 0.175, e: 1.45, m: { front: SAGE, handle: 'metal-brass' } },
-      { a: 'range-hood', x: 0.82, y: 0.25, w: 0.66, e: 1.6, m: { body: 'metal-white-powder' } },
+      { a: 'branded-appliances-vn:hafele-hh-wt70a', x: 0.82, y: 0.25, e: 1.6 },
       {
         a: 'kitchen-counters:peninsula-breakfast-bar',
         x: 0.675,
@@ -492,7 +492,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
     items: [
       { a: 'kitchen-base-cabinet', x: -0.3, y: 0.3, m: { front: OAK } },
       { a: 'kitchen-base-cabinet', x: 0.3, y: 0.3, m: { front: OAK } },
-      { a: 'coffee-machine', x: -0.3, y: 0.24, e: 0.9 },
+      { a: 'branded-appliances-vn:delonghi-ec685', x: -0.3, y: 0.24, e: 0.9 },
       { a: 'kettle', x: 0.12, y: 0.22, e: 0.9 },
       { a: 'lived-in:coffee-mugs-pair', x: 0.38, y: 0.4, w: 0.24, d: 0.12, e: 0.9 },
       { a: 'kitchen-open-shelf', x: 0, y: 0.125, e: 1.45 },
@@ -638,7 +638,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       { a: 'shower-tray', x: -0.75, y: 0.45 },
       { a: 'toilet', x: 0.2, y: 0.34 },
       { a: 'bathroom-collection:bidet-spray', x: 0.48, y: 0.05, e: 0.25 },
-      { a: 'basin-pedestal', x: 0.85, y: 0.225 },
+      { a: 'branded-bathroom-vn:toto-lpt236cs', x: 0.85, y: 0.225 },
       { a: 'bathroom-mirror', x: 0.85, y: 0.015, w: 0.5, h: 0.7, e: 1.15 },
     ],
   },
@@ -666,12 +666,12 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       'A 1.4 m desk with a monitor, a task lamp and a little succulent, a mobile drawer unit, a pinboard above and an ergonomic office chair.',
     items: [
       { a: 'desk', x: 0, y: 0.35 },
-      { a: 'monitor', x: -0.1, y: 0.15, e: 0.75 },
+      { a: 'branded-tech-vn:samsung-s24c310', x: -0.1, y: 0.15, e: 0.75 },
       { a: 'task-lamp', x: 0.55, y: 0.15, e: 0.75 },
       { a: 'plant-succulents', x: -0.5, y: 0.12, w: 0.25, d: 0.12, h: 0.12, e: 0.75 },
       { a: 'drawer-unit', x: 0.95, y: 0.3 },
       { a: 'pinboard', x: 0, y: 0.015, w: 0.8, h: 0.5, e: 1.3 },
-      { a: 'office-chair', x: 0, y: 1.0, r: UP },
+      { a: 'branded-tech-vn:sihoo-m57', x: 0, y: 1.0, r: UP },
     ],
   },
   {
@@ -686,7 +686,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       { a: 'laptop', x: 0, y: 0.25, e: 0.75 },
       { a: 'task-lamp', x: 0.38, y: 0.12, e: 0.75 },
       { a: 'shelving:floating-shelf-set', x: 0, y: 0.11, e: 1.2, w: 0.9 },
-      { a: 'office-chair', x: 0, y: 0.85, r: UP },
+      { a: 'branded-tech-vn:sihoo-m57', x: 0, y: 0.85, r: UP },
     ],
   },
   {
@@ -699,7 +699,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
     items: [
       { a: 'bookcase', x: -0.55, y: 0.16 },
       { a: 'bookcase', x: 0.55, y: 0.16 },
-      { a: 'office-chair', x: 0, y: 0.75 },
+      { a: 'branded-tech-vn:sihoo-m57', x: 0, y: 0.75 },
       { a: 'desk-executive', x: 0, y: 1.4, r: UP },
       { a: 'plant-large', x: 1.45, y: 0.45 },
     ],
@@ -859,7 +859,7 @@ function lKitchen(k: LKitchen): ReadyGroupSpec {
           items.push(
             k.hood === 'cylinder'
               ? { a: 'soft-modern-home:cylinder-wall-cooker-hood', ...at(0.2), r }
-              : { a: 'range-hood', ...at(0.25), r, w: Math.min(0.9, mod.w) },
+              : { a: 'branded-appliances-vn:hafele-hh-wt70a', ...at(0.25), r },
           );
         } else if (k.upper === 'glass')
           items.push({
@@ -1138,7 +1138,7 @@ READY_GROUP_SPECS.push(
     description: 'An L-shaped corner desk with a monitor, keyboard and notebook, a task lamp and an ergonomic mesh chair. Fits a 1.6 × 1.4 m corner plus room to pull the chair out.',
     items: [
       { a: 'workspace:l-desk-corner-left', x: 0, y: 0.7 },
-      { a: 'monitor', x: 0.3, y: 0.18, e: 0.75 },
+      { a: 'branded-tech-vn:samsung-s24c310', x: 0.3, y: 0.18, e: 0.75 },
       { a: 'workspace:desk-essentials', x: 0.3, y: 0.42, e: 0.75 },
       { a: 'task-lamp', x: 0.68, y: 0.15, e: 0.75 },
       { a: 'workspace:ergonomic-mesh-chair', x: 0.3, y: 1.0, r: UP },
@@ -1152,8 +1152,8 @@ READY_GROUP_SPECS.push(
     description: 'A black gaming L desk with two monitors on its raised shelf, an RGB strip, keyboard and mouse, and a racing-style gaming chair.',
     items: [
       { a: 'workspace:l-desk-gaming', x: 0, y: 0.6 },
-      { a: 'monitor', x: 0.08, y: 0.13, e: 0.87 },
-      { a: 'monitor', x: 0.56, y: 0.13, e: 0.87 },
+      { a: 'branded-tech-vn:samsung-s24c310', x: 0.08, y: 0.13, e: 0.87 },
+      { a: 'branded-tech-vn:samsung-s24c310', x: 0.56, y: 0.13, e: 0.87 },
       { a: 'workspace:desk-essentials', x: 0.32, y: 0.42, e: 0.75, m: { device: 'workspace:nylon-black' } },
       { a: 'chair-gaming', x: 0.32, y: 1.0, r: UP },
     ],
@@ -1166,7 +1166,7 @@ READY_GROUP_SPECS.push(
     description: 'An electric sit-stand desk with a monitor, keyboard and notebook, an ergonomic mesh chair for the sitting hours and a plant beside it.',
     items: [
       { a: 'workspace:standing-desk-electric', x: 0, y: 0.35 },
-      { a: 'monitor', x: 0, y: 0.15, e: 0.74 },
+      { a: 'branded-tech-vn:samsung-s24c310', x: 0, y: 0.15, e: 0.74 },
       { a: 'workspace:desk-essentials', x: 0, y: 0.42, e: 0.74 },
       { a: 'workspace:ergonomic-mesh-chair', x: 0, y: 1.0, r: UP },
       { a: 'houseplants:zz-plant', x: 0.95, y: 0.25, w: 0.45, d: 0.45 },
@@ -1250,7 +1250,7 @@ READY_GROUP_SPECS.push(
       'An adult steel loft bed with a desk and a bookshelf underneath and a desk chair pulled up to it: a double bed and a home office in one 2.1 × 1.5 m footprint.',
     items: [
       { a: 'studio-beds:loft-bed-steel', x: 0, y: 0.75, md: 'desk' },
-      { a: 'office-chair', x: -0.35, y: 0.95, r: UP },
+      { a: 'branded-tech-vn:sihoo-m57', x: -0.35, y: 0.95, r: UP },
     ],
   },
   {
@@ -1411,7 +1411,7 @@ READY_GROUP_SPECS.push(
       { a: 'studio-beds:legged-mattress-bed', x: -1.3, y: 1.06, w: 1.6, d: 2.0 },
       { a: CB + 'arched-screen-partition', x: -0.2, y: 0.7, r: FACE_RIGHT },
       { a: 'desk', x: 0.85, y: 0.3, w: 1.2, d: 0.6 },
-      { a: 'office-chair', x: 0.85, y: 0.95, r: UP },
+      { a: 'branded-tech-vn:sihoo-m57', x: 0.85, y: 0.95, r: UP },
       { a: CB + 'half-moon-shelf-wall', x: 0.85, y: 0.11, w: 1.2 },
       { a: SK + 'arched-panel-wardrobe', x: 2.05, y: 0.3 },
       { a: CB + 'bead-column-shelf-tower', x: 2.95, y: 0.175 },

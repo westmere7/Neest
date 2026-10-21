@@ -123,7 +123,7 @@ export function buildDemoProject(): Project {
       // Bedroom 2
       { asset: 'bed-single', x: 10.35, y: 6.6, rot: R / 2 },
       { asset: 'desk', x: 8.4, y: 7.55, rot: R },
-      { asset: 'office-chair', x: 8.4, y: 7.0 },
+      { asset: 'branded-tech-vn:sihoo-m57', x: 8.4, y: 7.0 },
       { asset: 'bookcase', x: 7.85, y: 6.6, rot: -R / 2 },
       // Hall
       { asset: 'shoe-cabinet', x: 4.55, y: 7.6, rot: R },

@@ -50,7 +50,6 @@ import {
 // ---------------------------------------------------------------------------
 
 const o = { plan: false };
-const CEIL = 2.7;
 const tags = (...t: string[]) => [...t, 'bathroom', 'phòng tắm', 'nhà vệ sinh'];
 
 /** Deck mixer for a vessel basin: tall body, forward spout and a side lever. */
@@ -540,28 +539,6 @@ const instantHeater = defineItem({
   },
 });
 
-const exhaustFan = defineItem({
-  id: 'ceiling-exhaust-fan',
-  name: 'Ceiling exhaust fan',
-  category: 'bathroom',
-  type: 'electronics',
-  group: 'Climate',
-  tags: tags('exhaust fan', 'quạt thông gió', 'quạt hút âm trần', 'ventilation', 'ceiling'),
-  description: 'Square ceiling-mounted bathroom exhaust fan (quạt hút âm trần) with a louvred grille.',
-  defaultSize: { w: 0.3, d: 0.3, h: 0.05 },
-  minSize: { w: 0.2, d: 0.2, h: 0.04 },
-  maxSize: { w: 0.4, d: 0.4, h: 0.06 },
-  mount: 'ceiling',
-  defaultElevation: CEIL - 0.05,
-  slots: [matSlot('grille', 'Grille', 'plastic-white'), matSlot('vent', 'Vent opening', 'solid-black')],
-  build: ({ w, d, h }) => {
-    const parts: Part[] = [span('grille', [-w / 2, w / 2], [h - 0.012, h], [-d / 2, d / 2], { bevel: 0.004 }), span('vent', [-w / 2 + 0.03, w / 2 - 0.03], [h - 0.03, h - 0.012], [-d / 2 + 0.03, d / 2 - 0.03], o)];
-    for (const z of cells(7, -d / 2 + 0.035, d / 2 - 0.035)) parts.push(span('grille', [-w / 2 + 0.03, w / 2 - 0.03], [h - 0.03, h - 0.015], [z - 0.006, z + 0.006], { rotation: [0.4, 0, 0], plan: false }));
-    parts.push(span('grille', [-w / 2 + 0.02, w / 2 - 0.02], [0, h - 0.03], [-d / 2 + 0.02, d / 2 - 0.02], o));
-    return parts;
-  },
-});
-
 // ---------------------------------------------------------------------------
 // Mirrors and storage
 // ---------------------------------------------------------------------------
@@ -930,7 +907,6 @@ export default definePack({
     gridScreen,
     bidetSpray,
     instantHeater,
-    exhaustFan,
     ledMirror,
     archedMirror,
     mirrorCabinet,

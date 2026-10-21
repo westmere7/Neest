@@ -145,23 +145,6 @@ function pullX(slot: string, c: V3, len: number, vertical: boolean): Part[] {
 }
 
 /**
- * Prism whose cross-section (`yz`, as [y, z] points) lies in the YZ plane, extruded along X over
- * `x`. Used for wedge shapes such as sloped hood canopies.
- */
-function sideProfile(slot: string, yz: V2[], x: V2, plan = false): Part {
-  const p: Part = {
-    shape: 'prism',
-    outline: yz.map(([y, z]) => [y, z] as V2),
-    height: Math.max(0.002, x[1] - x[0]),
-    position: [x[1], 0, 0],
-    rotation: [0, 0, Math.PI / 2],
-    slot,
-  };
-  if (!plan) p.plan = false;
-  return p;
-}
-
-/**
  * Oven-style door: a slab with an inset window, a thin trim around the window and a long bar
  * handle along the top. The door's back face is at `zFace`.
  */
@@ -1029,55 +1012,6 @@ const rangeCooker = defineAsset({
   },
 });
 
-const rangeHood = defineAsset({
-  id: 'range-hood',
-  name: 'Chimney extractor hood',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Cooking',
-  tags: ['hood', 'extractor', 'cooker hood', 'chimney', 'vent', 'range hood'],
-  defaultSize: { w: 0.9, d: 0.5, h: 0.95 },
-  minSize: { w: 0.6, d: 0.4, h: 0.6 },
-  maxSize: { w: 1.2, d: 0.6, h: 1.15 },
-  mount: 'wall',
-  defaultElevation: 1.6,
-  slots: [
-    matSlot('body', 'Hood', 'metal-brushed-steel'),
-    matSlot('filter', 'Filters & buttons', 'metal-anthracite'),
-    matSlot('light', 'Lights', 'light-warm'),
-  ],
-  // Lamps in the canopy's underside, lighting the hob.
-  light: { color: '#ffe8c2', intensity: 0.7, distance: 2, y: 0.01, z: 0.08, kind: 'spot', angle: 0.9, penumbra: 0.6 },
-  build: ({ w, d, h }) => {
-    const baseH = 0.06;
-    const slopeH = clamp(h * 0.22, 0.12, 0.22);
-    const cw = clamp(w * 0.32, 0.22, 0.34);
-    const cd = clamp(d * 0.55, 0.2, 0.3);
-    const y1 = baseH + slopeH;
-    const ym = y1 + (h - y1) * 0.5;
-    const nf = clamp(Math.round((w - 0.06) / 0.3), 2, 4);
-    const o = { plan: false };
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0.004, baseH], [-d / 2, d / 2], { bevel: 0.006 }),
-      sideProfile('body', [
-        [baseH - 0.002, -d / 2],
-        [baseH - 0.002, d / 2 - 0.012],
-        [y1, -d / 2 + cd],
-        [y1, -d / 2],
-      ], [-w / 2 + 0.004, w / 2 - 0.004]),
-      span('body', [-cw / 2, cw / 2], [y1 - 0.002, ym], [-d / 2, -d / 2 + cd], o),
-      span('body', [-cw / 2 + 0.006, cw / 2 - 0.006], [ym - 0.01, h], [-d / 2, -d / 2 + cd - 0.006], o),
-    ];
-    for (const [a, b] of cellSpans(nf, -w / 2 + 0.03, w / 2 - 0.03)) {
-      parts.push(span('filter', [a + 0.006, b - 0.006], [0, 0.005], [-d / 2 + 0.04, d / 2 - 0.11], o));
-    }
-    for (const s of [-1, 1]) parts.push(cyl('light', [(s * w) / 4, 0.002, d / 2 - 0.055], 0.024, 0.004, o));
-    for (const x of spaced(4, -0.06, 0.06)) parts.push(span('filter', [x - 0.01, x + 0.01], [0.022, 0.038], [d / 2 - 0.001, d / 2 + 0.002], o));
-    return parts;
-  },
-  planDetail: ({ w, d }) => [line([-w / 2, -d / 2], [w / 2, d / 2]), line([-w / 2, d / 2], [w / 2, -d / 2])],
-});
-
 // ---------------------------------------------------------------------------
 // Small appliances
 // ---------------------------------------------------------------------------
@@ -1123,69 +1057,6 @@ const microwave = defineAsset({
         parts.push(span('buttons', [x - 0.009, x + 0.009], [y - 0.006, y + 0.006], [zf + 0.006, zf + 0.009], o));
       }
     }
-    return parts;
-  },
-});
-
-const coffeeMachine = defineAsset({
-  id: 'coffee-machine',
-  name: 'Espresso machine',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Small appliances',
-  tags: ['coffee', 'espresso', 'barista', 'cappuccino', 'countertop', 'appliance'],
-  defaultSize: { w: 0.3, d: 0.38, h: 0.4 },
-  minSize: { w: 0.26, d: 0.32, h: 0.36 },
-  maxSize: { w: 0.4, d: 0.45, h: 0.45 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body', 'metal-brushed-steel'),
-    matSlot('accent', 'Handles & knobs', 'plastic-black'),
-    matSlot('cups', 'Cups', 'ceramic-white'),
-  ],
-  build: ({ w, d, h }) => {
-    const zt = -d / 2 + d * 0.5;
-    const headTop = h - 0.055;
-    const headY0 = h - 0.16;
-    const zh = d / 2 - 0.03;
-    const zg = (zt + zh) / 2;
-    const o = { plan: false };
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0, headY0 + 0.01], [-d / 2, zt], { bevel: 0.015 }),
-      span('body', [-w / 2, w / 2], [headY0, headTop], [-d / 2, zh], { bevel: 0.014 }),
-      // Drip tray and grate.
-      span('body', [-w / 2 + 0.012, w / 2 - 0.012], [0, 0.03], [zt - 0.01, d / 2 - 0.008], { bevel: 0.004, plan: false }),
-      ...slats('accent', [-w / 2 + 0.025, w / 2 - 0.025], [0.03, 0.034], [zt + 0.01, d / 2 - 0.02], Math.round((w - 0.05) / 0.016), {
-        axis: 'x',
-        gap: 0.45,
-        plan: false,
-      }),
-      // Cup rail on top with two warming cups.
-      rodX('body', -w / 2 + 0.015, w / 2 - 0.015, headTop + 0.012, -d / 2 + 0.015, 0.004, o),
-      rodX('body', -w / 2 + 0.015, w / 2 - 0.015, headTop + 0.012, zh - 0.02, 0.004, o),
-      rodZ('body', -w / 2 + 0.015, headTop + 0.012, -d / 2 + 0.015, zh - 0.02, 0.004, o),
-      rodZ('body', w / 2 - 0.015, headTop + 0.012, -d / 2 + 0.015, zh - 0.02, 0.004, o),
-      cyl('cups', [-w * 0.18, headTop + 0.025, -0.02], 0.028, 0.05, { rTop: 0.022, plan: false }),
-      cyl('cups', [w * 0.18, headTop + 0.025, -0.02], 0.028, 0.05, { rTop: 0.022, plan: false }),
-      // Group head, portafilter and spouts.
-      vcyl('body', 0, zg, headY0 - 0.03, headY0, 0.04, o),
-      vcyl('body', 0, zg, headY0 - 0.055, headY0 - 0.03, 0.036, o),
-      rod('accent', [0, headY0 - 0.045, zg + 0.03], [0, headY0 - 0.06, d / 2 - 0.012], 0.011, o),
-      vcyl('body', -0.012, zg, headY0 - 0.07, headY0 - 0.055, 0.005, o),
-      vcyl('body', 0.012, zg, headY0 - 0.07, headY0 - 0.055, 0.005, o),
-      // Espresso cup on its saucer.
-      cyl('cups', [0, 0.037, zg], 0.045, 0.006, { segments: 24, plan: false }),
-      cyl('cups', [0, 0.065, zg], 0.026, 0.05, { rTop: 0.03, plan: false }),
-      torus('cups', [0.034, 0.068, zg], 0.012, 0.004, o),
-      // Steam wand, knobs, gauge and buttons.
-      rod('body', [w / 2 - 0.04, headY0 - 0.005, zt + 0.02], [w / 2 - 0.03, 0.09, zt + 0.06], 0.005, o),
-      discZ('accent', [w / 2 - 0.05, (headY0 + headTop) / 2, zh + 0.008], 0.015, 0.016, o),
-      discZ('body', [0, (headY0 + headTop) / 2, zh + 0.004], 0.024, 0.008, o),
-      discZ('cups', [0, (headY0 + headTop) / 2, zh + 0.009], 0.019, 0.004, o),
-      span('accent', [-0.0015, 0.0015], [(headY0 + headTop) / 2, (headY0 + headTop) / 2 + 0.015], [zh + 0.011, zh + 0.012], o),
-      discZ('accent', [-w / 2 + 0.045, (headY0 + headTop) / 2 + 0.015, zh + 0.004], 0.008, 0.008, o),
-      discZ('accent', [-w / 2 + 0.045, (headY0 + headTop) / 2 - 0.015, zh + 0.004], 0.008, 0.008, o),
-    ];
     return parts;
   },
 });
@@ -1610,14 +1481,12 @@ export const KITCHEN_ASSETS: AssetDefinition[] = [
   cooktopUnit,
   ovenTower,
   rangeCooker,
-  rangeHood,
   fridge,
   fridgeFrench,
   wineCooler,
   dishwasher,
   washingMachine,
   microwave,
-  coffeeMachine,
   toaster,
   kettle,
   standMixer,

@@ -1116,106 +1116,6 @@ const hotTub = defineAsset({
   },
 });
 
-const bicycle = defineAsset({
-  id: 'bicycle',
-  name: 'Bicycle',
-  category: 'outdoor',
-  type: 'activities',
-  group: 'Bikes & scooters',
-  tags: ['bicycle', 'bike', 'cycling', 'city bike', 'outdoor', 'hallway'],
-  defaultSize: { w: 1.75, d: 0.6, h: 1.05 },
-  minSize: { w: 1.6, d: 0.5, h: 0.95 },
-  maxSize: { w: 1.9, d: 0.7, h: 1.15 },
-  wallSnap: true,
-  slots: [
-    matSlot('frame', 'Frame', 'plastic-mint'),
-    matSlot('tyres', 'Tyres, grips & saddle', 'rubber-black'),
-    matSlot('metal', 'Rims, spokes & chain', 'metal-chrome'),
-    matSlot('basket', 'Basket', 'rattan-natural'),
-  ],
-  build: ({ w, d, h }) => {
-    const tube = 0.018;
-    const R = clamp((w - 1.0) / 2 - tube, 0.28, 0.34);
-    const Rt = R + tube;
-    const xr = -w / 2 + Rt;
-    const xf = w / 2 - Rt;
-    const L = xf - xr;
-    const Ry = Rt;
-    const sy = Math.min(Ry + 0.52, h - 0.15);
-    const B: V3 = [xr + 0.4 * L, Ry - 0.06, 0];
-    const S: V3 = [xr + 0.3 * L, sy, 0];
-    const Ht: V3 = [xf - 0.2 * L, sy - 0.02, 0];
-    const Hb: V3 = [xf - 0.17 * L, sy - 0.17, 0];
-    const hy = Math.min(Ht[1] + 0.1, h - 0.03);
-    const hb: V3 = [Ht[0] + 0.05, hy, 0];
-    const hw = Math.min(0.28, d / 2 - 0.03);
-    const parts: Part[] = [];
-    // Wheels: tyre, rim, hub and spokes
-    for (const cx of [xr, xf]) {
-      parts.push(
-        torus('tyres', [cx, Ry, 0], R, tube),
-        torus('metal', [cx, Ry, 0], R - tube - 0.006, 0.008, { plan: false }),
-        discZ('metal', [cx, Ry, 0], 0.025, 0.1, { plan: false }),
-      );
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2;
-        const z = i % 2 === 0 ? 0.03 : -0.03;
-        parts.push(rod('metal', [cx, Ry, z], [cx + Math.cos(a) * (R - 0.03), Ry + Math.sin(a) * (R - 0.03), 0], 0.002, { plan: false }));
-      }
-    }
-    // Frame and fork
-    const A: V3 = [xr, Ry, 0];
-    const F: V3 = [xf, Ry, 0];
-    parts.push(
-      rod('frame', B, S, 0.017, { plan: false }),
-      rod('frame', S, Ht, 0.016, { plan: false }),
-      rod('frame', B, Hb, 0.02, { plan: false }),
-      rod('frame', Hb, Ht, 0.022, { plan: false }),
-    );
-    for (const z of [-0.035, 0.035]) {
-      parts.push(
-        rod('frame', [A[0], A[1], z], [B[0], B[1], z * 0.6], 0.011, { plan: false }),
-        rod('frame', [A[0], A[1], z], [S[0], S[1] - 0.03, z * 0.4], 0.01, { plan: false }),
-        rod('frame', [Hb[0], Hb[1], z * 0.8], [F[0], F[1], z * 1.3], 0.012, { plan: false }),
-      );
-    }
-    // Stem, handlebar, grips, bell; seat post and saddle
-    parts.push(
-      rod('metal', Ht, hb, 0.014, { plan: false }),
-      rodZ('metal', hb[0], hy, -hw, hw, 0.012),
-      rodZ('tyres', hb[0], hy, hw - 0.1, hw, 0.017, { plan: false }),
-      rodZ('tyres', hb[0], hy, -hw, -hw + 0.1, 0.017, { plan: false }),
-      sphere('metal', [hb[0], hy + 0.02, hw - 0.13], 0.02, { plan: false }),
-      rod('metal', S, [S[0] - 0.03, sy + 0.1, 0], 0.013, { plan: false }),
-      sphere('tyres', [S[0] - 0.04, sy + 0.12, 0], 0.5, { scale: [0.26, 0.06, 0.15], plan: false }),
-    );
-    // Crank, pedals and chain
-    parts.push(
-      discZ('metal', [B[0], B[1], 0.045], 0.1, 0.008, { plan: false }),
-      discZ('metal', [xr, Ry, 0.045], 0.04, 0.008, { plan: false }),
-      rod('metal', [B[0], B[1] + 0.1, 0.045], [xr, Ry + 0.04, 0.045], 0.004, { plan: false }),
-      rod('metal', [B[0], B[1] - 0.1, 0.045], [xr, Ry - 0.04, 0.045], 0.004, { plan: false }),
-      // Kickstand
-      rod('metal', [B[0] - 0.05, B[1], -0.03], [B[0] - 0.2, 0.005, -0.12], 0.008, { plan: false }),
-    );
-    for (const s of [-1, 1]) {
-      const a = s > 0 ? -0.5 : Math.PI - 0.5;
-      const e: V3 = [B[0] + 0.17 * Math.cos(a), B[1] + 0.17 * Math.sin(a), s * 0.06];
-      parts.push(
-        rod('metal', [B[0], B[1], s * 0.06], e, 0.01, { plan: false }),
-        box('tyres', [e[0], e[1], s * 0.1], [0.09, 0.025, 0.08], { bevel: 0.006, plan: false }),
-      );
-    }
-    // Wicker basket on the handlebars
-    const bx = Math.min(hb[0] + 0.17, w / 2 - 0.13);
-    parts.push(
-      span('basket', [bx - 0.12, bx + 0.12], [hy - 0.15, hy + 0.02], [-0.15, 0.15], { bevel: 0.015, plan: false }),
-      ring('basket', [bx, hy + 0.02, 0], 0.12, 0.01, { zScale: 1.25, plan: false }),
-    );
-    return parts;
-  },
-});
-
 const lanternOutdoor = defineAsset({
   id: 'lantern-outdoor',
   name: 'Outdoor lantern',
@@ -1404,7 +1304,6 @@ export const OUTDOOR_ASSETS: AssetDefinition[] = [
   hangingEggChair,
   gardenBench,
   picnicTable,
-  bicycle,
   lanternOutdoor,
   deckBox,
   pottedBayTree,
