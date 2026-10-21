@@ -92,6 +92,8 @@
     { "id": "bark-furrowed", "name": "Furrowed bark", "source": "polyhaven", "assetId": "bark_brown_01", "size": 1.0, "resolution": 1024 },
     { "id": "bark-scaly", "name": "Scaly bark", "source": "polyhaven", "assetId": "bark_platanus", "size": 1.5, "resolution": 1024 },
     { "id": "bark-smooth", "name": "Smooth bark", "source": "ambientcg", "assetId": "Bark005", "size": 1.0, "resolution": 1024 },
-    { "id": "pebbles", "name": "Small pebbles", "source": "ambientcg", "assetId": "Rocks022", "size": 0.5, "resolution": 1024 }
+    { "id": "pebbles", "name": "Small pebbles", "source": "ambientcg", "assetId": "Rocks022", "size": 0.5, "resolution": 1024 },
+    { "id": "tatami", "name": "Igusa tatami mat", "source": "polyhaven", "assetId": "tatami_mat", "size": 1.8, "resolution": 1024 },
+    { "id": "terrazzo-beige", "name": "Beige terrazzo", "source": "ambientcg", "assetId": "Terrazzo019L", "size": 0.8, "resolution": 1024 }
   ]
 }

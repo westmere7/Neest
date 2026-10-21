@@ -1685,6 +1685,62 @@
    "file": "curtains.webp",
    "fp": "765f19270b607a0e"
   },
+  "curved-builtins:arched-glass-partition": {
+   "file": "curved-builtins_arched-glass-partition.webp",
+   "fp": "11543d2dcdc9eca1"
+  },
+  "curved-builtins:arched-headboard-wall": {
+   "file": "curved-builtins_arched-headboard-wall.webp",
+   "fp": "ad5cc67cf48349a2"
+  },
+  "curved-builtins:arched-screen-partition": {
+   "file": "curved-builtins_arched-screen-partition.webp",
+   "fp": "0d3a1cf213224a45"
+  },
+  "curved-builtins:arched-wall-backdrop": {
+   "file": "curved-builtins_arched-wall-backdrop.webp",
+   "fp": "3061b5fe5eff50c5"
+  },
+  "curved-builtins:bead-column-shelf-tower": {
+   "file": "curved-builtins_bead-column-shelf-tower.webp",
+   "fp": "a041d1b0cb3754ac"
+  },
+  "curved-builtins:cubby-bookcase-arch": {
+   "file": "curved-builtins_cubby-bookcase-arch.webp",
+   "fp": "40d8e31cfffdde27"
+  },
+  "curved-builtins:curved-bay-display-wall": {
+   "file": "curved-builtins_curved-bay-display-wall.webp",
+   "fp": "ac7369fa946b554f"
+  },
+  "curved-builtins:half-moon-shelf-wall": {
+   "file": "curved-builtins_half-moon-shelf-wall.webp",
+   "fp": "806de01231e3d7fa"
+  },
+  "curved-builtins:led-step-platform": {
+   "file": "curved-builtins_led-step-platform.webp",
+   "fp": "992834e704d15577"
+  },
+  "curved-builtins:scalloped-banquette": {
+   "file": "curved-builtins_scalloped-banquette.webp",
+   "fp": "41836db5f7be220e"
+  },
+  "curved-builtins:shiplap-ceiling-cove": {
+   "file": "curved-builtins_shiplap-ceiling-cove.webp",
+   "fp": "70365a85d09c6f6d"
+  },
+  "curved-builtins:stone-ledge-banquette": {
+   "file": "curved-builtins_stone-ledge-banquette.webp",
+   "fp": "ea1765bf02c87578"
+  },
+  "curved-builtins:tiled-pillar-shelves": {
+   "file": "curved-builtins_tiled-pillar-shelves.webp",
+   "fp": "d3c8de4abbe63920"
+  },
+  "curved-builtins:wavy-ceiling-soffit": {
+   "file": "curved-builtins_wavy-ceiling-soffit.webp",
+   "fp": "7b8b73717a98f8a0"
+  },
   "cushion": {
    "file": "cushion.webp",
    "fp": "6c8b9dfe85141065"
@@ -3581,6 +3637,70 @@
    "file": "pool-table.webp",
    "fp": "45e1a2ada2b562d3"
   },
+  "portal-frames:asymmetric-portal": {
+   "file": "portal-frames_asymmetric-portal.webp",
+   "fp": "bb5a495b11130204"
+  },
+  "portal-frames:basket-arch-portal": {
+   "file": "portal-frames_basket-arch-portal.webp",
+   "fp": "f058b4b6459244ce"
+  },
+  "portal-frames:desk-nook-portal": {
+   "file": "portal-frames_desk-nook-portal.webp",
+   "fp": "f7b7249f8f0541f2"
+  },
+  "portal-frames:half-wall-portal": {
+   "file": "portal-frames_half-wall-portal.webp",
+   "fp": "570ac592333d8a7b"
+  },
+  "portal-frames:kitchen-portal": {
+   "file": "portal-frames_kitchen-portal.webp",
+   "fp": "8c0f56cbb0c23dce"
+  },
+  "portal-frames:l-portal": {
+   "file": "portal-frames_l-portal.webp",
+   "fp": "5dc65ade8691f03f"
+  },
+  "portal-frames:led-cove-portal": {
+   "file": "portal-frames_led-cove-portal.webp",
+   "fp": "12aab4482030bd53"
+  },
+  "portal-frames:niche-portal": {
+   "file": "portal-frames_niche-portal.webp",
+   "fp": "19fad4ee698c19bb"
+  },
+  "portal-frames:oak-lined-l-portal": {
+   "file": "portal-frames_oak-lined-l-portal.webp",
+   "fp": "3d74c9a6dc6c5fc6"
+  },
+  "portal-frames:oak-lined-portal": {
+   "file": "portal-frames_oak-lined-portal.webp",
+   "fp": "25425a2dd525644c"
+  },
+  "portal-frames:round-top-portal": {
+   "file": "portal-frames_round-top-portal.webp",
+   "fp": "63db1513507c7a25"
+  },
+  "portal-frames:rounded-header": {
+   "file": "portal-frames_rounded-header.webp",
+   "fp": "54055e66dcd6529c"
+  },
+  "portal-frames:rounded-header-led": {
+   "file": "portal-frames_rounded-header-led.webp",
+   "fp": "d37bbb9881e8b757"
+  },
+  "portal-frames:rounded-portal": {
+   "file": "portal-frames_rounded-portal.webp",
+   "fp": "0fa325c72447c7ec"
+  },
+  "portal-frames:soft-square-portal": {
+   "file": "portal-frames_soft-square-portal.webp",
+   "fp": "b6498e9a9249c489"
+  },
+  "portal-frames:stepped-portal": {
+   "file": "portal-frames_stepped-portal.webp",
+   "fp": "aedcfd8cfca63fab"
+  },
   "potted-bay-tree": {
    "file": "potted-bay-tree.webp",
    "fp": "6786148e75c6b09e"
@@ -3884,6 +4004,86 @@
   "soffit-box": {
    "file": "soffit-box.webp",
    "fp": "ad3cd6698ad6b06c"
+  },
+  "soft-curve-furniture:arched-leg-tea-table": {
+   "file": "soft-curve-furniture_arched-leg-tea-table.webp",
+   "fp": "5f5fbedeb496829d"
+  },
+  "soft-curve-furniture:dome-wall-sconce": {
+   "file": "soft-curve-furniture_dome-wall-sconce.webp",
+   "fp": "0e5089c8e70d8e47"
+  },
+  "soft-curve-furniture:floating-vanity-shelf": {
+   "file": "soft-curve-furniture_floating-vanity-shelf.webp",
+   "fp": "ca1f455b7007659b"
+  },
+  "soft-curve-furniture:fluted-oval-coffee-table": {
+   "file": "soft-curve-furniture_fluted-oval-coffee-table.webp",
+   "fp": "b4bb86ea7f5cae7d"
+  },
+  "soft-curve-furniture:leaf-pendant": {
+   "file": "soft-curve-furniture_leaf-pendant.webp",
+   "fp": "375d3bb9820350b2"
+  },
+  "soft-curve-furniture:oval-back-dining-chair": {
+   "file": "soft-curve-furniture_oval-back-dining-chair.webp",
+   "fp": "8bc23640fc256e1c"
+  },
+  "soft-curve-furniture:palm-leaf-fan": {
+   "file": "soft-curve-furniture_palm-leaf-fan.webp",
+   "fp": "0adc3c58c4e76ec5"
+  },
+  "soft-curve-furniture:rolled-headboard-bed": {
+   "file": "soft-curve-furniture_rolled-headboard-bed.webp",
+   "fp": "06d325ce816ccf46"
+  },
+  "soft-curve-furniture:shouldered-mirror": {
+   "file": "soft-curve-furniture_shouldered-mirror.webp",
+   "fp": "fc3c617bf04830a3"
+  },
+  "soft-curve-furniture:sphere-pedestal-table": {
+   "file": "soft-curve-furniture_sphere-pedestal-table.webp",
+   "fp": "e755fe2f73d2e89c"
+  },
+  "soft-curve-furniture:stacked-donut-pouf": {
+   "file": "soft-curve-furniture_stacked-donut-pouf.webp",
+   "fp": "cdc7cd1f5fe817ce"
+  },
+  "soft-curve-kitchen:arch-groove-sideboard": {
+   "file": "soft-curve-kitchen_arch-groove-sideboard.webp",
+   "fp": "b6150004d1c889b5"
+  },
+  "soft-curve-kitchen:arched-panel-wardrobe": {
+   "file": "soft-curve-kitchen_arched-panel-wardrobe.webp",
+   "fp": "25dec4129ca54d02"
+  },
+  "soft-curve-kitchen:boucle-bar-stool": {
+   "file": "soft-curve-kitchen_boucle-bar-stool.webp",
+   "fp": "1ba3495635af015c"
+  },
+  "soft-curve-kitchen:drum-ceiling-hood": {
+   "file": "soft-curve-kitchen_drum-ceiling-hood.webp",
+   "fp": "b31ccddbc5ff2b7b"
+  },
+  "soft-curve-kitchen:open-end-peninsula": {
+   "file": "soft-curve-kitchen_open-end-peninsula.webp",
+   "fp": "1e1cef66cded5ba5"
+  },
+  "soft-curve-kitchen:rounded-end-peninsula": {
+   "file": "soft-curve-kitchen_rounded-end-peninsula.webp",
+   "fp": "620b90a688f0d3fb"
+  },
+  "soft-curve-kitchen:rounded-tall-cabinet": {
+   "file": "soft-curve-kitchen_rounded-tall-cabinet.webp",
+   "fp": "1663a79d98420399"
+  },
+  "soft-curve-kitchen:tiered-pendant": {
+   "file": "soft-curve-kitchen_tiered-pendant.webp",
+   "fp": "162ffefcdfca78b7"
+  },
+  "soft-curve-kitchen:wall-plate-cluster": {
+   "file": "soft-curve-kitchen_wall-plate-cluster.webp",
+   "fp": "841199116b69600f"
   },
   "soft-modern-home:arch-leg-upholstered-chair": {
    "file": "soft-modern-home_arch-leg-upholstered-chair.webp",

@@ -1326,9 +1326,173 @@ READY_GROUP_SPECS.push(
 );
 
 /** Shelf order in the library's Groups list. */
+const CURVES = 'Curves & arches';
+const PF = 'portal-frames:';
+const CB = 'curved-builtins:';
+const SK = 'soft-curve-kitchen:';
+const SF = 'soft-curve-furniture:';
+const SM = 'soft-modern-home:';
+
+READY_GROUP_SPECS.push(
+  {
+    id: 'ready-arched-dining-nook',
+    name: 'Arched dining nook with stone-ledge banquette',
+    shelf: CURVES,
+    room: 'dining',
+    description:
+      'A terracotta arch painted on the wall behind a built-in banquette with a travertine ledge, a walnut racetrack table on a stacked-sphere pedestal, two oval-back chairs, a floating leaf pendant and a dome sconce in the arch.',
+    items: [
+      { a: CB + 'arched-wall-backdrop', x: 0, y: 0.02 },
+      { a: CB + 'stone-ledge-banquette', x: 0, y: 0.34 },
+      { a: SF + 'sphere-pedestal-table', x: 0, y: 1.36, r: PI / 2 },
+      { a: SF + 'oval-back-dining-chair', x: -0.62, y: 1.25, r: FACE_RIGHT },
+      { a: SF + 'oval-back-dining-chair', x: 0.62, y: 1.25, r: FACE_LEFT },
+      { a: SF + 'oval-back-dining-chair', x: -0.62, y: 1.8, r: FACE_RIGHT },
+      { a: SF + 'leaf-pendant', x: 0, y: 1.36, r: PI / 2 },
+      { a: SF + 'dome-wall-sconce', x: 0, y: 0.11, e: 1.7 },
+    ],
+  },
+  {
+    id: 'ready-scalloped-banquette-dining',
+    name: 'Scalloped banquette dining by an open-end peninsula',
+    shelf: CURVES,
+    room: 'dining',
+    description:
+      'A sage velvet banquette with arch-topped back cushions, a rounded quartz table and two arch-leg chairs, finished by a kitchen peninsula whose open end shelves face the dining table.',
+    items: [
+      { a: CB + 'scalloped-banquette', x: 0, y: 0.3 },
+      { a: SM + 'rounded-quartz-dining-table', x: 0, y: 1.05 },
+      { a: SM + 'arch-leg-upholstered-chair', x: -0.45, y: 1.75, r: UP },
+      { a: SM + 'arch-leg-upholstered-chair', x: 0.45, y: 1.75, r: UP },
+      { a: SK + 'open-end-peninsula', x: 1.52, y: 1.05 },
+    ],
+  },
+  {
+    id: 'ready-curved-display-breakfast-bar',
+    name: 'Curved display wall & rounded breakfast bar',
+    shelf: CURVES,
+    room: 'kitchen',
+    description:
+      'A cream built-in display wall with curved bays, walnut shelves and arch-groove cupboards, next to a V-groove breakfast peninsula with a rounded end, two bouclé bar stools and a layered pendant above.',
+    items: [
+      { a: CB + 'curved-bay-display-wall', x: 0, y: 0.225 },
+      { a: SK + 'rounded-end-peninsula', x: 2.05, y: 0.8, r: FACE_RIGHT },
+      { a: SK + 'boucle-bar-stool', x: 2.6, y: 0.75, r: FACE_LEFT },
+      { a: SK + 'boucle-bar-stool', x: 2.6, y: 1.25, r: FACE_LEFT },
+      { a: SK + 'tiered-pendant', x: 2.05, y: 0.8 },
+    ],
+  },
+  {
+    id: 'ready-oak-portal-tea-platform',
+    name: 'Oak-framed tea platform with cubby bookcase',
+    shelf: CURVES,
+    room: 'living',
+    description:
+      'A two-step timber platform with LED-lit nosings under an oak-lined portal, a cubby bookcase wall with an arched niche at the back and a low arched-leg tea table with floor cushions on the platform.',
+    items: [
+      { a: CB + 'cubby-bookcase-arch', x: 0, y: 0.2 },
+      { a: CB + 'led-step-platform', x: -0.11, y: 1.4, w: 2.78 },
+      { a: PF + 'oak-lined-l-portal', x: 0, y: 2.25, w: 3.0 },
+      { a: SF + 'arched-leg-tea-table', x: 0.3, y: 1.25, e: 0.35, w: 0.8, d: 0.8 },
+      { a: 'japanese-home:zabuton-cushion', x: -0.4, y: 1.25, e: 0.35, r: FACE_RIGHT, m: { cover: 'fabric-linen-rust' } },
+      { a: 'japanese-home:zabuton-cushion', x: 1.0, y: 1.25, e: 0.35, r: FACE_LEFT, m: { cover: 'fabric-linen-rust' } },
+      { a: 'japanese-home:zabuton-cushion', x: 0.3, y: 1.9, e: 0.35, r: UP, m: { cover: 'fabric-linen-rust' } },
+    ],
+  },
+  {
+    id: 'ready-arched-bed-desk-alcove',
+    name: 'Arched bed & desk alcove',
+    shelf: CURVES,
+    room: 'bedroom',
+    description:
+      'A bed against an arched-panel headboard wall, a slim double-arch screen between it and a desk under a painted half-moon with floating shelves, an arched-panel wardrobe and a floating shelf tower on bead columns.',
+    items: [
+      { a: CB + 'arched-headboard-wall', x: -1.3, y: 0.04, w: 1.8 },
+      { a: 'studio-beds:legged-mattress-bed', x: -1.3, y: 1.06, w: 1.6, d: 2.0 },
+      { a: CB + 'arched-screen-partition', x: -0.2, y: 0.7, r: FACE_RIGHT },
+      { a: 'desk', x: 0.85, y: 0.3, w: 1.2, d: 0.6 },
+      { a: 'office-chair', x: 0.85, y: 0.95, r: UP },
+      { a: CB + 'half-moon-shelf-wall', x: 0.85, y: 0.11, w: 1.2 },
+      { a: SK + 'arched-panel-wardrobe', x: 2.05, y: 0.3 },
+      { a: CB + 'bead-column-shelf-tower', x: 2.95, y: 0.175 },
+    ],
+  },
+  {
+    id: 'ready-velvet-bed-vanity',
+    name: 'Velvet bed with floating vanity corner',
+    shelf: CURVES,
+    room: 'bedroom',
+    description:
+      'A walnut bed with a rolled mustard-velvet headboard and, by the window, a floating walnut vanity shelf with two drawers under a mirror with curved shoulders and a stacked velvet-and-bouclé pouf.',
+    items: [
+      { a: SF + 'rolled-headboard-bed', x: 0.5, y: 1.075 },
+      { a: SF + 'floating-vanity-shelf', x: -0.9, y: 0.15 },
+      { a: SF + 'shouldered-mirror', x: -0.9, y: 0.015 },
+      { a: SF + 'stacked-donut-pouf', x: -0.9, y: 0.6 },
+    ],
+  },
+  {
+    id: 'ready-sage-rounded-kitchen',
+    name: 'Sage kitchen with rounded tall cabinet & walnut peninsula',
+    shelf: CURVES,
+    room: 'kitchen',
+    description:
+      'A sage tall cabinet with a rounded corner and a walnut-lined appliance niche, a French-door fridge, a sink and base run under wall cabinets, a walnut breakfast peninsula with a rounded end and handmade plates on the wall.',
+    items: [
+      { a: SK + 'rounded-tall-cabinet', x: -2.0, y: 0.3 },
+      { a: 'fridge-french-door', x: -1.1, y: 0.375 },
+      { a: 'kitchen-sink-unit', x: -0.25, y: 0.3, m: { front: 'wood-walnut', worktop: 'stone-quartz-white', handle: 'metal-brass' } },
+      { a: 'kitchen-base-cabinet', x: 0.45, y: 0.3, m: { front: 'wood-walnut', worktop: 'stone-quartz-white', handle: 'metal-brass' } },
+      { a: 'kitchen-base-cabinet', x: 1.05, y: 0.3, m: { front: 'wood-walnut', worktop: 'stone-quartz-white', handle: 'metal-brass' } },
+      { a: 'kitchen-wall-cabinet', x: -0.35, y: 0.175, m: { front: 'paint-sage', handle: 'metal-brass' } },
+      { a: 'kitchen-wall-cabinet', x: 0.25, y: 0.175, m: { front: 'paint-sage', handle: 'metal-brass' } },
+      { a: 'kitchen-wall-cabinet', x: 0.85, y: 0.175, m: { front: 'paint-sage', handle: 'metal-brass' } },
+      { a: SK + 'rounded-end-peninsula', x: 1.68, y: 1.0, r: FACE_RIGHT, h: 0.9, m: { body: 'wood-walnut' } },
+      { a: SK + 'wall-plate-cluster', x: 2.3, y: 0.025, w: 1.0 },
+    ],
+  },
+  {
+    id: 'ready-wavy-ceiling-dining',
+    name: 'Wavy-ceiling dining with backlit niche',
+    shelf: CURVES,
+    room: 'dining',
+    description:
+      'A wavy plasterboard soffit with a glowing LED edge over a fluted pill dining table, four cane-back chairs and a pleated table lamp, beside a backlit rounded wall niche with floating shelves.',
+    items: [
+      { a: CB + 'wavy-ceiling-soffit', x: 0, y: 0.6 },
+      { a: SM + 'fluted-pedestal-pill-table', x: -0.6, y: 1.1, r: PI / 2 },
+      { a: SM + 'cane-back-dining-chair', x: -1.1, y: 0.85, r: FACE_RIGHT },
+      { a: SM + 'cane-back-dining-chair', x: -1.1, y: 1.4, r: FACE_RIGHT },
+      { a: SM + 'cane-back-dining-chair', x: -0.1, y: 0.85, r: FACE_LEFT },
+      { a: SM + 'cane-back-dining-chair', x: -0.1, y: 1.4, r: FACE_LEFT },
+      { a: SM + 'pleated-shade-table-lamp', x: -0.6, y: 0.65, e: 0.75 },
+      { a: SM + 'backlit-rounded-wall-niche', x: 1.0, y: 0.08 },
+    ],
+  },
+  {
+    id: 'ready-kitchen-portal-run',
+    name: 'Rounded kitchen portal over a fridge & sink run',
+    shelf: CURVES,
+    room: 'kitchen',
+    description:
+      'A deep rounded portal with recessed downlights framing a kitchen run: base cabinets and a sink under wall cabinets, and a French-door fridge tucked against the right-hand leg.',
+    items: [
+      { a: PF + 'kitchen-portal', x: 0, y: 0.3, w: 3.1 },
+      { a: 'kitchen-base-cabinet', x: -1.07, y: 0.3, m: { front: SAGE, worktop: QZ } },
+      { a: 'kitchen-sink-unit', x: -0.37, y: 0.3, m: { front: SAGE, worktop: QZ } },
+      { a: 'kitchen-base-cabinet', x: 0.33, y: 0.3, m: { front: SAGE, worktop: QZ } },
+      { a: 'fridge-french-door', x: 0.86, y: 0.375, w: 0.88 },
+      { a: 'kitchen-wall-cabinet', x: -1.07, y: 0.175, m: { front: SAGE } },
+      { a: 'kitchen-wall-cabinet', x: -0.47, y: 0.175, m: { front: SAGE } },
+      { a: 'kitchen-wall-cabinet', x: 0.13, y: 0.175, m: { front: SAGE } },
+    ],
+  },
+);
+
 export const READY_GROUP_SHELVES = [
   BED,
   STUDIO,
+  CURVES,
   LIVING,
   KITCHEN,
   L_KITCHENS,

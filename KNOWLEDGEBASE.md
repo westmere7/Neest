@@ -275,7 +275,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **Ready-made groups** (`src/data/groups/readyGroups.ts`): furnished setups shipped with Neest (bedrooms, living rooms,
   kitchens, L-shaped kitchens from the `lKitchen` generator, dining, bathrooms, kids, office, balcony, entry, and **Studio
   setups** built from the studio-beds and compact-living packs: wall bed with sofa, loft-bed office, Murphy bedroom,
-  daybed lounge, compact lounge, fold-down dining wall, small entry), written in
+  daybed lounge, compact lounge, fold-down dining wall, small entry, and **Curves & arches**: nine setups rebuilt from
+  photos of rounded Vietnamese apartment interiors with the portal, built-in and soft-curve packs), written in
   plan metres with the back of the setup at y = 0. Built into `SavedGroup`s on demand (rebuilt when packs change) and
   shown in the Groups tab by shelf under "Your groups"; ids `ready-…`, asset ids `savedgroup:ready-…`. They place
   like saved groups; "Copy to my groups" makes an editable copy. Tests check items exist, names are unique and every
@@ -716,6 +717,36 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 
 ### Model variants (filled / empty …) and collections
 
+- **Portal frames** (`packs/portal-frames.pack.ts`, 16, structure shelf **Portals & arches**): rounded drywall
+  portals that frame a zone (a soffit curving down into one or two legs). One builder, `buildPortal(size, spec)`:
+  the opening is an outline (`frameLayer`: soffit + corner arcs as one `panelXY` prism, straight leg sections as
+  boxes so legs show on the plan), rebuilt from the real size so corners stay circular and only clamp when the opening
+  is small. Spec options: legs `both`/`right` (L-shaped, butts into a wall; mirror for the left), corner shape
+  (round radii per side, `semicircle`, flattened `ellipse`), `step` (stepped double layer), `cove` (shadow-gap
+  reveal at the ceiling line on both faces with the LED on the reveal's back face, so it shows), `lining` (an oak
+  band hugging the opening through the depth: plaster grown by the band, band 1 mm inside the faces), `niche` (lit
+  shelf niches in the legs), `downlights`, `desk` (cantilevered desk with a half-round end pier) and `halfWall`
+  (leg landing on a capped half wall with a rounded end). Items: rounded, soft-square, round-top, basket-arch,
+  L-shaped, asymmetric, stepped, oak-lined (two), LED-cove, deep kitchen portal with downlights, lit-niche legs, desk
+  nook, half-wall portal, and two ceiling-hung rounded headers. Plan: only the soffit edges across the opening.
+- **Curved built-ins** (`packs/curved-builtins.pack.ts`, 14): arched feature wall panel, banquettes with a stone
+  ledge and with scalloped arch-top cushions, tiled pillar with wrap-around shelves, tongue-and-groove ceiling with an
+  LED cove frame, slim double-arch screen, arched-panel headboard wall, painted half-moon with floating shelves, bead-
+  column shelf tower over an arched cubby, curved-bay display wall over arch-groove doors, cubby bookcase with an
+  arched niche, two-step LED platform (tatami variant), wavy ceiling soffit with an LED edge, arched oak-framed glass
+  partition on a half wall.
+- **Soft-curve kitchen & storage** (`packs/soft-curve-kitchen.pack.ts`, 9): rounded-end V-groove breakfast
+  peninsula, open-end peninsula, rounded-corner tall cabinet with a walnut niche, drum ceiling hood, ceramic wall plate
+  cluster (pack glazes on shared photo sets), bouclé bar stool, three-tier pendant, arch-groove sideboard, wardrobe
+  with arched door panels.
+- **Soft-curve furniture & lighting** (`packs/soft-curve-furniture.pack.ts`, 11): racetrack table on a stacked-
+  sphere pedestal, oval-back chair (ellipse prisms, no sphere pole facing the viewer), floating leaf pendant, dome
+  sconce, arched-leg tea table, palm-leaf ceiling fan, fluted oval coffee table, floating vanity shelf, shouldered
+  mirror, stacked donut pouf, walnut bed with a rolled velvet headboard (pillows are bevelled `cushion`s: the kit's
+  `pillow` is a scaled sphere and reads as a ball on a big bed).
+  - These three packs were written by helper agents from the same brief (resizable builds, photo-scanned default
+    materials, coplanar-safe detail) and reviewed in 3D; items the library already had (wavy island, arched wine wall,
+    backlit niche, pill tables, cane chairs, cylinder hood, zabuton, raised platforms) were skipped.
 - **Model variants** (`AssetDefinition.models`, `src/data/assets/models.ts`): the same item with different contents —
   a bookcase Filled or Empty, a table bare or set for dinner. Unlike colour variants they change parts, not materials;
   unlike `variantOf` versions they keep one item, one size and one outline. The first model is the default; a placed
@@ -817,17 +848,17 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
     both placement paths via `features/library/variantChoice.ts`) and `editor/ObjectVariants.tsx` (apply to every
     selected item of the kind, save, delete saved ones).
 - **Tests**: `src/packs/packs.test.ts` loads the real `/packs`, runs `describeAssetChecks` on every pack item, and checks namespacing, textures, reload replacement and the build fallback. Run it with `npx vitest run src/packs`.
-- **Materials** (`data/materials/catalog.ts`): ≈260 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
+- **Materials** (`data/materials/catalog.ts`): ≈265 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
   no new category, so older builds still load projects); defaults in `DEFAULT_MATERIALS`. 45 procedural patterns
   (wallpapers incl. coloured tropical/floral, gạch bông cement tile, chevron/basketweave parquet, terracotta, fish-scale,
-  penny, limewash, Venetian plaster, fluted, wood slats, cane webbing) and 92 CC0 photo sets (48 MB of the 60 MB budget).
+  penny, limewash, Venetian plaster, fluted, wood slats, cane webbing) and 94 CC0 photo sets (49 MB of the 60 MB budget).
   Two texture sources per material, same **texture × colour (multiply) model**:
   - **Procedural** (`texture`, `patterns.ts`): 28 seamless tiles drawn with wrap-around maths, deterministic seeds,
     normal maps derived by Sobel. Tiles are near-white luminance; `art`, `books`, `rug-geometric` are coloured.
     Detail layers: wood pore channels, ray flecks and figure, plank micro-bevels/end grain/wear, tile edge chips,
     pinholes and grout grime, brick spalls and recessed mortar, plaster pits and crazing, marble hair veins and
     sparkle, fabric fibres and pills, leather pores and creases. Always kept as the **fallback**.
-  - **Photo** (`photo`, optional): CC0 PBR sets from ambientCG / Poly Haven listed in `photoSets.json` (92 sets,
+  - **Photo** (`photo`, optional): CC0 PBR sets from ambientCG / Poly Haven listed in `photoSets.json` (94 sets,
     ≈48 MB in `public/textures/<set>/`: `color.webp` sRGB, `normal.webp` OpenGL, `roughness.webp`, `swatch.webp`
     256 px). `PHOTOS` in catalog.ts maps ~135 catalogue materials to sets (several share one set; the base colour
     tints it). `photo = { setId, scale m/tile, rotation°, contrast, enabled }`; `enabled: false` = use procedural.
@@ -1418,3 +1449,9 @@ Known limitations (also in README):
      - **Walkthrough (`WalkControls`, `guest-viewer`)**: two-finger swipe or 1-finger drag (without pointer lock) looks
        around; pinch or `Shift` + two-finger swipe walks/strafes with collision detection.
      - **3D object preview (`objectPreview`)**: two-finger swipe rotates the model, pinch zooms (done).
+117. "What type of object would we add to achieve these (rounded portals)" + "Build it, a lot of types, make sure it
+     can be resized" → `packs/portal-frames.pack.ts` (16 portal frames, new structure shelf "Portals & arches").
+     Then "add new items that you see here (11 photos), skip the ones we already had" + "make them detailed and use
+     real textures" → `curved-builtins` (14), `soft-curve-kitchen` (9) and `soft-curve-furniture` (11) packs, real
+     scans for tatami (Poly Haven) and beige terrazzo (ambientCG), vertical stacked tile materials, and nine
+     ready-made groups on a new "Curves & arches" shelf recreating the photos (done).

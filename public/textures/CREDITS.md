@@ -98,3 +98,5 @@ Maps were resized and re-encoded as WebP. Delete this folder to fall back to Nee
 | bark-scaly | Poly Haven | [bark_platanus](https://polyhaven.com/a/bark_platanus) | 1.5 m | 1024 |
 | bark-smooth | ambientCG | [Bark005](https://ambientcg.com/a/Bark005) | 1 m | 1024 |
 | pebbles | ambientCG | [Rocks022](https://ambientcg.com/a/Rocks022) | 0.5 m | 1024 |
+| tatami | Poly Haven | [tatami_mat](https://polyhaven.com/a/tatami_mat) | 1.8 m | 1024 |
+| terrazzo-beige | ambientCG | [Terrazzo019L](https://ambientcg.com/a/Terrazzo019L) | 0.8 m | 1024 |

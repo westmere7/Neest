@@ -161,6 +161,10 @@
    "file": "0d840b4fc78d43e2.webp",
    "tile": false
   },
+  "0dbc333f31f3e966": {
+   "file": "0dbc333f31f3e966.webp",
+   "tile": false
+  },
   "0dd347d8c03205f9": {
    "file": "0dd347d8c03205f9.webp",
    "tile": true
@@ -533,6 +537,10 @@
    "file": "2e0f42a1dea11957.webp",
    "tile": true
   },
+  "2eb641c108db3e4d": {
+   "file": "2eb641c108db3e4d.webp",
+   "tile": false
+  },
   "2f2099e7ce7e82e6": {
    "file": "2f2099e7ce7e82e6.webp",
    "tile": true
@@ -623,6 +631,10 @@
   },
   "3916739b18f351ac": {
    "file": "3916739b18f351ac.webp",
+   "tile": false
+  },
+  "393c7719345849cf": {
+   "file": "393c7719345849cf.webp",
    "tile": false
   },
   "39549ec879320e17": {
@@ -917,6 +929,10 @@
    "file": "549e4bd2ba72d7eb.webp",
    "tile": true
   },
+  "54c5a0cfd1802700": {
+   "file": "54c5a0cfd1802700.webp",
+   "tile": false
+  },
   "54c8310f1efe736a": {
    "file": "54c8310f1efe736a.webp",
    "tile": true
@@ -1140,6 +1156,10 @@
   "63d8cb2304a0dac3": {
    "file": "63d8cb2304a0dac3.webp",
    "tile": true
+  },
+  "641fccb0f1fc692d": {
+   "file": "641fccb0f1fc692d.webp",
+   "tile": false
   },
   "645e6c231b577236": {
    "file": "645e6c231b577236.webp",
@@ -2349,6 +2369,10 @@
    "file": "c4cf7a6a548c708a.webp",
    "tile": false
   },
+  "c5140967eec5fb31": {
+   "file": "c5140967eec5fb31.webp",
+   "tile": false
+  },
   "c56071ce2927f973": {
    "file": "c56071ce2927f973.webp",
    "tile": false
@@ -2999,6 +3023,10 @@
   },
   "f7334cf6924364ea": {
    "file": "f7334cf6924364ea.webp",
+   "tile": false
+  },
+  "f77a59359153f057": {
+   "file": "f77a59359153f057.webp",
    "tile": false
   },
   "f897cf71042cc4a6": {
@@ -3705,6 +3733,9 @@
   "shelving:terry-towel": "ac56135f1db23396",
   "shelving:walnut-veneer": "c08e6b0e0c750d03",
   "shelving:white-wicker": "7539955d442ecee4",
+  "soft-curve-kitchen:cream-glaze": "f77a59359153f057",
+  "soft-curve-kitchen:sand-glaze": "c5140967eec5fb31",
+  "soft-curve-kitchen:terracotta-glaze": "54c5a0cfd1802700",
   "soft-modern-home:black-ash": "7704ced8492209dc",
   "soft-modern-home:calacatta-quartz": "f2c04f1b8c3dd527",
   "soft-modern-home:glass-blocks": "97658bec82c4b3bc",
@@ -3737,6 +3768,7 @@
   "styled-storage:wire-chrome": "c10b940593d96377",
   "suede-sand": "edf84e3593c3a25c",
   "tadelakt-sand": "52d75d6fc6f8f030",
+  "tatami-mat": "0dbc333f31f3e966",
   "tile-azulejo-border": "dcbba42b51320eab",
   "tile-azulejo-floral": "015cd11dca1be0b4",
   "tile-cement-classic": "fdddee0d43affa83",
@@ -3751,12 +3783,15 @@
   "tile-penny-charcoal": "0d05f17411e61abe",
   "tile-penny-white": "c35794c6f3a4a072",
   "tile-square-sage": "16687f481e37c021",
+  "tile-stack-sage": "641fccb0f1fc692d",
+  "tile-stack-vertical": "2eb641c108db3e4d",
   "tile-stone-cream": "8d45cd9755691a4d",
   "tile-subway-black": "a5c33d2da79b8956",
   "tile-subway-green": "bb5b2de4d8915221",
   "tile-subway-white": "856b45a4cb1f25ad",
   "tile-terracotta-rustic": "e01f8980fb4252cf",
   "tile-terrazzo": "83f8baba19deeba2",
+  "tile-terrazzo-beige": "393c7719345849cf",
   "tile-terrazzo-colour": "c4707d8528942c9b",
   "tile-white-square": "891da2f24bed10ab",
   "tile-zellige-green": "c658e47f6fca0217",

@@ -211,7 +211,7 @@ export const ASSET_GROUPS: Record<AssetType, string[]> = {
   activities: ['Music', 'Fitness', 'Games', 'Creative', 'Knowledge'],
   pets: ['Bird cages', 'Bird accessories', 'Pet birds & animals', 'Dog beds & crates', 'Cat furniture', 'Feeding & care'],
   kids: ['Toys', 'Kids furniture', 'Nursery'],
-  structure: ['Columns', 'Partitions', 'Heating', 'Built-ins', 'Stairs & steps'],
+  structure: ['Columns', 'Partitions', 'Portals & arches', 'Heating', 'Built-ins', 'Stairs & steps'],
   misc: ['Basic shapes', 'Imported models'],
 };
 

@@ -348,6 +348,10 @@ const DEFS: Def[] = [
   { id: 'fabric-terry-white', name: 'White terry towelling', category: 'fabric', color: '#f1efea', roughness: 1, texture: tex('boucle', 0.15, 0.4) },
   { id: 'fabric-waffle-white', name: 'White waffle cotton', category: 'fabric', color: '#efebe3', roughness: 0.95, texture: tex('weave', 0.1, 0.5) },
   { id: 'fabric-hessian', name: 'Natural hessian', category: 'fabric', color: '#b89a6c', roughness: 1, texture: tex('jute', 0.2, 1) },
+  { id: 'tatami-mat', name: 'Igusa tatami', category: 'rug', color: '#c9c08a', roughness: 0.85, texture: tex('wallpaper-grasscloth', 0.35, 0.8, 90) },
+  { id: 'tile-terrazzo-beige', name: 'Beige terrazzo', category: 'tile', color: '#d8ccb6', roughness: 0.35, texture: tex('terrazzo', 0.8, 0.8) },
+  { id: 'tile-stack-vertical', name: 'Vertical stacked white tile', category: 'tile', color: '#eeede8', roughness: 0.18, texture: tex('subway', 0.6, 1, 90) },
+  { id: 'tile-stack-sage', name: 'Vertical stacked sage tile', category: 'tile', color: '#a9b8a2', roughness: 0.18, texture: tex('subway', 0.6, 1, 90) },
 ];
 
 /**
@@ -503,6 +507,10 @@ const PHOTOS: Record<string, { set: string; scale?: number; contrast?: number; r
   'leather-olive': { set: 'leather' },
   'suede-sand': { set: 'suede' },
   'rug-sisal': { set: 'sisal-weave' },
+  'tatami-mat': { set: 'tatami' },
+  'tile-terrazzo-beige': { set: 'terrazzo-beige' },
+  'tile-stack-vertical': { set: 'tile-glazed-subway', scale: 0.7, rotation: 90 },
+  'tile-stack-sage': { set: 'tile-glazed-subway', scale: 0.7, rotation: 90 },
   // Plants: a scanned leaf blade (midrib on the tile edge, like leaf UVs) and potting soil
   'plant-leaf': { set: 'leaf-blade', scale: 0.12, contrast: 0.4 },
   'plant-leaf-dark': { set: 'leaf-blade', scale: 0.12, contrast: 0.4 },

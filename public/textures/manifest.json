@@ -2495,6 +2495,60 @@
       "meanColor": "#9d9d9d",
       "meanRoughness": 0.561,
       "bytes": 689840
+    },
+    "tatami": {
+      "id": "tatami",
+      "name": "Igusa tatami mat",
+      "source": "Poly Haven",
+      "assetId": "tatami_mat",
+      "url": "https://polyhaven.com/a/tatami_mat",
+      "download": "https://api.polyhaven.com/files/tatami_mat",
+      "license": "CC0 1.0 Universal",
+      "size": 1.8,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#908361",
+      "meanLinear": [
+        0.5972,
+        0.5996,
+        0.5966
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.738,
+      "bytes": 150484
+    },
+    "terrazzo-beige": {
+      "id": "terrazzo-beige",
+      "name": "Beige terrazzo",
+      "source": "ambientCG",
+      "assetId": "Terrazzo019L",
+      "url": "https://ambientcg.com/a/Terrazzo019L",
+      "download": "https://ambientcg.com/get?file=Terrazzo019L_1K-JPG.zip",
+      "license": "CC0 1.0 Universal",
+      "size": 0.8,
+      "resolution": 1024,
+      "pipeline": 2,
+      "maps": {
+        "color": "color.webp",
+        "normal": "normal.webp",
+        "roughness": "roughness.webp",
+        "swatch": "swatch.webp"
+      },
+      "photoColor": "#a18f76",
+      "meanLinear": [
+        0.597,
+        0.5979,
+        0.5952
+      ],
+      "meanColor": "#cbcbcb",
+      "meanRoughness": 0.277,
+      "bytes": 220926
     }
   }
 }
