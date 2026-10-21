@@ -389,7 +389,7 @@ const ladderDesk = defineItem({
     const parts: Part[] = [];
     for (const s of [-1, 1]) parts.push(rod('wood', [s * (w / 2 - 0.02), 0, zBase], [s * (w / 2 - 0.02), h, zTop], 0.018, { plan: true }));
     const deskY = 0.74;
-    parts.push(top('wood', [-w / 2 + 0.04, w / 2 - 0.04], [-d / 2, at(deskY)], deskY, 0.022, false));
+    parts.push(top('wood', [-w / 2 + 0.04, w / 2 - 0.04], [-d / 2, at(deskY)], deskY, 0.022));
     for (const y of [1.1, 1.4, h - 0.08]) parts.push(span('wood', [-w / 2 + 0.04, w / 2 - 0.04], [y - 0.018, y], [-d / 2, at(y)], o));
     return keep(parts, size);
   },
@@ -579,8 +579,8 @@ const kneelingChair = defineItem({
       const x = s * (w / 2 - 0.04);
       parts.push(rod('wood', [x, 0.02, -d / 2 + 0.05], [x, 0.02, d / 2 - 0.05], 0.018, { plan: true }), rod('wood', [x, 0.03, -d / 2 + 0.1], [x, h - 0.06, -0.05], 0.018, o), rod('wood', [x, 0.03, d / 2 - 0.12], [x, h * 0.55, d / 2 - 0.15], 0.016, o));
     }
-    parts.push({ ...span('cushion', [-w / 2 + 0.02, w / 2 - 0.02], [-0.03, 0.03], [-0.17, 0.17], { bevel: 0.025, plan: false }), position: [0, h - 0.05, -0.08], rotation: [0.25, 0, 0] } as Part);
-    parts.push({ ...span('cushion', [-w / 2 + 0.02, w / 2 - 0.02], [-0.03, 0.03], [-0.1, 0.1], { bevel: 0.025, plan: false }), position: [0, h * 0.55 + 0.02, d / 2 - 0.15], rotation: [0.5, 0, 0] } as Part);
+    parts.push({ ...span('cushion', [-w / 2 + 0.02, w / 2 - 0.02], [-0.03, 0.03], [-0.17, 0.17], { bevel: 0.025 }), position: [0, h - 0.05, -0.08], rotation: [0.25, 0, 0] } as Part);
+    parts.push({ ...span('cushion', [-w / 2 + 0.02, w / 2 - 0.02], [-0.03, 0.03], [-0.1, 0.1], { bevel: 0.025 }), position: [0, h * 0.55 + 0.02, d / 2 - 0.15], rotation: [0.5, 0, 0] } as Part);
     return keep(parts, size);
   },
 });

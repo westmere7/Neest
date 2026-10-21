@@ -172,7 +172,7 @@ const crib = defineAsset({
     const mx: V2 = [-w / 2 + p + 0.005, w / 2 - p - 0.005];
     const mz: V2 = [-d / 2 + p + 0.005, d / 2 - p - 0.005];
     parts.push(
-      span('frame', [-w / 2 + p, w / 2 - p], [0.26, 0.28], [-d / 2 + p, d / 2 - p], { plan: false }),
+      span('frame', [-w / 2 + p, w / 2 - p], [0.26, 0.28], [-d / 2 + p, d / 2 - p]),
       cushion('mattress', mx, [0.28, 0.4], mz, { softness: 0.2, plan: false }),
       cushion('blanket', [w * 0.08, mx[1] - 0.02], [0.395, 0.425], [mz[0] + 0.02, mz[1] - 0.02], { softness: 0.4, plan: false }),
       cushion('blanket', [w * 0.14, mx[1] - 0.03], [0.42, 0.445], [mz[0] + 0.03, mz[1] - 0.06], { softness: 0.4, plan: false }),
@@ -361,7 +361,7 @@ function highBedFrame({ w, d, h }: Size3, p: number, yU: number, xL: number): Pa
   parts.push(
     span('frame', xi, [yU - 0.16, yU], back, { plan: false }),
     span('frame', xi, [yU - 0.16, yU], front, { plan: false }),
-    span('frame', xi, [yU - 0.04, yU - 0.02], [-d / 2 + p, d / 2 - p], { plan: false }),
+    span('frame', xi, [yU - 0.04, yU - 0.02], [-d / 2 + p, d / 2 - p]),
     // Guard rails: full at the back, stopping at the ladder at the front.
     span('frame', xi, [h - 0.09, h - 0.03], back, { bevel: 0.006, plan: false }),
     span('frame', xi, [yU + 0.17, yU + 0.22], back, { plan: false }),
@@ -837,7 +837,7 @@ const bookDisplay = defineAsset({
     const zLip = g.zBack + g.tierD;
     const parts: Part[] = [
       span('frame', xi, [0.02, h - 0.005], [-d / 2, g.zBack], { plan: false }),
-      span('frame', xi, [0.02, 0.04], [g.zBack, d / 2 - 0.005], { plan: false }),
+      span('frame', xi, [0.02, 0.04], [g.zBack, d / 2 - 0.005]),
       span('ledges', xi, [0.02, g.binH * 0.65], [d / 2 - 0.018, d / 2], { bevel: 0.005, plan: false }),
     ];
     for (const sx of [-1, 1]) {

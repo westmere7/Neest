@@ -547,6 +547,11 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - `build(size) → Part[]`, plus optional `planDetail`, `light` and `wallSnap`
 
   2D footprints are **derived** from the convex hulls of the parts with `plan !== false`, drawn by height.
+  Each part draws its own convex hull, so a whole bookcase or bed must show at least one part that spans its footprint
+  (top board, deck, base): marking only one side panel or rail `plan: true` draws a sliver (fixed library-wide on
+  2026-10-21). Thin rods (`rodPath`, wire, arms) are hidden from plan by default. `AssetPlan.extent` is the hull of
+  every part, hidden ones included; overhead items (ceiling, or elevation ≥ 1.2 m) draw it as their dashed outline,
+  so chandelier arms, fan blades and trailing plants show their real spread.
 
   Add assets with the helpers in `parts.ts`:
   - primitives: `box`, `span`, `cyl`, `rod`, `lathe`, `prism`, `legs4`, `fronts`, `defineAsset`, …
@@ -1470,3 +1475,8 @@ Known limitations (also in README):
      ceilings to "Beams & ceilings", bathroom/laundry cabinets to "Bathroom & laundry storage", bikes and scooters to
      "Bikes & scooters", plus single fixes (parasol, aquarium, goldfish bowl, altars, tableware props, desk props, floor
      cushion, kitchen racks, laundry rooms). Checked the 60LTN project (8 options, 843 objects) loads and builds (done).
+119. "Check the entire library for correct 2D outlines, without making them too complicated (the WalkingPad is wrong)" →
+     reviewed all 1,249 plan symbols beside their 3D thumbnails; fixed ~40 that drew only a side panel, rail, post or
+     one lobe (styled-storage shelves and wardrobes, WalkingPad, arcade, bunk/loft beds and cot, ladders, cages, trolley,
+     mirror, radiator, fire, pumpkins, crates, caddy, kneeling chair, tripod lamp), and overhead items now outline their
+     full extent (done).

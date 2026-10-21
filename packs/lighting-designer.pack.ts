@@ -750,7 +750,7 @@ const studioTripod = defineItem({
     const parts: Part[] = [];
     for (const k of range(3)) {
       const a = (k / 3) * Math.PI * 2 + Math.PI / 2;
-      parts.push(rod('wood', [0, top - 0.05, 0], [Math.cos(a) * (w / 2 - 0.03), 0, Math.sin(a) * (d / 2 - 0.03)], 0.014, { segments: 10, plan: k === 0 }), cyl('metal', [Math.cos(a) * (w / 2 - 0.03), 0.01, Math.sin(a) * (d / 2 - 0.03)], 0.016, 0.02, { segments: 10, plan: true }));
+      parts.push(rod('wood', [0, top - 0.05, 0], [Math.cos(a) * (w / 2 - 0.03), 0, Math.sin(a) * (d / 2 - 0.03)], 0.014, { segments: 10 }), cyl('metal', [Math.cos(a) * (w / 2 - 0.03), 0.01, Math.sin(a) * (d / 2 - 0.03)], 0.016, 0.02, { segments: 10, plan: true }));
     }
     parts.push(cyl('chrome', [0, top - 0.02, 0], 0.03, 0.08, { segments: 14, plan: false }), vcyl('chrome', 0, 0, top, top + 0.06, 0.01, o));
     // Yoke and tilted drum head.

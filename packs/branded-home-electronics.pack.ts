@@ -1029,7 +1029,7 @@ const fujieOfr = defineItem({
     const p: Part[] = [];
     for (const i of range(n)) {
       const x = x0 + pitch * (i + 0.5);
-      p.push(span('body', [x - ft / 2, x + ft / 2], [y0, y1], [-fd / 2, fd / 2], { bevel: 0.011, plan: i === 0 || i === n - 1 }));
+      p.push(span('body', [x - ft / 2, x + ft / 2], [y0, y1], [-fd / 2, fd / 2], { bevel: 0.011 }));
       // Pressed channels on each fin.
       p.push(span('body', [x - ft / 2 - 0.001, x + ft / 2 + 0.001], [y0 + 0.06, y1 - 0.06], [-0.012, 0.012], { bevel: 0.006, plan: false }));
     }

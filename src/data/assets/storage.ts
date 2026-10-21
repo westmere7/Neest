@@ -773,7 +773,7 @@ const shelfLadder = defineAsset({
         return;
       }
       const zb = zf - sd;
-      parts.push(span('wood', ix, [y - 0.018, y], [zb, zf], { plan: false }));
+      parts.push(span('wood', ix, [y - 0.018, y], [zb, zf], { plan: i === 0 }));
       parts.push(span('wood', ix, [y, y + 0.035], [zb, zb + 0.012], { plan: false }));
       const clear = i < n - 1 ? ys[i + 1] - 0.018 - y : h - y;
       const maxD = Math.min(0.22, sd - 0.03);

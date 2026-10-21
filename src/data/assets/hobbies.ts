@@ -1326,7 +1326,7 @@ const arcadeCabinet = defineAsset({
     const parts: Part[] = [
       sideProfile('body', prof, -w / 2, 0.02),
       sideProfile('body', prof, w / 2 - 0.02, 0.02),
-      span('body', iw, [0, h - 0.01], [zb, zf - 0.38], { plan: false }),
+      span('body', iw, [0, h - 0.01], [zb, zf - 0.38]),
       span('body', iw, [0.04, 0.82 * k], [zb, zf - 0.07], { plan: false }),
       span('trim', iw, [0, 0.06], [zf - 0.08, zf - 0.06], { plan: false }),
       // Coin door with two lit coin slots
@@ -1334,7 +1334,7 @@ const arcadeCabinet = defineAsset({
       span('buttons', [-0.07, -0.03], [0.5 * k, 0.53 * k], [zf - 0.055, zf - 0.05], { plan: false }),
       span('buttons', [0.03, 0.07], [0.5 * k, 0.53 * k], [zf - 0.055, zf - 0.05], { plan: false }),
       // Control deck, joystick and buttons
-      span('body', iw, [0.84 * k, cy], [zf - 0.24, zf - 0.005], { bevel: 0.01, plan: false }),
+      span('body', iw, [0.84 * k, cy], [zf - 0.24, zf - 0.005], { bevel: 0.01 }),
       vcyl('trim', -0.14, zf - 0.11, cy, cy + 0.004, 0.035, { plan: false }),
       rod('trim', [-0.14, cy, zf - 0.11], [-0.14, cy + 0.07, zf - 0.11], 0.006, { plan: false }),
       sphere('buttons', [-0.14, cy + 0.08, zf - 0.11], 0.018, { plan: false }),

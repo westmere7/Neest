@@ -67,10 +67,12 @@ function pumpkin(slot: string, x: number, z: number, y0: number, w: number, d: n
       sphere(slot, [x + Math.cos(a) * r0, y0 + h * 0.5, z + Math.sin(a) * r0], 0.5, {
         scale: [s * 0.56, h, s * 0.36],
         rotation: [0, -a, 0],
-        plan: k === 0,
+        plan: false,
       }),
     );
   }
+  // A round core inside the lobes: the pumpkin's plan outline (one lobe alone drew an offset oval).
+  parts.push(sphere(slot, [x, y0 + h * 0.5, z], 0.5, { scale: [s * 0.9, h * 0.9, s * 0.9] }));
   return parts;
 }
 

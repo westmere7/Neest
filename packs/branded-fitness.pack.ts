@@ -76,12 +76,12 @@ function deck(z0: number, z1: number, y0: number, opts: { belt: boolean; endCap:
   const top = y0 + DECK_H - 0.02;
   for (const s of [-1, 1]) {
     const x0 = s < 0 ? -W / 2 : W / 2 - RAIL;
-    parts.push(span('body', [x0, x0 + RAIL], [y0 + 0.012, top + 0.012], [z0, z1], { bevel: 0.012, plan: s < 0 }));
+    parts.push(span('body', [x0, x0 + RAIL], [y0 + 0.012, top + 0.012], [z0, z1], { bevel: 0.012 }));
     parts.push(span('trim', [x0 + 0.012, x0 + RAIL - 0.012], [top + 0.012, top + 0.0135], [z0 + 0.02, z1 - 0.02], o));
   }
   // Base plate under the belt.
   parts.push(span('body', [-W / 2 + RAIL, W / 2 - RAIL], [y0 + 0.012, y0 + 0.03], [z0, z1], o));
-  if (opts.belt) parts.push(span('belt', [-W / 2 + RAIL + 0.004, W / 2 - RAIL - 0.004], [y0 + 0.03, top + 0.008], [z0 + 0.004, z1 - 0.004], { bevel: 0.006, plan: false }));
+  if (opts.belt) parts.push(span('belt', [-W / 2 + RAIL + 0.004, W / 2 - RAIL - 0.004], [y0 + 0.03, top + 0.008], [z0 + 0.004, z1 - 0.004], { bevel: 0.006 }));
   for (const z of [z0 + 0.06, z1 - 0.06]) for (const s of [-1, 1]) parts.push(cyl('trim', [s * (W / 2 - 0.05), y0 + 0.006, z], 0.018, 0.012, { segments: 12, plan: false }));
   if (opts.endCap === 'rear') {
     // Rounded rear end cap over the back roller.

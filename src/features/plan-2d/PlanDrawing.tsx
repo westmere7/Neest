@@ -130,7 +130,7 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
       const sw = f(0.8 * px);
       if (isOverhead(project, o)) {
         // Ceiling fixtures and high wall units: dashed outline above the items below them.
-        const hull = convexHull(plan.shapes.flatMap((sh) => sh.points));
+        const hull = plan.extent.length >= 3 ? plan.extent : convexHull(plan.shapes.flatMap((sh) => sh.points));
         furniture.push(
           <g key={o.id} transform={tf} data-object={o.id}>
             <path

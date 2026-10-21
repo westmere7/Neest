@@ -1438,7 +1438,7 @@ const electricFire = defineItem({
       span('surround', [fw / 2 + 0.02, w / 2], [0, h - 0.05], [-d / 2, zf]),
       span('surround', [-fw / 2 - 0.02, fw / 2 + 0.02], [0, y0 - 0.02], [-d / 2, zf], o),
       span('surround', [-fw / 2 - 0.02, fw / 2 + 0.02], [yT + 0.02, h - 0.05], [-d / 2, zf], o),
-      span('surround', [-w / 2, w / 2], [h - 0.05, h], [-d / 2, d / 2], o),
+      span('surround', [-w / 2, w / 2], [h - 0.05, h], [-d / 2, d / 2]),
       ...frame4('firebox', [-fw / 2 - 0.02, fw / 2 + 0.02], [y0 - 0.02, yT + 0.02], [zf, d / 2], 0.02),
       span('firebox', [-fw / 2, fw / 2], [y0, yT], [zbk, zbk + 0.02], o),
       span('firebox', [-fw / 2, fw / 2], [y0, y0 + 0.01], [zbk, zf], o),

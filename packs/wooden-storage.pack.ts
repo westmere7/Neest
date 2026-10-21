@@ -1263,13 +1263,14 @@ const crateShelving = defineItem({
         const y1 = y0 + ch - 0.002;
         const z0 = -d / 2 + 0.01 + jz;
         const z1 = d / 2 - 0.01 + jz;
-        const o = { plan: r === 0 };
+        // In plan: the top row's crates seen from above (their outer boards).
+        const o = { plan: r === rows - 1 };
         const zm = (z0 + z1) / 2;
         const ym = (y0 + y1) / 2;
         parts.push(
           span('crate', [x0, x0 + te], [y0, y1], [z0, z1], o),
           span('crate', [x1 - te, x1], [y0, y1], [z0, z1], o),
-          sp('crate', [x0 + te, x1 - te], [y1 - tb, y1], [z0, z1]),
+          span('crate', [x0 + te, x1 - te], [y1 - tb, y1], [z0, z1], o),
           sp('crate', [x0 + te, x1 - te], [y0, y0 + tb], [z0, zm - 0.012]),
           sp('crate', [x0 + te, x1 - te], [y0, y0 + tb], [zm + 0.012, z1]),
           sp('crate', [x0 + te, x1 - te], [y0 + tb, ym - 0.016], [z0, z0 + tb]),

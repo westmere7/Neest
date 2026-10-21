@@ -1676,11 +1676,11 @@ const showerCaddy = defineItem({
     const parts: Part[] = [vcyl('caddy', cx, cz, 0, h, 0.007)];
     for (const y of yb) {
       parts.push(
-        ...rodPath('caddy', arc(1, y), wr),
+        ...rodPath('caddy', arc(1, y), wr, { plan: y === yb[0] }),
         ...rodPath('caddy', arc(1, y + rimH), wr),
         ...rodPath('caddy', arc(0.55, y), wr),
-        rodX('caddy', cx, cx + rx, y, cz, wr, NP),
-        rodZ('caddy', cx, y, cz, cz + rz, wr, NP),
+        rodX('caddy', cx, cx + rx, y, cz, wr, { plan: y === yb[0] }),
+        rodZ('caddy', cx, y, cz, cz + rz, wr, { plan: y === yb[0] }),
         rodX('caddy', cx, cx + rx, y + rimH, cz, wr, NP),
         rodZ('caddy', cx, y + rimH, cz, cz + rz, wr, NP),
         discZ('caddy', [cx + rx * 0.45, y + rimH * 0.6, -d / 2 + 0.004], 0.018, 0.008, NP),

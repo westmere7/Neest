@@ -133,12 +133,12 @@ function modularCage({ w, d, h }: Size3): Part[] {
   const levels = range(rows + 1).map((i) => BASE + ((h - 0.012 - BASE) * i) / rows);
   // Base band: white panels on four sides, a black pull-out tray under the front, a wire floor.
   parts.push(
-    span('base', [x0, x1], [0.035, BASE], [z1 - 0.004, z1], { plan: true }),
+    span('base', [x0, x1], [0.035, BASE], [z1 - 0.004, z1], o),
     span('base', [x0, x1], [0.035, BASE], [z0, z0 + 0.004], o),
     span('base', [x0, x0 + 0.004], [0.035, BASE], [z0, z1], o),
     span('base', [x1 - 0.004, x1], [0.035, BASE], [z0, z1], o),
     span('tray', [x0 + 0.01, x1 - 0.01], [0.008, 0.035], [z0 + 0.01, d / 2], { bevel: 0.004, plan: false }),
-    span('base', [x0 + 0.004, x1 - 0.004], [BASE - 0.05, BASE - 0.045], [z0 + 0.004, z1 - 0.004], o),
+    span('base', [x0 + 0.004, x1 - 0.004], [BASE - 0.05, BASE - 0.045], [z0 + 0.004, z1 - 0.004]),
   );
   // Wire panels: one see-through textured panel per face (the wires are in the texture), a wire
   // floor over the tray and a wire roof.
@@ -840,7 +840,7 @@ const windowPerch = defineItem({
         rodX('frame', -w / 2 + 0.01, w / 2 - 0.01, h - 0.012, d / 2 - 0.012, 0.008, { plan: true }),
         rodZ('frame', -w / 2 + 0.012, h - 0.012, -d / 2, d / 2 - 0.012, 0.008, o),
         rodZ('frame', w / 2 - 0.012, h - 0.012, -d / 2, d / 2 - 0.012, 0.008, o),
-        sphere('fabric', [0, h * 0.55, 0], 0.5, { scale: [w - 0.04, h * 0.8, d - 0.04], plan: false }),
+        sphere('fabric', [0, h * 0.55, 0], 0.5, { scale: [w - 0.04, h * 0.8, d - 0.04] }),
       ],
       size,
     );

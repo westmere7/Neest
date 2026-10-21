@@ -327,9 +327,9 @@ const styledBookcase = filled(defineItem({
     const cols = w > 1.1 ? 2 : 1;
     const z0 = -d / 2;
     const parts: Part[] = [
-      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, d / 2], { plan: true }),
+      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, d / 2], o),
       span('frame', [w / 2 - t, w / 2], [0, h], [z0, d / 2], o),
-      span('frame', [-w / 2, w / 2], [h - t, h], [z0, d / 2], o),
+      span('frame', [-w / 2, w / 2], [h - t, h], [z0, d / 2], { plan: true }),
       span('frame', [-w / 2 + t, w / 2 - t], [0, 0.06], [z0, d / 2], o),
       span('frame', [-w / 2 + t, w / 2 - t], [0.06, h - t], [z0, z0 + 0.008], o),
     ];
@@ -364,8 +364,8 @@ const styledCubes = filled(defineItem({
     const m = clamp(Math.round(h / 0.37), 2, 4);
     const z0 = -d / 2;
     const parts: Part[] = [];
-    for (const x of range(n + 1).map((i) => -w / 2 + (w * i) / n)) parts.push(span('frame', [Math.max(-w / 2, x - t / 2), Math.min(w / 2, x + t / 2)], [0, h], [z0, d / 2], { plan: x === -w / 2 }));
-    for (const y of range(m + 1).map((i) => (h * i) / m)) parts.push(span('frame', [-w / 2, w / 2], [Math.max(0, y - t / 2), Math.min(h, y + t / 2)], [z0, d / 2], o));
+    for (const x of range(n + 1).map((i) => -w / 2 + (w * i) / n)) parts.push(span('frame', [Math.max(-w / 2, x - t / 2), Math.min(w / 2, x + t / 2)], [0, h], [z0, d / 2], o));
+    for (const y of range(m + 1).map((i) => (h * i) / m)) parts.push(span('frame', [-w / 2, w / 2], [Math.max(0, y - t / 2), Math.min(h, y + t / 2)], [z0, d / 2], { plan: y === 0 }));
     const cw = w / n;
     const ch = h / m;
     let k = 0;
@@ -430,9 +430,9 @@ const styledDivider = filled(defineItem({
     const n = clamp(Math.round(w / 0.4), 2, 6);
     const m = clamp(Math.round(h / 0.42), 3, 6);
     const parts: Part[] = [];
-    for (const x of range(n + 1).map((i) => -w / 2 + 0.01 + ((w - 0.02) * i) / n)) for (const z of [-d / 2 + 0.01, d / 2 - 0.01]) parts.push(vcyl('frame', x, z, 0, h, 0.008, { plan: x < -w / 2 + 0.02 }));
+    for (const x of range(n + 1).map((i) => -w / 2 + 0.01 + ((w - 0.02) * i) / n)) for (const z of [-d / 2 + 0.01, d / 2 - 0.01]) parts.push(vcyl('frame', x, z, 0, h, 0.008, o));
     const ys = range(m).map((i) => 0.05 + ((h - 0.08) * i) / (m - 1));
-    for (const y of ys) parts.push(span('shelf', [-w / 2, w / 2], [y, y + 0.022], [-d / 2, d / 2], o));
+    for (const y of ys) parts.push(span('shelf', [-w / 2, w / 2], [y, y + 0.022], [-d / 2, d / 2], { plan: y === ys[0] }));
     const cw = (w - 0.02) / n;
     ys.slice(0, -1).forEach((y, j) => {
       for (const i of range(n)) {
@@ -467,7 +467,7 @@ const styledLadder = filled(defineItem({
     const ys = [0.35, 0.8, 1.22, h - 0.12];
     ys.forEach((y, i) => {
       const zf = at(y) + 0.02;
-      parts.push(span('wood', [-w / 2 + 0.035, w / 2 - 0.035], [y - 0.018, y], [zB - 0.01, zf], o));
+      parts.push(span('wood', [-w / 2 + 0.035, w / 2 - 0.035], [y - 0.018, y], [zB - 0.01, zf], { plan: i === 0 }));
       const depth = zf - zB;
       if (i === 0) parts.push(span('decor', [-w / 2 + 0.06, w / 2 - 0.06], [y, y + 0.24], [zB, zB + Math.min(0.3, depth - 0.02)], { bevel: 0.012, plan: false }));
       else if (i === 1) parts.push(...plant('decor', 'plant', -w * 0.18, y, zB + depth * 0.5, 0.3), ...bookStack('books', w * 0.2, y, zB + depth * 0.5, 4, 0.17, Math.min(0.16, depth * 0.8)));
@@ -552,9 +552,9 @@ const openWardrobe = filled(defineItem({
     const z0 = -d / 2;
     const split = -w / 2 + w * 0.6;
     const parts: Part[] = [
-      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, d / 2], { plan: true }),
+      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, d / 2], o),
       span('frame', [w / 2 - t, w / 2], [0, h], [z0, d / 2], o),
-      span('frame', [-w / 2, w / 2], [h - t, h], [z0, d / 2], o),
+      span('frame', [-w / 2, w / 2], [h - t, h], [z0, d / 2], { plan: true }),
       span('frame', [-w / 2 + t, w / 2 - t], [0, 0.06], [z0, d / 2], o),
       span('frame', [-w / 2 + t, w / 2 - t], [0.06, h - t], [z0, z0 + 0.01], o),
       span('frame', [split - t / 2, split + t / 2], [0.06, h - t], [z0, d / 2], o),
@@ -593,9 +593,9 @@ const glassWardrobe = filled(defineItem({
     const zf = d / 2 - 0.04;
     const drawerH = 0.42;
     const parts: Part[] = [
-      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, zf], { plan: true }),
+      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, zf], o),
       span('frame', [w / 2 - t, w / 2], [0, h], [z0, zf], o),
-      span('frame', [-w / 2, w / 2], [h - t, h], [z0, zf], o),
+      span('frame', [-w / 2, w / 2], [h - t, h], [z0, zf], { plan: true }),
       span('frame', [-w / 2 + t, w / 2 - t], [0, drawerH], [z0, zf], o),
       span('frame', [-w / 2 + t, w / 2 - t], [drawerH, h - t], [z0, z0 + 0.01], o),
       span('frame', [-w / 2 + t, w / 2 - t], [h - 0.36, h - 0.34], [z0, zf], o),
@@ -639,8 +639,8 @@ const walkInRun = filled(defineItem({
     const t = 0.022;
     const z0 = -d / 2;
     const xs = [-w / 2, -w / 2 + w * 0.25, -w / 2 + w * 0.5, -w / 2 + w * 0.72, w / 2];
-    const parts: Part[] = [span('frame', [-w / 2, w / 2], [h - t, h], [z0, d / 2], o), span('frame', [-w / 2, w / 2], [0, 0.05], [z0, d / 2], o)];
-    xs.forEach((x, i) => parts.push(span('frame', [Math.max(-w / 2, x - t / 2), Math.min(w / 2, x + t / 2)], [0, h], [z0, d / 2], { plan: i === 0 })));
+    const parts: Part[] = [span('frame', [-w / 2, w / 2], [h - t, h], [z0, d / 2], { plan: true }), span('frame', [-w / 2, w / 2], [0, 0.05], [z0, d / 2], o)];
+    xs.forEach((x) => parts.push(span('frame', [Math.max(-w / 2, x - t / 2), Math.min(w / 2, x + t / 2)], [0, h], [z0, d / 2], o)));
     parts.push(span('frame', [-w / 2, w / 2], [0.05, h - t], [z0, z0 + 0.01], o));
     // 1: long hanging.
     parts.push(...hangingClothes('clothes', 'metal', xs[0] + t / 2, xs[1] - t / 2, h - 0.3, 1.35, 0, d - 0.12), span('frame', [xs[0], xs[1]], [h - 0.28, h - 0.26], [z0, d / 2], o), ...foldedStacks('folded', xs[0] + 0.03, xs[1] - 0.03, h - 0.26, 0.2, z0, d));
@@ -681,7 +681,7 @@ const clothesRail = filled(defineItem({
     const parts: Part[] = [];
     for (const s of [-1, 1]) parts.push(vcyl('metal', s * (w / 2 - 0.02), 0, 0, h, 0.012, { plan: true }), rod2('metal', s * (w / 2 - 0.02), d / 2 - 0.02, -d / 2 + 0.02));
     parts.push(...hangingClothes('clothes', 'metal', -w / 2 + 0.02, w / 2 - 0.02, h - 0.03, Math.min(1.0, h - 0.45), 0, d - 0.12));
-    parts.push(span('basket', [-w / 2 + 0.03, w / 2 - 0.03], [0.14, 0.16], [-d / 2 + 0.03, d / 2 - 0.03], o), ...shoes('shoes', -w / 2 + 0.06, w * 0.15, 0.16, 0), F(span('basket', [w * 0.2, w / 2 - 0.06], [0.16, 0.36], [-d / 2 + 0.05, d / 2 - 0.05], { bevel: 0.015, plan: false })));
+    parts.push(span('basket', [-w / 2 + 0.03, w / 2 - 0.03], [0.14, 0.16], [-d / 2 + 0.03, d / 2 - 0.03], { plan: true }), ...shoes('shoes', -w / 2 + 0.06, w * 0.15, 0.16, 0), F(span('basket', [w * 0.2, w / 2 - 0.06], [0.16, 0.36], [-d / 2 + 0.05, d / 2 - 0.05], { bevel: 0.015, plan: false })));
     return parts;
   },
 }), ['clothes', 'shoes']);
@@ -711,9 +711,9 @@ const displayCabinet = filled(defineItem({
     const z0 = -d / 2;
     const zf = d / 2 - 0.02;
     const parts: Part[] = [
-      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, zf], { plan: true }),
+      span('frame', [-w / 2, -w / 2 + t], [0, h], [z0, zf], o),
       span('frame', [w / 2 - t, w / 2], [0, h], [z0, zf], o),
-      span('frame', [-w / 2, w / 2], [h - t, h], [z0, zf], o),
+      span('frame', [-w / 2, w / 2], [h - t, h], [z0, zf], { plan: true }),
       span('frame', [-w / 2 + t, w / 2 - t], [0, 0.08], [z0, zf], o),
       span('frame', [-w / 2 + t, w / 2 - t], [0.08, h - t], [z0, z0 + 0.01], o),
       span('glass', [-w / 2 + 0.03, w / 2 - 0.03], [0.1, h - 0.03], [zf, zf + 0.006], o),
@@ -838,9 +838,9 @@ const pantry = filled(defineItem({
     const t = 0.02;
     const z0 = -d / 2;
     const parts: Part[] = [
-      span('body', [-w / 2, -w / 2 + t], [0, h], [z0, d / 2 - 0.02], { plan: true }),
+      span('body', [-w / 2, -w / 2 + t], [0, h], [z0, d / 2 - 0.02], o),
       span('body', [w / 2 - t, w / 2], [0, h], [z0, d / 2 - 0.02], o),
-      span('body', [-w / 2, w / 2], [h - t, h], [z0, d / 2 - 0.02], o),
+      span('body', [-w / 2, w / 2], [h - t, h], [z0, d / 2 - 0.02], { plan: true }),
       span('body', [-w / 2, w / 2], [0, 0.08], [z0, d / 2 - 0.02], o),
       span('body', [-w / 2 + t, w / 2 - t], [0.08, h - t], [z0, z0 + 0.01], o),
     ];
@@ -921,10 +921,10 @@ const shoeRack = filled(defineItem({
   build: (size) => {
     const { w, d, h } = size;
     const parts: Part[] = [];
-    for (const s of [-1, 1]) parts.push(span('wood', [s * w / 2 - (s > 0 ? 0.02 : 0), s * w / 2 + (s < 0 ? 0.02 : 0)].sort((a, b) => a - b) as V2, [0, h - 0.2], [-d / 2, d / 2], { plan: s < 0 }));
+    for (const s of [-1, 1]) parts.push(span('wood', [s * w / 2 - (s > 0 ? 0.02 : 0), s * w / 2 + (s < 0 ? 0.02 : 0)].sort((a, b) => a - b) as V2, [0, h - 0.2], [-d / 2, d / 2], { plan: true }));
     const ys = [0.04, (h - 0.2) * 0.5, h - 0.22];
     ys.forEach((y, i) => {
-      for (const z of cells(4, -d / 2 + 0.02, d / 2 - 0.02)) parts.push(span('wood', [-w / 2 + 0.02, w / 2 - 0.02], [y, y + 0.018], [z - 0.025, z + 0.025], o));
+      for (const z of cells(4, -d / 2 + 0.02, d / 2 - 0.02)) parts.push(span('wood', [-w / 2 + 0.02, w / 2 - 0.02], [y, y + 0.018], [z - 0.025, z + 0.025], { plan: i === 2 }));
       if (i < 2) parts.push(...shoes('shoes', -w / 2 + 0.06, w / 2 - 0.06, y + 0.018, 0).map((p) => ({ ...p, scale: [1, 1, Math.min(1, d / 0.3)] as [number, number, number] })));
     });
     parts.push(span('basket', [-w * 0.3, w * 0.3], [h - 0.2, h - 0.02], [-d / 2 + 0.02, d / 2 - 0.02], { bevel: 0.015, plan: false }));
@@ -947,11 +947,11 @@ const utilityRack = filled(defineItem({
   build: (size) => {
     const { w, d, h } = size;
     const parts: Part[] = [];
-    for (const x of [-w / 2 + 0.012, w / 2 - 0.012]) for (const z of [-d / 2 + 0.012, d / 2 - 0.012]) parts.push(vcyl('wire', x, z, 0, h, 0.012, { plan: x < 0 && z < 0 }));
+    for (const x of [-w / 2 + 0.012, w / 2 - 0.012]) for (const z of [-d / 2 + 0.012, d / 2 - 0.012]) parts.push(vcyl('wire', x, z, 0, h, 0.012, o));
     const n = clamp(Math.round(h / 0.42), 3, 5);
     const ys = range(n + 1).map((i) => 0.12 + ((h - 0.14) * i) / n);
     ys.forEach((y, i) => {
-      parts.push(span('wire', [-w / 2 + 0.01, w / 2 - 0.01], [y - 0.003, y + 0.003], [-d / 2 + 0.01, d / 2 - 0.01], o));
+      parts.push(span('wire', [-w / 2 + 0.01, w / 2 - 0.01], [y - 0.003, y + 0.003], [-d / 2 + 0.01, d / 2 - 0.01], { plan: i === ys.length - 1 }));
       if (i === ys.length - 1) return;
       const gap = ys[i + 1] - y - 0.03;
       const pick = i % 4;

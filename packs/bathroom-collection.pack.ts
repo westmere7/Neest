@@ -700,7 +700,7 @@ const ladderShelf = defineItem({
     for (const [i, f] of [0.18, 0.47, 0.74].entries()) {
       const zf = d / 2 - 0.02 - lean * f;
       const sd = Math.max(0.08, zf - (-d / 2 + 0.03));
-      parts.push(span('bamboo', [-w / 2 + 0.03, w / 2 - 0.03], [h * f - 0.012, h * f], [zf - sd, zf], o));
+      parts.push(span('bamboo', [-w / 2 + 0.03, w / 2 - 0.03], [h * f - 0.012, h * f], [zf - sd, zf], { plan: i === 0 }));
       if (i === 0) parts.push(towelRoll('items', [-0.08, h * f + 0.04, zf - sd / 2], 0.18, 0.04), towelRoll('items', [0.1, h * f + 0.04, zf - sd / 2], 0.18, 0.04));
     }
     return parts;

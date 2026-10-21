@@ -366,7 +366,7 @@ const glassTopDesk = filledVanity(defineItem({
       span('desk', [-w / 2, -w / 2 + 0.03], [0, top - 0.01], [z0, d / 2 - 0.02], o),
       span('desk', [-w / 2 + 0.03, w / 2 - ped], [top - 0.07, top - 0.06], [z0 + 0.02, d / 2 - 0.04], o),
       span('desk', [-w / 2 + 0.03, w / 2 - ped], [top - 0.06, top - 0.01], [d / 2 - 0.045, d / 2 - 0.02], o),
-      span('glass', [-w / 2, w / 2], [top - 0.01, top], [z0, d / 2], o),
+      span('glass', [-w / 2, w / 2], [top - 0.01, top], [z0, d / 2]),
     ];
     for (const i of range(3)) parts.push(span('desk', [w / 2 - ped + 0.008, w / 2 - 0.008], [0.02 + i * 0.24, 0.25 + i * 0.24], [d / 2 - 0.02, d / 2 - 0.006], { bevel: 0.004, plan: false }), rodX('mirror', w / 2 - ped / 2 - 0.05, w / 2 - ped / 2 + 0.05, 0.2 + i * 0.24, d / 2, 0.005, o));
     // Compartments under the glass: lipsticks lying, palettes, brushes.
@@ -802,9 +802,9 @@ const beautyTrolley = defineItem({
   build: (size) => {
     const { w, d, h } = size;
     const parts: Part[] = [];
-    for (const x of [-w / 2 + 0.015, w / 2 - 0.015]) for (const z of [-d / 2 + 0.015, d / 2 - 0.015]) parts.push(vcyl('cart', x, z, 0.05, h, 0.008, { plan: x < 0 && z < 0 }), sphere('caps', [x, 0.025, z], 0.025, o));
+    for (const x of [-w / 2 + 0.015, w / 2 - 0.015]) for (const z of [-d / 2 + 0.015, d / 2 - 0.015]) parts.push(vcyl('cart', x, z, 0.05, h, 0.008, o), sphere('caps', [x, 0.025, z], 0.025, o));
     const ys = [0.08, 0.08 + (h - 0.12) / 2, h - 0.04];
-    for (const y of ys) parts.push(span('cart', [-w / 2 + 0.01, w / 2 - 0.01], [y - 0.004, y], [-d / 2 + 0.01, d / 2 - 0.01], o), span('cart', [-w / 2 + 0.01, w / 2 - 0.01], [y, y + 0.06], [-d / 2 + 0.01, -d / 2 + 0.013], o), span('cart', [-w / 2 + 0.01, w / 2 - 0.01], [y, y + 0.06], [d / 2 - 0.013, d / 2 - 0.01], o));
+    for (const y of ys) parts.push(span('cart', [-w / 2 + 0.01, w / 2 - 0.01], [y - 0.004, y], [-d / 2 + 0.01, d / 2 - 0.01], { plan: y === ys[2] }), span('cart', [-w / 2 + 0.01, w / 2 - 0.01], [y, y + 0.06], [-d / 2 + 0.01, -d / 2 + 0.013], o), span('cart', [-w / 2 + 0.01, w / 2 - 0.01], [y, y + 0.06], [d / 2 - 0.013, d / 2 - 0.01], o));
     // Top: skincare.
     const t = ys[2];
     parts.push(...pump('products', 'caps', -w * 0.3, t, -d * 0.15, 0.026, 0.13), ...pump('products', 'caps', -w * 0.12, t, -d * 0.18, 0.022, 0.1), ...dropper('products', 'caps', w * 0.05, t, -d * 0.15), ...jar('products', 'caps', w * 0.25, t, -d * 0.1), ...tube('products', 'caps', w * 0.35, t, d * 0.12, 0.12), ...perfume('products', 'caps', -w * 0.2, t, d * 0.18, 1), ...perfume('products', 'caps', w * 0.05, t, d * 0.18, 0));
@@ -945,9 +945,9 @@ const ledFloorMirror = defineItem({
     const parts: Part[] = [];
     // Built upright around the origin, then leaned back.
     const up: Part[] = [
-      span('mirror', [-r + 0.02, r - 0.02], [0, straight], [-0.004, 0.004], o),
+      span('mirror', [-r + 0.02, r - 0.02], [0, straight], [-0.004, 0.004]),
       { ...cyl('mirror', [0, 0, 0], r - 0.02, 0.008, { segments: 32, plan: false }), position: [0, straight, 0], rotation: [Math.PI / 2, 0, 0] } as Part,
-      span('frame', [-r, -r + 0.02], [0, straight], [-0.012, 0.008], { plan: true }),
+      span('frame', [-r, -r + 0.02], [0, straight], [-0.012, 0.008], o),
       span('frame', [r - 0.02, r], [0, straight], [-0.012, 0.008], o),
       span('frame', [-r, r], [0, 0.02], [-0.012, 0.008], o),
       { ...torus('frame', [0, 0, 0], r - 0.01, 0.012, { arc: Math.PI, plan: false }), position: [0, straight, -0.002] } as Part,

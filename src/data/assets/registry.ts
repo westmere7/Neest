@@ -84,6 +84,12 @@ export interface PlanShape {
 export interface AssetPlan {
   shapes: PlanShape[];
   strokes: PlanStroke[];
+  /**
+   * Convex outline of every part, including detail hidden from the plan (thin rods, arms, foliage).
+   * Overhead items (ceiling fixtures, high wall units) draw this as their dashed outline: the area
+   * they hang over, not just the parts shown in plan.
+   */
+  extent: Vec2[];
 }
 
 type M3 = [number, number, number, number, number, number, number, number, number];
@@ -191,14 +197,14 @@ export function assetPlan(asset: AssetDefinition, size: Size3, custom?: CustomAs
           { x: size.w / 2, y: size.d / 2 },
           { x: -size.w / 2, y: size.d / 2 },
         ];
-    plan = { shapes: [{ points: hull, slot: 'model', top: size.h }], strokes: [] };
+    plan = { shapes: [{ points: hull, slot: 'model', top: size.h }], strokes: [], extent: convexHull(hull) };
   } else {
-    const parts = asset.build(size).filter((p) => p.plan !== false);
-    const shapes = parts
-      .map(partFootprint)
-      .filter((s) => s.points.length >= 3)
+    const all = asset.build(size).map((p) => ({ p, fp: partFootprint(p) }));
+    const shapes = all
+      .filter(({ p, fp }) => p.plan !== false && fp.points.length >= 3)
+      .map(({ fp }) => fp)
       .sort((a, b) => a.top - b.top);
-    plan = { shapes, strokes: asset.planDetail?.(size) ?? [] };
+    plan = { shapes, strokes: asset.planDetail?.(size) ?? [], extent: convexHull(all.flatMap(({ fp }) => fp.points)) };
   }
   // Big enough for the whole library plus a project's sizes: when it fills up it is cleared, and an
   // open library would then rebuild every card's item on each render.
