@@ -270,7 +270,7 @@ export function currentItem(assetId: string, model?: string): { assetId: string;
 }
 
 /** Moves a placed item off a retired item onto its replacement (and model, if any); true when changed. */
-export function upgradeRetiredItem(o: { assetId: string; model?: string; width: number; depth: number; height: number }): boolean {
+export function upgradeRetiredItem(o: { assetId: string; model?: string; width?: number; depth?: number; height: number }): boolean {
   const r = RETIRED_MODEL_ITEMS[o.assetId];
   if (!r) return false;
   o.assetId = r.assetId;
