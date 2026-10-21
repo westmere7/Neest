@@ -180,7 +180,7 @@ const soffitBox = defineAsset({
   name: 'Boxed soffit / bulkhead',
   category: 'construction',
   type: 'structure',
-  group: 'Built-ins',
+  group: 'Beams & ceilings',
   tags: ['bulkhead', 'drop ceiling', 'boxing', 'ceiling', 'duct'],
   defaultSize: { w: 1.2, d: 0.4, h: 0.3 },
   minSize: { w: 0.2, d: 0.15, h: 0.1 },

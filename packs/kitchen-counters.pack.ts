@@ -321,6 +321,8 @@ interface CounterSpec {
   min: Size3;
   max: Size3;
   group?: 'Counters & cabinets' | 'Kitchen cabinets' | 'Sinks';
+  /** Room the item is listed under (default kitchen). */
+  category?: 'kitchen' | 'laundry';
   tags: string[];
   description: string;
   fourth?: [id: 'sink' | 'appliance', label: string, material: string];
@@ -335,7 +337,7 @@ function counter(p: CounterSpec): PackItem {
   return defineItem({
     id: p.id,
     name: p.name,
-    category: 'kitchen',
+    category: p.category ?? 'kitchen',
     type: p.group === 'Sinks' ? 'plumbing' : 'surfaces',
     group: p.group ?? 'Counters & cabinets',
     tags: ['kitchen', 'counter', 'cabinet', 'worktop', 'tủ bếp', ...p.tags],
@@ -470,7 +472,7 @@ const items: PackItem[] = [
   counter({ id: 'sink-granite-black', name: 'Black granite composite sink unit', group: 'Sinks', style: { bays: [{ kind: 'sink', w: 1 }], tap: true }, ...sinkUnit(0.8, 0.6, 1.0), tags: ['sink', 'granite composite', 'black sink', 'modern'], description: 'A sink unit with a matte black granite-composite bowl and a black mixer tap.', fourth: ['sink', 'Sink', 'granite-composite-black'], finishes: [['Oak & concrete', 'laminate-oak', 'laminate-grey', 'metal-black-matte'], FINISHES[0], FINISHES[4], FINISHES[5]] }),
   counter({ id: 'sink-farmhouse-shaker', name: 'Farmhouse apron sink, shaker unit', group: 'Sinks', style: { bays: [{ kind: 'sink', w: 1 }], tap: true, sink: 'apron', front: 'shaker' }, ...sinkUnit(0.9, 0.75, 1.0), tags: ['farmhouse sink', 'apron front', 'belfast', 'butler sink', 'fireclay', 'shaker'], description: 'A white fireclay apron-front sink set into a shaker unit, with a bridge-style tap.', fourth: ['sink', 'Sink', 'fireclay-white'], finishes: [FINISHES[1], FINISHES[2], FINISHES[0]] }),
   counter({ id: 'sink-bar-prep-45', name: 'Bar / prep sink unit', group: 'Sinks', style: { bays: [{ kind: 'sink', w: 1 }], tap: true, sink: 'undermount' }, ...sinkUnit(0.45, 0.4, 0.6), tags: ['bar sink', 'prep sink', 'small sink', 'island'], description: 'A narrow 45 cm prep or bar sink with a small undermount bowl, for islands and bars.', fourth: SINK }),
-  counter({ id: 'sink-laundry-counter', name: 'Laundry counter with deep sink', group: 'Sinks', style: { bays: [{ kind: 'sink', w: 0.7 }, { kind: 'open', w: 0.6 }], tap: true }, ...sinkUnit(1.3, 1.0, 1.8), tags: ['laundry', 'utility', 'deep sink', 'open shelf', 'washing machine space'], description: 'A laundry counter with a deep sink unit and an open bay beside it for baskets or a washing machine.', fourth: SINK }),
+  counter({ id: 'sink-laundry-counter', name: 'Laundry counter with deep sink', group: 'Sinks', category: 'laundry', style: { bays: [{ kind: 'sink', w: 0.7 }, { kind: 'open', w: 0.6 }], tap: true }, ...sinkUnit(1.3, 1.0, 1.8), tags: ['laundry', 'utility', 'deep sink', 'open shelf', 'washing machine space'], description: 'A laundry counter with a deep sink unit and an open bay beside it for baskets or a washing machine.', fourth: SINK }),
 ];
 
 export default definePack({

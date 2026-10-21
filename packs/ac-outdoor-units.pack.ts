@@ -35,7 +35,7 @@ function unit(id: string, name: string, size: Size3, k: [number, number, number]
     name,
     category: 'outdoor',
     type: 'electronics',
-    group: 'Climate',
+    group: 'Air conditioning',
     tags: [...TAGS, ...tags],
     description,
     ...around(size, k),
@@ -111,7 +111,7 @@ const windowAc = defineItem({
   name: 'Window air conditioner, 9,000 BTU',
   category: 'outdoor',
   type: 'electronics',
-  group: 'Climate',
+  group: 'Air conditioning',
   tags: ['air conditioner', 'window ac', 'window type', 'through the wall', 'máy lạnh cửa sổ', 'điều hòa cửa sổ', '9000 btu'],
   description:
     'Compact window-type air conditioner that sits through a wall or window opening: a plastic room-side front with an intake grille, top vanes, two knobs and a display; the steel chassis behind with louvred side and top vents and the condenser coil at the back.',
@@ -127,7 +127,7 @@ const bracket = defineItem({
   name: 'Outdoor unit wall bracket',
   category: 'outdoor',
   type: 'electronics',
-  group: 'Climate',
+  group: 'Air conditioning',
   tags: ['wall bracket', 'ac bracket', 'giá đỡ cục nóng', 'giá treo dàn nóng', 'mount', 'galvanised'],
   description:
     'Pair of galvanised angle-iron brackets for hanging an outdoor unit on a wall: uprights bolted on with anchor bolts, horizontal arms with diagonal braces, rubber anti-vibration pads, plastic end caps and a front tie bar.',
@@ -151,7 +151,7 @@ const stand = defineItem({
   name: 'Outdoor unit rooftop stand',
   category: 'outdoor',
   type: 'electronics',
-  group: 'Climate',
+  group: 'Air conditioning',
   tags: ['rooftop stand', 'floor stand', 'giá đặt sàn', 'chân đế dàn nóng', 'roof', 'terrace', 'galvanised'],
   description:
     'Galvanised steel stand that lifts an outdoor unit off a roof or terrace: four posts on base plates over two concrete sleepers, side rails with diagonal braces, and front and back top rails with rubber anti-vibration pads.',

@@ -1805,7 +1805,7 @@ const bathCabinet = defineItem({
   name: 'Wall-hung bathroom cabinet',
   category: 'bathroom',
   type: 'storage',
-  group: 'Sideboards & cabinets',
+  group: 'Bathroom & laundry storage',
   tags: ['bathroom cabinet', 'wall cabinet', 'louvred', 'towels', 'toiletries', 'open shelf', 'cupboard'],
   mount: 'wall',
   defaultElevation: 1.15,

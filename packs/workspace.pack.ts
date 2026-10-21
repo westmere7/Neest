@@ -397,8 +397,8 @@ const ladderDesk = defineItem({
 
 const deskSet = defineItem({
   ...desk,
-  type: 'decor',
-  group: 'Candles & tabletop',
+  type: 'electronics',
+  group: 'Computers',
   id: 'desk-essentials',
   name: 'Keyboard, mouse & notebook',
   tags: ['keyboard', 'mouse', 'notebook', 'pens', 'desk set', 'work'],

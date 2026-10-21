@@ -541,7 +541,7 @@ const broomCupboard = defineAsset({
   name: 'Broom cupboard',
   category: 'laundry',
   type: 'storage',
-  group: 'Hallway storage',
+  group: 'Bathroom & laundry storage',
   tags: ['broom cupboard', 'utility cupboard', 'cleaning', 'louvre', 'storage', 'mop bucket'],
   defaultSize: { w: 0.6, d: 0.45, h: 2.0 },
   minSize: { w: 0.4, d: 0.35, h: 1.8 },

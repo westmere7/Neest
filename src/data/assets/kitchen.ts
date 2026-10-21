@@ -899,7 +899,7 @@ const frontLoaderPlan = ({ w, d }: Size3): PlanStroke[] => [line([-w / 2, d / 2 
 const washingMachine = defineAsset({
   id: 'washing-machine',
   name: 'Washing machine',
-  category: 'kitchen',
+  category: 'laundry',
   type: 'appliances',
   group: 'Laundry',
   tags: ['washer', 'laundry', 'washing machine', 'appliance', 'utility'],

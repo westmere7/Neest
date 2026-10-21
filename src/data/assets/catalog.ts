@@ -182,6 +182,7 @@ export const ASSET_GROUPS: Record<AssetType, string[]> = {
     'Sideboards & cabinets',
     'Media units',
     'Kitchen cabinets',
+    'Bathroom & laundry storage',
     'Office storage',
     'Hallway storage',
     'Baskets & boxes',
@@ -207,11 +208,11 @@ export const ASSET_GROUPS: Record<AssetType, string[]> = {
   ],
   people: ['Standing', 'Sitting', 'Lying down', 'Kitchen & chores', 'Grooming', 'Exercise & leisure', 'Children'],
   plants: ['Indoor plants', 'Trees', 'Succulents & cacti', 'Hanging plants', 'Wall & vertical gardens', 'Terrariums & moss', 'Herbs & edibles', 'Cut & dried flowers', 'Outdoor plants'],
-  electronics: ['TV & audio', 'Computers', 'Gaming', 'Climate', 'Smart home'],
-  activities: ['Music', 'Fitness', 'Games', 'Creative', 'Knowledge'],
+  electronics: ['TV & audio', 'Computers', 'Gaming', 'Air conditioning', 'Climate', 'Smart home'],
+  activities: ['Music', 'Fitness', 'Games', 'Creative', 'Knowledge', 'Bikes & scooters'],
   pets: ['Bird cages', 'Bird accessories', 'Pet birds & animals', 'Dog beds & crates', 'Cat furniture', 'Feeding & care'],
   kids: ['Toys', 'Kids furniture', 'Nursery'],
-  structure: ['Columns', 'Partitions', 'Portals & arches', 'Heating', 'Built-ins', 'Stairs & steps'],
+  structure: ['Columns', 'Beams & ceilings', 'Partitions', 'Portals & arches', 'Heating', 'Built-ins', 'Stairs & steps'],
   misc: ['Basic shapes', 'Imported models'],
 };
 

@@ -836,7 +836,7 @@ const smartSpeaker = defineAsset({
 const robotVacuum = defineAsset({
   id: 'robot-vacuum',
   name: 'Robot vacuum',
-  category: 'electronics',
+  category: 'laundry',
   type: 'appliances',
   group: 'Cleaning',
   tags: ['robot vacuum', 'roomba', 'vacuum cleaner', 'cleaning', 'smart home'],
@@ -893,7 +893,7 @@ const airCon = defineAsset({
   name: 'Wall air-conditioning unit',
   category: 'electronics',
   type: 'electronics',
-  group: 'Climate',
+  group: 'Air conditioning',
   tags: ['air conditioning', 'ac', 'split unit', 'hvac', 'climate'],
   defaultSize: { w: 0.85, d: 0.22, h: 0.3 },
   minSize: { w: 0.6, d: 0.15, h: 0.22 },

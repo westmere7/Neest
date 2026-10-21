@@ -579,7 +579,7 @@ function robotVac(x: number, z: number, R: number, H: number, s = { body: 'body'
 const robotS10 = defineItem({
   id: 'xiaomi-robot-vacuum-s10',
   name: 'Xiaomi Robot Vacuum S10 with charging dock',
-  category: 'electronics',
+  category: 'laundry',
   type: 'appliances',
   group: 'Cleaning',
   tags: [...ROBOT_TAGS, 'xiaomi', 'lidar', 'mi home', 'robot'],
@@ -627,7 +627,7 @@ const STATION_SLOTS = [matSlot('body', 'Robot & station', 'hx-gloss-white'), mat
 const robotX10 = defineItem({
   id: 'xiaomi-robot-vacuum-x10-plus',
   name: 'Xiaomi Robot Vacuum X10+ with base station',
-  category: 'electronics',
+  category: 'laundry',
   type: 'appliances',
   group: 'Cleaning',
   tags: [...ROBOT_TAGS, 'xiaomi', 'lidar', 'self-emptying', 'tự đổ rác', 'mop washing', 'robot'],
@@ -653,7 +653,7 @@ const robotX10 = defineItem({
 const roborockS8 = defineItem({
   id: 'roborock-s8-pro-ultra',
   name: 'Roborock S8 Pro Ultra with RockDock Ultra',
-  category: 'electronics',
+  category: 'laundry',
   type: 'appliances',
   group: 'Cleaning',
   tags: [...ROBOT_TAGS, 'roborock', 'lidar', 'self-emptying', 'tự đổ rác', 'mop washing', 'robot'],
@@ -680,7 +680,7 @@ const roborockS8 = defineItem({
 const deebotT30 = defineItem({
   id: 'ecovacs-deebot-t30-omni',
   name: 'Ecovacs Deebot T30 Omni with Omni station',
-  category: 'electronics',
+  category: 'laundry',
   type: 'appliances',
   group: 'Cleaning',
   tags: [...ROBOT_TAGS, 'ecovacs', 'deebot', 'lidar', 'self-emptying', 'tự đổ rác', 'hot water mop', 'robot'],

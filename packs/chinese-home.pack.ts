@@ -1052,9 +1052,9 @@ const luckyBamboo = defineItem({
 const goldfishBowl = defineItem({
   id: 'goldfish-bowl',
   name: 'Goldfish bowl',
-  category: 'decor',
-  type: 'decor',
-  group: 'Ornaments',
+  category: 'pets',
+  type: 'pets',
+  group: 'Pet birds & animals',
   tags: ['goldfish', 'fish bowl', 'porcelain', 'blue and white', 'chinese', 'feng shui', 'aquarium', 'pond'],
   defaultSize: { w: 0.55, d: 0.55, h: 0.55 },
   minSize: { w: 0.3, d: 0.3, h: 0.3 },

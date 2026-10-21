@@ -1648,7 +1648,7 @@ const ironCabinet = defineItem({
   name: 'Wall-mounted ironing board cabinet',
   category: 'laundry',
   type: 'storage',
-  group: 'Sideboards & cabinets',
+  group: 'Bathroom & laundry storage',
   tags: IRON_TAGS,
   description: 'A slim white wall cabinet with a full-length mirror door that hides a fold-down ironing board: ironing space for a studio without a laundry room.',
   defaultSize: S3(0.42, 0.18, 1.18),

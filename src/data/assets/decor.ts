@@ -521,9 +521,9 @@ const throwBlanket = defineAsset({
 const floorCushion = defineAsset({
   id: 'floor-cushion',
   name: 'Floor cushion',
-  category: 'decor',
-  type: 'decor',
-  group: 'Cushions & throws',
+  category: 'living',
+  type: 'seating',
+  group: 'Ottomans & poufs',
   tags: ['floor cushion', 'pouf', 'zabuton', 'meditation', 'tufted', 'seat pad'],
   defaultSize: { w: 0.7, d: 0.7, h: 0.18 },
   minSize: { w: 0.45, d: 0.45, h: 0.1 },

@@ -1669,7 +1669,7 @@ const dishRack = defineItem({
   name: 'Dish drying rack',
   category: 'kitchen',
   type: 'storage',
-  group: 'Baskets & boxes',
+  group: 'Kitchen cabinets',
   tags: ['dish rack', 'drainer', 'drying rack', 'plates', 'cutlery caddy', 'countertop', 'wire'],
   defaultSize: { w: 0.46, d: 0.34, h: 0.3 },
   minSize: { w: 0.32, d: 0.26, h: 0.22 },

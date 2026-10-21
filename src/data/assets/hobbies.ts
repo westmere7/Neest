@@ -1666,9 +1666,9 @@ const telescope = defineAsset({
 const aquarium = defineAsset({
   id: 'aquarium',
   name: 'Aquarium on stand',
-  category: 'hobbies',
-  type: 'activities',
-  group: 'Knowledge',
+  category: 'pets',
+  type: 'pets',
+  group: 'Pet birds & animals',
   tags: ['aquarium', 'fish tank', 'fish', 'pets', 'water', 'nature'],
   defaultSize: { w: 1.0, d: 0.4, h: 1.35 },
   minSize: { w: 0.6, d: 0.3, h: 1.1 },

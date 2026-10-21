@@ -493,7 +493,7 @@ const hangingAltar = defineItem({
   name: 'Wall-hung altar shelf (bàn thờ treo)',
   category: 'living',
   type: 'storage',
-  group: 'Bookcases & shelves',
+  group: 'Sideboards & cabinets',
   tags: ['altar', 'bàn thờ treo', 'ban tho treo', 'wall altar', 'ancestor', 'worship', 'apartment', 'vietnamese'],
   description:
     'A compact lacquered wood altar box hung high on the wall, with a gilded lotus back panel, an LED strip under its canopy and a brass incense bowl, candle lamps and offering tray, the usual solution in small apartments.',
@@ -552,8 +552,8 @@ const thanTaiShrine = defineItem({
   id: 'than-tai-shrine',
   name: 'Thần Tài shrine (bàn thờ Thần Tài)',
   category: 'living',
-  type: 'decor',
-  group: 'Ornaments',
+  type: 'storage',
+  group: 'Sideboards & cabinets',
   tags: ['than tai', 'thần tài', 'ông địa', 'ong dia', 'shrine', 'god of wealth', 'altar', 'red lacquer', 'vietnamese'],
   description:
     'A small red-lacquered floor shrine with a gilded tiled roof for Thần Tài and Ông Địa, the gods of wealth and the land, with two gilt figures, an incense bowl and glowing red altar lamps; it stands on the floor facing the front door.',

@@ -351,7 +351,7 @@ const shiplapCeiling = defineItem({
   name: 'Tongue-and-groove ceiling panel with LED cove frame',
   category: 'construction',
   type: 'structure',
-  group: 'Built-ins',
+  group: 'Beams & ceilings',
   tags: ['ceiling', 'tongue and groove', 'shiplap', 'LED cove', 'bulkhead', 'downlights', 'trần gỗ', 'đèn hắt'],
   description:
     'A raised field of painted tongue-and-groove boards with V-grooves, framed by a plasterboard bulkhead whose inner edge hides a warm LED cove, with a grid of recessed downlights in the boards.',
@@ -839,7 +839,7 @@ const wavySoffit = defineItem({
   name: 'Wavy ceiling soffit with LED cove',
   category: 'construction',
   type: 'structure',
-  group: 'Built-ins',
+  group: 'Beams & ceilings',
   tags: ['soffit', 'wavy', 'curved ceiling', 'LED cove', 'bulkhead', 'downlights', 'trần thạch cao', 'trần lượn sóng'],
   description:
     'A plasterboard drop along a wall whose free edge swings in smooth S-curves, with a recessed warm LED strip following the wavy edge and a row of downlights in the band.',

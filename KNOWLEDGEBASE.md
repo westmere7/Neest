@@ -532,6 +532,16 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - optional `variants` (hand-made colour variants that replace the automatic themes), `model` (a shipped GLB, see
     "People and shipped models") and `variantOf` (a with/without-props version of another item, listed right after it)
   - **group** (shelf name; must be one of `ASSET_GROUPS[type]` in catalog.ts)
+  - Placement rules (audited 2026-10-21 over all items): an item sits with its own kind even when it is built in
+    (built-in wardrobe wall → Wardrobes, media wall → Media units, desk nook → Desks, banquettes → Stools & benches,
+    entry bench → Hallway storage); Structure keeps only building parts. Shelves: AC indoor/outdoor units, window AC,
+    brackets and stands → electronics › **Air conditioning** (fans, purifiers, heaters stay on Climate); beams,
+    joists, soffits and decorative ceilings → structure › **Beams & ceilings**; bathroom and laundry cabinets and
+    shelves (medicine/mirror cabinets, over-toilet units, ironing-board cabinets, broom cupboard) → storage ›
+    **Bathroom & laundry storage**; bicycle and motor scooter → activities › **Bikes & scooters**; aquariums and
+    fish bowls → pets › Pet birds & animals; altars and shrines → Sideboards & cabinets; tableware props (phin
+    coffee, thermos tea set) → Candles & tabletop, not Small appliances; the parasol → Outdoor tables. Room
+    (category) follows where the item lives: washing machines, robot vacuums and the laundry sink → laundry.
   - tags, default/min/max size, resizable flags, mount (floor/wall/ceiling) and default elevation
   - material slots with catalogue defaults
   - `build(size) → Part[]`, plus optional `planDetail`, `light` and `wallSnap`
@@ -690,8 +700,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Items: base units, runs from 1.8 to 3 m, a Vietnamese tiled masonry counter (bếp xây), islands, a peninsula,
     and eight sink units including a stainless sink with drainer.
   - Sink units include the tap in their height.
-- **Structures** (`packs/structures.pack.ts`, 54, type `structure`): placeable building parts on all five structure
-  shelves. The front faces +z, wall items stand on -z, and staircases climb from +z towards -z.
+- **Structures** (`packs/structures.pack.ts`, 54, type `structure`): placeable building parts on the structure
+  shelves (built-in furniture is listed with its own kind, see Placement rules). The front faces +z, wall items stand on -z, and staircases climb from +z towards -z.
   - Local helpers: `panelXY`/`panelZY` (prisms in the front or side plane), `bar` (a box between two points),
     `arcBand` (arch mouldings) and `band` (a sloped strip clipped to the floor and the top).
   - A `Flight` kit (`steps`, `stairString`, `balusters`, `handrail`, `newel`, `treadLines`) builds straight, L and U
@@ -1372,7 +1382,7 @@ Known limitations (also in README):
      Eco, Toshiba H10C4, Gree GWC09PB, Nagakawa NIS-C09R2H10, Sharp AH-X9XEW, MHI SRC25ZSS-W5) and
      `ac-outdoor-units` (resizable 9k/12k/18k/24k, twin-fan multi, twin side-discharge VRF with casing and
      coil finish variants, a window AC via `windowUnit()`, `wallBracket()` and `rooftopStand()`). All in outdoor ›
-     Climate; the XU9 left `legacyCoplanar.json`. Near-identical units were dropped before shipping (LG V13API1,
+     Air conditioning (was Climate until 2026-10-21); the XU9 left `legacyCoplanar.json`. Near-identical units were dropped before shipping (LG V13API1,
      Panasonic XU24, Mitsubishi JY25, Samsung AR10TY, Funiki HSC09TMU, the generic single-fan side-discharge unit) (done).
 106. "Why does the 3D view reload the textures each time?" → leaving 3D unmounted the canvas and its WebGL context;
     the desktop 3D view is now kept mounted, hidden and paused (`EditorShell` `mount3d`, `Scene3DView active`) (done).
@@ -1455,3 +1465,8 @@ Known limitations (also in README):
      real textures" → `curved-builtins` (14), `soft-curve-kitchen` (9) and `soft-curve-furniture` (11) packs, real
      scans for tatami (Poly Haven) and beige terrazzo (ambientCG), vertical stacked tile materials, and nine
      ready-made groups on a new "Curves & arches" shelf recreating the photos (done).
+118. "Go through all items and make sure they belong to the right groups" → audited all 1,249 items (room, type,
+     shelf); moved 77: built-in furniture to its own kind's shelf, AC units to a new "Air conditioning" shelf, beams and
+     ceilings to "Beams & ceilings", bathroom/laundry cabinets to "Bathroom & laundry storage", bikes and scooters to
+     "Bikes & scooters", plus single fixes (parasol, aquarium, goldfish bowl, altars, tableware props, desk props, floor
+     cushion, kitchen racks, laundry rooms). Checked the 60LTN project (8 options, 843 objects) loads and builds (done).

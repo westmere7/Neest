@@ -42,7 +42,7 @@ function unit(u: Unit): PackItem {
     name: u.name,
     category: 'outdoor',
     type: 'electronics',
-    group: 'Climate',
+    group: 'Air conditioning',
     tags: [...TAGS, ...u.tags],
     description: u.description,
     defaultSize: s,
