@@ -10,7 +10,7 @@
  * frame's depth, so corners stay circular at any width and height and only shrink when the opening
  * gets too small for them. Coordinates: x across the opening, y up, z through the frame (front +z).
  */
-import { cells, clamp, cyl, defineItem, definePack, line, matSlot, prism, range, ring, spaced, span, type Part, type Size3 } from '@/packs/kit';
+import { cells, clamp, cyl, defineItem, definePack, line, matSlot, prism, range, ring, spaced, span, type Part, type AssetModelVariant, type PlanStroke, type Size3 } from '@/packs/kit';
 
 type V2 = [number, number];
 const o = { plan: false };
@@ -67,6 +67,9 @@ interface PortalSpec {
   legs: 'both' | 'right';
   /** Leg width (m); legs never take more than 30 % (one leg: 40 %) of the width. */
   leg: number;
+  /** Left / right leg widths when they differ (a jamb against a wall, a wide pier at a corner). */
+  legL?: number;
+  legR?: number;
   /** How far the soffit drops below the ceiling (m). */
   head: number;
   /** Corner shape: rounded corners (rL, rR), a semicircular head, or a flattened basket arch. */
@@ -110,9 +113,9 @@ interface Geo {
 
 function portalGeo({ w, d, h }: Size3, s: PortalSpec): Geo {
   const legL = s.legs === 'both';
-  const lw = Math.min(s.leg, w * (legL ? 0.3 : 0.4));
-  const xl = legL ? -w / 2 + lw : -w / 2;
-  const xr = w / 2 - lw;
+  const cap = w * (legL ? 0.3 : 0.4);
+  const xl = legL ? -w / 2 + Math.min(s.legL ?? s.leg, cap) : -w / 2;
+  const xr = w / 2 - Math.min(s.legR ?? s.leg, cap);
   const yb = s.base ?? 0;
   const head = clamp(h - yb - (s.clear ?? 1.85), 0.08, s.head);
   const yi = h - head;
@@ -335,6 +338,7 @@ interface ItemCfg {
   slots?: ReturnType<typeof matSlot>[];
   variants?: { id: string; name: string; materials: Record<string, string> }[];
   ceiling?: boolean;
+  models?: AssetModelVariant[];
 }
 
 function portal(c: ItemCfg) {
@@ -354,6 +358,7 @@ function portal(c: ItemCfg) {
     ...(c.ceiling ? { mount: 'ceiling' as const, defaultElevation: CEILING - c.size.h } : {}),
     slots: c.slots ?? [FRAME],
     variants: c.variants ?? PAINT_VARIANTS,
+    ...(c.models ? { models: c.models } : {}),
     build: (size) => buildPortal(size, c.spec),
     planDetail: (size) => portalPlan(size, c.spec),
   });
@@ -542,12 +547,202 @@ const headerCove = portal({
   variants: [...PAINT_VARIANTS, { id: 'cool', name: 'Cool white LED', materials: { glow: 'light-cool' } }],
 });
 
+// ---------------------------------------------------------------------------
+// Arched partition and corner bedroom enclosure
+// ---------------------------------------------------------------------------
+
+/** Wall thickness of the partition and enclosure faces, as an interior wall (fixed: resizing changes spans, not walls). */
+const WALL_T = 0.12;
+/** Corner radius of their arches: fixed at every size, only smaller when the opening cannot hold it. */
+const ARCH_R = 0.45;
+const ARCH: PortalSpec = { legs: 'both', leg: 0.12, legR: 0.55, head: 0.38, rL: ARCH_R, rR: ARCH_R, step: 0.08 };
+
+/** Turns parts built along x (front +z) a quarter turn about the vertical, then moves them by (dx, dz). */
+function quarterTurn(parts: Part[], dx: number, dz: number): Part[] {
+  return parts.map((p) => {
+    const [x, y, z] = p.position;
+    const q: Part = { ...p, position: [dx + z, y, dz - x] };
+    if (p.shape === 'box' && !p.rotation) return { ...q, size: [p.size[2], p.size[1], p.size[0]] } as Part;
+    // Ry(90°)·Rx(90°) = Rx(90°)·Rz(-90°): the X/Y panels become Z/Y panels.
+    if (p.shape === 'prism' && p.rotation && Math.abs(p.rotation[0] - Math.PI / 2) < 1e-6 && !p.rotation[1] && !p.rotation[2])
+      return { ...q, rotation: [Math.PI / 2, 0, -Math.PI / 2] };
+    return { ...q, rotation: [p.rotation?.[0] ?? 0, (p.rotation?.[1] ?? 0) + Math.PI / 2, p.rotation?.[2] ?? 0] };
+  });
+}
+const shiftZ = (parts: Part[], dz: number): Part[] => parts.map((p) => ({ ...p, position: [p.position[0], p.position[1], p.position[2] + dz] }));
+
+/**
+ * The enclosure's two faces in item space: the front face runs along x at the front (+z) edge, from a
+ * jamb at the left room wall to the corner pier; the side face runs along z at the right (+x) edge,
+ * from a jamb at the back room wall to the corner pier. Mirror the item for a left-hand corner.
+ */
+function enclosureFaces({ w, d, h }: Size3) {
+  const t = Math.min(WALL_T, d / 3, w / 3);
+  const front: Size3 = { w, d: t, h };
+  const sideLen = d - t;
+  const side: Size3 = { w: sideLen, d: t, h };
+  // Side face built along x: its left end is the corner, its right end the back wall.
+  const sideSpec: PortalSpec = { ...ARCH, legL: ARCH.legR, legR: ARCH.leg };
+  return {
+    t,
+    front: { size: front, spec: ARCH, dz: d / 2 - t / 2 },
+    side: { size: side, spec: sideSpec, dx: w / 2 - t / 2, dz: -t / 2 },
+  };
+}
+
+function buildEnclosure(size: Size3): Part[] {
+  const e = enclosureFaces(size);
+  return [
+    ...shiftZ(buildPortal(e.front.size, e.front.spec), e.front.dz),
+    ...quarterTurn(buildPortal(e.side.size, e.side.spec), e.side.dx, e.side.dz),
+  ];
+}
+
+function enclosurePlan(size: Size3): PlanStroke[] {
+  const e = enclosureFaces(size);
+  const gf = portalGeo(e.front.size, e.front.spec);
+  const gs = portalGeo(e.side.size, e.side.spec);
+  const { w, d } = size;
+  const t = e.t;
+  // Soffit edges over both openings (overhead, so outlines only); side face x along its length maps to -z.
+  return [
+    line([gf.xl, d / 2 - t], [gf.xr, d / 2 - t]),
+    line([gf.xl, d / 2], [gf.xr, d / 2]),
+    line([w / 2 - t, e.side.dz - gs.xl], [w / 2 - t, e.side.dz - gs.xr]),
+    line([w / 2, e.side.dz - gs.xl], [w / 2, e.side.dz - gs.xr]),
+  ];
+}
+
+/** The side opening as a glass panel (glazed model). */
+function sideGlass(size: Size3): Part[] {
+  const e = enclosureFaces(size);
+  const g = portalGeo(e.side.size, e.side.spec);
+  const edge = openingEdge(g, 0);
+  const pane = panelXY('glass', dedupe(edge), -0.006, 0.012);
+  // A slim black frame: sill and the two jambs (the head follows the arch, so it is left to the glass edge).
+  const bar = (x0: number, x1: number, y0: number, y1: number) => span('mullion', [x0, x1], [y0, y1], [-0.012, 0.012], o);
+  const parts: Part[] = [pane, bar(g.xl, g.xr, 0, 0.03), bar(g.xl, g.xl + 0.03, 0, g.yi - g.cl[1]), bar(g.xr - 0.03, g.xr, 0, g.yi - g.cr[1])];
+  // Two transom bars across the glass.
+  for (const y of [0.9, 1.8]) if (y < g.yi - Math.max(g.cl[1], g.cr[1])) parts.push(bar(g.xl, g.xr, y - 0.012, y + 0.012));
+  return quarterTurn(parts, e.side.dx, e.side.dz);
+}
+
+/** Width of a side-light (fixed: it stays one pane wide as the opening grows), at most 45 % of the opening. */
+const SIDELIGHT_W = 0.9;
+
+/**
+ * A fixed glass side-light (kính lấy sáng) filling the opening next to the right pier, from the floor up
+ * into the arch, in a slim black frame; the rest of the opening stays open. Built in face space.
+ */
+function sidelight(size: Size3, spec: PortalSpec): Part[] {
+  const g = portalGeo(size, spec);
+  const width = Math.min(SIDELIGHT_W, (g.xr - g.xl) * 0.45);
+  const xg = g.xr - width;
+  // The opening's top edge (left foot → arch → right foot) is monotonic in x across the head.
+  const edge = openingEdge(g, 0).filter((p) => p[1] > g.yb + 1e-4);
+  let yAt = g.yi;
+  for (let i = 1; i < edge.length; i++) {
+    const [a, b] = [edge[i - 1], edge[i]];
+    if ((a[0] - xg) * (b[0] - xg) <= 0 && a[0] !== b[0]) {
+      yAt = a[1] + ((xg - a[0]) / (b[0] - a[0])) * (b[1] - a[1]);
+      break;
+    }
+  }
+  const head = edge.filter((p) => p[0] > xg + 1e-4);
+  const pane = panelXY('glass', dedupe([[xg, g.yb], [xg, yAt], ...head, [g.xr, g.yb]]), -0.006, 0.012);
+  const bar = (x0: number, x1: number, y0: number, y1: number) => span('mullion', [x0, x1], [y0, y1], [-0.015, 0.015], o);
+  return [pane, bar(xg, xg + 0.035, g.yb, yAt), bar(xg, g.xr, g.yb, g.yb + 0.035)];
+}
+
+const SIDELIGHT_SLOTS = [matSlot('glass', 'Glass', 'glass-reeded'), matSlot('mullion', 'Glazing bars', 'metal-black-matte')];
+
+/** A linen curtain on a rail under the front soffit, gathered at the corner pier (curtain model). */
+function frontCurtain(size: Size3): Part[] {
+  const e = enclosureFaces(size);
+  const g = portalGeo(e.front.size, e.front.spec);
+  const top = g.yi - Math.max(g.cl[1], g.cr[1]) * 0.15 - 0.03;
+  const zc = -e.t / 2 - 0.08;
+  const width = clamp((g.xr - g.xl) * 0.28, 0.35, 0.9);
+  const x1 = g.xr - 0.03;
+  const x0 = x1 - width;
+  // Gathered folds: a wavy band in plan, extruded from just above the floor to the rail.
+  const n = Math.max(4, Math.round(width / 0.08));
+  const amp = 0.035;
+  const fwd: [number, number][] = range(n * 4 + 1).map((i) => [x0 + (width * i) / (n * 4), zc + Math.sin((i / 4) * Math.PI) * amp]);
+  const back = fwd.map(([x, z]) => [x, z - 0.012] as [number, number]).reverse();
+  return shiftZ(
+    [
+      span('rail', [g.xl + 0.02, g.xr - 0.02], [top, top + 0.025], [zc - 0.012, zc + 0.012], o),
+      prism('curtain', [...fwd, ...back], 0.015, top - 0.04, { plan: false }),
+    ],
+    e.front.dz,
+  );
+}
+
+const archedWall = portal({
+  id: 'arched-partition-wall',
+  name: 'Arched partition wall',
+  description:
+    'A full-height partition with one wide arched opening: a slim jamb where it meets a wall, a broad pier at the free end and a soffit with softly rounded corners, stepped on both faces like a ceiling bulkhead. Add a fixed glass side-light beside the pier, or leave it open.',
+  tags: ['partition', 'arched wall', 'room divider', 'bedroom', 'vách ngăn', 'vách vòm', 'phòng ngủ'],
+  spec: ARCH,
+  size: { w: 3.0, d: WALL_T, h: CEILING },
+  min: { w: 1.6, d: 0.1, h: 2.1 },
+  max: { w: 6.0, d: 0.3, h: 3.6 },
+  models: [
+    { id: 'open', name: 'Open' },
+    { id: 'sidelight', name: 'Glass side-light', slots: SIDELIGHT_SLOTS, props: (size) => sidelight(size, ARCH) },
+  ],
+});
+
+const cornerRoom = defineItem({
+  id: 'corner-bedroom-enclosure',
+  name: 'Arched corner bedroom enclosure',
+  category: 'construction',
+  type: 'structure',
+  group: 'Portals & arches',
+  tags: [...TAGS, 'corner bedroom', 'bedroom box', 'enclosure', 'studio', 'sleeping nook', 'partition', 'L-shaped', 'phòng ngủ góc', 'vách ngăn phòng ngủ', 'căn hộ studio'],
+  description:
+    'Boxes a bedroom into the corner of an open room: two full-height arched partitions meet at a broad corner pier, each with a slim jamb where it reaches the room walls. The arch corners keep their radius at any size. Mirror it for a left-hand corner.',
+  defaultSize: { w: 3.2, d: 2.8, h: CEILING },
+  minSize: { w: 1.8, d: 1.6, h: 2.1 },
+  maxSize: { w: 6.0, d: 6.0, h: 3.6 },
+  slots: [FRAME],
+  variants: PAINT_VARIANTS,
+  models: [
+    { id: 'open', name: 'Open' },
+    {
+      id: 'glazed',
+      name: 'Glass side',
+      slots: [matSlot('glass', 'Glass', 'glass-reeded'), matSlot('mullion', 'Glazing bars', 'metal-black-matte')],
+      props: sideGlass,
+    },
+    {
+      id: 'sidelight',
+      name: 'Glass side-light',
+      slots: SIDELIGHT_SLOTS,
+      props: (size) => {
+        const e = enclosureFaces(size);
+        return shiftZ(sidelight(e.front.size, e.front.spec), e.front.dz);
+      },
+    },
+    {
+      id: 'curtain',
+      name: 'Curtain',
+      slots: [matSlot('curtain', 'Curtain', 'fabric-linen'), matSlot('rail', 'Curtain rail', 'metal-black-matte')],
+      props: frontCurtain,
+    },
+  ],
+  build: buildEnclosure,
+  planDetail: enclosurePlan,
+});
+
 export default definePack({
   name: 'Portal frames',
-  version: '1.0.0',
+  version: '1.1.0',
   author: 'Neest team',
   description:
-    'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal and rounded ceiling headers. All resize freely; the curves are rebuilt for every size.',
+    'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal, rounded ceiling headers, an arched partition wall and an arched corner bedroom enclosure. All resize freely; the curves are rebuilt for every size.',
   license: 'CC0 (made for Neest)',
-  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, header, headerCove],
+  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, header, headerCove, archedWall, cornerRoom],
 });

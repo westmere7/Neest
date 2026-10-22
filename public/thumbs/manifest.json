@@ -9,14 +9,6 @@
    "file": "ac-outdoor-units_ac-wall-bracket.webp",
    "fp": "b001d8e35604b1c8"
   },
-  "ac-outdoor-units:outdoor-unit-24000btu": {
-   "file": "ac-outdoor-units_outdoor-unit-24000btu.webp",
-   "fp": "5d05ba4c9625b698"
-  },
-  "ac-outdoor-units:outdoor-unit-9000btu": {
-   "file": "ac-outdoor-units_outdoor-unit-9000btu.webp",
-   "fp": "6b81839670e2d890"
-  },
   "ac-outdoor-units:outdoor-unit-side-discharge-twin": {
    "file": "ac-outdoor-units_outdoor-unit-side-discharge-twin.webp",
    "fp": "2e9cdeceebf4eb4a"
@@ -29,22 +21,6 @@
    "file": "ac-outdoor-units_window-air-conditioner.webp",
    "fp": "836907b58d79ae0c"
   },
-  "air-conditioner": {
-   "file": "air-conditioner.webp",
-   "fp": "d2bb6148c658ad54"
-  },
-  "air-purifier": {
-   "file": "air-purifier.webp",
-   "fp": "b5acb2c36dfe2dbe"
-  },
-  "appliances:air-fryer": {
-   "file": "appliances_air-fryer.webp",
-   "fp": "de0d35522bab9660"
-  },
-  "appliances:blender": {
-   "file": "appliances_blender.webp",
-   "fp": "dee568958765126c"
-  },
   "appliances:bread-maker": {
    "file": "appliances_bread-maker.webp",
    "fp": "58e86f8c17ca1656"
@@ -52,10 +28,6 @@
   "appliances:coffee-grinder": {
    "file": "appliances_coffee-grinder.webp",
    "fp": "8e08a539d1c0395d"
-  },
-  "appliances:dehumidifier": {
-   "file": "appliances_dehumidifier.webp",
-   "fp": "1d6c9006eebcff54"
   },
   "appliances:dish-drawer": {
    "file": "appliances_dish-drawer.webp",
@@ -72,10 +44,6 @@
   "appliances:fridge-retro": {
    "file": "appliances_fridge-retro.webp",
    "fp": "eb9e59055c2fa62f"
-  },
-  "appliances:fridge-side-by-side": {
-   "file": "appliances_fridge-side-by-side.webp",
-   "fp": "45b7bcc3c486cd61"
   },
   "appliances:hair-dryer-wall": {
    "file": "appliances_hair-dryer-wall.webp",
@@ -104,10 +72,6 @@
   "appliances:steam-mop": {
    "file": "appliances_steam-mop.webp",
    "fp": "8e7dd039b20dc2be"
-  },
-  "appliances:tower-fan": {
-   "file": "appliances_tower-fan.webp",
-   "fp": "eaeddab264094366"
   },
   "appliances:trash-bins": {
    "file": "appliances_trash-bins.webp",
@@ -184,10 +148,6 @@
   "asian-everyday:potted-frangipani": {
    "file": "asian-everyday_potted-frangipani.webp",
    "fp": "1b956a1670ba13d6"
-  },
-  "asian-everyday:rice-cooker": {
-   "file": "asian-everyday_rice-cooker.webp",
-   "fp": "e25d7b933c3fcd4f"
   },
   "asian-everyday:squat-toilet": {
    "file": "asian-everyday_squat-toilet.webp",
@@ -1973,10 +1933,6 @@
    "file": "dining-table-trestle_model_empty.webp",
    "fp": "ee993b1ae9e282da"
   },
-  "dishwasher": {
-   "file": "dishwasher.webp",
-   "fp": "1b8ff554ffa2c189"
-  },
   "display-cabinet": {
    "file": "display-cabinet.webp",
    "fp": "ce50076f405b7ea7"
@@ -2040,14 +1996,6 @@
   "foosball-table": {
    "file": "foosball-table.webp",
    "fp": "05dd8eead470e8ee"
-  },
-  "fridge": {
-   "file": "fridge.webp",
-   "fp": "40fd0baff941670a"
-  },
-  "fridge-french-door": {
-   "file": "fridge-french-door.webp",
-   "fp": "598c02a965e9727a"
   },
   "fruit-bowl": {
    "file": "fruit-bowl.webp",
@@ -2405,10 +2353,6 @@
    "file": "japanese-home_zaisu-chair.webp",
    "fp": "f0d2e820aa1d2d08"
   },
-  "kettle": {
-   "file": "kettle.webp",
-   "fp": "4b7089c17d458a0f"
-  },
   "kids-book-display": {
    "file": "kids-book-display.webp",
    "fp": "ebe8862049c2f43e"
@@ -2709,10 +2653,6 @@
    "file": "lantern-outdoor.webp",
    "fp": "2af8c47227a2534c"
   },
-  "laptop": {
-   "file": "laptop.webp",
-   "fp": "69b222ff8fbf629a"
-  },
   "laundry-basket": {
    "file": "laundry-basket.webp",
    "fp": "ba35d9b94b017aeb"
@@ -2969,10 +2909,6 @@
    "file": "medicine-cabinet.webp",
    "fp": "b8ed1def79991a21"
   },
-  "microwave": {
-   "file": "microwave.webp",
-   "fp": "1d193b6df776fea3"
-  },
   "mirror-arched": {
    "file": "mirror-arched.webp",
    "fp": "61c7cbb32ec39e5c"
@@ -3036,10 +2972,6 @@
   "niche-shelf": {
    "file": "niche-shelf.webp",
    "fp": "3db1c28288ec9fca"
-  },
-  "oil-heater": {
-   "file": "oil-heater.webp",
-   "fp": "a9ee98a0786d452d"
   },
   "ottoman": {
    "file": "ottoman.webp",
@@ -3601,6 +3533,14 @@
    "file": "pool-table.webp",
    "fp": "45e1a2ada2b562d3"
   },
+  "portal-frames:arched-partition-wall": {
+   "file": "portal-frames_arched-partition-wall.webp",
+   "fp": "64a6c3fe328e68aa"
+  },
+  "portal-frames:arched-partition-wall@model:sidelight": {
+   "file": "portal-frames_arched-partition-wall_model_sidelight.webp",
+   "fp": "7bb3c6f43ea7e11b"
+  },
   "portal-frames:asymmetric-portal": {
    "file": "portal-frames_asymmetric-portal.webp",
    "fp": "bb5a495b11130204"
@@ -3608,6 +3548,22 @@
   "portal-frames:basket-arch-portal": {
    "file": "portal-frames_basket-arch-portal.webp",
    "fp": "f058b4b6459244ce"
+  },
+  "portal-frames:corner-bedroom-enclosure": {
+   "file": "portal-frames_corner-bedroom-enclosure.webp",
+   "fp": "4c18150f36f1fd91"
+  },
+  "portal-frames:corner-bedroom-enclosure@model:curtain": {
+   "file": "portal-frames_corner-bedroom-enclosure_model_curtain.webp",
+   "fp": "8569a2ab725f4ca2"
+  },
+  "portal-frames:corner-bedroom-enclosure@model:glazed": {
+   "file": "portal-frames_corner-bedroom-enclosure_model_glazed.webp",
+   "fp": "532c56c12214375e"
+  },
+  "portal-frames:corner-bedroom-enclosure@model:sidelight": {
+   "file": "portal-frames_corner-bedroom-enclosure_model_sidelight.webp",
+   "fp": "305c2ff6d831aced"
   },
   "portal-frames:desk-nook-portal": {
    "file": "portal-frames_desk-nook-portal.webp",
@@ -3692,10 +3648,6 @@
   "range-cooker": {
    "file": "range-cooker.webp",
    "fp": "b98566f13ad913a4"
-  },
-  "robot-vacuum": {
-   "file": "robot-vacuum.webp",
-   "fp": "dffdc0110780ab1c"
   },
   "rocking-horse": {
    "file": "rocking-horse.webp",
@@ -3852,10 +3804,6 @@
   "sideboard@model:styled": {
    "file": "sideboard_model_styled.webp",
    "fp": "9778b1a900f49181"
-  },
-  "smart-speaker": {
-   "file": "smart-speaker.webp",
-   "fp": "cf2bcae5d8b30dcb"
   },
   "sofa-3-seat": {
    "file": "sofa-3-seat.webp",
@@ -4093,10 +4041,6 @@
    "file": "soft-modern-home_wooden-venetian-blind.webp",
    "fp": "61424486575b1b48"
   },
-  "soundbar": {
-   "file": "soundbar.webp",
-   "fp": "19ae76aa91a2ebae"
-  },
   "speaker-floor": {
    "file": "speaker-floor.webp",
    "fp": "4ec4a166f85c1670"
@@ -4104,10 +4048,6 @@
   "stand-mixer": {
    "file": "stand-mixer.webp",
    "fp": "89194ae35f298dc9"
-  },
-  "stick-vacuum": {
-   "file": "stick-vacuum.webp",
-   "fp": "e0bc1af53977ce78"
   },
   "storage-trunk": {
    "file": "storage-trunk.webp",
@@ -4621,10 +4561,6 @@
    "file": "toaster.webp",
    "fp": "709edf18114de991"
   },
-  "toilet": {
-   "file": "toilet.webp",
-   "fp": "519591e2c6fc4a0b"
-  },
   "toilet-roll-stand": {
    "file": "toilet-roll-stand.webp",
    "fp": "bdff21a2e98ec903"
@@ -4664,14 +4600,6 @@
   "turntable": {
    "file": "turntable.webp",
    "fp": "2e5dc2455fa9f9a3"
-  },
-  "tv-stand": {
-   "file": "tv-stand.webp",
-   "fp": "b0ce066b28184b10"
-  },
-  "tv-wall": {
-   "file": "tv-wall.webp",
-   "fp": "347418b9bb0f746c"
   },
   "umbrella-stand": {
    "file": "umbrella-stand.webp",
@@ -4885,14 +4813,6 @@
    "file": "wardrobes-fullheight_walnut-drawer-bank-wardrobe.webp",
    "fp": "b512223737a30b11"
   },
-  "washer-dryer-stack": {
-   "file": "washer-dryer-stack.webp",
-   "fp": "ac182a941e63164c"
-  },
-  "washing-machine": {
-   "file": "washing-machine.webp",
-   "fp": "acb1e4a35310a646"
-  },
   "water-heater": {
    "file": "water-heater.webp",
    "fp": "e0988d02132dafde"
@@ -4900,10 +4820,6 @@
   "weight-bench": {
    "file": "weight-bench.webp",
    "fp": "1fd68ac783e5686c"
-  },
-  "wifi-router": {
-   "file": "wifi-router.webp",
-   "fp": "dcc0604ebac22e07"
   },
   "wine-cooler": {
    "file": "wine-cooler.webp",
@@ -5060,10 +4976,6 @@
   "workspace:drafting-stool": {
    "file": "workspace_drafting-stool.webp",
    "fp": "51d6f76b84ea387b"
-  },
-  "workspace:ergonomic-mesh-chair": {
-   "file": "workspace_ergonomic-mesh-chair.webp",
-   "fp": "b543838cca87d020"
   },
   "workspace:fabric-task-chair": {
    "file": "workspace_fabric-task-chair.webp",
