@@ -299,8 +299,8 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       'A wall-mounted TV above a long oak media console with a soundbar, floating shelves to one side and a snake plant on the other.',
     items: [
       { a: 'media-console', x: 0, y: 0.21, m: { body: OAK } },
-      { a: 'tv-wall', x: 0, y: 0.03, e: 1.05 },
-      { a: 'soundbar', x: 0, y: 0.25, e: 0.5 },
+      { a: 'branded-tvs:samsung-qe55ls03d', x: 0, y: 0.03, e: 1.05 },
+      { a: 'branded-audio:samsung-hw-q600c-soundbar', x: 0, y: 0.25, e: 0.5 },
       { a: 'shelving:floating-shelf-set', x: -1.35, y: 0.11, e: 1.1 },
       { a: 'plant-snake', x: 1.2, y: 0.2 },
       { a: 'books-stack', x: 0.6, y: 0.22, e: 0.5 },
@@ -394,12 +394,12 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
         w: 2.8,
         m: { front: OAK, worktop: QZ, handle: 'metal-black-matte' },
       },
-      { a: 'fridge', x: -1.75, y: 0.35 },
+      { a: 'branded-appliances-vn:panasonic-nr-bx410wkvn', x: -1.75, y: 0.35 },
       { a: 'kitchen-wall-cabinet', x: -1.1, y: 0.175, e: 1.45, m: { front: 'paint-satin-white' } },
       { a: 'kitchen-wall-cabinet', x: -0.5, y: 0.175, e: 1.45, m: { front: 'paint-satin-white' } },
       { a: 'kitchen-wall-cabinet', x: 0.1, y: 0.175, e: 1.45, m: { front: 'paint-satin-white' } },
       { a: 'branded-appliances-vn:hafele-hh-wt70a', x: 1.0, y: 0.25, e: 1.6 },
-      { a: 'kettle', x: -1.2, y: 0.25, e: 0.9 },
+      { a: 'branded-home-electronics:xiaomi-electric-kettle-2', x: -1.2, y: 0.25, e: 0.9 },
       { a: 'lived-in:dish-soap-sponge', x: -0.1, y: 0.1, e: 0.9 },
       { a: 'lived-in:cooking-condiments', x: 1.3, y: 0.1, r: 0, w: 0.28, d: 0.12, e: 0.9 },
     ],
@@ -413,7 +413,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       'Sage-green fronts with brass handles and a white quartz top, a black French-door fridge, a peninsula with two counter stools and a cement-tile floor inlay. Inspired by Vietnamese new-build apartments.',
     items: [
       {
-        a: 'fridge-french-door',
+        a: 'branded-fridges:samsung-rf65dg960esr',
         x: -1.6,
         y: 0.36,
         w: 0.9,
@@ -461,9 +461,9 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       'A tiled masonry counter with a stainless sink and drainer, a rice cooker and everyday condiments, and a fridge beside it: the typical Vietnamese home kitchen.',
     items: [
       { a: 'kitchen-counters:masonry-counter-vn', x: 0, y: 0.3 },
-      { a: 'asian-everyday:rice-cooker', x: -0.9, y: 0.25, w: 0.3, d: 0.3, h: 0.25, e: 0.9 },
+      { a: 'branded-appliances-vn:toshiba-rc-18nmfvn', x: -0.9, y: 0.25, w: 0.3, d: 0.3, h: 0.25, e: 0.9 },
       { a: 'lived-in:cooking-condiments', x: 0.95, y: 0.1, w: 0.3, d: 0.12, e: 0.9 },
-      { a: 'fridge', x: 1.6, y: 0.35 },
+      { a: 'branded-appliances-vn:panasonic-nr-bx410wkvn', x: 1.6, y: 0.35 },
     ],
   },
   {
@@ -493,7 +493,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       { a: 'kitchen-base-cabinet', x: -0.3, y: 0.3, m: { front: OAK } },
       { a: 'kitchen-base-cabinet', x: 0.3, y: 0.3, m: { front: OAK } },
       { a: 'branded-appliances-vn:delonghi-ec685', x: -0.3, y: 0.24, e: 0.9 },
-      { a: 'kettle', x: 0.12, y: 0.22, e: 0.9 },
+      { a: 'branded-home-electronics:xiaomi-electric-kettle-2', x: 0.12, y: 0.22, e: 0.9 },
       { a: 'lived-in:coffee-mugs-pair', x: 0.38, y: 0.4, w: 0.24, d: 0.12, e: 0.9 },
       { a: 'kitchen-open-shelf', x: 0, y: 0.125, e: 1.45 },
     ],
@@ -636,7 +636,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       'A shower tray with a glass screen, a toilet with a bidet spray (vòi xịt) and a pedestal basin with a mirror, side by side along one 2.3 m wall.',
     items: [
       { a: 'shower-tray', x: -0.75, y: 0.45 },
-      { a: 'toilet', x: 0.2, y: 0.34 },
+      { a: 'branded-bathroom-vn:caesar-cd1338', x: 0.2, y: 0.34 },
       { a: 'bathroom-collection:bidet-spray', x: 0.48, y: 0.05, e: 0.25 },
       { a: 'branded-bathroom-vn:toto-lpt236cs', x: 0.85, y: 0.225 },
       { a: 'bathroom-mirror', x: 0.85, y: 0.015, w: 0.5, h: 0.7, e: 1.15 },
@@ -683,7 +683,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
       'A 1 m desk with a laptop and lamp, floating shelves above it and a desk chair. Fits a bedroom corner or an alcove.',
     items: [
       { a: 'desk', x: 0, y: 0.275, w: 1.0, d: 0.55 },
-      { a: 'laptop', x: 0, y: 0.25, e: 0.75 },
+      { a: 'branded-laptops:dell-inspiron-15-3530', x: 0, y: 0.25, e: 0.75 },
       { a: 'task-lamp', x: 0.38, y: 0.12, e: 0.75 },
       { a: 'shelving:floating-shelf-set', x: 0, y: 0.11, e: 1.2, w: 0.9 },
       { a: 'branded-tech-vn:sihoo-m57', x: 0, y: 0.85, r: UP },
@@ -726,7 +726,7 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
     description:
       'A washing machine with a laundry basket next to it and a clothes drying rack: where the washing is done in most Vietnamese apartments.',
     items: [
-      { a: 'washing-machine', x: -0.75, y: 0.3 },
+      { a: 'branded-appliances-vn:electrolux-ewf9024p5wb', x: -0.75, y: 0.3 },
       { a: 'laundry-basket', x: -0.2, y: 0.22 },
       { a: 'drying-rack', x: 0.85, y: 0.35, w: 1.2, d: 0.5 },
     ],
@@ -781,7 +781,7 @@ const MODULES = {
   tall: { a: 'kitchen-tall-cabinet', w: 0.6, tall: true },
   oven: { a: 'kitchen-oven-tower', w: 0.6, tall: true },
   pantry: { a: 'kitchen-collection:pantry-pullout', w: 0.3, tall: true },
-  fridge: { a: 'fridge', w: 0.7, tall: true },
+  fridge: { a: 'branded-appliances-vn:panasonic-nr-bx410wkvn', w: 0.7, tall: true },
 } as const;
 type ModKey = keyof typeof MODULES;
 const SINKS = new Set<ModKey>(['sink', 'sink2', 'farmsink']);
@@ -908,7 +908,7 @@ function lKitchen(k: LKitchen): ReadyGroupSpec {
       d: 0.12,
       e: 0.9,
     });
-  if (spots.free) items.push({ a: 'kettle', ...along(spots.free, 0), r: spots.free.r, e: 0.9 });
+  if (spots.free) items.push({ a: 'branded-home-electronics:xiaomi-electric-kettle-2', ...along(spots.free, 0), r: spots.free.r, e: 0.9 });
   items.push(...(k.extras ?? []));
   // Right-handed: mirror across the vertical axis (the corner cupboard itself is mirrored too).
   const out = k.right
@@ -1121,7 +1121,7 @@ const L_KITCHEN_SPECS: ReadyGroupSpec[] = [
     upper: 'cabinets',
     extras: [
       { a: 'kitchen-collection:dish-drying-rack', x: 2.6, y: 0.22, e: 0.9 },
-      { a: 'asian-everyday:rice-cooker', x: 0.3, y: 1.3, w: 0.3, d: 0.3, h: 0.25, e: 0.9 },
+      { a: 'branded-appliances-vn:toshiba-rc-18nmfvn', x: 0.3, y: 1.3, w: 0.3, d: 0.3, h: 0.25, e: 0.9 },
     ],
   }),
 ];
@@ -1141,7 +1141,7 @@ READY_GROUP_SPECS.push(
       { a: 'branded-tech-vn:samsung-s24c310', x: 0.3, y: 0.18, e: 0.75 },
       { a: 'workspace:desk-essentials', x: 0.3, y: 0.42, e: 0.75 },
       { a: 'task-lamp', x: 0.68, y: 0.15, e: 0.75 },
-      { a: 'workspace:ergonomic-mesh-chair', x: 0.3, y: 1.0, r: UP },
+      { a: 'branded-tech-vn:sihoo-m57', x: 0.3, y: 1.0, r: UP },
     ],
   },
   {
@@ -1168,7 +1168,7 @@ READY_GROUP_SPECS.push(
       { a: 'workspace:standing-desk-electric', x: 0, y: 0.35 },
       { a: 'branded-tech-vn:samsung-s24c310', x: 0, y: 0.15, e: 0.74 },
       { a: 'workspace:desk-essentials', x: 0, y: 0.42, e: 0.74 },
-      { a: 'workspace:ergonomic-mesh-chair', x: 0, y: 1.0, r: UP },
+      { a: 'branded-tech-vn:sihoo-m57', x: 0, y: 1.0, r: UP },
       { a: 'houseplants:zz-plant', x: 0.95, y: 0.25, w: 0.45, d: 0.45 },
     ],
   },
@@ -1440,7 +1440,7 @@ READY_GROUP_SPECS.push(
       'A sage tall cabinet with a rounded corner and a walnut-lined appliance niche, a French-door fridge, a sink and base run under wall cabinets, a walnut breakfast peninsula with a rounded end and handmade plates on the wall.',
     items: [
       { a: SK + 'rounded-tall-cabinet', x: -2.0, y: 0.3 },
-      { a: 'fridge-french-door', x: -1.1, y: 0.375 },
+      { a: 'branded-fridges:samsung-rf65dg960esr', x: -1.1, y: 0.375 },
       { a: 'kitchen-sink-unit', x: -0.25, y: 0.3, m: { front: 'wood-walnut', worktop: 'stone-quartz-white', handle: 'metal-brass' } },
       { a: 'kitchen-base-cabinet', x: 0.45, y: 0.3, m: { front: 'wood-walnut', worktop: 'stone-quartz-white', handle: 'metal-brass' } },
       { a: 'kitchen-base-cabinet', x: 1.05, y: 0.3, m: { front: 'wood-walnut', worktop: 'stone-quartz-white', handle: 'metal-brass' } },
@@ -1481,7 +1481,7 @@ READY_GROUP_SPECS.push(
       { a: 'kitchen-base-cabinet', x: -1.07, y: 0.3, m: { front: SAGE, worktop: QZ } },
       { a: 'kitchen-sink-unit', x: -0.37, y: 0.3, m: { front: SAGE, worktop: QZ } },
       { a: 'kitchen-base-cabinet', x: 0.33, y: 0.3, m: { front: SAGE, worktop: QZ } },
-      { a: 'fridge-french-door', x: 0.86, y: 0.375, w: 0.88 },
+      { a: 'branded-fridges:samsung-rf65dg960esr', x: 0.86, y: 0.375, w: 0.88 },
       { a: 'kitchen-wall-cabinet', x: -1.07, y: 0.175, m: { front: SAGE } },
       { a: 'kitchen-wall-cabinet', x: -0.47, y: 0.175, m: { front: SAGE } },
       { a: 'kitchen-wall-cabinet', x: 0.13, y: 0.175, m: { front: SAGE } },

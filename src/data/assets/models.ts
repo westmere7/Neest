@@ -225,8 +225,8 @@ export const RETIRED_MODEL_ITEMS: Record<
   'branded-laptops:macbook-air-13-m3': { assetId: 'branded-laptops:macbook-pro-14-m4', keepModel: true },
   'workspace:computer-desk-hutch': { assetId: 'desk-hutch', keepModel: true },
   'bedroom-collection:hollywood-vanity': { assetId: 'beauty:hollywood-vanity-set-up', keepModel: true },
-  'ac-outdoor-units:outdoor-unit-12000btu': { assetId: 'ac-outdoor-units:outdoor-unit-9000btu', keepModel: true },
-  'ac-outdoor-units:outdoor-unit-18000btu': { assetId: 'ac-outdoor-units:outdoor-unit-9000btu', keepModel: true },
+  'ac-outdoor-units:outdoor-unit-12000btu': { assetId: 'branded-climate-vn:panasonic-cu-xu9zkh-8', size: { w: 0.65, d: 0.23, h: 0.51 } },
+  'ac-outdoor-units:outdoor-unit-18000btu': { assetId: 'branded-climate-vn:panasonic-cu-xu9zkh-8', size: { w: 0.65, d: 0.23, h: 0.51 } },
   // Generic items converted into the real product most common in Vietnam (2026-10-21). Branded items have one
   // published size, so placed items take it (`size`).
   'range-hood': { assetId: 'branded-appliances-vn:hafele-hh-wt70a' },
@@ -259,6 +259,36 @@ export const RETIRED_MODEL_ITEMS: Record<
   'vietnamese-home:honda-scooter': { assetId: 'branded-vehicles-vn:honda-vision-2025', size: { w: 1.925, d: 0.686, h: 1.126 } },
   'bicycle': { assetId: 'branded-vehicles-vn:thong-nhat-new-26', size: { w: 1.77, d: 0.62, h: 1.06 } },
   'lighting-collection:led-panel': { assetId: 'branded-lighting-vn:rang-dong-p06-600x600-40w', size: { w: 0.6, d: 0.6, h: 0.035 } },
+  // Generic items replaced by the branded product they stood for (2026-10-23). Placed items take the
+  // product's real size.
+  'tv-wall': { assetId: 'branded-tvs:samsung-qe55ls03d', size: { w: 1.24, d: 0.02, h: 0.71 } },
+  'tv-stand': { assetId: 'branded-tvs:sony-k-55xr80', size: { w: 1.22, d: 0.25, h: 0.73 } },
+  'soundbar': { assetId: 'branded-audio:samsung-hw-q600c-soundbar', size: { w: 1.03, d: 0.11, h: 0.06 } },
+  'dishwasher': { assetId: 'bosch-dishwashers:sms4hvi33e', size: { w: 0.6, d: 0.6, h: 0.85 } },
+  'stick-vacuum': { assetId: 'branded-home-electronics:xiaomi-vacuum-cleaner-g11', size: { w: 0.26, d: 0.21, h: 1.25 } },
+  'robot-vacuum': { assetId: 'branded-home-electronics:xiaomi-robot-vacuum-s10', size: { w: 0.35, d: 0.46, h: 0.09 } },
+  'washing-machine': { assetId: 'branded-appliances-vn:electrolux-ewf9024p5wb', size: { w: 0.6, d: 0.57, h: 0.85 } },
+  'washer-dryer-stack': { assetId: 'branded-washers:lg-washtower-wt1210bbf', size: { w: 0.6, d: 0.66, h: 1.66 } },
+  'fridge': { assetId: 'branded-appliances-vn:panasonic-nr-bx410wkvn', size: { w: 0.68, d: 0.7, h: 1.63 } },
+  'fridge-french-door': { assetId: 'branded-fridges:samsung-rf65dg960esr', size: { w: 0.91, d: 0.72, h: 1.83 } },
+  'appliances:fridge-side-by-side': { assetId: 'branded-fridges:samsung-rs68a8840s9', size: { w: 0.91, d: 0.72, h: 1.78 } },
+  'microwave': { assetId: 'branded-appliances-vn:sharp-r-205vn', size: { w: 0.44, d: 0.34, h: 0.26 } },
+  'kettle': { assetId: 'branded-home-electronics:xiaomi-electric-kettle-2', size: { w: 0.23, d: 0.16, h: 0.26 } },
+  'appliances:air-fryer': { assetId: 'branded-home-electronics:philips-airfryer-hd9252', size: { w: 0.26, d: 0.36, h: 0.3 } },
+  'appliances:blender': { assetId: 'branded-home-electronics:philips-blender-hr2041', size: { w: 0.16, d: 0.19, h: 0.38 } },
+  'asian-everyday:rice-cooker': { assetId: 'branded-appliances-vn:toshiba-rc-18nmfvn', size: { w: 0.28, d: 0.35, h: 0.25 } },
+  'air-conditioner': { assetId: 'branded-climate-vn:panasonic-cs-xu9zkh-8', size: { w: 0.87, d: 0.23, h: 0.3 } },
+  'ac-outdoor-units:outdoor-unit-9000btu': { assetId: 'branded-climate-vn:panasonic-cu-xu9zkh-8', size: { w: 0.65, d: 0.23, h: 0.51 } },
+  'ac-outdoor-units:outdoor-unit-24000btu': { assetId: 'branded-ac-outdoor-vn:panasonic-cu-n24zkh-8', size: { w: 0.82, d: 0.3, h: 0.62 } },
+  'air-purifier': { assetId: 'branded-climate-vn:xiaomi-air-purifier-4', size: { w: 0.25, d: 0.25, h: 0.56 } },
+  'appliances:dehumidifier': { assetId: 'branded-home-electronics:xiaomi-smart-dehumidifier-22l', size: { w: 0.3, d: 0.3, h: 0.66 } },
+  'appliances:tower-fan': { assetId: 'branded-home-electronics:xiaomi-smart-tower-fan', size: { w: 0.31, d: 0.31, h: 1.11 } },
+  'oil-heater': { assetId: 'branded-home-electronics:fujie-ofr4411', size: { w: 0.51, d: 0.24, h: 0.64 } },
+  'laptop': { assetId: 'branded-laptops:dell-inspiron-15-3530', size: { w: 0.36, d: 0.32, h: 0.23 } },
+  'wifi-router': { assetId: 'branded-home-electronics:tp-link-archer-ax73', size: { w: 0.27, d: 0.17, h: 0.19 } },
+  'smart-speaker': { assetId: 'branded-home-electronics:google-nest-audio', size: { w: 0.12, d: 0.08, h: 0.18 } },
+  'toilet': { assetId: 'branded-bathroom-vn:caesar-cd1338', size: { w: 0.38, d: 0.7, h: 0.75 } },
+  'workspace:ergonomic-mesh-chair': { assetId: 'branded-tech-vn:sihoo-m57', size: { w: 0.64, d: 0.66, h: 1.1 } },
 };
 
 /** The item and model to use for an asset id, following retired version items to their replacement. */

@@ -175,7 +175,7 @@ describe('generated colour variants', () => {
   });
 
   it('keeps sanitary ceramic, glass and lights fixed', () => {
-    const toilet = ASSETS_BY_ID['toilet'];
+    const toilet = ASSETS_BY_ID['branded-bathroom-vn:caesar-cd1338'];
     expect(slotRoles(toilet, archetypeOf(toilet))[toilet.slots.findIndex((s) => s.id === 'ceramic')]).toBeNull();
     for (const a of assets) {
       const roles = slotRoles(a, archetypeOf(a));

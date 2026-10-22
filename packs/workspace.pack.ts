@@ -412,43 +412,6 @@ function arms(slot: string, x: number, y: number, z: V2): Part[] {
   return parts;
 }
 
-const meshChair = defineItem({
-  ...chair,
-  id: 'ergonomic-mesh-chair',
-  name: 'Ergonomic mesh chair with headrest',
-  tags: ['office chair', 'ergonomic', 'mesh chair', 'task chair', 'headrest', 'lumbar', 'ghế công thái học'],
-  description: 'A high-back ergonomic chair with a breathable see-through mesh back, lumbar support, an adjustable headrest, 3D armrests and a five-star base on castors.',
-  defaultSize: { w: 0.68, d: 0.66, h: 1.25 },
-  minSize: { w: 0.6, d: 0.6, h: 1.1 },
-  maxSize: { w: 0.75, d: 0.72, h: 1.35 },
-  slots: [matSlot('mesh', 'Mesh', 'mesh-black'), matSlot('seat', 'Seat', 'fabric-wool-grey'), matSlot('frame', 'Frame & base', 'nylon-black')],
-  build: (size) => {
-    const { w, d, h } = size;
-    const seatY = 0.48;
-    const parts: Part[] = [
-      ...starBase('frame', Math.min(w, d) / 2 - 0.03, seatY - 0.08),
-      span('frame', [-0.12, 0.12], [seatY - 0.1, seatY - 0.06], [-0.14, 0.12], { bevel: 0.01, plan: false }),
-      span('seat', [-0.25, 0.25], [seatY - 0.06, seatY], [-0.2, 0.24], { bevel: 0.025, plan: true }),
-      ...arms('frame', 0.27, seatY + 0.22, [-0.12, 0.12]),
-      // Back frame and mesh, leaning back slightly.
-      rod('frame', [0, seatY - 0.08, -0.16], [0, seatY + 0.02, -0.27], 0.02, o),
-    ];
-    const back0 = seatY + 0.04;
-    const back1 = h - 0.2;
-    for (const s of [-1, 1]) parts.push(rod('frame', [s * 0.22, back0, -0.25], [s * 0.21, back1, -0.3], 0.012, o));
-    parts.push(
-      rod('frame', [-0.21, back1, -0.3], [0.21, back1, -0.3], 0.012, o),
-      rod('frame', [-0.22, back0, -0.25], [0.22, back0, -0.25], 0.012, o),
-      { ...span('mesh', [-0.215, 0.215], [back0, back1], [-0.0015, 0.0015], o), position: [0, (back0 + back1) / 2, -0.275], rotation: [-0.1, 0, 0] } as Part,
-      span('frame', [-0.16, 0.16], [back0 + 0.12, back0 + 0.2], [-0.25, -0.22], { bevel: 0.02, plan: false }),
-      rod('frame', [0, back1, -0.31], [0, h - 0.1, -0.31], 0.01, o),
-      { ...span('mesh', [-0.14, 0.14], [h - 0.14, h - 0.02], [-0.0015, 0.0015], o), position: [0, h - 0.08, -0.3] } as Part,
-      span('frame', [-0.145, 0.145], [h - 0.03, h - 0.015], [-0.31, -0.29], o),
-    );
-    return keep(parts, size);
-  },
-});
-
 const taskChair = defineItem({
   ...chair,
   id: 'fabric-task-chair',
@@ -619,7 +582,6 @@ const items: PackItem[] = [
   wallDesk,
   ladderDesk,
   deskSet,
-  meshChair,
   taskChair,
   execChair,
   draftingStool,

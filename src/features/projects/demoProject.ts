@@ -92,7 +92,7 @@ export function buildDemoProject(): Project {
       { asset: 'coffee-table', x: 6.0, y: 3.25 },
       { asset: 'armchair', x: 4.95, y: 2.6, rot: -R / 2 - 0.35 },
       { asset: 'media-console', x: 6.0, y: 0.38 },
-      { asset: 'tv-wall', x: 6.0, y: 0.18, materials: {} },
+      { asset: 'branded-tvs:samsung-qe55ls03d', x: 6.0, y: 0.18, materials: {} },
       { asset: 'floor-lamp', x: 7.35, y: 4.5 },
       { asset: 'plant-large', x: 4.65, y: 4.5 },
       // Kitchen & dining
@@ -100,7 +100,7 @@ export function buildDemoProject(): Project {
       { asset: 'kitchen-sink-unit', x: 9.25, y: 0.43 },
       { asset: 'kitchen-base-cabinet', x: 10.05, y: 0.43, w: 0.6 },
       { asset: 'kitchen-cooktop', x: 10.53, y: 1.35, rot: R / 2 },
-      { asset: 'fridge', x: 10.5, y: 3.3, rot: R / 2 },
+      { asset: 'branded-appliances-vn:panasonic-nr-bx410wkvn', x: 10.5, y: 3.3, rot: R / 2 },
       { asset: 'kitchen-island', x: 9.3, y: 2.25 },
       { asset: 'bar-stool', x: 8.85, y: 2.95, rot: R },
       { asset: 'bar-stool', x: 9.75, y: 2.95, rot: R },
@@ -118,7 +118,7 @@ export function buildDemoProject(): Project {
       { asset: 'armchair', x: 3.5, y: 0.75, rot: R },
       // Bathroom
       { asset: 'bathtub', x: 0.5, y: 6.4, rot: R / 2 },
-      { asset: 'toilet', x: 2.2, y: 7.55, rot: R },
+      { asset: 'branded-bathroom-vn:caesar-cd1338', x: 2.2, y: 7.55, rot: R },
       { asset: 'vanity-basin', x: 1.55, y: 4.73 },
       { asset: 'towel-rail', x: 2.45, y: 5.4, rot: -R / 2 },
       // Bedroom 2
@@ -261,7 +261,7 @@ export function buildStudioProject(): Project {
       // Living zone (x 3.2–6.0)
       { asset: 'bookcase', x: 3.65, y: 0.165 },
       { asset: 'media-console', x: 5.05, y: 0.215 },
-      { asset: 'tv-wall', x: 5.05, y: 0.035 },
+      { asset: 'branded-tvs:samsung-qe55ls03d', x: 5.05, y: 0.035 },
       { asset: 'rug-rect', x: 4.85, y: 2.9, w: 2.4, d: 1.7 },
       { asset: 'sofa-3-seat', x: 4.85, y: 4.035, rot: R },
       { asset: 'coffee-table', x: 4.85, y: 2.85 },
@@ -270,10 +270,10 @@ export function buildStudioProject(): Project {
       { asset: 'floor-lamp', x: 6.2, y: 4.2 },
       { asset: 'ceiling-light', x: 4.85, y: 2.3 },
       // Kitchen along the right wall (x 8.4–9)
-      { asset: 'fridge', x: 8.645, y: 0.355, rot: RIGHT },
+      { asset: 'branded-appliances-vn:panasonic-nr-bx410wkvn', x: 8.645, y: 0.355, rot: RIGHT },
       { asset: 'kitchen-base-cabinet', x: 8.695, y: 1.0, rot: RIGHT },
       { asset: 'kitchen-sink-unit', x: 8.695, y: 1.7, rot: RIGHT },
-      { asset: 'dishwasher', x: 8.695, y: 2.4, rot: RIGHT },
+      { asset: 'bosch-dishwashers:sms4hvi33e', x: 8.695, y: 2.4, rot: RIGHT },
       { asset: 'kitchen-cooktop', x: 8.695, y: 3.0, rot: RIGHT },
       { asset: 'kitchen-base-cabinet', x: 8.695, y: 3.6, rot: RIGHT },
       { asset: 'kitchen-wall-cabinet', x: 8.82, y: 2.4, rot: RIGHT },

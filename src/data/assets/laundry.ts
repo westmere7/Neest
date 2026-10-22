@@ -61,34 +61,6 @@ const tumbleDryer = defineAsset({
   planDetail: loaderPlan,
 });
 
-const washerDryerStack = defineAsset({
-  id: 'washer-dryer-stack',
-  name: 'Stacked washer and dryer',
-  category: 'laundry',
-  type: 'appliances',
-  group: 'Laundry',
-  tags: ['washer', 'dryer', 'stacked', 'laundry tower', 'washing machine', 'utility'],
-  defaultSize: { w: 0.6, d: 0.62, h: 1.75 },
-  minSize: { w: 0.55, d: 0.55, h: 1.65 },
-  maxSize: { w: 0.65, d: 0.7, h: 1.85 },
-  wallSnap: true,
-  slots: LOADER_SLOTS,
-  build: ({ w, d, h }) => {
-    const kit = 0.03;
-    const uh = (h - kit) / 2;
-    const o = { plan: false };
-    return [
-      ...frontLoaderParts('washer', w, d, 0, uh),
-      // Stacking kit with a pull-out shelf.
-      span('trim', [-w / 2, w / 2], [uh, uh + kit], [-d / 2, d / 2 - 0.045], { bevel: 0.004, plan: false }),
-      span('body', [-w / 2 + 0.04, w / 2 - 0.04], [uh + 0.006, uh + kit - 0.006], [d / 2 - 0.045, d / 2 - 0.03], { bevel: 0.003, plan: false }),
-      span('trim', [-0.06, 0.06], [uh + 0.011, uh + 0.019], [d / 2 - 0.03, d / 2 - 0.024], o),
-      ...frontLoaderParts('dryer', w, d, uh + kit, h - uh - kit),
-    ];
-  },
-  planDetail: loaderPlan,
-});
-
 const laundryBasket = defineAsset({
   id: 'laundry-basket',
   name: 'Laundry basket',
@@ -469,73 +441,6 @@ const waterHeater = defineAsset({
   },
 });
 
-const stickVacuum = defineAsset({
-  id: 'stick-vacuum',
-  name: 'Cordless vacuum on dock',
-  category: 'laundry',
-  type: 'appliances',
-  group: 'Cleaning',
-  tags: ['vacuum', 'hoover', 'cordless', 'stick vacuum', 'cleaning', 'dock'],
-  defaultSize: { w: 0.3, d: 0.28, h: 1.25 },
-  minSize: { w: 0.26, d: 0.24, h: 1.15 },
-  maxSize: { w: 0.36, d: 0.34, h: 1.35 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body', 'metal-anthracite'),
-    matSlot('accent', 'Wand & accents', 'metal-copper'),
-    matSlot('bin', 'Dust bin', 'glass-frosted'),
-    matSlot('dock', 'Dock', 'plastic-white'),
-  ],
-  build: ({ w, d, h }) => {
-    const zw = -d / 2 + 0.14;
-    const hw = Math.min(0.25, w - 0.04);
-    const zh1 = Math.min(d / 2 - 0.005, zw + 0.11);
-    const ym = h - 0.38;
-    const o = { plan: false };
-    const parts: Part[] = [
-      span('dock', [-w / 2 + 0.01, w / 2 - 0.01], [0, 0.015], [-d / 2, d / 2 - 0.01], { bevel: 0.006 }),
-      span('dock', [-0.025, 0.025], [0.015, h - 0.03], [-d / 2, -d / 2 + 0.04], { bevel: 0.008, plan: false }),
-      span('dock', [-0.02, 0.02], [ym + 0.21, ym + 0.235], [-d / 2 + 0.04, zw - 0.055], { bevel: 0.004, plan: false }),
-      // Floor head with its brush bar, resting on the dock.
-      span('body', [-hw / 2, hw / 2], [0.015, 0.07], [zw - 0.05, zh1], { bevel: 0.008, plan: false }),
-      rodX('accent', -hw / 2 + 0.012, hw / 2 - 0.012, 0.045, zh1 - 0.028, 0.024, o),
-      sphere('body', [0, 0.08, zw], 0.026, o),
-      // Wand, cyclone bin, motor, battery and handle.
-      vcyl('accent', 0, zw, 0.08, ym, 0.017, o),
-      vcyl('bin', 0, zw, ym, ym + 0.15, 0.045, { segments: 28, plan: false }),
-      vcyl('accent', 0, zw, ym + 0.1, ym + 0.11, 0.047, o),
-      lathe('body', [0, ym + 0.15, zw], [
-        [0.045, 0],
-        [0.04, 0.03],
-        [0.03, 0.05],
-        [0, 0.05],
-      ], { segments: 24, plan: false }),
-      span('body', [-0.04, 0.04], [ym + 0.17, ym + 0.27], [zw - 0.06, zw + 0.03], { bevel: 0.012, plan: false }),
-      span('body', [-0.03, 0.03], [ym + 0.12, ym + 0.2], [zw - 0.095, zw - 0.045], { bevel: 0.01, plan: false }),
-      span('accent', [-0.02, 0.02], [ym + 0.13, ym + 0.135], [zw - 0.096, zw - 0.094], o),
-      ...rodPath('accent', [
-        [0, ym + 0.25, zw - 0.05],
-        [0, ym + 0.32, zw - 0.075],
-        [0, ym + 0.24, zw - 0.09],
-        [0, ym + 0.2, zw - 0.075],
-      ], 0.013),
-      span('accent', [-0.006, 0.006], [ym + 0.24, ym + 0.265], [zw - 0.07, zw - 0.058], o),
-    ];
-    // Spare tools clipped to the post: crevice tool and a dusting brush.
-    const ty = h * 0.42;
-    const tz = -d / 2 + 0.022;
-    parts.push(
-      span('dock', [0.025, 0.04], [ty + 0.05, ty + 0.07], [tz - 0.012, tz + 0.012], o),
-      rod('body', [0.055, ty, tz], [0.055, ty + 0.2, tz], 0.012, { rTop: 0.016, plan: false }),
-      span('dock', [-0.04, -0.025], [ty + 0.05, ty + 0.07], [tz - 0.012, tz + 0.012], o),
-      vcyl('body', -0.06, tz, ty + 0.06, ty + 0.15, 0.014, o),
-      span('accent', [-0.09, -0.03], [ty + 0.02, ty + 0.06], [tz - 0.014, tz + 0.014], { bevel: 0.006, plan: false }),
-    );
-    return parts;
-  },
-  planDetail: ({ w, d }) => [circle([0, -d / 2 + 0.14], 0.045), rectPoly(-Math.min(0.25, w - 0.04) / 2, -d / 2 + 0.09, Math.min(0.25, w - 0.04) / 2, Math.min(d / 2 - 0.005, -d / 2 + 0.25))],
-});
-
 const broomCupboard = defineAsset({
   id: 'broom-cupboard',
   name: 'Broom cupboard',
@@ -624,12 +529,10 @@ const broomCupboard = defineAsset({
 
 export const LAUNDRY_ASSETS: AssetDefinition[] = [
   tumbleDryer,
-  washerDryerStack,
   laundryBasket,
   ironingBoard,
   dryingRack,
   utilitySink,
   waterHeater,
-  stickVacuum,
   broomCupboard,
 ];

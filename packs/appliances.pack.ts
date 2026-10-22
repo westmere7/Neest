@@ -31,14 +31,11 @@ import {
   rod,
   rodPath,
   rodX,
-  rodZ,
   slats,
   spaced,
   span,
   sphere,
-  torus,
   vcyl,
-  circle,
   type Part,
   type V2,
   type V3,
@@ -144,80 +141,6 @@ function vessel(slot: string, base: V3, pts: V2[], wall: number, floor: number, 
 // Refrigeration
 // ---------------------------------------------------------------------------
 
-const sideBySideFridge = defineItem({
-  id: 'fridge-side-by-side',
-  name: 'Side-by-side fridge',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Refrigeration',
-  tags: ['fridge', 'refrigerator', 'side by side', 'american fridge', 'freezer', 'ice dispenser', 'water dispenser'],
-  defaultSize: { w: 0.91, d: 0.72, h: 1.78 },
-  minSize: { w: 0.8, d: 0.62, h: 1.7 },
-  maxSize: { w: 0.96, d: 0.8, h: 1.85 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Doors & cabinet', 'satin-stainless'),
-    matSlot('trim', 'Gaskets & dispenser', 'textured-black'),
-    matSlot('handles', 'Handles & chrome', 'metal-chrome'),
-    matSlot('display', 'Dispenser display', 'led-blue'),
-  ],
-  build: ({ w, d, h }) => {
-    const plinth = 0.1;
-    const zf = d / 2 - 0.085;
-    const zd = zf + 0.045;
-    const split = -w / 2 + w * 0.42;
-    const top = h - 0.004;
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0.012, h], [-d / 2, zf], { bevel: 0.01 }),
-      // Recessed kick plinth with a slotted grille.
-      span('trim', [-w / 2 + 0.015, w / 2 - 0.015], [0.012, plinth - 0.006], [zf - 0.03, zf + 0.006], o),
-      ...slats('body', [-w / 2 + 0.03, w / 2 - 0.03], [0.03, plinth - 0.025], [zf + 0.006, zf + 0.01], Math.round((w - 0.06) / 0.022), {
-        axis: 'x',
-        gap: 0.55,
-        plan: false,
-      }),
-      ...feet4('trim', w, d, 0.06, 0.018, 0.014),
-      // Freezer (left) and fridge (right) doors with a dark gasket between.
-      span('body', [-w / 2, split - 0.002], [plinth, top], [zf, zd], { bevel: 0.008 }),
-      span('body', [split + 0.002, w / 2], [plinth, top], [zf, zd], { bevel: 0.008 }),
-      span('trim', [split - 0.004, split + 0.004], [plinth, top], [zf - 0.01, zd - 0.006], o),
-      span('trim', [-w / 2 + 0.004, w / 2 - 0.004], [plinth - 0.006, plinth], [zf - 0.01, zd - 0.004], o),
-      // Top hinge covers.
-      span('trim', [-w / 2 + 0.02, -w / 2 + 0.09], [h - 0.02, h], [zf - 0.05, zf + 0.004], { bevel: 0.004, plan: false }),
-      span('trim', [w / 2 - 0.09, w / 2 - 0.02], [h - 0.02, h], [zf - 0.05, zf + 0.004], { bevel: 0.004, plan: false }),
-      // Badge strip on the fridge door.
-      span('handles', [(split + w / 2) / 2 - 0.04, (split + w / 2) / 2 + 0.04], [h - 0.09, h - 0.082], [zd, zd + 0.002], o),
-    ];
-    // Long vertical bar handles either side of the split.
-    const hy = plinth + (top - plinth) * 0.52;
-    const hl = Math.min(1.0, (top - plinth) * 0.62);
-    parts.push(...barPull('handles', [split - 0.045, hy, zd], hl, { vertical: true, r: 0.011, stand: 0.03 }));
-    parts.push(...barPull('handles', [split + 0.045, hy, zd], hl, { vertical: true, r: 0.011, stand: 0.03 }));
-    // Ice and water dispenser in the freezer door.
-    const cx = (-w / 2 + split) / 2 - 0.02;
-    const dw = Math.min(0.22, (split + w / 2) * 0.58);
-    const dy0 = h * 0.5;
-    const dy1 = dy0 + Math.min(0.34, h * 0.19);
-    parts.push(
-      span('handles', [cx - dw / 2 - 0.014, cx + dw / 2 + 0.014], [dy0 - 0.014, dy1 + 0.07], [zd, zd + 0.003], { bevel: 0.006, plan: false }),
-      span('trim', [cx - dw / 2, cx + dw / 2], [dy0, dy1], [zd + 0.003, zd + 0.005], { bevel: 0.01, plan: false }),
-      span('display', [cx - dw / 2, cx + dw / 2], [dy1 + 0.012, dy1 + 0.058], [zd + 0.003, zd + 0.006], { bevel: 0.004, plan: false }),
-      ...buttonRow('trim', 4, cx - dw / 2 + 0.01, cx + dw / 2 - 0.01, dy1 + 0.022, zd + 0.006, 0.026, 0.01),
-      span('trim', [cx - 0.03, cx + 0.03], [dy1 - 0.07, dy1 - 0.005], [zd + 0.005, zd + 0.03], { bevel: 0.008, plan: false }),
-      vcyl('handles', cx + 0.045, zd + 0.02, dy1 - 0.05, dy1 - 0.005, 0.006, o),
-      span('handles', [cx - 0.035, cx + 0.035], [dy0 + 0.06, dy1 - 0.09], [zd + 0.008, zd + 0.016], { bevel: 0.004, rotation: [0.15, 0, 0], plan: false }),
-      span('handles', [cx - dw / 2 + 0.008, cx + dw / 2 - 0.008], [dy0, dy0 + 0.014], [zd + 0.005, zd + 0.035], { bevel: 0.004, plan: false }),
-      ...slats('trim', [cx - dw / 2 + 0.012, cx + dw / 2 - 0.012], [dy0 + 0.014, dy0 + 0.017], [zd + 0.008, zd + 0.032], 9, { axis: 'x', gap: 0.5, plan: false }),
-    );
-    return parts;
-  },
-  planDetail: ({ w, d }) => {
-    const zf = d / 2 - 0.085;
-    const split = -w / 2 + w * 0.42;
-    return [line([-w / 2, zf], [w / 2, zf]), line([split, zf], [split, zf + 0.045])];
-  },
-});
-
 const retroFridge = defineItem({
   id: 'fridge-retro',
   name: 'Retro fridge',
@@ -312,119 +235,6 @@ const undercounterFridge = defineItem({
 // ---------------------------------------------------------------------------
 // Countertop appliances
 // ---------------------------------------------------------------------------
-
-const airFryer = defineItem({
-  id: 'air-fryer',
-  name: 'Air fryer',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Small appliances',
-  tags: ['air fryer', 'fryer', 'countertop', 'cooking', 'basket', 'digital'],
-  defaultSize: { w: 0.3, d: 0.36, h: 0.33 },
-  minSize: { w: 0.24, d: 0.3, h: 0.28 },
-  maxSize: { w: 0.38, d: 0.42, h: 0.4 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body & basket', 'textured-black'),
-    matSlot('window', 'Basket window', 'smoked-window'),
-    matSlot('display', 'Touch display', 'led-blue'),
-    matSlot('accent', 'Trim & vents', 'satin-stainless'),
-  ],
-  build: ({ w, d, h }) => {
-    const zf = d / 2 - 0.045;
-    const drawerTop = h * 0.56;
-    const tilt = 0.45;
-    const panelC: V3 = [0, h - 0.04, zf - 0.05];
-    const p = slope(panelC, tilt);
-    const pw = w * 0.62;
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0.012, h - 0.03], [-d / 2 + 0.006, zf], { bevel: 0.045 }),
-      span('body', [-w / 2 + 0.02, w / 2 - 0.02], [h - 0.07, h], [-d / 2 + 0.03, zf - 0.03], { bevel: 0.03 }),
-      // Sloped control panel with display and touch keys.
-      p.panel('accent', 0, 0, 0, [pw + 0.012, 0.01, 0.092], 0.004),
-      p.panel('body', 0, 0, 0.005, [pw, 0.004, 0.082], 0.002),
-      p.panel('display', 0, 0.006, 0.0075, [w * 0.2, 0.002, 0.034]),
-      // Pull-out basket with a viewing window and a grip handle.
-      span('body', [-w / 2 + 0.022, w / 2 - 0.022], [0.03, drawerTop], [zf - 0.01, zf + 0.012], { bevel: 0.01, plan: false }),
-      span('accent', [-w / 2 + 0.024, w / 2 - 0.024], [drawerTop - 0.004, drawerTop + 0.002], [zf - 0.012, zf + 0.008], o),
-      span('window', [-w * 0.24, w * 0.24], [drawerTop - 0.09, drawerTop - 0.025], [zf + 0.012, zf + 0.015], { bevel: 0.004, plan: false }),
-      ...frame4('accent', [-w * 0.24 - 0.006, w * 0.24 + 0.006], [drawerTop - 0.096, drawerTop - 0.019], [zf + 0.012, zf + 0.016], 0.006),
-      span('body', [-0.045, 0.045], [0.07, 0.11], [zf + 0.012, d / 2 - 0.004], { bevel: 0.012, plan: false }),
-      span('accent', [-0.015, 0.015], [0.108, 0.114], [zf + 0.03, zf + 0.04], { bevel: 0.002, plan: false }),
-      ...feet4('body', w, d, 0.04, 0.012, 0.014),
-    ];
-    for (const side of [-1, 1]) {
-      for (const v of [-0.018, 0.018]) parts.push(p.panel('accent', side * (w * 0.2), v, 0.0075, [0.014, 0.003, 0.012], 0.002));
-    }
-    // Rear exhaust slots and the power cord running out of the back.
-    parts.push(...slats('accent', [-w * 0.28, w * 0.28], [h * 0.5, h * 0.82], [-d / 2, -d / 2 + 0.006], 7, { axis: 'y', gap: 0.55, plan: false }));
-    parts.push(...rodPath('body', [[w * 0.25, 0.05, -d / 2 + 0.006], [w * 0.25, 0.006, -d / 2 + 0.005], [w / 2 - 0.008, 0.006, -d / 2 + 0.005]], 0.004));
-    return parts;
-  },
-});
-
-const blender = defineItem({
-  id: 'blender',
-  name: 'Blender',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Small appliances',
-  tags: ['blender', 'smoothie', 'jug', 'countertop', 'mixer', 'liquidiser'],
-  defaultSize: { w: 0.2, d: 0.22, h: 0.45 },
-  minSize: { w: 0.16, d: 0.18, h: 0.38 },
-  maxSize: { w: 0.26, d: 0.28, h: 0.55 },
-  wallSnap: true,
-  slots: [
-    matSlot('base', 'Motor base', 'satin-stainless'),
-    matSlot('jar', 'Jar', 'clear-tritan'),
-    matSlot('trim', 'Lid, handle & dial', 'textured-black'),
-    matSlot('blades', 'Blades & ring', 'metal-chrome'),
-  ],
-  build: ({ w, d, h }) => {
-    const bh = h * 0.28;
-    const jr = Math.min(w * 0.36, d * 0.42);
-    const jx = -w * 0.08;
-    const jy = bh + 0.024;
-    const lidY = h - 0.03;
-    const jh = lidY - jy;
-    const kr = Math.min(0.026, bh * 0.22);
-    const parts: Part[] = [
-      span('base', [-w / 2 + 0.006, w / 2 - 0.006], [0.01, bh], [-d / 2 + 0.02, d / 2 - 0.02], { bevel: 0.02 }),
-      span('trim', [-w / 2 + 0.012, w / 2 - 0.012], [0, 0.012], [-d / 2 + 0.026, d / 2 - 0.026], { bevel: 0.004 }),
-      // Control face: dial with chrome ring and two buttons.
-      span('trim', [-w * 0.36, w * 0.36], [bh * 0.2, bh * 0.85], [d / 2 - 0.022, d / 2 - 0.016], { bevel: 0.006, plan: false }),
-      ...dial('trim', 'blades', 0, bh * 0.52, d / 2 - 0.016, kr),
-      torus('blades', [0, bh * 0.52, d / 2 - 0.015], kr + 0.004, 0.0018, o),
-      span('blades', [-w * 0.3, -w * 0.3 + 0.016], [bh * 0.48, bh * 0.56], [d / 2 - 0.016, d / 2 - 0.012], { bevel: 0.002, plan: false }),
-      span('blades', [w * 0.3 - 0.016, w * 0.3], [bh * 0.48, bh * 0.56], [d / 2 - 0.016, d / 2 - 0.012], { bevel: 0.002, plan: false }),
-      // Coupling collar, octagonal jar and lid.
-      cyl('trim', [jx, bh + 0.012, 0], jr * 0.88, 0.024, { segments: 8, plan: false }),
-      vessel('jar', [jx, jy, 0], [[jr * 0.78, 0], [jr * 0.82, 0.012], [jr, jh * 0.9], [jr * 1.03, jh]], 0.004, 0.02, { segments: 8 }),
-      cyl('trim', [jx, lidY + 0.009, 0], jr * 1.03, 0.018, { segments: 8, plan: false }),
-      cyl('jar', [jx, h - 0.006, 0], jr * 0.32, 0.012, { segments: 16, plan: false }),
-      cyl('blades', [jx, jy + 0.03, 0], 0.01, 0.02, o),
-    ];
-    // Four cross blades, alternately tipped up and down.
-    for (const k of range(4)) {
-      const a = (k * Math.PI) / 2 + 0.3;
-      parts.push({
-        ...span('blades', [0, jr * 0.62], [-0.001, 0.001], [-0.007, 0.007]),
-        position: [jx + Math.cos(a) * jr * 0.31, jy + 0.038, -Math.sin(a) * jr * 0.31],
-        rotation: [0, a, k % 2 ? 0.25 : -0.25],
-        plan: false,
-      });
-    }
-    // Measuring ticks on the jar.
-    for (const y of cells(4, jy + jh * 0.25, jy + jh * 0.8)) {
-      parts.push(span('trim', [jx - 0.012, jx + 0.012], [y - 0.001, y + 0.001], [jr * 0.95, jr * 0.95 + 0.002], o));
-    }
-    // Loop handle on the right.
-    parts.push(
-      ...rodPath('trim', [[jx + jr * 0.95, jy + 0.04, 0], [w / 2 - 0.016, jy + 0.06, 0], [w / 2 - 0.016, lidY - 0.06, 0], [jx + jr * 0.98, lidY - 0.02, 0]], 0.012),
-    );
-    return parts;
-  },
-});
 
 const foodProcessor = defineItem({
   id: 'food-processor',
@@ -1166,56 +976,6 @@ const steamMop = defineItem({
   planDetail: ({ w, d }) => [rectPoly(-w / 2, -d / 2 + 0.02, w / 2, d / 2)],
 });
 
-const dehumidifier = defineItem({
-  id: 'dehumidifier',
-  name: 'Dehumidifier',
-  category: 'living',
-  type: 'electronics',
-  group: 'Climate',
-  tags: ['dehumidifier', 'damp', 'humidity', 'mould', 'climate', 'water tank'],
-  defaultSize: { w: 0.36, d: 0.26, h: 0.55 },
-  minSize: { w: 0.3, d: 0.2, h: 0.42 },
-  maxSize: { w: 0.44, d: 0.32, h: 0.68 },
-  slots: [
-    matSlot('body', 'Body', 'textured-white'),
-    matSlot('grille', 'Grilles, castors & panel', 'grille-black'),
-    matSlot('tank', 'Tank window', 'smoked-window'),
-    matSlot('display', 'Display', 'led-blue'),
-  ],
-  build: ({ w, d, h }) => {
-    const top = h - 0.006;
-    const tankTop = h * 0.45;
-    const zf = d / 2 - 0.004;
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0.03, top], [-d / 2 + 0.003, zf], { bevel: 0.04 }),
-      ...range(4).map((k) => sphere('grille', [(k % 2 ? 1 : -1) * (w / 2 - 0.05), 0.017, (k < 2 ? 1 : -1) * (d / 2 - 0.05)], 0.017, o)),
-      // Top: outlet louvres, control panel and a recessed carry handle.
-      ...slats('grille', [-w / 2 + 0.04, w / 2 - 0.04], [top - 0.002, h], [-d / 2 + 0.05, -0.005], Math.max(4, Math.round((d / 2 - 0.05) / 0.014)), {
-        axis: 'z',
-        gap: 0.45,
-        plan: false,
-      }),
-      span('grille', [-w * 0.34, w * 0.34], [top - 0.003, h - 0.002], [0.01, zf - 0.035], { bevel: 0.003, plan: false }),
-      span('display', [-0.028, 0.028], [h - 0.002, h], [0.03, Math.min(0.07, zf - 0.045)], o),
-      ...cells(4, -w * 0.28, w * 0.28)
-        .filter((x) => Math.abs(x) > 0.04)
-        .map((x) => cyl('body', [x, h - 0.001, (0.01 + zf - 0.035) / 2], 0.008, 0.002, { segments: 16, plan: false })),
-      span('grille', [-0.07, 0.07], [top - 0.004, h], [-d / 2 + 0.012, -d / 2 + 0.035], { bevel: 0.002, plan: false }),
-      // Front: water tank drawer with level window and finger grip.
-      span('body', [-w / 2 + 0.02, w / 2 - 0.02], [0.05, tankTop], [zf - 0.004, d / 2], { bevel: 0.006, plan: false }),
-      span('grille', [-w / 2 + 0.012, w / 2 - 0.012], [tankTop + 0.002, tankTop + 0.006], [zf - 0.004, d / 2 + 0.001], o),
-      span('tank', [-w * 0.3, -w * 0.12], [0.08, tankTop - 0.05], [d / 2 - 0.002, d / 2 + 0.002], { bevel: 0.0015, plan: false }),
-      span('grille', [-0.06, 0.06], [tankTop - 0.035, tankTop - 0.012], [d / 2 - 0.003, d / 2 + 0.002], { bevel: 0.002, plan: false }),
-      // Rear intake filter grille and drain hose port.
-      span('grille', [-w * 0.38, w * 0.38], [h * 0.35, h * 0.85], [-d / 2, -d / 2 + 0.005], { bevel: 0.002, plan: false }),
-      rodZ('grille', w * 0.3, 0.09, -d / 2, -d / 2 + 0.01, 0.01, o),
-    ];
-    // Side hand grips.
-    for (const s of [-1, 1]) parts.push(span('grille', s < 0 ? [-w / 2 - 0.001, -w / 2 + 0.004] : [w / 2 - 0.004, w / 2 + 0.001], [h * 0.7, h * 0.76], [-0.06, 0.06], { bevel: 0.002, plan: false }));
-    return parts;
-  },
-});
-
 const spaceHeater = defineItem({
   id: 'space-heater',
   name: 'Ceramic space heater',
@@ -1256,52 +1016,6 @@ const spaceHeater = defineItem({
     ];
     return parts;
   },
-});
-
-const towerFan = defineItem({
-  id: 'tower-fan',
-  name: 'Tower fan',
-  category: 'electronics',
-  type: 'electronics',
-  group: 'Climate',
-  tags: ['fan', 'tower fan', 'oscillating', 'cooling', 'bladeless', 'summer'],
-  defaultSize: { w: 0.28, d: 0.28, h: 1.05 },
-  minSize: { w: 0.24, d: 0.24, h: 0.75 },
-  maxSize: { w: 0.34, d: 0.34, h: 1.25 },
-  slots: [
-    matSlot('body', 'Body & grille bars', 'textured-white'),
-    matSlot('grille', 'Air outlet', 'grille-black'),
-    matSlot('accents', 'Base & top panel', 'textured-grey'),
-    matSlot('display', 'Display', 'led-blue'),
-  ],
-  build: ({ w, d, h }) => {
-    const R = Math.min(w, d) / 2;
-    const tr = R * 0.62;
-    const zs = 0.78;
-    const colY0 = 0.055;
-    const colTop = h - 0.014;
-    const zF = tr * zs;
-    const gw = tr * 1.0;
-    const gy: V2 = [0.16, h - 0.13];
-    const parts: Part[] = [
-      lathe('accents', [0, 0, 0], [[0, 0], [R, 0], [R, 0.012], [R * 0.9, 0.032], [R * 0.45, 0.045], [R * 0.4, 0.06], [0, 0.06]], { segments: 40 }),
-      cyl('body', [0, (colY0 + colTop) / 2, 0], tr, colTop - colY0, { scale: [1, 1, zs], segments: 36, plan: false }),
-      cyl('accents', [0, h - 0.007, 0], tr * 0.98, 0.014, { scale: [1, 1, zs], segments: 36, plan: false }),
-      // Air outlet strip with vertical bars and a few horizontal braces.
-      span('grille', [-gw / 2, gw / 2], gy, [zF * 0.5, zF + 0.002], o),
-      ...slats('body', [-gw / 2, gw / 2], gy, [zF + 0.002, zF + 0.008], Math.max(8, Math.round(gw / 0.011)), { axis: 'x', gap: 0.55, plan: false }),
-      ...cells(4, gy[0], gy[1]).map((y) => span('body', [-gw / 2, gw / 2], [y - 0.003, y + 0.003], [zF + 0.002, zF + 0.009], o)),
-      // Top controls.
-      span('display', [-0.018, 0.018], [h - 0.0005, h + 0.0015], [tr * zs * 0.15, tr * zs * 0.45], o),
-      ...cells(4, -tr * 0.65, tr * 0.65)
-        .filter((x) => Math.abs(x) > 0.025)
-        .map((x) => cyl('body', [x, h + 0.001, tr * zs * 0.15], 0.008, 0.003, { segments: 16, plan: false })),
-      // Carry slot at the back top.
-      span('grille', [-tr * 0.4, tr * 0.4], [h - 0.09, h - 0.06], [-zF - 0.002, -zF * 0.6], { bevel: 0.006, plan: false }),
-    ];
-    return parts;
-  },
-  planDetail: ({ w, d }) => [circle([0, 0], Math.min(w, d) / 2 * 0.62)],
 });
 
 const wallHairDryer = defineItem({
@@ -1375,11 +1089,8 @@ export default definePack({
     'Detailed, brand-neutral appliances: side-by-side, retro, mini and under-counter fridges, a chest freezer, dishwasher drawer, countertop cooking and coffee kit, vacuum, steam mop, garment steamer and climate gadgets.',
   license: 'CC0 (made for Neest)',
   items: [
-    sideBySideFridge,
     retroFridge,
     undercounterFridge,
-    airFryer,
-    blender,
     foodProcessor,
     juicer,
     slowCooker,
@@ -1393,9 +1104,7 @@ export default definePack({
     binTrio,
     uprightVacuum,
     steamMop,
-    dehumidifier,
     spaceHeater,
-    towerFan,
     wallHairDryer,
     waterFilterJug,
   ],

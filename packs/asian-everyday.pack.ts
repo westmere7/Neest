@@ -142,92 +142,6 @@ const hex = (c: string): [number, number, number] => [parseInt(c.slice(1, 3), 16
 // Kitchen
 // ---------------------------------------------------------------------------
 
-const riceCooker = defineItem({
-  id: 'rice-cooker',
-  name: 'Rice cooker',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Small appliances',
-  tags: ['rice cooker', 'rice', 'cooker', 'noi com dien', 'suihanki', 'steam', 'countertop', 'appliance', 'asian'],
-  defaultSize: { w: 0.32, d: 0.32, h: 0.27 },
-  minSize: { w: 0.26, d: 0.26, h: 0.21 },
-  maxSize: { w: 0.42, d: 0.42, h: 0.34 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body', 'plastic-white-textured'),
-    matSlot('lid', 'Lid & trim', 'metal-brushed-steel'),
-    matSlot('trim', 'Handle & buttons', 'plastic-black'),
-    matSlot('accent', 'Panel & paddle holder', 'plastic-pink-textured'),
-  ],
-  build: ({ w, d, h }) => {
-    const hw = 0.04;
-    const R = Math.min((w - hw) / 2 - 0.004, d / 2 - 0.028);
-    const x0 = -w / 2 + R + 0.002;
-    const footH = 0.012;
-    const bodyH = (h - footH) * 0.6;
-    const yb = footH + bodyH;
-    const lidH = h - yb - 0.03;
-    const o = { plan: false };
-    const py0 = footH + bodyH * 0.2;
-    const py1 = footH + bodyH * 0.8;
-    const zp = R + 0.012;
-    const parts: Part[] = [
-      lathe('body', [x0, footH, 0], [
-        [0, 0],
-        [R * 0.86, 0],
-        [R * 0.97, 0.012],
-        [R, bodyH * 0.3],
-        [R, bodyH * 0.92],
-        [R * 0.98, bodyH],
-        [0, bodyH],
-      ], { segments: 40 }),
-      ring('lid', [x0, yb, 0], R * 0.985, 0.005, o),
-      // Domed lid with its arched carry handle and steam vent.
-      lathe('lid', [x0, yb, 0], [
-        [R * 0.98, 0],
-        [R * 0.95, lidH * 0.3],
-        [R * 0.78, lidH * 0.75],
-        [R * 0.45, lidH * 0.97],
-        [0, lidH],
-      ], { segments: 40, plan: false }),
-      ...rodPath('trim', [
-        [x0 - R * 0.34, yb + lidH * 0.9, 0],
-        [x0 - R * 0.24, h - 0.012, 0],
-        [x0 + R * 0.24, h - 0.012, 0],
-        [x0 + R * 0.34, yb + lidH * 0.9, 0],
-      ], 0.009),
-      cyl('trim', [x0, yb + lidH * 0.9, -R * 0.5], 0.02, 0.014, o),
-      cyl('accent', [x0, yb + lidH * 0.9 + 0.009, -R * 0.5], 0.014, 0.006, o),
-      // Hinge at the back and the lid release on the front.
-      span('trim', [x0 - 0.03, x0 + 0.03], [yb - 0.012, yb + 0.012], [-R - 0.006, -R + 0.012], o),
-      span('trim', [x0 - 0.022, x0 + 0.022], [yb - 0.018, yb + 0.006], [R - 0.006, R + 0.012], { bevel: 0.004, plan: false }),
-      // Control panel: display, keep-warm light and buttons.
-      span('accent', [x0 - R * 0.42, x0 + R * 0.42], [py0, py1], [R * 0.8, zp], { bevel: 0.01, plan: false }),
-      span('trim', [x0 - R * 0.22, x0 + R * 0.22], [py0 + (py1 - py0) * 0.55, py0 + (py1 - py0) * 0.85], [zp - 0.001, zp + 0.002], o),
-      discZ('lid', [x0 + R * 0.3, py0 + (py1 - py0) * 0.3, zp + 0.002], 0.012, 0.006, o),
-      sphere('accent', [x0 + R * 0.3, py0 + (py1 - py0) * 0.7, zp], 0.005, o),
-      // Paddle holder clipped to the right side, with the rice paddle standing in it.
-      span('accent', [x0 + R - 0.01, x0 + R + 0.03], [footH + bodyH * 0.3, footH + bodyH * 0.85], [-0.022, 0.022], { bevel: 0.006 }),
-      span('body', [x0 + R + 0.006, x0 + R + 0.016], [footH + bodyH * 0.6, Math.min(h - 0.01, yb + 0.07)], [-0.014, 0.014], { bevel: 0.003, plan: false }),
-      // Power cord at the back.
-      rod('trim', [x0 + R * 0.3, footH + 0.03, -R * 0.9], [x0 + R * 0.5, 0.006, -d / 2 + 0.008], 0.004, o),
-    ];
-    for (const x of spaced(3, -R * 0.24, R * 0.06)) {
-      parts.push(discZ('trim', [x0 + x, py0 + (py1 - py0) * 0.3, zp + 0.002], 0.007, 0.005, o));
-    }
-    for (const k of range(4)) {
-      const a = Math.PI / 4 + (k * Math.PI) / 2;
-      parts.push(cyl('trim', [x0 + Math.cos(a) * R * 0.7, footH / 2, Math.sin(a) * R * 0.7], 0.014, footH, o));
-    }
-    return parts;
-  },
-  planDetail: ({ w, d }) => {
-    const R = Math.min((w - 0.04) / 2 - 0.004, d / 2 - 0.028);
-    const x0 = -w / 2 + R + 0.002;
-    return [circle([x0, 0], R * 0.55), line([x0 - R * 0.24, 0], [x0 + R * 0.24, 0])];
-  },
-});
-
 const tiffinCarrier = defineItem({
   id: 'tiffin-carrier',
   name: 'Tiffin carrier',
@@ -1202,7 +1116,6 @@ export default definePack({
     'Everyday objects from homes across East and Southeast Asia: rice cooker, hot pot table, water dispenser, shoe rack and slippers, massage chair, karaoke set, squat toilet, wet bathroom, drying rack, air cooler, teak daybed, tiffin carrier, frangipani and box fan.',
   license: 'CC0 (made for Neest)',
   items: [
-    riceCooker,
     hotpotTable,
     shoeRack,
     massageChair,

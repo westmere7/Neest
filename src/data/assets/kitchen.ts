@@ -1,4 +1,4 @@
-import type { AssetDefinition, Part, PlanStroke, Size3 } from './types';
+import type { AssetDefinition, Part, PlanStroke } from './types';
 import {
   barPull,
   cellSpans,
@@ -21,7 +21,6 @@ import {
   ring,
   rng,
   rod,
-  rodPath,
   rodX,
   rodZ,
   roundRectPoints,
@@ -602,115 +601,6 @@ const ovenTower = defineAsset({
 // Refrigeration
 // ---------------------------------------------------------------------------
 
-const FRIDGE_SLOTS = [
-  matSlot('body', 'Body & doors', 'metal-brushed-steel'),
-  matSlot('handle', 'Handles', 'metal-chrome'),
-  matSlot('seal', 'Door seals & grille', 'rubber-black'),
-];
-
-/** Fridge freezer: door gaskets, bar handles, kick grille, optional bottom freezer drawers and dispenser. */
-function fridgeParts({ w, d, h }: Size3, frenchMin: number, drawers: number, dispenser: boolean): Part[] {
-  const doorT = 0.05;
-  const handleD = 0.035;
-  const zf = d / 2 - doorT - handleD;
-  const zs = zf + doorT;
-  const foot = 0.02;
-  const kick = 0.07;
-  const y0 = foot + kick;
-  const freezer = h > 1.2 ? (h - y0) * 0.33 : 0;
-  const ySplit = y0 + freezer;
-  const stand = handleD - 0.012;
-  const o = { plan: false };
-  const parts: Part[] = [
-    span('body', [-w / 2, w / 2], [foot, h], [-d / 2, zf], { bevel: 0.012 }),
-    ...legs4('handle', w, d - 2 * (doorT + handleD), 0.03, 0, foot, 0.04, { round: true }),
-    span('seal', [-w / 2 + 0.02, w / 2 - 0.02], [foot + 0.008, y0 - 0.006], [zf, zf + 0.006], o),
-    ...slats('body', [-w / 2 + 0.04, w / 2 - 0.04], [foot + 0.02, y0 - 0.018], [zf + 0.006, zf + 0.01], Math.round((w - 0.08) / 0.03), {
-      axis: 'x',
-      gap: 0.5,
-      plan: false,
-    }),
-  ];
-  const door = (x: V2, y: V2) =>
-    parts.push(
-      span('seal', [x[0] + 0.002, x[1] - 0.002], [y[0] + 0.002, y[1] - 0.002], [zf, zf + 0.014], o),
-      span('body', [x[0] + 0.006, x[1] - 0.006], [y[0] + 0.006, y[1] - 0.004], [zf + 0.005, zs], { bevel: 0.008, plan: false }),
-    );
-  const french = w >= frenchMin;
-  const upper: V2[] = french ? cellSpans(2, -w / 2, w / 2) : [[-w / 2, w / 2]];
-  const hLen = clamp((h - ySplit) * 0.4, 0.15, 0.6);
-  upper.forEach(([x0, x1], i) => {
-    door([x0, x1], [ySplit, h]);
-    const hx = french && i === 1 ? x0 + 0.045 : x1 - 0.045;
-    const hy = freezer > 0 ? ySplit + 0.1 + hLen / 2 : h - 0.1 - hLen / 2;
-    parts.push(...barPull('handle', [hx, hy, zs], hLen, { vertical: true, r: 0.01, stand }));
-  });
-  if (freezer > 0) {
-    for (const [ya, yb] of cellSpans(drawers, y0, ySplit)) {
-      door([-w / 2, w / 2], [ya, yb]);
-      parts.push(...barPull('handle', [0, yb - 0.05, zs], w * 0.55, { r: 0.009, stand }));
-    }
-  }
-  if (dispenser && french) {
-    // Water & ice dispenser recessed into the left door.
-    const [x0, x1] = upper[0];
-    const dw = Math.min(0.2, (x1 - x0) * 0.5);
-    const dx = (x0 + x1) / 2 - 0.02;
-    const dh = Math.min(0.32, (h - ySplit) * 0.35);
-    const dy = ySplit + (h - ySplit) * 0.36;
-    parts.push(
-      span('seal', [dx - dw / 2, dx + dw / 2], [dy, dy + dh], [zs - 0.002, zs + 0.002], { bevel: 0.006, plan: false }),
-      span('handle', [dx - dw * 0.28, dx + dw * 0.28], [dy + dh * 0.4, dy + dh * 0.72], [zs, zs + 0.01], { bevel: 0.003, plan: false }),
-      span('handle', [dx - dw * 0.4, dx + dw * 0.4], [dy + 0.008, dy + 0.022], [zs, zs + 0.016], { bevel: 0.003, plan: false }),
-      span('body', [dx - dw * 0.35, dx + dw * 0.35], [dy + dh - 0.05, dy + dh - 0.02], [zs + 0.002, zs + 0.004], o),
-    );
-  } else {
-    // Temperature display near the top of the door.
-    const [x0, x1] = upper[upper.length - 1];
-    const cx = (x0 + x1) / 2;
-    parts.push(span('seal', [cx - 0.05, cx + 0.05], [h - 0.12, h - 0.075], [zs - 0.002, zs + 0.002], { bevel: 0.004, plan: false }));
-    parts.push(span('handle', [cx - 0.03, cx + 0.03], [h - 0.105, h - 0.09], [zs + 0.002, zs + 0.003], o));
-  }
-  return parts;
-}
-
-const fridgePlan = ({ w, d }: Size3): PlanStroke[] => {
-  const zf = d / 2 - 0.085;
-  return [line([-w / 2, zf], [w / 2, zf])];
-};
-
-const fridge = defineAsset({
-  id: 'fridge',
-  name: 'Fridge freezer',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Refrigeration',
-  tags: ['fridge', 'refrigerator', 'freezer', 'appliance', 'cooler'],
-  defaultSize: { w: 0.7, d: 0.7, h: 1.85 },
-  minSize: { w: 0.5, d: 0.55, h: 0.8 },
-  maxSize: { w: 1.0, d: 0.8, h: 2.1 },
-  wallSnap: true,
-  slots: FRIDGE_SLOTS,
-  build: (size) => fridgeParts(size, 0.85, 1, false),
-  planDetail: fridgePlan,
-});
-
-const fridgeFrench = defineAsset({
-  id: 'fridge-french-door',
-  name: 'French-door fridge',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Refrigeration',
-  tags: ['fridge', 'refrigerator', 'french door', 'american', 'side by side', 'ice dispenser', 'appliance'],
-  defaultSize: { w: 0.9, d: 0.75, h: 1.8 },
-  minSize: { w: 0.8, d: 0.65, h: 1.7 },
-  maxSize: { w: 1.0, d: 0.85, h: 1.95 },
-  wallSnap: true,
-  slots: FRIDGE_SLOTS,
-  build: (size) => fridgeParts(size, 0, 2, true),
-  planDetail: fridgePlan,
-});
-
 /** Wine bottle lying on its side, neck towards the front, centred at (x, y, z). */
 function lyingBottle(slot: string, x: number, y: number, z: number, r: number, len: number): Part {
   const prof: V2[] = [
@@ -792,43 +682,6 @@ const wineCooler = defineAsset({
 // Cleaning & laundry appliances
 // ---------------------------------------------------------------------------
 
-const dishwasher = defineAsset({
-  id: 'dishwasher',
-  name: 'Dishwasher',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Cleaning',
-  tags: ['dishwasher', 'appliance', 'dishes', 'under counter'],
-  defaultSize: { w: 0.6, d: 0.6, h: 0.85 },
-  minSize: { w: 0.45, d: 0.55, h: 0.8 },
-  maxSize: { w: 0.6, d: 0.65, h: 0.9 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body & door', 'metal-brushed-steel'),
-    matSlot('panel', 'Control panel', 'screen-black'),
-    matSlot('handle', 'Handle & buttons', 'metal-chrome'),
-  ],
-  build: ({ w, d, h }) => {
-    const zf = d / 2 - 0.035;
-    const zs = zf + 0.02;
-    const ct = h - 0.1;
-    const o = { plan: false };
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0.08, h], [-d / 2, zf]),
-      span('panel', [-w / 2 + 0.01, w / 2 - 0.01], [0.012, 0.08], [-d / 2 + 0.05, zf - 0.03], o),
-      ...legs4('handle', w - 0.04, d - 0.15, 0.02, 0, 0.012, 0.03, { round: true }),
-      span('body', [-w / 2 + 0.002, w / 2 - 0.002], [0.08, ct], [zf, zs], { bevel: 0.004, plan: false }),
-      span('panel', [-w / 2 + 0.002, w / 2 - 0.002], [ct + 0.002, h - 0.005], [zf, zs], { bevel: 0.003, plan: false }),
-      span('body', [w / 2 - 0.17, w / 2 - 0.06], [ct + 0.03, h - 0.035], [zs, zs + 0.002], o),
-      ...barPull('handle', [0, ct - 0.035, zs], w * 0.6, { stand: 0.01, r: 0.005 }),
-    ];
-    for (const x of spaced(5, -w / 2 + 0.05, -w / 2 + 0.17)) {
-      parts.push(discZ('handle', [x, (ct + h) / 2, zs + 0.002], 0.007, 0.004, o));
-    }
-    return parts;
-  },
-});
-
 /**
  * Front-loading washer or dryer built from y0 up `uh`: porthole door with chrome ring, control
  * fascia with display, dial and buttons, and a detergent/water drawer. Slots: body, door, trim.
@@ -876,28 +729,6 @@ export function frontLoaderParts(kind: 'washer' | 'dryer', w: number, d: number,
   }
   return parts;
 }
-
-const frontLoaderPlan = ({ w, d }: Size3): PlanStroke[] => [line([-w / 2, d / 2 - 0.04], [w / 2, d / 2 - 0.04])];
-
-const washingMachine = defineAsset({
-  id: 'washing-machine',
-  name: 'Washing machine',
-  category: 'laundry',
-  type: 'appliances',
-  group: 'Laundry',
-  tags: ['washer', 'laundry', 'washing machine', 'appliance', 'utility'],
-  defaultSize: { w: 0.6, d: 0.6, h: 0.85 },
-  minSize: { w: 0.5, d: 0.45, h: 0.8 },
-  maxSize: { w: 0.65, d: 0.7, h: 0.9 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body', 'laminate-white-gloss'),
-    matSlot('door', 'Door glass', 'glass-tinted'),
-    matSlot('trim', 'Door ring & dial', 'metal-chrome'),
-  ],
-  build: ({ w, d, h }) => frontLoaderParts('washer', w, d, 0, h),
-  planDetail: frontLoaderPlan,
-});
 
 // ---------------------------------------------------------------------------
 // Range cooker & hood
@@ -1016,51 +847,6 @@ const rangeCooker = defineAsset({
 // Small appliances
 // ---------------------------------------------------------------------------
 
-const microwave = defineAsset({
-  id: 'microwave',
-  name: 'Microwave',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Small appliances',
-  tags: ['microwave', 'oven', 'countertop', 'appliance', 'reheat'],
-  defaultSize: { w: 0.5, d: 0.38, h: 0.3 },
-  minSize: { w: 0.45, d: 0.33, h: 0.26 },
-  maxSize: { w: 0.6, d: 0.45, h: 0.35 },
-  wallSnap: true,
-  slots: [
-    matSlot('body', 'Body', 'metal-brushed-steel'),
-    matSlot('glass', 'Window & panel', 'screen-black'),
-    matSlot('display', 'Display', 'screen-glow'),
-    matSlot('buttons', 'Buttons & feet', 'plastic-black'),
-  ],
-  build: ({ w, d, h }) => {
-    const zf = d / 2 - 0.012;
-    const cpw = clamp(w * 0.22, 0.09, 0.13);
-    const xc = w / 2 - cpw / 2 - 0.004;
-    const dx: V2 = [-w / 2 + 0.006, w / 2 - cpw - 0.006];
-    const o = { plan: false };
-    const parts: Part[] = [
-      span('body', [-w / 2, w / 2], [0.012, h], [-d / 2, zf], { bevel: 0.012 }),
-      span('body', dx, [0.02, h - 0.012], [zf, zf + 0.008], { bevel: 0.004, plan: false }),
-      span('glass', [dx[0] + 0.035, dx[1] - 0.05], [0.055, h - 0.05], [zf + 0.008, zf + 0.01], o),
-      span('buttons', [dx[1] - 0.032, dx[1] - 0.018], [0.07, h - 0.07], [zf + 0.008, d / 2], { bevel: 0.004, plan: false }),
-      span('glass', [w / 2 - cpw - 0.002, w / 2 - 0.006], [0.02, h - 0.012], [zf, zf + 0.006], { bevel: 0.003, plan: false }),
-      span('display', [xc - cpw * 0.35, xc + cpw * 0.35], [h - 0.06, h - 0.035], [zf + 0.006, zf + 0.008], o),
-      discZ('buttons', [xc, 0.06, zf + 0.012], Math.min(0.022, cpw * 0.25), 0.012, o),
-      ...slats('glass', [w / 2 - 0.001, w / 2 + 0.002], [h - 0.12, h - 0.05], [-d / 2 + 0.05, -d / 2 + 0.2], 8, { axis: 'z', gap: 0.5, plan: false }),
-    ];
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) parts.push(cyl('buttons', [sx * (w / 2 - 0.05), 0.006, sz * (d / 2 - 0.06)], 0.012, 0.012, o));
-    }
-    for (const y of cells(3, 0.095, h - 0.075)) {
-      for (const x of cells(3, xc - cpw * 0.36, xc + cpw * 0.36)) {
-        parts.push(span('buttons', [x - 0.009, x + 0.009], [y - 0.006, y + 0.006], [zf + 0.006, zf + 0.009], o));
-      }
-    }
-    return parts;
-  },
-});
-
 const toaster = defineAsset({
   id: 'toaster',
   name: 'Toaster',
@@ -1106,50 +892,6 @@ const toaster = defineAsset({
       }
     }
     return parts;
-  },
-});
-
-const kettle = defineAsset({
-  id: 'kettle',
-  name: 'Kettle',
-  category: 'kitchen',
-  type: 'appliances',
-  group: 'Small appliances',
-  tags: ['kettle', 'tea', 'boil', 'hot water', 'countertop', 'appliance'],
-  defaultSize: { w: 0.22, d: 0.16, h: 0.25 },
-  minSize: { w: 0.18, d: 0.14, h: 0.22 },
-  maxSize: { w: 0.26, d: 0.2, h: 0.3 },
-  wallSnap: true,
-  slots: [matSlot('body', 'Body', 'metal-brushed-steel'), matSlot('handle', 'Base & handle', 'plastic-black')],
-  build: ({ w, d, h }) => {
-    const R = Math.min(d / 2 - 0.006, w * 0.3);
-    const x0 = -w * 0.04;
-    const baseH = 0.022;
-    const bh = h - baseH - 0.035;
-    return [
-      cyl('handle', [x0, baseH / 2, 0], R + 0.004, baseH, { segments: 32 }),
-      lathe('body', [x0, baseH, 0], [
-        [0, 0],
-        [R * 0.92, 0],
-        [R, 0.012],
-        [R, bh * 0.55],
-        [R * 0.92, bh * 0.85],
-        [R * 0.72, bh],
-        [0, bh],
-      ], { segments: 32, plan: false }),
-      cyl('handle', [x0, baseH + bh + 0.006, 0], R * 0.7, 0.012, { rTop: R * 0.62, plan: false }),
-      sphere('handle', [x0, baseH + bh + 0.02, 0], 0.012, { scale: [1.3, 0.8, 1.3], plan: false }),
-      // Water window, spout and handle.
-      span('handle', [x0 - 0.008, x0 + 0.008], [baseH + 0.03, baseH + bh * 0.6], [R - 0.006, R + 0.002], { bevel: 0.003, plan: false }),
-      rod('body', [x0 - R * 0.85, baseH + bh * 0.4, 0], [-w / 2 + 0.012, baseH + bh * 0.78, 0], 0.016, { rTop: 0.009, plan: false }),
-      ...rodPath('handle', [
-        [x0 + R * 0.8, baseH + 0.04, 0],
-        [w / 2 - 0.012, baseH + 0.07, 0],
-        [w / 2 - 0.012, h - 0.04, 0],
-        [x0 + R * 0.5, h - 0.012, 0],
-      ], 0.012),
-      span('handle', [x0 + R * 0.75, x0 + R * 0.95], [baseH + 0.005, baseH + 0.02], [-0.008, 0.008], { bevel: 0.003, plan: false }),
-    ];
   },
 });
 
@@ -1481,14 +1223,8 @@ export const KITCHEN_ASSETS: AssetDefinition[] = [
   cooktopUnit,
   ovenTower,
   rangeCooker,
-  fridge,
-  fridgeFrench,
   wineCooler,
-  dishwasher,
-  washingMachine,
-  microwave,
   toaster,
-  kettle,
   standMixer,
   openShelf,
   trolley,

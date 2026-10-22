@@ -1,8 +1,6 @@
 [
-  "appliances:air-fryer",
   "appliances:drip-coffee",
   "appliances:food-processor",
-  "appliances:fridge-side-by-side",
   "appliances:juicer",
   "appliances:sandwich-press",
   "appliances:trash-bins",
@@ -162,7 +160,6 @@
   "soft-modern-home:cream-base-run-oak-trims",
   "soft-modern-home:floating-tv-console-pedestal-end",
   "soft-modern-home:oak-framed-glass-partition",
-  "soundbar",
   "storage-trunk",
   "structures:alcove-cupboard-shelves",
   "structures:built-in-booth-banquette",

@@ -68,97 +68,9 @@ function mixerTap(slot: string, x: number, zt: number, yBase: number, yTop: numb
   ];
 }
 
-/** Toilet seat ring and closed, slightly domed lid over a bowl ellipse (rx × rz) at height `sy`. */
-function seatAndLid(x: number, z: number, sy: number, rx: number, rz: number): Part[] {
-  const o = { segments: 36, plan: false };
-  return [
-    cyl('seat', [x, sy + 0.009, z + 0.005], rx, 0.018, { ...o, scale: [1, 1, (rz - 0.005) / rx] }),
-    cyl('seat', [x, sy + 0.029, z + 0.01], rx - 0.006, 0.022, {
-      ...o,
-      rTop: rx - 0.02,
-      scale: [1, 1, (rz - 0.015) / (rx - 0.006)],
-    }),
-  ];
-}
-
-/** Two hinge barrels at the back of a toilet seat. */
-const seatHinges = (sy: number, z: number): Part[] =>
-  [-1, 1].map((s) => rodX('flush', s * 0.07 - 0.02, s * 0.07 + 0.02, sy + 0.022, z, 0.009, { plan: false }));
-
 // ---------------------------------------------------------------------------
-// Toilets & bidet
+// Bidet
 // ---------------------------------------------------------------------------
-
-function toiletLayout(w: number, d: number, h: number) {
-  const tankD = clamp(d * 0.25, 0.14, 0.2);
-  const seatY = clamp(h * 0.52, 0.36, 0.44);
-  const rx = w / 2 - 0.01;
-  // Bowl half-depth; overlaps the tank slightly so the two read as one piece.
-  const rz = (d - tankD) / 2 + 0.03;
-  return { tankD, seatY, sy: seatY - 0.02, rx, rz, bz: d / 2 - rz, zb: -d / 2 + tankD };
-}
-
-const toilet = defineAsset({
-  id: 'toilet',
-  name: 'Toilet',
-  category: 'bathroom',
-  type: 'plumbing',
-  group: 'Toilets',
-  tags: ['wc', 'toilet', 'lavatory', 'loo', 'commode', 'close coupled'],
-  defaultSize: { w: 0.38, d: 0.68, h: 0.78 },
-  minSize: { w: 0.34, d: 0.55, h: 0.65 },
-  maxSize: { w: 0.45, d: 0.8, h: 0.9 },
-  wallSnap: true,
-  slots: [
-    matSlot('ceramic', 'Ceramic', 'ceramic-white'),
-    matSlot('seat', 'Seat & lid', 'ceramic-white'),
-    matSlot('flush', 'Flush button & fittings', 'metal-chrome'),
-  ],
-  build: ({ w, d, h }) => {
-    const L = toiletLayout(w, d, h);
-    const o = { plan: false };
-    const bx = -d / 2 + L.tankD / 2;
-    const vx = -w / 2 + 0.05;
-    return [
-      // Cistern, lid and dual flush button.
-      span('ceramic', [-w / 2 + 0.012, w / 2 - 0.012], [L.seatY - 0.06, h - 0.03], [-d / 2, L.zb], { bevel: 0.015 }),
-      span('ceramic', [-w / 2, w / 2], [h - 0.03, h - 0.006], [-d / 2, L.zb + 0.012], { bevel: 0.01 }),
-      cyl('flush', [0, h - 0.004, bx], 0.034, 0.004, o),
-      span('flush', [-0.028, -0.002], [h - 0.006, h], [bx - 0.022, bx + 0.022], { bevel: 0.003, plan: false }),
-      span('flush', [0.002, 0.028], [h - 0.006, h], [bx - 0.022, bx + 0.022], { bevel: 0.003, plan: false }),
-      // Bowl on its trap-way foot (unit profile stretched to the footprint ellipse).
-      lathe('ceramic', [0, 0, L.bz], [
-        [0, 0],
-        [0.56, 0],
-        [0.6, 0.015],
-        [0.52, 0.1],
-        [0.55, L.sy * 0.45],
-        [0.8, L.sy * 0.75],
-        [0.97, L.sy - 0.03],
-        [1, L.sy],
-        [0.86, L.sy],
-        [0.6, L.sy - 0.08],
-        [0, L.sy - 0.12],
-      ], { scale: [L.rx, 1, L.rz], segments: 36 }),
-      ...seatAndLid(0, L.bz, L.sy, L.rx, L.rz),
-      ...seatHinges(L.sy, L.zb + 0.03),
-      sphere('ceramic', [-L.rx * 0.56, 0.02, L.bz], 0.014, o),
-      sphere('ceramic', [L.rx * 0.56, 0.02, L.bz], 0.014, o),
-      // Supply pipe and angle valve.
-      rodZ('flush', vx, 0.16, -d / 2, -d / 2 + 0.05, 0.008, o),
-      vcyl('flush', vx, -d / 2 + 0.05, 0.16, L.seatY - 0.06, 0.005, o),
-      sphere('flush', [vx, 0.16, -d / 2 + 0.05], 0.014, o),
-      rodX('flush', vx, vx + 0.035, 0.16, -d / 2 + 0.05, 0.005, o),
-    ];
-  },
-  planDetail: ({ w, d, h }) => {
-    const L = toiletLayout(w, d, h);
-    return [
-      poly(ellipsePoints(0, L.bz + 0.01, L.rx - 0.045, L.rz - 0.06)),
-      line([-w / 2 + 0.012, L.zb], [w / 2 - 0.012, L.zb]),
-    ];
-  },
-});
 
 const bidet = defineAsset({
   id: 'bidet',
@@ -986,7 +898,6 @@ const bathroomMirror = defineAsset({
 });
 
 export const BATHROOM_ASSETS: AssetDefinition[] = [
-  toilet,
   bidet,
   vanity,
   vanityDouble,

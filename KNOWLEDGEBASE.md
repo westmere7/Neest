@@ -1590,3 +1590,13 @@ Known limitations (also in README):
      `AssetDefinition.price` + `itemPrices.json` (§12 asset rule 12): 1097 of 1184 items priced, 120 of 137 branded
      items at their researched VN listed price with the source page, 17 branded estimates, 87 props and building parts
      without a price (people not counted); the info card shows it under the swatch caption (done).
+
+128. "Replace generic items that should have been branded (like the TV) and remove the generic ones; not all items"
+     → 28 generic appliances and electronics retired into the branded product of the same form, with the product's
+     real size (`RETIRED_MODEL_ITEMS`): wall and stand TVs, soundbar, dishwasher, stick and robot vacuums, washing
+     machine, washer-dryer stack, fridge, French-door and side-by-side fridges, microwave, kettle, air fryer, blender,
+     rice cooker, wall AC and two outdoor units, air purifier, dehumidifier, tower fan, oil heater, laptop, router,
+     smart speaker, toilet, ergonomic mesh chair. Kept generic: items with no branded match (treadmill, tumble dryer,
+     ceramic heater, floor speaker), built-in kitchen units, and the ones kept on purpose before (flush ceiling
+     light, downlight set, bathtub, squat toilet, instant heater with shower rail). Samples and ready groups use the
+     branded ids; loft.test now loads the packs (done).

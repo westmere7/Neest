@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+// The sample places branded items from the content packs.
+import '@/packs/loader';
 import { ProjectSchema } from '@/domain/model/schema';
 import { computeWallNetwork } from '@/domain/geometry/walls';
 import { detectRoomFaces } from '@/domain/geometry/rooms';
