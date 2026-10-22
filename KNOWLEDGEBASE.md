@@ -982,10 +982,16 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   `profileR` (lathe radius at a height) and `gasColumn`. Prices are in itemPrices.json like every pack (`AssetSpec`
   has no `price` field).
 - **Tests**: `src/packs/packs.test.ts` loads the real `/packs`, runs `describeAssetChecks` on every pack item, and checks namespacing, textures, reload replacement and the build fallback. Run it with `npx vitest run src/packs`.
-- **Materials** (`data/materials/catalog.ts`): ≈265 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
-  no new category, so older builds still load projects); defaults in `DEFAULT_MATERIALS`. 45 procedural patterns
-  (wallpapers incl. coloured tropical/floral, gạch bông cement tile, chevron/basketweave parquet, terracotta, fish-scale,
-  penny, limewash, Venetian plaster, fluted, wood slats, cane webbing) and 94 CC0 photo sets (49 MB of the 60 MB budget).
+- **Materials** (`data/materials/catalog.ts`): ≈380 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
+  no new category, so older builds still load projects); defaults in `DEFAULT_MATERIALS`. 52 procedural patterns
+  (wallpapers incl. coloured tropical/floral, trellis and fern, gạch bông cement tiles (coloured classic and flower,
+  two-tone star and quatrefoil), chevron/basketweave parquet, herringbone glazed tile, terracotta, fish-scale, penny,
+  limewash, Venetian plaster, fluted, wood slats, cane webbing, hammered metal) and 112 CC0 photo sets (≈55 MB of the
+  60 MB budget). The 2026-10-22 batch added 113 materials (parquets, SPC vinyl, polished concrete, microcement, gạch
+  bông, zellige, finger/kit-kat, glass mosaic, porcelain, stones, paints, wallpapers, satin, sheers, velvets, metals,
+  glass) and 18 scanned sets (mosaic/stick parquet, wide planks, polished concrete, finger tiles, terracotta cabochon,
+  zellige, glass mosaic, geometric encaustic, olive/bamboo/figured-walnut/smoked-eucalyptus veneers, satin, georgette
+  sheer, ticking stripe, gingham, blackened steel). Sheers are fabric with `opacity` ≈ 0.5.
   Two texture sources per material, same **texture × colour (multiply) model**:
   - **Procedural** (`texture`, `patterns.ts`): 28 seamless tiles drawn with wrap-around maths, deterministic seeds,
     normal maps derived by Sobel. Tiles are near-white luminance; `art`, `books`, `rug-geometric` are coloured.
@@ -1688,3 +1694,8 @@ Known limitations (also in README):
      Vietnamese (ghế nhựa đỏ, tall round plastic, đôn gỗ, đôn sứ, ghế tre, ghế băng), studio (round piano stool, lab
      stool on castors, wobble, box stool, folding step stool) and low stools (milking, spool, kids' step, mushroom, tree
      stump, Japanese, cork, butterfly, camp, tulip, skirted vanity, X-frame, tufted footstool); estimated VND prices (done).
+
+136. "Add a lot more mats" (both mat items and materials) → `packs/mats.pack.ts`: 35 mats (door and entrance, bath,
+     kitchen and laundry, play and kids, fitness, tatami, chiếu cói / chiếu trúc / chiếu mây, prayer rug, office chair mat,
+     pet and outdoor mats) with their own patterns and materials and VND estimates in itemPrices.json; 113 new materials
+     and 18 CC0 scanned sets (see §12) (done).

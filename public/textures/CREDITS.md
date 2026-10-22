@@ -100,3 +100,21 @@ Maps were resized and re-encoded as WebP. Delete this folder to fall back to Nee
 | pebbles | ambientCG | [Rocks022](https://ambientcg.com/a/Rocks022) | 0.5 m | 1024 |
 | tatami | Poly Haven | [tatami_mat](https://polyhaven.com/a/tatami_mat) | 1.8 m | 1024 |
 | terrazzo-beige | ambientCG | [Terrazzo019L](https://ambientcg.com/a/Terrazzo019L) | 0.8 m | 1024 |
+| mosaic-parquet | ambientCG | [WoodFloor071](https://ambientcg.com/a/WoodFloor071) | 0.6 m | 1024 |
+| stick-parquet | Poly Haven | [rectangular_parquet](https://polyhaven.com/a/rectangular_parquet) | 2.25 m | 1024 |
+| wide-planks | Poly Haven | [laminate_floor_03](https://polyhaven.com/a/laminate_floor_03) | 2.08 m | 1024 |
+| polished-concrete | Poly Haven | [smooth_concrete_floor](https://polyhaven.com/a/smooth_concrete_floor) | 2 m | 1024 |
+| finger-tiles | Poly Haven | [long_white_tiles](https://polyhaven.com/a/long_white_tiles) | 1.27 m | 1024 |
+| terracotta-cabochon | Poly Haven | [patterned_terracotta_tiling](https://polyhaven.com/a/patterned_terracotta_tiling) | 2.15 m | 1024 |
+| zellige | ambientCG | [Tiles017](https://ambientcg.com/a/Tiles017) | 0.6 m | 1024 |
+| glass-mosaic | ambientCG | [Tiles019](https://ambientcg.com/a/Tiles019) | 0.5 m | 1024 |
+| encaustic-geometric | ambientCG | [Tiles131](https://ambientcg.com/a/Tiles131) | 1.5 m | 1024 |
+| olive-veneer | Poly Haven | [olive_veneer](https://polyhaven.com/a/olive_veneer) | 1 m | 1024 |
+| bamboo-veneer | Poly Haven | [bamboo_veneer](https://polyhaven.com/a/bamboo_veneer) | 1 m | 1024 |
+| figured-walnut | Poly Haven | [natural_walnut_veneer](https://polyhaven.com/a/natural_walnut_veneer) | 1 m | 1024 |
+| smoked-eucalyptus | Poly Haven | [smoke_speckled_veneer](https://polyhaven.com/a/smoke_speckled_veneer) | 1 m | 1024 |
+| satin | Poly Haven | [crepe_satin](https://polyhaven.com/a/crepe_satin) | 0.26 m | 1024 |
+| sheer | Poly Haven | [crepe_georgette](https://polyhaven.com/a/crepe_georgette) | 0.26 m | 1024 |
+| ticking-stripe | ambientCG | [Fabric076](https://ambientcg.com/a/Fabric076) | 0.3 m | 1024 |
+| gingham | Poly Haven | [gingham_check](https://polyhaven.com/a/gingham_check) | 0.29 m | 1024 |
+| blackened-steel | ambientCG | [Metal063](https://ambientcg.com/a/Metal063) | 1 m | 1024 |

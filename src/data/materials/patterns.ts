@@ -2240,6 +2240,273 @@ function drawCane(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
 }
 
 // ---------------------------------------------------------------------------
+// More tiles, wallpapers and metal (2026-10-22)
+// ---------------------------------------------------------------------------
+
+/**
+ * Vietnamese "hoa" gạch bông: a red four-petal flower with a gold eye, green leaves on the
+ * diagonals, blue rings round the corners (whole circles where four tiles meet), 2 × 2 tiles.
+ */
+function drawCementLotus(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const cream: Rgb = [0.93, 0.9, 0.82];
+  const red: Rgb = [0.7, 0.27, 0.23];
+  const pink: Rgb = [0.86, 0.55, 0.47];
+  const green: Rgb = [0.34, 0.49, 0.37];
+  const blue: Rgb = [0.2, 0.32, 0.47];
+  const gold: Rgb = [0.86, 0.66, 0.3];
+  const grout: Rgb = [0.62, 0.6, 0.56];
+  const f = rgbField(N, cream);
+  const mottle = fbmField(N, 6, 6, 4, nextSeed(rng));
+  const pw = 4 / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const a = fract(((x + 0.5) / N) * 2) * 2 - 1;
+      const b = fract(((y + 0.5) / N) * 2) * 2 - 1;
+      const ax = Math.abs(a);
+      const ay = Math.abs(b);
+      const r = Math.hypot(a, b);
+      const c2 = Math.abs(Math.cos(2 * Math.atan2(b, a)));
+      // Corner rings and gold dots.
+      const corner = Math.hypot(1 - ax, 1 - ay);
+      blend(f, i, blue, cover((0.36 - corner) / pw));
+      blend(f, i, cream, cover((0.29 - corner) / pw));
+      blend(f, i, gold, cover((0.13 - corner) / pw));
+      // Leaves on the diagonals.
+      const p = (ax + ay) / Math.SQRT2;
+      const q = (ax - ay) / Math.SQRT2;
+      const leaf = 1 - Math.hypot((p - 0.7) / 0.17, q / 0.075);
+      blend(f, i, green, cover((leaf * 0.075) / pw));
+      blend(f, i, cream, cover((0.008 - Math.abs(q)) / pw) * (p > 0.56 && p < 0.84 ? 1 : 0));
+      // Flower: outer red petals, pink inner petals, gold eye.
+      blend(f, i, red, cover((0.16 + 0.34 * Math.pow(c2, 1.6) - r) / pw));
+      blend(f, i, pink, cover((0.1 + 0.17 * Math.pow(c2, 1.6) - r) / pw));
+      blend(f, i, gold, cover((0.075 - r) / pw));
+      // Blue border line, grout, cement mottling.
+      const m = Math.max(ax, ay);
+      blend(f, i, blue, cover((0.022 - Math.abs(m - 0.92)) / pw) * (Math.min(ax, ay) < 0.7 ? 1 : 0));
+      blend(f, i, grout, cover((m - 0.985) / pw));
+      const k = 1 + 0.045 * mottle[i];
+      f.r[i] *= k;
+      f.g[i] *= k;
+      f.b[i] *= k;
+    }
+  }
+  putRgb(ctx, N, f);
+}
+
+/**
+ * Two-tone encaustic tile (tinted by the material colour): an eight-point star with a light
+ * centre, diamonds that meet across the joints, corner discs and a fine border, 2 × 2 tiles.
+ */
+function drawCementStar(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const mottle = fbmField(N, 6, 6, 4, nextSeed(rng));
+  const pw = 4 / N;
+  const ground = 0.92;
+  const ink = 0.5;
+  const mid = 0.72;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const a = fract(((x + 0.5) / N) * 2) * 2 - 1;
+      const b = fract(((y + 0.5) / N) * 2) * 2 - 1;
+      let ax = Math.abs(a);
+      let ay = Math.abs(b);
+      if (ay > ax) [ax, ay] = [ay, ax];
+      const r = Math.hypot(ax, ay);
+      let l = ground;
+      const paint = (v: number, d: number) => {
+        const t = cover(d / pw);
+        l += (v - l) * t;
+      };
+      paint(ink, 0.36 - Math.max(ax, ay)); // square
+      paint(ink, 0.36 - (ax + ay) / Math.SQRT2); // square turned 45° → star
+      paint(ground, 0.17 - r);
+      paint(ink, 0.065 - r);
+      paint(ink, 0.3 - (1 - ax + ay)); // joint diamonds
+      paint(mid, 0.2 - Math.hypot(1 - ax, 1 - ay)); // corner discs
+      paint(mid, 0.018 - Math.abs(ax - 0.93)); // border
+      paint(0.64, ax - 0.985); // grout
+      L[i] = l * (1 + 0.04 * mottle[i]);
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/**
+ * Two-tone quatrefoil cement tile: four overlapping circles drawn as lines round a lighter
+ * clover, linked by quarter circles in the corners, 2 × 2 tiles.
+ */
+function drawCementQuatrefoil(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = field(N);
+  const mottle = fbmField(N, 6, 6, 4, nextSeed(rng));
+  const pw = 4 / N;
+  const w = 0.045;
+  for (let y = 0, i = 0; y < N; y++) {
+    for (let x = 0; x < N; x++, i++) {
+      const a = fract(((x + 0.5) / N) * 2) * 2 - 1;
+      const b = fract(((y + 0.5) / N) * 2) * 2 - 1;
+      const ax = Math.abs(a);
+      const ay = Math.abs(b);
+      const dA = Math.hypot(ax - 0.45, ay) - 0.45;
+      const dB = Math.hypot(ax, ay - 0.45) - 0.45;
+      const inside = Math.min(dA, dB);
+      const corner = Math.hypot(1 - ax, 1 - ay) - 0.5;
+      let l = 0.93;
+      l += (0.8 - l) * cover(-inside / pw);
+      l += (0.8 - l) * cover(-corner / pw);
+      const line = Math.min(Math.abs(dA), Math.abs(dB), Math.abs(corner));
+      l += (0.48 - l) * cover((w / 2 - line) / pw);
+      l += (0.48 - l) * cover((0.07 - Math.hypot(ax, ay)) / pw);
+      l += (0.64 - l) * cover((Math.max(ax, ay) - 0.985) / pw);
+      L[i] = l * (1 + 0.04 * mottle[i]);
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Glazed tiles laid in a 45° herringbone (4:1 tiles), with grout, per-tile shade and glaze pooling. */
+function drawTileHerringbone(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const k = 4;
+  const colsX = 2;
+  const rowsY = colsX * k;
+  const W = N / (colsX * k * Math.SQRT2);
+  const blocks = colsX * 2 * rowsY;
+  const tone = new Float32Array(blocks);
+  const tilt = new Float32Array(blocks);
+  for (let b = 0; b < blocks; b++) {
+    tone[b] = range(rng, -0.03, 0.03);
+    tilt[b] = range(rng, -0.03, 0.03);
+  }
+  const cloud = fbmField(N, 8, 8, 3, nextSeed(rng));
+  const gap = Math.max(0.8, N * 0.003);
+  const L = field(N);
+  for (let y = 0, i = 0; y < N; y++) {
+    const Y = (y + 0.5) / W;
+    for (let x = 0; x < N; x++, i++) {
+      const X = (x + 0.5) / W;
+      const u = (X + Y) / Math.SQRT2;
+      const v = (Y - X) / Math.SQRT2;
+      const m0 = Math.floor((u - v + k + 1) / (2 * k));
+      let s = 0;
+      let t = 0;
+      let bm = 0;
+      let bi = 0;
+      let orient = -1;
+      for (let c = 0; c < 3 && orient < 0; c++) {
+        const m = c === 0 ? m0 : c === 1 ? m0 - 1 : m0 + 1;
+        const qu = u - m * k;
+        const qv = v + m * k;
+        let n = Math.floor(qv);
+        if (qu >= n && qu < n + k) {
+          s = qu - n;
+          t = qv - n;
+          bm = m;
+          bi = n;
+          orient = 0;
+          break;
+        }
+        n = Math.floor(qu);
+        if (qv >= n + 1 && qv < n + 1 + k) {
+          s = qv - n - 1;
+          t = qu - n;
+          bm = m;
+          bi = n;
+          orient = 1;
+        }
+      }
+      const b = (mod(bm, colsX) * 2 + Math.max(orient, 0)) * rowsY + mod(bi, rowsY);
+      const e = Math.min(t, 1 - t, s, k - s) * W;
+      const face = 0.9 + tone[b] + tilt[b] * (s / k - 0.5) + 0.015 * cloud[i] - 0.07 * (1 - smoothstep(gap, gap * 4, e));
+      L[i] = 0.62 + (face - 0.62) * smoothstep(gap * 0.5, gap * 1.3, e);
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Ogee trellis wallpaper: two families of wavy lines, half a column apart, touching into an onion lattice. */
+function drawWallpaperTrellis(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = paperGround(N, rng, 0.92);
+  const cols = 3;
+  const rows = 2;
+  const amp = 0.25;
+  const px = cols / N;
+  for (let y = 0, i = 0; y < N; y++) {
+    const v = (y + 0.5) / N;
+    const s = Math.sin(TAU * v * rows);
+    // Slope of the curves in column units per column unit, to keep the line width even.
+    const slope = Math.hypot(1, (amp * TAU * rows * Math.cos(TAU * v * rows)) / cols);
+    for (let x = 0; x < N; x++, i++) {
+      const u = ((x + 0.5) / N) * cols;
+      const d1 = Math.abs(fract(u + amp * s) - 0.5);
+      const d2 = Math.abs(fract(u - amp * s + 0.5) - 0.5);
+      const d = (0.5 - Math.max(d1, d2)) / slope;
+      const line = clamp01((0.028 - d) / px + 0.5);
+      L[i] -= 0.22 * line;
+    }
+  }
+  putGray(ctx, N, L);
+}
+
+/** Fern wallpaper: scattered fronds (a curved stem with tapering paired leaflets) on paper. */
+function drawWallpaperFern(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const L = paperGround(N, rng, 0.93);
+  const ink = field(N); // strongest frond per pixel, so overlapping fronds do not darken
+  for (let k = 0; k < 14; k++) {
+    const cx = rng() * N;
+    const cy = rng() * N;
+    const len = N * range(rng, 0.24, 0.34);
+    const ang = rng() * TAU;
+    const bend = range(rng, -0.6, 0.6);
+    const ca = Math.cos(ang);
+    const sa = Math.sin(ang);
+    const shade = range(rng, 0.18, 0.28);
+    const R = len * 0.62;
+    const ox = cx + (ca * len) / 2;
+    const oy = cy + (sa * len) / 2;
+    forBox(N, ox - R, oy - R, ox + R, oy + R, (i, px, py) => {
+      const dx = px - cx;
+      const dy = py - cy;
+      const lx = dx * ca + dy * sa;
+      let ly = -dx * sa + dy * ca;
+      if (lx < -2 || lx > len + 2) return;
+      const t = clamp01(lx / len);
+      ly -= bend * len * 0.18 * t * t; // the frond curls a little
+      const stem = Math.abs(ly) - Math.max(0.5, 1.2 * (1 - t));
+      let a = t < 1 ? cover(-stem) : 0;
+      // Leaflets: ellipses angled 50° forward from the stem, shrinking towards the tip.
+      const spacing = len * 0.075;
+      const fy = Math.abs(ly);
+      const j0 = Math.round(lx / spacing);
+      for (let j = j0 - 1; j <= j0 + 1; j++) {
+        if (j < 1 || j * spacing > len * 0.96) continue;
+        const ll = len * 0.22 * (1 - 0.75 * ((j * spacing) / len));
+        const fx = lx - j * spacing;
+        const along = fx * 0.643 + fy * 0.766;
+        const across = -fx * 0.766 + fy * 0.643;
+        const el = 1 - Math.hypot((along - ll * 0.5) / (ll * 0.5), across / (ll * 0.22));
+        a = Math.max(a, cover(el * ll * 0.22));
+      }
+      ink[i] = Math.max(ink[i], shade * a * (0.85 + 0.15 * t));
+    });
+  }
+  for (let i = 0; i < N * N; i++) L[i] -= ink[i];
+  putGray(ctx, N, L);
+}
+
+/** Hammered metal: overlapping round hammer dimples (darker hollows, bright ridges). */
+function drawHammered(ctx: CanvasRenderingContext2D, N: number, rng: Rng): void {
+  const c = worley(N, 12, nextSeed(rng), 0.85);
+  const fine = noiseField(N, 200, 200, nextSeed(rng));
+  const L = field(N);
+  for (let i = 0; i < N * N; i++) {
+    const hollow = smoothstep(0, 0.75, c.f1[i]);
+    const ridge = 1 - smoothstep(0, 0.12, c.f2[i] - c.f1[i]);
+    L[i] = 0.74 + 0.14 * hollow + 0.05 * ridge + 0.008 * fine[i];
+  }
+  putGray(ctx, N, L);
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -2292,6 +2559,14 @@ const PATTERN_LIST: TexturePattern[] = [
   { id: 'fluted', name: 'Fluted panel', normalStrength: 1, draw: drawFluted },
   { id: 'wood-slats', name: 'Wood slat panel', normalStrength: 0.9, draw: drawWoodSlats },
   { id: 'cane', name: 'Rattan cane webbing', normalStrength: 1, draw: drawCane },
+  // More tiles, wallpapers and metal (2026-10-22)
+  { id: 'cement-tile-lotus', name: 'Flower cement tile (gạch bông hoa)', normalStrength: 0.35, colored: true, draw: drawCementLotus },
+  { id: 'cement-tile-star', name: 'Two-tone star cement tile', normalStrength: 0.35, draw: drawCementStar },
+  { id: 'cement-tile-quatrefoil', name: 'Two-tone quatrefoil cement tile', normalStrength: 0.35, draw: drawCementQuatrefoil },
+  { id: 'tile-herringbone', name: 'Herringbone glazed tile', normalStrength: 0.8, draw: drawTileHerringbone },
+  { id: 'wallpaper-trellis', name: 'Ogee trellis wallpaper', normalStrength: 0.15, draw: drawWallpaperTrellis },
+  { id: 'wallpaper-fern', name: 'Fern wallpaper', normalStrength: 0.12, draw: drawWallpaperFern },
+  { id: 'hammered', name: 'Hammered metal', normalStrength: 0.7, draw: drawHammered },
 ];
 
 export const TEXTURE_PATTERNS: Record<string, TexturePattern> = Object.fromEntries(

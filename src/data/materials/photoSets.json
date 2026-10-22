@@ -94,6 +94,24 @@
     { "id": "bark-smooth", "name": "Smooth bark", "source": "ambientcg", "assetId": "Bark005", "size": 1.0, "resolution": 1024 },
     { "id": "pebbles", "name": "Small pebbles", "source": "ambientcg", "assetId": "Rocks022", "size": 0.5, "resolution": 1024 },
     { "id": "tatami", "name": "Igusa tatami mat", "source": "polyhaven", "assetId": "tatami_mat", "size": 1.8, "resolution": 1024 },
-    { "id": "terrazzo-beige", "name": "Beige terrazzo", "source": "ambientcg", "assetId": "Terrazzo019L", "size": 0.8, "resolution": 1024 }
+    { "id": "terrazzo-beige", "name": "Beige terrazzo", "source": "ambientcg", "assetId": "Terrazzo019L", "size": 0.8, "resolution": 1024 },
+    { "id": "mosaic-parquet", "name": "Mosaic finger parquet", "source": "ambientcg", "assetId": "WoodFloor071", "size": 0.6, "resolution": 1024 },
+    { "id": "stick-parquet", "name": "Stick parquet", "source": "polyhaven", "assetId": "rectangular_parquet", "size": 2.25, "resolution": 1024 },
+    { "id": "wide-planks", "name": "Wide floor planks", "source": "polyhaven", "assetId": "laminate_floor_03", "size": 2.08, "resolution": 1024 },
+    { "id": "polished-concrete", "name": "Polished concrete floor", "source": "polyhaven", "assetId": "smooth_concrete_floor", "size": 2, "resolution": 1024 },
+    { "id": "finger-tiles", "name": "Finger (kit-kat) tiles", "source": "polyhaven", "assetId": "long_white_tiles", "size": 1.27, "resolution": 1024 },
+    { "id": "terracotta-cabochon", "name": "Terracotta octagons with cabochons", "source": "polyhaven", "assetId": "patterned_terracotta_tiling", "size": 2.15, "resolution": 1024 },
+    { "id": "zellige", "name": "Handmade glazed tiles (zellige)", "source": "ambientcg", "assetId": "Tiles017", "size": 0.6, "resolution": 1024 },
+    { "id": "glass-mosaic", "name": "Glass mosaic", "source": "ambientcg", "assetId": "Tiles019", "size": 0.5, "resolution": 1024 },
+    { "id": "encaustic-geometric", "name": "Geometric encaustic floor", "source": "ambientcg", "assetId": "Tiles131", "size": 1.5, "resolution": 1024 },
+    { "id": "olive-veneer", "name": "Olive wood veneer", "source": "polyhaven", "assetId": "olive_veneer", "size": 1, "resolution": 1024 },
+    { "id": "bamboo-veneer", "name": "Bamboo veneer", "source": "polyhaven", "assetId": "bamboo_veneer", "size": 1, "resolution": 1024 },
+    { "id": "figured-walnut", "name": "Figured walnut veneer", "source": "polyhaven", "assetId": "natural_walnut_veneer", "size": 1, "resolution": 1024 },
+    { "id": "smoked-eucalyptus", "name": "Smoked eucalyptus veneer", "source": "polyhaven", "assetId": "smoke_speckled_veneer", "size": 1, "resolution": 1024 },
+    { "id": "satin", "name": "Crepe satin", "source": "polyhaven", "assetId": "crepe_satin", "size": 0.26, "resolution": 1024 },
+    { "id": "sheer", "name": "Georgette sheer", "source": "polyhaven", "assetId": "crepe_georgette", "size": 0.26, "resolution": 1024 },
+    { "id": "ticking-stripe", "name": "Ticking stripe", "source": "ambientcg", "assetId": "Fabric076", "size": 0.3, "resolution": 1024 },
+    { "id": "gingham", "name": "Gingham check", "source": "polyhaven", "assetId": "gingham_check", "size": 0.29, "resolution": 1024 },
+    { "id": "blackened-steel", "name": "Blackened steel", "source": "ambientcg", "assetId": "Metal063", "size": 1, "resolution": 1024 }
   ]
 }
