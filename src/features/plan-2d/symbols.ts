@@ -2,6 +2,7 @@ import type { Opening, Vec2 } from '@/domain/model/schema';
 import { pointAt } from '@/domain/geometry/wallPath';
 import type { OpeningSpan, WallGeometry } from '@/domain/geometry/walls';
 import { add, angleOf, leftNormal, scale, sub } from '@/domain/geometry/vec';
+import { FRAMELESS_GLASS, isFramelessDesign, resolveOpeningDesign } from '@/domain/model/openingDesigns';
 
 /** Vector primitives shared by SVG, PDF and DXF output. Angles are plan radians. */
 export type PlanPrim =
@@ -14,7 +15,8 @@ export type PrimRole = 'opening' | 'leaf' | 'swing' | 'glass' | 'frame' | 'jamb'
 /**
  * Builds the technical plan symbol for an opening: jambs, door leaves with
  * swing arcs, sliding/pocket/bi-fold/barn/pivot leaves, passage head lines, or
- * window frames with glazing lines; plus grille bars, shutters and casing.
+ * window frames with glazing lines; plus grille bars, shutters and casing. Frameless glass doors draw
+ * their leaves as thin glass (A-GLAZ in DXF).
  */
 export function openingSymbol(opening: Opening, geom: WallGeometry, span: OpeningSpan): PlanPrim[] {
   const out: PlanPrim[] = [];
@@ -34,7 +36,10 @@ export function openingSymbol(opening: Opening, geom: WallGeometry, span: Openin
   const width = span.s1 - span.s0;
   const side = opening.swingSide === 'left' ? 1 : -1;
   const sideN = scale(N, side);
-  const leafT = Math.min(0.04, h);
+  // Frameless glass leaves are a thin pane drawn in the glass role.
+  const glassLeaf = !opening.kind.startsWith('window') && isFramelessDesign(resolveOpeningDesign(opening));
+  const leafRole: PrimRole = glassLeaf ? 'glass' : 'leaf';
+  const leafT = Math.min(glassLeaf ? FRAMELESS_GLASS * 1.2 : 0.04, h);
 
   /** Arc about `c` sweeping the short way between two directions. */
   const sweep = (c: Vec2, r: number, dirA: Vec2, dirB: Vec2, role: PrimRole = 'swing', dash?: boolean) => {
@@ -73,7 +78,7 @@ export function openingSymbol(opening: Opening, geom: WallGeometry, span: Openin
     const H = at(hingeS, side * h);
     const tip = add(H, scale(sideN, len));
     const back = scale(T, -toward * leafT);
-    out.push({ t: 'poly', pts: [H, tip, add(tip, back), add(H, back)], closed: true, role: 'leaf', fill: true });
+    out.push({ t: 'poly', pts: [H, tip, add(tip, back), add(H, back)], closed: true, role: leafRole, fill: true });
     // Sweep the short way between open and closed positions.
     sweep(H, len, sideN, scale(T, toward));
   };
@@ -94,15 +99,17 @@ export function openingSymbol(opening: Opening, geom: WallGeometry, span: Openin
     case 'door-sliding': {
       // The sliding panel runs on the swing side; the hinge end says which end it closes from.
       const panel = width * 0.55;
-      const t = Math.min(0.035, h * 0.5);
+      const t = glassLeaf ? leafT : Math.min(0.035, h * 0.5);
       const o1 = side * h * 0.35;
       const o2 = -o1;
       const [m0, m1] = opening.hinge === 'start' ? [span.s0, span.s0 + panel] : [span.s1 - panel, span.s1];
       const [f0, f1] = opening.hinge === 'start' ? [span.s1 - panel, span.s1] : [span.s0, span.s0 + panel];
       const p1 = [at(m0, o1 + t / 2), at(m1, o1 + t / 2), at(m1, o1 - t / 2), at(m0, o1 - t / 2)];
       const p2 = [at(f0, o2 + t / 2), at(f1, o2 + t / 2), at(f1, o2 - t / 2), at(f0, o2 - t / 2)];
-      out.push({ t: 'poly', pts: p1, closed: true, role: 'leaf', fill: true });
-      out.push({ t: 'poly', pts: p2, closed: true, role: 'leaf', fill: true });
+      out.push({ t: 'poly', pts: p1, closed: true, role: leafRole, fill: true });
+      out.push({ t: 'poly', pts: p2, closed: true, role: leafRole, fill: true });
+      // Frameless panes hang from a head track: drawn overhead (dashed) across the opening.
+      if (glassLeaf) pathLine(span.s0, span.s1, 0, 'thin', true, 1);
       break;
     }
     case 'door-french': {
@@ -112,15 +119,15 @@ export function openingSymbol(opening: Opening, geom: WallGeometry, span: Openin
     }
     case 'door-pocket': {
       // Leaf drawn dashed inside the wall on the hinge side, plus its closing path across the opening.
-      const lt = Math.min(0.035, h * 0.8);
+      const lt = glassLeaf ? leafT : Math.min(0.035, h * 0.8);
       const ps = toStart ? span.s0 : span.s1;
       const avail = toStart ? span.s0 - geom.clearStart : geom.clearEnd - span.s1;
       const len = Math.max(0, Math.min(width, avail));
       const far = toStart ? ps - len : ps + len;
       if (len > 1e-3) {
-        pathLine(far, ps, lt / 2, 'leaf', true);
-        pathLine(far, ps, -lt / 2, 'leaf', true);
-        out.push({ t: 'line', a: at(far, lt / 2), b: at(far, -lt / 2), role: 'leaf', dash: true });
+        pathLine(far, ps, lt / 2, leafRole, true);
+        pathLine(far, ps, -lt / 2, leafRole, true);
+        out.push({ t: 'line', a: at(far, lt / 2), b: at(far, -lt / 2), role: leafRole, dash: true });
       }
       pathLine(span.s0, span.s1, 0, 'thin', true, 1);
       break;
@@ -143,13 +150,13 @@ export function openingSymbol(opening: Opening, geom: WallGeometry, span: Openin
       const leafW = width + 0.1;
       const stand = opening.casing ? 0.018 : 0;
       const o0 = side * (h + stand + 0.012);
-      const o1 = side * (h + stand + 0.052);
+      const o1 = side * (h + stand + 0.012 + (glassLeaf ? leafT : 0.04));
       const a0 = span.s0 - 0.05;
       const a1 = span.s1 + 0.05;
       const shift = toStart ? -leafW : leafW;
       pathLine(Math.min(a0, a0 + shift) - 0.05, Math.max(a1, a1 + shift) + 0.05, side * (h + stand + 0.03), 'thin', false, 2);
       pathLine(a0 + shift, a1 + shift, o1, 'thin', true, 1);
-      band(a0, a1, o0, o1, 'leaf', true);
+      band(a0, a1, o0, o1, leafRole, true);
       break;
     }
     case 'door-pivot': {
@@ -161,7 +168,7 @@ export function openingSymbol(opening: Opening, geom: WallGeometry, span: Openin
       const half = scale(T, leafT / 2);
       const tail = add(P, scale(sideN, -pOff));
       const tip = add(P, scale(sideN, long));
-      out.push({ t: 'poly', pts: [add(tail, half), add(tip, half), sub(tip, half), sub(tail, half)], closed: true, role: 'leaf', fill: true });
+      out.push({ t: 'poly', pts: [add(tail, half), add(tip, half), sub(tip, half), sub(tail, half)], closed: true, role: leafRole, fill: true });
       sweep(P, long, sideN, scale(T, toward));
       sweep(P, pOff, scale(sideN, -1), scale(T, -toward), 'swing', true);
       circle(P, Math.min(0.03, Math.max(0.01, h * 0.5)), 'leaf');

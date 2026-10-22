@@ -67,14 +67,34 @@ export const OPENING_DESIGNS: OpeningDesignInfo[] = [
   }),
   D('lite-3h', 'Three lites', 'Three horizontal glass panes', 'glazed'),
   D('lite-full', 'Full lite', 'One large glass pane', 'glazed'),
+  D('lite-frosted', 'Frosted lite', 'Framed frosted pane (bathrooms)', 'glazed'),
   D('lites-divided', 'Divided lites', 'Glazing bars in a timber frame', 'glazed'),
   D('ribbed-glass', 'Ribbed glass', 'Timber frame, reeded glass', 'glazed'),
   D('alu-clear', 'Slim aluminium', 'Minimal frame, clear glass', 'glazed', { material: 'metal-anthracite' }),
   D('alu-frosted', 'Slim frosted', 'Minimal frame, frosted glass', 'glazed', {
     material: 'metal-anthracite',
   }),
-  D('steel-grid', 'Steel grid', 'Black steel with a glazing grid', 'glazed', {
+  D('alu-patio', 'Patio aluminium', 'Sturdy aluminium frame, deep bottom rail', 'glazed', {
+    material: 'metal-anthracite',
+    only: ['door-sliding', 'door-single', 'door-double', 'door-french', 'door-pocket'],
+  }),
+  D('steel-slim', 'Slim black frame', 'Thin black steel, one clear pane', 'glazed', { material: 'metal-black-matte' }),
+  D('steel-fluted', 'Black fluted', 'Thin black steel, fluted glass', 'glazed', { material: 'metal-black-matte' }),
+  D('steel-grid', 'Steel grid', 'Crittall-style black steel with a glazing grid', 'glazed', {
     material: 'metal-black-matte',
+  }),
+  // Frameless toughened glass: the "leaf" material colours the patch fittings, pulls and track.
+  D('glass-frameless', 'Frameless glass', 'Toughened clear glass, patch fittings, long pull', 'glazed', {
+    material: 'metal-brushed-steel',
+    exclude: ['door-bifold'],
+  }),
+  D('glass-frameless-frosted', 'Frameless frosted', 'Satin-etched glass for bathrooms', 'glazed', {
+    material: 'metal-brushed-steel',
+    exclude: ['door-bifold'],
+  }),
+  D('glass-frameless-fluted', 'Frameless fluted', 'Reeded toughened glass, no frame', 'glazed', {
+    material: 'metal-brushed-steel',
+    exclude: ['door-bifold'],
   }),
   // ── Windows ──
   D('win-plain', 'Plain', 'Standard frame, clear glass', 'glazed'),
@@ -104,6 +124,17 @@ export const OPENING_DESIGNS_BY_ID = Object.fromEntries(OPENING_DESIGNS.map((d) 
 >;
 
 export const isDoorDesign = (id: OpeningDesign) => (DOOR_DESIGN_IDS as readonly string[]).includes(id);
+
+const FRAMELESS: readonly OpeningDesign[] = ['glass-frameless', 'glass-frameless-frosted', 'glass-frameless-fluted'];
+
+/**
+ * Frameless glass leaves: one toughened pane edge to edge, held by patch fittings (swing), a top
+ * track (sliding) or clamp plates (barn) in the leaf material, drawn as glass in the plan.
+ */
+export const isFramelessDesign = (id: OpeningDesign | null | undefined): boolean => !!id && FRAMELESS.includes(id);
+
+/** Thickness of a frameless toughened-glass leaf. */
+export const FRAMELESS_GLASS = 0.01;
 
 /** Whether a design can be used on an opening kind (passages take none). */
 export function designFitsKind(design: OpeningDesign, kind: OpeningKind): boolean {
@@ -190,6 +221,8 @@ export interface LeafLayout {
   battens: DRect[];
   /** Diagonal brace between the ledges (barn doors). */
   brace: boolean;
+  /** One pane over the whole leaf, no stiles or rails (`isFramelessDesign`). */
+  frameless: boolean;
 }
 
 /** How far recessed panels and grooves sit below each face, in metres. */
@@ -242,6 +275,7 @@ export function doorLeafLayout(
     louvres: [],
     battens: [],
     brace: false,
+    frameless: false,
   };
   const add = (type: LeafRegionType, r: DRect) => {
     // Grooves are only a few millimetres wide; other regions need some size to be worth drawing.
@@ -313,9 +347,11 @@ export function doorLeafLayout(
     case 'lite-3h':
       for (const r of stackRows(field, 3, s * 0.8)) add('lite', r);
       break;
-    case 'lite-full': {
+    case 'lite-full':
+    case 'lite-frosted': {
       const rail = Math.min(0.09, w * 0.15);
       add('lite', R(rail, rail * 1.6, w - rail, h - rail));
+      if (design === 'lite-frosted') L.glass = 'frosted';
       break;
     }
     case 'lites-divided': {
@@ -347,6 +383,27 @@ export function doorLeafLayout(
       L.bars = gridBars(r, r.x1 - r.x0 > 0.55 ? 2 : 1, rows, 0.022);
       break;
     }
+    case 'steel-slim':
+    case 'steel-fluted': {
+      const p = Math.min(0.03, w * 0.08);
+      add('lite', R(p, p * 1.8, w - p, h - p));
+      if (design === 'steel-fluted') L.glass = 'reeded';
+      break;
+    }
+    case 'alu-patio': {
+      // Chunky sliding-door profiles: wide stiles and a deep bottom rail.
+      const p = Math.min(0.07, w * 0.12);
+      add('lite', R(p, Math.min(0.12, h * 0.08), w - p, h - Math.min(0.065, h * 0.05)));
+      break;
+    }
+    case 'glass-frameless':
+    case 'glass-frameless-frosted':
+    case 'glass-frameless-fluted':
+      add('lite', R(0, 0, w, h));
+      L.frameless = true;
+      if (design === 'glass-frameless-frosted') L.glass = 'frosted';
+      if (design === 'glass-frameless-fluted') L.glass = 'reeded';
+      break;
     default:
       break; // flush
   }

@@ -102,6 +102,14 @@
   stroke: var(--text-2);
   stroke-width: 0.4;
 }
+/* Frameless glass: the pane edge, and fittings (patches, pulls, track) in a metal tone. */
+.od-pane {
+  stroke: var(--text-2);
+  stroke-width: 0.8;
+}
+.od-hw {
+  fill: var(--text-2);
+}
 .od-batten {
   fill: var(--surface-solid);
   stroke: var(--text-2);

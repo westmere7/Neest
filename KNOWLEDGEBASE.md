@@ -383,8 +383,10 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   "Ceiling" chip) hides ceiling-mounted items in every room. `isAssetHidden` applies it in 3D, the plan and the
   guest view. Their lights keep shining because `LampLights` reads every object.
 - **Door and window finishes** (`domain/model/openingFinishes.ts`):
-  - Finish sets: 12 for doors (frame + leaf, e.g. oak, walnut, teak, gỗ lim, gỗ hương, laminates, paints) and 9 for
-    windows (frame only: uPVC, aluminium incl. Xingfa champagne and wood-grain, steel, bronze, timber).
+  - Finish sets: 18 for doors (frame + leaf, e.g. oak, walnut, teak, gỗ lim, gỗ hương, laminates, paints, plus metal
+    sets for glass doors: white frame with brushed steel or brass, black metal, anthracite, Xingfa champagne, white
+    aluminium) and 9 for windows (frame only: uPVC, aluminium incl. Xingfa champagne and wood-grain, steel, bronze,
+    timber).
   - `applyOpeningFinish` keeps glass leaves.
   - UI: swatches in the Inspector (`OpeningFinishes`, applies to all selected openings of the family) and in the
     Build panel (for the next opening placed: `editor.doorFinish/windowFinish`).
@@ -452,8 +454,9 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **Kinds:** door-single, door-double, door-french, door-sliding, door-pocket, door-bifold, door-barn and door-pivot; passage, passage-arched and passage-moon; window-single, window-double, window-fixed, window-sliding, window-tall, window-arched and window-round. `isPassageKind()` and `isDoorKind` cover the passages.
 - **Options:** `transom`, `threshold`, `casing`, `grille` ('none' | 'bars' | 'grid') and `shutters`.
 - **Designs** (`domain/model/openingDesigns.ts`): the kind says how an opening works, the optional `Opening.design` says
-  what it looks like. 18 door designs (flush, shaker, two/five panels, V-groove, lined, reeded, plank, louvred,
-  half/side/three/full lite, divided lites, ribbed glass, slim aluminium clear/frosted, steel grid) and 12 window
+  what it looks like. 25 door designs (flush, shaker, two/five panels, V-groove, lined, reeded, plank, louvred,
+  half/side/three/full lite, frosted lite, divided lites, ribbed glass, slim aluminium clear/frosted, patio aluminium,
+  slim black frame, black fluted, steel grid, frameless glass clear/frosted/fluted) and 12 window
   designs (`win-*`: plain, slim, black steel, tilt & turn, top light, asymmetric, 2×2 / 3×2 grid, vertical/horizontal
   bars, frosted lower, reeded glass).
   - `designFitsKind`/`designsForKind` decide what is offered: door designs for door kinds, window designs for windows,
@@ -473,6 +476,19 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - UI: `editor/OpeningDesignPicker.tsx` draws each design as a small SVG elevation from the same layout data. It is
     used in the Inspector's "Design" section and the Door & window tool panel (`editor.doorDesign` / `windowDesign`
     are applied on insert).
+  - **Glass doors.** Framed: `lite-frosted` (timber, frosted bathroom pane), `alu-patio` (chunky anthracite profiles,
+    sliding/swing/pocket only), `steel-slim` and `steel-fluted` (thin black steel, clear or reeded), `steel-grid`
+    (Crittall-style). These are ordinary leaf layouts.
+  - **Frameless glass** (`glass-frameless`, `-frosted`, `-fluted`; `isFramelessDesign`, not on bi-folds): the layout is one
+    lite over the whole leaf (`LeafLayout.frameless`) and the leaf is a 10 mm pane (`FRAMELESS_GLASS`; fluted = a
+    thinner core with reeds on both faces). Hardware depends on the kind, in the **leaf material** (the design
+    suggests `metal-brushed-steel`, so door finishes recolour the fittings): swing/double/French = hinge-side and lock
+    patch fittings plus a ladder pull through the glass; sliding = both panes hang under a head track, the sliding
+    pane gets a ladder pull outside and a flush pull facing the fixed pane, which stands in a floor channel; barn =
+    clamp plates on both faces, a pull outside, a flush pull toward the wall; pocket = flush pulls; pivot = patches at
+    the pivots. Hardware meshes are named `opening-hardware` (the inside-the-opening tests skip them, like metal
+    handles). Plan symbols draw frameless leaves as a 12 mm pane in the `glass` role (A-GLAZ in DXF), and frameless
+    sliding doors add a dashed overhead track.
 - **Exterior convention:** sashes open outward, so the exterior is the **swing side**. Shutters and bars go there, and the interior sill board is on the other side.
 - **3D** (`scene-3d/openingBuilder.ts`):
   - The wall gap stays rectangular. Arched and round shapes fill the corners with **infill** prisms in the wall's own materials, named `opening-infill`, but only in solid or half walls. Wall materials are part of `OpeningNode`'s key, so repainting a wall updates the infill.
@@ -1651,3 +1667,8 @@ Known limitations (also in README):
      `isObjectHidden`/`isObjectLocked` helpers used everywhere hidden/locked items are skipped (2D, hit-testing, 3D,
      lights, exports, thumbnails, guest, walk), the Layers panel from a top-bar icon (Shift+L), an Inspector Layer field
      and right-click "Move to …" entries; tests in `itemLayers.test.ts` (done).
+134. "Add more types of glass doors, including full-glass doors (single and sliding)" → seven door designs: frameless
+     glass clear/frosted/fluted (patch fittings + ladder pull on swing kinds, head track with one fixed pane on
+     sliding, clamp plates on barn, pocket and pivot variants), slim black frame, black fluted, patio aluminium and
+     frosted lite; metal door finish sets; thin glass plan symbols; picker thumbnails with fittings; tests in
+     `openings.test.ts`, `symbols.test.ts`, `openingDesigns.test.ts` (done).

@@ -221,6 +221,7 @@ describe('buildOpening designs', () => {
   const tol = 0.004;
   const sizes: ({ width: number; height: number } | undefined)[] = [undefined, { width: 0.6, height: 0.7 }, { width: 2.2, height: 2.4 }];
   const isMetal = (m: THREE.Mesh) => matName(m) === 'metal-brushed-steel';
+  const isHardware = (m: THREE.Mesh) => isMetal(m) || m.name === 'opening-hardware';
 
   for (const kind of KINDS.filter((k) => !isPassageKind(k))) {
     it(`keeps every ${kind} design inside the opening`, () => {
@@ -238,7 +239,7 @@ describe('buildOpening designs', () => {
               const b = new THREE.Box3().setFromObject(m, true);
               for (const v of [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z]) expect(Number.isFinite(v)).toBe(true);
               // Handles and hardware stand proud of the wall; the barn leaf hangs on the face; the sill board sits under the window.
-              if (kind === 'door-barn' || isMetal(m) || m.name === 'opening-infill') continue;
+              if (kind === 'door-barn' || isHardware(m) || m.name === 'opening-infill') continue;
               if (isWindowKind(kind) && b.max.y <= span.sill + 1e-6) continue;
               const where = `${kind} / ${d.id} / ${size ? `${size.width}×${size.height}` : 'preset'}`;
               expect(b.min.x, where).toBeGreaterThanOrEqual(span.s0 - tol);
@@ -271,7 +272,7 @@ describe('buildOpening designs', () => {
   it('hangs every barn design on the swing face, clear of the wall', () => {
     for (const d of designsForKind('door-barn')) {
       const { project, o, g, span } = setup('door-barn', { design: d.id, swingSide: 'right' });
-      const leaf = bounds(meshes(build(project, o, g, span), (m) => !isMetal(m) && /test-panel|glass/.test(matName(m))));
+      const leaf = bounds(meshes(build(project, o, g, span), (m) => !isHardware(m) && /test-panel|glass/.test(matName(m))));
       expect(leaf.min.z, d.id).toBeGreaterThan(T / 2);
       expect(leaf.max.x - leaf.min.x).toBeGreaterThan(span.s1 - span.s0);
     }
@@ -312,6 +313,102 @@ describe('buildOpening designs', () => {
     expect(names('door-single', 'ribbed-glass').has('glass-reeded')).toBe(true);
     expect(names('window-single', 'win-reeded').has('glass-reeded')).toBe(true);
     expect(names('window-single', 'win-frosted-low').has('glass-frosted')).toBe(true);
+    expect(names('door-single', 'lite-frosted').has('glass-frosted')).toBe(true);
+    expect(names('door-single', 'steel-fluted').has('glass-reeded')).toBe(true);
+    expect(names('door-sliding', 'glass-frameless-frosted').has('glass-frosted')).toBe(true);
+    expect(names('door-barn', 'glass-frameless-fluted').has('glass-reeded')).toBe(true);
+  });
+
+  describe('frameless glass', () => {
+    const FRAMELESS = ['glass-frameless', 'glass-frameless-frosted', 'glass-frameless-fluted'] as const;
+    const parts = (kind: OpeningKind, design: Opening['design'], patch: Partial<Opening> = {}) => {
+      const s = setup(kind, { design, ...patch });
+      const list = meshes(build(s.project, s.o, s.g, s.span));
+      return {
+        ...s,
+        glass: list.filter((m) => /^glass-/.test(matName(m))),
+        hardware: list.filter((m) => m.name === 'opening-hardware'),
+        // Everything else built from the leaf material (stiles, rails, slabs): frameless leaves have none.
+        leafBody: list.filter((m) => matName(m) === 'test-panel' && m.name !== 'opening-hardware'),
+      };
+    };
+
+    it('is offered to every door kind but bi-folds, and to no window or passage', () => {
+      for (const kind of KINDS) {
+        const fits = designsForKind(kind).some((d) => d.id === 'glass-frameless');
+        expect(fits, kind).toBe(!isWindowKind(kind) && !isPassageKind(kind) && kind !== 'door-bifold');
+      }
+    });
+
+    it('builds a pane edge to edge, one glass thickness, with no frame on the leaf', () => {
+      for (const d of FRAMELESS) {
+        const { glass, leafBody, span } = parts('door-single', d);
+        expect(leafBody, d).toHaveLength(0);
+        const b = bounds(glass);
+        const size = b.getSize(new THREE.Vector3());
+        // The leaf fills the frame's inner width (5 cm jambs) and is a single 10 mm pane.
+        expect(size.x, d).toBeCloseTo(span.s1 - span.s0 - 0.1, 3);
+        expect(size.z, d).toBeLessThanOrEqual(0.0101);
+      }
+    });
+
+    it('hangs swing leaves on patch fittings with a ladder pull through the glass', () => {
+      const single = parts('door-single', 'glass-frameless');
+      // Two hinge-side patches and a lock patch (boxes ~16 cm long), plus the two pull bars.
+      const patches = single.hardware.filter((m) => Math.abs(bounds([m]).getSize(new THREE.Vector3()).x - 0.16) < 0.002);
+      expect(patches).toHaveLength(3);
+      const bars = single.hardware.filter((m) => bounds([m]).getSize(new THREE.Vector3()).y > 0.5);
+      expect(bars).toHaveLength(2);
+      const zs = bars.map((m) => bounds([m]).getCenter(new THREE.Vector3()).z).sort((a, b) => a - b);
+      expect(zs[0]).toBeLessThan(zs[1] - 0.09);
+      // A double door gets a set on each leaf.
+      expect(parts('door-double', 'glass-frameless').hardware.length).toBe(single.hardware.length * 2);
+    });
+
+    it('slides full-height panes below a head track inside the opening, one fixed', () => {
+      const closed = parts('door-sliding', 'glass-frameless');
+      const open = parts('door-sliding', 'glass-frameless', { openAngle: 90 });
+      const track = closed.hardware.find((m) => bounds([m]).getSize(new THREE.Vector3()).x > closed.span.s1 - closed.span.s0 - 0.11);
+      expect(track).toBeDefined();
+      const tb = bounds([track!]);
+      expect(tb.max.y).toBeLessThanOrEqual(closed.span.head - 0.05 + 1e-6);
+      expect(tb.min.z).toBeGreaterThanOrEqual(-T / 2);
+      expect(tb.max.z).toBeLessThanOrEqual(T / 2);
+      // Panes stop under the track.
+      expect(bounds(closed.glass).max.y).toBeLessThanOrEqual(tb.min.y);
+      // Hinge at the start: the sliding pane (swing side, +z for "right") moves along +x; the fixed one stays.
+      const xs = (p: typeof closed) => p.glass.map((m) => Math.round(bounds([m]).getCenter(new THREE.Vector3()).x * 1000)).sort((a, b) => a - b);
+      const [c0, c1] = xs(closed);
+      const [o0, o1] = xs(open);
+      expect(o1).toBe(c1);
+      expect(o0).toBeGreaterThan(c0 + 300);
+    });
+
+    it('slides a glass pocket leaf into the wall and a glass barn leaf along the face', () => {
+      const pocket = parts('door-pocket', 'glass-frameless', { openAngle: 90 });
+      expect(bounds(pocket.glass).getSize(new THREE.Vector3()).z).toBeLessThanOrEqual(0.0101);
+      expect(bounds(pocket.glass).max.x).toBeLessThan(pocket.span.s0 + 0.1);
+      const barn = parts('door-barn', 'glass-frameless', { swingSide: 'right' });
+      expect(barn.leafBody).toHaveLength(0);
+      // Clamp plates on both faces of the pane, nothing behind the wall face.
+      expect(bounds(barn.glass).min.z).toBeGreaterThan(T / 2);
+      expect(barn.hardware.filter((m) => Math.abs(bounds([m]).getSize(new THREE.Vector3()).x - 0.14) < 0.002)).toHaveLength(4);
+    });
+
+    it('colours the fittings with the leaf material (brushed steel by default)', () => {
+      let id = '';
+      const project = produce(createEmptyProject(), (d) => {
+        const [wallId] = addWallChain(d, [{ x: 0, y: 0 }, { x: 8, y: 0 }], { thickness: T, height: 2.7, role: 'interior' });
+        id = addOpening(d, { wallId, kind: 'door-single', offset: 4, design: 'glass-frameless' })!;
+      });
+      const o = project.openings[id];
+      expect(o.panelMaterialId).toBe('metal-brushed-steel');
+      const g = computeWallNetwork(project).walls.get(o.wallId)!;
+      const span = g.spans.find((s) => s.id === id)!;
+      const hw = meshes(build(project, o, g, span), (m) => m.name === 'opening-hardware');
+      expect(hw.length).toBeGreaterThan(4);
+      expect(new Set(hw.map(matName))).toEqual(new Set(['metal-brushed-steel']));
+    });
   });
 
   it('keeps legacy openings (no design) looking as before', () => {

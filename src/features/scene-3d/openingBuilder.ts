@@ -5,6 +5,8 @@ import { isPassageKind, isWindowKind } from '@/domain/model/schema';
 import {
   ASYM_VENT_SHARE,
   doorLeafLayout,
+  FRAMELESS_GLASS,
+  isFramelessDesign,
   LEAF_GROOVE,
   LEAF_RECESS,
   leafCells,
@@ -446,6 +448,30 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
 
   const doorGlass = (kind: 'clear' | 'frosted' | 'reeded') => (kind === 'frosted' ? frostedMat : kind === 'reeded' ? reededMat : glassMat);
 
+  // Frameless glass leaves: a toughened pane, with fittings in the leaf material (brushed steel by default).
+  const frameless = !win && isFramelessDesign(design);
+  /** Leaf thickness: the kind's own, or the glass alone on frameless designs. */
+  const leafT = (solid: number) => (frameless ? FRAMELESS_GLASS : solid);
+  const hwMat = frameless ? panelMat : metalMat;
+  /** Hardware stands proud of the leaf; named so checks can tell it from the leaf itself. */
+  const hw = (m: THREE.Mesh) => {
+    m.name = 'opening-hardware';
+    return m;
+  };
+  /** Ladder pull: a round bar `len` long on stand-offs, on one face (`side` ±1) or both (0) of a leaf `lt` thick. */
+  const pullBar = (parent: THREE.Object3D, x: number, y: number, len: number, lt: number, side: -1 | 0 | 1) => {
+    const off = 0.05;
+    for (const sz of side === 0 ? [-1, 1] : [side]) parent.add(hw(cyl(0.0125, len, x, y, sz * (lt / 2 + off), 'y', hwMat, false)));
+    const z0 = side > 0 ? 0 : -(lt / 2 + off);
+    const z1 = side < 0 ? 0 : lt / 2 + off;
+    for (const dy of [-len / 2 + 0.07, len / 2 - 0.07]) parent.add(hw(cyl(0.008, z1 - z0, x, y + dy, (z0 + z1) / 2, 'z', hwMat, false)));
+  };
+  /** Flush round finger pull on one face (sliding glass passing close to a wall or another pane). */
+  const flushPull = (parent: THREE.Object3D, x: number, y: number, lt: number, side: number) =>
+    parent.add(hw(cyl(0.028, 0.004, x, y, side * (lt / 2 + 0.002), 'z', hwMat, false)));
+  /** Patch fitting clamping a corner of the glass, centred at (x, y). */
+  const patch = (parent: THREE.Object3D, x: number, y: number, lt: number) => parent.add(hw(box(0.16, 0.055, lt + 0.024, x, y, 0, hwMat, false)));
+
   /**
    * One door leaf in its design (domain/model/openingDesigns.ts): solid, recessed and grooved
    * strips at their depths, glass in the lites, glazing bars, reeds, louvres and ledges. Local
@@ -457,6 +483,27 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
     const outer = opts.outer ?? 1;
     const layout = doorLeafLayout(design ?? 'flush', width, lh, { brace: opts.brace });
     const gm = doorGlass(layout.glass);
+    if (layout.frameless) {
+      // One toughened pane edge to edge (fluted: a thinner core with reeds on both faces).
+      if (layout.glass === 'reeded') {
+        lg.add(box(width, lh, lt * 0.6, width / 2, lh / 2, 0, gm, false));
+        for (const side of [1, -1]) {
+          const m = new THREE.Mesh(flutedGeometry(width, lh, REED_PITCH * 0.8, lt * 0.2), gm);
+          m.position.set(width / 2, lh / 2, side * lt * 0.3);
+          if (side < 0) m.rotation.y = Math.PI;
+          lg.add(m);
+        }
+      } else lg.add(box(width, lh, lt, width / 2, lh / 2, 0, gm, false));
+      if (withHandle) {
+        // Swing door: patch fittings at the hinge-side corners, a lock patch, and a ladder pull through the glass.
+        patch(lg, 0.08, 0.0275, lt);
+        patch(lg, 0.08, lh - 0.0275, lt);
+        if (width > 0.4) patch(lg, width - 0.08, 0.0275, lt);
+        const pl = clamp(lh * 0.5, 0.2, 1.2);
+        pullBar(lg, width - 0.09, clamp(1.05 - bottom, pl / 2 + 0.07, lh - pl / 2 - 0.07), pl, lt, 0);
+      }
+      return lg;
+    }
     for (const c of leafCells(layout, width, lh)) {
       const cw = c.x1 - c.x0;
       const ch = c.y1 - c.y0;
@@ -536,10 +583,43 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
   ];
 
   if (!win) {
-    if (kind === 'door-single') swingLeaves([{ hingeAtStart, width: innerW }], (width) => leaf(width, true));
-    else if (kind === 'door-double') swingLeaves(pair, (width) => leaf(width, true));
-    else if (kind === 'door-french') swingLeaves(pair, (width) => leaf(width, true, leafH, 0.045));
-    else if (kind === 'door-sliding') {
+    if (kind === 'door-single') swingLeaves([{ hingeAtStart, width: innerW }], (width) => leaf(width, true, leafH, leafT(0.04)));
+    else if (kind === 'door-double') swingLeaves(pair, (width) => leaf(width, true, leafH, leafT(0.04)));
+    else if (kind === 'door-french') swingLeaves(pair, (width) => leaf(width, true, leafH, leafT(0.045)));
+    else if (kind === 'door-sliding' && frameless) {
+      // Full-height glass: both panes hang below a head track. The sliding one (swing side) has a ladder
+      // pull outside and a flush pull facing the fixed pane, which stands in a floor channel.
+      const lt = FRAMELESS_GLASS;
+      const pw = innerW * 0.55;
+      const slide = (opening.openAngle / 90) * innerW * 0.45;
+      const z = swing * t * 0.18;
+      const trackH = Math.min(0.05, leafH * 0.1);
+      const gap = 0.008;
+      const ph = leafH - trackH - 2 * gap;
+      const pane = (moving: boolean) => {
+        const p = leaf(pw, false, ph, lt);
+        for (const x of [0.12, pw - 0.12]) p.add(hw(box(0.11, 0.05, lt + 0.016, x, ph - 0.025, 0, hwMat, false)));
+        if (moving) {
+          const pl = clamp(ph * 0.45, 0.2, 1.0);
+          const py = clamp(1.05 - bottom - gap, pl / 2 + 0.07, ph - pl / 2 - 0.07);
+          pullBar(p, 0.09, py, pl, lt, swing);
+          flushPull(p, 0.09, py, lt, -swing);
+        } else p.add(hw(box(pw, 0.03, lt + 0.016, pw / 2, 0.015 - gap, 0, hwMat, false)));
+        return p;
+      };
+      const p1 = pane(true);
+      const p2 = pane(false);
+      if (hingeAtStart) {
+        p1.position.set(-innerW / 2 + slide, bottom + gap, z);
+        p2.position.set(innerW / 2 - pw, bottom + gap, -z);
+      } else {
+        p1.scale.x = -1;
+        p1.position.set(innerW / 2 - slide, bottom + gap, z);
+        p2.position.set(-innerW / 2, bottom + gap, -z);
+      }
+      add(p1, p2);
+      add(hw(box(innerW, trackH, Math.min(t - 0.01, 2 * Math.abs(z) + lt + 0.03), 0, bottom + leafH - trackH / 2, 0, hwMat, shadows)));
+    } else if (kind === 'door-sliding') {
       // The sliding panel (with the handle) runs on the swing side and closes from the hinge end;
       // the fixed panel sits on the other face at the other end.
       const pw = innerW * 0.55;
@@ -558,7 +638,7 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       add(p1, p2);
     } else if (kind === 'door-pocket') {
       // The leaf slides into the wall cavity on the hinge side (0–90° = 0–100 % open).
-      const lt = Math.min(0.035, t * 0.45);
+      const lt = leafT(Math.min(0.035, t * 0.45));
       const dir = hingeAtStart ? -1 : 1;
       const avail = hingeAtStart ? span.s0 - g.clearStart : g.clearEnd - span.s1;
       const slide = frac * clamp(avail + f, 0, innerW);
@@ -568,8 +648,8 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       const lead = dir < 0 ? innerW : 0;
       const inward = dir < 0 ? -1 : 1;
       const hy = clamp(1.0 - bottom, 0.1, leafH - 0.1);
-      lf.add(box(0.006, 0.16, lt * 0.6, lead - inward * 0.003, hy, 0, metalMat, false));
-      for (const side of [-1, 1]) lf.add(box(0.03, 0.13, 0.003, lead + inward * 0.06, hy, side * (lt / 2 + 0.0015), metalMat, false));
+      lf.add(hw(box(0.006, 0.16, lt * 0.6, lead - inward * 0.003, hy, 0, hwMat, false)));
+      for (const side of [-1, 1]) lf.add(hw(box(0.03, 0.13, 0.003, lead + inward * 0.06, hy, side * (lt / 2 + 0.0015), hwMat, false)));
       add(lf);
     } else if (kind === 'door-bifold') {
       // 2 or 4 hinged panels folding toward the hinge jamb, zig-zagging out on the swing side.
@@ -607,7 +687,7 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
     } else if (kind === 'door-barn') {
       // Slab leaf hung from a face-mounted rail on the swing side, sliding along the wall toward the hinge end.
       const sgn = hingeAtStart ? -1 : 1;
-      const lt = 0.04;
+      const lt = leafT(0.04);
       const stand = casing ? cd : 0; // clear the casing
       const leafW = w + 0.1;
       const railY = Math.max(head + 0.04, Math.min(head + 0.14, g.z1 - 0.03));
@@ -624,33 +704,40 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       const strapZ = swing * (lt / 2 + 0.003);
       const wheelZ = railZ - leafZ;
       for (const x of [0.15, leafW - 0.15]) {
-        const y0 = lh - 0.2;
-        lf.add(box(0.04, wheelY - y0, 0.006, x, (y0 + wheelY) / 2, strapZ, metalMat, false));
-        lf.add(cyl(wheelR, 0.02, x, wheelY, wheelZ, 'z', metalMat, false));
-        lf.add(cyl(0.01, Math.abs(strapZ - wheelZ) + 0.02, x, wheelY, (strapZ + wheelZ) / 2, 'z', metalMat, false));
+        // Glass hangs from clamp plates on both faces; timber from straps screwed to the outer face.
+        const y0 = frameless ? lh - 0.12 : lh - 0.2;
+        if (frameless) for (const sz of [-1, 1]) lf.add(hw(box(0.14, 0.12, 0.006, x, lh - 0.06, sz * (lt / 2 + 0.003), hwMat, false)));
+        lf.add(hw(box(0.04, wheelY - y0, 0.006, x, (y0 + wheelY) / 2, strapZ, hwMat, false)));
+        lf.add(hw(cyl(wheelR, 0.02, x, wheelY, wheelZ, 'z', hwMat, false)));
+        lf.add(hw(cyl(0.01, Math.abs(strapZ - wheelZ) + 0.02, x, wheelY, (strapZ + wheelZ) / 2, 'z', hwMat, false)));
       }
       // Bar pull on the outer face, flush pull on the inner face, at the closing edge.
       const hx = sgn < 0 ? leafW - 0.12 : 0.12;
       const hy = clamp(1.0 - bot, 0.3, lh - 0.3);
-      lf.add(box(0.022, 0.4, 0.022, hx, hy, swing * (lt / 2 + 0.045), metalMat, false));
-      for (const dy of [-0.17, 0.17]) lf.add(cyl(0.008, 0.045, hx, hy + dy, swing * (lt / 2 + 0.0225), 'z', metalMat, false));
-      lf.add(box(0.03, 0.12, 0.003, hx, hy, -swing * (lt / 2 + 0.0015), metalMat, false));
+      if (frameless) {
+        pullBar(lf, hx, hy, Math.min(0.8, lh * 0.4), lt, swing);
+        flushPull(lf, hx, hy, lt, -swing);
+      } else {
+        lf.add(box(0.022, 0.4, 0.022, hx, hy, swing * (lt / 2 + 0.045), metalMat, false));
+        for (const dy of [-0.17, 0.17]) lf.add(cyl(0.008, 0.045, hx, hy + dy, swing * (lt / 2 + 0.0225), 'z', metalMat, false));
+        lf.add(box(0.03, 0.12, 0.003, hx, hy, -swing * (lt / 2 + 0.0015), metalMat, false));
+      }
       add(lf);
       // Rail (wider than the opening so the leaf can clear it), stand-offs and end stops.
       const railLen = 2 * leafW + 0.1;
       const railCx = (sgn * leafW) / 2;
-      add(box(railLen, 0.04, 0.01, railCx, railY, railZ, metalMat, shadows));
+      add(hw(box(railLen, 0.04, 0.01, railCx, railY, railZ, hwMat, shadows)));
       const nb = Math.max(2, Math.ceil(railLen / 0.5) + 1);
       for (let i = 0; i < nb; i++) {
         const x = railCx - railLen / 2 + 0.05 + ((railLen - 0.1) * i) / (nb - 1);
-        add(cyl(0.012, 0.025 + stand, x, railY, swing * (face + (0.025 + stand) / 2), 'z', metalMat, false));
+        add(hw(cyl(0.012, 0.025 + stand, x, railY, swing * (face + (0.025 + stand) / 2), 'z', hwMat, false)));
       }
-      for (const sx of [-1, 1]) add(box(0.025, 0.05, 0.03, railCx + sx * (railLen / 2 - 0.0125), railY + 0.035, railZ, metalMat, false));
+      for (const sx of [-1, 1]) add(hw(box(0.025, 0.05, 0.03, railCx + sx * (railLen / 2 - 0.0125), railY + 0.035, railZ, hwMat, false)));
       // Floor guide on the slide side.
-      add(box(0.05, 0.04, lt + 0.03, sgn * (w / 2 + 0.08), sill + 0.02, leafZ, metalMat, false));
+      add(hw(box(0.05, 0.04, lt + 0.03, sgn * (w / 2 + 0.08), sill + 0.02, leafZ, hwMat, false)));
     } else if (kind === 'door-pivot') {
       // Wide slab turning about a vertical axis ~15 % in from the hinge jamb.
-      const lt = 0.055;
+      const lt = leafT(0.055);
       const pOff = 0.15 * innerW;
       const pivot = new THREE.Group();
       pivot.position.set(hingeAtStart ? -innerW / 2 + pOff : innerW / 2 - pOff, bottom, 0);
@@ -661,15 +748,17 @@ export function buildOpening(opening: Opening, g: WallGeometry, span: OpeningSpa
       const py = clamp(1.05 - bottom, pl / 2, leafH - pl / 2);
       const px = innerW - 0.12;
       for (const side of [-1, 1]) {
-        lf.add(box(0.025, pl, 0.025, px, py, side * (lt / 2 + 0.045), metalMat, false));
-        for (const dy of [-pl / 2 + 0.08, pl / 2 - 0.08]) lf.add(cyl(0.009, 0.045, px, py + dy, side * (lt / 2 + 0.0225), 'z', metalMat, false));
+        lf.add(hw(box(0.025, pl, 0.025, px, py, side * (lt / 2 + 0.045), hwMat, false)));
+        for (const dy of [-pl / 2 + 0.08, pl / 2 - 0.08]) lf.add(hw(cyl(0.009, 0.045, px, py + dy, side * (lt / 2 + 0.0225), 'z', hwMat, false)));
       }
+      // Glass pivot doors clamp the pane in patch fittings at the floor and head pivots.
+      if (frameless) for (const y of [0.0275, leafH - 0.0275]) patch(lf, pOff, y, lt);
       holder.add(lf);
       if (!hingeAtStart) holder.scale.x = -1;
       pivot.add(holder);
       // Pivot hardware at floor and head.
-      pivot.add(cyl(0.025, 0.012, 0, 0.006, 0, 'y', metalMat, false));
-      pivot.add(cyl(0.025, 0.012, 0, leafH - 0.006, 0, 'y', metalMat, false));
+      pivot.add(hw(cyl(0.025, 0.012, 0, 0.006, 0, 'y', hwMat, false)));
+      pivot.add(hw(cyl(0.025, 0.012, 0, leafH - 0.006, 0, 'y', hwMat, false)));
       pivot.rotation.y = (hingeAtStart ? -swing : swing) * open;
       add(pivot);
     }

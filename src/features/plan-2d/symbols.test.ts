@@ -45,6 +45,25 @@ describe('openingSymbol', () => {
     }
   });
 
+  it('draws frameless glass leaves as thin glass, other leaves as before', () => {
+    for (const kind of ['door-single', 'door-double', 'door-french', 'door-sliding', 'door-pocket', 'door-barn', 'door-pivot'] as OpeningKind[]) {
+      const glass = symbol(kind, { design: 'glass-frameless' }).prims;
+      const timber = symbol(kind, { design: 'flush' }).prims;
+      // Leaf bodies only (the pivot door's pivot marker stays a leaf-coloured circle).
+      const body = (p: PlanPrim) => p.t !== 'arc';
+      expect(glass.filter((p) => p.role === 'leaf' && body(p)), kind).toHaveLength(0);
+      expect(glass.filter((p) => p.role === 'glass').length, kind).toBe(timber.filter((p) => p.role === 'leaf' && body(p)).length);
+      expect(timber.some((p) => p.role === 'glass'), kind).toBe(false);
+    }
+    // Swing leaves: a 12 mm pane instead of a 40 mm slab.
+    const leafOf = (prims: PlanPrim[], role: PlanPrim['role']) => prims.find((p) => p.t === 'poly' && p.role === role) as Extract<PlanPrim, { t: 'poly' }>;
+    const thin = leafOf(symbol('door-single', { design: 'glass-frameless' }).prims, 'glass');
+    const xs = thin.pts.map((p) => p.x);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(0.012, 6);
+    // Framed glass designs keep the leaf symbol.
+    expect(symbol('door-single', { design: 'steel-slim' }).prims.some((p) => p.role === 'leaf')).toBe(true);
+  });
+
   it('keeps the pocket door leaf inside the wall thickness', () => {
     for (const hinge of ['start', 'end'] as const) {
       const { prims, span } = symbol('door-pocket', { hinge });

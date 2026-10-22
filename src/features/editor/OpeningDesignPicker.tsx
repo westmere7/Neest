@@ -6,6 +6,7 @@ import {
   ASYM_VENT_SHARE,
   designsForKind,
   doorLeafLayout,
+  isFramelessDesign,
   leafCells,
   OPENING_DESIGNS_BY_ID,
   sashGlazing,
@@ -109,6 +110,33 @@ function hatch(r: DRect, step: number, vertical: boolean, cls: string, key: stri
   return out;
 }
 
+/** Fittings drawn on a frameless glass leaf: patch fittings and a pull (swing), a pull and top clamps (slide, barn). */
+type GlassHardware = 'swing' | 'slide' | 'barn' | 'pivot' | 'none';
+
+/** Frameless glass leaf: one pane edge to edge with its fittings (same sizes as the 3D builder). */
+function glassLeafHardware(w: number, h: number, hardware: GlassHardware): ReactNode[] {
+  const els: ReactNode[] = [];
+  const pull = (px: number, len: number) => {
+    const py = Math.min(Math.max(1.05, len / 2 + 0.07), h - len / 2 - 0.07);
+    els.push(rect({ x0: px - 0.0125, y0: py - len / 2, x1: px + 0.0125, y1: py + len / 2 }, 'od-hw', 'pull'));
+  };
+  if (hardware === 'swing') {
+    const patches = [
+      { x0: 0, y0: 0, x1: 0.16, y1: 0.055 },
+      { x0: 0, y0: h - 0.055, x1: 0.16, y1: h },
+      ...(w > 0.4 ? [{ x0: w - 0.16, y0: 0, x1: w, y1: 0.055 }] : []),
+    ];
+    patches.forEach((r, i) => els.push(rect(r, 'od-hw', `p${i}`)));
+    pull(w - 0.09, Math.min(1.2, Math.max(0.2, h * 0.5)));
+  } else if (hardware === 'slide' || hardware === 'barn') {
+    const cw = hardware === 'barn' ? 0.14 : 0.11;
+    const ch = hardware === 'barn' ? 0.12 : 0.05;
+    for (const cx of [0.15, w - 0.15]) els.push(rect({ x0: cx - cw / 2, y0: h - ch, x1: cx + cw / 2, y1: h }, 'od-hw', `c${cx}`));
+    pull(hardware === 'barn' ? 0.12 : 0.09, Math.min(hardware === 'barn' ? 0.8 : 1.0, h * 0.42));
+  } else if (hardware === 'pivot') pull(w - 0.12, Math.min(1.4, h * 0.6));
+  return els;
+}
+
 function DoorLeaf({
   design,
   w,
@@ -116,6 +144,7 @@ function DoorLeaf({
   x,
   mirror,
   brace,
+  hardware = 'none',
 }: {
   design: OpeningDesign;
   w: number;
@@ -123,10 +152,22 @@ function DoorLeaf({
   x: number;
   mirror?: boolean;
   brace?: boolean;
+  hardware?: GlassHardware;
 }) {
   const layout = doorLeafLayout(design, w, h, { brace });
   const metal = !!OPENING_DESIGNS_BY_ID[design]?.material;
   const glassCls = layout.glass === 'frosted' ? 'od-frosted' : 'od-glass';
+  const tf = mirror ? `translate(${x + w},0) scale(-1,1)` : `translate(${x},0)`;
+  if (layout.frameless) {
+    const all = { x0: 0, y0: 0, x1: w, y1: h };
+    return (
+      <g transform={tf}>
+        {rect(all, `${glassCls} od-pane`, 'pane')}
+        {layout.glass === 'reeded' && hatch(all, 0.03, true, 'od-reed', 'r')}
+        {glassLeafHardware(w, h, hardware)}
+      </g>
+    );
+  }
   const els: ReactNode[] = [
     rect({ x0: 0, y0: 0, x1: w, y1: h }, metal ? 'od-leaf od-metal' : 'od-leaf', 'leaf'),
   ];
@@ -146,7 +187,7 @@ function DoorLeaf({
     const [lo, hi] = layout.battens;
     els.push(<line key="brace" className="od-brace" x1={0.12} y1={lo.y1} x2={w - 0.12} y2={hi.y0} />);
   }
-  return <g transform={mirror ? `translate(${x + w},0) scale(-1,1)` : `translate(${x},0)`}>{els}</g>;
+  return <g transform={tf}>{els}</g>;
 }
 
 function DoorElevation({
@@ -164,10 +205,25 @@ function DoorElevation({
   const iw = W - 2 * f;
   const lh = H - f;
   const leaves: ReactNode[] = [];
+  const glass = isFramelessDesign(design);
   if (kind === 'door-double' || kind === 'door-french') {
     leaves.push(
-      <DoorLeaf key="a" design={design} w={iw / 2} h={lh} x={f} />,
-      <DoorLeaf key="b" design={design} w={iw / 2} h={lh} x={f + iw / 2} mirror />,
+      <DoorLeaf key="a" design={design} w={iw / 2} h={lh} x={f} hardware="swing" />,
+      <DoorLeaf key="b" design={design} w={iw / 2} h={lh} x={f + iw / 2} mirror hardware="swing" />,
+    );
+  } else if (kind === 'door-sliding' && glass) {
+    // Frameless panes below a head track; the sliding one carries the pull.
+    const pw = iw * 0.55;
+    const tr = Math.min(0.05, lh * 0.1);
+    const ph = lh - tr - 0.016;
+    leaves.push(
+      <g key="b" transform="translate(0,0.008)">
+        <DoorLeaf design={design} w={pw} h={ph} x={W - f - pw} hardware="none" />
+      </g>,
+      <g key="a" transform="translate(0,0.008)">
+        <DoorLeaf design={design} w={pw} h={ph} x={f} hardware="slide" />
+      </g>,
+      rect({ x0: f, y0: lh - tr, x1: W - f, y1: lh }, 'od-hw', 'track'),
     );
   } else if (kind === 'door-sliding') {
     const pw = iw * 0.55;
@@ -192,8 +248,11 @@ function DoorElevation({
     leaves.push(
       <rect key="rail" className="od-rail" x={-0.12} y={H + 0.05} width={W + 0.24} height={0.03} />,
     );
-    leaves.push(<DoorLeaf key="a" design={design} w={W + 0.1} h={H + 0.03} x={-0.05} brace />);
-  } else leaves.push(<DoorLeaf key="a" design={design} w={iw} h={lh} x={f} />);
+    leaves.push(<DoorLeaf key="a" design={design} w={W + 0.1} h={H + 0.03} x={-0.05} brace hardware="barn" />);
+  } else
+    leaves.push(
+      <DoorLeaf key="a" design={design} w={iw} h={lh} x={f} hardware={kind === 'door-single' ? 'swing' : kind === 'door-pivot' ? 'pivot' : 'none'} />,
+    );
   return (
     <>
       <path className="od-frame" d={`M0 0 V${H} H${W} V0 H${W - f} V${H - f} H${f} V0 Z`} />

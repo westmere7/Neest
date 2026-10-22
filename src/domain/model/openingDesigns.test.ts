@@ -8,6 +8,7 @@ import {
   designPatch,
   designsForKind,
   doorLeafLayout,
+  isFramelessDesign,
   leafCells,
   OPENING_DESIGNS,
   OPENING_DESIGNS_BY_ID,
@@ -70,6 +71,23 @@ describe('opening designs: catalogue', () => {
     expect(designFitsKind('flush', 'window-single')).toBe(false);
   });
 
+  it('offers the glass door designs where they fit', () => {
+    const frameless = ['glass-frameless', 'glass-frameless-frosted', 'glass-frameless-fluted'] as const;
+    for (const kind of KINDS) {
+      for (const d of frameless) expect(designFitsKind(d, kind), `${d} on ${kind}`).toBe(!isWindowKind(kind) && !isPassageKind(kind) && kind !== 'door-bifold');
+      for (const d of ['steel-slim', 'steel-fluted', 'lite-frosted'] as const) expect(designFitsKind(d, kind)).toBe(!isWindowKind(kind) && !isPassageKind(kind));
+    }
+    expect(designsForKind('door-sliding').map((d) => d.id)).toEqual(expect.arrayContaining(['alu-patio', 'glass-frameless']));
+    expect(designFitsKind('alu-patio', 'door-barn')).toBe(false);
+    expect(designFitsKind('alu-patio', 'door-bifold')).toBe(false);
+    for (const d of frameless) {
+      expect(isFramelessDesign(d)).toBe(true);
+      expect(OPENING_DESIGNS_BY_ID[d].material).toBe('metal-brushed-steel');
+    }
+    expect(isFramelessDesign('alu-clear')).toBe(false);
+    expect(isFramelessDesign(null)).toBe(false);
+  });
+
   it('resolves the looks openings had before designs existed', () => {
     expect(resolveOpeningDesign({ kind: 'door-single', style: 'flush' })).toBe('flush');
     expect(resolveOpeningDesign({ kind: 'door-single', style: 'panel' })).toBe('panel-2');
@@ -113,6 +131,12 @@ describe('opening designs: layouts', () => {
         if (id === 'groove-v' || id === 'groove-h' || id === 'ledged') expect(cells.filter((c) => c.type === 'groove').length).toBeGreaterThan(0);
         if (id === 'shaker' || id.startsWith('panel-') || id === 'reeded') expect(cells.some((c) => c.type === 'recess')).toBe(true);
         if (id === 'flush') expect(cells).toHaveLength(1);
+        // Frameless glass: one pane over the whole leaf, nothing else.
+        expect(layout.frameless, id).toBe(isFramelessDesign(id));
+        if (layout.frameless) {
+          expect(cells).toEqual([{ type: 'lite', x0: 0, y0: 0, x1: w, y1: h }]);
+          expect(layout.bars.length + layout.flutes.length + layout.battens.length).toBe(0);
+        }
       }
     });
   }

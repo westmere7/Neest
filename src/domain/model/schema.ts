@@ -154,6 +154,13 @@ export const DOOR_DESIGN_IDS = [
   'alu-clear',
   'alu-frosted',
   'steel-grid',
+  'glass-frameless',
+  'glass-frameless-frosted',
+  'glass-frameless-fluted',
+  'steel-slim',
+  'steel-fluted',
+  'alu-patio',
+  'lite-frosted',
 ] as const;
 
 /** Window designs: frame profile plus glazing layout. */

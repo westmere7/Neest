@@ -27,6 +27,13 @@ export const DOOR_FINISHES: OpeningFinish[] = [
   { id: 'grey-laminate', name: 'Grey laminate (composite)', frame: 'laminate-grey', panel: 'laminate-grey' },
   { id: 'charcoal', name: 'Charcoal paint', frame: 'paint-charcoal', panel: 'paint-charcoal' },
   { id: 'sage', name: 'Sage paint', frame: 'paint-sage', panel: 'paint-sage' },
+  // Metal sets for glass doors: the leaf material is the profiles, or the fittings of frameless glass.
+  { id: 'white-steel', name: 'White frame, brushed steel', frame: 'paint-satin-white', panel: 'metal-brushed-steel' },
+  { id: 'white-brass', name: 'White frame, brass', frame: 'paint-satin-white', panel: 'metal-brass' },
+  { id: 'black-metal', name: 'Black metal', frame: 'metal-black-matte', panel: 'metal-black-matte' },
+  { id: 'anthracite', name: 'Anthracite aluminium', frame: 'metal-anthracite', panel: 'metal-anthracite' },
+  { id: 'champagne', name: 'Champagne aluminium (Xingfa)', frame: 'metal-champagne', panel: 'metal-champagne' },
+  { id: 'white-aluminium', name: 'White aluminium', frame: 'metal-white-powder', panel: 'metal-white-powder' },
 ];
 
 export const WINDOW_FINISHES: OpeningFinish[] = [
