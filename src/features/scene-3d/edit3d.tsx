@@ -18,6 +18,7 @@ import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type ToolId } from '@/state/editorStore';
 import { planKeyRouter } from '@/features/plan-2d/PlanCanvas';
 import { createCurveTool, createMeasureTool, createRoomTool, createSplitTool, createWallTool } from '@/features/plan-2d/tools/drawTools';
+import { createCalloutTool } from '@/features/plan-2d/tools/calloutTool';
 import { createOpeningTool, createPlaceTool } from '@/features/plan-2d/tools/placeTools';
 import { createExtendTool } from '@/features/plan-2d/tools/extendTool';
 import type { GhostObject, PointerInfo, Tool, ToolEnv, ToolOverlay } from '@/features/plan-2d/tools/types';
@@ -26,7 +27,7 @@ import { sharedRegistry } from './sceneRuntime';
 import { canScale, scalePct, scaledSize } from '@/features/editor/objectScale';
 
 /** Tools available directly in the 3D view (selection uses mesh picking instead). */
-export const TOOLS_3D: ToolId[] = ['select', 'pan', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place'];
+export const TOOLS_3D: ToolId[] = ['select', 'pan', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place', 'callout'];
 
 const ACCENT = '#2a8a78'; // brand teal, bright enough to read over floors
 const SNAP = '#d0a650'; // brass
@@ -64,6 +65,7 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
       measure: createMeasureTool(),
       split: createSplitTool(),
       extend: createExtendTool(),
+      callout: createCalloutTool(),
     }),
     [],
   );

@@ -5,6 +5,7 @@ import { formatArea } from '@/domain/model/units';
 import { PlanDrawing } from '@/features/plan-2d/PlanDrawing';
 import { printPalette } from '@/features/plan-2d/palette';
 import type { PlanMode } from '@/state/editorStore';
+import { calloutExtent, unionBounds } from '@/features/callouts/layout';
 
 export type PaperSize = 'A4' | 'A3' | 'A2' | 'Letter' | 'Tabloid';
 export const PAPER_MM: Record<PaperSize, [number, number]> = {
@@ -29,6 +30,8 @@ export interface SheetOptions {
   wallDims: boolean;
   roomDims: boolean;
   furniture: boolean;
+  /** Callout labels (those visible in the editor). */
+  callouts: boolean;
   titleBlock: boolean;
   scaleBar: boolean;
   legend: boolean;
@@ -72,23 +75,42 @@ export function buildSheet(project: Project, o: SheetOptions): SheetResult {
   const legendW = o.legend ? Math.min(70, W * 0.24) : 0;
   const area = { x: m, y: m, w: W - 2 * m - (legendW ? legendW + 6 : 0), h: H - 2 * m - (titleH ? titleH + 5 : 0) };
   const derived = derivePlan(project);
-  const b = derived.bounds;
+  const planBounds = derived.bounds;
+  // Callout labels keep their size on paper, so their extent depends on the scale: fit them in two passes.
+  const pxAt = (s: number) => PX_MM / (1000 / s);
+  const extent = (s: number) => (o.callouts ? unionBounds(planBounds, calloutExtent(project, derived, pxAt(s))) : planBounds);
+  let b = planBounds;
   // Dimension lines extend outside the walls; reserve room for them.
   const annoPad = (o.overallDims ? 16 : 4) + (o.wallDims ? 8 : 0);
+  const fitScale = (bb: NonNullable<typeof b>) => {
+    const bw = Math.max(0.5, bb.maxX - bb.minX);
+    const bh = Math.max(0.5, bb.maxY - bb.minY);
+    const k = Math.min((area.w - annoPad * 2) / bw, (area.h - annoPad * 2) / bh); // mm per metre
+    return Math.max(1, Math.ceil(1000 / k));
+  };
   let scale: number;
   if (!b) {
     scale = typeof o.scale === 'number' ? o.scale : 50;
     warnings.push('The plan is empty.');
   } else if (o.scale === 'fit') {
-    const bw = Math.max(0.5, b.maxX - b.minX);
-    const bh = Math.max(0.5, b.maxY - b.minY);
-    const k = Math.min((area.w - annoPad * 2) / bw, (area.h - annoPad * 2) / bh); // mm per metre
-    scale = Math.max(1, Math.ceil(1000 / k));
+    scale = fitScale(b);
+    for (let i = 0; i < 2; i++) {
+      b = extent(scale) ?? b;
+      scale = fitScale(b);
+    }
+    b = extent(scale) ?? b;
   } else {
     scale = o.scale;
     const k = 1000 / scale;
-    if (b && ((b.maxX - b.minX) * k + annoPad * 2 > area.w || (b.maxY - b.minY) * k + annoPad * 2 > area.h)) {
+    const fits = (bb: NonNullable<typeof b>) => (bb.maxX - bb.minX) * k + annoPad * 2 <= area.w && (bb.maxY - bb.minY) * k + annoPad * 2 <= area.h;
+    const withCallouts = extent(scale) ?? b;
+    if (!fits(b)) {
       warnings.push(`At 1:${scale} the plan does not fit on ${o.paper} ${o.orientation}. Choose a smaller scale, a larger paper size, or fit to page.`);
+    } else if (fits(withCallouts)) {
+      b = withCallouts;
+    } else {
+      // The plan stays centred and whole; callout labels past the drawing area are cut off.
+      warnings.push(`At 1:${scale} some callouts fall outside the drawing area. Move their labels closer, choose a smaller scale or fit to page.`);
     }
   }
   const k = 1000 / scale; // paper mm per world metre
@@ -113,6 +135,8 @@ export function buildSheet(project: Project, o: SheetOptions): SheetResult {
         showFurniture: o.furniture,
         showConstruction: true,
         showAnnotations: true,
+        showCallouts: o.callouts,
+        calloutLinks: true,
         textures: o.textures,
         shadows: o.mode === 'presentation' && o.textures,
         halo: o.halo,
@@ -219,6 +243,7 @@ export function defaultSheetOptions(project: Project): SheetOptions {
     wallDims: true,
     roomDims: false,
     furniture: true,
+    callouts: true,
     titleBlock: true,
     scaleBar: true,
     legend: true,

@@ -6,6 +6,7 @@ import { PlanDrawing } from '@/features/plan-2d/PlanDrawing';
 import { printPalette } from '@/features/plan-2d/palette';
 import type { PlanMode } from '@/state/editorStore';
 import type { SheetResult } from './sheet';
+import { calloutExtent, unionBounds } from '@/features/callouts/layout';
 
 export function svgBlob(svg: string): Blob {
   return new Blob([`<?xml version="1.0" encoding="UTF-8"?>\n`, svg], { type: 'image/svg+xml' });
@@ -52,12 +53,16 @@ export interface PlanImageOptions {
   transparent: boolean;
   annotations: boolean;
   furniture: boolean;
+  /** Callout labels (those visible in the editor). */
+  callouts?: boolean;
 }
 
 /** Plan-only image (no sheet) at a chosen resolution, for PNG export. */
 export function buildPlanImageSvg(project: Project, o: PlanImageOptions): { svg: string; width: number; height: number; background: string | null } {
   const derived = derivePlan(project);
-  const b = derived.bounds ?? { minX: 0, minY: 0, maxX: 5, maxY: 5 };
+  // Annotation sizes are fixed in world units (as on screen at ~55 px/m) so higher resolutions add detail, not clutter.
+  const px = 1 / 55;
+  const b = (o.callouts !== false ? unionBounds(derived.bounds, calloutExtent(project, derived, px)) : derived.bounds) ?? { minX: 0, minY: 0, maxX: 5, maxY: 5 };
   const marginM = 0.9;
   const wM = b.maxX - b.minX + marginM * 2;
   const hM = b.maxY - b.minY + marginM * 2;
@@ -65,8 +70,6 @@ export function buildPlanImageSvg(project: Project, o: PlanImageOptions): { svg:
   const maxSide = Math.max(wM, hM) * ppm;
   if (maxSide > MAX_PNG_PIXELS) ppm *= MAX_PNG_PIXELS / maxSide;
   const palette = printPalette(o.mode);
-  // Annotation sizes are fixed in world units (as on screen at ~55 px/m) so higher resolutions add detail, not clutter.
-  const px = 1 / 55;
   const inner = renderToStaticMarkup(
     createElement(PlanDrawing, {
       project,
@@ -84,6 +87,7 @@ export function buildPlanImageSvg(project: Project, o: PlanImageOptions): { svg:
         showFurniture: o.furniture,
         showConstruction: true,
         showAnnotations: o.annotations,
+        showCallouts: o.callouts !== false,
         textures: true,
         shadows: true,
         halo: true,

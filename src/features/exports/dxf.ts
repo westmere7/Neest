@@ -9,6 +9,8 @@ import { formatArea, formatLength } from '@/domain/model/units';
 import { assetPlan, getObjectAsset, objectSize } from '@/data/assets/registry';
 import { openingSymbol } from '@/features/plan-2d/symbols';
 import { dimensionGeometry } from '@/features/plan-2d/dimensions';
+import { layoutCallout, visibleCallouts } from '@/features/callouts/layout';
+import { lineText } from '@/features/callouts/content';
 
 /**
  * DXF export (AutoCAD R12 / AC1009 ASCII), chosen for the widest CAD
@@ -20,6 +22,7 @@ import { dimensionGeometry } from '@/features/plan-2d/dimensions';
  *   A-ANNO-TEXT  room names and areas                           TEXT
  *   A-ANNO-DIMS  dimension lines, ticks and values              LINE / TEXT (exploded)
  *   A-FURN       furniture and fixture footprints               closed POLYLINE / LINE / CIRCLE
+ *   A-ANNO-CALL  callouts: target outline, leader, label box    POLYLINE / LINE / CIRCLE / TEXT
  * Model space is 1:1 in the chosen unit; the plan's +y (down on screen) is
  * flipped to DXF's +Y up.
  */
@@ -32,6 +35,8 @@ export interface DxfOptions {
   dimensions: boolean;
   labels: boolean;
   rooms: boolean;
+  /** Callouts visible in the editor. */
+  callouts?: boolean;
 }
 
 const UNIT_SCALE: Record<DxfUnit, number> = { mm: 1000, cm: 100, m: 1, in: 1 / 0.0254 };
@@ -46,6 +51,7 @@ const LAYERS: { name: string; color: number; ltype?: string }[] = [
   { name: 'A-ANNO-TEXT', color: 2 },
   { name: 'A-ANNO-DIMS', color: 1 },
   { name: 'A-FURN', color: 8 },
+  { name: 'A-ANNO-CALL', color: 6 },
 ];
 
 class DxfWriter {
@@ -111,14 +117,15 @@ class DxfWriter {
     this.xy(c);
     this.pair(40, r * this.k);
   }
-  /** Centred text; rotation in plan degrees (clockwise on screen). */
-  text(layer: string, p: Vec2, height: number, value: string, rotationDeg = 0) {
+  /** Centred text (or left-aligned on its baseline); rotation in plan degrees (clockwise on screen). */
+  text(layer: string, p: Vec2, height: number, value: string, rotationDeg = 0, align: 'center' | 'left' = 'center') {
     this.pair(0, 'TEXT');
     this.pair(8, layer);
     this.xy(p, 10);
     this.pair(40, height * this.k);
     this.pair(1, value.replace(/[\r\n]+/g, ' '));
     if (rotationDeg) this.pair(50, normDeg(-rotationDeg));
+    if (align === 'left') return;
     this.pair(72, 1);
     this.xy(p, 11);
   }
@@ -220,6 +227,24 @@ export function buildDxf(project: Project, o: DxfOptions): string {
       w.line('A-ANNO-DIMS', geo.tick1[0], geo.tick1[1]);
       w.line('A-ANNO-DIMS', geo.tick2[0], geo.tick2[1]);
       w.text('A-ANNO-DIMS', geo.textPos, textH * 0.8, formatLength(g.path.length, units, project.settings.precision), geo.textAngle);
+    }
+  }
+
+  if (o.callouts !== false) {
+    const px = 0.012; // same label scale as the dimensions (~1 drawing px at 1:50)
+    for (const c of visibleCallouts(project)) {
+      const l = layoutCallout(project, derived, c, px);
+      if (!l) continue;
+      const { anchor, attach, box } = l;
+      if (anchor.outline) w.polyline('A-ANNO-CALL', anchor.outline, true);
+      w.circle('A-ANNO-CALL', anchor, 4 * px);
+      w.line('A-ANNO-CALL', anchor, attach);
+      w.polyline('A-ANNO-CALL', [{ x: box.x, y: box.y }, { x: box.x + box.w, y: box.y }, { x: box.x + box.w, y: box.y + box.h }, { x: box.x, y: box.y + box.h }], true);
+      l.lines.forEach((line, i) => {
+        const size = line.role === 'info' ? l.font * 0.92 : l.font;
+        const y = box.y + l.pad + l.font * 0.82 + i * l.lineH;
+        w.text('A-ANNO-CALL', { x: box.x + l.pad + 3 * px, y }, size, lineText(line), 0, 'left');
+      });
     }
   }
 

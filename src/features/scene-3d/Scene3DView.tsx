@@ -39,6 +39,7 @@ import { selectionBounds } from '@/features/editor/selectionBounds';
 import { WalkControls, toggleWalkFly, useWalkFly } from '@/features/walkthrough/WalkControls';
 import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
+import { CalloutsToggle } from '@/features/editor/AnnotationToggles';
 import { PostEffects } from './PostEffects';
 import { InfiniteGrid } from './InfiniteGrid';
 import { GlobalIllumination } from './globalIllumination';
@@ -554,6 +555,16 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     if (!e.shiftKey && e.nativeEvent.detail >= 2 && (kind === 'object' || kind === 'opening')) ed.requestFocus();
   }, []);
 
+  const onCalloutSelect = useCallback((id: string, additive: boolean) => {
+    const ed = useEditorStore.getState();
+    if (additive) ed.toggleSelection({ kind: 'callout', id });
+    else ed.setSelection([{ kind: 'callout', id }]);
+  }, []);
+  const onCalloutEdit = useCallback((id: string) => {
+    useEditorStore.getState().setSelection([{ kind: 'callout', id }]);
+    useDialogStore.getState().open('callout', { id });
+  }, []);
+
   const options: SceneOptions = {
     wallDisplay: walk ? 'full' : r.wallDisplay,
     cutawayHeight: r.cutawayHeight,
@@ -567,6 +578,9 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     selectedIds: walk || !showHelpers ? undefined : selectedIds,
     onPick: walk || drawing ? undefined : onPick,
     onObjectPointerDown: walk || drawing ? undefined : drag.onObjectPointerDown,
+    showCallouts: !walk,
+    onCalloutSelect: walk || drawing ? undefined : onCalloutSelect,
+    onCalloutEdit: walk || drawing ? undefined : onCalloutEdit,
   };
 
   const dpr: [number, number] =
@@ -721,7 +735,8 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
           shadows={r.shadows && r.quality !== 'draft'}
           quality={r.quality}
         />
-        <SceneContent project={project} derived={derived} registry={sharedRegistry} options={options} />
+        {/* Callout labels are HTML: keep them off the loading screen. */}
+        <SceneContent project={project} derived={derived} registry={sharedRegistry} options={ready ? options : { ...options, showCallouts: false }} />
         {!walk && (
           <group ref={helpersRef} visible={showHelpers}>
             <InfiniteGrid background={r.background} />
@@ -1280,6 +1295,7 @@ function ViewPanel({
               checked={r.showRoomLabels}
               onChange={(v) => setRender('Toggle 3D labels', { showRoomLabels: v })}
             />
+            <CalloutsToggle />
             <Toggle label="Wall dimensions" checked={showDims} onChange={setShowDims} />
             <Toggle label="Helpers (grid, selection)" checked={showHelpers} onChange={setShowHelpers} />
           </section>

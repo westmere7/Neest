@@ -9,6 +9,7 @@ import { ReplaceMaterialDialog } from '@/features/materials/MaterialUI';
 import { downloadBlob, exportFilename } from '@/features/exports/neestFile';
 import { SHORTCUT_LIST } from './useShortcuts';
 import { GroupDetailsDialog } from './GroupDetailsDialog';
+import { CalloutDialog } from '@/features/callouts/CalloutDialog';
 import { AssetViewerDialog } from '@/features/library/AssetInfoCard';
 import { ThemeSwitch } from '@/components/ThemeSwitch';
 import { AnnotationToggles } from './AnnotationToggles';
@@ -64,6 +65,7 @@ export function EditorDialogs() {
           onClose={close}
         />
       )}
+      {open === 'callout' && <CalloutDialog key={props.id as string} id={props.id as string} isNew={!!props.isNew} onClose={close} />}
       {open === 'group-details' && (
         <GroupDetailsDialog kind={props.kind as 'placed' | 'saved'} id={props.id as string} onClose={close} />
       )}
@@ -104,6 +106,7 @@ function RenderDialog({ onClose }: { onClose: () => void }) {
   const [long, setLong] = useState(1920);
   const [transparent, setTransparent] = useState(false);
   const [helpers, setHelpers] = useState(false);
+  const [callouts, setCallouts] = useState(true);
   const [samples, setSamples] = useState(128);
   const [bounces, setBounces] = useState(5);
   const [busy, setBusy] = useState(false);
@@ -128,6 +131,7 @@ function RenderDialog({ onClose }: { onClose: () => void }) {
   const w = ratio >= 1 ? long : Math.round(long * ratio);
   const h = ratio >= 1 ? Math.round(long / ratio) : long;
   const needs3d = workspace === 'plan';
+  const calloutCount = project.layers.callouts?.visible ? Object.values(project.callouts ?? {}).filter((c) => !c.hidden).length : 0;
   useEffect(
     () => () => {
       if (result) URL.revokeObjectURL(result.url);
@@ -136,6 +140,13 @@ function RenderDialog({ onClose }: { onClose: () => void }) {
   );
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  /** Paints the visible callouts over a finished render when asked to. */
+  const withCallouts = async (blob: Blob) => {
+    const { liveScene } = await import('@/features/scene-3d/sceneRuntime');
+    if (!callouts || !liveScene.current) return blob;
+    const { compositeCallouts } = await import('@/features/callouts/capture');
+    return compositeCallouts(blob, project, liveScene.current.camera, w, h);
+  };
   const show = (blob: Blob, extra: { engine: RenderEngine; samples?: number }) =>
     setResult((prev) => {
       if (prev) URL.revokeObjectURL(prev.url);
@@ -147,7 +158,7 @@ function RenderDialog({ onClose }: { onClose: () => void }) {
     try {
       if (engine === 'realtime') {
         const { captureView } = await import('@/features/scene-3d/sceneRuntime');
-        show(await captureView({ width: w, height: h, transparent, includeHelpers: helpers }), { engine });
+        show(await withCallouts(await captureView({ width: w, height: h, transparent, includeHelpers: helpers })), { engine });
       } else {
         const { renderPathTraced } = await import('@/features/scene-3d/pathTrace');
         const ac = new AbortController();
@@ -173,7 +184,7 @@ function RenderDialog({ onClose }: { onClose: () => void }) {
             setProgress({ ...p, started });
           },
         });
-        show(blob, { engine, samples: reached });
+        show(await withCallouts(blob), { engine, samples: reached });
         liveHost.current?.replaceChildren();
         toast.success(
           'Path-traced render finished',
@@ -314,6 +325,7 @@ function RenderDialog({ onClose }: { onClose: () => void }) {
               </>
             )}
             <Toggle label="Transparent background" checked={transparent} onChange={setTransparent} />
+            {calloutCount > 0 && <Toggle label="Callouts" checked={callouts} onChange={setCallouts} />}
             {engine === 'realtime' && (
               <Toggle label="Include helpers (grid, selection)" checked={helpers} onChange={setHelpers} />
             )}

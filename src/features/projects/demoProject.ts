@@ -8,6 +8,7 @@ import { buildWallPath, projectOnPath } from '@/domain/geometry/wallPath';
 import { opening, paintWallFacing, placeFurniture, type Furn } from './sampleHelpers';
 import { buildLoftProject } from './loftProject';
 import { buildGrandApartmentProject } from './grandApartmentProject';
+import { addCallout } from '@/domain/commands/callouts';
 
 const EXT = { thickness: 0.25, height: 2.7, role: 'exterior' as const };
 const INT = { thickness: 0.12, height: 2.7, role: 'interior' as const };
@@ -130,6 +131,7 @@ export function buildDemoProject(): Project {
       { asset: 'plant-potted', x: 7.2, y: 7.6 },
     ];
     placeFurniture(d, furniture);
+    addDemoCallouts(d as Project);
 
     d.cameras.push(
       {
@@ -156,6 +158,54 @@ export function buildDemoProject(): Project {
     d.guest.startCameraId = 'cam_overview';
     d.guest.spawn = { x: 5.9, y: 7.3 };
     d.guest.spawnAngle = -Math.PI / 2;
+  });
+}
+
+/** Callouts of the sample apartment: one on an item, one on a room, a drawn area and a spot. */
+function addDemoCallouts(d: Project) {
+  const item = (assetId: string) => Object.values(d.objects).find((o) => o.assetId === assetId);
+  const room = (name: string) => Object.values(d.rooms).find((r) => r.name === name);
+  const sofa = item('sofa-3-seat');
+  if (sofa)
+    addCallout(d, {
+      target: { kind: 'object', objectId: sofa.id },
+      offset: { x: 1.3, y: 1.15 },
+      lift: 1.7,
+      color: 'brass',
+      note: '**Keep** — reupholster in *olive bouclé*.\n- Fabric sample: [Vải Bọc Sofa](https://www.google.com/search?q=v%E1%BA%A3i+b%E1%BB%8Dc+sofa)\n- Needs 9 m of fabric',
+    });
+  const kitchen = room('Living & kitchen');
+  if (kitchen)
+    addCallout(d, {
+      target: { kind: 'room', roomId: kitchen.id },
+      offset: { x: -0.2, y: -1.9 },
+      lift: 3.0,
+      color: 'teal',
+      note: 'Open plan, south light all afternoon.',
+    });
+  addCallout(d, {
+    target: {
+      kind: 'region',
+      points: [
+        { x: 7.95, y: 0.15 },
+        { x: 10.85, y: 0.15 },
+        { x: 10.85, y: 3.75 },
+        { x: 7.95, y: 3.75 },
+      ],
+    },
+    offset: { x: 2.4, y: 0.15 },
+    lift: 1.9,
+    color: 'coral',
+    title: 'Kitchen refit',
+    note: '1. New quartz worktops\n2. Move the hob to the island\n3. Under-cabinet LED strips\nBudget: **85 million VND**',
+  });
+  addCallout(d, {
+    target: { kind: 'point', x: 0.25, y: 6.3, z: 1.8 },
+    offset: { x: -1.05, y: 0.55 },
+    lift: 0.9,
+    color: 'blue',
+    title: 'Extractor fan',
+    note: 'Ducted fan above the window, 100 mm duct to the outside wall.',
   });
 }
 

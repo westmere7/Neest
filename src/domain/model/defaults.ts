@@ -60,6 +60,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
     materials: defaultMaterialSet(),
     customAssets: {},
     groups: {},
+    callouts: {},
     collections: [],
     cameras: [],
     render: {
@@ -84,6 +85,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       construction: { visible: true, locked: false },
       furniture: { visible: true, locked: false },
       annotations: { visible: true, locked: false },
+      callouts: { visible: true, locked: false },
     },
     guest: { startCameraId: null, spawn: null, spawnAngle: 0 },
   };

@@ -10,7 +10,7 @@ import type { D } from './walls';
  * imported models, cameras, render, layers and guest settings. A project without `options` has one
  * implicit layout, "Option A".
  */
-export const PLAN_KEYS = ['nodes', 'walls', 'openings', 'rooms', 'objects', 'groups'] as const;
+export const PLAN_KEYS = ['nodes', 'walls', 'openings', 'rooms', 'objects', 'groups', 'callouts'] as const;
 
 export type NewOptionMode = 'duplicate' | 'shell' | 'blank';
 
@@ -25,6 +25,7 @@ function takePlan(d: D): OptionPlan {
     rooms: snapshot(d.rooms),
     objects: snapshot(d.objects),
     groups: snapshot(d.groups),
+    callouts: snapshot(d.callouts ?? {}),
   } as OptionPlan;
 }
 
@@ -42,6 +43,7 @@ function putPlan(d: D, plan: OptionPlan): void {
   d.rooms = own(plan.rooms);
   d.objects = own(plan.objects);
   d.groups = own(plan.groups);
+  d.callouts = own(plan.callouts ?? {});
 }
 
 /** Next free option letter: A, B… Z, then AA, AB… */
@@ -86,7 +88,7 @@ export function switchOption(d: D, id: string): boolean {
   return true;
 }
 
-const emptyPlan = (): OptionPlan => ({ nodes: {}, walls: {}, openings: {}, rooms: {}, objects: {}, groups: {} });
+const emptyPlan = (): OptionPlan => ({ nodes: {}, walls: {}, openings: {}, rooms: {}, objects: {}, groups: {}, callouts: {} });
 
 /**
  * Adds an option and switches to it. `duplicate` copies the current plan, `shell` keeps the walls,
@@ -96,7 +98,7 @@ export function addOption(d: D, mode: NewOptionMode, name?: string): string {
   const options = ensureOptions(d);
   const cur = takePlan(d);
   const plan: OptionPlan =
-    mode === 'duplicate' ? cur : mode === 'shell' ? { ...cur, objects: {}, groups: {} } : emptyPlan();
+    mode === 'duplicate' ? cur : mode === 'shell' ? { ...cur, objects: {}, groups: {}, callouts: {} } : emptyPlan();
   const id = newId('opt');
   options.push({ id, name: name?.trim() || nextOptionName(options), createdAt: Date.now(), plan });
   switchOption(d, id);

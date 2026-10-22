@@ -53,6 +53,10 @@ export async function captureView(opts: CaptureOptions): Promise<Blob> {
   cam.clearViewOffset(); // the editor's free-area offset is not part of the shot
   cam.updateProjectionMatrix();
   live.setHelpersVisible(opts.includeHelpers);
+  // Callouts are painted over the image afterwards (compositeCallouts), not rendered in the scene.
+  const callouts = scene.getObjectByName('callouts');
+  const calloutsShown = callouts?.visible ?? false;
+  if (callouts) callouts.visible = false;
   try {
     gl.setPixelRatio(1);
     gl.setSize(w, h, false);
@@ -70,6 +74,7 @@ export async function captureView(opts: CaptureOptions): Promise<Blob> {
     gl.setPixelRatio(prevRatio);
     gl.setSize(prevSize.x, prevSize.y, false);
     live.setHelpersVisible(true);
+    if (callouts) callouts.visible = calloutsShown;
   }
 }
 

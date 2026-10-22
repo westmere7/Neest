@@ -2,12 +2,12 @@ import { create } from 'zustand';
 import type { Opening, OpeningDesign, OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
 import type { MaterialTarget } from '@/domain/commands/entities';
 
-export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend';
+export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend' | 'callout';
 /** Which line of a new wall follows the drawn points: its centreline or one of its faces. */
 export type WallReference = 'center' | 'left' | 'right';
 export type Workspace = 'plan' | '3d' | 'split' | 'walk';
 export type PlanMode = 'draft' | 'furnished' | 'presentation';
-export type SelKind = 'wall' | 'node' | 'opening' | 'object' | 'room';
+export type SelKind = 'wall' | 'node' | 'opening' | 'object' | 'room' | 'callout';
 export type LibraryTab = 'build' | 'furniture' | 'materials';
 /** Structural tools in the Build tab. (Columns, beams and similar pieces are furniture-library items.) */
 export type BuildGroup = 'walls' | 'doors' | 'windows';

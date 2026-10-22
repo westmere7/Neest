@@ -5,6 +5,7 @@ import { pointInFace } from '@/domain/geometry/rooms';
 import { piecePolygon } from '@/domain/geometry/walls';
 import { pointAt, projectOnPath } from '@/domain/geometry/wallPath';
 import { add, dist, leftNormal, rotate, scale } from '@/domain/geometry/vec';
+import { hitCallout } from '@/features/callouts/layout';
 import type { SelItem } from '@/state/editorStore';
 
 export type Handle =
@@ -110,6 +111,9 @@ export function hitHandle(
 }
 
 export interface HitOptions {
+  /** Callout labels (on top of everything). Needs the pixel size: `px`, or the tolerance is taken as about 8 px. */
+  callouts?: boolean;
+  px?: number;
   walls?: boolean;
   openings?: boolean;
   objects?: boolean;
@@ -125,8 +129,12 @@ export function hitTest(
   derived: DerivedPlan,
   p: Vec2,
   tol: number,
-  opt: HitOptions = { walls: true, openings: true, objects: true, rooms: true },
+  opt: HitOptions = { callouts: true, walls: true, openings: true, objects: true, rooms: true },
 ): SelItem | null {
+  if (opt.callouts) {
+    const c = hitCallout(project, derived, p, opt.px ?? tol / 8);
+    if (c) return { kind: 'callout', id: c.id };
+  }
   const constructionVisible = project.layers.construction.visible;
   // Openings first: they sit on walls and are small.
   if (opt.openings && constructionVisible) {

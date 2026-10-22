@@ -274,6 +274,36 @@ export const ObjectGroupSchema = z.object({
   description: z.string().max(500).optional(),
 });
 
+/** What a callout points at: a spot (with a height), a placed item, a room or a drawn area. */
+export const CalloutTargetSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('point'), x: num, y: num, z: num.default(0) }),
+  z.object({ kind: z.literal('object'), objectId: Id }),
+  z.object({ kind: z.literal('room'), roomId: Id }),
+  z.object({ kind: z.literal('region'), points: z.array(Vec2Schema).min(3).max(64) }),
+]);
+
+export const CALLOUT_COLORS = ['teal', 'brass', 'coral', 'blue', 'slate'] as const;
+
+/**
+ * A floating note pinned to a spot, item, room or area. Drawn on the plan (and plan exports) as a
+ * leader from the anchor to a label box, and in 3D as a label floating above the anchor.
+ */
+export const CalloutSchema = z.object({
+  id: Id,
+  target: CalloutTargetSchema,
+  /** Label position relative to the anchor, in plan metres (+y down the screen). */
+  offset: Vec2Schema.default({ x: 0.9, y: -0.9 }),
+  /** How far the 3D label floats above the anchor (metres). */
+  lift: num.default(0.7),
+  title: z.string().max(120).default(''),
+  /** Note text with light formatting: **bold**, *italic*, [link](https://…), "- " bullets, "1. " lists. */
+  note: z.string().max(4000).default(''),
+  /** Also list the target's facts (item name, maker, size; room name and area; area size). */
+  showInfo: z.boolean().default(true),
+  color: z.enum(CALLOUT_COLORS).default('teal'),
+  hidden: z.boolean().default(false),
+});
+
 export const MaterialCategorySchema = z.enum([
   'paint',
   'plaster',
@@ -434,11 +464,14 @@ export const LayersSchema = z
     construction: LayerStateSchema,
     furniture: LayerStateSchema,
     annotations: LayerStateSchema,
+    /** Callouts (notes pinned to items, rooms, areas and spots); older projects get the default. */
+    callouts: LayerStateSchema.default({ visible: true, locked: false }),
   })
   .default({
     construction: { visible: true, locked: false },
     furniture: { visible: true, locked: false },
     annotations: { visible: true, locked: false },
+    callouts: { visible: true, locked: false },
   });
 
 export const GuestSettingsSchema = z
@@ -460,6 +493,7 @@ export const OptionPlanSchema = z.object({
   rooms: z.record(Id, RoomSchema).default({}),
   objects: z.record(Id, PlacedObjectSchema).default({}),
   groups: z.record(Id, ObjectGroupSchema).default({}),
+  callouts: z.record(Id, CalloutSchema).default({}),
 });
 
 /**
@@ -530,6 +564,8 @@ export const ProjectSchema = z.object({
   rooms: z.record(Id, RoomSchema).default({}),
   objects: z.record(Id, PlacedObjectSchema).default({}),
   groups: z.record(Id, ObjectGroupSchema).default({}),
+  /** Callouts of the active layout option (they point at its items and rooms). */
+  callouts: z.record(Id, CalloutSchema).default({}),
   materials: z.record(Id, MaterialSchema).default({}),
   customAssets: z.record(Id, CustomAssetSchema).default({}),
   cameras: z.array(CameraPresetSchema).default([]),
@@ -562,6 +598,9 @@ export type RoomType = z.infer<typeof RoomTypeSchema>;
 export type Room = z.infer<typeof RoomSchema>;
 export type PlacedObject = z.infer<typeof PlacedObjectSchema>;
 export type ObjectGroup = z.infer<typeof ObjectGroupSchema>;
+export type CalloutTarget = z.infer<typeof CalloutTargetSchema>;
+export type Callout = z.infer<typeof CalloutSchema>;
+export type CalloutColor = (typeof CALLOUT_COLORS)[number];
 export type MaterialCategory = z.infer<typeof MaterialCategorySchema>;
 export type TextureRef = z.infer<typeof TextureRefSchema>;
 export type PhotoTextureRef = z.infer<typeof PhotoTextureRefSchema>;

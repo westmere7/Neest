@@ -192,6 +192,7 @@ Principles that must hold:
 | `CameraPreset` | projection, position, target, fov, zoom, optional `wallDisplay` |
 | `RenderSettings` | quality draft/balanced/high, exposure, timeOfDay, sunAzimuth/Intensity, envIntensity, shadows, background, wallDisplay full/cutaway/fade/hidden, cutawayHeight, showCeilings, showRoomLabels, hiddenCategories |
 | `guest` | `startCameraId` (Guest View and guest export only; the editor always opens on a fitted view), `spawn`, `spawnAngle` |
+| `Callout` | `target` = `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; `offset` (plan metres, label from anchor), `lift` (3D float height), `title`, `note` (Markdown subset), `showInfo`, `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
 
 Materials referenced by id resolve **project → catalogue → visible fallback** (`resolveMaterial`). Catalogue
 materials are copied into `project.materials` only when edited/assigned (`ensureMaterial`), so projects stay
@@ -247,6 +248,9 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   `this | walls-of-role | asset-instances | rooms-of-type | same-material`, `createOverride` (unlink one
   surface), `duplicateMaterial`, `deleteMaterial(id, replacement)`, `updateMaterial`.
 - `reconcileRooms` runs automatically after structural edits (projectStore `finalize`).
+- Callouts (`callouts.ts`): `addCallout`, `updateCallout`, `deleteCallouts`, `translateCallouts`, `duplicateCallouts`.
+  `deleteEntities` first runs `detachCallouts`: a callout on a deleted item or room becomes a spot callout at the old
+  anchor, so the note survives. `repairProject` drops callouts whose item or room is missing.
 
 ## 9. State, history, autosave
 
@@ -465,6 +469,31 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **2D:** `symbols.ts` draws every kind.
 - **Inspector:** `OpeningExtras.tsx` adds a "Details" section with the options.
 - **Build tab:** `features/library/BuildExtras.tsx` provides `DOOR_KINDS`, `WINDOW_KINDS`, the icons and `WallPresetCards`.
+
+### Callouts (src/features/callouts)
+
+A floating note pointing at an item, a room, a drawn area or any spot. Tool **K** (rail "Callout"): click an item →
+item callout, Alt-click → the room, empty space → spot, drag → rectangular area; the pop-up editor opens at once
+(Cancel on a new one removes it). Editing happens only in the pop-up (`CalloutDialog`): what it points to (switch
+between spot / item / room under it / area), title, note with a toolbar (bold, italic, lists, link form, Ctrl+B/I/K,
+Ctrl+Enter saves), the target's facts (`calloutInfo`: item name, brand + model, W×D×H, first finish; room name,
+area, ceiling; area size), colour, 3D float height, visibility, live preview.
+
+- Note syntax (`content.ts`): `**bold**`, `*italic*`/`_italic_`, `[text](url)`, bare URLs, "- "/"* " bullets,
+  "1. " numbers, blank line = paragraph. `safeHref` keeps only http(s)/mailto/www links. `calloutLines` wraps to
+  34 characters at spaces (a word spanning styles stays whole); plan SVG, DXF, captures and the guest viewer share
+  it; the HTML card (`CalloutCard`, 3D + preview) uses the parsed blocks.
+- Plan (`CalloutsSvg` in `PlanDrawing`, after dimensions): sizes are screen-constant via `px`; label widths are
+  measured with the plan font in browsers (estimated in tests/DXF). Drawn in two passes — all outlines/leaders, then
+  all labels. Hit-testing checks callout labels first; select tool drags a label (changes `offset`), moves spot/area
+  callouts with a selection, double-click opens the editor. Fit-to-view includes labels.
+- 3D (`Callouts3D` in `SceneContent`, option `showCallouts`): drei `Line` leader (screen-width, no depth test)
+  from the anchor (item top, room label point, area centroid, spot) to `anchor + offset × 0.5` at `z + lift`;
+  constant-size dot sprite; dashed outline on the floor; the label is a drei `Html` card above the leader top.
+  Click selects, double-click edits. Hidden while the scene loads and in walk mode. The path tracer strips the
+  `callouts` group.
+- Inspector: preview, what it points to, Visible, Edit callout…; Project panel → Layers has Callouts (hide/lock);
+  Annotations and the 3D view panel have a Callouts toggle.
 
 ## 11. 3D (src/features/scene-3d, walkthrough)
 
@@ -977,7 +1006,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 | --- | --- |
 | Plan sheet SVG/PDF/PNG | `sheet.tsx › buildSheet`: paper A4/A3/A2/Letter/Tabloid, orientation, scale 1:20…1:200 or fit, title block, scale bar, legend/room schedule; units are **paper mm**; the plan is `PlanDrawing` scaled by `1000/N`; one drawing px = 0.22 mm keeps line weights legible. PDF via jsPDF + svg2pdf (vector; textures and halos disabled). PNG rasterises the SVG at a DPI (max 8192 px). |
 | Plan image PNG | plan only at px/m, optional transparency |
-| DXF | `dxf.ts`: AutoCAD R12 ASCII, 1:1 in mm/cm/m/in, Y flipped, layers A-WALL, A-DOOR, A-GLAZ, A-AREA, A-ANNO-TEXT, A-ANNO-DIMS (exploded lines + text), A-FURN |
+| DXF | `dxf.ts`: AutoCAD R12 ASCII, 1:1 in mm/cm/m/in, Y flipped, layers A-WALL, A-DOOR, A-GLAZ, A-AREA, A-ANNO-TEXT, A-ANNO-DIMS (exploded lines + text), A-FURN, A-ANNO-CALL (callout outline, leader, box, left-aligned text lines) |
+| Callouts | Every export has a Callouts toggle and follows the layer and per-callout visibility. Sheets/plan PNG draw them through `PlanDrawing` and grow the drawing (fit scale, image bounds) to include labels (`calloutExtent`); links become transparent `<a><rect>` hotspots over the link text, which svg2pdf turns into PDF link annotations (an `<a>` inside `<text>` would be lost). 3D renders hide the scene's callout group and paint labels over the finished image (`callouts/capture.ts › compositeCallouts`, real-time and path traced). The guest HTML gets plain callout data (`GuestData.callouts`) drawn by the viewer as DOM labels with a Hide/Show button. Thumbnails leave them out |
 | 3D render PNG (real-time) | `sceneRuntime.captureView`: renders the live scene with a clone of the live camera at the requested size (same position/orientation/vertical FOV, view offset cleared) |
 | 3D render PNG (path traced) | Render dialog → engine "Path traced": `renderPathTraced` with samples 32/128/512/1024, bounces 3/5/8, optional transparent background (§11) |
 | GLB | `sceneExport.ts`: standalone scene from the same builders → GLTFExporter (binary). The export registry bakes photo colour maps into canvases (1K for 2K floor sets, 512 px otherwise, JPEG in the GLB, colour gain folded in so glTF factors stay ≤ 1), skips normal/roughness maps, and awaits loads (`whenPhotosReady`); unavailable photos fall back to procedural |
@@ -1499,3 +1529,8 @@ Known limitations (also in README):
      with `size`: placed items take the real size); kept generics that are sets or vary in size (bathtub, flush ceiling
      light, downlight, squat toilet with cistern, instant heater with shower rail). Groups and samples point at the
      branded ids; grandApartment.test loads packs (done).
+122. "Add a callout system: a floating callout pointing to an object, area, region or any coordinate, showing the
+     object info, a drafted note with basic formatting and links (editing in a pop-up), correct in 2D and 3D,
+     toggleable, in the exports" → callouts (§10 Callouts): tool K, pop-up editor, plan + 3D rendering, layer and
+     per-callout visibility, sheets/PDF (live links)/PNG/DXF/3D renders/guest HTML. The sample apartment has four demo
+     callouts (sofa, living room, kitchen refit area, extractor fan spot). 60LTN and Ngan's load unchanged (done).

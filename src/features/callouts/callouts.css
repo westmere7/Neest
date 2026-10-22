@@ -1,0 +1,159 @@
+/* Callout label (3D overlay and editor preview). Colours come from the callout's own palette. */
+.callout-card {
+  --callout-main: #2a8a78;
+  --callout-fill: #eef7f4;
+  --callout-text: #14332d;
+  position: relative;
+  max-width: 260px;
+  min-width: 96px;
+  padding: 7px 10px 7px 13px;
+  border: 1px solid var(--callout-main);
+  border-radius: 6px;
+  background: var(--callout-fill);
+  color: var(--callout-text);
+  font: 12px/1.38 Inter, 'Segoe UI', system-ui, sans-serif;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 18%);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.callout-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 6px 0 0 6px;
+  background: var(--callout-main);
+}
+.callout-card.selected {
+  outline: 2px solid var(--callout-main);
+  outline-offset: 1px;
+}
+.callout-title {
+  font-weight: 650;
+}
+.callout-info {
+  color: #55626b;
+  font-size: 11px;
+}
+.callout-note p,
+.callout-note ul,
+.callout-note ol {
+  margin: 2px 0 0;
+}
+.callout-note ul,
+.callout-note ol {
+  padding-left: 16px;
+}
+.callout-note a,
+.callout-link {
+  color: var(--callout-main);
+  text-decoration: underline;
+}
+.callout-empty {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* 3D: the label floats above its anchor; a leader line is drawn in the scene. */
+.callout-3d {
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+.callout-3d .callout-card {
+  width: max-content;
+  max-width: 230px;
+  padding: 5px 9px 6px 12px;
+  font-size: 11.5px;
+}
+.callout-3d .callout-info {
+  font-size: 10.5px;
+}
+.callout-3d.passive {
+  cursor: default;
+}
+
+/* Editor pop-up */
+.callout-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 16px;
+}
+.callout-editor .field {
+  margin-bottom: 10px;
+}
+.callout-editor textarea.input {
+  min-height: 140px;
+  font-family: var(--font-sans);
+  resize: vertical;
+}
+.callout-toolbar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.callout-toolbar button {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+.callout-toolbar button:hover {
+  border-color: var(--accent);
+}
+.callout-link-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0 8px;
+}
+.callout-link-form .input {
+  flex: 1;
+  min-width: 0;
+}
+.callout-colors {
+  display: flex;
+  gap: 6px;
+}
+.callout-colors button {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.callout-colors button[aria-pressed='true'] {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--surface-solid) inset;
+}
+.callout-preview {
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--canvas);
+  border: 1px dashed var(--border-strong);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.callout-preview-label {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.callout-syntax {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+@media (max-width: 700px) {
+  .callout-editor {
+    grid-template-columns: 1fr;
+  }
+}

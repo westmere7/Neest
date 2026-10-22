@@ -24,6 +24,7 @@ import { DrawPresetSelect, WallConstruction, WallPresetPicker, WallTrims, isLigh
 import { WallMultiEdit } from './WallMultiEdit';
 import { SelectSameTypeButton } from './WallTypes';
 import { AnnotationToggles } from './AnnotationToggles';
+import { CalloutInspector } from '@/features/callouts/CalloutInspector';
 import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
@@ -119,6 +120,19 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
     } else if (s.kind === 'room' && project.rooms[s.id]) {
       body = <RoomInspector project={project} roomId={s.id} />;
       eyebrow = 'Room';
+    } else if (s.kind === 'callout' && project.callouts?.[s.id]) {
+      eyebrow = 'Callout';
+      body = <CalloutInspector project={project} derived={derived} id={s.id} />;
+      actions = (
+        <>
+          <IconButton label="Duplicate" shortcut="Ctrl+D" onClick={duplicateSelection}>
+            <Copy size={15} />
+          </IconButton>
+          <IconButton label="Delete" shortcut="Del" onClick={() => void deleteSelection()}>
+            <Trash2 size={15} />
+          </IconButton>
+        </>
+      );
     } else if (s.kind === 'node') {
       body = <p className="field-hint pad">Drag the endpoint to move it. Connected walls stay attached.</p>;
     }
@@ -1008,6 +1022,7 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
             ['construction', 'Walls & openings'],
             ['furniture', 'Furniture & fixtures'],
             ['annotations', 'Labels & dimensions'],
+            ['callouts', 'Callouts'],
           ] as const
         ).map(([key, label]) => (
           <div key={key} className="layer-row">

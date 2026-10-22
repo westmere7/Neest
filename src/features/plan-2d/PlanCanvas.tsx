@@ -12,10 +12,12 @@ import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type ToolId } from '@/state/editorStore';
 import { usePrefsStore } from '@/state/uiStores';
 import { PlanDrawing, polyPath, f, Dimension, type PlanDrawOptions } from './PlanDrawing';
+import { calloutExtent, unionBounds } from '@/features/callouts/layout';
 import { planPalette } from './palette';
 import { hitTest, selectionHandles } from './hitTest';
 import { createSelectTool } from './tools/selectTool';
 import { createCurveTool, createMeasureTool, createRoomTool, createSplitTool, createWallTool } from './tools/drawTools';
+import { createCalloutTool } from './tools/calloutTool';
 import { createOpeningTool, createPlaceTool } from './tools/placeTools';
 import { createExtendTool } from './tools/extendTool';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './tools/types';
@@ -74,6 +76,7 @@ export function PlanCanvas() {
       measure: createMeasureTool(),
       split: createSplitTool(),
       extend: createExtendTool(),
+      callout: createCalloutTool(),
     }),
     [],
   );
@@ -92,8 +95,8 @@ export function PlanCanvas() {
   }, []);
 
   const fit = useCallback(() => {
-    const { derived: dv, size: sz } = stateRef.current;
-    const b = dv.bounds ?? { minX: -1, minY: -1, maxX: 9, maxY: 7 };
+    const { project: pr, derived: dv, size: sz } = stateRef.current;
+    let b = dv.bounds ?? { minX: -1, minY: -1, maxX: 9, maxY: 7 };
     // Fit into the area not covered by floating panels, using the live container size.
     const host = containerRef.current?.getBoundingClientRect();
     const W = host?.width || sz.w;
@@ -102,9 +105,14 @@ export function PlanCanvas() {
     const margin = Math.min(56, Math.max(16, Math.min(W, Hh) * 0.06));
     const availW = Math.max(120, W - insets.l - insets.r - margin * 2);
     const availH = Math.max(120, Hh - insets.t - insets.b - margin * 2);
-    const bw = Math.max(1, b.maxX - b.minX);
-    const bh = Math.max(1, b.maxY - b.minY);
-    const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(availW / bw, availH / bh)));
+    const zoomFor = (bb: typeof b) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(availW / Math.max(1, bb.maxX - bb.minX), availH / Math.max(1, bb.maxY - bb.minY))));
+    let zoom = zoomFor(b);
+    // Callout labels keep their screen size, so their extent depends on the zoom: settle it in two passes.
+    const planB = b;
+    for (let i = 0; i < 2; i++) {
+      b = unionBounds(planB, calloutExtent(pr, dv, 1 / zoom)) ?? planB;
+      zoom = zoomFor(b);
+    }
     const offX = (insets.l - insets.r) / 2 / zoom;
     const offY = (insets.t - insets.b) / 2 / zoom;
     useEditorStore.getState().set({ planCamera: { cx: (b.minX + b.maxX) / 2 - offX, cy: (b.minY + b.maxY) / 2 - offY, zoom } });
@@ -419,6 +427,7 @@ export function PlanCanvas() {
   const pal = planPalette(planMode, theme);
   // Content packs reload live: a new options object redraws pack items.
   const packs = usePackVersion();
+  const calloutSel = useMemo(() => new Set(selection.filter((x) => x.kind === 'callout').map((x) => x.id)), [selection]);
   const drawOpts = useMemo<PlanDrawOptions>(
     () => ({
       mode: planMode,
@@ -437,10 +446,11 @@ export function PlanCanvas() {
       shadows: true,
       halo: true,
       idPrefix: 'scr',
+      calloutHighlight: calloutSel,
     }),
     // Quantise px so tiny zoom changes reuse the memoised drawing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [planMode, pal, Math.round(Math.log(px) * 40), project.settings, packs],
+    [planMode, pal, Math.round(Math.log(px) * 40), project.settings, packs, calloutSel],
   );
 
   const gridStep = useMemo(() => {

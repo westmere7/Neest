@@ -74,6 +74,7 @@ export function renderThumbnail(project: Project): string | null {
           showFurniture: true,
           showConstruction: true,
           showAnnotations: false,
+          showCallouts: false,
           textures: false,
           shadows: false,
           halo: false,

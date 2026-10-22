@@ -131,6 +131,17 @@ export function repairProject(project: Project): MigrationResult {
   if (upgraded) warnings.push(`${upgraded} retired item(s) replaced: empty or styled versions now use the original item with a model variant, look-alike items the one kept.`);
   for (const [key, r] of Object.entries(p.rooms)) if (r.id !== key) r.id = key;
   for (const [key, m] of Object.entries(p.materials)) if (m.id !== key) m.id = key;
+  // Callouts pinned to items or rooms that no longer exist have nothing to point at.
+  let droppedCallouts = 0;
+  for (const [key, c] of Object.entries(p.callouts ?? {})) {
+    if (c.id !== key) c.id = key;
+    const t = c.target;
+    if ((t.kind === 'object' && !p.objects[t.objectId]) || (t.kind === 'room' && !p.rooms[t.roomId])) {
+      delete p.callouts[key];
+      droppedCallouts++;
+    }
+  }
+  if (droppedCallouts) warnings.push(`${droppedCallouts} callout(s) pointed at missing items or rooms and were removed.`);
   const camIds = new Set<string>();
   p.cameras = p.cameras.filter((c) => (camIds.has(c.id) ? false : (camIds.add(c.id), true)));
   if (p.guest.startCameraId && !camIds.has(p.guest.startCameraId)) p.guest.startCameraId = null;

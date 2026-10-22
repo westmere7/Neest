@@ -27,6 +27,8 @@ export function describeSelection(project: Project, sel: SelItem[]): string {
       return project.objects[s.id]?.name ?? 'Object';
     case 'room':
       return project.rooms[s.id]?.name ?? 'Room';
+    case 'callout':
+      return project.callouts?.[s.id]?.title || 'Callout';
   }
 }
 

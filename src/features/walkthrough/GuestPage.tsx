@@ -124,6 +124,7 @@ export default function GuestPage({ projectId }: { projectId: string }) {
             shadows: r.shadows,
             hiddenCategories: r.hiddenCategories,
             interactive: false,
+            showCallouts: !walk,
           }}
         />
       </Canvas>

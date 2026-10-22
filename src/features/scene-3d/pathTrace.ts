@@ -50,7 +50,7 @@ export async function renderPathTraced(project: Project, o: PathTraceOptions): P
   const root = source.clone(true);
   const strip: THREE.Object3D[] = [];
   root.traverse((obj) => {
-    if ((obj as THREE.Sprite).isSprite || (obj as THREE.Box3Helper).type === 'Box3Helper' || obj.userData.helper) strip.push(obj);
+    if ((obj as THREE.Sprite).isSprite || (obj as THREE.Box3Helper).type === 'Box3Helper' || obj.userData.helper || obj.name === 'callouts') strip.push(obj);
   });
   strip.forEach((obj) => obj.removeFromParent());
   scene.add(root);

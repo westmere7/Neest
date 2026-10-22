@@ -3,7 +3,10 @@ import { derivePlan } from '@/domain/geometry/derive';
 import { buildColliders, defaultSpawn } from '@/domain/walkthrough/collision';
 import { namedView } from '@/features/scene-3d/cameraViews';
 import { sunFromSettings } from '@/features/scene-3d/SceneContent';
-import type { GuestCamera, GuestData } from '@/guest-viewer/main';
+import type { GuestCallout, GuestCamera, GuestData } from '@/guest-viewer/main';
+import { visibleCallouts } from '@/features/callouts/layout';
+import { callout3DPoints } from '@/features/callouts/Callouts3D';
+import { CALLOUT_PALETTE, calloutLines } from '@/features/callouts/content';
 import { exportGlb } from './sceneExport';
 
 function bufferToBase64(buf: ArrayBuffer): string {
@@ -40,8 +43,35 @@ canvas{display:block;touch-action:none}
  .ng-knob{position:absolute;left:38px;top:38px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.75)}
  .ng-walking .ng-look{display:block;position:fixed;right:0;top:90px;bottom:90px;width:50%;touch-action:none}
 }
+.ng-callouts{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.ng-callout{position:absolute;transform:translate(-50%,-100%);max-width:260px;width:max-content;padding:7px 10px 7px 13px;border:1px solid var(--main);border-radius:6px;background:var(--fill);color:var(--text);font:12px/1.38 Inter,"Segoe UI",system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.18);pointer-events:auto;background-clip:padding-box;border-left:4px solid var(--main)}
+.ng-cl-title{font-weight:650}.ng-cl-info{color:#55626b;font-size:11px}.ng-callout a{color:var(--main)}
 @media (max-width:640px){.ng-views{max-width:100%;justify-content:flex-start}.ng-help{white-space:normal;width:86vw;text-align:center}}
 `;
+
+const r3 = (v: number) => Math.round(v * 1000) / 1000;
+
+/** Visible callouts as plain data for the guest viewer (no app code runs there). */
+function guestCallouts(project: Project, derived: ReturnType<typeof derivePlan>): GuestCallout[] {
+  return visibleCallouts(project).flatMap((c) => {
+    const pts = callout3DPoints(project, derived, c);
+    if (!pts) return [];
+    return [
+      {
+        anchor: [r3(pts.anchor.x), r3(pts.anchor.y), r3(pts.anchor.z)],
+        label: [r3(pts.label.x), r3(pts.label.y), r3(pts.label.z)],
+        outline: pts.outline?.map((p) => [r3(p.x), r3(p.y)] as [number, number]),
+        outlineY: pts.outlineY,
+        colors: CALLOUT_PALETTE[c.color],
+        lines: calloutLines(project, derived, c).map((l) => ({
+          role: l.role,
+          indent: l.indent,
+          runs: l.runs.map((r) => ({ t: r.text, ...(r.bold ? { b: 1 as const } : {}), ...(r.italic ? { i: 1 as const } : {}), ...(r.href ? { h: r.href } : {}) })),
+        })),
+      },
+    ];
+  });
+}
 
 /**
  * Builds a single self-contained HTML file: the viewer runtime (three.js
@@ -77,6 +107,7 @@ export async function buildGuestHtml(project: Project): Promise<string> {
     sun: { dir: [sun.dir.x, sun.dir.y, sun.dir.z], color: `#${sun.color.getHexString()}`, intensity: sun.intensity },
     envIntensity: project.render.envIntensity,
     exposure: project.render.exposure,
+    callouts: guestCallouts(project, derived),
   };
   return `<!doctype html>
 <html lang="en">

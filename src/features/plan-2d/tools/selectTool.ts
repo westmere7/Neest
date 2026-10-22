@@ -13,6 +13,8 @@ import { WALL_HUG_MOVE, hugWall } from './placeTools';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './types';
 import { movedElevation } from './surfaces';
 import { axisGuide, axisLockLabel, createAxisLock, onAxis, snapOnAxis, type AxisLockState } from '@/domain/geometry/axisLock';
+import type { CalloutTarget } from '@/domain/model/schema';
+import { useDialogStore } from '@/state/uiStores';
 
 type Gesture =
   | { type: 'pending'; start: Vec2; startScreen: Vec2; hit: SelItem | null; shift: boolean; wasSelected: boolean }
@@ -22,6 +24,8 @@ type Gesture =
       start: Vec2;
       nodes: Record<string, Vec2>;
       objects: Record<string, Vec2>;
+      /** Spot and area callouts moving with the selection: their targets at the start. */
+      callouts: Record<string, CalloutTarget>;
       perp: { normal: Vec2 } | null;
       primaryObject: string | null;
       /** Shift keeps the move on one plan axis. */
@@ -33,7 +37,9 @@ type Gesture =
   | { type: 'opening-end'; openingId: string; end: 'start' | 'end' }
   | { type: 'rotate'; objectId: string; base: PlacedObject }
   | { type: 'resize'; objectId: string; sx: -1 | 0 | 1; sy: -1 | 0 | 1; base: PlacedObject }
-  | { type: 'label'; roomId: string; start: Vec2; base: Vec2 };
+  | { type: 'label'; roomId: string; start: Vec2; base: Vec2 }
+  /** Dragging a callout's label: its offset from the anchor changes. */
+  | { type: 'callout'; id: string; start: Vec2; base: Vec2 };
 
 const DRAG_THRESHOLD_PX = 4;
 
@@ -53,6 +59,7 @@ function isLockedItem(env: ToolEnv, item: SelItem): boolean {
   if (item.kind === 'node') return p.layers.construction.locked;
   if (item.kind === 'opening') return p.layers.construction.locked;
   if (item.kind === 'object') return !!p.objects[item.id]?.locked || p.layers.furniture.locked;
+  if (item.kind === 'callout') return !!p.layers.callouts?.locked;
   return false;
 }
 
@@ -80,6 +87,13 @@ export function createSelectTool(): Tool {
       gesture = null;
       return;
     }
+    if (movable.length === 1 && movable[0].kind === 'callout') {
+      const c = project.callouts?.[movable[0].id];
+      if (!c) return;
+      store().begin('Move callout label');
+      gesture = { type: 'callout', id: c.id, start: g.start, base: { ...c.offset } };
+      return;
+    }
     if (movable.length === 1 && movable[0].kind === 'opening') {
       store().begin('Move opening');
       gesture = { type: 'slide-opening', openingId: movable[0].id };
@@ -87,7 +101,13 @@ export function createSelectTool(): Tool {
     }
     const nodes: Record<string, Vec2> = {};
     const objects: Record<string, Vec2> = {};
+    const callouts: Record<string, CalloutTarget> = {};
     for (const s of movable) {
+      if (s.kind === 'callout') {
+        const c = project.callouts?.[s.id];
+        if (c && (c.target.kind === 'point' || c.target.kind === 'region')) callouts[c.id] = structuredClone(c.target);
+        continue;
+      }
       if (s.kind === 'wall') {
         const w = project.walls[s.id];
         if (!w) continue;
@@ -119,6 +139,7 @@ export function createSelectTool(): Tool {
       start: g.start,
       nodes,
       objects,
+      callouts,
       perp,
       primaryObject: objIds.length === 1 && !Object.keys(nodes).length ? objIds[0] : null,
       lock: createAxisLock(),
@@ -258,6 +279,12 @@ export function createSelectTool(): Tool {
               o.y = p.y + delta.y;
               if (hugRot !== undefined && id === g.primaryObject) o.rotation = normalizeRotation(hugRot);
               if (lift !== undefined) o.elevation = lift;
+            }
+            for (const [id, t] of Object.entries(g.callouts)) {
+              const c = d.callouts?.[id];
+              if (!c) continue;
+              if (t.kind === 'point') c.target = { ...t, x: t.x + delta.x, y: t.y + delta.y };
+              else if (t.kind === 'region') c.target = { ...t, points: t.points.map((p) => ({ x: p.x + delta.x, y: p.y + delta.y })) };
             }
           });
           env.setSnapLabel([axis && axisLockLabel(axis), hugged && 'Against wall'].filter(Boolean).join(' · ') || null);
@@ -448,6 +475,15 @@ export function createSelectTool(): Tool {
           });
           return;
         }
+        case 'callout': {
+          const off = add(gesture.base, sub(e.world, gesture.start));
+          const id = gesture.id;
+          store().preview((d) => {
+            const c = d.callouts?.[id];
+            if (c) c.offset = off;
+          });
+          return;
+        }
       }
     },
 
@@ -501,6 +537,7 @@ export function createSelectTool(): Tool {
         case 'rotate':
         case 'resize':
         case 'label':
+        case 'callout':
         case 'slide-opening':
           store().commit();
           break;
@@ -510,7 +547,13 @@ export function createSelectTool(): Tool {
     },
 
     onDoubleClick(e, env) {
-      // An item: select it and close in on it. A room: select it and edit its name.
+      // A callout: open its editor. An item: select it and close in on it. A room: select it and edit its name.
+      const call = hitTest(env.project(), env.derived(), e.world, env.tol(), { callouts: true });
+      if (call) {
+        editor().setSelection([call]);
+        useDialogStore.getState().open('callout', { id: call.id });
+        return;
+      }
       const item = hitTest(env.project(), env.derived(), e.world, env.tol(), { rooms: false, walls: false, objects: true, openings: true });
       if (item) {
         editor().setSelection([item]);

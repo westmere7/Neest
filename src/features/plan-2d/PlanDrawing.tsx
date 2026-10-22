@@ -13,6 +13,7 @@ import { tintedPatternUrl } from '@/features/materials/textureCache';
 import type { PlanMode } from '@/state/editorStore';
 import { dimensionGeometry, type DimensionSpec } from './dimensions';
 import { shade, type PlanPalette } from './palette';
+import { CalloutsSvg } from '@/features/callouts/CalloutsSvg';
 import { arcPath, openingSymbol, type PlanPrim } from './symbols';
 
 export interface PlanDrawOptions {
@@ -35,6 +36,12 @@ export interface PlanDrawOptions {
   halo: boolean;
   idPrefix: string;
   fontFamily?: string;
+  /** Draw callouts (default true; the callouts layer and each callout's own visibility still apply). */
+  showCallouts?: boolean;
+  /** Selected callouts, drawn heavier. */
+  calloutHighlight?: ReadonlySet<string>;
+  /** Callout links as real <a> elements (SVG and PDF exports). */
+  calloutLinks?: boolean;
 }
 
 export const f = (n: number) => (Math.abs(n) < 1e-9 ? '0' : n.toFixed(4).replace(/\.?0+$/, ''));
@@ -451,6 +458,9 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
       <g className="plan-openings">{openingEls}</g>
       <g className="plan-labels">{labels}</g>
       <g className="plan-dimensions">{dimEls}</g>
+      {opts.showCallouts !== false && (
+        <CalloutsSvg project={project} derived={derived} px={px} fontFamily={font} highlight={opts.calloutHighlight} links={opts.calloutLinks} />
+      )}
     </g>
   );
 });

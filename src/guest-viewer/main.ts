@@ -20,6 +20,17 @@ export interface GuestCamera {
   fov: number;
 }
 
+/** A callout in the guest view: leader from `anchor` up to the label at `label` (three.js coordinates). */
+export interface GuestCallout {
+  anchor: [number, number, number];
+  label: [number, number, number];
+  /** Target outline on the floor (x, z pairs) and its height. */
+  outline?: [number, number][];
+  outlineY?: number;
+  colors: { main: string; fill: string; text: string };
+  lines: { role: 'title' | 'info' | 'text'; indent: number; runs: { t: string; b?: 1; i?: 1; h?: string }[] }[];
+}
+
 export interface GuestData {
   title: string;
   exportedAt: string;
@@ -33,6 +44,7 @@ export interface GuestData {
   sun: { dir: [number, number, number]; color: string; intensity: number };
   envIntensity: number;
   exposure: number;
+  callouts?: GuestCallout[];
 }
 
 declare global {
@@ -132,6 +144,93 @@ function start(data: GuestData) {
   const bar = el('div', 'ng-bar');
   bar.append(modeBtn);
   root.append(bar);
+
+  // ── Callouts: leaders in the scene, labels as HTML placed over the canvas each frame ──
+  const calloutLayer = el('div', 'ng-callouts');
+  root.append(calloutLayer);
+  const calloutGroup = new THREE.Group();
+  scene.add(calloutGroup);
+  const callouts = (data.callouts ?? []).map((c) => {
+    const anchor = new THREE.Vector3(...c.anchor);
+    const label = new THREE.Vector3(...c.label);
+    const lineMat = new THREE.LineBasicMaterial({ color: c.colors.main, depthTest: false, transparent: true });
+    const leader = new THREE.Line(new THREE.BufferGeometry().setFromPoints([anchor, label]), lineMat);
+    // Anchor dot: constant size on screen, white ring.
+    const dc = document.createElement('canvas');
+    dc.width = dc.height = 64;
+    const g = dc.getContext('2d')!;
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    g.arc(32, 32, 30, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = c.colors.main;
+    g.beginPath();
+    g.arc(32, 32, 23, 0, Math.PI * 2);
+    g.fill();
+    const tex = new THREE.CanvasTexture(dc);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, sizeAttenuation: false }));
+    dot.scale.set(0.02, 0.02, 1);
+    dot.position.copy(anchor);
+    leader.renderOrder = dot.renderOrder = 999;
+    calloutGroup.add(leader, dot);
+    if (c.outline && c.outline.length >= 3) {
+      const y = c.outlineY ?? 0.025;
+      const loop = new THREE.LineLoop(
+        new THREE.BufferGeometry().setFromPoints(c.outline.map(([x, z]) => new THREE.Vector3(x, y, z))),
+        new THREE.LineDashedMaterial({ color: c.colors.main, dashSize: 0.12, gapSize: 0.08 }),
+      );
+      loop.computeLineDistances();
+      calloutGroup.add(loop);
+    }
+    const card = el('div', 'ng-callout');
+    card.style.setProperty('--main', c.colors.main);
+    card.style.setProperty('--fill', c.colors.fill);
+    card.style.setProperty('--text', c.colors.text);
+    for (const line of c.lines) {
+      const row = el('div', `ng-cl-${line.role}`);
+      if (line.indent) row.style.paddingLeft = `${line.indent * 0.54}em`;
+      for (const r of line.runs) {
+        const span: HTMLElement = r.h ? el('a') : el('span');
+        span.textContent = r.t;
+        if (r.b) span.style.fontWeight = '650';
+        if (r.i) span.style.fontStyle = 'italic';
+        if (r.h && span instanceof HTMLAnchorElement) {
+          span.href = r.h;
+          span.target = '_blank';
+          span.rel = 'noopener noreferrer';
+        }
+        row.append(span);
+      }
+      card.append(row);
+    }
+    calloutLayer.append(card);
+    return { label, card };
+  });
+  let calloutsOn = callouts.length > 0;
+  if (callouts.length) {
+    const toggle = el('button', 'ng-btn', 'Hide callouts');
+    toggle.onclick = () => {
+      calloutsOn = !calloutsOn;
+      toggle.textContent = calloutsOn ? 'Hide callouts' : 'Show callouts';
+    };
+    bar.append(toggle);
+  }
+  const projected = new THREE.Vector3();
+  const placeCallouts = () => {
+    const show = calloutsOn && !walking;
+    calloutGroup.visible = show;
+    calloutLayer.style.display = show ? '' : 'none';
+    if (!show) return;
+    for (const c of callouts) {
+      projected.copy(c.label).project(camera);
+      const visible = projected.z < 1 && projected.z > -1;
+      c.card.style.display = visible ? '' : 'none';
+      if (!visible) continue;
+      c.card.style.left = `${((projected.x + 1) / 2) * window.innerWidth}px`;
+      c.card.style.top = `${((1 - projected.y) / 2) * window.innerHeight}px`;
+    }
+  };
 
   let walking = false;
   let yaw = 0;
@@ -358,6 +457,7 @@ function start(data: GuestData) {
       persp.position.y = EYE;
       persp.rotation.set(pitch, yaw, 0, 'YXZ');
     } else controls.update();
+    placeCallouts();
     renderer.render(scene, camera);
   });
 }
