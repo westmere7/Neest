@@ -406,7 +406,9 @@ export function hitsGizmo(e: { intersections: THREE.Intersection[] }): boolean {
   });
 }
 
-const AXIS_COLORS = { x: '#e5574a', y: '#4fb36a', z: '#4a8fe5' } as const;
+const AXIS_COLORS = { x: '#ff2a1f', y: '#12d14b', z: '#1f74ff' } as const;
+/** The gizmo's ring, centre disc and scale square: a vivid teal. */
+const GIZMO_TEAL = '#00d4a6';
 type Axis = 'x' | 'y' | 'z';
 
 const lockGuideMats = {
@@ -466,7 +468,7 @@ function gizmoMat(color: string, hot: boolean): THREE.MeshBasicMaterial {
       color: hot ? new THREE.Color(color).lerp(new THREE.Color('#ffffff'), 0.35) : new THREE.Color(color),
       depthTest: false,
       transparent: true,
-      opacity: hot ? 1 : 0.92,
+      opacity: 1,
     });
     gizmoMaterials.set(key, m);
   }
@@ -640,12 +642,100 @@ function OpeningGizmo({ openingId, controlsRef }: { openingId: string; controlsR
   );
 }
 
+type ResizeAxis = 'rx' | 'rz' | 'ry';
+/** The item size an arrow's resize tab changes: X and Z take whichever of width/depth lines up with them. */
+function resizeKey(rotation: number, m: ResizeAxis): 'width' | 'depth' | 'height' {
+  if (m === 'ry') return 'height';
+  const alongX = Math.abs(Math.cos(rotation)) >= Math.abs(Math.sin(rotation));
+  return (m === 'rx') === alongX ? 'width' : 'depth';
+}
+const RESIZE_LABEL = { width: 'Width', depth: 'Depth', height: 'Height' } as const;
+
+/** Four-way move icon lying flat: a teal disc with a white cross of arrows. */
+function MoveIcon({ hot }: { hot: boolean }) {
+  const k = hot ? 1.2 : 1;
+  const mark = gizmoMat('#ffffff', true);
+  const head = (a: number) => (
+    <mesh key={a} position={[Math.cos(a) * 0.09, Math.sin(a) * 0.09, 0]} rotation={[0, 0, a]} material={mark} renderOrder={23} raycast={() => null}>
+      <circleGeometry args={[0.045, 3]} />
+    </mesh>
+  );
+  return (
+    <group scale={k} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh material={gizmoMat(GIZMO_TEAL, hot)} renderOrder={21}>
+        <circleGeometry args={[0.15, 32]} />
+      </mesh>
+      <group position={[0, 0, 0.002]}>
+        <mesh material={mark} renderOrder={22} raycast={() => null}>
+          <planeGeometry args={[0.17, 0.026]} />
+        </mesh>
+        <mesh material={mark} renderOrder={22} raycast={() => null}>
+          <planeGeometry args={[0.026, 0.17]} />
+        </mesh>
+        {[0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2].map(head)}
+      </group>
+    </group>
+  );
+}
+
+/** Proportional-scale tile: a square with a diagonal two-headed mark (corner to corner), lying flat. */
+function ScaleTile({ hot }: { hot: boolean }) {
+  const k = hot ? 1.2 : 1;
+  const mark = gizmoMat('#ffffff', true);
+  return (
+    <group scale={k} rotation={[0, -Math.PI / 4, 0]}>
+      <mesh rotation-x={-Math.PI / 2} material={gizmoMat(GIZMO_TEAL, hot)} renderOrder={23}>
+        <planeGeometry args={[0.26, 0.26]} />
+      </mesh>
+      <group rotation={[-Math.PI / 2, 0, Math.PI / 4]} position={[0, 0.002, 0]}>
+        <mesh material={mark} renderOrder={24} raycast={() => null}>
+          <planeGeometry args={[0.03, 0.2]} />
+        </mesh>
+        <mesh position={[0, 0.1, 0]} rotation={[0, 0, Math.PI / 2]} material={mark} renderOrder={24} raycast={() => null}>
+          <circleGeometry args={[0.05, 3]} />
+        </mesh>
+        <mesh position={[0, -0.1, 0]} rotation={[0, 0, -Math.PI / 2]} material={mark} renderOrder={24} raycast={() => null}>
+          <circleGeometry args={[0.05, 3]} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/**
+ * Two-headed resize arrow on the move arrow's own line, just behind it (the arrow's frame points
+ * along +y, so this runs from -0.1 to -0.62): same colour, thinner, with a head at each end.
+ */
+function ResizeArrow({ color, hot }: { color: string; hot: boolean }) {
+  const mat = gizmoMat(color, hot);
+  const r = hot ? 1.35 : 1;
+  return (
+    <>
+      <mesh position={[0, -0.36, 0]} material={mat} renderOrder={20}>
+        <cylinderGeometry args={[0.016 * r, 0.016 * r, 0.34, 8]} />
+      </mesh>
+      <mesh position={[0, -0.16, 0]} material={mat} renderOrder={20}>
+        <coneGeometry args={[0.055 * r, 0.12, 14]} />
+      </mesh>
+      <mesh position={[0, -0.56, 0]} rotation={[0, 0, Math.PI]} material={mat} renderOrder={20}>
+        <coneGeometry args={[0.055 * r, 0.12, 14]} />
+      </mesh>
+      <mesh position={[0, -0.36, 0]} material={hitMat}>
+        <cylinderGeometry args={[0.08, 0.08, 0.52, 8]} />
+      </mesh>
+    </>
+  );
+}
+
 /**
  * Transform gizmo for selected furniture: X/Z arrows slide along the floor,
- * the Y arrow changes elevation, the centre disc moves freely, the ring
- * rotates and the square on the ring scales a single item proportionally (5 %
- * steps; Alt for free scaling). Arrows keep a constant on-screen size. Snaps to the grid (Alt for
- * free movement); each drag is a single undo step.
+ * the Y arrow changes elevation, the centre icon moves freely, the ring
+ * rotates (a whole selection turns about its centre) and the tile outside the ring scales a single item proportionally (5 %
+ * steps; Alt for free scaling). Behind each arrow, on its line, a two-headed arrow resizes a single item:
+ * X and Z change the width or depth (whichever lines up with the arrow), the up arrow's tab the height.
+ * The face on the arrow's side moves and the opposite face stays put; Alt resizes from the centre.
+ * Sizes snap to 1 cm and keep to the item's limits. Handles keep a constant on-screen size. Snaps to
+ * the grid (Alt for free movement); each drag is a single undo step.
  */
 export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefObject<OrbitControlsImpl | null> }) {
   const project = useProjectStore((s) => s.project!);
@@ -655,6 +745,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
   const scene = useThree((s) => s.scene);
   const [hot, setHot] = useState<string | null>(null);
   const [readout, setReadout] = useState<string | null>(null);
+  const [tip, setTip] = useState<{ text: string; at: THREE.Vector3 } | null>(null);
   const scaled = useRef<THREE.Group[]>([]);
   const centerRef = useRef(new THREE.Vector3());
 
@@ -681,13 +772,18 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
   if (openingSel) return <OpeningGizmo openingId={openingSel.id} controlsRef={controlsRef} />;
   if (!n || locked) return null;
   const single = n === 1 ? objs[0] : null;
-  const ringR = single ? Math.max(single.width, single.depth) / 2 + 0.22 : 0.3;
+  // The ring wraps the item, or the whole selection (every item's far corner) for a group.
+  const ringR = single
+    ? Math.max(single.width, single.depth) / 2 + 0.22
+    : Math.max(0.3, ...objs.map((o) => Math.hypot(o.x - cx, o.y - cz) + Math.hypot(o.width, o.depth) / 2)) + 0.22;
   const units = project.settings;
 
   const scaleAsset = single ? getAsset(project, single.assetId) : null;
   const scalable = !!scaleAsset && canScale(scaleAsset) && !project.customAssets[single!.assetId];
+  // Per-axis resize grips, for the dimensions the item lets you change.
+  const resizable = single && scaleAsset && !project.customAssets[single.assetId] ? scaleAsset.resizable : null;
 
-  const startDrag = (e: ThreeEvent<PointerEvent>, mode: Axis | 'free' | 'rotate' | 'scale') => {
+  const startDrag = (e: ThreeEvent<PointerEvent>, mode: Axis | 'free' | 'rotate' | 'scale' | ResizeAxis) => {
     console.debug('[gizmo] down', mode, e.button);
     if (e.button !== 0) return;
     e.stopPropagation();
@@ -705,13 +801,33 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
     const a0 = Math.atan2(hit0.z - cz, hit0.x - cx);
     const r0 = Math.max(0.05, Math.hypot(hit0.x - cx, hit0.z - cz));
     // The free move keeps to one axis while Shift is held.
+    const resizing = !!single && (mode === 'rx' || mode === 'rz' || mode === 'ry');
+    const grip = resizing
+      ? { origin: new THREE.Vector3(cx, mode === 'ry' ? top : base, cz), dir: new THREE.Vector3(mode === 'rx' ? 1 : 0, mode === 'ry' ? 1 : 0, mode === 'rz' ? 1 : 0) }
+      : null;
+    const g0 = grip ? closestOnLine(e.ray.origin, e.ray.direction, grip.origin, grip.dir) : null;
     const lock = createAxisLock();
     const lockFx = mode === 'free' ? axisLockFeedback3D(scene) : null;
     if (controlsRef.current) controlsRef.current.enabled = false;
     useProjectStore
       .getState()
-      .begin(mode === 'rotate' ? 'Rotate object' : mode === 'scale' ? 'Scale object' : mode === 'y' ? 'Change elevation' : n > 1 ? 'Move objects' : 'Move object');
+      .begin(
+        mode === 'rotate'
+          ? n > 1
+            ? 'Rotate objects'
+            : 'Rotate object'
+          : mode === 'scale'
+            ? 'Scale object'
+            : mode === 'rx' || mode === 'rz' || mode === 'ry'
+              ? `Change ${RESIZE_LABEL[resizeKey(single?.rotation ?? 0, mode)].toLowerCase()}`
+              : mode === 'y'
+                ? 'Change elevation'
+                : n > 1
+                  ? 'Move objects'
+                  : 'Move object',
+      );
     setHot(mode);
+    setTip(null);
     const move = (ev: PointerEvent) => {
       const rect = el.getBoundingClientRect();
       raycaster.setFromCamera(
@@ -730,6 +846,28 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
         useProjectStore.getState().preview((d) => updateObjects(d, [single.id], { rotation: rot }));
         return;
       }
+      if (mode === 'rotate') {
+        // A group turns about its centre: positions swing round it, each item turns by the same angle.
+        const p = new THREE.Vector3();
+        if (!ray.intersectPlane(floor, p)) return;
+        let da = Math.atan2(p.z - cz, p.x - cx) - a0;
+        if (!ev.altKey) da = Math.round(da / (Math.PI / 12)) * (Math.PI / 12);
+        const c = Math.cos(da);
+        const sn = Math.sin(da);
+        setReadout(`Rotate ${da >= 0 ? '+' : '−'}${Math.round((Math.abs(da) * 180) / Math.PI)}°`);
+        useProjectStore.getState().preview((d) => {
+          for (const id of ids) {
+            const s0 = start.get(id)!;
+            const dx = s0.x - cx;
+            const dz = s0.y - cz;
+            const o = d.objects[id];
+            o.x = cx + dx * c - dz * sn;
+            o.y = cz + dx * sn + dz * c;
+            o.rotation = normalizeRotation(s0.r + da);
+          }
+        });
+        return;
+      }
       if (mode === 'scale' && single && scaleAsset) {
         const p = new THREE.Vector3();
         if (!ray.intersectPlane(floor, p)) return;
@@ -741,6 +879,32 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
         const next = scaledSize({ width: s0.w, depth: s0.d, height: s0.h }, scaleAsset, k);
         setReadout(`Scale ${Math.round(scalePct({ width: next.width ?? s0.w, depth: next.depth ?? s0.d, height: next.height ?? s0.h }, scaleAsset))}%`);
         useProjectStore.getState().preview((d) => updateObjects(d, [single.id], next));
+        return;
+      }
+      if (grip && g0 !== null && single && scaleAsset && (mode === 'rx' || mode === 'rz' || mode === 'ry')) {
+        const t = closestOnLine(ray.origin, ray.direction, grip.origin, grip.dir);
+        if (t === null) return;
+        const s0 = start.get(single.id)!;
+        const key = resizeKey(s0.r, mode);
+        const dim = key === 'width' ? 'w' : key === 'depth' ? 'd' : 'h';
+        const size0 = s0[dim];
+        // One-sided: the size grows by the drag; from the centre (Alt) by twice the drag.
+        const centred = ev.altKey && mode !== 'ry';
+        let size = size0 + (t - g0) * (centred ? 2 : 1);
+        const lo = scaleAsset.minSize?.[dim] ?? 0.02;
+        const hi = scaleAsset.maxSize?.[dim] ?? 20;
+        size = Math.min(hi, Math.max(lo, Math.round(size * 100) / 100));
+        const grow = size - size0;
+        setReadout(`${RESIZE_LABEL[key]} ${formatLength(size, units.units, units.precision)}`);
+        useProjectStore.getState().preview((d) => {
+          const o = d.objects[single.id];
+          o[key] = size;
+          // Keep the opposite face where it was: the centre moves by half the growth.
+          if (!centred && mode !== 'ry') {
+            o.x = s0.x + (grip.dir.x * grow) / 2;
+            o.y = s0.y + (grip.dir.z * grow) / 2;
+          }
+        });
         return;
       }
       if (mode === 'free') {
@@ -802,14 +966,39 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
     window.addEventListener('pointerup', up);
   };
 
+  const tipText = (id: string): string => {
+    switch (id) {
+      case 'x':
+      case 'z':
+        return `Move along ${id.toUpperCase()}`;
+      case 'y':
+        return 'Raise or lower';
+      case 'free':
+        return 'Move · Shift: one axis · Alt: no snapping';
+      case 'rotate':
+        return n > 1 ? 'Rotate the selection · Alt: any angle' : 'Rotate · Alt: any angle';
+      case 'scale':
+        return 'Scale proportionally · Alt: no 5 % steps';
+      default: {
+        const key = resizeKey(single?.rotation ?? 0, id as ResizeAxis);
+        return `Resize ${RESIZE_LABEL[key].toLowerCase()}${id === 'ry' ? '' : ' · Alt: from the centre'}`;
+      }
+    }
+  };
   const hover = (id: string) => ({
     onPointerOver: (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
       setHot((h) => h ?? id);
-      gl.domElement.style.cursor = id === 'rotate' ? 'grab' : id === 'scale' ? 'nesw-resize' : 'move';
+      setTip({ text: tipText(id), at: e.point.clone() });
+      gl.domElement.style.cursor = id === 'rotate' ? 'grab' : id === 'scale' ? 'nesw-resize' : id === 'rx' ? 'ew-resize' : id === 'rz' || id === 'ry' ? 'ns-resize' : 'move';
+    },
+    onPointerMove: (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation();
+      setTip((t) => (t && t.text === tipText(id) ? { text: t.text, at: e.point.clone() } : t));
     },
     onPointerOut: () => {
       setHot((h) => (h === id ? null : h));
+      setTip((t) => (t && t.text === tipText(id) ? null : t));
       gl.domElement.style.cursor = '';
     },
   });
@@ -823,44 +1012,56 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
       {/* X arrow (east) */}
       <group position={[cx + ringR, base + 0.03, cz]} rotation={[0, 0, -Math.PI / 2]} ref={keep} onPointerDown={(e) => startDrag(e, 'x')} {...hover('x')}>
         <ArrowShape color={AXIS_COLORS.x} hot={hot === 'x'} />
+        {single && resizable?.[resizeKey(single!.rotation, 'rx') === 'width' ? 'w' : resizeKey(single!.rotation, 'rx') === 'depth' ? 'd' : 'h'] && (
+          <group onPointerDown={(e) => startDrag(e, 'rx')} {...hover('rx')}>
+            <ResizeArrow color={AXIS_COLORS.x} hot={hot === 'rx'} />
+          </group>
+        )}
       </group>
       {/* Z arrow (towards the bottom of the plan) */}
       <group position={[cx, base + 0.03, cz + ringR]} rotation={[Math.PI / 2, 0, 0]} ref={keep} onPointerDown={(e) => startDrag(e, 'z')} {...hover('z')}>
         <ArrowShape color={AXIS_COLORS.z} hot={hot === 'z'} />
+        {single && resizable?.[resizeKey(single!.rotation, 'rz') === 'width' ? 'w' : resizeKey(single!.rotation, 'rz') === 'depth' ? 'd' : 'h'] && (
+          <group onPointerDown={(e) => startDrag(e, 'rz')} {...hover('rz')}>
+            <ResizeArrow color={AXIS_COLORS.z} hot={hot === 'rz'} />
+          </group>
+        )}
       </group>
       {/* Y arrow (elevation) */}
       <group position={[cx, top + 0.04, cz]} ref={keep} onPointerDown={(e) => startDrag(e, 'y')} {...hover('y')}>
         <ArrowShape color={AXIS_COLORS.y} hot={hot === 'y'} />
+        {single && resizable?.[resizeKey(single!.rotation, 'ry') === 'width' ? 'w' : resizeKey(single!.rotation, 'ry') === 'depth' ? 'd' : 'h'] && (
+          <group onPointerDown={(e) => startDrag(e, 'ry')} {...hover('ry')}>
+            <ResizeArrow color={AXIS_COLORS.y} hot={hot === 'ry'} />
+          </group>
+        )}
       </group>
-      {/* Centre disc: free move on the floor */}
+      {/* Centre: four-way move icon, free move on the floor */}
       <group position={[cx, base + 0.03, cz]} ref={keep} onPointerDown={(e) => startDrag(e, 'free')} {...hover('free')}>
-        <mesh rotation-x={-Math.PI / 2} material={gizmoMat('#f2efe9', hot === 'free')} renderOrder={21}>
-          <circleGeometry args={[0.11, 28]} />
-        </mesh>
-        <mesh rotation-x={-Math.PI / 2} position={[0, 0.001, 0]} material={gizmoMat(ACCENT, hot === 'free')} renderOrder={22}>
-          <ringGeometry args={[0.07, 0.11, 28]} />
-        </mesh>
+        <MoveIcon hot={hot === 'free'} />
       </group>
-      {single && (
-        <group position={[cx, base + 0.025, cz]} rotation={[0, -single.rotation, 0]}>
-          <mesh rotation-x={-Math.PI / 2} onPointerDown={(e) => startDrag(e, 'rotate')} {...hover('rotate')} material={gizmoMat(ACCENT, hot === 'rotate')} renderOrder={19}>
+      {n > 0 && (
+        <group position={[cx, base + 0.025, cz]} rotation={[0, -(single?.rotation ?? 0), 0]}>
+          <mesh rotation-x={-Math.PI / 2} onPointerDown={(e) => startDrag(e, 'rotate')} {...hover('rotate')} material={gizmoMat(GIZMO_TEAL, hot === 'rotate')} renderOrder={19}>
             <torusGeometry args={[ringR, hot === 'rotate' ? 0.04 : 0.026, 10, 72]} />
           </mesh>
-          <mesh position={[0, 0, ringR]} rotation-x={-Math.PI / 2} material={gizmoMat(ACCENT, true)} renderOrder={19} raycast={() => null}>
+          <mesh position={[0, 0, ringR]} rotation-x={-Math.PI / 2} material={gizmoMat(GIZMO_TEAL, true)} renderOrder={19} raycast={() => null}>
             <circleGeometry args={[0.06, 20]} />
           </mesh>
-          {scalable && (
-            // Scale handle: a square on the ring between the front and the right.
-            <group position={[ringR * Math.SQRT1_2, 0.004, ringR * Math.SQRT1_2]} rotation={[0, Math.PI / 4, 0]} onPointerDown={(e) => startDrag(e, 'scale')} {...hover('scale')}>
-              <mesh rotation-x={-Math.PI / 2} material={gizmoMat('#f2efe9', hot === 'scale')} renderOrder={23}>
-                <planeGeometry args={[hot === 'scale' ? 0.15 : 0.12, hot === 'scale' ? 0.15 : 0.12]} />
-              </mesh>
-              <mesh rotation-x={-Math.PI / 2} position={[0, 0.001, 0]} material={gizmoMat(ACCENT, hot === 'scale')} renderOrder={24} raycast={() => null}>
-                <ringGeometry args={[0.035, 0.05, 4, 1, Math.PI / 4]} />
-              </mesh>
+          {single && scalable && (
+            // Scale handle: a tile just outside the ring (front-right), clear of the rotation ring.
+            <group position={[ringR * Math.SQRT1_2, 0.004, ringR * Math.SQRT1_2]} rotation={[0, Math.PI / 4, 0]} ref={keep}>
+              <group position={[0, 0, 0.36]} onPointerDown={(e) => startDrag(e, 'scale')} {...hover('scale')}>
+                <ScaleTile hot={hot === 'scale'} />
+              </group>
             </group>
           )}
         </group>
+      )}
+      {tip && !readout && (
+        <Html position={tip.at} style={{ pointerEvents: 'none' }} zIndexRange={[40, 30]}>
+          <div className="gizmo-tip">{tip.text}</div>
+        </Html>
       )}
       {readout && (
         <Html position={[cx, top + 0.6, cz]} center style={{ pointerEvents: 'none' }}>

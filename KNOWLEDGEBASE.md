@@ -1600,3 +1600,17 @@ Known limitations (also in README):
      ceramic heater, floor speaker), built-in kitchen units, and the ones kept on purpose before (flush ceiling
      light, downlight set, bathtub, squat toilet, instant heater with shower rail). Samples and ready groups use the
      branded ids; loft.test now loads the packs (done).
+129. "Outline the object (even through walls) when its note is selected, different from it being selected" → a second
+     OutlinePass in PostEffects (amber, pulsing, hidden edges shown) for the items selected notes point at (done).
+130. "Build this arched structure to box a corner bedroom; resizing must not change the curve radius" + "add a kính lấy
+     sáng" + "same thickness as an interior wall" → portal-frames 1.1: `arched-partition-wall` and
+     `corner-bedroom-enclosure` (two arched faces in an L meeting at a corner pier, 12 cm walls, fixed 45 cm arch
+     radius, stepped soffit; models Open / Glass side / Glass side-light / Curtain; the side-light is a fixed reeded
+     pane beside the pier up into the arch). PortalSpec gained `legL`/`legR`; `quarterTurn` turns a face built
+     along x onto the z side (done).
+131. "Per-axis resizing on the gizmo, tied to the arrows" + "more vibrant colours" + "tooltips" + "scale icon too easy
+     to confuse with the ring" + "move icon in the middle" + "rotation for groups" → TransformGizmo: a two-headed
+     resize arrow on each move arrow's line just behind it (X/Z → width or depth, whichever lines up; up arrow →
+     height; one face moves, Alt from the centre, 1 cm steps, item limits), vivid opaque colours, hover tooltips,
+     the scale tile outside the ring, a four-way move icon, and the ring for multi-selections turning them about
+     their centre (15° steps, Alt free) (done).
