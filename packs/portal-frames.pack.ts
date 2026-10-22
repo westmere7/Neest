@@ -96,6 +96,11 @@ interface PortalSpec {
   halfWall?: number;
   /** Timber lining this thick around the opening, through the full depth (shows as a band on both faces). */
   lining?: number;
+  /**
+   * Timber lining this thick inside the opening, from foot to foot round the arch, standing a few mm
+   * proud of both faces (works with the stepped frame; the opening narrows by it).
+   */
+  liningIn?: number;
 }
 
 interface Geo {
@@ -191,6 +196,21 @@ function liningBand(g: Geo, t: number, z: V2): Part {
   return panelXY('shelf', dedupe([...inner, ...outer]), z[0], z[1] - z[0]);
 }
 
+/** The opening's geometry shrunk by a lining `t` thick (the clear opening inside it). */
+function insetGeo(g: Geo, t: number): Geo {
+  if (t <= 0) return g;
+  const shrink = (c: V2): V2 => (c[0] > 0 ? [Math.max(0.01, c[0] - t), Math.max(0.01, c[1] - t)] : c);
+  return { ...g, xl: g.legL ? g.xl + t : g.xl, xr: g.xr - t, yi: g.yi - t, cl: shrink(g.cl), cr: shrink(g.cr) };
+}
+
+/** Lining inside the opening: a band from the clear opening out to the plaster, 4 mm proud of each face. */
+function liningInside(g: Geo, t: number, d: number): Part {
+  const inner = openingEdge(insetGeo(g, t), 0);
+  // 1 mm short of the plaster so the two never share a face plane.
+  const outer = openingEdge(insetGeo(g, 0.001), 0).reverse();
+  return panelXY('lining', dedupe([...inner, ...outer]), -d / 2 - 0.004, d + 0.008);
+}
+
 /** A leg x0..x1 (y0..y1) with an open, lit shelf niche on its front face. */
 function nicheLeg(x0: number, x1: number, y0: number, y1: number, d: number): Part[] {
   const t = Math.min(0.04, (x1 - x0) * 0.15);
@@ -250,6 +270,7 @@ function buildPortal(size: Size3, s: PortalSpec): Part[] {
     // The band sits 1 mm inside the faces so the two finishes never share a face plane.
     parts.push(...frameLayer(g, [-d / 2, d / 2], t, h, s), liningBand(g, t, [-d / 2 + 0.001, d / 2 - 0.001]));
   } else parts.push(...frameLayer(g, [-d / 2, d / 2], 0, h, s));
+  if (s.liningIn) parts.push(liningInside(g, s.liningIn, d));
 
   // Niche legs (on the core layer's place).
   const ysR = g.yi - g.cr[1];
@@ -555,7 +576,15 @@ const headerCove = portal({
 const WALL_T = 0.12;
 /** Corner radius of their arches: fixed at every size, only smaller when the opening cannot hold it. */
 const ARCH_R = 0.45;
-const ARCH: PortalSpec = { legs: 'both', leg: 0.12, legR: 0.55, head: 0.38, rL: ARCH_R, rR: ARCH_R, step: 0.08 };
+/** Timber lining round the arch openings. */
+const ARCH_LINING = 0.03;
+const ARCH: PortalSpec = { legs: 'both', leg: 0.12, legR: 0.55, head: 0.38, rL: ARCH_R, rR: ARCH_R, step: 0.08, liningIn: ARCH_LINING };
+const LINING = matSlot('lining', 'Arch lining', 'wood-oak-light');
+const ARCH_VARIANTS = [
+  ...PAINT_VARIANTS,
+  { id: 'walnut-lining', name: 'Walnut lining', materials: { lining: 'wood-walnut' } },
+  { id: 'plain', name: 'Painted lining', materials: { lining: 'paint-warm-white' } },
+];
 
 /** Turns parts built along x (front +z) a quarter turn about the vertical, then moves them by (dx, dz). */
 function quarterTurn(parts: Part[], dx: number, dz: number): Part[] {
@@ -581,8 +610,9 @@ function enclosureFaces({ w, d, h }: Size3) {
   const front: Size3 = { w, d: t, h };
   const sideLen = d - t;
   const side: Size3 = { w: sideLen, d: t, h };
-  // Side face built along x: its left end is the corner, its right end the back wall.
-  const sideSpec: PortalSpec = { ...ARCH, legL: ARCH.legR, legR: ARCH.leg };
+  // Side face built along x: its left end is the corner, its right end the back wall. Its arch sits
+  // by the corner (slim jamb there), with the solid stretch towards the back wall.
+  const sideSpec: PortalSpec = { ...ARCH, legL: ARCH.leg, legR: ARCH.legR };
   return {
     t,
     front: { size: front, spec: ARCH, dz: d / 2 - t / 2 },
@@ -616,7 +646,7 @@ function enclosurePlan(size: Size3): PlanStroke[] {
 /** The side opening as a glass panel (glazed model). */
 function sideGlass(size: Size3): Part[] {
   const e = enclosureFaces(size);
-  const g = portalGeo(e.side.size, e.side.spec);
+  const g = insetGeo(portalGeo(e.side.size, e.side.spec), ARCH_LINING);
   const edge = openingEdge(g, 0);
   const pane = panelXY('glass', dedupe(edge), -0.006, 0.012);
   // A slim black frame: sill and the two jambs (the head follows the arch, so it is left to the glass edge).
@@ -635,7 +665,7 @@ const SIDELIGHT_W = 0.9;
  * into the arch, in a slim black frame; the rest of the opening stays open. Built in face space.
  */
 function sidelight(size: Size3, spec: PortalSpec): Part[] {
-  const g = portalGeo(size, spec);
+  const g = insetGeo(portalGeo(size, spec), spec.liningIn ?? 0);
   const width = Math.min(SIDELIGHT_W, (g.xr - g.xl) * 0.45);
   const xg = g.xr - width;
   // The opening's top edge (left foot → arch → right foot) is monotonic in x across the head.
@@ -659,7 +689,7 @@ const SIDELIGHT_SLOTS = [matSlot('glass', 'Glass', 'glass-reeded'), matSlot('mul
 /** A linen curtain on a rail under the front soffit, gathered at the corner pier (curtain model). */
 function frontCurtain(size: Size3): Part[] {
   const e = enclosureFaces(size);
-  const g = portalGeo(e.front.size, e.front.spec);
+  const g = insetGeo(portalGeo(e.front.size, e.front.spec), ARCH_LINING);
   const top = g.yi - Math.max(g.cl[1], g.cr[1]) * 0.15 - 0.03;
   const zc = -e.t / 2 - 0.08;
   const width = clamp((g.xr - g.xl) * 0.28, 0.35, 0.9);
@@ -683,10 +713,12 @@ const archedWall = portal({
   id: 'arched-partition-wall',
   name: 'Arched partition wall',
   description:
-    'A full-height partition with one wide arched opening: a slim jamb where it meets a wall, a broad pier at the free end and a soffit with softly rounded corners, stepped on both faces like a ceiling bulkhead. Add a fixed glass side-light beside the pier, or leave it open.',
+    'A full-height partition with one wide arched opening: a slim jamb where it meets a wall, a broad pier at the free end and a soffit with softly rounded corners, stepped on both faces like a ceiling bulkhead, the arch lined in timber. Add a fixed glass side-light beside the pier, or leave it open.',
   tags: ['partition', 'arched wall', 'room divider', 'bedroom', 'vách ngăn', 'vách vòm', 'phòng ngủ'],
   spec: ARCH,
   size: { w: 3.0, d: WALL_T, h: CEILING },
+  slots: [FRAME, LINING],
+  variants: ARCH_VARIANTS,
   min: { w: 1.6, d: 0.1, h: 2.1 },
   max: { w: 6.0, d: 0.3, h: 3.6 },
   models: [
@@ -703,12 +735,12 @@ const cornerRoom = defineItem({
   group: 'Portals & arches',
   tags: [...TAGS, 'corner bedroom', 'bedroom box', 'enclosure', 'studio', 'sleeping nook', 'partition', 'L-shaped', 'phòng ngủ góc', 'vách ngăn phòng ngủ', 'căn hộ studio'],
   description:
-    'Boxes a bedroom into the corner of an open room: two full-height arched partitions meet at a broad corner pier, each with a slim jamb where it reaches the room walls. The arch corners keep their radius at any size. Mirror it for a left-hand corner.',
+    'Boxes a bedroom into the corner of an open room: two full-height arched partitions with timber-lined arches meet at a broad corner pier, each with a slim jamb where it reaches the room walls. The arch corners keep their radius at any size. Mirror it for a left-hand corner.',
   defaultSize: { w: 3.2, d: 2.8, h: CEILING },
   minSize: { w: 1.8, d: 1.6, h: 2.1 },
   maxSize: { w: 6.0, d: 6.0, h: 3.6 },
-  slots: [FRAME],
-  variants: PAINT_VARIANTS,
+  slots: [FRAME, LINING],
+  variants: ARCH_VARIANTS,
   models: [
     { id: 'open', name: 'Open' },
     {
@@ -739,7 +771,7 @@ const cornerRoom = defineItem({
 
 export default definePack({
   name: 'Portal frames',
-  version: '1.1.0',
+  version: '1.2.0',
   author: 'Neest team',
   description:
     'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal, rounded ceiling headers, an arched partition wall and an arched corner bedroom enclosure. All resize freely; the curves are rebuilt for every size.',

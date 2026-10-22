@@ -1614,3 +1614,7 @@ Known limitations (also in README):
      height; one face moves, Alt from the centre, 1 cm steps, item limits), vivid opaque colours, hover tooltips,
      the scale tile outside the ring, a four-way move icon, and the ring for multi-selections turning them about
      their centre (15° steps, Alt free) (done).
+132. "Add wood lining to the arches' curves" + a sketch moving the side arch → PortalSpec `liningIn`: a 3 cm timber band
+     inside the opening from foot to foot, 4 mm proud of each face (slot `lining`, light oak; walnut and painted
+     variants); glass and curtain fit inside it. The enclosure's side arch now sits by the corner with the solid
+     stretch at the back wall (done).
