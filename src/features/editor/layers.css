@@ -81,6 +81,16 @@
 .item-layer {
   border-radius: var(--radius-sm);
 }
+/* Holds a selected item: an accent bar and tint; all of it selected: a stronger tint. */
+.item-layer.has-selection {
+  background: color-mix(in srgb, var(--accent-soft) 60%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.item-layer.has-selection .item-layer-name,
+.item-layer.has-selection .item-layer-count {
+  color: var(--accent);
+  font-weight: 600;
+}
 .item-layer.is-current {
   background: var(--accent-soft);
 }

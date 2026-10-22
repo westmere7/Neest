@@ -129,6 +129,8 @@ function LayerRow({
   const items = objectsInLayer(project, id);
   const selectedIds = new Set(selection.map((s) => s.id));
   const current = items.length > 0 && items.every((o) => selectedIds.has(o.id));
+  // The layer row of a selected item is highlighted (the row only; the item list stays as it is).
+  const holds = items.filter((o) => selectedIds.has(o.id));
   const set = (label: string, patch: { visible?: boolean; locked?: boolean }) =>
     exec(label, (d) => (layer ? updateItemLayer(d, layer.id, patch) : updateUnassignedLayer(d, patch)));
 
@@ -149,7 +151,10 @@ function LayerRow({
   };
 
   return (
-    <div className={`item-layer${visible ? '' : ' is-hidden'}${current ? ' is-current' : ''}`} data-testid={`item-layer-${id ?? 'unassigned'}`}>
+    <div
+      className={`item-layer${visible ? '' : ' is-hidden'}${current ? ' is-current' : ''}${holds.length ? ' has-selection' : ''}`}
+      data-testid={`item-layer-${id ?? 'unassigned'}`}
+    >
       <div className="item-layer-row">
         <button
           type="button"
@@ -192,8 +197,11 @@ function LayerRow({
             {name}
           </button>
         )}
-        <span className="item-layer-count" title={`${items.length} item${items.length === 1 ? '' : 's'}`}>
-          {items.length}
+        <span
+          className="item-layer-count"
+          title={holds.length ? `${holds.length} of ${items.length} selected` : `${items.length} item${items.length === 1 ? '' : 's'}`}
+        >
+          {holds.length && !current ? `${holds.length}/${items.length}` : items.length}
         </span>
         <IconButton
           label={visible ? `Hide ${name}` : `Show ${name}`}
