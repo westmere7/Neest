@@ -530,6 +530,15 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const panning3d = !walk && tool === 'pan';
   const drag = useObjectDrag(project, derived, !walk && !drawing && !panning3d);
   const selectedIds = useMemo(() => new Set(selection.map((s) => s.id)), [selection]);
+  // Items the selected notes point at (outlined differently from the selection).
+  const notedIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const s of selection) {
+      const t = s.kind === 'callout' ? project.callouts?.[s.id]?.target : undefined;
+      if (t?.kind === 'object') ids.add(t.objectId);
+    }
+    return ids;
+  }, [selection, project.callouts]);
   const notesCamera = useRef<THREE.Camera | null>(null);
   // Right-click: the same menu as in the plan, for the item under the pointer (not after a right-drag orbit/pan).
   const rightDown = useRef<{ x: number; y: number } | null>(null);
@@ -693,7 +702,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
             onProgress={setProgress}
           />
         )}
-        <PostEffects quality={r.quality} selectedIds={options.selectedIds} paused={!compiled} />
+        <PostEffects quality={r.quality} selectedIds={options.selectedIds} notedIds={walk || !showHelpers ? undefined : notedIds} paused={!compiled} />
         <GlobalIllumination enabled={r.quality === 'ultra' && ready} project={project} derived={derived} />
         <FloorReflections enabled={r.quality === 'ultra'} />
         {walk || projection === 'perspective' ? (

@@ -11,6 +11,9 @@ import type { RenderSettings } from '@/domain/model/schema';
 
 const SELECT = new THREE.Color('#14b89a');
 const SELECT_HIDDEN = new THREE.Color('#5fe0c8');
+/** The item a selected note points at: amber and pulsing, so it never reads as selected itself. */
+const NOTED = new THREE.Color('#ff8a00');
+const NOTED_HIDDEN = new THREE.Color('#ffa024');
 const OUTLINED = new Set(['object', 'opening', 'wall']);
 /** Scene overlays drawn after ambient occlusion, on top of everything (the transform gizmo). */
 const OVERLAY_NAMES = new Set(['neest-gizmo']);
@@ -48,19 +51,32 @@ class OverlayPass extends Pass {
  * - Selection outline at every quality: a bold edge around the selected objects, openings and
  *   walls, drawn in a lighter tint where something hides them (a door or window seen through its
  *   wall, a chair behind a sofa), so the selection is always visible.
+ * - Note target outline: the items a selected note points at get a second, amber pulsing outline
+ *   (also seen through walls), different from the selection's.
  *
  * Rendering goes through a half-float, 4× multisampled target (with a depth texture for the AO),
  * so antialiasing and the HDR range are kept; OutputPass applies the renderer's tone mapping,
  * exposure and sRGB conversion.
  */
-export function PostEffects({ quality, selectedIds, paused }: { quality: RenderSettings['quality']; selectedIds?: Set<string>; paused?: boolean }) {
+export function PostEffects({
+  quality,
+  selectedIds,
+  notedIds,
+  paused,
+}: {
+  quality: RenderSettings['quality'];
+  selectedIds?: Set<string>;
+  /** Items a selected note points at. */
+  notedIds?: Set<string>;
+  paused?: boolean;
+}) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
   const ao = quality === 'ultra';
 
-  const { composer, outline, gtao, overlay } = useMemo(() => {
+  const { composer, outline, noted, gtao, overlay } = useMemo(() => {
     const target = new THREE.WebGLRenderTarget(1, 1, {
       type: THREE.HalfFloatType,
       samples: quality === 'draft' ? 0 : 4,
@@ -78,6 +94,15 @@ export function PostEffects({ quality, selectedIds, paused }: { quality: RenderS
       gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 8, rings: 2, samples: 16 });
       composer.addPass(gtao);
     }
+    const noted = new OutlinePass(new THREE.Vector2(1, 1), scene, camera);
+    noted.visibleEdgeColor.copy(NOTED);
+    noted.hiddenEdgeColor.copy(NOTED_HIDDEN);
+    noted.edgeStrength = 10;
+    noted.edgeThickness = 1.5;
+    noted.edgeGlow = 0.8;
+    noted.pulsePeriod = 1.6;
+    noted.enabled = false;
+    composer.addPass(noted);
     const outline = new OutlinePass(new THREE.Vector2(1, 1), scene, camera);
     outline.visibleEdgeColor.copy(SELECT);
     outline.hiddenEdgeColor.copy(SELECT_HIDDEN);
@@ -89,7 +114,7 @@ export function PostEffects({ quality, selectedIds, paused }: { quality: RenderS
     const overlay = new OverlayPass(camera);
     composer.addPass(overlay);
     composer.addPass(new OutputPass());
-    return { composer, outline, gtao, overlay };
+    return { composer, outline, noted, gtao, overlay };
   }, [gl, scene, camera, quality, ao]);
 
   useEffect(() => {
@@ -100,9 +125,10 @@ export function PostEffects({ quality, selectedIds, paused }: { quality: RenderS
     () => () => {
       gtao?.dispose();
       outline.dispose();
+      noted.dispose();
       composer.dispose();
     },
-    [composer, outline, gtao],
+    [composer, outline, noted, gtao],
   );
 
   useFrame(() => {
@@ -113,14 +139,20 @@ export function PostEffects({ quality, selectedIds, paused }: { quality: RenderS
     // edited. Overlay roots are collected in the same walk.
     const picked: THREE.Object3D[] = [];
     const overlays: THREE.Object3D[] = [];
+    const notedPicked: THREE.Object3D[] = [];
     const sel = selectedIds?.size ? selectedIds : null;
+    const nt = notedIds?.size ? notedIds : null;
     scene.traverse((o) => {
       if (OVERLAY_NAMES.has(o.name) && o.visible) overlays.push(o);
-      const id = sel ? (o.userData?.id as string | undefined) : undefined;
-      if (id && sel!.has(id) && OUTLINED.has(o.userData.kind)) picked.push(o);
+      const id = sel || nt ? (o.userData?.id as string | undefined) : undefined;
+      if (!id || !OUTLINED.has(o.userData.kind)) return;
+      if (sel?.has(id)) picked.push(o);
+      if (nt?.has(id)) notedPicked.push(o);
     });
     outline.selectedObjects = picked;
     outline.enabled = picked.length > 0;
+    noted.selectedObjects = notedPicked;
+    noted.enabled = notedPicked.length > 0;
     // AO samples the depth the scene pass just wrote (it respects clipping and transparency).
     const depth = composer.readBuffer.depthTexture;
     if (gtao && depth && gtao.depthTexture !== depth) gtao.setGBuffer(depth);
