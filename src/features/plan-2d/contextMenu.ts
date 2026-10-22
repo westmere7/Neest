@@ -17,6 +17,11 @@ import {
 } from '@/features/editor/actions';
 import { groupSelection, groupState, saveSelectionToLibrary, ungroupSelection } from '@/features/editor/groups';
 import { createCalloutAt } from './tools/calloutTool';
+import { isObjectLocked, itemLayerOf } from '@/domain/commands/itemLayers';
+import { moveSelectionToLayer, newLayerFromSelection } from '@/features/editor/itemLayerActions';
+
+/** Layers listed by name in the right-click menu; with more, the menu opens the Layers panel. */
+const MENU_LAYERS = 6;
 
 export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
   const project = useProjectStore.getState().project;
@@ -55,10 +60,12 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
       ...(g.canGroup || g.canUngroup || g.count >= 1 ? [{ separator: true, label: '' }] : []),
       { label: 'Add note', run: () => void createCalloutAt({ kind: 'object', objectId: hit.id }, px) },
       { label: 'Duplicate', shortcut: 'Ctrl+D', run: duplicateSelection },
-      { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: o?.locked },
+      { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: !!o && isObjectLocked(project, o) },
       { label: o?.locked ? 'Unlock' : 'Lock', shortcut: 'Ctrl+L', run: toggleLockSelection },
       { separator: true, label: '' },
-      { label: 'Delete', shortcut: 'Del', danger: true, run: () => void deleteSelection(), disabled: o?.locked },
+      ...layerMenuItems(o ? (itemLayerOf(project, o)?.id ?? null) : null),
+      { separator: true, label: '' },
+      { label: 'Delete', shortcut: 'Del', danger: true, run: () => void deleteSelection(), disabled: !!o && isObjectLocked(project, o) },
     );
   } else if (hit.kind === 'wall') {
     const w = project.walls[hit.id];
@@ -101,4 +108,26 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
     );
   }
   return items;
+}
+
+/** "Move to layer" entries for the selected items: the layers by name (current one checked) and a new layer. */
+function layerMenuItems(current: string | null): MenuItem[] {
+  const layers = useProjectStore.getState().project?.itemLayers ?? [];
+  const openPanel = () => useEditorStore.getState().set({ layersPanelOpen: true });
+  if (layers.length > MENU_LAYERS) return [{ label: 'Move to layer…', shortcut: 'Shift+L', run: openPanel }];
+  return [
+    ...(layers.length
+      ? [
+          { label: 'Move to Unassigned', checked: current === null, run: () => moveSelectionToLayer(null) },
+          ...layers.map((l) => ({ label: `Move to “${l.name}”`, checked: current === l.id, run: () => moveSelectionToLayer(l.id) })),
+        ]
+      : []),
+    {
+      label: 'Move to new layer',
+      run: () => {
+        newLayerFromSelection();
+        openPanel();
+      },
+    },
+  ];
 }

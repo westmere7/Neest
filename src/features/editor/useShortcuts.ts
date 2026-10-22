@@ -54,6 +54,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: '1 / 2', action: 'Outline / 2D plan' },
   { keys: '4 / 5', action: '3D view / split view' },
   { keys: 'P (3D view)', action: 'Show / hide the 3D view panel' },
+  { keys: 'Shift+L', action: 'Show / hide the item layers panel' },
   { keys: 'Tab or \\', action: 'Hide / show interface' },
   { keys: 'Esc', action: 'Cancel, back to select, clear selection, show interface' },
   { keys: '?', action: 'Show shortcuts' },
@@ -162,6 +163,7 @@ export function useEditorShortcuts(isMobile: boolean) {
       if (key === '4') return ed.set({ workspace: '3d' });
       if (key === '5' && !isMobile) return ed.set({ workspace: 'split' });
       if (key === 'p' && ed.workspace === '3d' && !isMobile) return ed.set({ viewPanelOpen: !ed.viewPanelOpen });
+      if (key === 'l' && e.shiftKey && !isMobile) return ed.set({ layersPanelOpen: !ed.layersPanelOpen });
       // While placing, R turns what is being placed (the tool handles it when it has the keys; this is
       // the fallback): it never switches to the room tool under a ghost.
       if (key === 'r' && !mod && (ed.tool === 'place' || ed.tool === 'opening')) {

@@ -5,6 +5,7 @@ import type { Project, RenderSettings } from '@/domain/model/schema';
 import { getAsset } from '@/data/assets/registry';
 import { LAMP_BUDGET, resolveObjectLights, type ResolvedLight } from '@/data/assets/lights';
 import { usePackVersion } from '@/packs/events';
+import { isObjectHidden } from '@/domain/commands/itemLayers';
 
 /** A candidate only takes a slot from an assigned light when it is clearly more relevant. */
 const SWAP_MARGIN = 0.7;
@@ -36,7 +37,7 @@ export function LampLights({ project, quality }: { project: Project; quality: Re
   const all = useMemo(() => {
     void packVersion;
     const out: ResolvedLight[] = [];
-    for (const o of Object.values(project.objects)) out.push(...resolveObjectLights(o, getAsset(project, o.assetId)));
+    for (const o of Object.values(project.objects)) if (!isObjectHidden(project, o)) out.push(...resolveObjectLights(o, getAsset(project, o.assetId)));
     return out;
   }, [project, packVersion]);
 

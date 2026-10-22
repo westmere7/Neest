@@ -142,6 +142,19 @@ export function repairProject(project: Project): MigrationResult {
     }
   }
   if (droppedCallouts) warnings.push(`${droppedCallouts} callout(s) pointed at missing items or rooms and were removed.`);
+  // Item layers: one entry per id; items filed under a missing layer go back to Unassigned.
+  const layerIds = new Set<string>();
+  p.itemLayers = (p.itemLayers ?? []).filter((l) => (layerIds.has(l.id) ? false : (layerIds.add(l.id), true)));
+  let unfiled = 0;
+  const unfile = (o: { layerId?: string }) => {
+    if (o.layerId && !layerIds.has(o.layerId)) {
+      delete o.layerId;
+      unfiled++;
+    }
+  };
+  for (const o of Object.values(p.objects)) unfile(o);
+  for (const opt of p.options ?? []) for (const o of Object.values(opt.plan?.objects ?? {})) unfile(o);
+  if (unfiled) warnings.push(`${unfiled} item(s) were on a missing layer and are now unassigned.`);
   const camIds = new Set<string>();
   p.cameras = p.cameras.filter((c) => (camIds.has(c.id) ? false : (camIds.add(c.id), true)));
   if (p.guest.startCameraId && !camIds.has(p.guest.startCameraId)) p.guest.startCameraId = null;

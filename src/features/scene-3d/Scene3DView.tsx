@@ -54,6 +54,7 @@ import { floatingInsets } from '@/components/layoutInsets';
 import { SceneLoading, type SceneLoadStage } from './SceneLoading';
 import './scene3d.css';
 import { movedElevation } from '@/features/plan-2d/tools/surfaces';
+import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 
 type Projection = 'perspective' | 'orthographic';
 
@@ -305,7 +306,7 @@ function SelectionPivot() {
     const box = new THREE.Box3();
     for (const id of key.split(',')) {
       const o = project.objects[id];
-      if (!o || o.hidden) continue;
+      if (!o || isObjectHidden(project, o)) continue;
       box.expandByPoint(new THREE.Vector3(o.x, o.elevation, o.y));
       box.expandByPoint(new THREE.Vector3(o.x, o.elevation + o.height, o.y));
     }
@@ -368,7 +369,7 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
       const live = liveScene.current;
       if (!enabled || e.button !== 0 || !live || hitsGizmo(e)) return;
       const sel = useEditorStore.getState().selection;
-      if (!sel.some((s) => s.id === obj.id) || obj.locked || latest.current.project.layers.furniture.locked)
+      if (!sel.some((s) => s.id === obj.id) || isObjectLocked(latest.current.project, obj) || latest.current.project.layers.furniture.locked)
         return;
       e.stopPropagation();
       const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -obj.elevation);
@@ -377,7 +378,7 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
       const offset = { x: obj.x - hit.x, y: obj.y - hit.z };
       // Grouped items move together (no wall hugging for a group).
       const mates = withGroupMates(latest.current.project, [obj.id]).filter(
-        (id) => !latest.current.project.objects[id]?.locked,
+        (id) => !!latest.current.project.objects[id] && !isObjectLocked(latest.current.project, latest.current.project.objects[id]),
       );
       const starts = Object.fromEntries(
         mates.map((id) => [

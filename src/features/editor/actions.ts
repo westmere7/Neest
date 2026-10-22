@@ -6,6 +6,7 @@ import { useEditorStore, type SelItem } from '@/state/editorStore';
 import { confirmAction, toast } from '@/state/uiStores';
 import { groupFromSelection } from './groups';
 import { transientGroups } from '@/features/library/savedGroupAssets';
+import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 
 const ps = () => useProjectStore.getState();
 const es = () => useEditorStore.getState();
@@ -43,7 +44,7 @@ export async function deleteSelection(): Promise<void> {
     toast.warning('Locked walls', 'Unlock the walls (or the construction layer) before deleting them.');
     return;
   }
-  const lockedObjs = sel.filter((s) => s.kind === 'object' && project.objects[s.id]?.locked);
+  const lockedObjs = sel.filter((s) => s.kind === 'object' && project.objects[s.id] && isObjectLocked(project, project.objects[s.id]));
   if (lockedObjs.length) {
     toast.warning('Locked objects', 'Unlock the selected objects before deleting them.');
     return;
@@ -138,7 +139,7 @@ function placeCopies(project: NonNullable<ReturnType<typeof ps>['project']>, ids
 export function rotateSelection(delta = Math.PI / 2): void {
   const project = ps().project;
   const ids = es()
-    .selection.filter((s) => s.kind === 'object' && !project?.objects[s.id]?.locked)
+    .selection.filter((s) => s.kind === 'object' && !!project?.objects[s.id] && !isObjectLocked(project, project.objects[s.id]))
     .map((s) => s.id);
   if (!ids.length) return;
   ps().execute('Rotate', (d) => rotateObjects(d, ids, delta));
@@ -148,7 +149,7 @@ export function nudgeSelection(dx: number, dy: number): void {
   const project = ps().project;
   if (!project) return;
   const sel = es().selection;
-  const objIds = sel.filter((s) => s.kind === 'object' && !project.objects[s.id]?.locked).map((s) => s.id);
+  const objIds = sel.filter((s) => s.kind === 'object' && !!project.objects[s.id] && !isObjectLocked(project, project.objects[s.id])).map((s) => s.id);
   const nodeIds = new Set<string>();
   if (!project.layers.construction.locked) {
     for (const s of sel) {
@@ -213,7 +214,7 @@ export function selectAll(): void {
       .filter((w) => !w.locked && !project.layers.construction.locked)
       .map((w) => ({ kind: 'wall' as const, id: w.id })),
     ...Object.values(project.objects)
-      .filter((o) => !o.locked && !project.layers.furniture.locked)
+      .filter((o) => !isObjectLocked(project, o) && !isObjectHidden(project, o) && !project.layers.furniture.locked)
       .map((o) => ({ kind: 'object' as const, id: o.id })),
   ];
   es().setSelection(sel);

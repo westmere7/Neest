@@ -30,6 +30,7 @@ import { LampLights } from './LampLights';
 import { reflectiveMaterial, registerReflectiveFloor } from './floorReflections';
 import { WALL_DEPTH_BIAS, biasDepth } from './depthBias';
 import { Callouts3D } from '@/features/callouts/Callouts3D';
+import { isObjectHidden } from '@/domain/commands/itemLayers';
 
 export interface SceneOptions {
   wallDisplay: WallDisplay;
@@ -717,7 +718,7 @@ export function SceneContent({
   const constructionVisible = project.layers.construction.visible;
   const hubMat = registry.get(project, 'plaster-white');
   const objects = Object.values(project.objects).filter((o) => {
-    if (o.hidden || !project.layers.furniture.visible) return false;
+    if (isObjectHidden(project, o) || !project.layers.furniture.visible) return false;
     // Lights of hidden items still shine (LampLights reads every object).
     return !isAssetHidden(getAsset(project, o.assetId), options.hiddenCategories);
   });

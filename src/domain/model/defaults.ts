@@ -87,7 +87,9 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       furniture: { visible: true, locked: false },
       annotations: { visible: true, locked: false },
       callouts: { visible: true, locked: false },
+      unassigned: { visible: true, locked: false },
     },
+    itemLayers: [],
     guest: { startCameraId: null, spawn: null, spawnAngle: 0 },
   };
 }

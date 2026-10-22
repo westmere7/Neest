@@ -9,6 +9,7 @@ import { setSelectionExpander, useEditorStore, type SelItem } from '@/state/edit
 import { toast, usePrefsStore, type SavedGroup } from '@/state/uiStores';
 import { readyGroupById } from '@/data/groups/readyGroups';
 import { transientGroups } from '@/features/library/savedGroupAssets';
+import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 
 /**
  * Groups of placed items: selecting one member selects the whole group (installed into the editor
@@ -23,7 +24,7 @@ setSelectionExpander((sel: SelItem[]): SelItem[] => {
     sel.filter((s) => s.kind === 'object').map((s) => s.id),
   );
   const have = new Set(sel.map((s) => s.id));
-  return [...sel, ...ids.filter((id) => !have.has(id) && !p.objects[id]?.hidden).map((id) => ({ kind: 'object' as const, id }))];
+  return [...sel, ...ids.filter((id) => !have.has(id) && !!p.objects[id] && !isObjectHidden(p, p.objects[id])).map((id) => ({ kind: 'object' as const, id }))];
 });
 
 /** Default names like "Group 3" or "Group of 4 items" that say nothing about the contents. */
@@ -85,7 +86,7 @@ export function groupSelection(): void {
     toast.info('Select two or more items to group them');
     return;
   }
-  if (ids.some((id) => p.objects[id].locked)) {
+  if (ids.some((id) => isObjectLocked(p, p.objects[id]))) {
     toast.warning('Unlock the items first', 'Locked items cannot be grouped.');
     return;
   }

@@ -12,6 +12,7 @@ import { dimensionGeometry } from '@/features/plan-2d/dimensions';
 import { layoutCallout, visibleCallouts } from '@/features/callouts/layout';
 import { lineText } from '@/features/callouts/content';
 import { arrowHead, endPx } from '@/features/callouts/style';
+import { isObjectHidden } from '@/domain/commands/itemLayers';
 
 /**
  * DXF export (AutoCAD R12 / AC1009 ASCII), chosen for the widest CAD
@@ -193,7 +194,7 @@ export function buildDxf(project: Project, o: DxfOptions): string {
 
   if (o.furniture) {
     for (const obj of Object.values(project.objects)) {
-      if (obj.hidden) continue;
+      if (isObjectHidden(project, obj)) continue;
       const asset = getObjectAsset(project, obj);
       if (!asset) continue;
       const plan = assetPlan(asset, objectSize(obj), project.customAssets[obj.assetId]);

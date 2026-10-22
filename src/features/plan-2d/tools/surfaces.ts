@@ -2,6 +2,7 @@ import type { Project } from '@/domain/model/schema';
 import { getAsset } from '@/data/assets/registry';
 import { partBounds } from '@/data/assets/plantParts';
 import type { AssetDefinition, Part, Size3 } from '@/data/assets/types';
+import { isObjectHidden } from '@/domain/commands/itemLayers';
 
 /**
  * Surface placement: small items placed or moved over a table, desk, counter, cabinet or appliance
@@ -46,7 +47,7 @@ export function surfaceUnder(project: Project, asset: AssetDefinition, size: Siz
   if (!canStandOnSurfaces(asset, size)) return null;
   let best: number | null = null;
   for (const o of Object.values(project.objects)) {
-    if (o.hidden || ignore.has(o.id)) continue;
+    if (isObjectHidden(project, o) || ignore.has(o.id)) continue;
     const top = o.elevation + o.height;
     if (top < 0.15 || top > 1.6 || (best !== null && top <= best)) continue;
     // Quick reject by the footprint, in the item's own frame (plan +y is its front, +z).

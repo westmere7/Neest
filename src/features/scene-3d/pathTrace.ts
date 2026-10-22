@@ -5,6 +5,7 @@ import { getAsset } from '@/data/assets/registry';
 import { resolveObjectLights } from '@/data/assets/lights';
 import { liveScene } from './sceneRuntime';
 import { sunFromSettings } from './SceneContent';
+import { isObjectHidden } from '@/domain/commands/itemLayers';
 
 export interface PathTraceOptions {
   width: number;
@@ -79,6 +80,7 @@ export async function renderPathTraced(project: Project, o: PathTraceOptions): P
   // Lamp fixtures: point and spot lights as in the live view, nearest to the camera first.
   const cam = live.camera.position;
   const lamps = Object.values(project.objects)
+    .filter((obj) => !isObjectHidden(project, obj))
     .flatMap((obj) => resolveObjectLights(obj, getAsset(project, obj.assetId)))
     .sort((a, b) => cam.distanceTo(new THREE.Vector3(...a.position)) - cam.distanceTo(new THREE.Vector3(...b.position)))
     .slice(0, 24);

@@ -264,6 +264,25 @@ export const PlacedObjectSchema = z.object({
   groupId: Id.optional(),
   /** Model variant of the asset (`AssetDefinition.models`); absent = the asset's default model. */
   model: z.string().max(60).optional(),
+  /** Item layer (`Project.itemLayers`) this item is filed under; absent = unassigned. */
+  layerId: Id.optional(),
+});
+
+/**
+ * A user-made layer for organising placed items (show/hide, lock, select all). Not a depth order:
+ * items are only filed under it. Defined once per project and shared by every layout option.
+ */
+export const ItemLayerSchema = z.object({
+  id: Id,
+  name: z.string().min(1).max(60),
+  visible: z.boolean().default(true),
+  locked: z.boolean().default(false),
+  /** Tag colour shown in the Layers panel (#rrggbb). */
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional()
+    .catch(undefined),
 });
 
 /** A named group of placed items (Ctrl+G). Older builds ignore it and keep the items. */
@@ -484,12 +503,15 @@ export const LayersSchema = z
     annotations: LayerStateSchema,
     /** Callouts (notes pinned to items, rooms, areas and spots); older projects get the default. */
     callouts: LayerStateSchema.default({ visible: true, locked: false }),
+    /** Items on no item layer (the implicit "Unassigned" row of the Layers panel). */
+    unassigned: LayerStateSchema.default({ visible: true, locked: false }),
   })
   .default({
     construction: { visible: true, locked: false },
     furniture: { visible: true, locked: false },
     annotations: { visible: true, locked: false },
     callouts: { visible: true, locked: false },
+    unassigned: { visible: true, locked: false },
   });
 
 export const GuestSettingsSchema = z
@@ -592,6 +614,8 @@ export const ProjectSchema = z.object({
   guest: GuestSettingsSchema,
   /** Library collections, shared by all layout options. */
   collections: z.array(CollectionSchema).default([]),
+  /** User item layers (organising only), shared by all layout options; items point at them with `layerId`. */
+  itemLayers: z.array(ItemLayerSchema).max(200).default([]),
   /** Layout options; absent or empty means the project has a single, unnamed layout. */
   options: z.array(LayoutOptionSchema).optional(),
   /** Id of the option whose plan is in the fields above. */
@@ -616,6 +640,7 @@ export type RoomType = z.infer<typeof RoomTypeSchema>;
 export type Room = z.infer<typeof RoomSchema>;
 export type PlacedObject = z.infer<typeof PlacedObjectSchema>;
 export type ObjectGroup = z.infer<typeof ObjectGroupSchema>;
+export type ItemLayer = z.infer<typeof ItemLayerSchema>;
 export type CalloutTarget = z.infer<typeof CalloutTargetSchema>;
 export type Callout = z.infer<typeof CalloutSchema>;
 export type CalloutColor = (typeof CALLOUT_COLORS)[number];

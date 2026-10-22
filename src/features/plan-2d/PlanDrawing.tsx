@@ -15,6 +15,7 @@ import { dimensionGeometry, type DimensionSpec } from './dimensions';
 import { shade, type PlanPalette } from './palette';
 import { CalloutsSvg } from '@/features/callouts/CalloutsSvg';
 import { arcPath, openingSymbol, type PlanPrim } from './symbols';
+import { isObjectHidden } from '@/domain/commands/itemLayers';
 
 export interface PlanDrawOptions {
   mode: PlanMode;
@@ -110,7 +111,7 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
   const furniture: ReactNode[] = [];
   if (opts.showFurniture && project.layers.furniture.visible) {
     const objs = Object.values(project.objects)
-      .filter((o) => !o.hidden && !isAssetHidden(getAsset(project, o.assetId), project.render.hiddenCategories))
+      .filter((o) => !isObjectHidden(project, o) && !isAssetHidden(getAsset(project, o.assetId), project.render.hiddenCategories))
       .sort((a, b) => Number(isOverhead(project, a)) - Number(isOverhead(project, b)) || a.elevation + a.height - (b.elevation + b.height));
     for (const o of objs) {
       const asset = getObjectAsset(project, o);
@@ -405,7 +406,7 @@ export const PlanDrawing = memo(function PlanDrawing({ project, derived, opts }:
     // things standing on furniture (a laptop on a desk) and sides too short on screen to label.
     if (opts.dims.objects && opts.showFurniture && project.layers.furniture.visible) {
       for (const o of Object.values(project.objects)) {
-        if (o.hidden || Math.max(o.width, o.depth) / px < 40) continue;
+        if (isObjectHidden(project, o) || Math.max(o.width, o.depth) / px < 40) continue;
         if (o.elevation > 0.3 && getAsset(project, o.assetId)?.mount === 'floor') continue;
         const c = Math.cos(o.rotation);
         const s = Math.sin(o.rotation);

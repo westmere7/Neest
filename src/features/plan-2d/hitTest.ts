@@ -7,6 +7,7 @@ import { pointAt, projectOnPath } from '@/domain/geometry/wallPath';
 import { add, dist, leftNormal, rotate, scale } from '@/domain/geometry/vec';
 import { hitCallout } from '@/features/callouts/layout';
 import type { SelItem } from '@/state/editorStore';
+import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 
 export type Handle =
   | { type: 'node'; nodeId: string }
@@ -63,7 +64,7 @@ export function selectionHandles(project: Project, derived: DerivedPlan, selecti
     }
   } else if (s.kind === 'object') {
     const o = project.objects[s.id];
-    if (o && !o.locked) {
+    if (o && !isObjectLocked(project, o)) {
       const c = { x: o.x, y: o.y };
       for (const sx of [-1, 0, 1] as const) {
         for (const sy of [-1, 0, 1] as const) {
@@ -151,7 +152,7 @@ export function hitTest(
     // Prefer the smallest/top-most object under the cursor.
     let best: { id: string; area: number; top: number } | null = null;
     for (const o of Object.values(project.objects)) {
-      if (o.hidden) continue;
+      if (isObjectHidden(project, o)) continue;
       const poly = rectPolygon(o.x, o.y, o.width + tol * 2, o.depth + tol * 2, o.rotation);
       if (!pointInPolygon(p, poly)) continue;
       const area = o.width * o.depth;
@@ -217,7 +218,7 @@ export function marqueeSelect(project: Project, derived: DerivedPlan, a: Vec2, b
   }
   if (project.layers.furniture.visible && !project.layers.furniture.locked) {
     for (const o of Object.values(project.objects)) {
-      if (o.hidden || o.locked) continue;
+      if (isObjectHidden(project, o) || isObjectLocked(project, o)) continue;
       if (rectPolygon(o.x, o.y, o.width, o.depth, o.rotation).every(inside)) out.push({ kind: 'object', id: o.id });
     }
   }

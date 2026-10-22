@@ -16,6 +16,7 @@ import { buildWallExtras } from '@/features/scene-3d/wallExtras';
 import { buildOpening } from '@/features/scene-3d/openingBuilder';
 import { MaterialRegistry } from '@/features/scene-3d/materialRegistry';
 import { loadProjectModels } from '@/features/scene-3d/customModels';
+import { isObjectHidden } from '@/domain/commands/itemLayers';
 
 export interface SceneExportOptions {
   ceilings: boolean;
@@ -86,7 +87,7 @@ export async function buildExportScene(project: Project, o: SceneExportOptions):
     const furn = new THREE.Group();
     furn.name = 'Furniture';
     for (const obj of Object.values(project.objects)) {
-      if (obj.hidden) continue;
+      if (isObjectHidden(project, obj)) continue;
       const g = buildObject(obj, ctx);
       g.name = obj.name ?? getAsset(project, obj.assetId)?.name ?? obj.assetId;
       furn.add(g);

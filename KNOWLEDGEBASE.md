@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-10-20 (Mac trackpad navigation across 2D, 3D, walkthrough and previews).
+Last updated: 2026-10-22 (item layers: Layers panel for organising placed items).
 
 ---
 
@@ -181,12 +181,13 @@ Principles that must hold:
 
 | Entity | Key fields & semantics |
 | --- | --- |
-| `Project` | `format`, `schemaVersion` (1), `id`, `name`, timestamps, `settings`, records `nodes/walls/openings/rooms/objects/materials/customAssets`, `cameras[]`, `render`, `layers`, `guest` |
+| `Project` | `format`, `schemaVersion` (1), `id`, `name`, timestamps, `settings`, records `nodes/walls/openings/rooms/objects/materials/customAssets`, `cameras[]`, `render`, `layers` (construction, furniture, annotations, callouts, `unassigned`), `itemLayers[]`, `guest` |
 | `WallNode` | shared endpoint; moving it moves every attached wall end |
 | `WallSegment` | `a`,`b` node ids; `thickness`, `height`, `baseElevation`; `role` exterior/interior/partition; `curve` = quadratic Bézier control point or null; `materials {left,right,top}`; `locked`, `hidden` |
 | `Opening` | host `wallId`; `kind` (door-single/double/sliding, passage, window-single/double/fixed/sliding); **`offset` = arc length from node `a` to the opening centre**; `width`, `height`, `sillHeight`; `swingSide` left/right; `hinge` start/end; `openAngle` (3D only); `style`; optional `design` (§10); frame/panel material ids |
 | `Room` | user data for a detected face: `name`, `type`, floor/ceiling materials, `showCeiling`, `ceilingHeight` (null = lowest bounding wall), label prefs; identity hints `anchor`, `boundaryWallIds` |
-| `PlacedObject` | `assetId`, `x`,`y`,`elevation`,`rotation`, `width/depth/height`, `mirrored`, `materials` (slot → material id; missing slots use asset defaults), `locked`, `hidden` |
+| `PlacedObject` | `assetId`, `x`,`y`,`elevation`,`rotation`, `width/depth/height`, `mirrored`, `materials` (slot → material id; missing slots use asset defaults), `locked`, `hidden`, optional `groupId`, `model`, `layerId` |
+| `ItemLayer` | user item layer (`Project.itemLayers`, default `[]`): `id` (`lay_…`), `name`, `visible`, `locked`, optional `color` (#rrggbb, bad values load as none). Organising only, not a draw order; project-wide (every layout option shares the list, items point at it with `layerId`) |
 | `MaterialDefinition` | `color`, `roughness`, `metalness`, `opacity`, `emissive*`, `texture {patternId, scale m/tile, rotation°, contrast}` (procedural, also the fallback), `photo {setId, scale, rotation, contrast, enabled}` (optional CC0 photo set, §12), `overrideOf` (unlinked per-surface copy), `catalogId`, `source` licence |
 | `CustomAsset` | imported GLB: `blobId` (IndexedDB), native `size`, normalised top-down `footprint` hull, licence text |
 | `CameraPreset` | projection, position, target, fov, zoom, optional `wallDisplay` |
@@ -251,6 +252,17 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - Callouts (`callouts.ts`): `addCallout`, `updateCallout`, `deleteCallouts`, `translateCallouts`, `duplicateCallouts`.
   `deleteEntities` first runs `detachCallouts`: a callout on a deleted item or room becomes a spot callout at the old
   anchor, so the note survives. `repairProject` drops callouts whose item or room is missing.
+- Item layers (`itemLayers.ts`): `addItemLayer` ("Layer N", next tag colour), `updateItemLayer`, `updateUnassignedLayer`
+  (`layers.unassigned`), `setAllItemLayersVisible`, `moveItemLayer`, `setObjectsLayer(ids, layerId | null)`, and
+  `deleteItemLayer` (its items go back to Unassigned in every option, via `inEveryOption`). Read helpers:
+  `itemLayerOf`, `objectsInLayer` (null = Unassigned, incl. items on a missing layer), and **`isObjectHidden` /
+  `isObjectLocked`** = the item's own flag OR its layer's state (Unassigned uses `layers.unassigned`). Every place that
+  skips hidden items or refuses locked ones goes through them: plan drawing and dimensions, hit-testing and marquee,
+  select tool, nudge/rotate/delete/select-all, group expansion, 3D objects, picking/drag/gizmo, lamp lights, path
+  tracer lamps, DXF, GLB/guest export, thumbnails (PlanDrawing), surfaces under placed items and walk collisions. The
+  project-wide Furniture layer (Project panel) stays a separate master switch checked beside them. `duplicateEntities`
+  keeps `layerId` (copies stay on the layer); `repairProject` de-duplicates layer ids and unfiles items whose layer is
+  missing (with a warning).
 
 ## 9. State, history, autosave
 
@@ -513,6 +525,22 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   filled label. Deleting an item deletes its notes; a deleted room's notes stay as spots.
 - Selected note's Inspector: preview, what it points to, Visible, Edit note…; Project panel → Layers has Notes
   (hide/lock); Annotations and the 3D view panel have a Notes toggle.
+
+### Item layers (Layers panel)
+
+- Top bar → Layers icon (`toggle-layers-panel`, Shift+L, desktop) toggles `editor.layersPanelOpen` and the floating
+  `LayersPanel` (`features/editor/LayersPanel.tsx`, `layers.css`). It docks left of the Inspector (left of the finish
+  panel when that is open, at the right edge when no Inspector shows) and is registered in `layoutInsets`.
+- Header: show/hide all (every layer and Unassigned), New layer (takes the selected items). One row per layer plus
+  the implicit **Unassigned** row: chevron (lists the items; click selects, Shift/Ctrl adds), colour dot (click cycles
+  `ITEM_LAYER_COLORS`), name (click to rename inline), count, eye, lock, select all (shown items only), move selection
+  here, delete (confirms when not empty; items go to Unassigned). Hiding a layer drops its items from the selection.
+  A notice offers to show furniture when the Project panel's Furniture layer is off.
+- Inspector: a **Layer** select (Unassigned, each layer with (hidden)/(locked), "New layer…") in an item's Item
+  section and in the multi-selection's Items section (`ItemLayerField`); the More section says when the item's layer
+  hides or locks it. Right-click on an item (2D and 3D share `contextMenu.ts`): "Move to Unassigned / “Layer”"
+  (current one checked) and "Move to new layer"; with more than 6 layers a single "Move to layer…" opens the panel.
+  UI actions live in `features/editor/itemLayerActions.ts`.
 
 ## 11. 3D (src/features/scene-3d, walkthrough)
 
@@ -1618,3 +1646,8 @@ Known limitations (also in README):
      inside the opening from foot to foot, 4 mm proud of each face (slot `lining`, light oak; walnut and painted
      variants); glass and curtain fit inside it. The enclosure's side arch now sits by the corner with the solid
      stretch at the back wall (done).
+133. "Add a layer system: just for items management (show/hide/select all etc.), not a real depth layer; leave the
+     icon here (top-right toolbar)" → `Project.itemLayers` + `PlacedObject.layerId` + `layers.unassigned`, commands and
+     `isObjectHidden`/`isObjectLocked` helpers used everywhere hidden/locked items are skipped (2D, hit-testing, 3D,
+     lights, exports, thumbnails, guest, walk), the Layers panel from a top-bar icon (Shift+L), an Inspector Layer field
+     and right-click "Move to …" entries; tests in `itemLayers.test.ts` (done).

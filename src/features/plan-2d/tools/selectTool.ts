@@ -15,6 +15,7 @@ import { movedElevation } from './surfaces';
 import { axisGuide, axisLockLabel, createAxisLock, onAxis, snapOnAxis, type AxisLockState } from '@/domain/geometry/axisLock';
 import type { CalloutTarget } from '@/domain/model/schema';
 import { useDialogStore } from '@/state/uiStores';
+import { isObjectLocked } from '@/domain/commands/itemLayers';
 
 type Gesture =
   | { type: 'pending'; start: Vec2; startScreen: Vec2; hit: SelItem | null; shift: boolean; wasSelected: boolean }
@@ -58,7 +59,7 @@ function isLockedItem(env: ToolEnv, item: SelItem): boolean {
   if (item.kind === 'wall') return !!p.walls[item.id]?.locked || p.layers.construction.locked;
   if (item.kind === 'node') return p.layers.construction.locked;
   if (item.kind === 'opening') return p.layers.construction.locked;
-  if (item.kind === 'object') return !!p.objects[item.id]?.locked || p.layers.furniture.locked;
+  if (item.kind === 'object') return (!!p.objects[item.id] && isObjectLocked(p, p.objects[item.id])) || p.layers.furniture.locked;
   if (item.kind === 'callout') return !!p.layers.callouts?.locked;
   return false;
 }

@@ -28,6 +28,7 @@ import { selectionBounds } from '@/features/editor/selectionBounds';
 import { usePackVersion } from '@/packs/events';
 import { planContextMenuItems } from './contextMenu';
 import './plan.css';
+import { isObjectLocked } from '@/domain/commands/itemLayers';
 
 /** Constant on-screen pointer tolerance in pixels. */
 const HIT_PX = 8;
@@ -562,7 +563,7 @@ function SelectionLayer({ px, hoverId }: { px: number; hoverId: string | null })
     } else if (item.kind === 'object') {
       const o = project.objects[item.id];
       if (o) items.push(outline(item.id, polyPath(rectPolygon(o.x, o.y, o.width, o.depth, o.rotation)), selected, !selected));
-      if (o && selected && o.locked) items.push(<LockBadge key={`lock-${item.id}`} p={{ x: o.x, y: o.y }} px={px} />);
+      if (o && selected && isObjectLocked(project, o)) items.push(<LockBadge key={`lock-${item.id}`} p={{ x: o.x, y: o.y }} px={px} />);
     } else if (item.kind === 'room') {
       const face = derived.roomFaces.get(item.id);
       if (face) {

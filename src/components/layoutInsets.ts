@@ -8,7 +8,7 @@ export interface Insets {
 
 /**
  * Measures how much of `host` is covered by the floating chrome (top bar,
- * tool rail, library, 3D view panel, inspector + finish panel, status/mobile bar) so views
+ * tool rail, library, 3D view panel, inspector + finish and layers panels, status/mobile bar) so views
  * can be framed inside the area the user can actually see.
  */
 export function floatingInsets(host: DOMRect): Insets {
@@ -20,7 +20,7 @@ export function floatingInsets(host: DOMRect): Insets {
     const r = rect(el);
     if (r.width && r.left < midX) insets.l = Math.max(insets.l, r.right - host.left);
   }
-  for (const el of document.querySelectorAll('.inspector:not(.sheet), .material-panel')) {
+  for (const el of document.querySelectorAll('.inspector:not(.sheet), .material-panel, .layers-panel')) {
     const r = rect(el);
     if (r.width && r.left > midX) insets.r = Math.max(insets.r, host.right - r.left);
   }

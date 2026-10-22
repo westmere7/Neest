@@ -30,6 +30,8 @@ import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
 import { ObjectPreview } from './ObjectPreview';
+import { ItemLayerField } from './LayersPanel';
+import { isObjectLocked, itemLayerOf } from '@/domain/commands/itemLayers';
 import { PlantCare } from '@/features/library/PlantCare';
 import { OpeningFinishes, OpeningToolFinish } from './OpeningFinishes';
 import { ObjectVariants } from './ObjectVariants';
@@ -115,7 +117,7 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
           <IconButton label={o.locked ? 'Unlock' : 'Lock'} shortcut="Ctrl+L" onClick={toggleLockSelection} active={o.locked}>
             {o.locked ? <Lock size={15} /> : <Unlock size={15} />}
           </IconButton>
-          <IconButton label="Delete" shortcut="Del" onClick={() => void deleteSelection()} disabled={o.locked}>
+          <IconButton label="Delete" shortcut="Del" onClick={() => void deleteSelection()} disabled={isObjectLocked(project, o)}>
             <Trash2 size={15} />
           </IconButton>
         </>
@@ -565,7 +567,9 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
   const upd = (label: string, patch: Parameters<typeof updateObjects>[2]) => exec(label, (d) => updateObjects(d, [objectId], patch));
   const min = asset?.minSize ?? { w: 0.02, d: 0.02, h: 0.02 };
   const max = asset?.maxSize ?? { w: 30, d: 30, h: 12 };
-  const locked = o.locked || project.layers.furniture.locked;
+  const locked = isObjectLocked(project, o) || project.layers.furniture.locked;
+  const layer = itemLayerOf(project, o);
+  const layerState = layer ?? project.layers.unassigned;
   return (
     <>
       {!asset && (
@@ -578,6 +582,7 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
       <Section title="Item">
         {asset && <ObjectPreview project={project} objectId={objectId} />}
         <TextField label="Label" value={o.name ?? asset?.name ?? ''} onCommit={(name) => upd('Rename object', { name })} />
+        <ItemLayerField project={project} ids={[objectId]} />
         {asset && <ObjectModels project={project} objectId={objectId} asset={asset} />}
         {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
       </Section>
@@ -645,6 +650,11 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
       <Section title="More" defaultOpen={false}>
         <Toggle label="Locked" checked={o.locked} onChange={(v) => upd(v ? 'Lock object' : 'Unlock object', { locked: v })} />
         <Toggle label="Hidden" checked={o.hidden} onChange={(v) => upd(v ? 'Hide object' : 'Show object', { hidden: v })} />
+        {layerState && (!layerState.visible || layerState.locked) && (
+          <p className="field-hint">
+            Its layer “{layer?.name ?? 'Unassigned'}” is {[!layerState.visible && 'hidden', layerState.locked && 'locked'].filter(Boolean).join(' and ')} (Layers panel).
+          </p>
+        )}
         {asset && <p className="field-hint">Source: {asset.source.name} · {asset.source.license}</p>}
       </Section>
     </>
@@ -757,6 +767,11 @@ function MultiInspector({ project }: { project: Project }) {
           </Button>
         </div>
       </Section>
+      {objects.length > 0 && (
+        <Section title="Items">
+          <ItemLayerField project={project} ids={objects} />
+        </Section>
+      )}
       {walls.length === 2 && <RoundCornerSection project={project} walls={walls} />}
       {walls.length > 0 && (
         <>

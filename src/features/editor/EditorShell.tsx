@@ -16,6 +16,7 @@ import {
   Grid3x3,
   Hand,
   LayoutDashboard,
+  Layers,
   LibraryBig,
   Loader2,
   Magnet,
@@ -49,6 +50,7 @@ import { PlanCanvas } from '@/features/plan-2d/PlanCanvas';
 import { LibraryPanel } from '@/features/library/LibraryPanel';
 import { Inspector, projectPanelShown } from './Inspector';
 import { MaterialPanel } from '@/features/materials/MaterialPanel';
+import { LayersPanel } from './LayersPanel';
 import { EditorDialogs } from './EditorDialogs';
 import { OptionSwitcher } from './OptionSwitcher';
 import { useEditorShortcuts } from './useShortcuts';
@@ -66,6 +68,7 @@ export function EditorShell() {
   const chromeHidden = useEditorStore((s) => s.chromeHidden);
   const libraryOpen = useEditorStore((s) => s.libraryOpen);
   const libraryWidth = useEditorStore((s) => s.libraryWidth);
+  const layersOpen = useEditorStore((s) => s.layersPanelOpen);
   const isMobile = useIsMobile();
   useEditorShortcuts(isMobile);
   useDropAsset();
@@ -131,6 +134,7 @@ export function EditorShell() {
           {/* In the walkthrough it only shows the Project panel. */}
           <Inspector isMobile={isMobile} />
           {workspace !== 'walk' && !isMobile && <MaterialPanel />}
+          {layersOpen && !isMobile && <LayersPanel />}
           {showPlan && <CanvasControls />}
           {!isMobile && <StatusBar />}
           {isMobile && <MobileBar />}
@@ -261,6 +265,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
   const planMode = useEditorStore((s) => s.planMode);
   const projectId = useProjectStore((s) => s.project!.id);
   const projectShown = useEditorStore(projectPanelShown);
+  const layersOpen = useEditorStore((s) => s.layersPanelOpen);
   const open = useDialogStore((s) => s.open);
   const current = workspace === 'plan' ? `plan:${planMode}` : workspace;
   const setView = (v: string) => {
@@ -334,6 +339,17 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
               data-testid="toggle-project-panel"
             >
               <LayoutDashboard size={17} />
+            </IconButton>
+          )}
+          {!isMobile && (
+            <IconButton
+              label="Item layers"
+              shortcut="Shift+L"
+              active={layersOpen}
+              onClick={() => useEditorStore.getState().set({ layersPanelOpen: !layersOpen })}
+              data-testid="toggle-layers-panel"
+            >
+              <Layers size={17} />
             </IconButton>
           )}
           {!isMobile && (

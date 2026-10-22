@@ -25,6 +25,7 @@ import type { GhostObject, PointerInfo, Tool, ToolEnv, ToolOverlay } from '@/fea
 import { buildObject, partGeometry } from './builders';
 import { sharedRegistry } from './sceneRuntime';
 import { canScale, scalePct, scaledSize } from '@/features/editor/objectScale';
+import { isObjectLocked } from '@/domain/commands/itemLayers';
 
 /** Tools available directly in the 3D view (selection uses mesh picking instead). */
 export const TOOLS_3D: ToolId[] = ['select', 'pan', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place', 'callout'];
@@ -753,7 +754,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
   const objs = selection
     .filter((s) => s.kind === 'object')
     .map((s) => project.objects[s.id])
-    .filter((o): o is NonNullable<typeof o> => !!o && !o.locked);
+    .filter((o): o is NonNullable<typeof o> => !!o && !isObjectLocked(project, o));
   const locked = project.layers.furniture.locked;
   const n = objs.length;
   const cx = n ? objs.reduce((a, o) => a + o.x, 0) / n : 0;

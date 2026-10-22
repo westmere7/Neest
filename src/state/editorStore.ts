@@ -111,6 +111,8 @@ export interface EditorState {
   viewPanelOpen: boolean;
   /** Project overview in the Inspector's place whenever nothing is selected, in every view (top-bar toggle). */
   projectPanelOpen: boolean;
+  /** Item layers panel (top-bar Layers button): organise placed items into user layers. */
+  layersPanelOpen: boolean;
   snap: SnapSettings;
   gridVisible: boolean;
   planCamera: PlanCamera;
@@ -171,6 +173,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   // Opened on demand (top-bar button or P), not every time the 3D view is shown.
   viewPanelOpen: false,
   projectPanelOpen: true,
+  layersPanelOpen: false,
   snap: { grid: true, geometry: true, angle: true, guides: true },
   gridVisible: true,
   planCamera: { cx: 0, cy: 0, zoom: 60 },

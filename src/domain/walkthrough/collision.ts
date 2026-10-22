@@ -4,6 +4,7 @@ import type { WallNetwork } from '../geometry/walls';
 import type { RoomFace } from '../geometry/rooms';
 import { rectPolygon, pointInPolygon, polygonArea } from '../geometry/polygon';
 import { closestPointOnSegment, dist } from '../geometry/vec';
+import { isObjectHidden } from '../commands/itemLayers';
 
 /** Body height range checked for walkthrough collisions (metres above floor). */
 const BODY_MIN = 0.35;
@@ -33,7 +34,7 @@ export function buildColliders(project: Project, network: WallNetwork): Collider
   }
   for (const h of network.hubs) addPoly(h.polygon);
   for (const o of Object.values(project.objects)) {
-    if (o.hidden || o.height < 0.3 || o.elevation > 1.2 || o.elevation + o.height < BODY_MIN) continue;
+    if (isObjectHidden(project, o) || o.height < 0.3 || o.elevation > 1.2 || o.elevation + o.height < BODY_MIN) continue;
     addPoly(rectPolygon(o.x, o.y, o.width, o.depth, o.rotation));
   }
   return out;

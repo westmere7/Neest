@@ -1,0 +1,227 @@
+/* Item layers panel: docked to the left of the Inspector (and of the finish panel when that is open). */
+.layers-panel {
+  top: calc(10px + var(--topbar-h) + 10px);
+  right: calc(10px + var(--inspector-w) + 8px);
+  width: 320px;
+  max-height: calc(100% - var(--topbar-h) - var(--status-h) - 90px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.editor:not(:has(.inspector:not(.sheet))) .layers-panel {
+  right: 10px;
+}
+.material-panel ~ .layers-panel {
+  right: calc(10px + 2 * (var(--inspector-w) + 8px));
+}
+.layers-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 6px 8px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.layers-panel-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.layers-panel-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.layers-panel-head h2 {
+  font-size: 15px;
+  line-height: 1.3;
+}
+.layers-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+.layers-panel-actions .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+.layers-panel-body {
+  overflow: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.layers-notice {
+  margin: 2px 4px 6px;
+}
+.layers-notice .link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.layers-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 8px 6px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.item-layer {
+  border-radius: var(--radius-sm);
+}
+.item-layer.is-current {
+  background: var(--accent-soft);
+}
+.item-layer-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 32px;
+  padding-left: 2px;
+  font-size: 12.5px;
+}
+.item-layer-row .icon-btn {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+.item-layer-row .icon-btn:disabled {
+  opacity: 0.35;
+}
+.item-layer-chev {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 22px;
+  flex: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.item-layer-chev:disabled {
+  visibility: hidden;
+}
+.item-layer-chev svg {
+  transition: transform 0.12s ease;
+}
+.item-layer-chev.open svg {
+  transform: rotate(90deg);
+}
+.item-layer-dot {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  margin: 0 4px 0 2px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  cursor: pointer;
+}
+.item-layer-dot.none {
+  background: none;
+  border: 1.5px dashed var(--text-3);
+  cursor: default;
+}
+.item-layer-name {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 4px 2px;
+  text-align: left;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+  border-radius: 4px;
+}
+.item-layer-name:hover {
+  background: var(--surface-3);
+}
+.item-layer-name.fixed {
+  color: var(--text-2);
+  font-style: italic;
+  cursor: default;
+}
+.item-layer-name.fixed:hover {
+  background: none;
+}
+.item-layer.is-hidden .item-layer-name,
+.item-layer.is-hidden .item-layer-count {
+  opacity: 0.5;
+}
+.item-layer-input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  font-size: 12.5px;
+}
+.item-layer-count {
+  min-width: 22px;
+  padding: 0 4px;
+  text-align: right;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+}
+.item-layer-spacer {
+  width: 26px;
+  flex: none;
+}
+.item-layer-items {
+  list-style: none;
+  margin: 0 0 4px 22px;
+  padding: 0 0 0 8px;
+  border-left: 1px solid var(--border);
+}
+.item-layer-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-2);
+  text-align: left;
+  cursor: pointer;
+}
+.item-layer-item > span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-layer-item:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.item-layer-item.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.item-layer-item.dim {
+  opacity: 0.5;
+}
