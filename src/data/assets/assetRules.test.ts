@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import '@/packs/loader';
 import { ASSET_CATALOG, ASSET_GROUPS } from './catalog';
 import { MATERIAL_CATALOG } from '@/data/materials/catalog';
-import LEGACY_NO_DESCRIPTION from './legacyNoDescription.json';
 import LEGACY_COPLANAR from './legacyCoplanar.json';
+import ITEM_DESCRIPTIONS from './itemDescriptions.json';
 import { coplanarClashes } from './coplanar';
 import { assetModels, withModel } from './models';
 
@@ -31,18 +31,14 @@ describe('asset rules', () => {
     }
   });
 
-  it('every item has at least three search tags and new items have a description', () => {
-    // Items from before this rule are listed in legacyNoDescription.json. The list may only shrink:
-    // when you give one of them a description, remove its id from the file.
-    const legacy = new Set<string>(LEGACY_NO_DESCRIPTION);
+  it('every item has at least three search tags and a description', () => {
+    // New items define `description` themselves; older ones take it from itemDescriptions.json.
     for (const a of items) {
-      const described = (a.description?.trim().length ?? 0) >= 20;
-      if (legacy.has(a.id)) expect(described, `${a.id} now has a description: remove it from legacyNoDescription.json`).toBe(false);
-      else expect(described, `${a.id} needs a one- or two-sentence description (20+ characters)`).toBe(true);
+      expect((a.description?.trim().length ?? 0) >= 20, `${a.id} needs a one- or two-sentence description (20+ characters)`).toBe(true);
       expect(new Set(a.tags.map((t) => t.toLowerCase())).size, `${a.id} needs 3+ distinct tags`).toBeGreaterThanOrEqual(3);
     }
     const ids = new Set(items.map((a) => a.id));
-    expect(LEGACY_NO_DESCRIPTION.filter((id) => !ids.has(id)), 'ids in legacyNoDescription.json that no longer exist').toEqual([]);
+    expect(Object.keys(ITEM_DESCRIPTIONS).filter((id) => !ids.has(id)), 'ids in itemDescriptions.json that no longer exist').toEqual([]);
   });
 
   it('parts of different slots never share a face plane (they flicker in 3D)', () => {

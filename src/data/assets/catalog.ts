@@ -25,6 +25,7 @@ import { LIVING_ASSETS } from './living';
 import { OFFICE_ASSETS } from './office';
 import { OUTDOOR_ASSETS } from './outdoor';
 import { STORAGE_ASSETS } from './storage';
+import ITEM_DESCRIPTIONS from './itemDescriptions.json';
 
 export const ASSET_CATALOG: AssetDefinition[] = [
   ...LIVING_ASSETS,
@@ -44,6 +45,18 @@ export const ASSET_CATALOG: AssetDefinition[] = [
   ...CONSTRUCTION_ASSETS,
   ...GENERIC_ASSETS,
 ];
+
+const DESCRIPTIONS: Record<string, string> = ITEM_DESCRIPTIONS;
+
+/**
+ * Fills in the description of an item from before descriptions were required (built-in or pack),
+ * from itemDescriptions.json. Items that define their own keep it; new items must define one.
+ */
+export function withDescription(a: AssetDefinition): AssetDefinition {
+  if (!a.description?.trim() && DESCRIPTIONS[a.id]) a.description = DESCRIPTIONS[a.id];
+  return a;
+}
+ASSET_CATALOG.forEach(withDescription);
 
 export const ASSETS_BY_ID: Record<string, AssetDefinition> = Object.fromEntries(
   ASSET_CATALOG.map((a) => [a.id, a]),
