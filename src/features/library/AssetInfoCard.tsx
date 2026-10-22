@@ -12,7 +12,8 @@ import { ExternalLink, Maximize2 } from 'lucide-react';
 import type { LengthUnit, PlacedObject } from '@/domain/model/schema';
 import { formatLength } from '@/domain/model/units';
 import { ASSET_CATEGORY_LABELS } from '@/data/assets/catalog';
-import type { AssetDefinition, Size3 } from '@/data/assets/types';
+import type { AssetDefinition, AssetPrice, Size3 } from '@/data/assets/types';
+import { formatVnd } from '@/data/assets/price';
 import { usePackVersion } from '@/packs/events';
 import { useProjectStore } from '@/state/projectStore';
 import { getAsset } from '@/data/assets/registry';
@@ -463,6 +464,26 @@ function InfoVariants({ asset }: { asset: AssetDefinition }) {
   );
 }
 
+/** What the item costs in Vietnam: a researched listed price for branded models, otherwise a rough estimate. */
+function InfoPrice({ price }: { price: AssetPrice }) {
+  return (
+    <div className="aic-price" data-testid="aic-price">
+      <span className="aic-price-value num">{formatVnd(price)}</span>
+      <span className="aic-sub">
+        {price.estimate ? 'Approx. price in Vietnam' : 'Listed price in Vietnam'}
+        {price.source && (
+          <>
+            {' · '}
+            <a className="aic-link" href={price.source} target="_blank" rel="noopener noreferrer">
+              Source <ExternalLink size={10} aria-hidden />
+            </a>
+          </>
+        )}
+      </span>
+    </div>
+  );
+}
+
 /** Model variant picker (filled, bare…); picking one arms the place tool with it, like a colour. */
 function InfoModels({ asset }: { asset: AssetDefinition }) {
   const { models, chosen } = useChosenModel(asset);
@@ -514,6 +535,7 @@ function InfoBody({
       </header>
       {pickers && <InfoModels asset={asset} />}
       {pickers && <InfoVariants asset={asset} />}
+      {asset.price && <InfoPrice price={asset.price} />}
       {asset.description && <p className="aic-desc">{asset.description}</p>}
       {brand && (
         <section className="aic-brand" aria-label={`${brand.name} product`}>

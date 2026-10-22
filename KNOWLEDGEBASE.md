@@ -625,7 +625,7 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
 3. **Text:** every new item needs a `description` (one or two sentences, 20+ characters, saying what it looks like and
    what it is made of) and 3+ distinct `tags` (synonyms, styles, and Vietnamese names when they are common).
    Every item has one: older items take theirs from `src/data/assets/itemDescriptions.json` (applied by
-   `withDescription` in `catalog.ts` and the pack runtime, only where the item defines none). New items define it
+   `withItemData` in `catalog.ts` and the pack runtime, only where the item defines none). New items define it
    in their own definition.
 4. **Size:** `defaultSize` is a typical real product in metres, with realistic `minSize`/`maxSize`. Parts stay
    inside the size box at every size, with 160 parts at most. Mark small details `plan: false`.
@@ -667,6 +667,24 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
 11. **Versions of an item** (with or without props) are separate items with `variantOf`. See `packs/model-variants.pack.ts`.
    - The test checks presence only. Fingerprints computed in Node differ from the browser's, because the SSR
      transform rewrites pattern code.
+12. **Price:** `price: { vnd, estimate, source? }` is what one item costs in Vietnam, in whole đồng, shown in the info
+   card under the colour swatches ("≈ 12.500.000 ₫" for estimates, "12.990.000 ₫" + Source link for listed prices;
+   `formatVnd` in `data/assets/price.ts`).
+   - Older items take theirs from `src/data/assets/itemPrices.json` (applied by `withItemData`, only where the item
+     defines none). New items define `price` themselves.
+   - Branded items: the typical **listed** price of that exact model on a VN retailer or maker page (Điện Máy Xanh,
+     Nguyễn Kim, CellphoneS, FPT Shop, the maker's VN site; the struck-through price, not a flash sale), with
+     `estimate: false` and the page as `source`. Models with no VN listed price (the early EU/UK-only fridges,
+     washers and dishwashers, quote-only VRF units, discontinued models) carry an estimate from VN sibling models
+     and are listed in `BRANDED_ESTIMATES` in assetRules.test.ts. Keep that list short.
+   - Generic items: a mid-market VN estimate (Nhà Xinh / Baya / JYSK / Điện Máy Xanh level; built-ins as
+     made-to-order joinery at the default size), rounded to two significant digits, `estimate: true`. A set is
+     priced as the set; a with/without-props version costs the same as its base item.
+   - No price for filler and styling props (meals, table settings, book and magazine stacks, clutter, toiletries,
+     shoes), people, live animals, placeholder shapes and building parts (columns, beams, ceilings, soffits,
+     portals, walls, half walls, stairs, balustrades, platforms, pipe boxing). 87 items have none (2026-10-22).
+   - Caveats: split-AC outdoor-unit rows and the soundbar's subwoofer carry the whole set's price, so placing both
+     halves counts it twice. Large estimates (hot tub, ofuro, fine-wood antiques) are rough.
 
 ### People and shipped models
 
@@ -1567,3 +1585,8 @@ Known limitations (also in README):
 126. "In 3D, a setting for how notes are placed (close, further, avoid the structure); don't let notes overlap when
      space allows; more vibrant colours; hide notes whose subject is out of view; remove an item's notes with the
      item" → screen-space note layout (§10 Notes), Note placement in the 3D view panel, eight vivid colours (done).
+127. "Add a price to library items: what it costs in Vietnam, in VND; research real prices for branded items,
+     estimate generic ones, skip filler items like a mid-dinner dish; show it under the colour swatches" →
+     `AssetDefinition.price` + `itemPrices.json` (§12 asset rule 12): 1097 of 1184 items priced, 120 of 137 branded
+     items at their researched VN listed price with the source page, 17 branded estimates, 87 props and building parts
+     without a price (people not counted); the info card shows it under the swatch caption (done).

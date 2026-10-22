@@ -4,7 +4,7 @@ import { MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catal
 import { PHOTO_SETS_BY_ID } from '@/data/materials/photoSets';
 import { setPackPatterns, type TexturePattern } from '@/data/materials/patterns';
 import { setPackPhotoSets, type PhotoManifestEntry } from '@/features/materials/photoTextures';
-import { ASSET_CATALOG, ASSET_CATEGORY_ORDER, ASSET_TYPE_ORDER, ASSETS_BY_ID, withDescription } from '@/data/assets/catalog';
+import { ASSET_CATALOG, ASSET_CATEGORY_ORDER, ASSET_TYPE_ORDER, ASSETS_BY_ID, withItemData } from '@/data/assets/catalog';
 import { defineAsset } from '@/data/assets/parts';
 import { checkPlantInfo } from '@/data/assets/plantInfo';
 import type { AssetCategory, AssetDefinition, AssetType, Part, Size3 } from '@/data/assets/types';
@@ -284,7 +284,7 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
     MATERIAL_CATALOG_BY_ID[m.id] = m;
   }
   for (const a of items) {
-    withDescription(a);
+    withItemData(a);
     ASSET_CATALOG.push(a);
     ASSETS_BY_ID[a.id] = a;
   }

@@ -8,7 +8,7 @@
  * Browsing follows the Sims "Buy mode" idea: shop by room (`category`) or by type (`type`), with
  * each listing split into shelves (`group`).
  */
-import type { AssetCategory, AssetDefinition, AssetType } from './types';
+import type { AssetCategory, AssetDefinition, AssetPrice, AssetType } from './types';
 import { BATHROOM_ASSETS } from './bathroom';
 import { BEDROOM_ASSETS } from './bedroom';
 import { CONSTRUCTION_ASSETS } from './construction';
@@ -26,6 +26,7 @@ import { OFFICE_ASSETS } from './office';
 import { OUTDOOR_ASSETS } from './outdoor';
 import { STORAGE_ASSETS } from './storage';
 import ITEM_DESCRIPTIONS from './itemDescriptions.json';
+import ITEM_PRICES from './itemPrices.json';
 
 export const ASSET_CATALOG: AssetDefinition[] = [
   ...LIVING_ASSETS,
@@ -47,16 +48,19 @@ export const ASSET_CATALOG: AssetDefinition[] = [
 ];
 
 const DESCRIPTIONS: Record<string, string> = ITEM_DESCRIPTIONS;
+const PRICES: Record<string, AssetPrice> = ITEM_PRICES;
 
 /**
- * Fills in the description of an item from before descriptions were required (built-in or pack),
- * from itemDescriptions.json. Items that define their own keep it; new items must define one.
+ * Fills in what an item (built-in or pack) takes from the central maps where it defines none itself:
+ * the description from itemDescriptions.json (items from before descriptions were required; new items
+ * must define one) and the Vietnamese price from itemPrices.json.
  */
-export function withDescription(a: AssetDefinition): AssetDefinition {
+export function withItemData(a: AssetDefinition): AssetDefinition {
   if (!a.description?.trim() && DESCRIPTIONS[a.id]) a.description = DESCRIPTIONS[a.id];
+  if (!a.price && PRICES[a.id]) a.price = PRICES[a.id];
   return a;
 }
-ASSET_CATALOG.forEach(withDescription);
+ASSET_CATALOG.forEach(withItemData);
 
 export const ASSETS_BY_ID: Record<string, AssetDefinition> = Object.fromEntries(
   ASSET_CATALOG.map((a) => [a.id, a]),

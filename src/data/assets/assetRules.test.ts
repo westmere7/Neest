@@ -6,6 +6,7 @@ import { ASSET_CATALOG, ASSET_GROUPS } from './catalog';
 import { MATERIAL_CATALOG } from '@/data/materials/catalog';
 import LEGACY_COPLANAR from './legacyCoplanar.json';
 import ITEM_DESCRIPTIONS from './itemDescriptions.json';
+import ITEM_PRICES from './itemPrices.json';
 import { coplanarClashes } from './coplanar';
 import { assetModels, withModel } from './models';
 
@@ -17,6 +18,30 @@ import { assetModels, withModel } from './models';
 const items = ASSET_CATALOG.filter((a) => a.category !== 'custom');
 const packFile = (id: string) => (id.includes(':') ? id.split(':')[0] : null);
 const root = path.resolve(__dirname, '../../..');
+/**
+ * Branded models with no listed price in Vietnam, priced as an estimate from VN sibling models: EU/UK-only
+ * models from the early branded packs, dealer "contact for price" VRF units, discontinued models no VN
+ * shop lists any more. New branded items must be sold in Vietnam, with their listed price.
+ */
+const BRANDED_ESTIMATES = new Set<string>([
+  'bosch-dishwashers:sps2ikw04e',
+  'branded-ac-outdoor-vn:mitsubishi-electric-pumy-p125vkm',
+  'branded-ac-outdoor-vn:samsung-dvm-s-eco-am060fxmdgh',
+  'branded-appliances-vn:kangaroo-kg31a3',
+  'branded-fridges:samsung-rs68a8840s9',
+  'branded-fridges:lg-gsxv91bsae',
+  'branded-fridges:samsung-rf65dg960esr',
+  'branded-fridges:lg-gmg960evje',
+  'branded-fridges:bosch-kgn392ldfg',
+  'branded-fridges:liebherr-cbnc-5723',
+  'branded-home-electronics:xiaomi-vacuum-cleaner-g11',
+  'branded-tvs:lg-oled77g4',
+  'branded-washers:bosch-wgg254z0gb',
+  'branded-washers:lg-fwy996wctn4',
+  'branded-washers:samsung-ww11db8b95gbu3',
+  'branded-washers:lg-washtower-wt1210bbf',
+  'studio-living:laptop-stacked-monitor',
+]);
 const readJson = (p: string) => (existsSync(p) ? (JSON.parse(readFileSync(p, 'utf8')) as Record<string, unknown>) : null);
 
 describe('asset rules', () => {
@@ -86,6 +111,27 @@ describe('asset rules', () => {
       expect(a.brand.model.trim(), `${a.id} needs the exact model number`).not.toBe('');
       expect(a.name.toLowerCase(), `${a.id}: the name should start with or include the maker`).toContain(a.brand.name.toLowerCase().split(' ')[0]);
     }
+  });
+
+  it('prices are whole VND; branded items have a researched listed price', () => {
+    // Items take their price from itemPrices.json (or define `price`). Generic items carry an estimate or
+    // none (filler props, building parts); a branded model needs its real listed price with the page it
+    // comes from, unless it is listed in BRANDED_ESTIMATES.
+    for (const a of items.filter((x) => x.price)) {
+      const p = a.price!;
+      expect(Number.isInteger(p.vnd) && p.vnd > 0, `${a.id}: price.vnd must be a positive whole number of đồng`).toBe(true);
+      if (!p.estimate) {
+        expect(a.brand, `${a.id}: only branded models have a researched (non-estimate) price`).toBeDefined();
+        expect(p.source ?? '', `${a.id}: a researched price needs its source page`).toMatch(/^https:\/\//);
+      }
+    }
+    for (const a of items.filter((x) => x.brand)) {
+      if (BRANDED_ESTIMATES.has(a.id)) expect(a.price?.estimate, `${a.id} is in BRANDED_ESTIMATES: give it an estimate, or its listed price and remove it from the list`).toBe(true);
+      else expect(a.price && !a.price.estimate, `${a.id} is branded: give it its researched listed price in Vietnam`).toBe(true);
+    }
+    const ids = new Set(items.map((a) => a.id));
+    expect(Object.keys(ITEM_PRICES).filter((id) => !ids.has(id)), 'ids in itemPrices.json that no longer exist').toEqual([]);
+    expect([...BRANDED_ESTIMATES].filter((id) => !ids.has(id)), 'ids in BRANDED_ESTIMATES that no longer exist').toEqual([]);
   });
 
   it('items whose name mentions a brand carry brand info', () => {

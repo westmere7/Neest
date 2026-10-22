@@ -124,6 +124,8 @@ export interface AssetDefinition {
   description?: string;
   /** Set for models of a real, branded product (shown in the library's info card). */
   brand?: AssetBrand;
+  /** What one costs in Vietnam (shown in the library's info card). Filler props and building parts have none. */
+  price?: AssetPrice;
   /** Care and placement guide for plants (shown in the library's info card and the Inspector). */
   plant?: PlantInfo;
   /**
@@ -225,6 +227,16 @@ export interface AssetBrand {
   url?: string;
   /** Published specs as label/value pairs, e.g. ["Place settings", "13"]. */
   specs?: [string, string][];
+}
+
+/** Retail price in Vietnam, in VND. */
+export interface AssetPrice {
+  /** Whole đồng, e.g. 12990000. */
+  vnd: number;
+  /** True for a rough estimate (generic items); false for a researched listed price of the branded model. */
+  estimate: boolean;
+  /** Page the listed price comes from (researched prices). */
+  source?: string;
 }
 
 /** Light a plant wants, brightest first: direct sun → bright indirect → medium → low light. */
