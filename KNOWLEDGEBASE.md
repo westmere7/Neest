@@ -613,6 +613,9 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   Frames are yielded with `MessageChannel`, not rAF, so rendering continues in background tabs. BVH is built
   synchronously (`setScene`); `setSceneAsync` needs a BVH worker. All GPU resources are disposed defensively.
 - Walkthrough: pointer-lock mouse look + WASD/Shift, touch joystick + drag-look, eye height 1.6 m, collisions.
+  The physical mouse wheel sets the speed (`domain/walkthrough/speed.ts`: √2 per notch, up = faster, ¼×–4× walking,
+  ¼×–8× flying, kept separately for walk and fly while the page is open); the walk HUD shows it (`walk-speed`). The
+  guest viewer does the same for walking and shows it in its hint. Trackpad gestures are unchanged.
 - Guest view (`#/guest/:id`) is view-only; the exported guest HTML embeds a GLB + the standalone runtime.
 
 ## 12. Library & materials
@@ -1672,3 +1675,6 @@ Known limitations (also in README):
      sliding, clamp plates on barn, pocket and pivot variants), slim black frame, black fluted, patio aluminium and
      frosted lite; metal door finish sets; thin glass plan symbols; picker thumbnails with fittings; tests in
      `openings.test.ts`, `symbols.test.ts`, `openingDesigns.test.ts` (done).
+135. "mousewheel = walking/flying speed" → in the walkthrough the physical mouse wheel no longer nudges forward; each
+     notch makes walking (or flying, kept separately) √2 faster or slower, shown in the walk HUD and the guest viewer's
+     hint (`domain/walkthrough/speed.ts`, tests in `speed.test.ts`) (done).

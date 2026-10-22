@@ -11,6 +11,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { moveWithCollisions, type Collider } from '@/domain/walkthrough/collision';
 import { attachTrackpadOrbit } from '@/features/scene-3d/trackpadOrbit';
 import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
+import { formatSpeed, stepSpeed, WALK_SPEED, WALK_SPEED_MAX } from '@/domain/walkthrough/speed';
 import { inView, placeNoteLabels, screenBounds, type LabelInput, type NotePlacement, type ScreenRect } from '@/features/callouts/placement';
 import { arrowHead } from '@/features/callouts/style';
 
@@ -291,6 +292,8 @@ function start(data: GuestData) {
   const move = { x: 0, y: 0 };
   const look = { dx: 0, dy: 0 };
   const wheelWalk = { fwd: 0, strafe: 0 };
+  /** Walking speed multiplier, set with the mouse wheel. */
+  let walkSpeed = 1;
 
   const resizeOrtho = () => {
     const aspect = window.innerWidth / window.innerHeight;
@@ -373,6 +376,8 @@ function start(data: GuestData) {
   lookPad.addEventListener('pointerup', () => (lookId = null));
 
   const touch = matchMedia('(pointer: coarse)').matches;
+  const walkHelp = () =>
+    `Click or two-finger swipe to look · W A S D or pinch to move · Shift to run · wheel: speed ${formatSpeed(walkSpeed)} · Esc to exit`;
   function setWalking(on: boolean) {
     walking = on;
     document.body.classList.toggle('ng-walking', on);
@@ -381,7 +386,7 @@ function start(data: GuestData) {
     help.textContent = on
       ? touch
         ? 'Left pad: move · drag right side: look'
-        : 'Click or two-finger swipe to look · W A S D or pinch to move · Shift to run · Esc to exit'
+        : walkHelp()
       : touch
         ? 'Drag to orbit · pinch to zoom'
         : 'Drag or two-finger swipe to orbit · Shift-swipe or right-drag to pan · pinch to zoom';
@@ -441,8 +446,10 @@ function start(data: GuestData) {
       } else if (kind === 'trackpad') {
         yaw -= deltaX * 0.003;
         pitch = Math.max(-1.3, Math.min(1.3, pitch - deltaY * 0.003));
-      } else {
-        wheelWalk.fwd += -Math.sign(deltaY) * 0.35;
+      } else if (deltaY) {
+        // Physical mouse wheel: up = faster, down = slower.
+        walkSpeed = stepSpeed(walkSpeed, -Math.sign(deltaY), WALK_SPEED_MAX);
+        help.textContent = walkHelp();
       }
     },
     { passive: false },
@@ -497,7 +504,7 @@ function start(data: GuestData) {
       const ws = wheelWalk.strafe;
       wheelWalk.fwd = 0;
       wheelWalk.strafe = 0;
-      const speed = 1.5 * (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 2 : 1) * dt;
+      const speed = WALK_SPEED * walkSpeed * (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 2 : 1) * dt;
       const fx = -Math.sin(yaw);
       const fz = -Math.cos(yaw);
       const dx = fx * (f * speed + wf) - fz * (s * speed + ws);

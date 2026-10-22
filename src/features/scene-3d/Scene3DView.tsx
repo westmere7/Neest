@@ -36,7 +36,8 @@ import { useIsMobile } from '@/components/hooks';
 import { WALL_HUG_MOVE, hugWall } from '@/features/plan-2d/tools/placeTools';
 import { FloorReflections } from './floorReflections';
 import { selectionBounds } from '@/features/editor/selectionBounds';
-import { WalkControls, toggleWalkFly, useWalkFly } from '@/features/walkthrough/WalkControls';
+import { formatSpeed } from '@/domain/walkthrough/speed';
+import { WalkControls, toggleWalkFly, useWalkFly, useWalkSpeed } from '@/features/walkthrough/WalkControls';
 import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
 import { CalloutsToggle } from '@/features/editor/AnnotationToggles';
@@ -1047,6 +1048,7 @@ function TrackpadOrbitBridge({ drawing, active }: { drawing: boolean; active: bo
 
 function WalkHud({ onExit, isMobile }: { onExit: () => void; isMobile: boolean }) {
   const flying = useWalkFly();
+  const speed = useWalkSpeed();
   return (
     <>
       <div className="walk-hud floating" role="status">
@@ -1057,7 +1059,11 @@ function WalkHud({ onExit, isMobile }: { onExit: () => void; isMobile: boolean }
             Click or two-finger swipe to look · <kbd>W</kbd>
             <kbd>A</kbd>
             <kbd>S</kbd>
-            <kbd>D</kbd> or pinch to move · <kbd>Shift</kbd> to run · <kbd>F</kbd> {flying ? 'walk again' : 'free-fly'}
+            <kbd>D</kbd> or pinch to move · <kbd>Shift</kbd> to run · wheel: speed{' '}
+            <span className="walk-speed" data-testid="walk-speed">
+              {formatSpeed(speed)}
+            </span>{' '}
+            · <kbd>F</kbd> {flying ? 'walk again' : 'free-fly'}
             {flying && (
               <>
                 {' '}

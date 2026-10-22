@@ -126,6 +126,13 @@
 .walk-hud kbd {
   margin: 0 1px;
 }
+.walk-speed {
+  display: inline-block;
+  min-width: 2.8em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
 .guest-hint {
   bottom: 20px;
   pointer-events: none;

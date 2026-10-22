@@ -4,11 +4,11 @@ import { useFrame, useThree } from '@react-three/fiber';
 import type { Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { buildColliders, defaultSpawn, moveWithCollisions } from '@/domain/walkthrough/collision';
+import { FLY_SPEED, FLY_SPEED_MAX, stepSpeed, WALK_SPEED, WALK_SPEED_MAX } from '@/domain/walkthrough/speed';
 import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
 
 export const EYE_HEIGHT = 1.6;
 const RADIUS = 0.22;
-const SPEED = 1.5;
 
 /** Shared input state so DOM overlays (touch joystick) can drive the controls. */
 export const walkInput = {
@@ -36,14 +36,38 @@ export function useWalkFly(): boolean {
     () => false,
   );
 }
-const FLY_SPEED = 2.5;
+
+/** Walking and flying speed multipliers, set with the mouse wheel; kept while the page is open. */
+const speed = { walk: 1, fly: 1 };
+const speedListeners = new Set<() => void>();
+/** Faster (`notches` > 0) or slower by √2 per notch, for the current mode (walk or fly). */
+export function stepWalkSpeed(notches: number): void {
+  if (fly.on) speed.fly = stepSpeed(speed.fly, notches, FLY_SPEED_MAX);
+  else speed.walk = stepSpeed(speed.walk, notches, WALK_SPEED_MAX);
+  speedListeners.forEach((fn) => fn());
+}
+/** Speed multiplier of the current mode (walk or fly). */
+export function useWalkSpeed(): number {
+  return useSyncExternalStore(
+    (cb) => {
+      speedListeners.add(cb);
+      flyListeners.add(cb);
+      return () => {
+        speedListeners.delete(cb);
+        flyListeners.delete(cb);
+      };
+    },
+    () => (fly.on ? speed.fly : speed.walk),
+    () => 1,
+  );
+}
 
 /**
  * First-person walkthrough: pointer-lock mouse look and WASD/arrow keys on
  * desktop, joystick + drag-to-look on touch. Movement collides with walls
  * (doorways are passable) and taller furniture. F switches to free-fly: move
  * along the view, Space/E up, Q/C down, no collisions; switching back lands at
- * eye height.
+ * eye height. The mouse wheel sets the walking (or flying) speed.
  */
 export function WalkControls({ project, derived, onExit, startOverride }: { project: Project; derived: DerivedPlan; onExit?: () => void; startOverride?: { x: number; y: number; angle: number } | null }) {
   const { camera, gl } = useThree();
@@ -135,8 +159,9 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
       } else if (kind === 'trackpad') {
         yaw.current -= deltaX * 0.003;
         pitch.current = Math.max(-1.3, Math.min(1.3, pitch.current - deltaY * 0.003));
-      } else {
-        wheelMove.current.fwd += -Math.sign(deltaY) * 0.35;
+      } else if (deltaY) {
+        // Physical mouse wheel: up = faster, down = slower.
+        stepWalkSpeed(-Math.sign(deltaY));
       }
     };
     const detachSafari = attachSafariGesture(el, ({ scaleRatio, rotationDeg }) => {
@@ -201,7 +226,7 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
     }
     if (fly.on) {
       // Free-fly: along the view (pitch included), up/down keys, no collisions.
-      const sp = FLY_SPEED * (run ? 3 : 1) * dt;
+      const sp = FLY_SPEED * speed.fly * (run ? 3 : 1) * dt;
       const cp = Math.cos(pitch.current);
       const look = new THREE.Vector3(-Math.sin(yaw.current) * cp, Math.sin(pitch.current), -Math.cos(yaw.current) * cp);
       const side = new THREE.Vector3(Math.cos(yaw.current), 0, -Math.sin(yaw.current));
@@ -211,10 +236,10 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
       camera.rotation.set(pitch.current, yaw.current, 0, 'YXZ');
       return;
     }
-    const speed = SPEED * (run ? 2 : 1) * dt;
+    const sp = WALK_SPEED * speed.walk * (run ? 2 : 1) * dt;
     const forward = new THREE.Vector3(-Math.sin(yaw.current), 0, -Math.cos(yaw.current));
     const right = new THREE.Vector3(-forward.z, 0, forward.x);
-    const delta = forward.multiplyScalar(fwd * speed + wf).add(right.multiplyScalar(strafe * speed + ws));
+    const delta = forward.multiplyScalar(fwd * sp + wf).add(right.multiplyScalar(strafe * sp + ws));
     if (delta.lengthSq() > 0) {
       const next = moveWithCollisions({ x: camera.position.x, y: camera.position.z }, { x: delta.x, y: delta.z }, RADIUS, colliderRef.current);
       camera.position.x = next.x;
