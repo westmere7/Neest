@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
+import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
 import { isEditableTarget } from '@/components/hooks';
 
 export interface OrbitLike {
@@ -158,6 +158,7 @@ export function attachTrackpadOrbit(
 
     const kind = classifier.classify(e);
     if (kind === 'ignore') return;
+    const { x: deltaX, y: deltaY } = wheelDelta(e);
 
     ctrl.dispatchEvent?.({ type: 'start' });
 
@@ -171,17 +172,17 @@ export function attachTrackpadOrbit(
     if (wantZoom) {
       const speed =
         (ctrl.zoomSpeed ?? 1) * (kind === 'pinch' ? 0.01 : kind === 'trackpad' ? 0.0045 : 0.0015);
-      const dy = kind === 'wheel' ? Math.max(-160, Math.min(160, e.deltaY)) : e.deltaY;
+      const dy = kind === 'wheel' ? Math.max(-160, Math.min(160, deltaY)) : deltaY;
       dollyCamera(ctrl, Math.exp(dy * speed));
     } else if (wantPan) {
-      const dx = kind === 'wheel' && e.deltaX === 0 ? -e.deltaY : -e.deltaX;
-      const dy = kind === 'wheel' && e.deltaX === 0 ? 0 : -e.deltaY;
+      const dx = kind === 'wheel' && deltaX === 0 ? -deltaY : -deltaX;
+      const dy = kind === 'wheel' && deltaX === 0 ? 0 : -deltaY;
       panCamera(ctrl, el, dx, dy);
     } else {
       const h = Math.max(120, el.clientHeight || 600);
       const speed = (ctrl.rotateSpeed ?? 1) * 0.85;
-      const dTheta = ((-e.deltaX / h) * 2 * Math.PI) * speed;
-      const dPhi = ((-e.deltaY / h) * 2 * Math.PI) * speed;
+      const dTheta = ((-deltaX / h) * 2 * Math.PI) * speed;
+      const dPhi = ((-deltaY / h) * 2 * Math.PI) * speed;
       orbitCamera(ctrl, dTheta, dPhi);
     }
 

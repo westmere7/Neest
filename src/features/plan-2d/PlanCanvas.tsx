@@ -23,7 +23,7 @@ import { createExtendTool } from './tools/extendTool';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './tools/types';
 import { openContextMenu } from '@/components/ContextMenu';
 import { floatingInsets } from '@/components/layoutInsets';
-import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
+import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
 import { selectionBounds } from '@/features/editor/selectionBounds';
 import { usePackVersion } from '@/packs/events';
 import { planContextMenuItems } from './contextMenu';
@@ -265,22 +265,23 @@ export function PlanCanvas() {
       userMoved.current = true;
       const kind = classifier.classify(e);
       if (kind === 'ignore') return;
+      const { x: deltaX, y: deltaY } = wheelDelta(e);
       const cam = useEditorStore.getState().planCamera;
       if (kind === 'trackpad' && !e.metaKey && !e.altKey) {
         const dx = e.shiftKey
-          ? e.deltaX === 0
-            ? e.deltaY
-            : Math.abs(e.deltaX) >= Math.abs(e.deltaY)
-              ? e.deltaX
+          ? deltaX === 0
+            ? deltaY
+            : Math.abs(deltaX) >= Math.abs(deltaY)
+              ? deltaX
               : 0
-          : e.deltaX;
+          : deltaX;
         const dy = e.shiftKey
-          ? e.deltaX === 0
+          ? deltaX === 0
             ? 0
-            : Math.abs(e.deltaY) > Math.abs(e.deltaX)
-              ? e.deltaY
+            : Math.abs(deltaY) > Math.abs(deltaX)
+              ? deltaY
               : 0
-          : e.deltaY;
+          : deltaY;
         useEditorStore.getState().set({
           planCamera: { ...cam, cx: cam.cx + dx / cam.zoom, cy: cam.cy + dy / cam.zoom },
         });
@@ -288,12 +289,12 @@ export function PlanCanvas() {
       }
       if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
         useEditorStore.getState().set({
-          planCamera: { ...cam, cx: cam.cx + (e.deltaX || e.deltaY) / cam.zoom },
+          planCamera: { ...cam, cx: cam.cx + (deltaX || deltaY) / cam.zoom },
         });
         return;
       }
       const speed = e.ctrlKey ? 0.01 : kind === 'trackpad' ? 0.0045 : 0.0015;
-      zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * speed));
+      zoomAt(e.clientX, e.clientY, Math.exp(-deltaY * speed));
     };
     const detachSafari = attachSafariGesture(svg, ({ scaleRatio, clientX, clientY }) => {
       if (Math.abs(scaleRatio - 1) <= 1e-4) return;

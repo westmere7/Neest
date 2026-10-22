@@ -63,6 +63,20 @@ export function createWheelClassifier(): WheelClassifier {
   };
 }
 
+/** Pixels per wheel line: a 3-line mouse notch moves as far as Chrome's 100 px notch. */
+const LINE_PX = 100 / 3;
+/** Pixels per wheel page. */
+const PAGE_PX = 800;
+
+/**
+ * Wheel deltas in pixels, whatever the event's `deltaMode`. Read it after `classify`: Firefox reports a
+ * mouse wheel in lines (3 per notch) once `deltaMode` has been read, which would otherwise zoom ~30× slower.
+ */
+export function wheelDelta(e: WheelEvent): { x: number; y: number } {
+  const k = e.deltaMode === 1 ? LINE_PX : e.deltaMode === 2 ? PAGE_PX : 1;
+  return { x: e.deltaX * k, y: e.deltaY * k };
+}
+
 export interface SafariGestureDelta {
   scaleRatio: number;
   rotationDeg: number;

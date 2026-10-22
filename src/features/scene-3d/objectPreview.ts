@@ -9,7 +9,7 @@ import { buildObject } from './builders';
 import { loadCustomModel } from './customModels';
 import { GI_OFF_Y } from './globalIllumination';
 import { sharedRegistry } from './sceneRuntime';
-import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
+import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
 
 /**
  * Live 3D preview of one placed object (Inspector › Item).
@@ -163,12 +163,13 @@ class Controller implements PreviewHandle {
         e.preventDefault();
         const kind = classifier.classify(e);
         if (kind === 'ignore') return;
+        const { x: deltaX, y: deltaY } = wheelDelta(e);
         if (kind === 'trackpad' && !e.ctrlKey && !e.altKey && !e.metaKey) {
-          this.yaw -= e.deltaX * 0.008;
-          this.pitch = Math.min(PITCH_MAX, Math.max(PITCH_MIN, this.pitch + e.deltaY * 0.008));
+          this.yaw -= deltaX * 0.008;
+          this.pitch = Math.min(PITCH_MAX, Math.max(PITCH_MIN, this.pitch + deltaY * 0.008));
         } else {
           const speed = kind === 'pinch' ? 0.01 : 0.0015;
-          this.zoom = Math.min(3, Math.max(0.25, this.zoom * Math.exp(e.deltaY * speed)));
+          this.zoom = Math.min(3, Math.max(0.25, this.zoom * Math.exp(deltaY * speed)));
         }
         this.pauseAutoRotate();
         this.invalidate();

@@ -10,7 +10,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { moveWithCollisions, type Collider } from '@/domain/walkthrough/collision';
 import { attachTrackpadOrbit } from '@/features/scene-3d/trackpadOrbit';
-import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
+import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
 
 export interface GuestCamera {
   name: string;
@@ -380,16 +380,17 @@ function start(data: GuestData) {
       e.preventDefault();
       const kind = walkClassifier.classify(e);
       if (kind === 'ignore') return;
+      const { x: deltaX, y: deltaY } = wheelDelta(e);
       if (kind === 'pinch' || e.altKey) {
-        wheelWalk.fwd += -e.deltaY * 0.015;
+        wheelWalk.fwd += -deltaY * 0.015;
       } else if (e.shiftKey || e.metaKey) {
-        wheelWalk.fwd += -e.deltaY * 0.008;
-        wheelWalk.strafe += e.deltaX * 0.008;
+        wheelWalk.fwd += -deltaY * 0.008;
+        wheelWalk.strafe += deltaX * 0.008;
       } else if (kind === 'trackpad') {
-        yaw -= e.deltaX * 0.003;
-        pitch = Math.max(-1.3, Math.min(1.3, pitch - e.deltaY * 0.003));
+        yaw -= deltaX * 0.003;
+        pitch = Math.max(-1.3, Math.min(1.3, pitch - deltaY * 0.003));
       } else {
-        wheelWalk.fwd += -Math.sign(e.deltaY) * 0.35;
+        wheelWalk.fwd += -Math.sign(deltaY) * 0.35;
       }
     },
     { passive: false },

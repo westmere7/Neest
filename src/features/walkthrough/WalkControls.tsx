@@ -4,7 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import type { Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { buildColliders, defaultSpawn, moveWithCollisions } from '@/domain/walkthrough/collision';
-import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
+import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
 
 export const EYE_HEIGHT = 1.6;
 const RADIUS = 0.22;
@@ -126,16 +126,17 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
       e.preventDefault();
       const kind = classifier.classify(e);
       if (kind === 'ignore') return;
+      const { x: deltaX, y: deltaY } = wheelDelta(e);
       if (kind === 'pinch' || e.altKey) {
-        wheelMove.current.fwd += -e.deltaY * 0.015;
+        wheelMove.current.fwd += -deltaY * 0.015;
       } else if (e.shiftKey || e.metaKey) {
-        wheelMove.current.fwd += -e.deltaY * 0.008;
-        wheelMove.current.strafe += e.deltaX * 0.008;
+        wheelMove.current.fwd += -deltaY * 0.008;
+        wheelMove.current.strafe += deltaX * 0.008;
       } else if (kind === 'trackpad') {
-        yaw.current -= e.deltaX * 0.003;
-        pitch.current = Math.max(-1.3, Math.min(1.3, pitch.current - e.deltaY * 0.003));
+        yaw.current -= deltaX * 0.003;
+        pitch.current = Math.max(-1.3, Math.min(1.3, pitch.current - deltaY * 0.003));
       } else {
-        wheelMove.current.fwd += -Math.sign(e.deltaY) * 0.35;
+        wheelMove.current.fwd += -Math.sign(deltaY) * 0.35;
       }
     };
     const detachSafari = attachSafariGesture(el, ({ scaleRatio, rotationDeg }) => {
