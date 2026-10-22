@@ -9,7 +9,7 @@ import { calloutAnchor } from '@/domain/geometry/callouts';
 import type { D } from '@/domain/commands/walls';
 import { addWallChain } from '@/domain/commands/walls';
 import { deleteEntities, duplicateEntities, placeObject, reconcileRooms } from '@/domain/commands/entities';
-import { addCallout, updateCallout } from '@/domain/commands/callouts';
+import { addCallout, detachCallouts, updateCallout } from '@/domain/commands/callouts';
 import { addOption, switchOption } from '@/domain/commands/options';
 import { repairProject } from '@/storage/migrations';
 import { hitTest } from '@/features/plan-2d/hitTest';
@@ -112,17 +112,24 @@ describe('callout targets', () => {
     expect(calloutInfo(q, derived, q.callouts[area]).join(' ')).toMatch(/2(\.0+)? m²/);
   });
 
-  it('keeps a note as a spot when its item is deleted', () => {
-    const { p, obj } = base();
-    let id = '';
+  it('removes notes with their item and keeps notes of a deleted room as spots', () => {
+    const { p, obj, roomId } = base();
+    let onItem = '';
+    let onRoom = '';
+    let spot = '';
     const q = edit(p, (d) => {
-      id = addCallout(d, { target: { kind: 'object', objectId: obj }, note: 'keep me' });
+      onItem = addCallout(d, { target: { kind: 'object', objectId: obj }, note: 'goes with the table' });
+      onRoom = addCallout(d, { target: { kind: 'room', roomId }, note: 'keep me' });
+      spot = addCallout(d, { target: { kind: 'point', x: 2, y: 2, z: 0 } });
     });
     const r = edit(q, (d) => deleteEntities(d, [obj]));
-    expect(r.callouts[id].target).toEqual({ kind: 'point', x: 1, y: 1, z: 0.55 });
-    expect(r.callouts[id].note).toBe('keep me');
-    // Deleting the callout itself removes it.
-    expect(edit(r, (d) => deleteEntities(d, [id])).callouts[id]).toBeUndefined();
+    expect(r.callouts[onItem]).toBeUndefined();
+    expect(r.callouts[spot]).toBeDefined();
+    const s = edit(r, (d) => detachCallouts(d, new Set([roomId])));
+    expect(s.callouts[onRoom].target.kind).toBe('point');
+    expect(s.callouts[onRoom].note).toBe('keep me');
+    // Deleting a note itself removes it.
+    expect(edit(s, (d) => deleteEntities(d, [spot])).callouts[spot]).toBeUndefined();
   });
 
   it('duplicates a spot callout with an offset', () => {

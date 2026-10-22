@@ -45,10 +45,8 @@ export interface SceneOptions {
   selectedIds?: Set<string>;
   onPick?: (kind: 'wall' | 'object' | 'opening' | 'room', id: string, e: ThreeEvent<MouseEvent>) => void;
   onObjectPointerDown?: (obj: PlacedObject, e: ThreeEvent<PointerEvent>) => void;
-  /** Floating callout labels (each callout and the Callouts layer still decide). */
+  /** Note target highlights (each note and the Notes layer still decide); the labels are NotesOverlay. */
   showCallouts?: boolean;
-  onCalloutSelect?: (id: string, additive: boolean) => void;
-  onCalloutEdit?: (id: string) => void;
 }
 
 /** Sun direction from time of day (hours) and azimuth (degrees, 0 = north/-y, clockwise). */
@@ -814,8 +812,6 @@ export function SceneContent({
           project={project}
           derived={derived}
           selectedIds={options.selectedIds}
-          onSelect={options.onCalloutSelect}
-          onEdit={options.onCalloutEdit}
         />
       )}
     </group>

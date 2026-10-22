@@ -1,4 +1,4 @@
-import type { Callout, CalloutColor, Project } from '@/domain/model/schema';
+import type { Callout, Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { calloutRegionArea } from '@/domain/geometry/callouts';
 import { formatArea, formatLength } from '@/domain/model/units';
@@ -211,11 +211,4 @@ export function calloutLines(project: Project, derived: DerivedPlan | null, c: C
 /** Plain text of a line (for DXF, accessibility and tests). */
 export const lineText = (l: Line) => ' '.repeat(l.indent) + l.runs.map((r) => r.text).join('');
 
-/** Accent colours: [main, light fill]. */
-export const CALLOUT_PALETTE: Record<CalloutColor, { main: string; fill: string; text: string }> = {
-  teal: { main: '#2a8a78', fill: '#eef7f4', text: '#14332d' },
-  brass: { main: '#b0862f', fill: '#fbf5e6', text: '#3a2c0d' },
-  coral: { main: '#d0584a', fill: '#fdf0ee', text: '#45160f' },
-  blue: { main: '#3f6fb5', fill: '#eef3fb', text: '#14264a' },
-  slate: { main: '#55606b', fill: '#f2f4f6', text: '#1f262c' },
-};
+export { CALLOUT_PALETTE } from './palette';

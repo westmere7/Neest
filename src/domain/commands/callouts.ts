@@ -26,14 +26,17 @@ export function deleteCallouts(d: D, ids: string[]): void {
 }
 
 /**
- * Before items or rooms are deleted: callouts pinned to them stay where they were, as spot callouts
- * at the old anchor (an item's top, a room's label point), so the note is not lost with the item.
+ * Before items or rooms are deleted: notes on a deleted item go with it; notes on a deleted room
+ * stay where they were, as spot notes at the room's old label point.
  */
 export function detachCallouts(d: D, deletedIds: Set<string>): void {
   for (const c of Object.values(d.callouts ?? {})) {
     const t = c.target;
-    const gone = (t.kind === 'object' && deletedIds.has(t.objectId)) || (t.kind === 'room' && deletedIds.has(t.roomId));
-    if (!gone) continue;
+    if (t.kind === 'object' && deletedIds.has(t.objectId)) {
+      delete d.callouts[c.id];
+      continue;
+    }
+    if (!(t.kind === 'room' && deletedIds.has(t.roomId))) continue;
     const a = calloutAnchor(d as unknown as Project, null, t);
     if (a) c.target = { kind: 'point', x: a.x, y: a.y, z: a.z };
   }

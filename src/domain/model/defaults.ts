@@ -80,6 +80,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       hiddenCategories: [],
       fov: 45,
       walkFov: 70,
+      notePlacement: 'close',
     },
     layers: {
       construction: { visible: true, locked: false },

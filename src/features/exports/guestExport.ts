@@ -7,7 +7,7 @@ import type { GuestCallout, GuestCamera, GuestData } from '@/guest-viewer/main';
 import { visibleCallouts } from '@/features/callouts/layout';
 import { callout3DPoints } from '@/features/callouts/Callouts3D';
 import { calloutLines } from '@/features/callouts/content';
-import { NOTE_SIZE_SCALE, endPx, labelColors } from '@/features/callouts/style';
+import { NOTE_LINE_WIDTH, NOTE_SIZE_SCALE, endPx, labelColors, leaderDash } from '@/features/callouts/style';
 import { exportGlb } from './sceneExport';
 
 function bufferToBase64(buf: ArrayBuffer): string {
@@ -45,7 +45,8 @@ canvas{display:block;touch-action:none}
  .ng-walking .ng-look{display:block;position:fixed;right:0;top:90px;bottom:90px;width:50%;touch-action:none}
 }
 .ng-callouts{position:fixed;inset:0;pointer-events:none;overflow:hidden}
-.ng-callout{position:absolute;transform:translate(-50%,-100%);max-width:260px;width:max-content;padding:7px 10px 7px 13px;border:1px solid var(--border);border-radius:6px;background:var(--fill);color:var(--text);font-family:Inter,"Segoe UI",system-ui,sans-serif;line-height:1.38;box-shadow:0 2px 10px rgba(0,0,0,.18);pointer-events:auto;background-clip:padding-box;border-left:4px solid var(--main)}
+.ng-marks{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ng-callout{position:absolute;left:0;top:0;visibility:hidden;will-change:transform;max-width:260px;width:max-content;padding:7px 10px 7px 13px;border:1px solid var(--border);border-radius:6px;background:var(--fill);color:var(--text);font-family:Inter,"Segoe UI",system-ui,sans-serif;line-height:1.38;box-shadow:0 2px 10px rgba(0,0,0,.18);pointer-events:auto;background-clip:padding-box;border-left:4px solid var(--main)}
 .ng-box-solid,.ng-box-outline{border-left:1px solid var(--border);padding-left:10px}
 .ng-box-text{border:0;box-shadow:none;padding:2px 4px;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
 .ng-cl-title{font-weight:650}.ng-cl-info{color:var(--info);font-size:.92em}.ng-callout a{color:var(--link)}
@@ -57,7 +58,7 @@ const r3 = (v: number) => Math.round(v * 1000) / 1000;
 /** Visible callouts as plain data for the guest viewer (no app code runs there). */
 function guestCallouts(project: Project, derived: ReturnType<typeof derivePlan>): GuestCallout[] {
   return visibleCallouts(project).flatMap((c) => {
-    const pts = callout3DPoints(project, derived, c);
+    const pts = callout3DPoints(project, derived, c, project.render.notePlacement);
     if (!pts) return [];
     return [
       {
@@ -69,7 +70,7 @@ function guestCallouts(project: Project, derived: ReturnType<typeof derivePlan>)
           const k = labelColors(c);
           return { main: k.main, fill: k.fill ?? 'transparent', border: k.stroke ?? 'transparent', text: k.text, info: k.info, link: k.link };
         })(),
-        style: { box: c.box, scale: NOTE_SIZE_SCALE[c.size], line: c.line, end: c.end, endPx: endPx(c) },
+        style: { box: c.box, scale: NOTE_SIZE_SCALE[c.size], line: c.line, lineWidth: NOTE_LINE_WIDTH[c.lineWeight] * 1.15, dash: leaderDash(c), end: c.end, endPx: endPx(c) },
         lines: calloutLines(project, derived, c).map((l) => ({
           role: l.role,
           indent: l.indent,
@@ -115,6 +116,8 @@ export async function buildGuestHtml(project: Project): Promise<string> {
     envIntensity: project.render.envIntensity,
     exposure: project.render.exposure,
     callouts: guestCallouts(project, derived),
+    notePlacement: project.render.notePlacement,
+    wallTop: Math.max(0, ...Object.values(project.walls).map((w) => (w.baseElevation ?? 0) + w.height)),
   };
   return `<!doctype html>
 <html lang="en">

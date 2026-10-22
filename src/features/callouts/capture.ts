@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import type { Project } from '@/domain/model/schema';
+import type { Callout, Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { calloutLines } from './content';
 import { NOTE_LINE_WIDTH, NOTE_SIZE_SCALE, arrowHead, endPx, labelColors, leaderDash } from './style';
 import { visibleCallouts, type CalloutLayout } from './layout';
-import { callout3DPoints } from './Callouts3D';
+import { layoutNotes3D } from './NotesOverlay';
 
 /** The live camera framed for a shot of w × h (same viewpoint, requested aspect, no editor offset). */
 export function shotCamera(camera: THREE.Camera, w: number, h: number): THREE.PerspectiveCamera | THREE.OrthographicCamera {
@@ -25,8 +25,8 @@ export function shotCamera(camera: THREE.Camera, w: number, h: number): THREE.Pe
 const FONT = "Inter, 'Segoe UI', system-ui, sans-serif";
 
 /**
- * Paints the visible callouts onto a rendered 3D image: leader, anchor dot and the label above the
- * leader's top, as in the live view. Labels scale with the image height so they read the same at
+ * Paints the visible notes onto a rendered 3D image, laid out as in the live view (placement setting,
+ * no overlaps where space allows). Labels scale with the image height so they read the same at
  * any resolution. Returns the original blob when there is nothing to draw.
  */
 export async function compositeCallouts(blob: Blob, project: Project, camera: THREE.Camera, w: number, h: number): Promise<Blob> {
@@ -51,20 +51,10 @@ export function drawCallouts(ctx: CanvasRenderingContext2D, project: Project, ca
   const font = 12 * s;
   const lineH = font * 1.38;
   const pad = { x: 10 * s, y: 7 * s, stripe: 4 * s };
-  const toScreen = (v: THREE.Vector3) => {
-    const p = v.clone().project(camera);
-    return { x: ((p.x + 1) / 2) * w, y: ((1 - p.y) / 2) * h, behind: p.z > 1 || p.z < -1 };
-  };
   const fontFor = (bold: boolean, italic: boolean, size: number) => `${italic ? 'italic ' : ''}${bold ? 650 : 400} ${size}px ${FONT}`;
-  // Far labels first so near ones sit on top.
-  const items = visibleCallouts(project)
-    .map((c) => ({ c, pts: callout3DPoints(project, derived, c) }))
-    .flatMap(({ c, pts }) => (pts ? [{ c, pts, depth: pts.label.distanceTo(camera.position) }] : []))
-    .sort((a, b) => b.depth - a.depth);
-  for (const { c, pts } of items) {
-    const a = toScreen(pts.anchor);
-    const l = toScreen(pts.label);
-    if (a.behind || l.behind) continue;
+  // Each label's text and size first; the layout (placement, no overlaps) is the live view's.
+  const metrics = new Map<string, ReturnType<typeof measure>>();
+  function measure(c: Callout) {
     const colors = labelColors(c);
     const k = NOTE_SIZE_SCALE[c.size];
     const fz = font * k;
@@ -74,7 +64,6 @@ export function drawCallouts(ctx: CanvasRenderingContext2D, project: Project, ca
     const stripe = colors.stripe ? pad.stripe : 0;
     const lines = calloutLines(project, derived, c);
     const size = (line: CalloutLayout['lines'][number]) => (line.role === 'info' ? fz * 0.92 : fz);
-    // Measure.
     let textW = 0;
     for (const line of lines) {
       let lw = line.indent * size(line) * 0.54;
@@ -86,9 +75,17 @@ export function drawCallouts(ctx: CanvasRenderingContext2D, project: Project, ca
     }
     const bw = Math.max(c.box === 'text' ? 0 : 96 * s, textW + px * 2 + stripe);
     const bh = lines.length * lh + py * 2 - (lh - fz) * 0.4;
-    const bx = l.x - bw / 2;
-    const by = l.y - bh;
-    // Leader and end mark.
+    return { colors, fz, lh, px, py, stripe, lines, size, bw, bh };
+  }
+  const notes = layoutNotes3D(project, derived, camera, w, h, (c) => {
+    const m = measure(c);
+    metrics.set(c.id, m);
+    return { w: m.bw, h: m.bh };
+  });
+  // Leaders and end marks first, then the labels on top.
+  for (const { c, anchor: a, placed } of notes) {
+    const { colors } = metrics.get(c.id)!;
+    const l = placed.attach;
     if (c.line !== 'none') {
       const dash = leaderDash(c);
       ctx.save();
@@ -112,7 +109,7 @@ export function drawCallouts(ctx: CanvasRenderingContext2D, project: Project, ca
       ctx.lineWidth = (c.end === 'dot' ? 1.4 : Math.max(1.6, r / s / 2.6)) * s;
       ctx.stroke();
     } else if (c.end === 'arrow') {
-      const tri = arrowHead(a, l, r);
+      const tri = arrowHead(a, Math.hypot(l.x - a.x, l.y - a.y) > 1 ? l : { x: a.x, y: a.y - 10 }, r);
       ctx.fillStyle = colors.main;
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 0.8 * s;
@@ -122,6 +119,11 @@ export function drawCallouts(ctx: CanvasRenderingContext2D, project: Project, ca
       ctx.fill();
       ctx.stroke();
     }
+  }
+  for (const { c, placed } of notes) {
+    const { colors, fz, lh, px, py, stripe, lines, size, bw, bh } = metrics.get(c.id)!;
+    const bx = placed.rect.x;
+    const by = placed.rect.y;
     // Box with shadow and accent stripe (none for text-only labels).
     if (colors.fill) {
       ctx.save();

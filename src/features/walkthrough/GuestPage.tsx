@@ -18,6 +18,7 @@ import { TouchControls } from './TouchControls';
 import { CanvasMeasureKick, clientCompute } from '@/features/scene-3d/useCanvasMeasureFix';
 import { attachTrackpadOrbit, type OrbitLike } from '@/features/scene-3d/trackpadOrbit';
 import '@/features/scene-3d/scene3d.css';
+import { NotesOverlay, NotesViewBridge } from '@/features/callouts/NotesOverlay';
 
 function TrackpadGuestBridge() {
   const gl = useThree((s) => s.gl);
@@ -71,6 +72,7 @@ export default function GuestPage({ projectId }: { projectId: string }) {
   const [view, setView] = useState<{ v: CameraView; n: number } | null>(null);
   const viewRef = useRef(view);
   viewRef.current = view;
+  const notesCamera = useRef<THREE.Camera | null>(null);
   useEffect(() => {
     if (initial && !viewRef.current) setView({ v: initial, n: 1 });
   }, [initial]);
@@ -127,7 +129,9 @@ export default function GuestPage({ projectId }: { projectId: string }) {
             showCallouts: !walk,
           }}
         />
+        <NotesViewBridge target={notesCamera} />
       </Canvas>
+      <NotesOverlay project={project} derived={derived} camera={notesCamera} visible={!walk} />
       <header className="guest-head floating">
         <div>
           <strong>{project.name}</strong>

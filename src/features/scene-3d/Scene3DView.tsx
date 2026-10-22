@@ -31,7 +31,7 @@ import { ASSET_CATEGORY_LABELS, ASSET_CATEGORY_ORDER, CEILING_CATEGORY } from '@
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { toast, useDialogStore, usePrefsStore } from '@/state/uiStores';
-import { Button, IconButton, Segmented, Slider, Toggle } from '@/components/ui';
+import { Button, IconButton, Segmented, Select, Slider, Toggle } from '@/components/ui';
 import { useIsMobile } from '@/components/hooks';
 import { WALL_HUG_MOVE, hugWall } from '@/features/plan-2d/tools/placeTools';
 import { FloorReflections } from './floorReflections';
@@ -40,6 +40,7 @@ import { WalkControls, toggleWalkFly, useWalkFly } from '@/features/walkthrough/
 import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
 import { CalloutsToggle } from '@/features/editor/AnnotationToggles';
+import { NotesOverlay, NotesViewBridge } from '@/features/callouts/NotesOverlay';
 import { PostEffects } from './PostEffects';
 import { InfiniteGrid } from './InfiniteGrid';
 import { GlobalIllumination } from './globalIllumination';
@@ -529,6 +530,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const panning3d = !walk && tool === 'pan';
   const drag = useObjectDrag(project, derived, !walk && !drawing && !panning3d);
   const selectedIds = useMemo(() => new Set(selection.map((s) => s.id)), [selection]);
+  const notesCamera = useRef<THREE.Camera | null>(null);
   // Right-click: the same menu as in the plan, for the item under the pointer (not after a right-drag orbit/pan).
   const rightDown = useRef<{ x: number; y: number } | null>(null);
   const menuShown = useRef(0);
@@ -579,8 +581,6 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     onPick: walk || drawing ? undefined : onPick,
     onObjectPointerDown: walk || drawing ? undefined : drag.onObjectPointerDown,
     showCallouts: !walk,
-    onCalloutSelect: walk || drawing ? undefined : onCalloutSelect,
-    onCalloutEdit: walk || drawing ? undefined : onCalloutEdit,
   };
 
   const dpr: [number, number] =
@@ -747,6 +747,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         />
         {/* Callout labels are HTML: keep them off the loading screen. */}
         <SceneContent project={project} derived={derived} registry={sharedRegistry} options={ready ? options : { ...options, showCallouts: false }} />
+        <NotesViewBridge target={notesCamera} />
         {!walk && (
           <group ref={helpersRef} visible={showHelpers}>
             <InfiniteGrid background={r.background} />
@@ -766,6 +767,16 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         {!walk && <ToolBridge3D enabled={workspace === '3d'} />}
         {!walk && !drawing && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
       </Canvas>
+      {/* Note labels and leaders, laid out on screen over the canvas; hidden while loading and in walk mode. */}
+      <NotesOverlay
+        project={project}
+        derived={derived}
+        camera={notesCamera}
+        visible={active && ready && !walk}
+        selectedIds={options.selectedIds}
+        onSelect={drawing ? undefined : onCalloutSelect}
+        onEdit={drawing ? undefined : onCalloutEdit}
+      />
       {!ready &&
         (switching ? (
           <div className="pane-loading scene3d-loading switching">
@@ -1306,6 +1317,18 @@ function ViewPanel({
               onChange={(v) => setRender('Toggle 3D labels', { showRoomLabels: v })}
             />
             <CalloutsToggle />
+            {project.layers.callouts?.visible && Object.keys(project.callouts ?? {}).length > 0 && (
+              <Select<RenderSettings['notePlacement']>
+                label="Note placement"
+                value={r.notePlacement}
+                onChange={(v) => setRender('Change note placement', { notePlacement: v })}
+                options={[
+                  { value: 'close', label: 'Close to what they point at' },
+                  { value: 'further', label: 'Further out' },
+                  { value: 'clear', label: 'Clear of the walls' },
+                ]}
+              />
+            )}
             <Toggle label="Wall dimensions" checked={showDims} onChange={setShowDims} />
             <Toggle label="Helpers (grid, selection)" checked={showHelpers} onChange={setShowHelpers} />
           </section>

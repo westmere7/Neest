@@ -11,6 +11,8 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { moveWithCollisions, type Collider } from '@/domain/walkthrough/collision';
 import { attachTrackpadOrbit } from '@/features/scene-3d/trackpadOrbit';
 import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
+import { inView, placeNoteLabels, screenBounds, type LabelInput, type NotePlacement, type ScreenRect } from '@/features/callouts/placement';
+import { arrowHead } from '@/features/callouts/style';
 
 export interface GuestCamera {
   name: string;
@@ -28,8 +30,8 @@ export interface GuestCallout {
   outline?: [number, number][];
   outlineY?: number;
   colors: { main: string; fill: string; border: string; text: string; info: string; link: string };
-  /** Label look and text size factor, leader style and width (px), end mark and its size (px). */
-  style: { box: 'card' | 'solid' | 'outline' | 'text'; scale: number; line: 'solid' | 'dashed' | 'dotted' | 'none'; end: 'dot' | 'ring' | 'arrow' | 'none'; endPx: number };
+  /** Label look and text size factor, leader style, width and dashes (px), end mark and its size (px). */
+  style: { box: 'card' | 'solid' | 'outline' | 'text'; scale: number; line: 'solid' | 'dashed' | 'dotted' | 'none'; lineWidth: number; dash: number[] | null; end: 'dot' | 'ring' | 'arrow' | 'none'; endPx: number };
   lines: { role: 'title' | 'info' | 'text'; indent: number; runs: { t: string; b?: 1; i?: 1; h?: string }[] }[];
 }
 
@@ -47,6 +49,9 @@ export interface GuestData {
   envIntensity: number;
   exposure: number;
   callouts?: GuestCallout[];
+  /** Where note labels float (see placement.ts) and the top of the walls (for "clear of the walls"). */
+  notePlacement?: NotePlacement;
+  wallTop?: number;
 }
 
 declare global {
@@ -147,64 +152,40 @@ function start(data: GuestData) {
   bar.append(modeBtn);
   root.append(bar);
 
-  // ── Callouts: leaders in the scene, labels as HTML placed over the canvas each frame ──
+  // ── Notes: highlights in the scene; labels, leaders and end marks laid out on screen each frame ──
+  const SVG = 'http://www.w3.org/2000/svg';
   const calloutLayer = el('div', 'ng-callouts');
+  const marksSvg = document.createElementNS(SVG, 'svg');
+  marksSvg.setAttribute('class', 'ng-marks');
+  calloutLayer.append(marksSvg);
   root.append(calloutLayer);
   const calloutGroup = new THREE.Group();
   scene.add(calloutGroup);
-  const callouts = (data.callouts ?? []).map((c) => {
-    const anchor = new THREE.Vector3(...c.anchor);
-    const label = new THREE.Vector3(...c.label);
+  const callouts = (data.callouts ?? []).map((c, i) => {
     const st = c.style;
+    let line: SVGLineElement | null = null;
     if (st.line !== 'none') {
-      const dotted = st.line === 'dotted';
-      const lineMat =
-        st.line === 'solid'
-          ? new THREE.LineBasicMaterial({ color: c.colors.main, depthTest: false, transparent: true })
-          : new THREE.LineDashedMaterial({ color: c.colors.main, depthTest: false, transparent: true, dashSize: dotted ? 0.012 : 0.09, gapSize: dotted ? 0.045 : 0.06 });
-      const leader = new THREE.Line(new THREE.BufferGeometry().setFromPoints([anchor, label]), lineMat);
-      leader.computeLineDistances();
-      leader.renderOrder = 999;
-      calloutGroup.add(leader);
+      line = document.createElementNS(SVG, 'line');
+      line.setAttribute('stroke', c.colors.main);
+      line.setAttribute('stroke-width', String(st.lineWidth));
+      line.setAttribute('stroke-linecap', 'round');
+      if (st.dash) line.setAttribute('stroke-dasharray', st.dash.join(' '));
+      marksSvg.append(line);
     }
-    // End mark: constant size on screen (a dot with a white ring, a ring, or an arrow turned towards the target).
-    let mark: THREE.Sprite | null = null;
-    if (st.end !== 'none') {
-      const dc = document.createElement('canvas');
-      dc.width = dc.height = 64;
-      const g = dc.getContext('2d')!;
-      if (st.end === 'arrow') {
-        g.fillStyle = c.colors.main;
-        g.strokeStyle = '#ffffff';
-        g.lineWidth = 4;
-        g.lineJoin = 'round';
-        g.beginPath();
-        g.moveTo(32, 3);
-        g.lineTo(58, 61);
-        g.lineTo(6, 61);
-        g.closePath();
-        g.fill();
-        g.stroke();
-      } else {
-        g.fillStyle = st.end === 'dot' ? '#ffffff' : c.colors.main;
-        g.beginPath();
-        g.arc(32, 32, 30, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = st.end === 'dot' ? c.colors.main : '#ffffff';
-        g.beginPath();
-        g.arc(32, 32, st.end === 'dot' ? 23 : 19, 0, Math.PI * 2);
-        g.fill();
-      }
-      const tex = new THREE.CanvasTexture(dc);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, sizeAttenuation: false }));
-      if (st.end === 'arrow') mark.center.set(0.5, 1);
-      const k = (st.endPx / 4) * 0.02;
-      mark.scale.set(st.end === 'arrow' ? k * 0.8 : k, k, 1);
-      mark.position.copy(anchor);
-      mark.renderOrder = 999;
-      calloutGroup.add(mark);
+    let mark: SVGElement | null = null;
+    if (st.end === 'dot' || st.end === 'ring') {
+      mark = document.createElementNS(SVG, 'circle');
+      mark.setAttribute('r', String(st.endPx));
+      mark.setAttribute('fill', st.end === 'dot' ? c.colors.main : '#fff');
+      mark.setAttribute('stroke', st.end === 'dot' ? '#fff' : c.colors.main);
+      mark.setAttribute('stroke-width', String(st.end === 'dot' ? 1.4 : Math.max(1.6, st.endPx / 2.6)));
+    } else if (st.end === 'arrow') {
+      mark = document.createElementNS(SVG, 'path');
+      mark.setAttribute('fill', c.colors.main);
+      mark.setAttribute('stroke', '#fff');
+      mark.setAttribute('stroke-width', '0.8');
     }
+    if (mark) marksSvg.append(mark);
     if (c.outline && c.outline.length >= 3) {
       const y = c.outlineY ?? 0.025;
       const loop = new THREE.LineLoop(
@@ -217,10 +198,10 @@ function start(data: GuestData) {
     const card = el('div', `ng-callout ng-box-${st.box}`);
     for (const [k, v] of Object.entries(c.colors)) card.style.setProperty(`--${k}`, v);
     card.style.fontSize = `${12 * st.scale}px`;
-    for (const line of c.lines) {
-      const row = el('div', `ng-cl-${line.role}`);
-      if (line.indent) row.style.paddingLeft = `${line.indent * 0.54}em`;
-      for (const r of line.runs) {
+    for (const ln of c.lines) {
+      const row = el('div', `ng-cl-${ln.role}`);
+      if (ln.indent) row.style.paddingLeft = `${ln.indent * 0.54}em`;
+      for (const r of ln.runs) {
         const span: HTMLElement = r.h ? el('a') : el('span');
         span.textContent = r.t;
         if (r.b) span.style.fontWeight = '650';
@@ -235,7 +216,7 @@ function start(data: GuestData) {
       card.append(row);
     }
     calloutLayer.append(card);
-    return { anchor, label, card, mark };
+    return { id: `n${i}`, anchor: new THREE.Vector3(...c.anchor), label: new THREE.Vector3(...c.label), card, line, mark, endPx: st.endPx };
   });
   let calloutsOn = callouts.length > 0;
   if (callouts.length) {
@@ -247,25 +228,60 @@ function start(data: GuestData) {
     bar.append(toggle);
   }
   const projected = new THREE.Vector3();
+  const toScreen = (p: THREE.Vector3) => {
+    projected.copy(p).project(camera);
+    if (projected.z > 1 || projected.z < -1) return null;
+    return { x: ((projected.x + 1) / 2) * window.innerWidth, y: ((1 - projected.y) / 2) * window.innerHeight };
+  };
+  const hide = (e: Element | null) => e && ((e as HTMLElement).style.visibility = 'hidden');
   const placeCallouts = () => {
     const show = calloutsOn && !walking;
     calloutGroup.visible = show;
     calloutLayer.style.display = show ? '' : 'none';
     if (!show) return;
-    for (const c of callouts) {
-      if (c.mark && c.mark.center.y === 1) {
-        // Arrow: point from the label towards the target as seen on screen.
-        const a = c.anchor.clone().project(camera);
-        const b = c.label.clone().project(camera);
-        c.mark.material.rotation = Math.atan2(a.y - b.y, (a.x - b.x) * (window.innerWidth / window.innerHeight)) - Math.PI / 2;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const inputs: (LabelInput & { n: (typeof callouts)[number] })[] = [];
+    for (const n of callouts) {
+      const a = toScreen(n.anchor);
+      const l = toScreen(n.label);
+      if (!a || !l || !inView(a, { w, h })) {
+        [n.card, n.line, n.mark].forEach(hide);
+        continue;
       }
-      projected.copy(c.label).project(camera);
-      const visible = projected.z < 1 && projected.z > -1;
-      c.card.style.display = visible ? '' : 'none';
-      if (!visible) continue;
-      c.card.style.left = `${((projected.x + 1) / 2) * window.innerWidth}px`;
-      c.card.style.top = `${((1 - projected.y) / 2) * window.innerHeight}px`;
+      inputs.push({ id: n.id, n, anchor: a, prefer: l, w: n.card.offsetWidth, h: n.card.offsetHeight });
     }
+    // The building's box on screen, kept clear of labels in "clear of the walls" mode.
+    let obstacle: ScreenRect | null = null;
+    if (data.notePlacement === 'clear') {
+      const corners: ({ x: number; y: number } | null)[] = [];
+      for (const x of [b.minX, b.maxX]) for (const y of [0, data.wallTop ?? 2.7]) for (const z of [b.minY, b.maxY]) corners.push(toScreen(new THREE.Vector3(x, y, z)));
+      obstacle = corners.some((p) => !p) ? null : screenBounds(corners);
+    }
+    // Keep clear of the title and view buttons at the top and the walk button at the bottom.
+    const placed = placeNoteLabels(inputs, { w, h }, { mode: data.notePlacement ?? 'close', obstacle, insets: { l: 0, r: 0, t: hud.offsetHeight + 12, b: bar.offsetHeight + 24 } });
+    inputs.forEach(({ n, anchor: a }, i) => {
+      const { rect, attach } = placed[i];
+      n.card.style.transform = `translate(${Math.round(rect.x)}px, ${Math.round(rect.y)}px)`;
+      n.card.style.visibility = '';
+      if (n.line) {
+        n.line.setAttribute('x1', String(a.x));
+        n.line.setAttribute('y1', String(a.y));
+        n.line.setAttribute('x2', String(attach.x));
+        n.line.setAttribute('y2', String(attach.y));
+        n.line.style.visibility = '';
+      }
+      if (n.mark) {
+        if (n.mark.tagName === 'circle') {
+          n.mark.setAttribute('cx', String(a.x));
+          n.mark.setAttribute('cy', String(a.y));
+        } else {
+          const from = Math.hypot(attach.x - a.x, attach.y - a.y) > 1 ? attach : { x: a.x, y: a.y - 10 };
+          n.mark.setAttribute('d', arrowHead(a, from, n.endPx).map((q, k) => `${k ? 'L' : 'M'}${q.x} ${q.y}`).join('') + 'Z');
+        }
+        n.mark.style.visibility = '';
+      }
+    });
   };
 
   let walking = false;

@@ -282,7 +282,7 @@ export const CalloutTargetSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('region'), points: z.array(Vec2Schema).min(3).max(64) }),
 ]);
 
-export const CALLOUT_COLORS = ['teal', 'brass', 'coral', 'blue', 'slate'] as const;
+export const CALLOUT_COLORS = ['teal', 'brass', 'coral', 'blue', 'slate', 'red', 'orange', 'yellow', 'green', 'cyan', 'violet', 'pink', 'black'] as const;
 /** Note label looks: tinted card with an accent stripe, filled with the colour, white with a border, text only. */
 export const NOTE_BOXES = ['card', 'solid', 'outline', 'text'] as const;
 export const NOTE_LINES = ['solid', 'dashed', 'dotted', 'none'] as const;
@@ -441,6 +441,8 @@ export const RenderSettingsSchema = z.object({
   fov: num.min(15).max(110).default(45),
   /** Field of view in the first-person walkthrough. */
   walkFov: num.min(40).max(110).default(70),
+  /** Where note labels float in 3D: close to what they point at, further out, or clear of the walls. */
+  notePlacement: z.enum(['close', 'further', 'clear']).default('close'),
 });
 
 export const ProjectSettingsSchema = z.object({

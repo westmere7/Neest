@@ -499,10 +499,18 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   measured with the plan font in browsers (estimated in tests/DXF). Drawn in two passes — all highlights/leaders,
   then all labels. Hit-testing checks note labels first; select tool drags a label (changes `offset`), moves
   spot/area notes with a selection, double-click opens the editor. Fit-to-view includes labels.
-- 3D (`Callouts3D` in `SceneContent`, option `showCallouts`): leader from the anchor (item top, room label point,
-  area centroid, spot) to `anchor + offset × 0.5` at `z + lift`; constant-size end mark; dashed highlight on the
-  floor; the label is a drei `Html` card above the leader top. Click selects, double-click edits. Hidden while the
-  scene loads and in walk mode. The path tracer strips the `callouts` group.
+- 3D: the scene only holds each note's dashed floor highlight (`Callouts3D` in `SceneContent`; the path tracer
+  strips the `callouts` group). Labels, leaders and end marks are an HTML/SVG overlay outside the canvas
+  (`NotesOverlay`, camera passed by `NotesViewBridge`), laid out on screen every frame by `layoutNotes3D` →
+  `placement.ts › placeNoteLabels`: each label starts above its preferred point (`callout3DPoints`, per placement),
+  "Clear of the walls" moves it off the building's screen box, then overlapping labels are pushed apart (sideways when
+  moving vertically would hit the building) and kept inside the area the floating panels leave free
+  (`floatingInsets`). Notes whose subject is off-screen are hidden. Setting: 3D view panel → Note placement
+  (`render.notePlacement` close / further / clear). Render captures and the guest viewer use the same layout.
+  Click selects, double-click edits. Hidden while the scene loads and in walk mode.
+- Colours (`palette.ts`, import-free so the guest viewer can bundle it): five muted (teal, brass, coral, blue,
+  slate) and eight vivid (red, orange, yellow, green, cyan, violet, pink, black); `onMain` is the text colour on a
+  filled label. Deleting an item deletes its notes; a deleted room's notes stay as spots.
 - Selected note's Inspector: preview, what it points to, Visible, Edit note…; Project panel → Layers has Notes
   (hide/lock); Annotations and the 3D view panel have a Notes toggle.
 
@@ -1556,3 +1564,6 @@ Known limitations (also in README):
 125. "Make sure every item in this app has a description" → 454 descriptions written from each item's build, slots
      and brand data into `itemDescriptions.json`; the asset rule now requires a description on every item and
      `legacyNoDescription.json` is gone (done).
+126. "In 3D, a setting for how notes are placed (close, further, avoid the structure); don't let notes overlap when
+     space allows; more vibrant colours; hide notes whose subject is out of view; remove an item's notes with the
+     item" → screen-space note layout (§10 Notes), Note placement in the 3D view panel, eight vivid colours (done).

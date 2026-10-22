@@ -106,13 +106,11 @@ export function PlanCanvas() {
     const availW = Math.max(120, W - insets.l - insets.r - margin * 2);
     const availH = Math.max(120, Hh - insets.t - insets.b - margin * 2);
     const zoomFor = (bb: typeof b) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(availW / Math.max(1, bb.maxX - bb.minX), availH / Math.max(1, bb.maxY - bb.minY))));
-    let zoom = zoomFor(b);
-    // Callout labels keep their screen size, so their extent depends on the zoom: settle it in two passes.
-    const planB = b;
-    for (let i = 0; i < 2; i++) {
-      b = unionBounds(planB, calloutExtent(pr, dv, 1 / zoom)) ?? planB;
-      zoom = zoomFor(b);
-    }
+    // Note labels keep their screen size: measure them at the plan's own zoom, and make room for them by
+    // zooming out at most 40% (zooming out further would only make them relatively bigger).
+    const planZoom = zoomFor(b);
+    b = unionBounds(b, calloutExtent(pr, dv, 1 / planZoom)) ?? b;
+    const zoom = Math.max(planZoom * 0.6, zoomFor(b));
     const offX = (insets.l - insets.r) / 2 / zoom;
     const offY = (insets.t - insets.b) / 2 / zoom;
     useEditorStore.getState().set({ planCamera: { cx: (b.minX + b.maxX) / 2 - offX, cy: (b.minY + b.maxY) / 2 - offY, zoom } });

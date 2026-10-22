@@ -1,5 +1,5 @@
 import type { Callout } from '@/domain/model/schema';
-import { CALLOUT_PALETTE } from './content';
+import { CALLOUT_PALETTE } from './palette';
 
 /**
  * Note styles shared by every renderer (plan SVG, 3D, render captures, guest viewer, DXF): label
@@ -43,7 +43,7 @@ export function labelColors(c: Pick<Callout, 'color' | 'box'>): LabelColors {
   const p = CALLOUT_PALETTE[c.color];
   switch (c.box) {
     case 'solid':
-      return { main: p.main, fill: p.main, stroke: p.main, text: '#ffffff', info: 'rgba(255,255,255,0.82)', link: '#ffffff', stripe: false, halo: false };
+      return { main: p.main, fill: p.main, stroke: p.main, text: p.onMain, info: p.onMain === '#ffffff' ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.62)', link: p.onMain, stripe: false, halo: false };
     case 'outline':
       return { main: p.main, fill: '#ffffff', stroke: p.main, text: '#1f2428', info: '#55626b', link: p.main, stripe: false, halo: false };
     case 'text':

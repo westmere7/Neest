@@ -73,12 +73,27 @@
   opacity: 0.7;
 }
 
-/* 3D: the label floats above its anchor; a leader line is drawn in the scene. */
+/* 3D: labels and leaders over the view, laid out on screen every frame (NotesOverlay). */
+.notes-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+.notes-marks {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
 .callout-3d {
-  transform: translate(-50%, -100%);
+  position: absolute;
+  left: 0;
+  top: 0;
   pointer-events: auto;
   cursor: pointer;
   user-select: none;
+  will-change: transform;
 }
 .callout-3d .callout-card {
   width: max-content;
@@ -181,6 +196,7 @@
 }
 .callout-colors {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 .callout-colors button {
