@@ -976,6 +976,11 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   - UI: `VariantSwatches` in the hover card (choice in `editor.variantChoice`, shown in the live preview and used by
     both placement paths via `features/library/variantChoice.ts`) and `editor/ObjectVariants.tsx` (apply to every
     selected item of the kind, save, delete saved ones).
+- **Stools** (`packs/stools.pack.ts`, 35, shelf Stools & benches; the footstool on Ottomans & poufs): bar and
+  counter stools, Vietnamese stools (ghế nhựa đỏ, đôn gỗ, đôn sứ, ghế tre, ghế băng), studio and low stools. Round
+  stools size from min(w, d); local helpers `stick` (box between points), `sidePlate`, `radialDisc`/`radialRing`,
+  `profileR` (lathe radius at a height) and `gasColumn`. Prices are in itemPrices.json like every pack (`AssetSpec`
+  has no `price` field).
 - **Tests**: `src/packs/packs.test.ts` loads the real `/packs`, runs `describeAssetChecks` on every pack item, and checks namespacing, textures, reload replacement and the build fallback. Run it with `npx vitest run src/packs`.
 - **Materials** (`data/materials/catalog.ts`): ≈265 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
   no new category, so older builds still load projects); defaults in `DEFAULT_MATERIALS`. 45 procedural patterns
@@ -1678,3 +1683,8 @@ Known limitations (also in README):
 135. "mousewheel = walking/flying speed" → in the walkthrough the physical mouse wheel no longer nudges forward; each
      notch makes walking (or flying, kept separately) √2 faster or slower, shown in the walk HUD and the guest viewer's
      hint (`domain/walkthrough/speed.ts`, tests in `speed.test.ts`) (done).
+134. "Add a lot more stools" → packs/stools.pack.ts (35): bar/counter (gas-lift swivel, low-back walnut, hairpin,
+     sheet-steel bar + low, cross-braced oak, channel-tufted velvet, rattan, tractor seat, bentwood cane, Shaker tape),
+     Vietnamese (ghế nhựa đỏ, tall round plastic, đôn gỗ, đôn sứ, ghế tre, ghế băng), studio (round piano stool, lab
+     stool on castors, wobble, box stool, folding step stool) and low stools (milking, spool, kids' step, mushroom, tree
+     stump, Japanese, cork, butterfly, camp, tulip, skirted vanity, X-frame, tufted footstool); estimated VND prices (done).

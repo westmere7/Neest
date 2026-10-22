@@ -977,6 +977,10 @@
    "file": "56421bb0a02a07ac.webp",
    "tile": false
   },
+  "573720ae3dcf11ec": {
+   "file": "573720ae3dcf11ec.webp",
+   "tile": false
+  },
   "5765054467e62cad": {
    "file": "5765054467e62cad.webp",
    "tile": true
@@ -3794,6 +3798,7 @@
   "stone-quartz-white": "04f436f8ee610f28",
   "stone-slate": "52dee6a5b1a9760a",
   "stone-travertine": "c25711e0f18bd6b1",
+  "stools:stump-bark": "573720ae3dcf11ec",
   "studio-beds:pallet-pine": "17670025f63662e3",
   "studio-beds:sheer-voile": "93e4545e5d26e99f",
   "studio-beds:tatami-igusa": "156408a95b7b5fdb",
