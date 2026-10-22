@@ -6,7 +6,8 @@ import { sunFromSettings } from '@/features/scene-3d/SceneContent';
 import type { GuestCallout, GuestCamera, GuestData } from '@/guest-viewer/main';
 import { visibleCallouts } from '@/features/callouts/layout';
 import { callout3DPoints } from '@/features/callouts/Callouts3D';
-import { CALLOUT_PALETTE, calloutLines } from '@/features/callouts/content';
+import { calloutLines } from '@/features/callouts/content';
+import { NOTE_SIZE_SCALE, endPx, labelColors } from '@/features/callouts/style';
 import { exportGlb } from './sceneExport';
 
 function bufferToBase64(buf: ArrayBuffer): string {
@@ -44,8 +45,10 @@ canvas{display:block;touch-action:none}
  .ng-walking .ng-look{display:block;position:fixed;right:0;top:90px;bottom:90px;width:50%;touch-action:none}
 }
 .ng-callouts{position:fixed;inset:0;pointer-events:none;overflow:hidden}
-.ng-callout{position:absolute;transform:translate(-50%,-100%);max-width:260px;width:max-content;padding:7px 10px 7px 13px;border:1px solid var(--main);border-radius:6px;background:var(--fill);color:var(--text);font:12px/1.38 Inter,"Segoe UI",system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.18);pointer-events:auto;background-clip:padding-box;border-left:4px solid var(--main)}
-.ng-cl-title{font-weight:650}.ng-cl-info{color:#55626b;font-size:11px}.ng-callout a{color:var(--main)}
+.ng-callout{position:absolute;transform:translate(-50%,-100%);max-width:260px;width:max-content;padding:7px 10px 7px 13px;border:1px solid var(--border);border-radius:6px;background:var(--fill);color:var(--text);font-family:Inter,"Segoe UI",system-ui,sans-serif;line-height:1.38;box-shadow:0 2px 10px rgba(0,0,0,.18);pointer-events:auto;background-clip:padding-box;border-left:4px solid var(--main)}
+.ng-box-solid,.ng-box-outline{border-left:1px solid var(--border);padding-left:10px}
+.ng-box-text{border:0;box-shadow:none;padding:2px 4px;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
+.ng-cl-title{font-weight:650}.ng-cl-info{color:var(--info);font-size:.92em}.ng-callout a{color:var(--link)}
 @media (max-width:640px){.ng-views{max-width:100%;justify-content:flex-start}.ng-help{white-space:normal;width:86vw;text-align:center}}
 `;
 
@@ -60,9 +63,13 @@ function guestCallouts(project: Project, derived: ReturnType<typeof derivePlan>)
       {
         anchor: [r3(pts.anchor.x), r3(pts.anchor.y), r3(pts.anchor.z)],
         label: [r3(pts.label.x), r3(pts.label.y), r3(pts.label.z)],
-        outline: pts.outline?.map((p) => [r3(p.x), r3(p.y)] as [number, number]),
+        outline: c.highlight ? pts.outline?.map((p) => [r3(p.x), r3(p.y)] as [number, number]) : undefined,
         outlineY: pts.outlineY,
-        colors: CALLOUT_PALETTE[c.color],
+        colors: (() => {
+          const k = labelColors(c);
+          return { main: k.main, fill: k.fill ?? 'transparent', border: k.stroke ?? 'transparent', text: k.text, info: k.info, link: k.link };
+        })(),
+        style: { box: c.box, scale: NOTE_SIZE_SCALE[c.size], line: c.line, end: c.end, endPx: endPx(c) },
         lines: calloutLines(project, derived, c).map((l) => ({
           role: l.role,
           indent: l.indent,

@@ -90,7 +90,7 @@ export function createSelectTool(): Tool {
     if (movable.length === 1 && movable[0].kind === 'callout') {
       const c = project.callouts?.[movable[0].id];
       if (!c) return;
-      store().begin('Move callout label');
+      store().begin('Move note');
       gesture = { type: 'callout', id: c.id, start: g.start, base: { ...c.offset } };
       return;
     }

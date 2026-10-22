@@ -382,7 +382,7 @@ const ACTION_TOOLS: { id: ToolId; label: string; key: string; icon: React.ReactN
   { id: 'split', label: 'Split wall', key: 'S', icon: <Scissors size={18} /> },
   { id: 'extend', label: 'Extend / trim / join', key: 'E', icon: <ArrowRightToLine size={18} /> },
   { id: 'measure', label: 'Measure', key: 'M', icon: <Ruler size={18} /> },
-  { id: 'callout', label: 'Callout', key: 'K', icon: <MessageSquareText size={18} /> },
+  { id: 'callout', label: 'Note', key: 'K', icon: <MessageSquareText size={18} /> },
 ];
 
 const TOOLS = [...NAV_TOOLS, ...ACTION_TOOLS];
@@ -535,7 +535,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           <span className="rail-btn-label">Measure</span>
         </IconButton>
         <IconButton
-          label="Callout"
+          label="Note"
           shortcut="K"
           active={tool === 'callout'}
           tooltipSide="right"

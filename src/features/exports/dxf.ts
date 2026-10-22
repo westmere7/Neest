@@ -11,6 +11,7 @@ import { openingSymbol } from '@/features/plan-2d/symbols';
 import { dimensionGeometry } from '@/features/plan-2d/dimensions';
 import { layoutCallout, visibleCallouts } from '@/features/callouts/layout';
 import { lineText } from '@/features/callouts/content';
+import { arrowHead, endPx } from '@/features/callouts/style';
 
 /**
  * DXF export (AutoCAD R12 / AC1009 ASCII), chosen for the widest CAD
@@ -22,7 +23,7 @@ import { lineText } from '@/features/callouts/content';
  *   A-ANNO-TEXT  room names and areas                           TEXT
  *   A-ANNO-DIMS  dimension lines, ticks and values              LINE / TEXT (exploded)
  *   A-FURN       furniture and fixture footprints               closed POLYLINE / LINE / CIRCLE
- *   A-ANNO-CALL  callouts: target outline, leader, label box    POLYLINE / LINE / CIRCLE / TEXT
+ *   A-ANNO-NOTE  notes: target outline, leader, label box       POLYLINE / LINE / CIRCLE / TEXT
  * Model space is 1:1 in the chosen unit; the plan's +y (down on screen) is
  * flipped to DXF's +Y up.
  */
@@ -51,7 +52,7 @@ const LAYERS: { name: string; color: number; ltype?: string }[] = [
   { name: 'A-ANNO-TEXT', color: 2 },
   { name: 'A-ANNO-DIMS', color: 1 },
   { name: 'A-FURN', color: 8 },
-  { name: 'A-ANNO-CALL', color: 6 },
+  { name: 'A-ANNO-NOTE', color: 6 },
 ];
 
 class DxfWriter {
@@ -236,14 +237,16 @@ export function buildDxf(project: Project, o: DxfOptions): string {
       const l = layoutCallout(project, derived, c, px);
       if (!l) continue;
       const { anchor, attach, box } = l;
-      if (anchor.outline) w.polyline('A-ANNO-CALL', anchor.outline, true);
-      w.circle('A-ANNO-CALL', anchor, 4 * px);
-      w.line('A-ANNO-CALL', anchor, attach);
-      w.polyline('A-ANNO-CALL', [{ x: box.x, y: box.y }, { x: box.x + box.w, y: box.y }, { x: box.x + box.w, y: box.y + box.h }, { x: box.x, y: box.y + box.h }], true);
+      if (anchor.outline && c.highlight) w.polyline('A-ANNO-NOTE', anchor.outline, true);
+      const r = endPx(c) * px;
+      if (c.end === 'dot' || c.end === 'ring') w.circle('A-ANNO-NOTE', anchor, r);
+      else if (c.end === 'arrow') w.polyline('A-ANNO-NOTE', arrowHead(anchor, attach, r), true);
+      if (c.line !== 'none') w.line('A-ANNO-NOTE', anchor, attach, c.line === 'solid' ? undefined : 'DASHED');
+      if (c.box !== 'text') w.polyline('A-ANNO-NOTE', [{ x: box.x, y: box.y }, { x: box.x + box.w, y: box.y }, { x: box.x + box.w, y: box.y + box.h }, { x: box.x, y: box.y + box.h }], true);
       l.lines.forEach((line, i) => {
         const size = line.role === 'info' ? l.font * 0.92 : l.font;
         const y = box.y + l.pad + l.font * 0.82 + i * l.lineH;
-        w.text('A-ANNO-CALL', { x: box.x + l.pad + 3 * px, y }, size, lineText(line), 0, 'left');
+        w.text('A-ANNO-NOTE', { x: box.x + l.pad + (l.colors.stripe ? 3 * px : 0), y }, size, lineText(line), 0, 'left');
       });
     }
   }

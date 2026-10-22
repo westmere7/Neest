@@ -1,9 +1,9 @@
-import type { CalloutTarget, Vec2 } from '@/domain/model/schema';
+import { CalloutSchema, type CalloutTarget, type Vec2 } from '@/domain/model/schema';
 import { addCallout } from '@/domain/commands/callouts';
 import { dist } from '@/domain/geometry/vec';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
-import { useDialogStore } from '@/state/uiStores';
+import { useDialogStore, usePrefsStore } from '@/state/uiStores';
 import { hitTest } from '../hitTest';
 import type { Tool, ToolEnv } from './types';
 
@@ -26,7 +26,10 @@ export function calloutTargetAt(env: ToolEnv, p: Vec2, alt: boolean): CalloutTar
 export function createCalloutAt(target: CalloutTarget, px: number): string | undefined {
   // The label opens up and to the right of the target, a fixed distance on screen.
   const offset = { x: Math.max(0.35, 70 * px), y: -Math.max(0.3, 60 * px) };
-  const id = useProjectStore.getState().execute('Add callout', (d) => addCallout(d, { target, offset }));
+  // New notes start with the style set as default in the note editor.
+  const saved = usePrefsStore.getState().noteStyle;
+  const style = saved && CalloutSchema.partial().safeParse(saved).success ? saved : {};
+  const id = useProjectStore.getState().execute('Add note', (d) => addCallout(d, { ...style, target, offset }));
   if (!id) return undefined;
   useEditorStore.getState().setSelection([{ kind: 'callout', id }]);
   useDialogStore.getState().open('callout', { id, isNew: true });
@@ -43,7 +46,7 @@ export function createCalloutTool(): Tool {
   return {
     id: 'callout',
     cursor: 'crosshair',
-    hint: 'Click an item or a spot to pin a callout · Alt-click inside a room for the room · drag to mark an area.',
+    hint: 'Click an item or a spot to pin a note · Alt-click inside a room for the room · drag to mark an area.',
     busy: () => start !== null,
     onPointerDown(e) {
       if (e.button !== 0) return;

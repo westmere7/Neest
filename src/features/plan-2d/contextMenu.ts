@@ -16,13 +16,18 @@ import {
   toggleLockSelection,
 } from '@/features/editor/actions';
 import { groupSelection, groupState, saveSelectionToLibrary, ungroupSelection } from '@/features/editor/groups';
+import { createCalloutAt } from './tools/calloutTool';
 
 export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
   const project = useProjectStore.getState().project;
   if (!project) return [];
   const ed = useEditorStore.getState();
+  // A new note's label opens a fixed distance away on screen.
+  const px = 1 / Math.max(1, ed.planCamera.zoom);
   if (!hit) {
     return [
+      { label: 'Add note here', shortcut: 'K', run: () => void createCalloutAt({ kind: 'point', x: world.x, y: world.y, z: 0 }, px) },
+      { separator: true, label: '' },
       { label: 'Select all', shortcut: 'Ctrl+A', run: selectAll },
       { label: 'Fit plan to view', shortcut: 'F', run: () => ed.requestFit() },
       { separator: true, label: '' },
@@ -48,6 +53,7 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
         : []),
       ...(g.count >= 1 ? [{ label: g.count > 1 || gid ? 'Save to library as a group' : 'Save to library', run: () => void saveSelectionToLibrary() }] : []),
       ...(g.canGroup || g.canUngroup || g.count >= 1 ? [{ separator: true, label: '' }] : []),
+      { label: 'Add note', run: () => void createCalloutAt({ kind: 'object', objectId: hit.id }, px) },
       { label: 'Duplicate', shortcut: 'Ctrl+D', run: duplicateSelection },
       { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: o?.locked },
       { label: o?.locked ? 'Unlock' : 'Lock', shortcut: 'Ctrl+L', run: toggleLockSelection },
@@ -88,6 +94,7 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
   } else if (hit.kind === 'room') {
     items.push(
       { label: 'Rename room', run: () => window.dispatchEvent(new CustomEvent('neest:focus-name')) },
+      { label: 'Add note to room', run: () => void createCalloutAt({ kind: 'room', roomId: hit.id }, px) },
       { label: 'Fit plan to view', shortcut: 'F', run: () => ed.requestFit() },
       { separator: true, label: '' },
       { label: 'Delete room walls…', danger: true, run: () => void deleteSelection() },

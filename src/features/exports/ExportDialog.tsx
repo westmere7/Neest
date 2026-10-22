@@ -218,7 +218,7 @@ function SheetExport({ project, format, busy, run }: PaneProps & { format: 'pdf'
           <Toggle label="Room names" checked={o.roomLabels} onChange={(v) => set({ roomLabels: v })} />
           <Toggle label="Room areas" checked={o.roomAreas} onChange={(v) => set({ roomAreas: v })} />
           <Toggle label="Furniture" checked={o.furniture} onChange={(v) => set({ furniture: v })} />
-          <Toggle label="Callouts" checked={o.callouts} onChange={(v) => set({ callouts: v })} />
+          <Toggle label="Notes" checked={o.callouts} onChange={(v) => set({ callouts: v })} />
           <Toggle label="Title block" checked={o.titleBlock} onChange={(v) => set({ titleBlock: v })} />
           <Toggle label="Scale bar" checked={o.scaleBar} onChange={(v) => set({ scaleBar: v })} />
           <Toggle label="Legend & room schedule" checked={o.legend} onChange={(v) => set({ legend: v })} />
@@ -297,7 +297,7 @@ function PlanImageExport({ project, busy, run }: PaneProps) {
         <Toggle label="Transparent background" checked={transparent} onChange={setTransparent} />
         <Toggle label="Labels & dimensions" checked={annotations} onChange={setAnnotations} />
         <Toggle label="Furniture" checked={furniture} onChange={setFurniture} />
-        <Toggle label="Callouts" checked={callouts} onChange={setCallouts} />
+        <Toggle label="Notes" checked={callouts} onChange={setCallouts} />
         <div className="export-summary">
           <strong>PNG</strong> · {img.width} × {img.height} px
         </div>
@@ -328,7 +328,7 @@ function DxfExport({ project, busy, run }: PaneProps) {
       <h3>DXF for CAD</h3>
       <p className="field-hint">
         AutoCAD R12 ASCII DXF at 1:1 in model space. Layers: A-WALL (wall faces), A-DOOR (leaves, swings), A-GLAZ (windows), A-AREA (room boundaries),
-        A-ANNO-TEXT (names, areas), A-ANNO-DIMS (dimension lines and values, exploded), A-FURN (furniture outlines), A-ANNO-CALL (callouts). Y is flipped so north is up.
+        A-ANNO-TEXT (names, areas), A-ANNO-DIMS (dimension lines and values, exploded), A-FURN (furniture outlines), A-ANNO-NOTE (notes). Y is flipped so north is up.
       </p>
       <Segmented
         label="Drawing unit"
@@ -347,7 +347,7 @@ function DxfExport({ project, busy, run }: PaneProps) {
         <Toggle label="Wall dimensions" checked={dimensions} onChange={setDimensions} />
         <Toggle label="Room labels" checked={labels} onChange={setLabels} />
         <Toggle label="Room boundaries" checked={rooms} onChange={setRooms} />
-        <Toggle label="Callouts" checked={callouts} onChange={setCallouts} />
+        <Toggle label="Notes" checked={callouts} onChange={setCallouts} />
       </div>
       <Button
         variant="primary"

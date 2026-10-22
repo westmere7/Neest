@@ -27,7 +27,9 @@ export interface GuestCallout {
   /** Target outline on the floor (x, z pairs) and its height. */
   outline?: [number, number][];
   outlineY?: number;
-  colors: { main: string; fill: string; text: string };
+  colors: { main: string; fill: string; border: string; text: string; info: string; link: string };
+  /** Label look and text size factor, leader style and width (px), end mark and its size (px). */
+  style: { box: 'card' | 'solid' | 'outline' | 'text'; scale: number; line: 'solid' | 'dashed' | 'dotted' | 'none'; end: 'dot' | 'ring' | 'arrow' | 'none'; endPx: number };
   lines: { role: 'title' | 'info' | 'text'; indent: number; runs: { t: string; b?: 1; i?: 1; h?: string }[] }[];
 }
 
@@ -153,27 +155,56 @@ function start(data: GuestData) {
   const callouts = (data.callouts ?? []).map((c) => {
     const anchor = new THREE.Vector3(...c.anchor);
     const label = new THREE.Vector3(...c.label);
-    const lineMat = new THREE.LineBasicMaterial({ color: c.colors.main, depthTest: false, transparent: true });
-    const leader = new THREE.Line(new THREE.BufferGeometry().setFromPoints([anchor, label]), lineMat);
-    // Anchor dot: constant size on screen, white ring.
-    const dc = document.createElement('canvas');
-    dc.width = dc.height = 64;
-    const g = dc.getContext('2d')!;
-    g.fillStyle = '#ffffff';
-    g.beginPath();
-    g.arc(32, 32, 30, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = c.colors.main;
-    g.beginPath();
-    g.arc(32, 32, 23, 0, Math.PI * 2);
-    g.fill();
-    const tex = new THREE.CanvasTexture(dc);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, sizeAttenuation: false }));
-    dot.scale.set(0.02, 0.02, 1);
-    dot.position.copy(anchor);
-    leader.renderOrder = dot.renderOrder = 999;
-    calloutGroup.add(leader, dot);
+    const st = c.style;
+    if (st.line !== 'none') {
+      const dotted = st.line === 'dotted';
+      const lineMat =
+        st.line === 'solid'
+          ? new THREE.LineBasicMaterial({ color: c.colors.main, depthTest: false, transparent: true })
+          : new THREE.LineDashedMaterial({ color: c.colors.main, depthTest: false, transparent: true, dashSize: dotted ? 0.012 : 0.09, gapSize: dotted ? 0.045 : 0.06 });
+      const leader = new THREE.Line(new THREE.BufferGeometry().setFromPoints([anchor, label]), lineMat);
+      leader.computeLineDistances();
+      leader.renderOrder = 999;
+      calloutGroup.add(leader);
+    }
+    // End mark: constant size on screen (a dot with a white ring, a ring, or an arrow turned towards the target).
+    let mark: THREE.Sprite | null = null;
+    if (st.end !== 'none') {
+      const dc = document.createElement('canvas');
+      dc.width = dc.height = 64;
+      const g = dc.getContext('2d')!;
+      if (st.end === 'arrow') {
+        g.fillStyle = c.colors.main;
+        g.strokeStyle = '#ffffff';
+        g.lineWidth = 4;
+        g.lineJoin = 'round';
+        g.beginPath();
+        g.moveTo(32, 3);
+        g.lineTo(58, 61);
+        g.lineTo(6, 61);
+        g.closePath();
+        g.fill();
+        g.stroke();
+      } else {
+        g.fillStyle = st.end === 'dot' ? '#ffffff' : c.colors.main;
+        g.beginPath();
+        g.arc(32, 32, 30, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = st.end === 'dot' ? c.colors.main : '#ffffff';
+        g.beginPath();
+        g.arc(32, 32, st.end === 'dot' ? 23 : 19, 0, Math.PI * 2);
+        g.fill();
+      }
+      const tex = new THREE.CanvasTexture(dc);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, sizeAttenuation: false }));
+      if (st.end === 'arrow') mark.center.set(0.5, 1);
+      const k = (st.endPx / 4) * 0.02;
+      mark.scale.set(st.end === 'arrow' ? k * 0.8 : k, k, 1);
+      mark.position.copy(anchor);
+      mark.renderOrder = 999;
+      calloutGroup.add(mark);
+    }
     if (c.outline && c.outline.length >= 3) {
       const y = c.outlineY ?? 0.025;
       const loop = new THREE.LineLoop(
@@ -183,10 +214,9 @@ function start(data: GuestData) {
       loop.computeLineDistances();
       calloutGroup.add(loop);
     }
-    const card = el('div', 'ng-callout');
-    card.style.setProperty('--main', c.colors.main);
-    card.style.setProperty('--fill', c.colors.fill);
-    card.style.setProperty('--text', c.colors.text);
+    const card = el('div', `ng-callout ng-box-${st.box}`);
+    for (const [k, v] of Object.entries(c.colors)) card.style.setProperty(`--${k}`, v);
+    card.style.fontSize = `${12 * st.scale}px`;
     for (const line of c.lines) {
       const row = el('div', `ng-cl-${line.role}`);
       if (line.indent) row.style.paddingLeft = `${line.indent * 0.54}em`;
@@ -205,14 +235,14 @@ function start(data: GuestData) {
       card.append(row);
     }
     calloutLayer.append(card);
-    return { label, card };
+    return { anchor, label, card, mark };
   });
   let calloutsOn = callouts.length > 0;
   if (callouts.length) {
-    const toggle = el('button', 'ng-btn', 'Hide callouts');
+    const toggle = el('button', 'ng-btn', 'Hide notes');
     toggle.onclick = () => {
       calloutsOn = !calloutsOn;
-      toggle.textContent = calloutsOn ? 'Hide callouts' : 'Show callouts';
+      toggle.textContent = calloutsOn ? 'Hide notes' : 'Show notes';
     };
     bar.append(toggle);
   }
@@ -223,6 +253,12 @@ function start(data: GuestData) {
     calloutLayer.style.display = show ? '' : 'none';
     if (!show) return;
     for (const c of callouts) {
+      if (c.mark && c.mark.center.y === 1) {
+        // Arrow: point from the label towards the target as seen on screen.
+        const a = c.anchor.clone().project(camera);
+        const b = c.label.clone().project(camera);
+        c.mark.material.rotation = Math.atan2(a.y - b.y, (a.x - b.x) * (window.innerWidth / window.innerHeight)) - Math.PI / 2;
+      }
       projected.copy(c.label).project(camera);
       const visible = projected.z < 1 && projected.z > -1;
       c.card.style.display = visible ? '' : 'none';

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import type { Callout, Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
-import { CALLOUT_PALETTE, calloutInfo, parseNote, type Run } from './content';
+import { calloutInfo, parseNote, type Run } from './content';
+import { NOTE_SIZE_SCALE, labelColors } from './style';
 import './callouts.css';
 
 function runs(list: Run[], interactive: boolean): ReactNode[] {
@@ -35,7 +36,7 @@ export function CalloutCard({
   interactive?: boolean;
   selected?: boolean;
 }) {
-  const colors = CALLOUT_PALETTE[callout.color];
+  const colors = labelColors(callout);
   const info = callout.showInfo ? calloutInfo(project, derived, callout) : [];
   const title = callout.title.trim() || (info.length ? info.shift()! : '');
   const blocks = parseNote(callout.note);
@@ -69,8 +70,18 @@ export function CalloutCard({
   flush();
   return (
     <div
-      className={`callout-card${selected ? ' selected' : ''}`}
-      style={{ '--callout-main': colors.main, '--callout-fill': colors.fill, '--callout-text': colors.text } as React.CSSProperties}
+      className={`callout-card box-${callout.box}${selected ? ' selected' : ''}`}
+      style={
+        {
+          '--callout-main': colors.main,
+          '--callout-fill': colors.fill ?? 'transparent',
+          '--callout-border': colors.stroke ?? 'transparent',
+          '--callout-text': colors.text,
+          '--callout-info': colors.info,
+          '--callout-link': colors.link,
+          '--note-scale': NOTE_SIZE_SCALE[callout.size],
+        } as React.CSSProperties
+      }
       data-callout={callout.id}
     >
       {title && <div className="callout-title">{title}</div>}

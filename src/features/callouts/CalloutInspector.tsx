@@ -32,10 +32,10 @@ export function CalloutInspector({ project, derived, id }: { project: Project; d
       <div className="callout-preview" style={{ marginBottom: 10 }}>
         <CalloutCard project={project} derived={derived} callout={c} />
       </div>
-      <Toggle label="Visible" checked={!c.hidden} onChange={(v) => exec(v ? 'Show callout' : 'Hide callout', (d) => updateCallout(d, id, { hidden: !v }))} />
+      <Toggle label="Visible" checked={!c.hidden} onChange={(v) => exec(v ? 'Show note' : 'Hide note', (d) => updateCallout(d, id, { hidden: !v }))} />
       <div className="btn-row">
         <Button size="sm" variant="primary" onClick={() => useDialogStore.getState().open('callout', { id })} data-testid="callout-edit">
-          Edit callout…
+          Edit note…
         </Button>
       </div>
       <p className="field-hint">Drag the label to move it. Double-click a label to edit it.</p>

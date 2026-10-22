@@ -1,7 +1,8 @@
 import type { Callout, Project, Vec2 } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { calloutAnchor, calloutLabelPoint, type CalloutAnchor } from '@/domain/geometry/callouts';
-import { CALLOUT_PALETTE, calloutLines, type Line } from './content';
+import { calloutLines, type Line } from './content';
+import { NOTE_SIZE_SCALE, labelColors, type LabelColors } from './style';
 
 /**
  * Plan layout of a callout label: sizes are constant on screen (scaled by `px`, the world size of a
@@ -18,7 +19,7 @@ export interface CalloutLayout {
   font: number;
   lineH: number;
   pad: number;
-  colors: (typeof CALLOUT_PALETTE)[keyof typeof CALLOUT_PALETTE];
+  colors: LabelColors;
 }
 
 const FONT_PX = 11.5;
@@ -56,16 +57,18 @@ export function textWidth(line: Line, font: number): number {
 export function layoutCallout(project: Project, derived: DerivedPlan | null, c: Callout, px: number): CalloutLayout | null {
   const anchor = calloutAnchor(project, derived, c.target);
   if (!anchor) return null;
-  const font = FONT_PX * px;
+  const k = NOTE_SIZE_SCALE[c.size];
+  const font = FONT_PX * k * px;
   const lineH = font * 1.38;
-  const pad = 7 * px;
+  // Text-only labels sit closer to their leader.
+  const pad = (c.box === 'text' ? 3 : 7) * k * px;
   const lines = calloutLines(project, derived, c);
   const w = Math.max(70 * px, Math.max(...lines.map((l) => textWidth(l, l.role === 'info' ? font * 0.92 : font))) + pad * 2 + 4 * px);
   const h = lines.length * lineH + pad * 2 - (lineH - font) * 0.4;
   const attach = calloutLabelPoint(anchor, c);
   const right = c.offset.x >= 0;
   const box = { x: right ? attach.x : attach.x - w, y: attach.y - h / 2, w, h };
-  return { callout: c, anchor, attach, box, lines, font, lineH, pad, colors: CALLOUT_PALETTE[c.color] };
+  return { callout: c, anchor, attach, box, lines, font, lineH, pad, colors: labelColors(c) };
 }
 
 /** Callouts to draw: the layer and each callout's own visibility. */

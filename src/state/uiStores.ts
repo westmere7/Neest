@@ -3,6 +3,7 @@ import { preferenceRepository } from '@/storage/indexeddb/db';
 import type { UserVariant } from '@/data/assets/variants';
 import type { MaterialDefinition } from '@/domain/model/schema';
 import type { AssetCategory } from '@/data/assets/types';
+import type { NoteStyle } from '@/features/callouts/style';
 
 /** A group of placed items saved to the library (Furniture → Saved groups), positions relative to its centre. */
 export interface SavedGroup {
@@ -82,6 +83,8 @@ interface PrefsState {
   libraryDensity: LibraryDensity;
   /** Groups saved to the library (every project). */
   savedGroups: SavedGroup[];
+  /** Style new notes start with ("Set as default" in the note editor); null = the built-in style. */
+  noteStyle: NoteStyle | null;
   loaded: boolean;
   setThemePref(p: ThemePref): void;
   syncSystemTheme(): void;
@@ -100,6 +103,7 @@ interface PrefsState {
   /** Changes a saved group's name and description (an empty description removes it). */
   updateSavedGroup(id: string, details: { name: string; description: string }): void;
   deleteSavedGroup(id: string): void;
+  setNoteStyle(style: NoteStyle | null): void;
   hydrate(): Promise<void>;
 }
 
@@ -120,6 +124,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   assetVariants: {},
   libraryDensity: 'normal',
   savedGroups: [],
+  noteStyle: null,
   loaded: false,
   setThemePref(p) {
     try {
@@ -220,9 +225,13 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
     set({ libraryDensity: d });
     persist('libraryDensity', d);
   },
+  setNoteStyle(style) {
+    set({ noteStyle: style });
+    persist('noteStyle', style);
+  },
   async hydrate() {
     try {
-      const [fa, ra, fm, rm, ob, rs, av, ld, sg, fs] = await Promise.all([
+      const [fa, ra, fm, rm, ob, rs, av, ld, sg, fs, ns] = await Promise.all([
         preferenceRepository.get<string[]>('favouriteAssets'),
         preferenceRepository.get<string[]>('recentAssets'),
         preferenceRepository.get<string[]>('favouriteMaterials'),
@@ -233,6 +242,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         preferenceRepository.get<LibraryDensity>('libraryDensity'),
         preferenceRepository.get<SavedGroup[]>('savedGroups'),
         preferenceRepository.get<boolean>('focusSelection'),
+        preferenceRepository.get<NoteStyle | null>('noteStyle'),
       ]);
       set({
         favouriteAssets: fa ?? [],
@@ -245,6 +255,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         assetVariants: av && typeof av === 'object' ? av : {},
         libraryDensity: ld && LIBRARY_DENSITIES.includes(ld) ? ld : 'normal',
         savedGroups: Array.isArray(sg) ? sg : [],
+        noteStyle: ns && typeof ns === 'object' ? ns : null,
         loaded: true,
       });
     } catch {

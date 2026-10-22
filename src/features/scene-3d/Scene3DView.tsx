@@ -629,7 +629,17 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         // An item already opened its menu for this click; otherwise offer the empty-space menu.
         if (walk || drawing || menuShown.current === e.nativeEvent.timeStamp || rightDragged(e.nativeEvent))
           return;
-        const items = planContextMenuItems(null, { x: 0, y: 0 });
+        // The floor point under the pointer (for "Add note here").
+        let ground = { x: 0, y: 0 };
+        const live = liveScene.current;
+        if (live) {
+          const rect = live.gl.domElement.getBoundingClientRect();
+          const ray = new THREE.Raycaster();
+          ray.setFromCamera(new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1), live.camera);
+          const p = new THREE.Vector3();
+          if (ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), p)) ground = { x: p.x, y: p.z };
+        }
+        const items = planContextMenuItems(null, ground);
         if (items.length) openContextMenu(e.clientX, e.clientY, items);
       }}
       onDragOver={(e) => {

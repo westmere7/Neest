@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createEmptyProject } from '@/domain/model/defaults';
-import { ProjectSchema, type Project } from '@/domain/model/schema';
+import { CalloutSchema, ProjectSchema, type Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { calloutAnchor } from '@/domain/geometry/callouts';
 import type { D } from '@/domain/commands/walls';
@@ -213,9 +213,53 @@ describe('callouts on the plan and in exports', () => {
     const ext = calloutExtent(demo, derived, 1 / 55)!;
     expect(ext.minX).toBeLessThan(derived.bounds!.minX);
     const dxf = buildDxf(demo, { unit: 'mm', furniture: false, dimensions: false, labels: false, rooms: false, callouts: true });
-    expect(dxf).toContain('A-ANNO-CALL');
+    expect(dxf).toContain('A-ANNO-NOTE');
     expect(dxf).toContain('Kitchen refit');
     expect(dxf).toContain(lineText({ runs: [{ text: 'Extractor fan' }], role: 'title', indent: 0 }));
     expect(buildDxf(demo, { unit: 'mm', furniture: false, dimensions: false, labels: false, rooms: false, callouts: false })).not.toContain('Kitchen refit');
   });
+
+  it('draws each note style: label look, line, end mark and highlight', () => {
+    const draw = (patch: Parameters<typeof updateCallout>[2]) => {
+      const one = Object.values(demo.callouts).find((c) => c.target.kind === 'object')!;
+      const p = edit(demo, (d) => {
+        for (const id of Object.keys(d.callouts)) if (id !== one.id) delete d.callouts[id];
+        updateCallout(d, one.id, patch);
+      });
+      return renderToStaticMarkup(createElement(CalloutsSvg, { project: p, derived: derivePlan(p), px: 0.02, fontFamily: 'sans-serif' }));
+    };
+    // Defaults: card with stripe, solid leader, dot, highlighted target.
+    const base = draw({});
+    expect(base).toContain('<line');
+    expect(base).not.toMatch(/<line[^>]*stroke-dasharray/);
+    expect(base.match(/<circle/g)?.length).toBe(1);
+    expect(base.match(/<path/g)?.length).toBe(1); // the target highlight
+    expect(draw({ line: 'dashed' })).toMatch(/<line[^>]*stroke-dasharray/);
+    expect(draw({ line: 'none' })).not.toContain('<line');
+    expect(draw({ end: 'arrow' }).match(/<path/g)?.length).toBe(2);
+    expect(draw({ end: 'none', highlight: false })).not.toMatch(/<circle|<path/);
+    // Text-only labels have no box; filled labels use the colour and white text.
+    expect(draw({ box: 'text' })).not.toContain('<rect');
+    expect(draw({ box: 'solid' })).toContain('fill="#ffffff"');
+    // Bigger text makes a bigger label.
+    const c = Object.values(demo.callouts)[0];
+    const small = layoutCallout(demo, derived, { ...c, size: 's' }, 0.02)!;
+    const large = layoutCallout(demo, derived, { ...c, size: 'l' }, 0.02)!;
+    expect(large.box.h).toBeGreaterThan(small.box.h);
+  });
+
+  it('older notes get the default style and DXF follows the style', () => {
+    const one = Object.values(demo.callouts)[0];
+    const { box, size, line, lineWeight, end, endSize, highlight, ...old } = one;
+    void [box, size, line, lineWeight, end, endSize, highlight];
+    expect(CalloutSchema.parse(old)).toMatchObject({ box: 'card', size: 'm', line: 'solid', lineWeight: 'regular', end: 'dot', endSize: 'm', highlight: true });
+    const plain = edit(demo, (d) => {
+      for (const c of Object.values(d.callouts)) Object.assign(c, { line: 'none', end: 'none', box: 'text', highlight: false });
+    });
+    const dxf = buildDxf(plain, { unit: 'mm', furniture: false, dimensions: false, labels: false, rooms: false, callouts: true });
+    expect(dxf).toContain('Kitchen refit');
+    // Text only, no leader, no end mark, no highlight: only TEXT entities on the notes layer.
+    expect(dxf).not.toMatch(/\r\n0\r\n(LINE|CIRCLE|POLYLINE)\r\n8\r\nA-ANNO-NOTE/);
+  });
 });
+

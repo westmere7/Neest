@@ -470,30 +470,41 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **Inspector:** `OpeningExtras.tsx` adds a "Details" section with the options.
 - **Build tab:** `features/library/BuildExtras.tsx` provides `DOOR_KINDS`, `WINDOW_KINDS`, the icons and `WallPresetCards`.
 
-### Callouts (src/features/callouts)
+### Notes (src/features/callouts)
 
-A floating note pointing at an item, a room, a drawn area or any spot. Tool **K** (rail "Callout"): click an item →
-item callout, Alt-click → the room, empty space → spot, drag → rectangular area; the pop-up editor opens at once
-(Cancel on a new one removes it). Editing happens only in the pop-up (`CalloutDialog`): what it points to (switch
-between spot / item / room under it / area), title, note with a toolbar (bold, italic, lists, link form, Ctrl+B/I/K,
-Ctrl+Enter saves), the target's facts (`calloutInfo`: item name, brand + model, W×D×H, first finish; room name,
-area, ceiling; area size), colour, 3D float height, visibility, live preview.
+Called **Notes** everywhere in the interface; the code and saved data keep the name *callout* (`project.callouts`,
+`layers.callouts`, tool id `callout`) so older projects load unchanged. A floating note pointing at an item, a room,
+a drawn area or any spot. Tool **K** (rail "Note"): click an item → item note, Alt-click → the room, empty space →
+spot, drag → rectangular area. Right-click menu: "Add note" on an item, "Add note to room" on a room, "Add note here"
+on empty space (3D uses the floor point under the pointer). An item's or room's panel header has a note icon (it
+replaced the old collapse button; lit when the selection has notes): one note opens its editor, several give a menu,
+none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once (Cancel on a new note removes it).
 
+- Editor (`CalloutDialog`): the essentials up front — Points to (a dropdown: spot / item / room under it / area),
+  title, note with a toolbar (bold, italic, lists, link form, Ctrl+B/I/K, Ctrl+Enter saves), show the target's facts
+  (`calloutInfo`), colour — and a live preview (card + leader). Everything else is folded under **More options**:
+  label look, text size, line, line weight, end mark, end size, 3D float height, spot height, highlight, visible,
+  "Use this style for new notes" (saved in prefs `noteStyle`, applied by `createCalloutAt`).
+- Style fields on `Callout` (all defaulted, so old notes keep the original look): `box` card/solid/outline/text,
+  `size` s/m/l, `line` solid/dashed/dotted/none, `lineWeight` thin/regular/bold, `end` dot/ring/arrow/none,
+  `endSize` s/m/l, `highlight` (shade the target). `style.ts` holds the shared numbers (`labelColors`,
+  `leaderDash`, `endPx`, `arrowHead`); every renderer uses it: plan SVG, HTML card (CSS `box-*` classes and
+  `--note-scale`), 3D (drei `Line` dashes in metres, end mark sprites — the arrow sprite turns each frame to point
+  at the target), render captures, the guest viewer and DXF (DASHED linetype, CIRCLE/arrow POLYLINE, no box for text).
 - Note syntax (`content.ts`): `**bold**`, `*italic*`/`_italic_`, `[text](url)`, bare URLs, "- "/"* " bullets,
   "1. " numbers, blank line = paragraph. `safeHref` keeps only http(s)/mailto/www links. `calloutLines` wraps to
   34 characters at spaces (a word spanning styles stays whole); plan SVG, DXF, captures and the guest viewer share
   it; the HTML card (`CalloutCard`, 3D + preview) uses the parsed blocks.
 - Plan (`CalloutsSvg` in `PlanDrawing`, after dimensions): sizes are screen-constant via `px`; label widths are
-  measured with the plan font in browsers (estimated in tests/DXF). Drawn in two passes — all outlines/leaders, then
-  all labels. Hit-testing checks callout labels first; select tool drags a label (changes `offset`), moves spot/area
-  callouts with a selection, double-click opens the editor. Fit-to-view includes labels.
-- 3D (`Callouts3D` in `SceneContent`, option `showCallouts`): drei `Line` leader (screen-width, no depth test)
-  from the anchor (item top, room label point, area centroid, spot) to `anchor + offset × 0.5` at `z + lift`;
-  constant-size dot sprite; dashed outline on the floor; the label is a drei `Html` card above the leader top.
-  Click selects, double-click edits. Hidden while the scene loads and in walk mode. The path tracer strips the
-  `callouts` group.
-- Inspector: preview, what it points to, Visible, Edit callout…; Project panel → Layers has Callouts (hide/lock);
-  Annotations and the 3D view panel have a Callouts toggle.
+  measured with the plan font in browsers (estimated in tests/DXF). Drawn in two passes — all highlights/leaders,
+  then all labels. Hit-testing checks note labels first; select tool drags a label (changes `offset`), moves
+  spot/area notes with a selection, double-click opens the editor. Fit-to-view includes labels.
+- 3D (`Callouts3D` in `SceneContent`, option `showCallouts`): leader from the anchor (item top, room label point,
+  area centroid, spot) to `anchor + offset × 0.5` at `z + lift`; constant-size end mark; dashed highlight on the
+  floor; the label is a drei `Html` card above the leader top. Click selects, double-click edits. Hidden while the
+  scene loads and in walk mode. The path tracer strips the `callouts` group.
+- Selected note's Inspector: preview, what it points to, Visible, Edit note…; Project panel → Layers has Notes
+  (hide/lock); Annotations and the 3D view panel have a Notes toggle.
 
 ## 11. 3D (src/features/scene-3d, walkthrough)
 
@@ -605,8 +616,9 @@ area, ceiling; area size), colour, 3D float height, visibility, live preview.
    a room.
 3. **Text:** every new item needs a `description` (one or two sentences, 20+ characters, saying what it looks like and
    what it is made of) and 3+ distinct `tags` (synonyms, styles, and Vietnamese names when they are common).
-   Older items without a description are frozen in `legacyNoDescription.json`. That list may only shrink: when you
-   describe one of them, remove its id from the file.
+   Every item has one: older items take theirs from `src/data/assets/itemDescriptions.json` (applied by
+   `withDescription` in `catalog.ts` and the pack runtime, only where the item defines none). New items define it
+   in their own definition.
 4. **Size:** `defaultSize` is a typical real product in metres, with realistic `minSize`/`maxSize`. Parts stay
    inside the size box at every size, with 160 parts at most. Mark small details `plan: false`.
 5. **Slots:** 1–4 slots, labelled by what they are ("Frame", "Seat cushions", "Leaves", "Pot"). Each default is a
@@ -1006,7 +1018,7 @@ area, ceiling; area size), colour, 3D float height, visibility, live preview.
 | --- | --- |
 | Plan sheet SVG/PDF/PNG | `sheet.tsx › buildSheet`: paper A4/A3/A2/Letter/Tabloid, orientation, scale 1:20…1:200 or fit, title block, scale bar, legend/room schedule; units are **paper mm**; the plan is `PlanDrawing` scaled by `1000/N`; one drawing px = 0.22 mm keeps line weights legible. PDF via jsPDF + svg2pdf (vector; textures and halos disabled). PNG rasterises the SVG at a DPI (max 8192 px). |
 | Plan image PNG | plan only at px/m, optional transparency |
-| DXF | `dxf.ts`: AutoCAD R12 ASCII, 1:1 in mm/cm/m/in, Y flipped, layers A-WALL, A-DOOR, A-GLAZ, A-AREA, A-ANNO-TEXT, A-ANNO-DIMS (exploded lines + text), A-FURN, A-ANNO-CALL (callout outline, leader, box, left-aligned text lines) |
+| DXF | `dxf.ts`: AutoCAD R12 ASCII, 1:1 in mm/cm/m/in, Y flipped, layers A-WALL, A-DOOR, A-GLAZ, A-AREA, A-ANNO-TEXT, A-ANNO-DIMS (exploded lines + text), A-FURN, A-ANNO-NOTE (note highlight, leader, end mark, box, left-aligned text lines) |
 | Callouts | Every export has a Callouts toggle and follows the layer and per-callout visibility. Sheets/plan PNG draw them through `PlanDrawing` and grow the drawing (fit scale, image bounds) to include labels (`calloutExtent`); links become transparent `<a><rect>` hotspots over the link text, which svg2pdf turns into PDF link annotations (an `<a>` inside `<text>` would be lost). 3D renders hide the scene's callout group and paint labels over the finished image (`callouts/capture.ts › compositeCallouts`, real-time and path traced). The guest HTML gets plain callout data (`GuestData.callouts`) drawn by the viewer as DOM labels with a Hide/Show button. Thumbnails leave them out |
 | 3D render PNG (real-time) | `sceneRuntime.captureView`: renders the live scene with a clone of the live camera at the requested size (same position/orientation/vertical FOV, view offset cleared) |
 | 3D render PNG (path traced) | Render dialog → engine "Path traced": `renderPathTraced` with samples 32/128/512/1024, bounces 3/5/8, optional transparent background (§11) |
@@ -1534,3 +1546,13 @@ Known limitations (also in README):
      toggleable, in the exports" → callouts (§10 Callouts): tool K, pop-up editor, plan + 3D rendering, layer and
      per-callout visibility, sheets/PDF (live links)/PNG/DXF/3D renders/guest HTML. The sample apartment has four demo
      callouts (sofa, living room, kitchen refit area, extractor fan spot). 60LTN and Ngan's load unchanged (done).
+123. "The mouse wheel zoom is very slow now" (Firefox) → the trackpad classifier reads `deltaMode` first, so Firefox
+     reports a wheel notch as 3 lines; `wheelDelta` (trackpad.ts) converts line/page deltas to pixels in the plan,
+     3D orbit, walk mode, item preview and guest viewer (done). A Windows-only "middle-drag orbits" change was tried
+     and reverted at the user's request: middle-drag pans, as before.
+124. "Rename callouts to Notes; add notes from the right-click menu; edit the note and line/dot style; selecting an item
+     with a note offers to edit it" → Notes (§10): interface rename, menu entries, style fields and More options in a
+     tidied editor, a note icon in the panel header in place of the collapse button (done).
+125. "Make sure every item in this app has a description" → 454 descriptions written from each item's build, slots
+     and brand data into `itemDescriptions.json`; the asset rule now requires a description on every item and
+     `legacyNoDescription.json` is gone (done).

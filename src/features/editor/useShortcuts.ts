@@ -34,7 +34,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'S', action: 'Split wall' },
   { keys: 'E', action: 'Extend / trim / join walls' },
   { keys: 'M', action: 'Measure' },
-  { keys: 'K', action: 'Callout (click an item or spot, Alt-click a room, drag an area)' },
+  { keys: 'K', action: 'Note (click an item or spot, Alt-click a room, drag an area)' },
   { keys: 'Shift (while drawing)', action: 'Lock angle to 45° steps' },
   { keys: 'Shift (while moving)', action: 'Keep the move on one axis (X or Y)' },
   { keys: 'Alt (while dragging)', action: 'Disable snapping' },

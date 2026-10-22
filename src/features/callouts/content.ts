@@ -204,7 +204,7 @@ export function calloutLines(project: Project, derived: DerivedPlan | null, c: C
     const indent = prefix.length;
     wrapRuns(b.runs, width, prefix ? { text: prefix } : null, indent).forEach((l, i) => out.push({ runs: l, role: 'text', indent: i === 0 ? 0 : indent }));
   }
-  if (!out.length) out.push({ runs: [{ text: 'Callout', italic: true }], role: 'title', indent: 0 });
+  if (!out.length) out.push({ runs: [{ text: 'Note', italic: true }], role: 'title', indent: 0 });
   return out;
 }
 

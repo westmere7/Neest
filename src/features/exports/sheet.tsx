@@ -110,7 +110,7 @@ export function buildSheet(project: Project, o: SheetOptions): SheetResult {
       b = withCallouts;
     } else {
       // The plan stays centred and whole; callout labels past the drawing area are cut off.
-      warnings.push(`At 1:${scale} some callouts fall outside the drawing area. Move their labels closer, choose a smaller scale or fit to page.`);
+      warnings.push(`At 1:${scale} some notes fall outside the drawing area. Move their labels closer, choose a smaller scale or fit to page.`);
     }
   }
   const k = 1000 / scale; // paper mm per world metre

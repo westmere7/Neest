@@ -22,9 +22,9 @@ export function CalloutsToggle() {
   const exec = useProjectStore((s) => s.execute);
   return (
     <Toggle
-      label={count ? `Callouts (${count})` : 'Callouts'}
+      label={count ? `Notes (${count})` : 'Notes'}
       checked={visible}
-      onChange={(v) => exec(v ? 'Show callouts' : 'Hide callouts', (d) => void (d.layers.callouts.visible = v))}
+      onChange={(v) => exec(v ? 'Show notes' : 'Hide notes', (d) => void (d.layers.callouts.visible = v))}
     />
   );
 }

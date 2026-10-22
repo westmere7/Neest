@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import type { Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
-import { CALLOUT_PALETTE, calloutLines } from './content';
+import { calloutLines } from './content';
+import { NOTE_LINE_WIDTH, NOTE_SIZE_SCALE, arrowHead, endPx, labelColors, leaderDash } from './style';
 import { visibleCallouts, type CalloutLayout } from './layout';
 import { callout3DPoints } from './Callouts3D';
 
@@ -64,9 +65,15 @@ export function drawCallouts(ctx: CanvasRenderingContext2D, project: Project, ca
     const a = toScreen(pts.anchor);
     const l = toScreen(pts.label);
     if (a.behind || l.behind) continue;
-    const colors = CALLOUT_PALETTE[c.color];
+    const colors = labelColors(c);
+    const k = NOTE_SIZE_SCALE[c.size];
+    const fz = font * k;
+    const lh = lineH * k;
+    const px = c.box === 'text' ? 4 * s : pad.x;
+    const py = c.box === 'text' ? 2 * s : pad.y;
+    const stripe = colors.stripe ? pad.stripe : 0;
     const lines = calloutLines(project, derived, c);
-    const size = (line: CalloutLayout['lines'][number]) => (line.role === 'info' ? font * 0.92 : font);
+    const size = (line: CalloutLayout['lines'][number]) => (line.role === 'info' ? fz * 0.92 : fz);
     // Measure.
     let textW = 0;
     for (const line of lines) {
@@ -77,55 +84,87 @@ export function drawCallouts(ctx: CanvasRenderingContext2D, project: Project, ca
       }
       textW = Math.max(textW, lw);
     }
-    const bw = Math.max(96 * s, textW + pad.x * 2 + pad.stripe);
-    const bh = lines.length * lineH + pad.y * 2 - (lineH - font) * 0.4;
+    const bw = Math.max(c.box === 'text' ? 0 : 96 * s, textW + px * 2 + stripe);
+    const bh = lines.length * lh + py * 2 - (lh - fz) * 0.4;
     const bx = l.x - bw / 2;
     const by = l.y - bh;
-    // Leader and anchor.
-    ctx.strokeStyle = colors.main;
-    ctx.lineWidth = 1.5 * s;
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(l.x, l.y);
-    ctx.stroke();
-    ctx.fillStyle = colors.main;
-    ctx.beginPath();
-    ctx.arc(a.x, a.y, 4 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1.4 * s;
-    ctx.stroke();
-    // Box with shadow and accent stripe.
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.18)';
-    ctx.shadowBlur = 10 * s;
-    ctx.shadowOffsetY = 2 * s;
-    ctx.fillStyle = colors.fill;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, 6 * s);
-    ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = colors.main;
-    ctx.lineWidth = 1 * s;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, 6 * s);
-    ctx.stroke();
-    ctx.fillStyle = colors.main;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, pad.stripe, bh, [6 * s, 0, 0, 6 * s]);
-    ctx.fill();
+    // Leader and end mark.
+    if (c.line !== 'none') {
+      const dash = leaderDash(c);
+      ctx.save();
+      ctx.strokeStyle = colors.main;
+      ctx.lineWidth = NOTE_LINE_WIDTH[c.lineWeight] * 1.15 * s;
+      ctx.lineCap = 'round';
+      ctx.setLineDash(dash ? dash.map((d) => d * s) : []);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(l.x, l.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+    const r = endPx(c) * s;
+    if (c.end === 'dot' || c.end === 'ring') {
+      ctx.fillStyle = c.end === 'dot' ? colors.main : '#fff';
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = c.end === 'dot' ? '#fff' : colors.main;
+      ctx.lineWidth = (c.end === 'dot' ? 1.4 : Math.max(1.6, r / s / 2.6)) * s;
+      ctx.stroke();
+    } else if (c.end === 'arrow') {
+      const tri = arrowHead(a, l, r);
+      ctx.fillStyle = colors.main;
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 0.8 * s;
+      ctx.beginPath();
+      tri.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    // Box with shadow and accent stripe (none for text-only labels).
+    if (colors.fill) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.18)';
+      ctx.shadowBlur = 10 * s;
+      ctx.shadowOffsetY = 2 * s;
+      ctx.fillStyle = colors.fill;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 6 * s);
+      ctx.fill();
+      ctx.restore();
+    }
+    if (colors.stroke) {
+      ctx.strokeStyle = colors.stroke;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 6 * s);
+      ctx.stroke();
+    }
+    if (stripe) {
+      ctx.fillStyle = colors.main;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, stripe, bh, [6 * s, 0, 0, 6 * s]);
+      ctx.fill();
+    }
     // Text.
     ctx.textBaseline = 'alphabetic';
+    ctx.lineJoin = 'round';
     lines.forEach((line, i) => {
       const sz = size(line);
-      let x = bx + pad.x + pad.stripe * 0.5 + line.indent * sz * 0.54;
-      const y = by + pad.y + font * 0.82 + i * lineH;
-      for (const r of line.runs) {
-        ctx.font = fontFor(!!r.bold || line.role === 'title', !!r.italic, sz);
-        ctx.fillStyle = r.href ? colors.main : line.role === 'info' ? '#55626b' : colors.text;
-        ctx.fillText(r.text, x, y);
-        const tw = ctx.measureText(r.text).width;
-        if (r.href) ctx.fillRect(x, y + 1.5 * s, tw, Math.max(1, 0.9 * s));
+      let x = bx + px + stripe * 0.5 + line.indent * sz * 0.54;
+      const y = by + py + fz * 0.82 + i * lh;
+      for (const run of line.runs) {
+        ctx.font = fontFor(!!run.bold || line.role === 'title', !!run.italic, sz);
+        const tw = ctx.measureText(run.text).width;
+        if (colors.halo) {
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 3 * s;
+          ctx.strokeText(run.text, x, y);
+        }
+        ctx.fillStyle = run.href ? colors.link : line.role === 'info' ? colors.info : colors.text;
+        ctx.fillText(run.text, x, y);
+        if (run.href) ctx.fillRect(x, y + 1.5 * s, tw, Math.max(1, 0.9 * s));
         x += tw;
       }
     });

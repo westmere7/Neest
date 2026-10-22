@@ -325,7 +325,7 @@ function RenderDialog({ onClose }: { onClose: () => void }) {
               </>
             )}
             <Toggle label="Transparent background" checked={transparent} onChange={setTransparent} />
-            {calloutCount > 0 && <Toggle label="Callouts" checked={callouts} onChange={setCallouts} />}
+            {calloutCount > 0 && <Toggle label="Notes" checked={callouts} onChange={setCallouts} />}
             {engine === 'realtime' && (
               <Toggle label="Include helpers (grid, selection)" checked={helpers} onChange={setHelpers} />
             )}

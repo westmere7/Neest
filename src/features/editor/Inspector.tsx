@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowLeftRight, ChevronDown, ChevronUp, Copy, Eye, EyeOff, FlipHorizontal2, Focus, LibraryBig, Lock, Minus, PanelRightClose, RotateCw, Scissors, Spline, Trash2, Unlock, X } from 'lucide-react';
+import { ArrowLeftRight, Copy, Eye, EyeOff, FlipHorizontal2, Focus, LibraryBig, Lock, Minus, PanelRightClose, RotateCw, Scissors, Spline, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
 import { isDividerWall, isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
@@ -25,6 +25,7 @@ import { WallMultiEdit } from './WallMultiEdit';
 import { SelectSameTypeButton } from './WallTypes';
 import { AnnotationToggles } from './AnnotationToggles';
 import { CalloutInspector } from '@/features/callouts/CalloutInspector';
+import { NoteButton } from '@/features/callouts/ItemNotes';
 import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
@@ -52,12 +53,13 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
   const tool = useEditorStore((s) => s.tool);
   const workspace = useEditorStore((s) => s.workspace);
   const projectOpen = useEditorStore((s) => s.projectPanelOpen);
-  const [collapsed, setCollapsed] = useState(false);
   const derived = useMemo(() => derivePlan(project), [project]);
 
   let title = describeSelection(project, selection);
   let body: ReactNode = null;
   let actions: ReactNode = null;
+  /** The selected item or room, for the note icon in the header. */
+  let noteTarget: { kind: 'object' | 'room'; id: string } | null = null;
   /** Small label above a user-given name (objects, rooms), which then gets its own line below the actions. */
   let eyebrow: string | null = null;
   // The walkthrough has no selection or tools: only the Project panel can show there.
@@ -98,6 +100,7 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
       title = o.name ?? asset?.name ?? 'Object';
       eyebrow = asset ? ASSET_CATEGORY_LABELS[asset.category] : 'Item';
       body = <ObjectInspector project={project} objectId={s.id} isMobile={isMobile} />;
+      noteTarget = { kind: 'object', id: s.id };
       actions = (
         <>
           <IconButton
@@ -119,9 +122,10 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
       );
     } else if (s.kind === 'room' && project.rooms[s.id]) {
       body = <RoomInspector project={project} roomId={s.id} />;
+      noteTarget = { kind: 'room', id: s.id };
       eyebrow = 'Room';
     } else if (s.kind === 'callout' && project.callouts?.[s.id]) {
-      eyebrow = 'Callout';
+      eyebrow = 'Note';
       body = <CalloutInspector project={project} derived={derived} id={s.id} />;
       actions = (
         <>
@@ -159,11 +163,9 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
 
   if (!body) return null;
   if (isMobile && selection.length === 0) return null;
-  // The Project panel is hidden as a whole (top-bar toggle), never collapsed.
-  const folded = collapsed && !isProject;
 
   return (
-    <aside className={`inspector floating${folded ? ' collapsed' : ''}${isMobile ? ' sheet' : ''}`} aria-label={isProject ? 'Project overview' : 'Inspector'} data-testid="inspector">
+    <aside className={`inspector floating${isMobile ? ' sheet' : ''}`} aria-label={isProject ? 'Project overview' : 'Inspector'} data-testid="inspector">
       <header className={`inspector-head${eyebrow ? ' stacked' : ''}`}>
         {eyebrow ? (
           <span className="inspector-eyebrow">{eyebrow}</span>
@@ -176,23 +178,13 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
               <Focus size={15} />
             </IconButton>
           )}
-          {!folded && actions}
+          {noteTarget && <NoteButton project={project} target={noteTarget} />}
+          {actions}
           {isProject ? (
             <IconButton label="Hide project panel" onClick={() => useEditorStore.getState().set({ projectPanelOpen: false })} data-testid="stash-project-panel">
               <PanelRightClose size={15} />
             </IconButton>
-          ) : (
-            <IconButton
-              label={collapsed ? 'Expand inspector' : 'Collapse inspector'}
-              onClick={() => {
-                // The finish panel belongs to the Inspector's content: collapsing closes it.
-                if (!collapsed) useEditorStore.getState().set({ materialPicker: null });
-                setCollapsed(!collapsed);
-              }}
-            >
-              {collapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
-            </IconButton>
-          )}
+          ) : null}
           {!isProject && selection.length > 0 && (
             <IconButton label="Clear selection" shortcut="Esc" onClick={() => useEditorStore.getState().clearSelection()}>
               <X size={15} />
@@ -205,7 +197,7 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
           </h2>
         )}
       </header>
-      {!folded && <div className="inspector-body">{body}</div>}
+      <div className="inspector-body">{body}</div>
     </aside>
   );
 }
@@ -1022,7 +1014,7 @@ function ProjectSummary({ project, derived }: { project: Project; derived: Retur
             ['construction', 'Walls & openings'],
             ['furniture', 'Furniture & fixtures'],
             ['annotations', 'Labels & dimensions'],
-            ['callouts', 'Callouts'],
+            ['callouts', 'Notes'],
           ] as const
         ).map(([key, label]) => (
           <div key={key} className="layer-row">

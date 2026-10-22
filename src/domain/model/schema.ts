@@ -283,6 +283,12 @@ export const CalloutTargetSchema = z.discriminatedUnion('kind', [
 ]);
 
 export const CALLOUT_COLORS = ['teal', 'brass', 'coral', 'blue', 'slate'] as const;
+/** Note label looks: tinted card with an accent stripe, filled with the colour, white with a border, text only. */
+export const NOTE_BOXES = ['card', 'solid', 'outline', 'text'] as const;
+export const NOTE_LINES = ['solid', 'dashed', 'dotted', 'none'] as const;
+export const NOTE_ENDS = ['dot', 'ring', 'arrow', 'none'] as const;
+export const NOTE_SIZES = ['s', 'm', 'l'] as const;
+export const NOTE_WEIGHTS = ['thin', 'regular', 'bold'] as const;
 
 /**
  * A floating note pinned to a spot, item, room or area. Drawn on the plan (and plan exports) as a
@@ -302,6 +308,16 @@ export const CalloutSchema = z.object({
   showInfo: z.boolean().default(true),
   color: z.enum(CALLOUT_COLORS).default('teal'),
   hidden: z.boolean().default(false),
+  /** Label look and text size. */
+  box: z.enum(NOTE_BOXES).default('card'),
+  size: z.enum(NOTE_SIZES).default('m'),
+  /** Leader line style and weight, and the mark at the target end. */
+  line: z.enum(NOTE_LINES).default('solid'),
+  lineWeight: z.enum(NOTE_WEIGHTS).default('regular'),
+  end: z.enum(NOTE_ENDS).default('dot'),
+  endSize: z.enum(NOTE_SIZES).default('m'),
+  /** Shade the item footprint, room or area the note points at. */
+  highlight: z.boolean().default(true),
 });
 
 export const MaterialCategorySchema = z.enum([
