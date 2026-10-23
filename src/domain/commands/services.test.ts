@@ -90,11 +90,18 @@ describe('services placement', () => {
     expect(s.y).toBeLessThan(0.1);
     // Facing into the room (+y).
     expect(Math.sin(s.rotation)).toBeCloseTo(1, 5);
-    // Away from walls a socket becomes a floor box; a switch can't go there.
-    expect(placeServicePoint(derived, 'socket', { x: 2, y: 1.5 })).toMatchObject({ host: 'floor', valid: true });
+    // Points are locked to the building: away from walls a wall point is refused (a socket only goes on
+    // the floor when asked to), and nothing goes outside the rooms.
+    expect(placeServicePoint(derived, 'socket', { x: 2, y: 1.5 }).valid).toBe(false);
     expect(placeServicePoint(derived, 'switch', { x: 2, y: 1.5 }).valid).toBe(false);
-    // Drains stay where they are, in the floor, even next to a wall.
+    expect(placeServicePoint(derived, 'socket', { x: 2, y: 1.5 }, 'floor')).toMatchObject({ host: 'floor', valid: true });
+    expect(placeServicePoint(derived, 'socket', { x: 6, y: 1.5 }, 'floor').valid).toBe(false);
+    expect(placeServicePoint(derived, 'light', { x: 6, y: 1.5 }).valid).toBe(false);
+    // The outside face of a wall is not a place for a socket.
+    expect(placeServicePoint(derived, 'socket', { x: 2, y: -0.4 }).valid).toBe(false);
+    // Drains stay where they are, in the floor, even next to a wall; never outside.
     expect(placeServicePoint(derived, 'floor-drain', { x: 2, y: 0.2 })).toMatchObject({ host: 'floor', x: 2, y: 0.2 });
+    expect(placeServicePoint(derived, 'floor-drain', { x: 2, y: -1 }).valid).toBe(false);
     // A host the kind doesn't allow is not used.
     let id = '';
     let q = edit(p, (d) => {
@@ -120,6 +127,15 @@ describe('services placement', () => {
     const before = { ...q.servicePoints[id] };
     q = edit(q, (d) => moveServicePoints(d, derived, { [id]: servicePointAt(derived, q.servicePoints[id]) }, { x: 0, y: 1.4 }));
     expect(q.servicePoints[id]).toMatchObject({ x: before.x, y: before.y });
+    // A floor point dragged out of the room stays at its last spot inside.
+    let drain = '';
+    q = edit(q, (d) => {
+      drain = addServicePoint(d, { kind: 'floor-drain', x: 2, y: 1.5, host: 'floor', wallId: null, height: 0, rotation: 0 });
+    });
+    q = edit(q, (d) => moveServicePoints(d, derived, { [drain]: { x: 2, y: 1.5 } }, { x: 0, y: -3 }));
+    expect(q.servicePoints[drain]).toMatchObject({ x: 2, y: 1.5 });
+    q = edit(q, (d) => moveServicePoints(d, derived, { [drain]: { x: 2, y: 1.5 } }, { x: 1, y: 0.5 }));
+    expect(q.servicePoints[drain]).toMatchObject({ x: 3, y: 2 });
   });
 });
 
@@ -248,6 +264,29 @@ describe('runs', () => {
     // 0.9 + 1 + 1 m of cable, not 0.9 + 1.9 + 2.9 back to the panel each time.
     const total = runs.reduce((s, r) => s + r.points.slice(1).reduce((t, q, i) => t + Math.hypot(q.x - r.points[i].x, q.y - r.points[i].y), 0), 0);
     expect(total).toBeLessThan(3.1);
+  });
+
+  it('deleting a point removes its runs and links the rest of the chain again', () => {
+    let p = room().p;
+    const derived = derivePlan(p);
+    const ids: string[] = [];
+    p = edit(p, (d) => {
+      addServicePoint(d, { kind: 'panel', ...placeServicePoint(derived, 'panel', { x: 0.3, y: 1.5 }), height: 1.6 });
+      for (const x of [1, 2, 3]) ids.push(addServicePoint(d, { kind: 'light', x, y: 1.5, host: 'ceiling', wallId: null, height: 0, rotation: 0 }));
+    });
+    p = edit(p, (d) => {
+      for (const r of routeToSources(p, derivePlan(p))) addServiceRun(d, r);
+    });
+    expect(Object.keys(p.serviceRuns)).toHaveLength(3);
+    // Remove the middle light: its two runs go, the last light is wired to the first one.
+    p = edit(p, (d) => deleteEntities(d, [ids[1]]));
+    const runs = Object.values(p.serviceRuns);
+    expect(runs).toHaveLength(2);
+    const spans = runs.map((r) => [r.points[0].x, r.points[r.points.length - 1].x].sort((a, b) => a - b));
+    expect(spans.some(([a, b]) => a === 1 && b === 3)).toBe(true);
+    expect(spans.some(([a, b]) => a < 0.3 && b === 1)).toBe(true);
+    // Nothing is left hanging: every run end sits on a point.
+    for (const r of runs) for (const q of [r.points[0], r.points[r.points.length - 1]]) expect(Object.values(p.servicePoints).some((s) => Math.hypot(s.x - q.x, s.y - q.y) < 0.15), JSON.stringify(q)).toBe(true);
   });
 
   it('duplicates and deletes with the selection, belongs to each layout option and survives repair', () => {

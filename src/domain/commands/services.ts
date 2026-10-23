@@ -3,7 +3,10 @@ import { ServicePointSchema, ServiceRunSchema } from '../model/schema';
 import { SERVICE_POINTS, SERVICE_SYSTEM_INFO, type ServiceSystem } from '../model/services';
 import { newId } from '../model/ids';
 import type { DerivedPlan } from '../geometry/derive';
-import { placeServicePoint, type ServicePointInput, type ServiceRunInput } from '../geometry/services';
+import { current, isDraft } from 'immer';
+import { derivePlan } from '../geometry/derive';
+import { RUN_CONNECT, placeServicePoint, routeToSources, type ServicePointInput, type ServiceRunInput } from '../geometry/services';
+import { dist } from '../geometry/vec';
 import type { D } from './walls';
 
 /** Adds a services point and returns its id. */
@@ -50,6 +53,7 @@ function fixRun(r: ServiceRun): void {
 /**
  * Moves points by `delta` from their positions in `base`. Wall points slide along walls and step
  * onto another wall they are moved to; away from every wall they stay at their last wall position.
+ * Floor and ceiling points never leave the rooms.
  */
 export function moveServicePoints(d: D, derived: DerivedPlan, base: Record<string, Vec2>, delta: Vec2): void {
   for (const [id, b] of Object.entries(base)) {
@@ -63,7 +67,8 @@ export function moveServicePoints(d: D, derived: DerivedPlan, base: Record<strin
       p.y = at.y;
       p.wallId = at.wallId;
       p.rotation = at.rotation;
-    } else {
+    } else if (placeServicePoint(derived, p.kind, target, p.host).valid) {
+      // Floor and ceiling points stay inside rooms: outside one they keep their last spot.
       p.x = target.x;
       p.y = target.y;
     }
@@ -95,17 +100,39 @@ export function removeRunVertex(d: D, id: string, index: number): void {
   if (r && r.points.length > 2 && r.points[index]) r.points.splice(index, 1);
 }
 
-/** Deletes the points and runs among `ids` and forgets connections to deleted points. */
+/**
+ * Deletes the points and runs among `ids` and forgets connections to deleted points. A deleted
+ * point takes the runs that end at it along; the points those runs led to are linked again to the
+ * nearest point still on their network, so no wiring or pipe is left hanging.
+ */
 export function deleteServices(d: D, ids: string[]): void {
   const gone = new Set<string>();
+  const relink = new Set<string>();
   for (const id of ids) {
-    if (d.servicePoints?.[id]) {
+    const pt = d.servicePoints?.[id];
+    if (pt) {
+      const system = SERVICE_POINTS[pt.kind].system;
+      for (const r of Object.values(d.serviceRuns ?? {})) {
+        if (r.system !== system) continue;
+        const ends = [r.points[0], r.points[r.points.length - 1]];
+        const at = ends.findIndex((e) => dist(e, pt) <= RUN_CONNECT);
+        if (at < 0) continue;
+        // The point at the other end loses this run.
+        const other = ends[1 - at];
+        for (const q of Object.values(d.servicePoints)) if (q.id !== id && SERVICE_POINTS[q.kind].system === system && dist(other, q) <= RUN_CONNECT) relink.add(q.id);
+        delete d.serviceRuns[r.id];
+      }
       delete d.servicePoints[id];
       gone.add(id);
     }
     if (d.serviceRuns?.[id]) delete d.serviceRuns[id];
   }
+  for (const id of gone) relink.delete(id);
   if (gone.size) pruneServiceLinks(d, gone);
+  if (relink.size) {
+    const p = (isDraft(d) ? current(d) : d) as Project;
+    for (const r of routeToSources(p, derivePlan(p), relink)) addServiceRun(d, r);
+  }
 }
 
 /** Drops connection overrides that name missing points. */

@@ -72,20 +72,30 @@ export interface ServicePlacement {
   reason?: string;
 }
 
+/** Whether a plan spot is on the floor of a room (points never go outside the home). */
+export function inRoom(derived: DerivedPlan, p: Vec2): boolean {
+  return derived.faces.some((f) => pointInFace(p, f));
+}
+
 /**
- * Where a point of `kind` lands for the pointer at `p`: wall points snap into the nearest wall face
- * (kinds that also allow the floor fall back to it away from walls); floor and ceiling points stay
- * where they are. Drainage is floor only. `host` forces one host.
+ * Where a point of `kind` lands for the pointer at `p`. Points are locked to the building: wall points
+ * snap into the nearest wall face that looks into a room, and are refused away from walls; floor and
+ * ceiling points must be inside a room. Drainage is floor only. `host` forces one host the kind allows
+ * (e.g. a socket as a floor box).
  */
 export function placeServicePoint(derived: DerivedPlan, kind: ServicePointKind, p: Vec2, host?: ServiceHost, range = 0.7): ServicePlacement {
   const hosts = SERVICE_POINTS[kind].hosts;
   const want = host && hosts.includes(host) ? host : hosts[0];
+  const refuse = (reason: string): ServicePlacement => ({ x: p.x, y: p.y, host: want, wallId: null, rotation: 0, valid: false, reason });
   if (want === 'wall') {
     const face = wallFaceAt(derived, p, range);
-    if (face) return { x: face.p.x, y: face.p.y, host: 'wall', wallId: face.wallId, rotation: face.rotation, valid: true };
-    if (!host && hosts.includes('floor')) return { x: p.x, y: p.y, host: 'floor', wallId: null, rotation: 0, valid: true };
-    return { x: p.x, y: p.y, host: 'wall', wallId: null, rotation: 0, valid: false, reason: 'Point at a wall: this goes in a wall' };
+    if (!face) return refuse('Point at a wall: this goes in a wall');
+    // The face must look into a room, not out of the building.
+    const front = { x: face.p.x + Math.cos(face.rotation) * 0.06, y: face.p.y + Math.sin(face.rotation) * 0.06 };
+    if (!inRoom(derived, front)) return refuse('Point at the room side of a wall');
+    return { x: face.p.x, y: face.p.y, host: 'wall', wallId: face.wallId, rotation: face.rotation, valid: true };
   }
+  if (!inRoom(derived, p)) return refuse(want === 'ceiling' ? 'Place it under the ceiling of a room' : 'Place it on the floor of a room');
   return { x: p.x, y: p.y, host: want, wallId: null, rotation: 0, valid: true };
 }
 
@@ -325,7 +335,7 @@ export function suggestPoint(derived: DerivedPlan, o: PlacedObject, system: Serv
   const info = SERVICE_POINTS[kind];
   const back = add(o, rotate({ x: 0, y: -o.depth * 0.25 }, o.rotation));
   if (info.hosts[0] === 'floor') {
-    const at = kind === 'floor-drain' ? { x: o.x, y: o.y } : back;
+    const at = kind === 'floor-drain' || !inRoom(derived, back) ? { x: o.x, y: o.y } : back;
     return { kind, x: at.x, y: at.y, host: 'floor', wallId: null, height: 0, rotation: 0 };
   }
   if (kind === 'light' && (o.elevation >= 1.6 || o.elevation + o.height >= 2.2)) {
@@ -338,7 +348,8 @@ export function suggestPoint(derived: DerivedPlan, o: PlacedObject, system: Serv
     // Beside the item along the wall, so it is not hidden behind tall units.
     return { kind, x: face.p.x, y: face.p.y, host: 'wall', wallId: face.wallId, height: heightFor(o, system), rotation: face.rotation };
   }
-  if (info.hosts.includes('floor')) return { kind, x: back.x, y: back.y, host: 'floor', wallId: null, height: 0, rotation: 0 };
+  // No wall near: a floor box under the item, when the kind allows one and the item stands in a room.
+  if (info.hosts.includes('floor') && inRoom(derived, o)) return { kind, x: o.x, y: o.y, host: 'floor', wallId: null, height: 0, rotation: 0 };
   return null;
 }
 
@@ -359,9 +370,9 @@ export function pointHasRun(project: Project, derived: DerivedPlan, pt: ServiceP
  * Runs for every point that has none, chained like circuits: points join the network of their
  * system one at a time, nearest first, each with a right-angled run to the nearest point already on
  * it (starting from its main: Power in, Water in or Waste out). Ceiling points chain in the
- * ceiling; the rest run in the floor.
+ * ceiling; the rest run in the floor. `only` limits it to those points (re-linking after a delete).
  */
-export function routeToSources(project: Project, derived: DerivedPlan): ServiceRunInput[] {
+export function routeToSources(project: Project, derived: DerivedPlan, only?: ReadonlySet<string>): ServiceRunInput[] {
   const out: ServiceRunInput[] = [];
   const all = Object.values(project.servicePoints ?? {});
   const manhattan = (a: Vec2, b: Vec2) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
@@ -373,7 +384,9 @@ export function routeToSources(project: Project, derived: DerivedPlan): ServiceR
     const net: { p: Vec2; ceiling: boolean }[] = mine
       .filter((p) => SERVICE_POINTS[p.kind].source || pointHasRun(project, derived, p))
       .map((p) => ({ p: servicePointAt(derived, p), ceiling: p.host === 'ceiling' }));
-    const todo = mine.filter((p) => !SERVICE_POINTS[p.kind].source && !pointHasRun(project, derived, p)).map((pt) => ({ pt, at: servicePointAt(derived, pt) }));
+    const todo = mine
+      .filter((p) => !SERVICE_POINTS[p.kind].source && !pointHasRun(project, derived, p) && (!only || only.has(p.id)))
+      .map((pt) => ({ pt, at: servicePointAt(derived, pt) }));
     while (todo.length) {
       // The waiting point closest to the network joins next (Prim's), so chains stay short.
       let best: { i: number; to: Vec2; d: number } | null = null;
@@ -422,4 +435,12 @@ export function servicesSummary(project: Project): { points: Partial<Record<Serv
     if (r.system === 'water' && r.hot) hot += l;
   }
   return { points, lengths, hot };
+}
+
+/** Runs with an end on nothing: no point of their system and no item that needs it is there. */
+export function looseRuns(project: Project, derived: DerivedPlan, needsOf: NeedsOf): ServiceRun[] {
+  const items = serviceItems(project, needsOf);
+  const onSomething = (r: ServiceRun, p: Vec2) =>
+    !!pointNear(project, derived, p, r.system) || items.some(({ o, needs }) => !!needs[r.system] && distToItem(o, p) <= RUN_CONNECT);
+  return Object.values(project.serviceRuns ?? {}).filter((r) => !onSomething(r, r.points[0]) || !onSomething(r, r.points[r.points.length - 1]));
 }

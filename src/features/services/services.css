@@ -296,3 +296,21 @@
   text-transform: uppercase;
   color: var(--text-2);
 }
+
+/* Loose runs notice */
+.svc-loose {
+  margin-top: 8px;
+  font-size: 11.5px;
+}
+.svc-loose .link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.svc-loose .link-btn:hover {
+  text-decoration: underline;
+}

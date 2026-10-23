@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import type { Project } from '@/domain/model/schema';
+import type { Project, ServicePoint } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
-import { compatiblePoints, runLength } from '@/domain/geometry/services';
+import { compatiblePoints, placeServicePoint, runLength, servicePointAt } from '@/domain/geometry/services';
+import { toast } from '@/state/uiStores';
 import { updateServicePoint, updateServiceRun } from '@/domain/commands/services';
 import { formatLength } from '@/domain/model/units';
 import {
@@ -36,6 +37,13 @@ export function ServicePointInspector({ project, id }: { project: Project; id: s
   const info = SERVICE_POINTS[p.kind];
   const u = project.settings;
   const serves = servicesState(project, derived).serves.get(id) ?? [];
+  // A new kind or host re-places the point (into the nearest wall, or onto the room floor); refused where it can't go.
+  const moveTo = (kind: ServicePointKind, host: ServicePoint['host']) => {
+    const at = servicePointAt(derived, p);
+    const pl = placeServicePoint(derived, kind, at, host, 1.5);
+    if (!pl.valid) return toast.info(pl.reason ?? 'It can’t go there');
+    exec('Change point', (d) => updateServicePoint(d, id, { kind, host: pl.host, x: pl.x, y: pl.y, wallId: pl.wallId, rotation: pl.rotation }));
+  };
   return (
     <div className="pad">
       <div className="svc-need" style={{ marginBottom: 8 }}>
@@ -52,14 +60,14 @@ export function ServicePointInspector({ project, id }: { project: Project; id: s
         label="Kind"
         value={p.kind}
         options={pointKindsOf(info.system).map((k) => ({ value: k, label: SERVICE_POINTS[k].name }))}
-        onChange={(kind) => exec('Change point', (d) => updateServicePoint(d, id, { kind }))}
+        onChange={(kind) => moveTo(kind, SERVICE_POINTS[kind].hosts.includes(p.host) ? p.host : SERVICE_POINTS[kind].hosts[0])}
       />
       {info.hosts.length > 1 && (
         <Segmented
           label="Where it sits"
           size="sm"
           value={p.host}
-          onChange={(host) => exec('Change point', (d) => updateServicePoint(d, id, { host }))}
+          onChange={(host) => moveTo(p.kind, host)}
           options={info.hosts.map((h) => ({ value: h, label: SERVICE_HOST_LABELS[h] }))}
         />
       )}

@@ -589,10 +589,14 @@ Not a technical layout: no fittings, valves or pipe sizes. Shown only in **Servi
   appliance outlet serves one item. A run of the system ending at the item also meets it. `serviceLinks.skip`
   (Disconnect: right-click the line or the point, or the Inspector) makes automatic connection pass that point (the next
   one in reach takes over); `pin` (Inspector "Connect to…") holds up to 4 m. Connections follow moves by themselves.
-  Deleting a point prunes overrides naming it.
-- **Placement** (`placeServicePoint`): wall kinds snap into the nearest wall face (1.2 cm inside, facing the room; sockets
-  and water points fall back to the floor away from walls, switches and panels refuse); floor and ceiling points stay
-  put. Wall points show at their wall's face even after the wall moves (`servicePointAt`); dragging slides them along
+  Deleting a point prunes overrides naming it, and takes the runs ending at it along: the points those runs led to
+  are linked again to the nearest point on their network (`deleteServices` → `routeToSources(…, only)`), so nothing
+  hangs. The panel flags runs with a loose end (`looseRuns`: no point and no item of the system there) with Select / Remove.
+- **Placement** (`placeServicePoint`) is locked to the building: wall kinds snap into the nearest wall face that looks
+  into a room (1.2 cm inside it) and are refused away from walls or on a wall's outside face; floor and ceiling points
+  must be inside a room (`inRoom`). A socket or water point goes on the floor only when its host is set to the floor
+  (Inspector "Where it sits", which re-places the point and refuses where it can't go). Dragged floor and ceiling
+  points stop at the room's edge. Wall points show at their wall's face even after the wall moves (`servicePointAt`); dragging slides them along
   walls. Tools: `service` (arms a kind from the panel, stays armed) and `run` (click bends; snaps to points and to the
   outline of items of its system, which end the run; wall runs snap to wall centre lines; double-click / Enter ends,
   Backspace undoes a bend). Both also run in 3D through `ToolBridge3D`.
@@ -1800,3 +1804,7 @@ Known limitations (also in README):
      master power in (CB) and master water in … they should look a bit different" + "rename those 3 more correctly" →
      flowing connection dashes (supply into the item, drainage out); the three sources became the Mains row (Power in,
      Water in, Waste out; asked for shorter, more intuitive names) with hexagon markers (done).
+142. "Lock placement of these items. They can't be placed in the middle of nowhere" → points only in a wall facing a room or
+     on a room's floor or ceiling; no automatic floor fallback; drags and Inspector host/kind changes keep to it (done).
+143. "Removing a connected socket orphans the wiring" → deleting a point deletes its runs and re-links the rest of the
+     chain; a loose-runs notice in the panel (done).

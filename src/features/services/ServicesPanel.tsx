@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { Eye, EyeOff, Plug, Route, Sparkles, X } from 'lucide-react';
 import { derivePlan } from '@/domain/geometry/derive';
-import { servicesSummary } from '@/domain/geometry/services';
+import { looseRuns, servicesSummary } from '@/domain/geometry/services';
+import { deleteServices } from '@/domain/commands/services';
 import { formatLength } from '@/domain/model/units';
 import {
   SERVICE_COLORS,
@@ -20,7 +21,7 @@ import { Button, IconButton, LengthField, Section, Segmented } from '@/component
 import { PointIcon, SystemIcon } from './ServiceIcon';
 import { RUN_DASH } from './ServicesSvg';
 import { addMissingPoints, armPoint, armRun, connectToSources, setServicesMode } from './actions';
-import { servicesState } from './needs';
+import { needsOfProject, servicesState } from './needs';
 import './services.css';
 
 /**
@@ -43,6 +44,7 @@ export function ServicesPanel() {
   const u = project.settings;
   const len = (m: number) => formatLength(m, u.units, 1);
   const unmet = state.needs.filter((n) => !n.met);
+  const loose = looseRuns(project, derived, needsOfProject(project));
   const pointCount = (sys: ServiceSystem) => pointKindsOf(sys).reduce((n, k) => n + (summary.points[k] ?? 0), 0);
   const levels = SERVICE_SYSTEM_INFO[runSystem].levels;
 
@@ -102,7 +104,7 @@ export function ServicesPanel() {
               })}
             </div>
           ))}
-          <p className="field-hint">Wall points go into the nearest wall; drains only in the floor.</p>
+          <p className="field-hint">Points stay in the home: in a wall facing a room, or on a room’s floor or ceiling. Drains go in the floor only.</p>
         </Section>
 
         <Section title="Draw a run">
@@ -208,6 +210,23 @@ export function ServicesPanel() {
             <Route size={14} /> Route runs to sources
           </Button>
           <p className="field-hint">Chains every point without a run back to its main: Power in, Water in or Waste out.</p>
+          {loose.length > 0 && (
+            <p className="notice svc-loose">
+              {loose.length} run{loose.length === 1 ? ' has' : 's have'} a loose end.{' '}
+              <button type="button" className="link-btn" onClick={() => useEditorStore.getState().setSelection(loose.map((r) => ({ kind: 'run', id: r.id })))}>
+                Select
+              </button>{' '}
+              ·{' '}
+              <button
+                type="button"
+                className="link-btn"
+                onClick={() => useProjectStore.getState().execute(`Remove ${loose.length} loose run${loose.length === 1 ? '' : 's'}`, (d) => deleteServices(d, loose.map((r) => r.id)))}
+                data-testid="svc-remove-loose"
+              >
+                Remove
+              </button>
+            </p>
+          )}
           <table className="svc-totals">
             <tbody>
               {SERVICE_SYSTEMS.map((sys) => (
