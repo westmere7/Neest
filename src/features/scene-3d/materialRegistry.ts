@@ -20,6 +20,26 @@ import {
 /** Largest photo map (px) used live; exports bake their own sizes. */
 const LIVE_PHOTO_MAX = 1024;
 
+/** A greyscale roughness photo as a glTF metallic-roughness map: R occlusion 1, G roughness, B metalness 1. */
+function packRoughness(image: CanvasImageSource & { width: number; height: number }, size: number): HTMLCanvasElement | null {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(image, 0, 0, size, size);
+  const img = ctx.getImageData(0, 0, size, size);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i] = 255;
+    d[i + 2] = 255;
+    d[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return c;
+}
+
 type MeshMat = THREE.MeshStandardMaterial;
 type Entry = { mat: MeshMat; def: MaterialDefinition; texKey: string };
 /** A material's photo state: `entry` is set once the manifest knows the set; `pending` while maps load. */
@@ -54,6 +74,11 @@ export class MaterialRegistry {
    * stay ≤ 1), normal/roughness maps are skipped. 0 = live rendering.
    */
   bakePhotoSize = 0;
+  /**
+   * Export mode only: also embed photo normal maps and roughness (packed as a glTF
+   * metallic-roughness texture shared by the roughness and metalness slots), as JPEG.
+   */
+  exportDetail = false;
 
   constructor() {
     // Content packs reload live: forget their textures and re-texture their materials on next use.
@@ -109,7 +134,7 @@ export class MaterialRegistry {
   }
 
   private photoMaps(): PhotoMap[] {
-    return this.bakePhotoSize > 0 ? ['color'] : ['color', 'normal', 'roughness'];
+    return this.bakePhotoSize > 0 && !this.exportDetail ? ['color'] : ['color', 'normal', 'roughness'];
   }
 
   /** Re-applies textures whose photo state may have changed (manifest or images arrived). */
@@ -134,6 +159,8 @@ export class MaterialRegistry {
       t.colorSpace = THREE.SRGBColorSpace;
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = this.anisotropy;
+      // Exports: opaque patterns as JPEG (see-through ones need PNG alpha).
+      if (this.bakePhotoSize > 0 && !patternInfo(patternId)?.cutout) t.userData.mimeType = 'image/jpeg';
       this.baseTextures.set(key, t);
     }
     return t;
@@ -147,6 +174,7 @@ export class MaterialRegistry {
       t = new THREE.CanvasTexture(canvas);
       t.colorSpace = THREE.NoColorSpace;
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      if (this.bakePhotoSize > 0) t.userData.mimeType = 'image/jpeg';
       this.normalTextures.set(patternId, t);
     }
     return t;
@@ -154,7 +182,7 @@ export class MaterialRegistry {
 
   /** Shared base texture for one map of a photo set (null while loading or when missing). */
   private photoTexture(entry: PhotoManifestEntry, map: PhotoMap, contrast: number): THREE.Texture | null {
-    const bake = map === 'color' && (this.bakePhotoSize > 0 || contrast < 0.995);
+    const bake = this.bakePhotoSize > 0 || (map === 'color' && contrast < 0.995);
     const key = `${entry.id}|${map}|${bake ? `${contrast.toFixed(2)}|${this.bakePhotoSize}` : 'raw'}`;
     const hit = this.photoTextures.get(key);
     if (hit) return hit;
@@ -163,9 +191,20 @@ export class MaterialRegistry {
     let t: THREE.Texture;
     if (bake) {
       this.pruneBakedPhotos();
-      // Exports keep 2K floor sets at 1K and 1K sets at 512 px; live contrast bakes stay ≤ 1K.
-      const size = this.bakePhotoSize > 0 ? Math.min(this.bakePhotoSize, Math.max(512, image.width / 2)) : Math.min(1024, image.width);
-      const canvas = bakePhotoCanvas(image, entry, size, contrast, this.bakePhotoSize > 0 ? [1, 1, 1] : null);
+      // Exports at 1024 keep 2K floor sets at 1K and 1K sets at 512 px (at 2048: full size, at 512: all 512);
+      // live contrast bakes stay ≤ 1K.
+      const size =
+        this.bakePhotoSize >= 2048
+          ? Math.min(2048, image.width)
+          : this.bakePhotoSize > 0
+            ? Math.min(this.bakePhotoSize, Math.max(512, image.width / 2))
+            : Math.min(1024, image.width);
+      const canvas =
+        map === 'color'
+          ? bakePhotoCanvas(image, entry, size, contrast, this.bakePhotoSize > 0 ? [1, 1, 1] : null)
+          : map === 'roughness'
+            ? packRoughness(image, size)
+            : bakePhotoCanvas(image, entry, size, 1, null);
       if (!canvas) return null;
       t = new THREE.CanvasTexture(canvas);
       t.userData.neestBaked = true;
@@ -289,6 +328,7 @@ export class MaterialRegistry {
     mat.map = null;
     mat.normalMap = null;
     mat.roughnessMap = null;
+    mat.metalnessMap = null;
     mat.userData.neestPhoto = false;
     const photo = this.activePhoto(def);
     if (photo?.entry && !photo.pending && def.photo) this.applyPhoto(mat, def, photo.entry);
@@ -313,7 +353,7 @@ export class MaterialRegistry {
     };
     mat.map = place(base);
     mat.userData.neestPhoto = true;
-    if (this.bakePhotoSize > 0) return;
+    if (this.bakePhotoSize > 0 && !this.exportDetail) return;
     if (this.normalMaps && p.contrast > 0.02) {
       const n = this.photoTexture(entry, 'normal', 1);
       if (n) {
@@ -323,6 +363,9 @@ export class MaterialRegistry {
     }
     const r = this.photoTexture(entry, 'roughness', 1);
     if (r) mat.roughnessMap = place(r);
+    // Exports: the packed map (G roughness, B = 1) also fills the metalness slot, so glTF gets one
+    // shared metallic-roughness texture per photo set instead of a merged copy per material.
+    if (r && this.bakePhotoSize > 0) mat.metalnessMap = mat.roughnessMap;
   }
 
   private applyPattern(mat: MeshMat, def: MaterialDefinition) {
@@ -353,6 +396,7 @@ export class MaterialRegistry {
       mat.map?.dispose();
       mat.normalMap?.dispose();
       mat.roughnessMap?.dispose();
+      mat.metalnessMap = null;
       mat.dispose();
     }
     for (const t of this.baseTextures.values()) t.dispose();

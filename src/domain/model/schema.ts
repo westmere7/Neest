@@ -521,11 +521,61 @@ export const LayersSchema = z
     unassigned: { visible: true, locked: false },
   });
 
+/**
+ * Guest walkthrough settings (Guest view and the exported guest HTML). Every field has a default so
+ * older projects load; `null` on an override means "as in the 3D view".
+ */
 export const GuestSettingsSchema = z
   .object({
     startCameraId: Id.nullable(),
     spawn: Vec2Schema.nullable(),
     spawnAngle: num,
+    /** Title shown to guests; empty = the project name. */
+    title: z.string().max(120).default(''),
+    /** Line under the title; empty = "View-only 3D walkthrough". */
+    subtitle: z.string().max(200).default(''),
+    /** Welcome card shown before exploring, with this text. */
+    intro: z.boolean().default(false),
+    welcome: z.string().max(2000).default(''),
+    /** Saved views offered as buttons, in this order; null = all, in the project's order. */
+    viewIds: z.array(Id).nullable().default(null),
+    /** Also offer the automatic Overview and Top views. */
+    overviewViews: z.boolean().default(true),
+    /** Open orbiting the opening view, or already walking. */
+    startMode: z.enum(['orbit', 'walk']).default('orbit'),
+    /** Walking speed multiplier guests start with (the mouse wheel still changes it). */
+    walkSpeed: num.min(0.25).max(4).default(1),
+    eyeHeight: num.min(0.8).max(2.2).default(1.6),
+    /** Walkthrough field of view (degrees); null = the 3D view's walkthrough FOV. */
+    walkFov: num.min(40).max(110).nullable().default(null),
+    /** Notes: shown, included but hidden until the guest shows them, or left out. */
+    notes: z.enum(['shown', 'hidden', 'off']).default('shown'),
+    /** Room names and areas while orbiting (guests can toggle them). */
+    roomLabels: z.boolean().default(false),
+    /** Ceilings start shown (guests can toggle them). */
+    ceilings: z.boolean().default(true),
+    /** Overview panel (rooms, areas, counts): open at start, behind an Info button, or left out. */
+    info: z.enum(['open', 'closed', 'off']).default('open'),
+    /** Walls while orbiting (walking always shows full walls; guests can switch). */
+    wallDisplay: z.enum(['full', 'cutaway']).default('full'),
+    cutawayHeight: num.min(0.3).max(5).default(1.2),
+    quality: z.enum(['fast', 'balanced', 'high']).default('balanced'),
+    shadows: z.boolean().default(true),
+    /** Hours (5–21); null = the 3D view's time of day. */
+    timeOfDay: num.min(5).max(21).nullable().default(null),
+    /** Background colour; null = the 3D view's. */
+    background: HexColor.nullable().default(null),
+    /** A Floor plan button (the plan drawing, click to walk there). */
+    floorPlan: z.boolean().default(true),
+    /** Include items on hidden item layers (they start hidden; guests can show them in the layer list). */
+    hiddenItems: z.boolean().default(false),
+    /** Tour: cycles the views by itself until the guest takes over. */
+    tour: z.boolean().default(false),
+    tourSeconds: num.min(3).max(30).default(7),
+    /** Largest embedded texture (px): smaller file vs sharper surfaces. */
+    textureSize: z.union([z.literal(512), z.literal(1024), z.literal(2048)]).default(1024),
+    /** Embed normal and roughness maps for surface relief (bigger file). */
+    surfaceDetail: z.boolean().default(true),
   })
   .default({ startCameraId: null, spawn: null, spawnAngle: 0 });
 
@@ -668,6 +718,7 @@ export type CameraPreset = z.infer<typeof CameraPresetSchema>;
 export type RenderSettings = z.infer<typeof RenderSettingsSchema>;
 export type ProjectSettings = z.infer<typeof ProjectSettingsSchema>;
 export type Layers = z.infer<typeof LayersSchema>;
+export type GuestSettings = z.infer<typeof GuestSettingsSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
 export type Collection = z.infer<typeof CollectionSchema>;
 export type GroupSnapshot = z.infer<typeof GroupSnapshotSchema>;

@@ -24,5 +24,4 @@ export function useIsMobile(): boolean {
   return useSyncExternalStore(mobileStore.subscribe, mobileStore.get, () => false);
 }
 
-export const isEditableTarget = (t: EventTarget | null) =>
-  t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable);
+export { isEditableTarget } from './editableTarget';

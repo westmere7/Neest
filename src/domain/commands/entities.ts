@@ -724,4 +724,5 @@ export function deleteCameraPreset(d: D, id: string): void {
   const i = d.cameras.findIndex((x) => x.id === id);
   if (i >= 0) d.cameras.splice(i, 1);
   if (d.guest.startCameraId === id) d.guest.startCameraId = null;
+  if (d.guest.viewIds) d.guest.viewIds = d.guest.viewIds.filter((v) => v !== id);
 }

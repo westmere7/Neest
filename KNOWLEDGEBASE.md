@@ -616,7 +616,14 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   The physical mouse wheel sets the speed (`domain/walkthrough/speed.ts`: √2 per notch, up = faster, ¼×–4× walking,
   ¼×–8× flying, kept separately for walk and fly while the page is open); the walk HUD shows it (`walk-speed`). The
   guest viewer does the same for walking and shows it in its hint. Trackpad gestures are unchanged.
-- Guest view (`#/guest/:id`) is view-only; the exported guest HTML embeds a GLB + the standalone runtime.
+- Guest view (`#/guest/:id`, `GuestPage.tsx`) is view-only; the exported guest HTML embeds a GLB + the standalone
+  runtime (`src/guest-viewer/main.ts`). Both follow `project.guest` (see §14 "Guest walkthrough") and offer the same
+  things: saved views in the chosen order (+ Overview/Top), a 2D plan (pan/zoom, click a spot to walk there), walking
+  with free-fly, a tour, an Overview panel (`domain/geometry/overview.ts › planOverview`, shared with the Inspector)
+  and a View panel (walls full/cutaway, ceilings, notes, room names, item layers, quality, shadows), full screen,
+  the app's loading screen (`FirstFrames.tsx` + `SceneLoading`), and a phone layout. Bottom-bar controls are of two
+  kinds: the action button (filled: Walk through / Exit) and on/off switches (label + small switch, `aria-pressed`:
+  Fly, Tour, Info, View, Full screen); view buttons show the current view as a filled pill.
 
 ## 12. Library & materials
 
@@ -1107,7 +1114,7 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
 | 3D render PNG (real-time) | `sceneRuntime.captureView`: renders the live scene with a clone of the live camera at the requested size (same position/orientation/vertical FOV, view offset cleared) |
 | 3D render PNG (path traced) | Render dialog → engine "Path traced": `renderPathTraced` with samples 32/128/512/1024, bounces 3/5/8, optional transparent background (§11) |
 | GLB | `sceneExport.ts`: standalone scene from the same builders → GLTFExporter (binary). The export registry bakes photo colour maps into canvases (1K for 2K floor sets, 512 px otherwise, JPEG in the GLB, colour gain folded in so glTF factors stay ≤ 1), skips normal/roughness maps, and awaits loads (`whenPhotosReady`); unavailable photos fall back to procedural |
-| Guest walkthrough | `guestExport.ts`: one HTML file = inline viewer runtime (three.js included) + base64 GLB + cameras, spawn, colliders. No external URLs, blob URLs or storage access (photo textures are embedded in the GLB as above) |
+| Guest walkthrough | `guestExport.ts › buildGuestData/buildGuestHtml`, pane `GuestExportPane.tsx`. One HTML file = inline viewer runtime (three.js included, ~625 kB) + gzipped base64 GLB + `GuestData` (cameras, spawn, colliders, lamps, item layers, notes, room labels, overview numbers, plan SVG, settings). Settings live on `project.guest` (Zod defaults; `domain/walkthrough/guest.ts` has `guestViews`, `guestAutoViews`, `guestSceneProject`, `guestLayers`): title/subtitle, welcome card, Overview panel open/button/off, views and order, Overview+Top, 2D plan, opening view, start orbit/walk, tour (+ seconds), walk speed, eye height, walk FOV, notes shown/hidden/left out, room names, ceilings, walls full/cutaway (+ height), hidden item layers (included, start hidden), quality fast/balanced/high, shadows, time of day, background, texture size 512/1K/2K, surface detail (normal + packed metallic-roughness maps, JPEG). The GLB has role groups (`userData.neestRole`: walls, walls-cut, wall-details, openings, rooms, ceilings, furniture) and one group per item layer (`userData.neestLayer`); the viewer clips openings/details at the cut height. `exportGlb` indexes unindexed geometry (`mergeVertices`, same look, several times smaller); the GLB is gzipped (`CompressionStream`; the viewer unpacks with `DecompressionStream`). The model is cached by its inputs, so the pane's size estimate and the download build it once. Fonts are system-only; nothing is loaded: no URLs, no storage (the only `blob:` URLs are GLTFLoader's in-page image decodes). Sample flat ≈ 14 MB (Standard), 6.6 MB (Small), 44 MB (Sharp 2K) |
 | `.neest`, JSON summary | `neestFile.ts`, `report.ts` |
 
 The Export dialog opens instantly: `EditorDialogs` renders the dialog frame at once with a `<Suspense>` fallback
@@ -1205,6 +1212,15 @@ construction documents.
   (`window.__NEEST__.project.getState().execute`) so it merges with the live state.
 - **Hidden Browser pane pauses rendering**: rAF stops, so 3D loading never finishes there; measure in a headless
   Playwright page instead (repo sync off first).
+- **Guest viewer bundle size**: everything `src/guest-viewer/main.ts` imports ships in every exported file. Importing
+  `collision.ts` (→ `schema.ts` → Zod) or `components/hooks.ts` (→ React) once added both; the viewer now imports
+  `domain/walkthrough/move.ts` and `components/editableTarget.ts`. `guestExport.test.ts` fails if Zod or React come back.
+- **Guest note cards never showed**: `.ng-callout` is `visibility:hidden` in the stylesheet, and the layout cleared the
+  inline style with `''`, which falls back to hidden. Set `'visible'`.
+- **Exports shipped procedural textures on slow tabs**: `whenPhotosReady` gave up after 15 s (a throttled or freshly
+  loaded tab takes longer), so the GLB got procedural stand-ins. Exports now wait up to 60 s.
+- **Guest view opened straight from the launcher had no chrome styles**: `.floating`/`.pane-loading` live in
+  `editor.css`, which only the editor imported; `GuestPage` imports it too.
 
 ## 17. Recipes
 
@@ -1699,3 +1715,15 @@ Known limitations (also in README):
      kitchen and laundry, play and kids, fitness, tatami, chiếu cói / chiếu trúc / chiếu mây, prayer rug, office chair mat,
      pet and outdoor mats) with their own patterns and materials and VND estimates in itemPrices.json; 113 new materials
      and 18 CC0 scanned sets (see §12) (done).
+
+137. "Add more settings for the guest walkthrough; make sure the HTML contains everything needed" + "it must support 2D
+     views, fly through, some quality setting, hiding some view items (like ceiling etc), layer system, and show the
+     overview info" + "add loading, mobile support, full screen; indicate which are buttons and which are toggles" →
+     `project.guest` settings and the grouped Export pane (Welcome, Views & tour, Walkthrough, What guests see, Light &
+     quality, File, live size estimate); the viewer and the in-app Guest view gained the 2D plan, fly, tour, Overview and
+     View panels (item layers, walls, ceilings, notes, room names, quality, shadows), full screen, the loading screen,
+     a phone layout and switch-style toggles. The HTML now carries lamp lights, item layers, normal/roughness maps,
+     cut walls, plan SVG and overview numbers; geometry is indexed and the model gzipped (sample flat 45 → 14 MB).
+     Note cards in exported files were invisible before (fixed). Tests in `guestExport.test.ts` (done).
+138. "items alignment" (right-click menu: "Move to …" rows indented past the others) → menus with choice rows give every
+     row the same left gutter and draw the check mark in it (`ContextMenu.tsx` `has-checks`, `components.css`) (done).

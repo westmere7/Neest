@@ -46,6 +46,11 @@ export function stepWalkSpeed(notches: number): void {
   else speed.walk = stepSpeed(speed.walk, notches, WALK_SPEED_MAX);
   speedListeners.forEach((fn) => fn());
 }
+/** Sets the walking speed multiplier (Guest view starts at the project's guest walk speed). */
+export function setWalkSpeed(v: number): void {
+  speed.walk = Math.min(WALK_SPEED_MAX, Math.max(0.25, v));
+  speedListeners.forEach((fn) => fn());
+}
 /** Speed multiplier of the current mode (walk or fly). */
 export function useWalkSpeed(): number {
   return useSyncExternalStore(
@@ -69,7 +74,21 @@ export function useWalkSpeed(): number {
  * along the view, Space/E up, Q/C down, no collisions; switching back lands at
  * eye height. The mouse wheel sets the walking (or flying) speed.
  */
-export function WalkControls({ project, derived, onExit, startOverride }: { project: Project; derived: DerivedPlan; onExit?: () => void; startOverride?: { x: number; y: number; angle: number } | null }) {
+export function WalkControls({
+  project,
+  derived,
+  onExit,
+  startOverride,
+  eyeHeight = EYE_HEIGHT,
+  fov = 70,
+}: {
+  project: Project;
+  derived: DerivedPlan;
+  onExit?: () => void;
+  startOverride?: { x: number; y: number; angle: number } | null;
+  eyeHeight?: number;
+  fov?: number;
+}) {
   const { camera, gl } = useThree();
   const keys = useRef(new Set<string>());
   const yaw = useRef(0);
@@ -82,12 +101,12 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
   // Spawn once when entering the mode.
   useEffect(() => {
     const spawn = startOverride ? { p: { x: startOverride.x, y: startOverride.y }, angle: startOverride.angle } : defaultSpawn(project, derived.faces);
-    camera.position.set(spawn.p.x, EYE_HEIGHT, spawn.p.y);
+    camera.position.set(spawn.p.x, eyeHeight, spawn.p.y);
     yaw.current = -spawn.angle - Math.PI / 2;
     pitch.current = 0;
     setWalkFly(false);
     if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
-      (camera as THREE.PerspectiveCamera).fov = 70;
+      (camera as THREE.PerspectiveCamera).fov = fov;
       camera.near = 0.05;
       (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
     }
@@ -245,7 +264,7 @@ export function WalkControls({ project, derived, onExit, startOverride }: { proj
       camera.position.x = next.x;
       camera.position.z = next.y;
     }
-    camera.position.y = EYE_HEIGHT;
+    camera.position.y = eyeHeight;
     camera.rotation.set(pitch.current, yaw.current, 0, 'YXZ');
   });
   return null;

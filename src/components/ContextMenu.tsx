@@ -66,7 +66,7 @@ export function ContextMenuHost() {
   return (
     <div
       ref={ref}
-      className="context-menu"
+      className={`context-menu${open.items.some((it) => it.checked !== undefined) ? ' has-checks' : ''}`}
       role="menu"
       style={{ left: Math.min(open.x, maxX), top: Math.max(8, Math.min(open.y, maxY)) }}
       onContextMenu={(e) => e.preventDefault()}

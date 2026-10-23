@@ -158,5 +158,6 @@ export function repairProject(project: Project): MigrationResult {
   const camIds = new Set<string>();
   p.cameras = p.cameras.filter((c) => (camIds.has(c.id) ? false : (camIds.add(c.id), true)));
   if (p.guest.startCameraId && !camIds.has(p.guest.startCameraId)) p.guest.startCameraId = null;
+  if (p.guest.viewIds) p.guest.viewIds = p.guest.viewIds.filter((v) => camIds.has(v));
   return { project: p, warnings };
 }

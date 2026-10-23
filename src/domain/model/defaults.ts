@@ -1,6 +1,7 @@
 import { DEFAULT_MATERIALS, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { newId } from './ids';
 import {
+  GuestSettingsSchema,
   PROJECT_FORMAT,
   SCHEMA_VERSION,
   type LengthUnit,
@@ -90,7 +91,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       unassigned: { visible: true, locked: false },
     },
     itemLayers: [],
-    guest: { startCameraId: null, spawn: null, spawnAngle: 0 },
+    guest: GuestSettingsSchema.parse(undefined),
   };
 }
 

@@ -473,12 +473,18 @@ kbd {
 .menu-item:disabled {
   opacity: 0.45;
 }
-/* Choice items (one of several): a check column, label after it. */
+/* Choice items (one of several): the check mark sits in a left gutter that every item of the
+   menu gets, so all labels line up. */
+.context-menu.has-checks .menu-item {
+  position: relative;
+  padding-left: 28px;
+}
 .menu-item[role='menuitemradio'] {
   justify-content: flex-start;
-  gap: 6px;
 }
 .menu-check {
+  position: absolute;
+  left: 10px;
   width: 14px;
   color: var(--accent-strong);
   font-weight: 700;

@@ -137,3 +137,52 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Guest walkthrough pane */
+.guest-export .section {
+  border-top: 1px solid var(--border);
+}
+.guest-export .section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+.guest-textarea {
+  min-height: 84px;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.45;
+  padding: 7px 9px;
+}
+.guest-view-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  max-height: 210px;
+  overflow: auto;
+}
+.guest-view-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 6px 3px 10px;
+  font-size: 12.5px;
+}
+.guest-view-row + .guest-view-row {
+  border-top: 1px solid var(--border);
+}
+.guest-view-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-height: 26px;
+  cursor: pointer;
+}
+.guest-view-row span {
+  display: flex;
+  gap: 2px;
+}

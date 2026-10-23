@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
-import { isEditableTarget } from '@/components/hooks';
+import { isEditableTarget } from '@/components/editableTarget';
 
 export interface OrbitLike {
   enabled: boolean;

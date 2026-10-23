@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ArrowLeftRight, Copy, Eye, EyeOff, FlipHorizontal2, Focus, LibraryBig, Lock, Minus, PanelRightClose, RotateCw, Scissors, Spline, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
-import { isDividerWall, isPassageKind, isWindowKind } from '@/domain/model/schema';
+import { isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
 import { formatArea, formatLength } from '@/domain/model/units';
 import { derivePlan } from '@/domain/geometry/derive';
-import { boundsOf, unionBounds, type Bounds } from '@/domain/geometry/vec';
+import { planOverview } from '@/domain/geometry/overview';
 import { pointAt } from '@/domain/geometry/wallPath';
 import { clampOpenings, swapWallFaces, unroundCorner, cornerArc, curveHandleFraction, maxCornerRadius, roundCorner, setCornerRadius, sharedNode, fitCurveToJoins, flipCurve, joinTangent, makeCircularArc, setCurveHandleFraction, setCurveHandles, setWallAngle, setWallLength, splitWallAt, updateWalls } from '@/domain/commands/walls';
 import { assignMaterial, normalizeRotation, setOpeningDesign, suggestedFloor, updateObjects, updateOpening, updateRoom } from '@/domain/commands/entities';
@@ -936,14 +936,7 @@ function OpeningToolOptions() {
 
 function ProjectSummary({ project, derived }: { project: Project; derived: ReturnType<typeof derivePlan> }) {
   const u = project.settings;
-  const total = derived.faces.reduce((s, f) => s + f.area, 0);
-  const walls = [...derived.network.walls.values()].filter((g) => !isDividerWall(g.wall));
-  const wallLength = walls.reduce((s, g) => s + g.path.length, 0);
-  // Outer size of the walls only (furniture outside, e.g. on a terrace, does not count).
-  const shell = walls.reduce<Bounds | null>((b, g) => unionBounds(b, boundsOf(g.footprint)), null);
-  const openings = Object.values(project.openings);
-  const windows = openings.filter((o) => isWindowKind(o.kind)).length;
-  const doors = openings.filter((o) => !isWindowKind(o.kind) && !isPassageKind(o.kind)).length;
+  const { floorArea: total, wallLength, shell, windows, doors } = planOverview(project, derived);
   const byCategory = new Map<string, number>();
   for (const o of Object.values(project.objects)) {
     const a = getAsset(project, o.assetId);

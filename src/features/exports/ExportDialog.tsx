@@ -12,6 +12,7 @@ import { downloadBlob, exportFilename, exportNeest } from './neestFile';
 import { buildDxf, type DxfUnit } from './dxf';
 import { buildReport } from './report';
 import { PanelLoading } from '@/components/Overlays';
+import { GuestExport } from './GuestExportPane';
 import './exports.css';
 
 type Format = 'pdf' | 'svg' | 'png-sheet' | 'png-plan' | 'dxf' | 'glb' | 'render' | 'guest' | 'neest' | 'json';
@@ -392,47 +393,6 @@ function GlbExport({ project, busy, run }: PaneProps) {
         }
       >
         {busy ? 'Building model…' : 'Download GLB'}
-      </Button>
-    </div>
-  );
-}
-
-function GuestExport({ project, busy, run }: PaneProps) {
-  const start = project.cameras.find((c) => c.id === project.guest.startCameraId);
-  return (
-    <div className="export-pane">
-      <h3>Guest walkthrough</h3>
-      <p className="field-hint">
-        One self-contained HTML file with the 3D model, saved views and first-person walking. Recipients just open it in a browser — no Neest account,
-        no internet connection, nothing loaded from your device.
-      </p>
-      <Select
-        label="Opening view"
-        value={project.guest.startCameraId ?? '__overview__'}
-        onChange={(v) =>
-          useProjectStore.getState().execute('Set guest start view', (d) => {
-            d.guest.startCameraId = v === '__overview__' ? null : v;
-          })
-        }
-        options={[{ value: '__overview__', label: 'Overview' }, ...project.cameras.map((c) => ({ value: c.id, label: c.name }))]}
-      />
-      <p className="field-hint">
-        {start ? `Opens at “${start.name}”.` : 'Opens at an overview.'} Walk mode starts {project.guest.spawn ? 'at your chosen spot' : 'in the largest room'}. Save
-        more views in the 3D panel to offer them as buttons.
-      </p>
-      <Button
-        variant="primary"
-        disabled={busy}
-        data-testid="download-guest"
-        onClick={() =>
-          run(async () => {
-            const { buildGuestHtml } = await import('./guestExport');
-            const html = await buildGuestHtml(project);
-            downloadBlob(new Blob([html], { type: 'text/html' }), exportFilename(project.name, 'guest-walkthrough', 'html'));
-          })
-        }
-      >
-        {busy ? 'Packaging…' : 'Download guest HTML'}
       </Button>
     </div>
   );
