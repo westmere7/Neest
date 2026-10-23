@@ -603,7 +603,7 @@ Not a technical layout: no fittings, valves or pipe sizes. Shown only in **Servi
 - **Panel** (`ServicesPanel`, in the library's place): systems with show/hide (`editor.servicesShown`), the point palette,
   run buttons with level and height, "Not connected" list (click selects and focuses, plug adds a point), **Add all
   missing points** (`suggestPoint`: next to the item, sockets at counter height over worktops, drains in the floor, ceiling
-  points under ceiling fixtures), **Route runs to sources** (`routeToSources`: chained like circuits, each point joins the
+  points under ceiling fixtures; added one at a time by `addMissingServicePoints`, so neighbouring items share a point), **Route runs to sources** (`routeToSources`: chained like circuits, each point joins the
   nearest point already on its system's network, starting at its main; ceiling points chain in the
   ceiling) and totals.
 - **2D**: the plan draws as a faded dark outline (`planPalette('draft','dark')`, furniture off) under `ServicesSvg`: items
@@ -618,6 +618,9 @@ Not a technical layout: no fittings, valves or pipe sizes. Shown only in **Servi
   `checkMaterialsReady`). Only items that need services are drawn; ceilings off, walls full, dark background. Runs are
   plain lines (`runPath3D`: at floor −4 cm, ceiling +4 cm or wall height, with a drop to the point at each end); points
   and badges are screen-size sprites (orthographic cameras rescale them each frame).
+  A selected point gets a small gizmo (`ServicePointGizmo` in edit3d.tsx, like the opening gizmo): wall points an arrow each
+  way along the wall plus a height arrow (5 cm steps); floor and ceiling points X and Z arrows; drags go through
+  `moveServicePoints`, so the placement rules hold. Markers themselves only select (no hold-and-drag).
 - Layout options: services belong to each option's plan (`PLAN_KEYS`); "same walls, no furniture" keeps them.
 
 ## 11. 3D (src/features/scene-3d, walkthrough)
@@ -1808,3 +1811,5 @@ Known limitations (also in README):
      on a room's floor or ceiling; no automatic floor fallback; drags and Inspector host/kind changes keep to it (done).
 143. "Removing a connected socket orphans the wiring" → deleting a point deletes its runs and re-links the rest of the
      chain; a loose-runs notice in the panel (done).
+144. "Allow repositioning those items in 3D view" + "it should have a small gizmo instead of just hold and drag" → the
+     services point gizmo in 3D; Add missing points no longer stacks two sockets on one spot (done).

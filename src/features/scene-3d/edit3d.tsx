@@ -21,6 +21,8 @@ import { createCurveTool, createMeasureTool, createRoomTool, createSplitTool, cr
 import { createCalloutTool } from '@/features/plan-2d/tools/calloutTool';
 import { createRunTool, createServicePointTool } from '@/features/plan-2d/tools/serviceTools';
 import { SERVICE_POINTS } from '@/domain/model/services';
+import { pointElevation, servicePointAt } from '@/domain/geometry/services';
+import { moveServicePoints, updateServicePoint } from '@/domain/commands/services';
 import { runColor } from '@/features/services/ServicesSvg';
 import { createOpeningTool, createPlaceTool } from '@/features/plan-2d/tools/placeTools';
 import { createExtendTool } from '@/features/plan-2d/tools/extendTool';
@@ -663,6 +665,135 @@ function OpeningGizmo({ openingId, controlsRef }: { openingId: string; controlsR
   );
 }
 
+/**
+ * Small gizmo for a selected services point (Services mode, 3D). A wall point gets an arrow each
+ * way along its wall (it slides along walls, stepping onto another wall it reaches) and one up for
+ * its height (5 cm steps); floor and ceiling points get X and Z arrows (they stay inside rooms).
+ * Grid-snapped unless Alt; one undo step per drag.
+ */
+function ServicePointGizmo({ pointId, controlsRef }: { pointId: string; controlsRef: React.MutableRefObject<OrbitControlsImpl | null> }) {
+  const project = useProjectStore((s) => s.project!);
+  const gl = useThree((s) => s.gl);
+  const get = useThree((s) => s.get);
+  const [hot, setHot] = useState<string | null>(null);
+  const [readout, setReadout] = useState<string | null>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const centerRef = useRef(new THREE.Vector3());
+  const pt = project.servicePoints?.[pointId];
+  const derived = useMemo(() => derivePlan(project), [project]);
+  const at = pt ? servicePointAt(derived, pt) : null;
+  const y = pt ? pointElevation(project, derived, pt) : 0;
+  if (at) centerRef.current.set(at.x, y, at.y);
+  useFrame(() => {
+    const { camera, size } = get();
+    groupRef.current?.scale.setScalar(worldPerPixel(camera, centerRef.current, size.height) * 52);
+  });
+  if (!pt || !at) return null;
+  const units = project.settings;
+  const wall = pt.host === 'wall';
+  // Along the wall: perpendicular to the direction the point faces.
+  const tangent = new THREE.Vector3(-Math.sin(at.rotation), 0, Math.cos(at.rotation));
+  const up = new THREE.Vector3(0, 1, 0);
+  const X = new THREE.Vector3(1, 0, 0);
+  const Z = new THREE.Vector3(0, 0, 1);
+  // Each arrow: where it points, and the axis (shared by its pair) a drag moves along.
+  const axes: { key: string; group: string; dir: THREE.Vector3; axis: THREE.Vector3; color: string }[] = wall
+    ? [
+        { key: 'a', group: 'wall', dir: tangent, axis: tangent, color: AXIS_COLORS.x },
+        { key: 'b', group: 'wall', dir: tangent.clone().negate(), axis: tangent, color: AXIS_COLORS.x },
+        { key: 'h', group: 'h', dir: up, axis: up, color: AXIS_COLORS.y },
+      ]
+    : [
+        { key: 'x+', group: 'x', dir: X, axis: X, color: AXIS_COLORS.x },
+        { key: 'x-', group: 'x', dir: X.clone().negate(), axis: X, color: AXIS_COLORS.x },
+        { key: 'z+', group: 'z', dir: Z, axis: Z, color: AXIS_COLORS.z },
+        { key: 'z-', group: 'z', dir: Z.clone().negate(), axis: Z, color: AXIS_COLORS.z },
+      ];
+  const hotGroup = axes.find((a) => a.key === hot)?.group;
+
+  const startDrag = (e: ThreeEvent<PointerEvent>, axis: THREE.Vector3, height: boolean) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    const origin = centerRef.current.clone();
+    const t0 = closestOnLine(e.ray.origin, e.ray.direction, origin, axis);
+    if (t0 === null) return;
+    const base = { [pointId]: { x: at.x, y: at.y } };
+    const h0 = pt.height;
+    const raycaster = new THREE.Raycaster();
+    const el = gl.domElement;
+    if (controlsRef.current) controlsRef.current.enabled = false;
+    useProjectStore.getState().begin(height ? 'Point height' : 'Move point');
+    const move = (ev: PointerEvent) => {
+      const rect = el.getBoundingClientRect();
+      raycaster.setFromCamera(new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1), get().camera);
+      const t = closestOnLine(raycaster.ray.origin, raycaster.ray.direction, origin, axis);
+      if (t === null) return;
+      const snap = !ev.altKey && useEditorStore.getState().snap.grid;
+      if (height) {
+        let h = Math.min(6, Math.max(0, h0 + (t - t0)));
+        if (snap) h = Math.round(h / 0.05) * 0.05;
+        setReadout(`Height ${formatLength(h, units.units, units.precision)}`);
+        useProjectStore.getState().preview((d) => updateServicePoint(d, pointId, { height: h }));
+        return;
+      }
+      const step = units.gridSize / 2;
+      let along = t - t0;
+      if (snap) along = Math.round(along / step) * step;
+      setReadout(formatLength(Math.abs(along), units.units, units.precision));
+      useProjectStore.getState().preview((d) => moveServicePoints(d, derived, base, { x: axis.x * along, y: axis.z * along }));
+    };
+    const done = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', done);
+      useProjectStore.getState().commit();
+      setHot(null);
+      setReadout(null);
+      if (controlsRef.current) controlsRef.current.enabled = true;
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', done);
+  };
+
+  // Orients ArrowShape (built along +Y) to a direction.
+  const quat = (dir: THREE.Vector3) => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+  return (
+    <group name="neest-gizmo" userData={{ helper: true }}>
+      <group ref={groupRef} position={[at.x, y, at.y]}>
+        {axes.map((a) => {
+          const isHot = hotGroup === a.group;
+          return (
+            <group
+              key={a.key}
+              position={a.dir.clone().multiplyScalar(0.32).toArray()}
+              quaternion={quat(a.dir)}
+              onPointerDown={(e) => {
+                setHot(a.key);
+                startDrag(e, a.axis, a.group === 'h');
+              }}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                setHot((h) => h ?? a.key);
+                gl.domElement.style.cursor = a.key === 'h' ? 'ns-resize' : 'move';
+              }}
+              onPointerOut={() => {
+                setHot((h) => (h === a.key ? null : h));
+                gl.domElement.style.cursor = '';
+              }}
+            >
+              <ArrowShape color={a.color} hot={isHot} />
+            </group>
+          );
+        })}
+      </group>
+      {readout && (
+        <Html position={[at.x, y + 0.35, at.y]} center style={{ pointerEvents: 'none' }}>
+          <div className="label3d accent">{readout}</div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
 type ResizeAxis = 'rx' | 'rz' | 'ry';
 /** The item size an arrow's resize tab changes: X and Z take whichever of width/depth lines up with them. */
 function resizeKey(rotation: number, m: ResizeAxis): 'width' | 'depth' | 'height' {
@@ -791,6 +922,8 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
   });
 
   if (openingSel) return <OpeningGizmo openingId={openingSel.id} controlsRef={controlsRef} />;
+  if (selection.length === 1 && selection[0].kind === 'service' && project.servicePoints?.[selection[0].id])
+    return <ServicePointGizmo pointId={selection[0].id} controlsRef={controlsRef} />;
   if (!n || locked) return null;
   const single = n === 1 ? objs[0] : null;
   // The ring wraps the item, or the whole selection (every item's far corner) for a group.

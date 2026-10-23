@@ -21,6 +21,7 @@ import { addRectangleWalls } from './walls';
 import { deleteEntities, duplicateEntities, placeObject, reconcileRooms } from './entities';
 import { addOption, switchOption } from './options';
 import {
+  addMissingServicePoints,
   addServicePoint,
   addServiceRun,
   connectService,
@@ -218,6 +219,27 @@ describe('item connections', () => {
       for (const x of sugg) addServicePoint(d, x);
     });
     expect(resolveServices(p, derivePlan(p), needsOf).needs.every((n) => n.met)).toBe(true);
+  });
+});
+
+describe('missing points', () => {
+  it('adds one at a time, so neighbouring items share a socket', () => {
+    let p = room().p;
+    p = edit(p, (d) => {
+      for (const x of [2.2, 2.6, 3.0]) placeObject(d, { assetId: 'table-lamp', x, y: 0.4, width: 0.3, depth: 0.3, height: 0.5 });
+    });
+    const lamps: NeedsOf = (o) => (o.assetId === 'table-lamp' ? { power: 'plug' } : undefined);
+    let added = 0;
+    p = edit(p, (d) => {
+      added = addMissingServicePoints(d, lamps);
+    });
+    expect(added).toBe(1);
+    expect(resolveServices(p, derivePlan(p), lamps).needs.every((n) => n.met)).toBe(true);
+    // Nothing left to add.
+    p = edit(p, (d) => {
+      added = addMissingServicePoints(d, lamps);
+    });
+    expect(added).toBe(0);
   });
 });
 

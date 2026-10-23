@@ -5,7 +5,7 @@ import { newId } from '../model/ids';
 import type { DerivedPlan } from '../geometry/derive';
 import { current, isDraft } from 'immer';
 import { derivePlan } from '../geometry/derive';
-import { RUN_CONNECT, placeServicePoint, routeToSources, type ServicePointInput, type ServiceRunInput } from '../geometry/services';
+import { RUN_CONNECT, placeServicePoint, resolveServices, routeToSources, suggestPoint, type NeedsOf, type ServicePointInput, type ServiceRunInput } from '../geometry/services';
 import { dist } from '../geometry/vec';
 import type { D } from './walls';
 
@@ -205,3 +205,38 @@ export function resetServiceLinks(d: D, objectIds: string[], system?: ServiceSys
 
 /** Ids of every point and run (Select all in Services mode). */
 export const allServiceIds = (p: Pick<Project, 'servicePoints' | 'serviceRuns'>) => [...Object.keys(p.servicePoints ?? {}), ...Object.keys(p.serviceRuns ?? {})];
+
+/**
+ * Adds a point for every unmet need (of the items in `only`, or all), one at a time: each new point
+ * may already serve the next item, so neighbours share a socket instead of getting one each. Returns
+ * how many were added.
+ */
+export function addMissingServicePoints(d: D, needsOf: NeedsOf, only?: ReadonlySet<string>): number {
+  let added = 0;
+  const skip = new Set<string>();
+  for (let guard = 0; guard < 500; guard++) {
+    const p = (isDraft(d) ? current(d) : d) as Project;
+    const derived = derivePlan(p);
+    const next = resolveServices(p, derived, needsOf).needs.find(
+      (n) => !n.met && (!only || only.has(n.objectId)) && !skip.has(`${n.objectId}:${n.system}`),
+    );
+    if (!next) break;
+    const o = p.objects[next.objectId];
+    const needs = needsOf(o);
+    const input = needs ? suggestPoint(derived, o, next.system, needs) : null;
+    if (!input) {
+      skip.add(`${next.objectId}:${next.system}`);
+      continue;
+    }
+    const id = addServicePoint(d, input);
+    const after = (isDraft(d) ? current(d) : d) as Project;
+    const met = resolveServices(after, derivePlan(after), needsOf).needs.some((n) => n.objectId === next.objectId && n.system === next.system && n.met);
+    if (met) added++;
+    else {
+      // The point would not reach the item (e.g. the nearest wall is too far): leave the need for the user.
+      delete d.servicePoints[id];
+      skip.add(`${next.objectId}:${next.system}`);
+    }
+  }
+  return added;
+}

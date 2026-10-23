@@ -1,7 +1,7 @@
 import type { Vec2 } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
-import { placeServicePoint, routeToSources, suggestPoint, type ServiceLinkInfo } from '@/domain/geometry/services';
-import { addServicePoint, addServiceRun, connectService, disconnectService, removeRunVertex, resetServiceLinks, updateServiceRun } from '@/domain/commands/services';
+import { placeServicePoint, routeToSources, type ServiceLinkInfo } from '@/domain/geometry/services';
+import { addMissingServicePoints, addServicePoint, addServiceRun, connectService, disconnectService, removeRunVertex, resetServiceLinks, updateServiceRun } from '@/domain/commands/services';
 import { SERVICE_POINTS, SERVICE_SYSTEM_INFO, type ServicePointKind, type ServiceSystem } from '@/domain/model/services';
 import type { MenuItem } from '@/components/ContextMenu';
 import { useProjectStore } from '@/state/projectStore';
@@ -48,26 +48,16 @@ export function armRun(system: ServiceSystem, hot = false): void {
 export function addMissingPoints(objectIds?: string[]): number {
   const project = ps().project;
   if (!project) return 0;
-  const derived = derivePlan(project);
-  const needsOf = needsOfProject(project);
-  const only = objectIds ? new Set(objectIds) : null;
-  const todo = servicesState(project, derived).needs.filter((n) => !n.met && (!only || only.has(n.objectId)));
-  const inputs = todo
-    .map((n) => {
-      const o = project.objects[n.objectId];
-      const needs = o && needsOf(o);
-      return o && needs ? suggestPoint(derived, o, n.system, needs) : null;
-    })
-    .filter((x): x is NonNullable<typeof x> => !!x);
-  if (!inputs.length) {
-    toast.info(todo.length ? 'No wall near enough for the missing points' : 'Every item is connected');
+  const only = objectIds ? new Set(objectIds) : undefined;
+  const todo = servicesState(project, derivePlan(project)).needs.filter((n) => !n.met && (!only || only.has(n.objectId))).length;
+  if (!todo) {
+    toast.info('Every item is connected');
     return 0;
   }
-  ps().execute(inputs.length === 1 ? `Add ${SERVICE_POINTS[inputs[0].kind].name.toLowerCase()}` : `Add ${inputs.length} service points`, (d) => {
-    for (const i of inputs) addServicePoint(d, i);
-  });
-  toast.success(`Added ${inputs.length} point${inputs.length === 1 ? '' : 's'}`, 'Move them where they should go; connections follow.');
-  return inputs.length;
+  const added = ps().execute('Add missing points', (d) => addMissingServicePoints(d, needsOfProject(project), only)) ?? 0;
+  if (!added) toast.info('No wall near enough for the missing points', 'Place them by hand, or set a socket to sit in the floor.');
+  else toast.success(`Added ${added} point${added === 1 ? '' : 's'}`, 'Nearby items share them. Move them where they should go; connections follow.');
+  return added;
 }
 
 /** Routes every point without a run to the nearest main (Power in, Water in, Waste out). */
