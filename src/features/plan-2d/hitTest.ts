@@ -16,7 +16,9 @@ export type Handle =
   | { type: 'opening-end'; openingId: string; end: 'start' | 'end' }
   | { type: 'object-rotate'; objectId: string }
   | { type: 'object-resize'; objectId: string; sx: -1 | 0 | 1; sy: -1 | 0 | 1 }
-  | { type: 'room-label'; roomId: string };
+  | { type: 'room-label'; roomId: string }
+  /** A bend or end of a services run. */
+  | { type: 'run-vertex'; runId: string; index: number };
 
 /** World positions of handles for the current selection. */
 export function selectionHandles(project: Project, derived: DerivedPlan, selection: SelItem[], px: number) {
@@ -76,6 +78,9 @@ export function selectionHandles(project: Project, derived: DerivedPlan, selecti
       const rotLocal = { x: 0, y: -o.depth / 2 - 22 * px };
       out.push({ handle: { type: 'object-rotate', objectId: o.id }, p: add(c, rotate(rotLocal, o.rotation)) });
     }
+  } else if (s.kind === 'run') {
+    const r = project.serviceRuns?.[s.id];
+    r?.points.forEach((p, index) => out.push({ handle: { type: 'run-vertex', runId: r.id, index }, p }));
   } else if (s.kind === 'room') {
     const face = derived.roomFaces.get(s.id);
     const r = project.rooms[s.id];

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SERVICE_HOSTS, SERVICE_POINT_KINDS, SERVICE_SYSTEMS } from './services';
 
 /**
  * Neest project schema.
@@ -251,6 +252,9 @@ export const RoomSchema = z.object({
   labelOffset: Vec2Schema.default({ x: 0, y: 0 }),
 });
 
+/** One system's connection override on a placed item (see `PlacedObject.serviceLinks`). */
+export const ServiceLinkSchema = z.object({ pin: Id.nullable().default(null), skip: z.array(Id).max(50).default([]) });
+
 export const PlacedObjectSchema = z.object({
   id: Id,
   assetId: Id,
@@ -273,6 +277,14 @@ export const PlacedObjectSchema = z.object({
   model: z.string().max(60).optional(),
   /** Item layer (`Project.itemLayers`) this item is filed under; absent = unassigned. */
   layerId: Id.optional(),
+  /**
+   * Services connections the user changed (Services mode). Per system: `pin` = the point chosen by
+   * hand (null = the nearest compatible point in reach), `skip` = points the user disconnected, which
+   * automatic connection then passes over. Absent = fully automatic.
+   */
+  serviceLinks: z
+    .object({ power: ServiceLinkSchema.optional(), water: ServiceLinkSchema.optional(), drain: ServiceLinkSchema.optional() })
+    .optional(),
 });
 
 /**
@@ -344,6 +356,42 @@ export const CalloutSchema = z.object({
   endSize: z.enum(NOTE_SIZES).default('m'),
   /** Shade the item footprint, room or area the note points at. */
   highlight: z.boolean().default(true),
+});
+
+/**
+ * A services point (Services mode only): a socket, switch, water point, drain… In a wall (on a wall
+ * face, `wallId`), in the floor or in the ceiling. Drainage points are floor only.
+ */
+export const ServicePointSchema = z.object({
+  id: Id,
+  kind: z.enum(SERVICE_POINT_KINDS),
+  x: num,
+  y: num,
+  host: z.enum(SERVICE_HOSTS).default('wall'),
+  /** Wall a wall point sits in (it follows that wall's face). */
+  wallId: Id.nullable().default(null),
+  /** Height above the floor (wall points; ceiling points sit at the ceiling). */
+  height: num.min(0).max(12).default(0.3),
+  /** Facing direction in the plan (wall points: out of the wall face). */
+  rotation: num.default(0),
+  label: z.string().max(60).default(''),
+  note: z.string().max(500).default(''),
+});
+
+/**
+ * A services run (Services mode only): wiring, a water pipe or a drain pipe along a plan polyline,
+ * in a wall, the floor or the ceiling. Drain runs are floor only. Reference only: no fittings.
+ */
+export const ServiceRunSchema = z.object({
+  id: Id,
+  system: z.enum(SERVICE_SYSTEMS),
+  level: z.enum(SERVICE_HOSTS).default('floor'),
+  /** Water runs: the hot line. */
+  hot: z.boolean().default(false),
+  points: z.array(Vec2Schema).min(2).max(200),
+  /** Height of a wall run above the floor (m). */
+  height: num.min(0).max(12).default(0.3),
+  label: z.string().max(60).default(''),
 });
 
 export const MaterialCategorySchema = z.enum([
@@ -591,6 +639,8 @@ export const OptionPlanSchema = z.object({
   objects: z.record(Id, PlacedObjectSchema).default({}),
   groups: z.record(Id, ObjectGroupSchema).default({}),
   callouts: z.record(Id, CalloutSchema).default({}),
+  servicePoints: z.record(Id, ServicePointSchema).default({}),
+  serviceRuns: z.record(Id, ServiceRunSchema).default({}),
 });
 
 /**
@@ -663,6 +713,9 @@ export const ProjectSchema = z.object({
   groups: z.record(Id, ObjectGroupSchema).default({}),
   /** Callouts of the active layout option (they point at its items and rooms). */
   callouts: z.record(Id, CalloutSchema).default({}),
+  /** Services (power & plumbing reference) of the active layout option: points and runs. */
+  servicePoints: z.record(Id, ServicePointSchema).default({}),
+  serviceRuns: z.record(Id, ServiceRunSchema).default({}),
   materials: z.record(Id, MaterialSchema).default({}),
   customAssets: z.record(Id, CustomAssetSchema).default({}),
   cameras: z.array(CameraPresetSchema).default([]),
@@ -701,6 +754,8 @@ export type ItemLayer = z.infer<typeof ItemLayerSchema>;
 export type CalloutTarget = z.infer<typeof CalloutTargetSchema>;
 export type Callout = z.infer<typeof CalloutSchema>;
 export type CalloutColor = (typeof CALLOUT_COLORS)[number];
+export type ServicePoint = z.infer<typeof ServicePointSchema>;
+export type ServiceRun = z.infer<typeof ServiceRunSchema>;
 export type MaterialCategory = z.infer<typeof MaterialCategorySchema>;
 export type TextureRef = z.infer<typeof TextureRefSchema>;
 export type PhotoTextureRef = z.infer<typeof PhotoTextureRefSchema>;

@@ -19,6 +19,9 @@ import { useEditorStore, type ToolId } from '@/state/editorStore';
 import { planKeyRouter } from '@/features/plan-2d/PlanCanvas';
 import { createCurveTool, createMeasureTool, createRoomTool, createSplitTool, createWallTool } from '@/features/plan-2d/tools/drawTools';
 import { createCalloutTool } from '@/features/plan-2d/tools/calloutTool';
+import { createRunTool, createServicePointTool } from '@/features/plan-2d/tools/serviceTools';
+import { SERVICE_POINTS } from '@/domain/model/services';
+import { runColor } from '@/features/services/ServicesSvg';
 import { createOpeningTool, createPlaceTool } from '@/features/plan-2d/tools/placeTools';
 import { createExtendTool } from '@/features/plan-2d/tools/extendTool';
 import type { GhostObject, PointerInfo, Tool, ToolEnv, ToolOverlay } from '@/features/plan-2d/tools/types';
@@ -28,7 +31,7 @@ import { canScale, scalePct, scaledSize } from '@/features/editor/objectScale';
 import { isObjectLocked } from '@/domain/commands/itemLayers';
 
 /** Tools available directly in the 3D view (selection uses mesh picking instead). */
-export const TOOLS_3D: ToolId[] = ['select', 'pan', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place', 'callout'];
+export const TOOLS_3D: ToolId[] = ['select', 'pan', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place', 'callout', 'service', 'run'];
 
 const ACCENT = '#2a8a78'; // brand teal, bright enough to read over floors
 const SNAP = '#d0a650'; // brass
@@ -67,6 +70,8 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
       split: createSplitTool(),
       extend: createExtendTool(),
       callout: createCalloutTool(),
+      service: createServicePointTool(),
+      run: createRunTool(),
     }),
     [],
   );
@@ -345,6 +350,21 @@ function ToolOverlay3D({ overlay }: { overlay: ToolOverlay }) {
     );
   }
   if (overlay.ghostObject) els.push(<GhostObject3D key="ghost" ghost={overlay.ghostObject} />);
+  if (overlay.runPreview) {
+    const rp = overlay.runPreview;
+    const y = rp.level === 'floor' ? 0.01 : rp.level === 'ceiling' ? wallH - 0.02 : useEditorStore.getState().runHeight;
+    rp.points.slice(1).forEach((p, i) => els.push(<Segment key={`rp${i}`} a={rp.points[i]} b={p} color={runColor(rp)} y={y} />));
+  }
+  if (overlay.ghostService) {
+    const g = overlay.ghostService;
+    const y = g.host === 'floor' ? 0.02 : g.host === 'ceiling' ? wallH - 0.02 : SERVICE_POINTS[g.kind].height;
+    els.push(
+      <mesh key="gsvc" position={[g.x, y, g.y]} renderOrder={12} raycast={() => null}>
+        <sphereGeometry args={[0.05, 16, 12]} />
+        <meshBasicMaterial color={g.valid ? '#ffffff' : '#ff3b5c'} depthTest={false} transparent opacity={0.85} />
+      </mesh>,
+    );
+  }
   if (overlay.ghostOpening) {
     const ed = useEditorStore.getState();
     const preset = OPENING_PRESETS[ed.openingKind];

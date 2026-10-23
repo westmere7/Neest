@@ -7,6 +7,10 @@ import { confirmAction, toast } from '@/state/uiStores';
 import { groupFromSelection } from './groups';
 import { transientGroups } from '@/features/library/savedGroupAssets';
 import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
+import { allServiceIds, moveServiceRuns, moveServicePoints } from '@/domain/commands/services';
+import { SERVICE_POINTS, SERVICE_SYSTEM_INFO } from '@/domain/model/services';
+import { derivePlan } from '@/domain/geometry/derive';
+import { servicePointAt } from '@/domain/geometry/services';
 
 const ps = () => useProjectStore.getState();
 const es = () => useEditorStore.getState();
@@ -30,6 +34,14 @@ export function describeSelection(project: Project, sel: SelItem[]): string {
       return project.rooms[s.id]?.name ?? 'Room';
     case 'callout':
       return project.callouts?.[s.id]?.title || 'Note';
+    case 'service': {
+      const p = project.servicePoints?.[s.id];
+      return p ? p.label || SERVICE_POINTS[p.kind].name : 'Point';
+    }
+    case 'run': {
+      const r = project.serviceRuns?.[s.id];
+      return r ? r.label || (r.system === 'water' && r.hot ? 'Hot water pipe' : SERVICE_SYSTEM_INFO[r.system].run) : 'Run';
+    }
   }
 }
 
@@ -79,6 +91,14 @@ export async function deleteSelection(): Promise<void> {
  */
 export function duplicateSelection(): void {
   const project = ps().project;
+  // Services points and runs: copies beside the originals.
+  const svc = es().selection.filter((s) => s.kind === 'service' || s.kind === 'run');
+  if (project && svc.length && svc.length === es().selection.length) {
+    const ids = ps().execute('Duplicate', (d) => duplicateEntities(d, svc.map((s) => s.id), { x: 0.3, y: 0.3 }));
+    const p = ps().project!;
+    if (ids?.length) es().setSelection(ids.map((id) => ({ kind: p.servicePoints?.[id] ? 'service' : 'run', id }) as SelItem));
+    return;
+  }
   const sel = es().selection.filter((s) => s.kind === 'object' || s.kind === 'opening');
   if (!project || !sel.length) {
     if (es().selection.length) toast.info('Only furniture and openings can be duplicated');
@@ -161,8 +181,13 @@ export function nudgeSelection(dx: number, dy: number): void {
     }
   }
   const openings = sel.filter((s) => s.kind === 'opening').map((s) => s.id);
-  if (!objIds.length && !nodeIds.size && !openings.length) return;
+  const derived = derivePlan(project);
+  const svc = Object.fromEntries(sel.filter((s) => s.kind === 'service' && project.servicePoints?.[s.id]).map((s) => [s.id, servicePointAt(derived, project.servicePoints[s.id])]));
+  const runs = Object.fromEntries(sel.filter((s) => s.kind === 'run' && project.serviceRuns?.[s.id]).map((s) => [s.id, project.serviceRuns[s.id].points]));
+  if (!objIds.length && !nodeIds.size && !openings.length && !Object.keys(svc).length && !Object.keys(runs).length) return;
   ps().execute('Nudge', (d) => {
+    moveServicePoints(d, derived, svc, { x: dx, y: dy });
+    moveServiceRuns(d, runs, { x: dx, y: dy });
     translateObjects(d, objIds, { x: dx, y: dy });
     if (nodeIds.size) {
       translateNodes(d, [...nodeIds], { x: dx, y: dy });
@@ -209,6 +234,10 @@ export function reverseWall(id: string): void {
 export function selectAll(): void {
   const project = ps().project;
   if (!project) return;
+  if (es().servicesMode) {
+    es().setSelection(allServiceIds(project).map((id) => ({ kind: project.servicePoints?.[id] ? 'service' : 'run', id }) as SelItem));
+    return;
+  }
   const sel: SelItem[] = [
     ...Object.values(project.walls)
       .filter((w) => !w.locked && !project.layers.construction.locked)
@@ -232,7 +261,13 @@ export function pruneSelection(project: Project): void {
           ? !!project.openings[s.id]
           : s.kind === 'object'
             ? !!project.objects[s.id]
-            : !!project.rooms[s.id];
+            : s.kind === 'callout'
+              ? !!project.callouts?.[s.id]
+              : s.kind === 'service'
+                ? !!project.servicePoints?.[s.id]
+                : s.kind === 'run'
+                  ? !!project.serviceRuns?.[s.id]
+                  : !!project.rooms[s.id];
   const next = sel.filter(exists);
   if (next.length !== sel.length) es().setSelection(next);
   const hover = es().hover;

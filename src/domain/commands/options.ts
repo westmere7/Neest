@@ -10,7 +10,7 @@ import type { D } from './walls';
  * imported models, cameras, render, layers and guest settings. A project without `options` has one
  * implicit layout, "Option A".
  */
-export const PLAN_KEYS = ['nodes', 'walls', 'openings', 'rooms', 'objects', 'groups', 'callouts'] as const;
+export const PLAN_KEYS = ['nodes', 'walls', 'openings', 'rooms', 'objects', 'groups', 'callouts', 'servicePoints', 'serviceRuns'] as const;
 
 export type NewOptionMode = 'duplicate' | 'shell' | 'blank';
 
@@ -26,6 +26,8 @@ function takePlan(d: D): OptionPlan {
     objects: snapshot(d.objects),
     groups: snapshot(d.groups),
     callouts: snapshot(d.callouts ?? {}),
+    servicePoints: snapshot(d.servicePoints ?? {}),
+    serviceRuns: snapshot(d.serviceRuns ?? {}),
   } as OptionPlan;
 }
 
@@ -44,6 +46,8 @@ function putPlan(d: D, plan: OptionPlan): void {
   d.objects = own(plan.objects);
   d.groups = own(plan.groups);
   d.callouts = own(plan.callouts ?? {});
+  d.servicePoints = own(plan.servicePoints ?? {});
+  d.serviceRuns = own(plan.serviceRuns ?? {});
 }
 
 /** Next free option letter: A, B… Z, then AA, AB… */
@@ -88,11 +92,12 @@ export function switchOption(d: D, id: string): boolean {
   return true;
 }
 
-const emptyPlan = (): OptionPlan => ({ nodes: {}, walls: {}, openings: {}, rooms: {}, objects: {}, groups: {}, callouts: {} });
+const emptyPlan = (): OptionPlan => ({ nodes: {}, walls: {}, openings: {}, rooms: {}, objects: {}, groups: {}, callouts: {}, servicePoints: {}, serviceRuns: {} });
 
 /**
  * Adds an option and switches to it. `duplicate` copies the current plan, `shell` keeps the walls,
  * doors, windows and rooms but no furniture, `blank` starts empty. Returns the new option's id.
+ * Services (sockets, water points, drains and their runs) belong to the building and stay in `shell`.
  */
 export function addOption(d: D, mode: NewOptionMode, name?: string): string {
   const options = ensureOptions(d);

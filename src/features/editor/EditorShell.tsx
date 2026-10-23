@@ -36,7 +36,10 @@ import {
   Undo2,
   Waypoints,
   ChevronDown,
+  Zap,
 } from 'lucide-react';
+import { ServicesPanel } from '@/features/services/ServicesPanel';
+import { toggleServicesMode } from '@/features/services/actions';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type PlanMode, type ToolId, type Workspace } from '@/state/editorStore';
 import { useDialogStore } from '@/state/uiStores';
@@ -69,6 +72,7 @@ export function EditorShell() {
   const libraryOpen = useEditorStore((s) => s.libraryOpen);
   const libraryWidth = useEditorStore((s) => s.libraryWidth);
   const layersOpen = useEditorStore((s) => s.layersPanelOpen);
+  const servicesMode = useEditorStore((s) => s.servicesMode);
   const isMobile = useIsMobile();
   useEditorShortcuts(isMobile);
   useDropAsset();
@@ -104,10 +108,10 @@ export function EditorShell() {
 
   return (
     <div
-      className={`editor ws-${workspace}${chromeHidden ? ' chrome-hidden' : ''}${isMobile ? ' is-mobile' : ''}`}
+      className={`editor ws-${workspace}${chromeHidden ? ' chrome-hidden' : ''}${isMobile ? ' is-mobile' : ''}${servicesMode ? ' services-on' : ''}`}
       style={
         {
-          '--lib-offset': libraryOpen && !isMobile && workspace === '3d' ? `${libraryWidth + 8}px` : '0px',
+          '--lib-offset': !isMobile && workspace === '3d' && (servicesMode || libraryOpen) ? `${servicesMode ? 308 : libraryWidth + 8}px` : '0px',
           '--rail-offset': !isMobile && workspace === '3d' ? 'calc(var(--rail-w) + 18px)' : '0px',
         } as React.CSSProperties
       }
@@ -130,7 +134,7 @@ export function EditorShell() {
         <>
           <TopBar isMobile={isMobile} />
           {!isMobile && (showPlan || workspace === '3d') && <ToolRail in3d={workspace === '3d'} />}
-          {libraryOpen && workspace !== 'walk' && <LibraryPanel isMobile={isMobile} />}
+          {servicesMode && !isMobile && workspace !== 'walk' ? <ServicesPanel /> : libraryOpen && workspace !== 'walk' && <LibraryPanel isMobile={isMobile} />}
           {/* In the walkthrough it only shows the Project panel. */}
           <Inspector isMobile={isMobile} />
           {workspace !== 'walk' && !isMobile && <MaterialPanel />}
@@ -411,6 +415,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
   const buildGroup = useEditorStore((s) => s.buildGroup);
   const openingKind = useEditorStore((s) => s.openingKind);
   const viewPanelOpen = useEditorStore((s) => s.viewPanelOpen);
+  const servicesMode = useEditorStore((s) => s.servicesMode);
   const set = useEditorStore((s) => s.set);
 
   const inFurnitureLib = libraryOpen && (libraryTab === 'furniture' || libraryTab === 'materials');
@@ -427,7 +432,9 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           tooltipSide="right"
           className="library-hero-btn"
           onClick={() => {
-            if (inFurnitureLib) set({ libraryOpen: false });
+            // The Services panel takes the library's place: the library leaves Services mode.
+            if (servicesMode) set({ servicesMode: false, libraryOpen: true, libraryTab: 'furniture' });
+            else if (inFurnitureLib) set({ libraryOpen: false });
             else set({ libraryOpen: true, libraryTab: 'furniture' });
           }}
         >
@@ -561,6 +568,22 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         >
           <MessageSquareText size={18} />
           <span className="rail-btn-label">Callout</span>
+        </IconButton>
+      </div>
+
+      {/* Services: power & plumbing reference in an X-ray view */}
+      <div className="tool-rail-group floating" role="group" aria-label="Services">
+        <IconButton
+          label="Services (power & plumbing)"
+          shortcut="U"
+          active={servicesMode}
+          tooltipSide="right"
+          className="rail-labeled-btn rail-services-btn"
+          onClick={toggleServicesMode}
+          data-testid="tool-services"
+        >
+          <Zap size={18} />
+          <span className="rail-btn-label">Services</span>
         </IconButton>
       </div>
 

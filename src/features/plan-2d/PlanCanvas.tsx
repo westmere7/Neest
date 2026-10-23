@@ -20,6 +20,10 @@ import { createCurveTool, createMeasureTool, createRoomTool, createSplitTool, cr
 import { createCalloutTool } from './tools/calloutTool';
 import { createOpeningTool, createPlaceTool } from './tools/placeTools';
 import { createExtendTool } from './tools/extendTool';
+import { createRunTool, createServicePointTool } from './tools/serviceTools';
+import { PointMarker, RUN_DASH, RUN_PX, ServicesSvg, runColor } from '@/features/services/ServicesSvg';
+import { hitServiceLink, hitServices } from '@/features/services/hit';
+import { servicesMenuItems } from '@/features/services/actions';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './tools/types';
 import { openContextMenu } from '@/components/ContextMenu';
 import { floatingInsets } from '@/components/layoutInsets';
@@ -54,6 +58,8 @@ export function PlanCanvas() {
   const fitRequest = useEditorStore((s) => s.fitRequest);
   const chromeHidden = useEditorStore((s) => s.chromeHidden);
   const theme = usePrefsStore((s) => s.theme);
+  const servicesMode = useEditorStore((s) => s.servicesMode);
+  const servicesShown = useEditorStore((s) => s.servicesShown);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -78,6 +84,8 @@ export function PlanCanvas() {
       split: createSplitTool(),
       extend: createExtendTool(),
       callout: createCalloutTool(),
+      service: createServicePointTool(),
+      run: createRunTool(),
     }),
     [],
   );
@@ -404,6 +412,14 @@ export function PlanCanvas() {
       return;
     }
     const pi = info(e);
+    if (servicesMode) {
+      const hit = hitServices(project, derived, pi.world, 1 / camera.zoom, servicesShown);
+      const link = hit?.kind === 'service' ? null : hitServiceLink(project, derived, pi.world, 1 / camera.zoom, servicesShown);
+      if (hit && !selection.some((s) => s.id === hit.id)) useEditorStore.getState().setSelection([hit]);
+      const items = servicesMenuItems(link ? null : hit, pi.world, link);
+      if (items.length) openContextMenu(e.clientX, e.clientY, items);
+      return;
+    }
     const hit = hitTest(project, derived, pi.world, HIT_PX / camera.zoom);
     if (hit && !selection.some((s) => s.id === hit.id)) useEditorStore.getState().setSelection([hit]);
     const items = planContextMenuItems(hit, pi.world);
@@ -424,13 +440,15 @@ export function PlanCanvas() {
     window.dispatchEvent(new CustomEvent('neest:drop-asset', { detail: { assetId, x: world.x, y: world.y } }));
   };
 
-  const pal = planPalette(planMode, theme);
+  // Services mode: an X-ray of the plan (dark outline drawing, faded) under the services layer.
+  const pal = servicesMode ? planPalette('draft', 'dark') : planPalette(planMode, theme);
   // Content packs reload live: a new options object redraws pack items.
   const packs = usePackVersion();
   const calloutSel = useMemo(() => new Set(selection.filter((x) => x.kind === 'callout').map((x) => x.id)), [selection]);
+  const selectedIds = useMemo(() => new Set(selection.map((x) => x.id)), [selection]);
   const drawOpts = useMemo<PlanDrawOptions>(
     () => ({
-      mode: planMode,
+      mode: servicesMode ? 'draft' : planMode,
       palette: pal,
       px,
       unit: project.settings.units,
@@ -438,8 +456,8 @@ export function PlanCanvas() {
       areaUnit: project.settings.areaUnit,
       showRoomLabels: project.settings.showRoomLabels,
       showAreas: project.settings.showRoomAreas,
-      dims: project.settings.dimensions,
-      showFurniture: true,
+      dims: servicesMode ? { overall: false, walls: false, rooms: false } : project.settings.dimensions,
+      showFurniture: !servicesMode,
       showConstruction: true,
       showAnnotations: true,
       textures: true,
@@ -447,10 +465,11 @@ export function PlanCanvas() {
       halo: true,
       idPrefix: 'scr',
       calloutHighlight: calloutSel,
+      showCallouts: !servicesMode,
     }),
     // Quantise px so tiny zoom changes reuse the memoised drawing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [planMode, pal, Math.round(Math.log(px) * 40), project.settings, packs, calloutSel],
+    [planMode, pal, Math.round(Math.log(px) * 40), project.settings, packs, calloutSel, servicesMode],
   );
 
   const gridStep = useMemo(() => {
@@ -463,7 +482,7 @@ export function PlanCanvas() {
   return (
     <div
       ref={containerRef}
-      className={`plan-canvas mode-${planMode}${chromeHidden ? ' chrome-hidden' : ''}`}
+      className={`plan-canvas mode-${planMode}${chromeHidden ? ' chrome-hidden' : ''}${servicesMode ? ' services-mode' : ''}`}
       style={{ background: pal.paper }}
       onDragOver={onDragOver}
       onDrop={onDrop}
@@ -498,7 +517,16 @@ export function PlanCanvas() {
         {gridVisible && planMode !== 'presentation' && !chromeHidden && (
           <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#grid-major)" pointerEvents="none" />
         )}
-        <PlanDrawing project={project} derived={derived} opts={drawOpts} />
+        {servicesMode ? (
+          <>
+            <g opacity={0.42}>
+              <PlanDrawing project={project} derived={derived} opts={drawOpts} />
+            </g>
+            <ServicesSvg project={project} derived={derived} px={px} shown={servicesShown} selected={selectedIds} hoverId={hover?.id ?? null} />
+          </>
+        ) : (
+          <PlanDrawing project={project} derived={derived} opts={drawOpts} />
+        )}
         {!chromeHidden && (
           <SelectionLayer px={px} hoverId={hover?.id ?? null} />
         )}
@@ -606,7 +634,7 @@ function SelectionLayer({ px, hoverId }: { px: number; hoverId: string | null })
         </g>
       );
     }
-    if (handle.type === 'node' || handle.type === 'curve' || handle.type === 'room-label')
+    if (handle.type === 'node' || handle.type === 'curve' || handle.type === 'room-label' || handle.type === 'run-vertex')
       return <circle key={i} cx={p.x} cy={p.y} r={r * 1.1} className={`handle ${handle.type}`} strokeWidth={1.5 * px} />;
     return <rect key={i} x={p.x - r} y={p.y - r} width={2 * r} height={2 * r} className="handle" strokeWidth={1.5 * px} />;
   });
@@ -719,6 +747,23 @@ function OverlayLayer({ overlay, px }: { overlay: ToolOverlay; px: number }) {
         </g>,
       );
     }
+  }
+  if (overlay.runPreview && overlay.runPreview.points.length) {
+    const r = overlay.runPreview;
+    const dash = RUN_DASH[r.level];
+    els.push(
+      <g key="runp">
+        <path d={polyPath(r.points, false)} fill="none" stroke="#0c1522" strokeOpacity={0.6} strokeWidth={(RUN_PX[r.system] + 2) * px} strokeLinejoin="round" />
+        <path d={polyPath(r.points, false)} fill="none" stroke={runColor(r)} strokeWidth={RUN_PX[r.system] * px} strokeLinejoin="round" strokeDasharray={dash?.map((x) => x * px).join(' ')} />
+        {r.points.slice(0, -1).map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={3 * px} fill={runColor(r)} />
+        ))}
+      </g>,
+    );
+  }
+  if (overlay.ghostService) {
+    const g = overlay.ghostService;
+    els.push(<PointMarker key="gsvc" pt={{ ...g, wallId: null }} derived={derivePlan(project)} px={px} ghost valid={g.valid} />);
   }
   if (overlay.splitMarker) {
     const { a, b } = overlay.splitMarker;

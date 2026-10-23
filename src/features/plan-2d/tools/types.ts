@@ -3,6 +3,7 @@ import type { DerivedPlan } from '@/domain/geometry/derive';
 import type { SnapContext, SnapKind, SnapResult } from '@/domain/geometry/snapping';
 import type { DimensionSpec } from '../dimensions';
 import type { EditorState, ToolId } from '@/state/editorStore';
+import type { ServiceHost, ServicePointKind, ServiceSystem } from '@/domain/model/services';
 
 export interface PointerInfo {
   /** Raw world position. */
@@ -44,6 +45,10 @@ export interface ToolOverlay {
   splitMarker?: { a: Vec2; b: Vec2 } | null;
   curveHandle?: { a: Vec2; b: Vec2; c: Vec2; mid: Vec2 } | null;
   numeric?: { label: string; value: string; p: Vec2 } | null;
+  /** Services point being placed (red when it can't go there). */
+  ghostService?: { kind: ServicePointKind; host: ServiceHost; x: number; y: number; rotation: number; valid: boolean } | null;
+  /** Services run being drawn. */
+  runPreview?: { points: Vec2[]; system: ServiceSystem; hot: boolean; level: ServiceHost } | null;
 }
 
 export interface ToolEnv {

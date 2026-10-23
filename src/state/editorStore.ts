@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import type { Opening, OpeningDesign, OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
 import type { MaterialTarget } from '@/domain/commands/entities';
+import type { ServiceHost, ServicePointKind, ServiceSystem } from '@/domain/model/services';
 
-export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend' | 'callout';
+export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend' | 'callout' | 'service' | 'run';
 /** Which line of a new wall follows the drawn points: its centreline or one of its faces. */
 export type WallReference = 'center' | 'left' | 'right';
 export type Workspace = 'plan' | '3d' | 'split' | 'walk';
 export type PlanMode = 'draft' | 'furnished' | 'presentation';
-export type SelKind = 'wall' | 'node' | 'opening' | 'object' | 'room' | 'callout';
+export type SelKind = 'wall' | 'node' | 'opening' | 'object' | 'room' | 'callout' | 'service' | 'run';
 export type LibraryTab = 'build' | 'furniture' | 'materials';
 /** Structural tools in the Build tab. (Columns, beams and similar pieces are furniture-library items.) */
 export type BuildGroup = 'walls' | 'doors' | 'windows';
@@ -130,6 +131,21 @@ export interface EditorState {
   materialPicker: MaterialPickerRequest | null;
   /** 3D: request to move the camera to a preset id or a named view. */
   cameraRequest: { view: string; nonce: number } | null;
+  /**
+   * Services mode (rail → Services, U): the house turns X-ray and only power and plumbing points, runs,
+   * connections and the items that need them show; everything else is hidden from view and picking.
+   */
+  servicesMode: boolean;
+  /** Systems shown in Services mode. */
+  servicesShown: Record<ServiceSystem, boolean>;
+  /** Point kind the services point tool places, and the host it is forced into (null = the kind's default). */
+  serviceKind: ServicePointKind;
+  serviceHost: ServiceHost | null;
+  /** Run tool: system, level (drain runs are floor only), hot water line, wall-run height. */
+  runSystem: ServiceSystem;
+  runLevel: ServiceHost;
+  runHot: boolean;
+  runHeight: number;
 
   setTool(tool: ToolId): void;
   setSelection(sel: SelItem[]): void;
@@ -186,6 +202,14 @@ export const useEditorStore = create<EditorState>((set) => ({
   activeMaterialId: null,
   materialPicker: null,
   cameraRequest: null,
+  servicesMode: false,
+  servicesShown: { power: true, water: true, drain: true },
+  serviceKind: 'socket',
+  serviceHost: null,
+  runSystem: 'power',
+  runLevel: 'wall',
+  runHot: false,
+  runHeight: 0.3,
 
   setTool: (tool) => set({ tool, hint: null, snapLabel: null }),
   setSelection: (selection) => set({ selection: expandSelection(selection) }),

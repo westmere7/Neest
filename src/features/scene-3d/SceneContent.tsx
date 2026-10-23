@@ -31,6 +31,8 @@ import { reflectiveMaterial, registerReflectiveFloor } from './floorReflections'
 import { WALL_DEPTH_BIAS, biasDepth } from './depthBias';
 import { Callouts3D } from '@/features/callouts/Callouts3D';
 import { isObjectHidden } from '@/domain/commands/itemLayers';
+import { Services3D, XRayGhost, type ServicesViewOptions } from './Services3D';
+import { neededSystems } from '@/domain/model/services';
 
 export interface SceneOptions {
   wallDisplay: WallDisplay;
@@ -44,10 +46,12 @@ export interface SceneOptions {
   /** Hide everything above eye level except walls (used by walkthrough to keep ceilings). */
   interactive: boolean;
   selectedIds?: Set<string>;
-  onPick?: (kind: 'wall' | 'object' | 'opening' | 'room', id: string, e: ThreeEvent<MouseEvent>) => void;
+  onPick?: (kind: 'wall' | 'object' | 'opening' | 'room' | 'service' | 'run', id: string, e: ThreeEvent<MouseEvent>) => void;
   onObjectPointerDown?: (obj: PlacedObject, e: ThreeEvent<PointerEvent>) => void;
   /** Note target highlights (each note and the Notes layer still decide); the labels are NotesOverlay. */
   showCallouts?: boolean;
+  /** Services mode: the building as an X-ray, only items that need services, plus points, runs and connections. */
+  services?: Omit<ServicesViewOptions, 'onPick' | 'selectedIds'>;
 }
 
 /** Sun direction from time of day (hours) and azimuth (degrees, 0 = north/-y, clockwise). */
@@ -717,14 +721,23 @@ export function SceneContent({
   );
   const constructionVisible = project.layers.construction.visible;
   const hubMat = registry.get(project, 'plaster-white');
+  const services = options.services;
+  // In Services mode walls, doors and floors are not pickable (only points, runs and service items).
+  const structurePick = services ? undefined : options.onPick;
+  const planRef = useRef<THREE.Group>(null);
   const objects = Object.values(project.objects).filter((o) => {
     if (isObjectHidden(project, o) || !project.layers.furniture.visible) return false;
+    if (services && !neededSystems(getAsset(project, o.assetId)?.services).some((s) => services.shown[s])) return false;
     // Lights of hidden items still shine (LampLights reads every object).
     return !isAssetHidden(getAsset(project, o.assetId), options.hiddenCategories);
   });
   return (
-    <group name="neest-plan">
+    <group name="neest-plan" ref={planRef}>
       <ClippedMaterialSync />
+      {services && <XRayGhost root={planRef} />}
+      {services && (
+        <Services3D project={project} derived={derived} options={{ ...services, selectedIds: options.selectedIds, onPick: options.onPick }} />
+      )}
       {constructionVisible && options.wallDisplay !== 'hidden' && (
         <group name="walls">
           {[...derived.network.walls.values()]
@@ -739,7 +752,7 @@ export function SceneContent({
                 fade={options.wallDisplay === 'fade'}
                 center={center}
                 shadows={shadows}
-                onPick={options.onPick}
+                onPick={structurePick}
               />
             ))}
           {[...derived.network.walls.values()]
@@ -752,7 +765,7 @@ export function SceneContent({
                 registry={registry}
                 cut={cut}
                 shadows={shadows}
-                onPick={options.onPick}
+                onPick={structurePick}
               />
             ))}
           {derived.network.hubs.map((h) => (
@@ -773,7 +786,7 @@ export function SceneContent({
                   project={project}
                   ctx={ctx}
                   cut={cut}
-                  onPick={options.onPick}
+                  onPick={structurePick}
                 />
               )),
             )}
@@ -785,7 +798,7 @@ export function SceneContent({
           ctx={ctx}
           showCeilings={options.showCeilings}
           reflect={options.quality === 'ultra'}
-          onPick={options.onPick}
+          onPick={structurePick}
         />
       </group>
       <group name="objects">
@@ -808,7 +821,7 @@ export function SceneContent({
           dims={options.showDimensions}
         />
       )}
-      {options.showCallouts && (
+      {options.showCallouts && !services && (
         <Callouts3D
           project={project}
           derived={derived}

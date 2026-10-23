@@ -30,6 +30,7 @@ import { useEditorStore } from '@/state/editorStore';
 import { useDialogStore, usePrefsStore } from '@/state/uiStores';
 import type { AssetVariant } from '@/data/assets/variants';
 import { useAssetThumbnail } from './thumbnails';
+import { ServiceNeeds } from '@/features/services/ServiceBadges';
 
 /**
  * Library hover card: a bigger (live 3D) preview, colour variant swatches, size, source, description,
@@ -536,6 +537,7 @@ function InfoBody({
       {pickers && <InfoModels asset={asset} />}
       {pickers && <InfoVariants asset={asset} />}
       {asset.price && <InfoPrice price={asset.price} />}
+      <ServiceNeeds services={asset.services} />
       {asset.description && <p className="aic-desc">{asset.description}</p>}
       {brand && (
         <section className="aic-brand" aria-label={`${brand.name} product`}>

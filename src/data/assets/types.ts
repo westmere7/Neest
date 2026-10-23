@@ -1,3 +1,5 @@
+import type { AssetServices } from '@/domain/model/services';
+
 /**
  * Built-in parametric asset contract.
  *
@@ -128,6 +130,8 @@ export interface AssetDefinition {
   price?: AssetPrice;
   /** Care and placement guide for plants (shown in the library's info card and the Inspector). */
   plant?: PlantInfo;
+  /** Power, water and drainage the item needs where it stands (library icons, Services mode). */
+  services?: AssetServices;
   /**
    * Hand-made colour variants (outfits, finish sets) offered instead of the automatic themes.
    * `materials` maps slot id → material id for the slots that differ from the defaults.

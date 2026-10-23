@@ -16,6 +16,10 @@ import { axisGuide, axisLockLabel, createAxisLock, onAxis, snapOnAxis, type Axis
 import type { CalloutTarget } from '@/domain/model/schema';
 import { useDialogStore } from '@/state/uiStores';
 import { isObjectLocked } from '@/domain/commands/itemLayers';
+import { insertRunVertex, moveServicePoints, moveServiceRuns, setRunVertex } from '@/domain/commands/services';
+import { pointNear, servicePointAt, wallCentreAt } from '@/domain/geometry/services';
+import { hitServices, marqueeServices } from '@/features/services/hit';
+import { closestPointOnSegment } from '@/domain/geometry/vec';
 
 type Gesture =
   | { type: 'pending'; start: Vec2; startScreen: Vec2; hit: SelItem | null; shift: boolean; wasSelected: boolean }
@@ -27,6 +31,9 @@ type Gesture =
       objects: Record<string, Vec2>;
       /** Spot and area callouts moving with the selection: their targets at the start. */
       callouts: Record<string, CalloutTarget>;
+      /** Services points and runs moving with the selection: positions and vertices at the start. */
+      services: Record<string, Vec2>;
+      runs: Record<string, Vec2[]>;
       perp: { normal: Vec2 } | null;
       primaryObject: string | null;
       /** Shift keeps the move on one plan axis. */
@@ -40,7 +47,9 @@ type Gesture =
   | { type: 'resize'; objectId: string; sx: -1 | 0 | 1; sy: -1 | 0 | 1; base: PlacedObject }
   | { type: 'label'; roomId: string; start: Vec2; base: Vec2 }
   /** Dragging a callout's label: its offset from the anchor changes. */
-  | { type: 'callout'; id: string; start: Vec2; base: Vec2 };
+  | { type: 'callout'; id: string; start: Vec2; base: Vec2 }
+  /** Dragging one bend (or end) of a services run. */
+  | { type: 'run-vertex'; runId: string; index: number };
 
 const DRAG_THRESHOLD_PX = 4;
 
@@ -68,6 +77,12 @@ export function createSelectTool(): Tool {
   let gesture: Gesture | null = null;
   const store = () => useProjectStore.getState();
   const editor = () => useEditorStore.getState();
+
+  /** What is under the pointer: in Services mode only points, runs and the items that need services. */
+  const pick = (env: ToolEnv, p: Vec2): SelItem | null => {
+    const ed = editor();
+    return ed.servicesMode ? hitServices(env.project(), env.derived(), p, env.px(), ed.servicesShown) : hitTest(env.project(), env.derived(), p, env.tol());
+  };
 
   const fmt = (env: ToolEnv, m: number) => {
     const s = env.project().settings;
@@ -103,7 +118,19 @@ export function createSelectTool(): Tool {
     const nodes: Record<string, Vec2> = {};
     const objects: Record<string, Vec2> = {};
     const callouts: Record<string, CalloutTarget> = {};
+    const services: Record<string, Vec2> = {};
+    const runs: Record<string, Vec2[]> = {};
     for (const s of movable) {
+      if (s.kind === 'service') {
+        const pt = project.servicePoints?.[s.id];
+        if (pt) services[pt.id] = servicePointAt(env.derived(), pt);
+        continue;
+      }
+      if (s.kind === 'run') {
+        const r = project.serviceRuns?.[s.id];
+        if (r) runs[r.id] = r.points.map((q) => ({ ...q }));
+        continue;
+      }
       if (s.kind === 'callout') {
         const c = project.callouts?.[s.id];
         if (c && (c.target.kind === 'point' || c.target.kind === 'region')) callouts[c.id] = structuredClone(c.target);
@@ -134,13 +161,16 @@ export function createSelectTool(): Tool {
       }
     }
     const objIds = Object.keys(objects);
-    store().begin(Object.keys(nodes).length ? 'Move walls' : objIds.length > 1 ? 'Move objects' : 'Move object');
+    const svcOnly = !objIds.length && !Object.keys(nodes).length && (Object.keys(services).length || Object.keys(runs).length);
+    store().begin(Object.keys(nodes).length ? 'Move walls' : svcOnly ? 'Move services' : objIds.length > 1 ? 'Move objects' : 'Move object');
     gesture = {
       type: 'move',
       start: g.start,
       nodes,
       objects,
       callouts,
+      services,
+      runs,
       perp,
       primaryObject: objIds.length === 1 && !Object.keys(nodes).length ? objIds[0] : null,
       lock: createAxisLock(),
@@ -157,7 +187,7 @@ export function createSelectTool(): Tool {
       editor().setHover(null);
       return;
     }
-    const hit = hitTest(project, derived, e.world, env.tol());
+    const hit = pick(env, e.world);
     editor().setHover(hit && hit.kind !== 'room' ? hit : null);
     env.setCursor(hit && hit.kind !== 'room' ? 'pointer' : 'default');
   };
@@ -200,6 +230,9 @@ export function createSelectTool(): Tool {
         } else if (h.type === 'object-resize') {
           store().begin('Resize object');
           gesture = { type: 'resize', objectId: h.objectId, sx: h.sx, sy: h.sy, base: { ...project.objects[h.objectId] } };
+        } else if (h.type === 'run-vertex') {
+          store().begin('Move bend');
+          gesture = { type: 'run-vertex', runId: h.runId, index: h.index };
         } else if (h.type === 'room-label') {
           const r = project.rooms[h.roomId];
           store().begin('Move room label');
@@ -207,7 +240,7 @@ export function createSelectTool(): Tool {
         }
         return;
       }
-      const hit = hitTest(project, derived, e.world, env.tol());
+      const hit = pick(env, e.world);
       const wasSelected = !!hit && sel.some((s) => s.id === hit.id);
       if (hit) {
         // Shift on a selected item waits for the release: a drag moves the selection along one axis instead.
@@ -281,6 +314,8 @@ export function createSelectTool(): Tool {
               if (hugRot !== undefined && id === g.primaryObject) o.rotation = normalizeRotation(hugRot);
               if (lift !== undefined) o.elevation = lift;
             }
+            moveServicePoints(d, env.derived(), g.services, delta);
+            moveServiceRuns(d, g.runs, delta);
             for (const [id, t] of Object.entries(g.callouts)) {
               const c = d.callouts?.[id];
               if (!c) continue;
@@ -476,6 +511,33 @@ export function createSelectTool(): Tool {
           });
           return;
         }
+        case 'run-vertex': {
+          const r = project.serviceRuns?.[gesture.runId];
+          if (!r) return;
+          const derived = env.derived();
+          const tol = 14 * env.px();
+          const neighbour = r.points[gesture.index === 0 ? 1 : gesture.index - 1];
+          let p = e.world;
+          let label: string | null = null;
+          const pt = !e.alt ? pointNear(project, derived, e.world, r.system, tol) : null;
+          if (pt) {
+            p = servicePointAt(derived, pt);
+            label = 'Connected';
+          } else if (!e.alt) {
+            const s = env.snap(e.world, { anchor: neighbour, forceAngle: e.shift });
+            p = s.point;
+            label = s.label || null;
+            const c = r.level === 'wall' ? wallCentreAt(derived, p, tol) : null;
+            if (c) {
+              p = c.p;
+              label = 'In wall';
+            }
+          }
+          const { runId, index } = gesture;
+          store().preview((d) => setRunVertex(d, runId, index, p));
+          env.setSnapLabel(label);
+          return;
+        }
         case 'callout': {
           const off = add(gesture.base, sub(e.world, gesture.start));
           const id = gesture.id;
@@ -500,14 +562,14 @@ export function createSelectTool(): Tool {
             if (g.shift) editor().toggleSelection(g.hit);
             else editor().setSelection([g.hit]);
           }
-          if (!g.hit) {
+          if (!g.hit && !editor().servicesMode) {
             const room = hitTest(project, env.derived(), e.world, env.tol(), { rooms: true });
             if (room) editor().setSelection(g.shift ? [...editor().selection, room] : [room]);
           }
           break;
         }
         case 'marquee': {
-          const items = marqueeSelect(project, env.derived(), g.a, g.b);
+          const items = editor().servicesMode ? marqueeServices(project, env.derived(), g.a, g.b, editor().servicesShown) : marqueeSelect(project, env.derived(), g.a, g.b);
           editor().setSelection(g.additive ? [...editor().selection, ...items.filter((i) => !editor().selection.some((s) => s.id === i.id))] : items);
           break;
         }
@@ -539,6 +601,7 @@ export function createSelectTool(): Tool {
         case 'resize':
         case 'label':
         case 'callout':
+        case 'run-vertex':
         case 'slide-opening':
           store().commit();
           break;
@@ -548,6 +611,25 @@ export function createSelectTool(): Tool {
     },
 
     onDoubleClick(e, env) {
+      // Services mode: double-click a run to add a bend there.
+      if (editor().servicesMode) {
+        const hit = pick(env, e.world);
+        const r = hit?.kind === 'run' ? env.project().serviceRuns?.[hit.id] : undefined;
+        if (r) {
+          let best = { i: 0, d: Infinity, p: e.world };
+          for (let i = 1; i < r.points.length; i++) {
+            const c = closestPointOnSegment(e.world, r.points[i - 1], r.points[i]);
+            if (c.dist < best.d) best = { i: i - 1, d: c.dist, p: c.point };
+          }
+          const at = best;
+          store().execute('Add bend', (d) => insertRunVertex(d, r.id, at.i, at.p));
+          editor().setSelection([{ kind: 'run', id: r.id }]);
+        } else if (hit?.kind === 'object') {
+          editor().setSelection([hit]);
+          editor().requestFocus();
+        }
+        return;
+      }
       // A callout: open its editor. An item: select it and close in on it. A room: select it and edit its name.
       const call = hitTest(env.project(), env.derived(), e.world, env.tol(), { callouts: true });
       if (call) {

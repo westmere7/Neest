@@ -26,6 +26,7 @@ import { SelectSameTypeButton } from './WallTypes';
 import { AnnotationToggles } from './AnnotationToggles';
 import { CalloutInspector } from '@/features/callouts/CalloutInspector';
 import { NoteButton } from '@/features/callouts/ItemNotes';
+import { ItemServices, ServicePointInspector, ServiceRunInspector } from '@/features/services/ServiceInspector';
 import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
 import { WallReferencePicker } from './WallToolExtras';
@@ -129,6 +130,19 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
     } else if (s.kind === 'callout' && project.callouts?.[s.id]) {
       eyebrow = 'Note';
       body = <CalloutInspector project={project} derived={derived} id={s.id} />;
+      actions = (
+        <>
+          <IconButton label="Duplicate" shortcut="Ctrl+D" onClick={duplicateSelection}>
+            <Copy size={15} />
+          </IconButton>
+          <IconButton label="Delete" shortcut="Del" onClick={() => void deleteSelection()}>
+            <Trash2 size={15} />
+          </IconButton>
+        </>
+      );
+    } else if ((s.kind === 'service' && project.servicePoints?.[s.id]) || (s.kind === 'run' && project.serviceRuns?.[s.id])) {
+      eyebrow = s.kind === 'service' ? 'Services point' : 'Services run';
+      body = s.kind === 'service' ? <ServicePointInspector project={project} id={s.id} /> : <ServiceRunInspector project={project} id={s.id} />;
       actions = (
         <>
           <IconButton label="Duplicate" shortcut="Ctrl+D" onClick={duplicateSelection}>
@@ -586,6 +600,7 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
         {asset && <ObjectModels project={project} objectId={objectId} asset={asset} />}
         {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
       </Section>
+      <ItemServices project={project} objectId={objectId} />
       {asset?.plant && (
         <Section title="Plant care">
           <PlantCare plant={asset.plant} units={u.units} details />

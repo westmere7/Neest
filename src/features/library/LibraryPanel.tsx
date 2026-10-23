@@ -33,6 +33,7 @@ import { AssetInfoCard, InfoCardControl } from './AssetInfoCard';
 import { DOOR_KINDS, WINDOW_KINDS, WallPresetCards, extraOpeningIcon } from './BuildExtras';
 import { OpeningBuildOptions } from './OpeningBuildOptions';
 import './library.css';
+import { servicesSearchText } from '@/domain/model/services';
 
 const BUILD_GROUP_TITLES = {
   walls: 'Walls',
@@ -431,7 +432,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const collectionItems = (collectionAll.filter(Boolean) as AssetDefinition[]).filter((a) => groupMatch({ ...a, description: a.description }) && (!favOnly || favourites.includes(a.id)));
   const list = all.filter((a) => {
     if (q) {
-      const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''} ${a.plant ? plantSearchText(a.plant) : ''}`;
+      const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''} ${a.plant ? plantSearchText(a.plant) : ''} ${servicesSearchText(a.services)}`;
       if (!hay.toLowerCase().includes(q)) return false;
     }
     if (favOnly && !favourites.includes(a.id)) return false;

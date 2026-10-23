@@ -194,6 +194,9 @@ Principles that must hold:
 | `RenderSettings` | quality draft/balanced/high, exposure, timeOfDay, sunAzimuth/Intensity, envIntensity, shadows, background, wallDisplay full/cutaway/fade/hidden, cutawayHeight, showCeilings, showRoomLabels, hiddenCategories |
 | `guest` | `startCameraId` (Guest View and guest export only; the editor always opens on a fitted view), `spawn`, `spawnAngle` |
 | `Callout` | `target` = `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; `offset` (plan metres, label from anchor), `lift` (3D float height), `title`, `note` (Markdown subset), `showInfo`, `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
+| `ServicePoint` | Services mode (§10 "Services"): `kind` (14 kinds in `domain/model/services.ts`), `x`,`y`, `host` wall/floor/ceiling, `wallId` (wall points follow that wall's face), `height` (wall points), `rotation` (facing), `label`, `note`. Per layout option (`servicePoints`) |
+| `ServiceRun` | `system` power/water/drain, `level` wall/floor/ceiling (drain: floor only), `hot` (water), `points` (plan polyline), `height` (wall runs), `label`. Per layout option (`serviceRuns`) |
+| `PlacedObject.serviceLinks` | per system `{ pin, skip[] }`: the point the user connected by hand, and points they disconnected; absent = automatic |
 
 Materials referenced by id resolve **project → catalogue → visible fallback** (`resolveMaterial`). Catalogue
 materials are copied into `project.materials` only when edited/assigned (`ensureMaterial`), so projects stay
@@ -557,6 +560,61 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   hides or locks it. Right-click on an item (2D and 3D share `contextMenu.ts`): "Move to Unassigned / “Layer”"
   (current one checked) and "Move to new layer"; with more than 6 layers a single "Move to layer…" opens the panel.
   UI actions live in `features/editor/itemLayerActions.ts`.
+
+### Services: power & plumbing (src/features/services)
+
+One reference system for electric, water supply and drainage, so items that need them are placed with them in mind.
+Not a technical layout: no fittings, valves or pipe sizes. Shown only in **Services mode** (rail → Services, `U`;
+`editor.servicesMode`), in 2D and 3D; it never shows in normal views, exports or the guest viewer.
+
+- **Model** (`domain/model/services.ts`, import-free): systems `power` (amber `#f5b400`), `water` (blue `#1e90ff`, hot
+  lines and the hot half of mixer points red `#ff5a4a`), `drain` (green `#1fbf75`); unmet needs `#ff3b5c`. Point kinds
+  (`SERVICE_POINTS`: name, VN name, allowed hosts, default height, `source`): socket, appliance outlet (own circuit),
+  switch, light point, network/TV · cold, hot & cold, tap · floor drain, waste outlet, toilet outlet, and the three **mains**
+  (`source`, `MAIN_POINT_KINDS`, their own palette row): **Power in** (main breaker / board), **Water in** (meter / riser feed),
+  **Waste out** (soil & waste stack), drawn as bigger hexagons with a second ring. Drainage points and runs are floor only.
+- **What items need**: `AssetDefinition.services` (`{ power?: plug|dedicated|wired, water?: cold|hot, drain?: waste|soil|floor }`).
+  Library items take it from `src/data/assets/itemServices.json` (compact tokens `power power:dedicated power:wired water
+  water:hot drain drain:soil drain:floor`, parsed by `parseServices`, which throws on typos) via `withItemData`; new
+  items define `services` themselves. 344 items have needs (2026-10-23): electronics, AC (own circuit), lamps (ceiling
+  and wall lights wired), appliances (ovens, hobs, washers, dryers, dishwashers, water heaters: own circuit), sinks and
+  basins (hot & cold + waste), toilets (soil), showers (floor drain), lit/motorised furniture and built-ins. Shown in
+  the library hover card only (`ServiceNeeds`, slim glyphs), the Inspector and Services mode; search matches
+  "power", "water", "drain".
+- **Connections** (`domain/geometry/services.ts › resolveServices`, cached per project in `features/services/needs.ts`):
+  each need of each visible item connects to the nearest compatible point (`pointsMeeting`) within reach of its
+  outline (`needReach`: plug 1.8 m, own circuit 1.5, wired 0.6, water/drain 1.0), drawn as a dashed line whose short
+  dashes flow the way the service does (power and water into the item, waste out to the drain; CSS `svc-flow` in 2D,
+  `dashOffset` in 3D; off with reduced motion). An
+  appliance outlet serves one item. A run of the system ending at the item also meets it. `serviceLinks.skip`
+  (Disconnect: right-click the line or the point, or the Inspector) makes automatic connection pass that point (the next
+  one in reach takes over); `pin` (Inspector "Connect to…") holds up to 4 m. Connections follow moves by themselves.
+  Deleting a point prunes overrides naming it.
+- **Placement** (`placeServicePoint`): wall kinds snap into the nearest wall face (1.2 cm inside, facing the room; sockets
+  and water points fall back to the floor away from walls, switches and panels refuse); floor and ceiling points stay
+  put. Wall points show at their wall's face even after the wall moves (`servicePointAt`); dragging slides them along
+  walls. Tools: `service` (arms a kind from the panel, stays armed) and `run` (click bends; snaps to points and to the
+  outline of items of its system, which end the run; wall runs snap to wall centre lines; double-click / Enter ends,
+  Backspace undoes a bend). Both also run in 3D through `ToolBridge3D`.
+- **Panel** (`ServicesPanel`, in the library's place): systems with show/hide (`editor.servicesShown`), the point palette,
+  run buttons with level and height, "Not connected" list (click selects and focuses, plug adds a point), **Add all
+  missing points** (`suggestPoint`: next to the item, sockets at counter height over worktops, drains in the floor, ceiling
+  points under ceiling fixtures), **Route runs to sources** (`routeToSources`: chained like circuits, each point joins the
+  nearest point already on its system's network, starting at its main; ceiling points chain in the
+  ceiling) and totals.
+- **2D**: the plan draws as a faded dark outline (`planPalette('draft','dark')`, furniture off) under `ServicesSvg`: items
+  that need services (outline + need badges, red ring = unmet), runs (solid in walls, dashes in the floor, dots in the
+  ceiling), connections, point markers (disc in a wall with a facing tick, rounded square in the floor, ringed disc in the
+  ceiling). Picking (`features/services/hit.ts`) sees only points, runs and service items; walls and rooms are not
+  selectable there. Selection kinds `service` and `run`; runs get vertex handles, double-click adds a bend, right-click
+  a bend removes it. Delete, duplicate, nudge and select all handle them.
+- **3D** (`scene-3d/Services3D.tsx`): `XRayGhost` swaps the materials of walls, openings and floors for faint see-through
+  ones with edge lines every frame (React re-applies a wall mesh's own material on re-render) and puts them back on
+  exit; it waits until the scene's first load is done (swapping during `compileAsync` crashed three's
+  `checkMaterialsReady`). Only items that need services are drawn; ceilings off, walls full, dark background. Runs are
+  plain lines (`runPath3D`: at floor −4 cm, ceiling +4 cm or wall height, with a drop to the point at each end); points
+  and badges are screen-size sprites (orthographic cameras rescale them each frame).
+- Layout options: services belong to each option's plan (`PLAN_KEYS`); "same walls, no furniture" keeps them.
 
 ## 11. 3D (src/features/scene-3d, walkthrough)
 
@@ -1727,3 +1785,18 @@ Known limitations (also in README):
      Note cards in exported files were invisible before (fixed). Tests in `guestExport.test.ts` (done).
 138. "items alignment" (right-click menu: "Move to …" rows indented past the others) → menus with choice rows give every
      row the same left gutter and draw the check mark in it (`ContextMenu.tsx` `has-checks`, `components.css`) (done).
+139. "Add an extensive electronic and plumbing system … one single system … in the left menu … X-ray mode where only the
+     wiring/pipes/items that require them are shown … icons for water input, electronic and drainage on the library …
+     inside walls and floor, drainage floor only … very robust" + "some extra items, not too detailed (no valves, U-turn,
+     T-turn)" + "end-point connections to compatible items as dashed lines … add, remove, automatically connected in
+     proximity" + "no need to make the wiring/piping real 3D, just lines" + "don't show in thumbnails, just on the hover
+     cards, smaller / sleeker icons" → Services mode (§10 "Services"): 14 point kinds, runs, automatic item connections
+     with disconnect / connect-to, Add missing points, chained routing, X-ray 2D and 3D, needs for 344 library items
+     (`itemServices.json`), Inspector sections, `services.test.ts` (done).
+140. "Auto-add that to the 60LTN project, matching all my current placement" → every layout option got a panel by the
+     entrance, a water riser and soil stack by the toilet, a point for every item need (nearby items share sockets; one
+     appliance outlet per heavy appliance) and chained runs; all needs met (done).
+141. "Animate the dashed lines with the correct direction depending on type, and smaller dashes" + "add master waste outlet,
+     master power in (CB) and master water in … they should look a bit different" + "rename those 3 more correctly" →
+     flowing connection dashes (supply into the item, drainage out); the three sources became the Mains row (Power in,
+     Water in, Waste out; asked for shorter, more intuitive names) with hexagon markers (done).

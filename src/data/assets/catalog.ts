@@ -27,6 +27,8 @@ import { OUTDOOR_ASSETS } from './outdoor';
 import { STORAGE_ASSETS } from './storage';
 import ITEM_DESCRIPTIONS from './itemDescriptions.json';
 import ITEM_PRICES from './itemPrices.json';
+import ITEM_SERVICES from './itemServices.json';
+import { parseServices } from '@/domain/model/services';
 
 export const ASSET_CATALOG: AssetDefinition[] = [
   ...LIVING_ASSETS,
@@ -49,15 +51,18 @@ export const ASSET_CATALOG: AssetDefinition[] = [
 
 const DESCRIPTIONS: Record<string, string> = ITEM_DESCRIPTIONS;
 const PRICES: Record<string, AssetPrice> = ITEM_PRICES;
+/** Item id → service needs in compact form (see `parseServices`); "" = needs nothing. */
+export const ITEM_SERVICES_MAP: Record<string, string> = ITEM_SERVICES;
 
 /**
  * Fills in what an item (built-in or pack) takes from the central maps where it defines none itself:
  * the description from itemDescriptions.json (items from before descriptions were required; new items
- * must define one) and the Vietnamese price from itemPrices.json.
+ * must define one), the Vietnamese price from itemPrices.json and the service needs from itemServices.json.
  */
 export function withItemData(a: AssetDefinition): AssetDefinition {
   if (!a.description?.trim() && DESCRIPTIONS[a.id]) a.description = DESCRIPTIONS[a.id];
   if (!a.price && PRICES[a.id]) a.price = PRICES[a.id];
+  if (!a.services && ITEM_SERVICES_MAP[a.id]) a.services = parseServices(ITEM_SERVICES_MAP[a.id]);
   return a;
 }
 ASSET_CATALOG.forEach(withItemData);

@@ -1,0 +1,298 @@
+/* Services mode: panel, plan layer, Inspector and library badges. */
+
+.services-panel {
+  width: 300px;
+}
+.svc-title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  padding-left: 2px;
+}
+.svc-title strong {
+  font-size: 13.5px;
+}
+.svc-title span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.services-body {
+  padding-bottom: 12px;
+}
+.svc-icon {
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.svc-systems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 10px 4px;
+}
+.svc-system {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+}
+.svc-system:hover {
+  background: var(--surface-2);
+}
+.svc-system.off {
+  opacity: 0.55;
+}
+.svc-system-name {
+  flex: 1;
+  font-weight: 600;
+}
+.svc-system-count {
+  color: var(--text-2);
+  font-size: 11.5px;
+}
+
+.svc-kinds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.svc-kind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+.svc-kind span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.svc-kind:hover {
+  border-color: var(--border-strong);
+}
+.svc-kind.on,
+.svc-run-btn.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.svc-runs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.svc-run-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.svc-run-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.svc-line-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.svc-line-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.svc-issues {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  overflow: auto;
+}
+.svc-issues li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.svc-issue {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.svc-issue:hover {
+  background: var(--surface-2);
+}
+.svc-issue-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.svc-issue-need {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.svc-totals {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.svc-totals th {
+  text-align: left;
+  font-weight: 500;
+  padding: 3px 0;
+}
+.svc-totals td {
+  text-align: right;
+  color: var(--text-2);
+  padding: 3px 0 3px 8px;
+}
+
+/* Plan layer */
+.svc-item {
+  fill: rgba(150, 196, 255, 0.1);
+  stroke: #b9d6ff;
+  stroke-linejoin: round;
+}
+.svc-item.on {
+  fill: rgba(150, 196, 255, 0.22);
+  stroke: #ffffff;
+}
+.plan-canvas.services-mode .ov-snap {
+  stroke: #ffffff;
+}
+
+/* Inspector */
+.svc-needs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.svc-need {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.svc-need-title {
+  font-weight: 600;
+}
+.svc-need-state {
+  grid-column: 2;
+  color: var(--text-2);
+  font-size: 11.5px;
+}
+.svc-need-state.missing {
+  color: var(--danger);
+}
+.svc-need-actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.svc-need-actions select {
+  max-width: 100%;
+}
+
+/* Library hover card */
+.aic-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+.aic-services span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Rail button */
+.rail-services-btn.active svg {
+  color: #f5b400;
+}
+
+/* Connections flow: the dash pattern moves one period per cycle along the line (start → end). */
+.svc-flow {
+  animation: svc-flow 0.9s linear infinite;
+}
+@keyframes svc-flow {
+  to {
+    stroke-dashoffset: calc(-1 * var(--svc-period));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .svc-flow {
+    animation: none;
+  }
+}
+
+/* Mains row of the point palette */
+.svc-kinds.mains {
+  grid-template-columns: 1fr 1fr 1fr;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.svc-kinds-title {
+  grid-column: 1 / -1;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}

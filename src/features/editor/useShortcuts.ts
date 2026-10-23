@@ -7,6 +7,7 @@ import { planKeyRouter } from '@/features/plan-2d/PlanCanvas';
 import { flushSave } from '../projects/projectService';
 import { deleteSelection, duplicateSelection, nudgeSelection, rotateSelection, selectAll, toggleLockSelection } from './actions';
 import { groupSelection, ungroupSelection } from './groups';
+import { setServicesMode, toggleServicesMode } from '@/features/services/actions';
 
 export const TOOL_SHORTCUTS: Record<string, ToolId> = {
   v: 'select',
@@ -35,6 +36,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'E', action: 'Extend / trim / join walls' },
   { keys: 'M', action: 'Measure' },
   { keys: 'K', action: 'Note (click an item or spot, Alt-click a room, drag an area)' },
+  { keys: 'U', action: 'Services mode: power & plumbing in X-ray (sockets, water, drains)' },
   { keys: 'Shift (while drawing)', action: 'Lock angle to 45° steps' },
   { keys: 'Shift (while moving)', action: 'Keep the move on one axis (X or Y)' },
   { keys: 'Alt (while dragging)', action: 'Disable snapping' },
@@ -164,6 +166,7 @@ export function useEditorShortcuts(isMobile: boolean) {
       if (key === '5' && !isMobile) return ed.set({ workspace: 'split' });
       if (key === 'p' && ed.workspace === '3d' && !isMobile) return ed.set({ viewPanelOpen: !ed.viewPanelOpen });
       if (key === 'l' && e.shiftKey && !isMobile) return ed.set({ layersPanelOpen: !ed.layersPanelOpen });
+      if (key === 'u' && !isMobile && ed.workspace !== 'walk') return toggleServicesMode();
       // While placing, R turns what is being placed (the tool handles it when it has the keys; this is
       // the fallback): it never switches to the room tool under a ghost.
       if (key === 'r' && !mod && (ed.tool === 'place' || ed.tool === 'opening')) {
@@ -173,7 +176,9 @@ export function useEditorShortcuts(isMobile: boolean) {
       const tool = TOOL_SHORTCUTS[key];
       if (tool && editActive) {
         if (isMobile && tool !== 'select' && tool !== 'pan') return;
-        ed.setTool(tool);
+        // Building tools work on the normal view: they leave Services mode.
+        if (ed.servicesMode && tool !== 'select' && tool !== 'pan') setServicesMode(false);
+        useEditorStore.getState().setTool(tool);
       }
     };
     window.addEventListener('keydown', onKey);

@@ -142,6 +142,12 @@ export function repairProject(project: Project): MigrationResult {
     }
   }
   if (droppedCallouts) warnings.push(`${droppedCallouts} callout(s) pointed at missing items or rooms and were removed.`);
+  // Services: a wall point whose wall is gone keeps its spot; ids match their keys.
+  for (const [key, s] of Object.entries(p.servicePoints ?? {})) {
+    if (s.id !== key) s.id = key;
+    if (s.wallId && !p.walls[s.wallId]) s.wallId = null;
+  }
+  for (const [key, r] of Object.entries(p.serviceRuns ?? {})) if (r.id !== key) r.id = key;
   // Item layers: one entry per id; items filed under a missing layer go back to Unassigned.
   const layerIds = new Set<string>();
   p.itemLayers = (p.itemLayers ?? []).filter((l) => (layerIds.has(l.id) ? false : (layerIds.add(l.id), true)));

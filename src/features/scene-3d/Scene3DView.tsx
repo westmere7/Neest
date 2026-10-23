@@ -57,6 +57,7 @@ import { SceneLoading, type SceneLoadStage } from './SceneLoading';
 import './scene3d.css';
 import { movedElevation } from '@/features/plan-2d/tools/surfaces';
 import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
+import { servicesMenuItems } from '@/features/services/actions';
 
 type Projection = 'perspective' | 'orthographic';
 
@@ -484,6 +485,8 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const workspace = useEditorStore((s) => s.workspace);
   const tool = useEditorStore((s) => s.tool);
   const viewPanelOpen = useEditorStore((s) => s.viewPanelOpen);
+  const servicesMode = useEditorStore((s) => s.servicesMode);
+  const servicesShown = useEditorStore((s) => s.servicesShown);
   const isMobile = useIsMobile();
   useCanvasMeasureFix();
   const [projection, setProjection] = useState<Projection>('perspective');
@@ -556,7 +559,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
       e.nativeEvent.preventDefault();
       if (rightDragged(e.nativeEvent)) return;
       if (!ed.selection.some((s) => s.id === id)) ed.setSelection([item]);
-      const items = planContextMenuItems(item, { x: e.point.x, y: e.point.z });
+      const items = ed.servicesMode ? servicesMenuItems(item, { x: e.point.x, y: e.point.z }, null) : planContextMenuItems(item, { x: e.point.x, y: e.point.z });
       if (items.length) {
         menuShown.current = e.nativeEvent.timeStamp;
         openContextMenu(e.nativeEvent.clientX, e.nativeEvent.clientY, items);
@@ -579,10 +582,12 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     useDialogStore.getState().open('callout', { id });
   }, []);
 
+  // Services mode: the X-ray shows whole walls, no ceilings and only items that need services.
+  const xray = servicesMode && !walk;
   const options: SceneOptions = {
-    wallDisplay: walk ? 'full' : r.wallDisplay,
+    wallDisplay: walk || xray ? 'full' : r.wallDisplay,
     cutawayHeight: r.cutawayHeight,
-    showCeilings: walk ? true : r.showCeilings,
+    showCeilings: walk ? true : xray ? false : r.showCeilings,
     showRoomLabels: !walk && r.showRoomLabels,
     showDimensions: !walk && showDims,
     quality: r.quality,
@@ -592,7 +597,8 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     selectedIds: walk || !showHelpers ? undefined : selectedIds,
     onPick: walk || drawing ? undefined : onPick,
     onObjectPointerDown: walk || drawing ? undefined : drag.onObjectPointerDown,
-    showCallouts: !walk,
+    showCallouts: !walk && !xray,
+    services: xray ? { shown: servicesShown } : undefined,
   };
 
   const dpr: [number, number] =
@@ -651,7 +657,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
           const p = new THREE.Vector3();
           if (ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), p)) ground = { x: p.x, y: p.z };
         }
-        const items = planContextMenuItems(null, ground);
+        const items = useEditorStore.getState().servicesMode ? servicesMenuItems(null, ground, null) : planContextMenuItems(null, ground);
         if (items.length) openContextMenu(e.clientX, e.clientY, items);
       }}
       onDragOver={(e) => {
@@ -695,7 +701,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
           if (!walk && !drawing && e.button === 0) useEditorStore.getState().clearSelection();
         }}
       >
-        <color attach="background" args={[r.background]} />
+        <color attach="background" args={[xray ? '#0b1522' : r.background]} />
         {!ready && (
           <FirstFrames
             key={r.quality}
@@ -757,12 +763,13 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
           shadows={r.shadows && r.quality !== 'draft'}
           quality={r.quality}
         />
-        {/* Callout labels are HTML: keep them off the loading screen. */}
-        <SceneContent project={project} derived={derived} registry={sharedRegistry} options={ready ? options : { ...options, showCallouts: false }} />
+        {/* Callout labels are HTML: keep them off the loading screen. The services X-ray swaps materials, so it
+            waits until the first load (and its async shader compile) is done. */}
+        <SceneContent project={project} derived={derived} registry={sharedRegistry} options={ready ? options : { ...options, showCallouts: false, services: undefined }} />
         <NotesViewBridge target={notesCamera} />
         {!walk && (
           <group ref={helpersRef} visible={showHelpers}>
-            <InfiniteGrid background={r.background} />
+            <InfiniteGrid background={xray ? '#0b1522' : r.background} />
           </group>
         )}
         <mesh rotation-x={-Math.PI / 2} position={[0, -0.01, 0]} receiveShadow raycast={() => null}>
@@ -784,7 +791,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         project={project}
         derived={derived}
         camera={notesCamera}
-        visible={active && ready && !walk}
+        visible={active && ready && !walk && !xray}
         selectedIds={options.selectedIds}
         onSelect={drawing ? undefined : onCalloutSelect}
         onEdit={drawing ? undefined : onCalloutEdit}

@@ -22,6 +22,7 @@ import { computeWallNetwork, openingOffsetRange } from '../geometry/walls';
 import { detectRoomFaces, matchFacesToRooms } from '../geometry/rooms';
 import { rotate } from '../geometry/vec';
 import { deleteCallouts, detachCallouts, duplicateCallouts } from './callouts';
+import { deleteServices, duplicateServices } from './services';
 import { deleteWalls, type D } from './walls';
 import { inEveryOption } from './options';
 
@@ -263,6 +264,7 @@ export function duplicateEntities(d: D, ids: string[], offset: Vec2): string[] {
     }
   }
   out.push(...duplicateCallouts(d, ids, offset));
+  out.push(...duplicateServices(d, ids, offset));
   return out;
 }
 
@@ -273,6 +275,7 @@ export function deleteEntities(d: D, ids: string[]): void {
   // Callouts on deleted items and rooms stay put as spot callouts.
   detachCallouts(d, new Set(ids));
   deleteCallouts(d, ids);
+  deleteServices(d, ids);
   const wallIds: string[] = [];
   for (const id of ids) {
     if (d.objects[id]) delete d.objects[id];

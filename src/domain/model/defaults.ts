@@ -62,6 +62,8 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
     customAssets: {},
     groups: {},
     callouts: {},
+    servicePoints: {},
+    serviceRuns: {},
     collections: [],
     cameras: [],
     render: {
