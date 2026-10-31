@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1793465802937,
+  "updatedAt": 1793467604204,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -1676,42 +1676,44 @@
       "id": "obj_lik3y3ywtd",
       "assetId": "branded-appliances-vn:electrolux-ewf9024p5wb",
       "name": null,
-      "x": 0.373,
-      "y": 0.9663615767917424,
+      "x": 4.124615242138274,
+      "y": 0.33682334546033454,
       "elevation": 0,
-      "rotation": -1.5707963267948966,
+      "rotation": 1.5707963267948966,
       "width": 0.6,
       "depth": 0.57,
       "height": 0.85,
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_dwpzg2iteh"
     },
     "obj_cqzeinr4zm": {
       "id": "obj_cqzeinr4zm",
       "assetId": "baskets-wicker",
       "name": null,
-      "x": 0.4,
-      "y": 0.7000000000000001,
+      "x": 4.097615242138274,
+      "y": 0.6031849222520769,
       "elevation": 0.85,
-      "rotation": 4.974188368183839,
+      "rotation": 1.8325957145940457,
       "width": 0.8,
       "depth": 0.4,
       "height": 0.45,
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_dwpzg2iteh"
     },
     "obj_i2599i81po": {
       "id": "obj_i2599i81po",
       "assetId": "pets:modular-bird-cage",
       "name": null,
-      "x": 4.15,
+      "x": 0.35000000000000003,
       "y": 0.65,
       "elevation": 0,
-      "rotation": 4.71238898038469,
+      "rotation": 1.5707963267948966,
       "width": 1.224,
       "depth": 0.5498,
       "height": 1.59,
@@ -1741,17 +1743,18 @@
       "id": "obj_fqu9dw2vl6",
       "assetId": "branded-washers:aqua-aqh-v700fw",
       "name": null,
-      "x": 0.3837864194601017,
-      "y": 0.3531943965573084,
+      "x": 4.1138288226781725,
+      "y": 0.9499905256947686,
       "elevation": 0,
-      "rotation": 4.71238898038469,
+      "rotation": 1.5707963267948966,
       "width": 0.6,
       "depth": 0.555,
       "height": 0.82,
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_dwpzg2iteh"
     },
     "obj_jmwxmqckkv": {
       "id": "obj_jmwxmqckkv",
@@ -1825,23 +1828,6 @@
       "materials": {
         "body": "metal-white-powder"
       },
-      "locked": false,
-      "hidden": false,
-      "layerId": "lay_kitchen01"
-    },
-    "obj_sj6rurards": {
-      "id": "obj_sj6rurards",
-      "assetId": "branded-appliances-vn:panasonic-nr-bx410wkvn",
-      "name": null,
-      "x": 4.2,
-      "y": 4.65,
-      "elevation": 0,
-      "rotation": 1.5707963267948966,
-      "width": 0.682,
-      "depth": 0.7,
-      "height": 1.605,
-      "mirrored": false,
-      "materials": {},
       "locked": false,
       "hidden": false,
       "layerId": "lay_kitchen01"
@@ -2356,8 +2342,8 @@
       "id": "obj_yw27ljpjlb",
       "assetId": "planter-herbs",
       "name": null,
-      "x": 2.95,
-      "y": 0.2,
+      "x": 2.7986030681496237,
+      "y": 0.2216281875202477,
       "elevation": 0,
       "rotation": 0,
       "width": 1,
@@ -2372,17 +2358,18 @@
       "id": "obj_3mq9rhfm11",
       "assetId": "laundry-basket",
       "name": null,
-      "x": 0.95,
-      "y": 1.05,
+      "x": 3.5476152421382743,
+      "y": 0.2531849222520769,
       "elevation": 0,
-      "rotation": 0,
+      "rotation": 3.141592653589793,
       "width": 0.45,
       "depth": 0.35,
       "height": 0.55,
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "groupId": "grp_dwpzg2iteh"
     },
     "obj_shvhrmiq4r": {
       "id": "obj_shvhrmiq4r",
@@ -2416,23 +2403,6 @@
       "locked": false,
       "hidden": false,
       "groupId": "grp_rtgfzc1scv"
-    },
-    "obj_iju7doekmx": {
-      "id": "obj_iju7doekmx",
-      "assetId": "branded-climate-vn:panasonic-cs-xu9zkh-8",
-      "name": null,
-      "x": 4.3825,
-      "y": 6.9,
-      "elevation": 2.3000000000000003,
-      "rotation": 1.5707963267948966,
-      "width": 0.87,
-      "depth": 0.229,
-      "height": 0.295,
-      "mirrored": false,
-      "materials": {},
-      "locked": false,
-      "hidden": false,
-      "layerId": "lay_aptbase01"
     },
     "obj_862gkb0e24": {
       "id": "obj_862gkb0e24",
@@ -2780,22 +2750,6 @@
       "hidden": false,
       "groupId": "grp_t8kzasnwu8"
     },
-    "obj_8moz3f0ogz": {
-      "id": "obj_8moz3f0ogz",
-      "assetId": "floor-lamp",
-      "name": null,
-      "x": 1.75,
-      "y": 6.3500000000000005,
-      "elevation": 0,
-      "rotation": 1.5707963267948966,
-      "width": 0.25,
-      "depth": 0.3,
-      "height": 1.6,
-      "mirrored": false,
-      "materials": {},
-      "locked": false,
-      "hidden": false
-    },
     "obj_mfg44dsu44": {
       "id": "obj_mfg44dsu44",
       "assetId": "compact-living:stackable-birch-stools",
@@ -2833,7 +2787,7 @@
       "id": "obj_0zdul2qk9g",
       "assetId": "wardrobe-study:wardrobe-shelf-tower-niche",
       "name": null,
-      "x": 1.01,
+      "x": 1,
       "y": 9.261999999999999,
       "elevation": 0,
       "rotation": 3.141592653589793,
@@ -2843,7 +2797,8 @@
       "mirrored": true,
       "materials": {},
       "locked": false,
-      "hidden": false
+      "hidden": false,
+      "model": "hanging-niche"
     },
     "obj_j80t9xiwh6": {
       "id": "obj_j80t9xiwh6",
@@ -3020,12 +2975,12 @@
       "id": "obj_1thf6v6wuz",
       "assetId": "portal-frames:corner-portal-half-wall",
       "name": null,
-      "x": 3.4925,
+      "x": 3.535,
       "y": 3.35,
       "elevation": 0,
       "rotation": 4.71238898038469,
       "width": 3.9,
-      "depth": 2.185,
+      "depth": 2.27,
       "height": 2.7,
       "mirrored": false,
       "materials": {
@@ -3079,7 +3034,7 @@
       "assetId": "people:man-sitting-chair",
       "name": null,
       "x": 2.95,
-      "y": 2.75,
+      "y": 2.8000000000000003,
       "elevation": 0.27199363612379834,
       "rotation": 1.832595714594046,
       "width": 0.54,
@@ -3101,6 +3056,102 @@
       "width": 0.45,
       "depth": 0.434,
       "height": 1.6,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_l6ncpd5vhi": {
+      "id": "obj_l6ncpd5vhi",
+      "assetId": "studio-living:black-glass-fridge",
+      "name": null,
+      "x": 4.180705637399781,
+      "y": 4.609769862938452,
+      "elevation": 0,
+      "rotation": 1.5707963267948966,
+      "width": 0.6,
+      "depth": 0.65,
+      "height": 1.75,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_macrzzm1nv": {
+      "id": "obj_macrzzm1nv",
+      "assetId": "people:man-sofa",
+      "name": null,
+      "x": 1.6500000000000001,
+      "y": 3.35,
+      "elevation": 0,
+      "rotation": 1.5707963267948966,
+      "width": 0.589,
+      "depth": 1.167,
+      "height": 1.278,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_6v7lr84h3u": {
+      "id": "obj_6v7lr84h3u",
+      "assetId": "lived-in:shared-family-dishes",
+      "name": null,
+      "x": 2.6778135260452305,
+      "y": 2.51811191898086,
+      "elevation": 0.9959362198749285,
+      "rotation": 4.631446111233986,
+      "width": 0.62,
+      "depth": 0.3,
+      "height": 0.16,
+      "mirrored": true,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_k6v6wsjh23": {
+      "id": "obj_k6v6wsjh23",
+      "assetId": "branded-household:uforu-16l-slim-rolling-trash-can",
+      "name": null,
+      "x": 4.1000000000000005,
+      "y": 5.1000000000000005,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 0.36,
+      "depth": 0.235,
+      "height": 0.675,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_pgc8x0cpaj": {
+      "id": "obj_pgc8x0cpaj",
+      "assetId": "branded-climate-vn:panasonic-cs-xu9zkh-8",
+      "name": null,
+      "x": 0.14750000000000002,
+      "y": 8.05,
+      "elevation": 2.15,
+      "rotation": -1.5707963267948966,
+      "width": 0.87,
+      "depth": 0.229,
+      "height": 0.295,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_lef33jt6mk": {
+      "id": "obj_lef33jt6mk",
+      "assetId": "branded-climate-vn:panasonic-cs-xu9zkh-8",
+      "name": null,
+      "x": 0.14750000000000002,
+      "y": 2.95,
+      "elevation": 2.15,
+      "rotation": -1.5707963267948966,
+      "width": 0.87,
+      "depth": 0.229,
+      "height": 0.295,
       "mirrored": false,
       "materials": {},
       "locked": false,
@@ -3132,18 +3183,46 @@
     "grp_hhb32imtgo": {
       "id": "grp_hhb32imtgo",
       "name": "Floating wall shelf & aloe vera with pups + 1 more"
+    },
+    "grp_dwpzg2iteh": {
+      "id": "grp_dwpzg2iteh",
+      "name": "Electrolux EWF9024P5WB front loader & aqua aqh-v700fw vented"
     }
   },
   "callouts": {
-    "call_5enkni6xh0": {
-      "id": "call_5enkni6xh0",
+    "call_hhox8tntwi": {
+      "id": "call_hhox8tntwi",
       "target": {
-        "kind": "object",
-        "objectId": "obj_iju7doekmx"
+        "kind": "room",
+        "roomId": "room_296q174o70"
       },
       "offset": {
-        "x": 1.0548117761006939,
-        "y": 0.18286083763626815
+        "x": 0.35,
+        "y": -0.3
+      },
+      "lift": 0.7,
+      "title": "",
+      "note": "",
+      "showInfo": true,
+      "color": "teal",
+      "hidden": false,
+      "box": "card",
+      "size": "m",
+      "line": "solid",
+      "lineWeight": "regular",
+      "end": "dot",
+      "endSize": "m",
+      "highlight": true
+    },
+    "call_pph6l5jy8v": {
+      "id": "call_pph6l5jy8v",
+      "target": {
+        "kind": "object",
+        "objectId": "obj_mk3xwgu4et"
+      },
+      "offset": {
+        "x": 0.35,
+        "y": -0.3
       },
       "lift": 0.7,
       "title": "",
@@ -6456,6 +6535,25 @@
         "license": "CC0 1.0 (photo texture); procedural fallback original",
         "url": "https://polyhaven.com/a/leather_white"
       }
+    },
+    "branded-household:pp-olive": {
+      "id": "branded-household:pp-olive",
+      "name": "Olive green polypropylene",
+      "category": "solid",
+      "color": "#94a067",
+      "roughness": 0.55,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": null,
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "branded-household:pp-olive",
+      "source": {
+        "name": "Branded household pack by Neest team",
+        "license": "CC0 (made for Neest); brand names belong to their owners"
+      }
     }
   },
   "customAssets": {},
@@ -6470,7 +6568,7 @@
     "envIntensity": 0.3,
     "shadows": true,
     "background": "#4d5c66",
-    "wallDisplay": "full",
+    "wallDisplay": "cutaway",
     "cutawayHeight": 0.35,
     "showCeilings": false,
     "showRoomLabels": false,
