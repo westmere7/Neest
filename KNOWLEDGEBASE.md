@@ -1849,3 +1849,11 @@ Known limitations (also in README):
      Sage green & satin white plus 6 pastel/wood/marble finishes) (done).
 145. "Connections it is" (rename Services) + "in the item details panel, leave Connections way below, above More but under
      Finishes" → every visible label says Connections; the item's Connections section sits between Finishes and More (done).
+146. "How do we deal with this long text" (rail label) + "allow me to collapse the categories so only icons are shown" +
+     "allow materials to have the same categories panel" + "allow grid view for materials and use it by default" + "context
+     menu: long item names make it too wide, just truncate" + "allow locating an object in library in context menu" → rail
+     label **Connect** (tooltip and panel keep Connections); `library/CategoryRail.tsx` (shared sidebar, toggle at its top folds
+     it to icons, pref `libraryRailCollapsed`, desktop only); Materials tab uses it (This project, Favourites, All, then each
+     type) beside a swatch grid (pref `materialView`, grid by default; the header button switches grid/list there); context
+     menus cap at 340 px with ellipsis (full label on hover); right-click an item → **Show in library** (`showInLibrary` in
+     `plan-2d/contextMenu.ts`, also the Inspector button; it leaves Connections) (done).

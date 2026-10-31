@@ -583,7 +583,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           data-testid="tool-services"
         >
           <Zap size={18} />
-          <span className="rail-btn-label">Connections</span>
+          <span className="rail-btn-label">Connect</span>
         </IconButton>
       </div>
 

@@ -10,6 +10,7 @@ import { toast } from '@/state/uiStores';
 import { deleteSelection, duplicateSelection, selectAll } from '@/features/editor/actions';
 import { needsOfProject, servicesState } from './needs';
 import { getObjectAsset } from '@/data/assets/registry';
+import { showInLibrary } from '@/features/plan-2d/contextMenu';
 
 const ps = () => useProjectStore.getState();
 const es = () => useEditorStore.getState();
@@ -131,6 +132,7 @@ export function servicesMenuItems(hit: SelItem | null, world: Vec2, link: Servic
     items.push(
       { label: unmet ? `Add missing point${unmet === 1 ? '' : 's'} for this item` : 'All needs connected', disabled: !unmet, run: () => void addMissingPoints([hit.id]) },
       { label: 'Reset connections', disabled: !o?.serviceLinks, run: () => resetConnections([hit.id]) },
+      ...(o ? [{ separator: true, label: '' }, { label: 'Show in library', run: () => showInLibrary(o.assetId) }] : []),
     );
     return items;
   }

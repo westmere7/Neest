@@ -884,3 +884,31 @@
 .object-preview-wrap:hover .aic-expand {
   opacity: 1;
 }
+
+/* Category sidebar folded to icons (toggle at its top; Furniture and Materials share it). */
+.lib-cat-toggle {
+  color: var(--text-3);
+}
+.library.sheet .lib-cat-toggle {
+  display: none;
+}
+.library:not(.sheet) .furniture-split.rail-collapsed {
+  grid-template-columns: 42px minmax(0, 1fr);
+}
+.library:not(.sheet) .lib-cat-rail.collapsed {
+  gap: 4px;
+  padding: 8px 4px 12px;
+}
+.library:not(.sheet) .lib-cat-rail.collapsed .lib-cat-btn {
+  justify-content: center;
+  min-height: 30px;
+  padding: 0;
+}
+.library:not(.sheet) .lib-cat-rail.collapsed .lib-cat-label,
+.library:not(.sheet) .lib-cat-rail.collapsed .lib-cat-count {
+  display: none;
+}
+/* Groups already have a divider line between them. */
+.library:not(.sheet) .lib-cat-rail.collapsed .lib-cat-heading {
+  display: none;
+}

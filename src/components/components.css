@@ -441,6 +441,8 @@ kbd {
   position: fixed;
   z-index: 200;
   min-width: 210px;
+  /* Long item and group names are cut with an ellipsis (full text on hover) instead of widening the menu. */
+  max-width: 340px;
   padding: 5px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -475,6 +477,15 @@ kbd {
 }
 /* Choice items (one of several): the check mark sits in a left gutter that every item of the
    menu gets, so all labels line up. */
+.menu-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.menu-item kbd {
+  flex: none;
+}
 .context-menu.has-checks .menu-item {
   position: relative;
   padding-left: 28px;

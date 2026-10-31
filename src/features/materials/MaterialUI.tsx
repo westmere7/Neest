@@ -1,5 +1,30 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Copy, Link2, Link2Off, Pencil, Search, Star, Trash2, X } from 'lucide-react';
+import {
+  BrickWall,
+  Briefcase,
+  Copy,
+  FolderOpen,
+  GlassWater,
+  Grid3x3,
+  Layers,
+  LayoutGrid,
+  Link2,
+  Link2Off,
+  Mountain,
+  Paintbrush,
+  Palette,
+  Pencil,
+  Search,
+  Shirt,
+  Star,
+  Trash2,
+  TreeDeciduous,
+  Waves,
+  Wrench,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
+import { CategoryButton, CategoryHeading, CategoryRail, useRailCollapsed } from '@/features/library/CategoryRail';
 import { MaterialSchema, type MaterialCategory, type MaterialDefinition, type PhotoTextureRef, type Project } from '@/domain/model/schema';
 import {
   assignMaterial,
@@ -379,63 +404,128 @@ export function FinishPicker({
 
 // ───────────── Material library + editor ─────────────
 
+type MaterialFilter = MaterialCategory | 'all' | 'project' | 'favourites';
+
+/** Sidebar icons for the material types. */
+const MATERIAL_ICONS: Record<MaterialCategory, LucideIcon> = {
+  paint: Paintbrush,
+  plaster: BrickWall,
+  wood: TreeDeciduous,
+  tile: Grid3x3,
+  stone: Mountain,
+  metal: Wrench,
+  glass: GlassWater,
+  fabric: Shirt,
+  leather: Briefcase,
+  rug: Waves,
+  laminate: Layers,
+  solid: Palette,
+};
+
+/**
+ * The Materials library: the same category sidebar as Furniture (collapsible to icons) beside the
+ * materials as a grid of swatches (default) or a list (header button); the editor opens below.
+ */
 export function MaterialLibrary() {
   const project = useProjectStore((s) => s.project!);
   const activeId = useEditorStore((s) => s.activeMaterialId);
   const favourites = usePrefsStore((s) => s.favouriteMaterials);
+  const view = usePrefsStore((s) => s.materialView);
+  const railCollapsed = useRailCollapsed();
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<MaterialCategory | 'all' | 'project' | 'favourites'>('project');
+  const [category, setCategory] = useState<MaterialFilter>('project');
   const all = useMemo(() => [...availableMaterials(project), ...Object.values(project.materials).filter((m) => m.overrideOf)], [project]);
   const usedIds = useMemo(() => new Set(Object.keys(project.materials)), [project.materials]);
-  const list = all.filter((m) => {
-    if (query && !`${m.name} ${m.category}`.toLowerCase().includes(query.toLowerCase())) return false;
-    if (category === 'project') return usedIds.has(m.id);
-    if (category === 'favourites') return favourites.includes(m.id);
-    if (category === 'all') return true;
-    return m.category === category;
-  });
+  const q = query.trim().toLowerCase();
+  const found = q ? all.filter((m) => `${m.name} ${m.category} ${MATERIAL_CATEGORY_LABELS[m.category]}`.toLowerCase().includes(q)) : all;
+  const inFilter = (m: MaterialDefinition, f: MaterialFilter) =>
+    f === 'project' ? usedIds.has(m.id) : f === 'favourites' ? favourites.includes(m.id) : f === 'all' ? true : m.category === f;
+  const list = found.filter((m) => inFilter(m, category));
+  const count = (f: MaterialFilter) => found.filter((m) => inFilter(m, f)).length;
   const active = activeId ? project.materials[activeId] ?? MATERIAL_CATALOG_BY_ID[activeId] : null;
+  const pick = (id: string) => useEditorStore.getState().set({ activeMaterialId: id });
+  const catButton = (f: MaterialFilter, label: string, icon: LucideIcon, tooltip?: string) => {
+    const n = count(f);
+    return (
+      <CategoryButton
+        key={f}
+        active={category === f}
+        empty={!!q && n === 0 && category !== f}
+        onClick={() => setCategory(f)}
+        icon={icon}
+        label={label}
+        count={n}
+        tooltip={tooltip}
+        testId={`mat-cat-${f}`}
+      />
+    );
+  };
   return (
     <div className={`mat-library${active ? ' editing' : ''}`}>
       <div className="lib-filters">
         <div className="search-box">
           <Search size={13} aria-hidden />
-          <input className="input" placeholder="Search materials" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={searchKeyDown(query, setQuery)} aria-label="Search materials" />
+          <input className="input" placeholder={`Search ${all.length} materials`} value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={searchKeyDown(query, setQuery)} aria-label="Search materials" />
           <SearchClear query={query} onClear={() => setQuery('')} testId="material-search-clear" />
         </div>
-        <select className="input select" value={category} onChange={(e) => setCategory(e.target.value as typeof category)} aria-label="Material category">
-          <option value="project">Used in this project</option>
-          <option value="favourites">Favourites</option>
-          <option value="all">All materials</option>
-          {Object.entries(MATERIAL_CATEGORY_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </select>
       </div>
-      <div className="mat-list" role="listbox" aria-label="Materials">
-        {list.length === 0 && <p className="field-hint pad">Nothing here yet. Choose “All materials” to browse the library.</p>}
-        {list.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            role="option"
-            aria-selected={m.id === activeId}
-            className={`mat-row${m.id === activeId ? ' on' : ''}`}
-            onClick={() => useEditorStore.getState().set({ activeMaterialId: m.id })}
-          >
-            <MaterialSwatch material={m} size={30} />
-            <span className="mat-row-text">
-              <span>{m.name}</span>
-              <span className="field-hint">
-                {MATERIAL_CATEGORY_LABELS[m.category]}
-                {m.overrideOf ? ' · override' : ''}
-              </span>
-            </span>
-            {favourites.includes(m.id) && <Star size={12} className="fav-star" aria-label="Favourite" />}
-          </button>
-        ))}
+      <div className={`furniture-split mat-split${railCollapsed ? ' rail-collapsed' : ''}`}>
+        <CategoryRail label="Material categories" testId="material-categories">
+          <div className="lib-cat-group">
+            {catButton('project', 'This project', FolderOpen, 'Used in this project')}
+            {catButton('favourites', 'Favourites', Star)}
+            {catButton('all', 'All materials', LayoutGrid)}
+          </div>
+          <div className="lib-cat-group">
+            <CategoryHeading>By type</CategoryHeading>
+            {(Object.keys(MATERIAL_CATEGORY_LABELS) as MaterialCategory[]).map((c) => catButton(c, MATERIAL_CATEGORY_LABELS[c], MATERIAL_ICONS[c]))}
+          </div>
+        </CategoryRail>
+        <div className="furniture-results">
+          {list.length === 0 && (
+            <p className="field-hint pad">
+              {q ? 'No materials match your search.' : category === 'favourites' ? 'Star materials in the editor to collect them here.' : 'Nothing here yet. Choose “All materials” to browse the library.'}
+            </p>
+          )}
+          <div className={view === 'grid' ? 'mat-grid' : 'mat-list'} role="listbox" aria-label="Materials" data-testid="material-results">
+            {list.map((m) =>
+              view === 'grid' ? (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="option"
+                  aria-selected={m.id === activeId}
+                  className={`mat-tile${m.id === activeId ? ' on' : ''}`}
+                  onClick={() => pick(m.id)}
+                  title={`${m.name} · ${MATERIAL_CATEGORY_LABELS[m.category]}${m.overrideOf ? ' · override' : ''}`}
+                >
+                  <MaterialSwatch material={m} fill />
+                  <span className="mat-tile-name">{m.name}</span>
+                  {favourites.includes(m.id) && <Star size={11} className="fav-star" aria-label="Favourite" />}
+                </button>
+              ) : (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="option"
+                  aria-selected={m.id === activeId}
+                  className={`mat-row${m.id === activeId ? ' on' : ''}`}
+                  onClick={() => pick(m.id)}
+                >
+                  <MaterialSwatch material={m} size={30} />
+                  <span className="mat-row-text">
+                    <span>{m.name}</span>
+                    <span className="field-hint">
+                      {MATERIAL_CATEGORY_LABELS[m.category]}
+                      {m.overrideOf ? ' · override' : ''}
+                    </span>
+                  </span>
+                  {favourites.includes(m.id) && <Star size={12} className="fav-star" aria-label="Favourite" />}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
       </div>
       {active && <MaterialEditor material={active} />}
     </div>

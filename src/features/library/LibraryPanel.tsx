@@ -26,6 +26,7 @@ import {
   Grid3x3,
   Lamp,
   LayoutGrid,
+  List,
   Monitor,
   PawPrint,
   Pencil,
@@ -83,6 +84,7 @@ import { AssetInfoCard, InfoCardControl } from './AssetInfoCard';
 import { DOOR_KINDS, WINDOW_KINDS, WallPresetCards, extraOpeningIcon } from './BuildExtras';
 import { OpeningBuildOptions } from './OpeningBuildOptions';
 import './library.css';
+import { CategoryButton, CategoryHeading, CategoryRail, useRailCollapsed } from './CategoryRail';
 import { servicesSearchText } from '@/domain/model/services';
 
 const BUILD_GROUP_TITLES = {
@@ -109,6 +111,20 @@ function DensityButton() {
       data-testid="library-density"
     >
       <Icon size={16} />
+    </IconButton>
+  );
+}
+
+/** Materials tab: swatch grid (default) or list. */
+function MaterialViewButton() {
+  const view = usePrefsStore((s) => s.materialView);
+  return (
+    <IconButton
+      label={view === 'grid' ? 'Show materials as a list' : 'Show materials as a grid'}
+      onClick={() => usePrefsStore.getState().setMaterialView(view === 'grid' ? 'list' : 'grid')}
+      data-testid="material-view"
+    >
+      {view === 'grid' ? <List size={16} /> : <LayoutGrid size={16} />}
     </IconButton>
   );
 }
@@ -151,7 +167,7 @@ export const LibraryPanel = memo(function LibraryPanel({ isMobile }: { isMobile:
           />
         )}
         <div className="library-head-actions">
-          <DensityButton />
+          {current === 'materials' ? <MaterialViewButton /> : <DensityButton />}
           <IconButton label="Close library" onClick={() => set({ libraryOpen: false })}>
             <X size={16} />
           </IconButton>
@@ -437,6 +453,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const [query, setQuery] = useState('');
   const [favOnly, setFavOnly] = useState(false);
   const [cat, setCat] = useState<CatFilter>('all');
+  const railCollapsed = useRailCollapsed();
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const chooseCat = (next: CatFilter) => {
@@ -603,21 +620,19 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     tooltip?: string,
   ) => {
     const active = cat === value;
-    const empty = (q || favOnly) && count === 0 && !active;
+    const empty = !!(q || favOnly) && count === 0 && !active;
     return (
-      <button
+      <CategoryButton
         key={value}
-        type="button"
-        className={`lib-cat-btn${active ? ' on' : ''}${empty ? ' empty' : ''}`}
+        active={active}
+        empty={empty}
         onClick={() => chooseCat(value)}
-        aria-pressed={active}
-        title={tooltip ?? label}
-        data-testid={`lib-cat-${value}`}
-      >
-        <Icon size={13} aria-hidden />
-        <span className="lib-cat-label">{label}</span>
-        <span className="lib-cat-count num">{count}</span>
-      </button>
+        icon={Icon}
+        label={label}
+        count={count}
+        tooltip={tooltip}
+        testId={`lib-cat-${value}`}
+      />
     );
   };
 
@@ -666,8 +681,8 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
         </div>
       </div>
 
-      <div className="furniture-split">
-        <nav className="lib-cat-rail" aria-label="Furniture categories" data-testid="library-categories">
+      <div className={`furniture-split${railCollapsed ? ' rail-collapsed' : ''}`}>
+        <CategoryRail label="Furniture categories" testId="library-categories">
           <div className="lib-cat-group">
             {renderCatBtn('all', 'All items', LayoutGrid, baseList.length, 'All items · Tất cả')}
             {renderCatBtn('recent', 'Recent', Clock, recentCount, 'Recently placed · Gần đây')}
@@ -676,7 +691,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
 
           {collections.length > 0 && (
             <div className="lib-cat-group">
-              <div className="lib-cat-heading">Collections</div>
+              <CategoryHeading>Collections</CategoryHeading>
               {collections.map((c) =>
                 renderCatBtn(`col:${c.id}`, c.name, Folder, c.items.length, `${c.name} (${c.items.length})`),
               )}
@@ -684,19 +699,19 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
           )}
 
           <div className="lib-cat-group" data-testid="library-cat-rooms">
-            <div className="lib-cat-heading">By room</div>
+            <CategoryHeading>By room</CategoryHeading>
             {ROOM_CATEGORIES.map((c) =>
               renderCatBtn(c.id, c.label, CATEGORY_ICONS[c.id], catCounts.get(c.id) ?? 0, `${c.label} · ${c.vn}`),
             )}
           </div>
 
           <div className="lib-cat-group" data-testid="library-cat-items">
-            <div className="lib-cat-heading">By item</div>
+            <CategoryHeading>By item</CategoryHeading>
             {ITEM_CATEGORIES.map((c) =>
               renderCatBtn(c.id, c.label, CATEGORY_ICONS[c.id], catCounts.get(c.id) ?? 0, `${c.label} · ${c.vn}`),
             )}
           </div>
-        </nav>
+        </CategoryRail>
 
         <div className="furniture-results" ref={resultsRef}>
           {collection && (

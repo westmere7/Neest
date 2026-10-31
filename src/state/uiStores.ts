@@ -81,6 +81,10 @@ interface PrefsState {
   /** Colour variants the user saved, by asset id. */
   assetVariants: Record<string, UserVariant[]>;
   libraryDensity: LibraryDensity;
+  /** Library category sidebar shows icons only (Furniture and Materials). */
+  libraryRailCollapsed: boolean;
+  /** Materials library as a grid of swatches (default) or a list. */
+  materialView: 'grid' | 'list';
   /** Groups saved to the library (every project). */
   savedGroups: SavedGroup[];
   /** Style new notes start with ("Set as default" in the note editor); null = the built-in style. */
@@ -98,6 +102,8 @@ interface PrefsState {
   saveAssetVariant(assetId: string, variant: UserVariant): void;
   deleteAssetVariant(assetId: string, id: string): void;
   setLibraryDensity(d: LibraryDensity): void;
+  setLibraryRailCollapsed(on: boolean): void;
+  setMaterialView(v: 'grid' | 'list'): void;
   saveGroup(g: SavedGroup): void;
   renameSavedGroup(id: string, name: string): void;
   /** Changes a saved group's name and description (an empty description removes it). */
@@ -123,6 +129,8 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   focusSelection: false,
   assetVariants: {},
   libraryDensity: 'normal',
+  libraryRailCollapsed: false,
+  materialView: 'grid',
   savedGroups: [],
   noteStyle: null,
   loaded: false,
@@ -229,9 +237,17 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
     set({ noteStyle: style });
     persist('noteStyle', style);
   },
+  setLibraryRailCollapsed(on) {
+    set({ libraryRailCollapsed: on });
+    persist('libraryRailCollapsed', on);
+  },
+  setMaterialView(v) {
+    set({ materialView: v });
+    persist('materialView', v);
+  },
   async hydrate() {
     try {
-      const [fa, ra, fm, rm, ob, rs, av, ld, sg, fs, ns] = await Promise.all([
+      const [fa, ra, fm, rm, ob, rs, av, ld, sg, fs, ns, rc, mv] = await Promise.all([
         preferenceRepository.get<string[]>('favouriteAssets'),
         preferenceRepository.get<string[]>('recentAssets'),
         preferenceRepository.get<string[]>('favouriteMaterials'),
@@ -243,6 +259,8 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         preferenceRepository.get<SavedGroup[]>('savedGroups'),
         preferenceRepository.get<boolean>('focusSelection'),
         preferenceRepository.get<NoteStyle | null>('noteStyle'),
+        preferenceRepository.get<boolean>('libraryRailCollapsed'),
+        preferenceRepository.get<'grid' | 'list'>('materialView'),
       ]);
       set({
         favouriteAssets: fa ?? [],
@@ -256,6 +274,8 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         libraryDensity: ld && LIBRARY_DENSITIES.includes(ld) ? ld : 'normal',
         savedGroups: Array.isArray(sg) ? sg : [],
         noteStyle: ns && typeof ns === 'object' ? ns : null,
+        libraryRailCollapsed: rc === true,
+        materialView: mv === 'list' ? 'list' : 'grid',
         loaded: true,
       });
     } catch {

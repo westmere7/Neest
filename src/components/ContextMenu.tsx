@@ -87,7 +87,9 @@ export function ContextMenuHost() {
             }}
           >
             {item.checked !== undefined && <span className="menu-check" aria-hidden>{item.checked ? '✓' : ''}</span>}
-            <span>{item.label}</span>
+            <span className="menu-label" title={item.label.length > 40 ? item.label : undefined}>
+              {item.label}
+            </span>
             {item.shortcut && <kbd>{item.shortcut}</kbd>}
           </button>
         ),

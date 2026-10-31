@@ -455,3 +455,70 @@
     opacity: 1;
   }
 }
+
+/* Materials library: sidebar + results like Furniture (furniture-split / furniture-results). */
+.mat-library .mat-split {
+  flex: 1;
+  min-height: 0;
+}
+.mat-library.editing .mat-split {
+  flex: none;
+  height: 34vh;
+  border-bottom: 1px solid var(--border);
+}
+.mat-split .mat-list,
+.mat-library.editing .mat-split .mat-list {
+  flex: none;
+  max-height: none;
+  overflow: visible;
+  border-bottom: 0;
+}
+.mat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 6px;
+  padding: 8px;
+}
+.mat-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mat-tile .mat-swatch {
+  border-radius: calc(var(--radius-sm) - 2px);
+}
+.mat-tile:hover {
+  background: var(--surface-3);
+}
+.mat-tile.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.mat-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.mat-tile-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.25;
+}
+.mat-tile .fav-star {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6));
+}

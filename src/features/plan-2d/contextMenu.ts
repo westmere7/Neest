@@ -21,6 +21,11 @@ import { createCalloutAt } from './tools/calloutTool';
 import { isObjectLocked, itemLayerOf } from '@/domain/commands/itemLayers';
 import { moveSelectionToLayer, newLayerFromSelection } from '@/features/editor/itemLayerActions';
 
+/** Opens the library on an item's shelf and flashes its card (leaves Connections, which shares the panel's place). */
+export function showInLibrary(assetId: string): void {
+  useEditorStore.getState().set({ servicesMode: false, libraryOpen: true, libraryTab: 'furniture', libraryReveal: { assetId, nonce: Date.now() } });
+}
+
 /** Layers listed by name in the right-click menu; with more, the menu opens the Layers panel. */
 const MENU_LAYERS = 6;
 
@@ -60,6 +65,7 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
       ...(g.count >= 1 ? [{ label: g.count > 1 || gid ? 'Save to library as a group' : 'Save to library', run: () => void saveSelectionToLibrary() }] : []),
       ...(g.canGroup || g.canUngroup || g.count >= 1 ? [{ separator: true, label: '' }] : []),
       { label: 'Add note', run: () => void createCalloutAt({ kind: 'object', objectId: hit.id }, px) },
+      ...(o && !project.customAssets[o.assetId] ? [{ label: 'Show in library', run: () => showInLibrary(o.assetId) }] : []),
       { label: 'Duplicate', shortcut: 'Ctrl+D', run: duplicateSelection },
       { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },
       { label: 'Flip (mirror)', run: mirrorSelection, disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },

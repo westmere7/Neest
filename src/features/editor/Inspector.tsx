@@ -26,6 +26,7 @@ import { SelectSameTypeButton } from './WallTypes';
 import { AnnotationToggles } from './AnnotationToggles';
 import { CalloutInspector } from '@/features/callouts/CalloutInspector';
 import { NoteButton } from '@/features/callouts/ItemNotes';
+import { showInLibrary } from '@/features/plan-2d/contextMenu';
 import { ItemServices, ServicePointInspector, ServiceRunInspector } from '@/features/services/ServiceInspector';
 import { OpeningExtras } from './OpeningExtras';
 import { OpeningDesignGrid } from './OpeningDesignPicker';
@@ -108,7 +109,7 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
         <>
           <IconButton
             label="Show in library"
-            onClick={() => useEditorStore.getState().set({ libraryOpen: true, libraryTab: 'furniture', libraryReveal: { assetId: o.assetId, nonce: Date.now() } })}
+            onClick={() => showInLibrary(o.assetId)}
           >
             <LibraryBig size={15} />
           </IconButton>
