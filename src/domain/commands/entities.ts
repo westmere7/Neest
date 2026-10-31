@@ -214,6 +214,32 @@ export function rotateObjects(d: D, ids: string[], delta: number): void {
   }
 }
 
+/**
+ * Mirrors (flips) objects left-to-right: a single object toggles `mirrored` in its own local frame;
+ * multiple objects reflect across the centroid plane perpendicular to the largest item's width axis.
+ */
+export function mirrorObjects(d: D, ids: string[]): void {
+  const objs = ids.map((id) => d.objects[id]).filter(Boolean);
+  if (!objs.length) return;
+  if (objs.length === 1) {
+    objs[0].mirrored = !objs[0].mirrored;
+    return;
+  }
+  const cx = objs.reduce((s, o) => s + o.x, 0) / objs.length;
+  const cy = objs.reduce((s, o) => s + o.y, 0) / objs.length;
+  const lead = objs.reduce((best, cur) => (cur.width * cur.depth > best.width * best.depth ? cur : best), objs[0]);
+  const alpha = lead.rotation;
+  const nx = Math.cos(alpha);
+  const ny = Math.sin(alpha);
+  for (const o of objs) {
+    const dot = (o.x - cx) * nx + (o.y - cy) * ny;
+    o.x -= 2 * dot * nx;
+    o.y -= 2 * dot * ny;
+    o.rotation = normalizeRotation(2 * alpha - o.rotation);
+    o.mirrored = !o.mirrored;
+  }
+}
+
 export function normalizeRotation(r: number): number {
   const t = Math.PI * 2;
   let v = r % t;

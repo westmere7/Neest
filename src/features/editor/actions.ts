@@ -1,5 +1,5 @@
 import type { Project } from '@/domain/model/schema';
-import { deleteEntities, duplicateEntities, rotateObjects, translateObjects, updateObjects, updateOpening } from '@/domain/commands/entities';
+import { deleteEntities, duplicateEntities, mirrorObjects, rotateObjects, translateObjects, updateObjects, updateOpening } from '@/domain/commands/entities';
 import { clampOpenings, flipWall, insertJunctions, translateNodes, updateWalls } from '@/domain/commands/walls';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type SelItem } from '@/state/editorStore';
@@ -159,10 +159,23 @@ function placeCopies(project: NonNullable<ReturnType<typeof ps>['project']>, ids
 export function rotateSelection(delta = Math.PI / 2): void {
   const project = ps().project;
   const ids = es()
-    .selection.filter((s) => s.kind === 'object' && !!project?.objects[s.id] && !isObjectLocked(project, project.objects[s.id]))
+    .selection.filter(
+      (s) => s.kind === 'object' && !!project?.objects[s.id] && !isObjectLocked(project, project.objects[s.id]) && !project.layers.furniture.locked,
+    )
     .map((s) => s.id);
   if (!ids.length) return;
   ps().execute('Rotate', (d) => rotateObjects(d, ids, delta));
+}
+
+export function mirrorSelection(): void {
+  const project = ps().project;
+  const ids = es()
+    .selection.filter(
+      (s) => s.kind === 'object' && !!project?.objects[s.id] && !isObjectLocked(project, project.objects[s.id]) && !project.layers.furniture.locked,
+    )
+    .map((s) => s.id);
+  if (!ids.length) return;
+  ps().execute('Flip', (d) => mirrorObjects(d, ids));
 }
 
 export function nudgeSelection(dx: number, dy: number): void {

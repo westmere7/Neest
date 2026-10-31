@@ -19,7 +19,7 @@ import { renderThumbnail } from '@/features/projects/projectService';
 import { thumbnailSrc } from '@/features/projects/thumbnails';
 import { Button, IconButton, LengthField, NumberField, Section, Select, Slider, TextField, Toggle, Segmented } from '@/components/ui';
 import { MaterialSlotRow } from '@/features/materials/MaterialUI';
-import { deleteSelection, duplicateSelection, flipOpening, reverseWall, rotateSelection, toggleLockSelection, describeSelection } from './actions';
+import { deleteSelection, duplicateSelection, flipOpening, mirrorSelection, reverseWall, rotateSelection, toggleLockSelection, describeSelection } from './actions';
 import { DrawPresetSelect, WallConstruction, WallPresetPicker, WallTrims, isLightWall, LightWallFinishes } from './WallExtras';
 import { WallMultiEdit } from './WallMultiEdit';
 import { SelectSameTypeButton } from './WallTypes';
@@ -774,6 +774,9 @@ function MultiInspector({ project }: { project: Project }) {
               </Button>
               <Button size="sm" onClick={() => rotateSelection()}>
                 <RotateCw size={13} /> Rotate group
+              </Button>
+              <Button size="sm" onClick={mirrorSelection}>
+                <FlipHorizontal2 size={13} /> Flip
               </Button>
             </>
           )}

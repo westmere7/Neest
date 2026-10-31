@@ -185,7 +185,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   libraryReveal: null,
   libraryCollection: null,
   buildGroup: 'walls',
-  libraryWidth: 300,
+  libraryWidth: 416,
   // Opened on demand (top-bar button or P), not every time the 3D view is shown.
   viewPanelOpen: false,
   projectPanelOpen: true,

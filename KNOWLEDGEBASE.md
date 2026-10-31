@@ -360,8 +360,9 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **Groups**:
   - Model: `PlacedObject.groupId` plus `Project.groups` (`{ id, name }`, default `{}`, so older files load).
   - Commands in entities.ts: `groupObjects`, `ungroupObjects`, `renameGroup`, `pruneGroups` (groups of fewer
-    than two members are dropped, e.g. after deleting) and `withGroupMates`. `duplicateEntities` gives copies a
-    new group.
+    than two members are dropped, e.g. after deleting), `withGroupMates` and `mirrorObjects` (flips a single
+    item's `mirrored` flag in its own frame, or reflects a multi-selection/group across the centroid plane
+    perpendicular to the largest item's width axis). `duplicateEntities` gives copies a new group.
   - Selection: `features/editor/groups.ts` installs `setSelectionExpander` into the editor store, so
     `setSelection` widens to whole groups and `toggleSelection` toggles a whole group. Marquee, 2D clicks, 3D
     picks and menus all get this for free.
@@ -375,7 +376,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
     group in view; drag uses the asset drag channel with id `savedgroup:<id>`, handled in `useDropAsset`.
     Placing creates a new group.
 - **Right-click menus**:
-  - Plan: `plan-2d/contextMenu.ts` builds the items, adding Group, Ungroup, Rename group and Save to library.
+  - Plan: `plan-2d/contextMenu.ts` builds the items, adding Group, Ungroup, Rename group, Save to library and
+    `Flip (mirror)` right after `Rotate 90°` (`mirrorSelection`, also exposed as `Flip` in `MultiInspector`).
   - 3D: every `onPick` site in SceneContent also fires on `contextmenu`. Scene3DView opens the same menu, or the
     empty-space menu, and ignores the click after a right-drag orbit or pan.
   - Library: asset cards offer Place, Place in view and Favourite; saved-group cards offer Place, Rename and Delete.
@@ -726,10 +728,21 @@ Not a technical layout: no fittings, valves or pipe sizes. Shown only in **Servi
 
   `assetChecks.ts › describeAssetChecks(list)` holds the per-asset validation. It checks bounds at default/min/max and every size corner, parts ≤ `MAX_PARTS` (160), slots, materials, light rules and type/group. `catalog.test.ts` runs it over the whole catalogue and adds catalogue-level checks plus parametric tests (bed pillows, sofa arms, table legs, wall-cabinet height).
 - **Rendering detail cheaply**: `builders.ts › assetSlotGeometries(asset, size)` bakes every part into object space and merges them into **one geometry per material slot**. The result is cached per asset+size and shared by all instances (`userData.cached`: never dispose). A 120-part sofa therefore costs 2–4 draw calls. Thumbnails use the same path.
-- **Library UI** (`features/library/LibraryPanel.tsx`): Sims buy-mode browsing.
-  - **By room** (categories) or **By type** (types), with chips per room or type.
-  - Listings are split into shelves: per room or type in "All", otherwise per group, ordered by `ASSET_GROUPS` and `groupRank`.
-  - Search matches name, tags, room, type, group and pack name.
+- **Library UI** (`features/library/LibraryPanel.tsx`, `data/assets/furnitureCategories.ts`):
+  - Two-column Furniture panel (`libraryWidth` default 416 px, resizable 330–640 px): a scrollable left category rail
+    (`.lib-cat-rail`) beside the shelf/card grid (`.furniture-results`).
+  - Left category rail has quick views (`All items`, `Recent`, `Groups`, plus user `Collections` when present), then two
+    main groups: **By room** on top (`ROOM_CATEGORIES`: Living room, Bedroom, Kitchen, Dining, Bathroom, Study & office,
+    Kids & nursery, Laundry, Outdoor) and **By item** below (`ITEM_CATEGORIES`: Sofas & chairs, Beds, Tables & desks,
+    Cabinets, Appliances, Bath & sinks, Lighting, Electronics, Rugs & drapes, Decor & art, Plants, Structure,
+    Hobbies & kids, Pets, People, Shapes & imports).
+  - Multi-category classification (`furnitureCategoriesOf`): an asset automatically belongs to every room and item
+    category it fits (e.g. a sofa bed sits in Living room, Bedroom, Sofas & chairs and Beds; a kitchen sink counter sits
+    in Kitchen, Tables & desks, Cabinets and Bath & sinks; indoor AC sits in Living room, Bedroom, Study & office,
+    Appliances and Electronics). Live counts update as you search or filter by Favourites.
+  - Listings are split into shelves: per type in "All", otherwise per group ordered by `categoryShelfRank` (each room's
+    signature furniture types sort first). Search matches name, tags, room, type, group, pack name and English/Vietnamese
+    category terms.
 
 ### Asset rules (for anyone adding content: people and agents)
 
@@ -855,8 +868,9 @@ Not a technical layout: no fittings, valves or pipe sizes. Shown only in **Servi
   `uChaise`) feeds one builder; each module side is an arm, a back, a seam (joined) or open. Piping is `weltRect` rods on
   the rounded cushion edges (k = 0.293 × bevel); leaning back cushions use `leanCushion` (Ry · Rx turned into XYZ Euler
   angles) so a cushion can face any side of a corner. Right-hand sectionals mirror the parts (`mirrorX`).
-- **L-shaped desks** (`packs/l-desks.pack.ts`, 12): main run along the back, return down the left (corner at the back
-  left); `lPair` adds the mirrored return-right version as `variantOf`.
+- **L-shaped desks** (`packs/l-desks.pack.ts`, 14): main run along the back, return down the left (corner at the back
+  left); `lPair` adds the mirrored return-right version as `variantOf`. Includes a pastel soft-curve two-person desk
+  (`soft-curve-avocado-l-desk-left` / `-right`, default Sage green) with scalloped finger-pull drawers and full floor legs.
 - **Studio & apartment beds** (`packs/studio-beds.pack.ts`, 22): wall beds on their own beds shelf **Wall beds**
   (vertical Murphy queen open + folded, side-tilt single open + folded, with a sofa, with a fold-over desk, between
   wardrobes under a bridge cabinet), loft beds (adult steel loft with models "Desk / Sofa / Open underneath"; stair loft
@@ -1813,3 +1827,22 @@ Known limitations (also in README):
      chain; a loose-runs notice in the panel (done).
 144. "Allow repositioning those items in 3D view" + "it should have a small gizmo instead of just hold and drag" → the
      services point gizmo in 3D; Add missing points no longer stacks two sockets on one spot (done).
+145. "Thêm tính năng mirrored (Flip) vào khi click chuột phải sau phần 90 độ của 1 vật thể" → `mirrorObjects`
+     (`entities.ts`) + `mirrorSelection` (`actions.ts`), `Flip (mirror)` right after `Rotate 90°` in the shared 2D/3D
+     right-click menu (`contextMenu.ts`), and a `Flip` button in `MultiInspector`; tests in `groups.test.ts` and
+     `contextMenu.test.ts` (done).
+146. "Phần furniture thêm category vào bên trái và tự phân loại thành category chính … Một item có thể thuộc 2 hoặc nhiều
+     category … chia thành 2 nhóm bên trên là xếp theo loại phòng, nhóm dưới là theo đồ đạc" → two-column Furniture
+     tab with a left category sidebar (`By room` above `By item`, plus `All items`, `Recent`, `Groups` and `Collections`),
+     automatic multi-category classification (`src/data/assets/furnitureCategories.ts`), live filtered counts and VN
+     tooltips/search terms; tests in `furnitureCategories.test.ts` and `LibraryPanel.test.tsx` (done).
+147. "Sửa icon này thành icon X" + "Dựng cho tôi bàn chữ L này 3D … dùng chân bàn thay vì gắn vào tường, thêm vào thư viện"
+     + "bỏ màu xanh bơ đi, giữ lại các màu còn lại" → swapped the library close icon to `X` (`LibraryPanel.tsx`); added
+     `l-desks:soft-curve-avocado-l-desk-left` and `-right` + `lacquer-butter` in `packs/l-desks.pack.ts` (default Sage
+     green plus Cream lacquer, Buttercream, Dusty pink and Oak & warm white; rounded outer corners, smooth concave inner
+     corner, flush scalloped wave-pull drawers on both wings, and three freestanding rounded floor legs; `AssetSpec` now
+     accepts `price` and `services`) (done).
+148. "Tương tự tạo bàn ăn 3D này, 1 mặt sát tường, không cần ghế" → added `soft-curve-furniture:wall-peninsula-bead-table`
+     in `packs/soft-curve-furniture.pack.ts` (`wallSnap: true`, flat wall back `-z` with rounded-bottom wall support panel,
+     rounded front corners, and a white `lathe` turned pedestal leg with a central bead orb and flared upper cone; default
+     Sage green & satin white plus 6 pastel/wood/marble finishes) (done).

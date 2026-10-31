@@ -5,7 +5,46 @@ import { renameGenericSavedGroups } from '@/features/editor/groups';
 import { READY_GROUP_SHELVES, readyGroupById, readyGroups } from '@/data/groups/readyGroups';
 import { SAVED_GROUP_PREFIX, savedGroupAssets } from './savedGroupAssets';
 import { collectionMenuItems, editCollection, newCollection, removeCollection } from './collections';
-import { FolderHeart, Grid2x2, Grid3x3, LayoutGrid, PanelLeftClose, Pencil, Search, Star, Trash2, Upload } from 'lucide-react';
+import {
+  Archive,
+  Armchair,
+  Baby,
+  Bath,
+  Bed,
+  BedDouble,
+  Blinds,
+  Box,
+  Clock,
+  Columns2,
+  Component,
+  CookingPot,
+  Dumbbell,
+  Folder,
+  FolderHeart,
+  Frame,
+  Grid2x2,
+  Grid3x3,
+  Lamp,
+  LayoutGrid,
+  Monitor,
+  PawPrint,
+  Pencil,
+  Refrigerator,
+  Search,
+  ShowerHead,
+  Sofa,
+  Sprout,
+  Star,
+  Sun,
+  Table2,
+  Trash2,
+  Tv,
+  Upload,
+  User,
+  Utensils,
+  WashingMachine,
+  X,
+} from 'lucide-react';
 import type { OpeningKind, WallRole } from '@/domain/model/schema';
 import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { formatLength } from '@/domain/model/units';
@@ -16,9 +55,20 @@ import {
   ASSET_TYPE_ORDER,
   groupRank,
 } from '@/data/assets/catalog';
+import {
+  FURNITURE_CATEGORY_BY_ID,
+  ITEM_CATEGORIES,
+  ROOM_CATEGORIES,
+  categoryShelfRank,
+  furnitureCategoriesOf,
+  furnitureCategorySearchText,
+  isFurnitureCategoryId,
+  primaryItemCategoryOf,
+  type FurnitureCategoryId,
+} from '@/data/assets/furnitureCategories';
 import { assetPlan, customAssetDefinition, getAsset } from '@/data/assets/registry';
 import { plantSearchText } from '@/data/assets/plantInfo';
-import type { AssetCategory, AssetDefinition, AssetType } from '@/data/assets/types';
+import type { AssetDefinition } from '@/data/assets/types';
 import { usePackVersion } from '@/packs/events';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type LibraryTab } from '@/state/editorStore';
@@ -103,7 +153,7 @@ export const LibraryPanel = memo(function LibraryPanel({ isMobile }: { isMobile:
         <div className="library-head-actions">
           <DensityButton />
           <IconButton label="Close library" onClick={() => set({ libraryOpen: false })}>
-            <PanelLeftClose size={16} />
+            <X size={16} />
           </IconButton>
         </div>
       </header>
@@ -120,8 +170,8 @@ export const LibraryPanel = memo(function LibraryPanel({ isMobile }: { isMobile:
           aria-label="Resize library"
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === 'ArrowLeft') set({ libraryWidth: Math.max(260, width - 20) });
-            if (e.key === 'ArrowRight') set({ libraryWidth: Math.min(480, width + 20) });
+            if (e.key === 'ArrowLeft') set({ libraryWidth: Math.max(330, width - 20) });
+            if (e.key === 'ArrowRight') set({ libraryWidth: Math.min(640, width + 20) });
           }}
           onPointerDown={(e) => {
             (e.target as Element).setPointerCapture(e.pointerId);
@@ -130,7 +180,7 @@ export const LibraryPanel = memo(function LibraryPanel({ isMobile }: { isMobile:
           onPointerMove={(e) => {
             if (!resizing.current) return;
             set({
-              libraryWidth: Math.min(480, Math.max(260, resizing.current.w + e.clientX - resizing.current.x)),
+              libraryWidth: Math.min(640, Math.max(330, resizing.current.w + e.clientX - resizing.current.x)),
             });
           }}
           onPointerUp={() => (resizing.current = null)}
@@ -296,10 +346,38 @@ function BuildTab() {
 // ───────────── Furniture tab ─────────────
 
 
-/** Dropdown filter: a room or type, all, recent, the groups, or a collection (`col:<id>`). */
-type CatFilter = AssetCategory | AssetType | 'all' | 'recent' | 'groups' | `col:${string}`;
+/** Sidebar filter: a room or item category, all, recent, groups, or a collection (`col:<id>`). */
+type CatFilter = FurnitureCategoryId | 'all' | 'recent' | 'groups' | `col:${string}`;
 
 const isCollectionFilter = (c: CatFilter): c is `col:${string}` => c.startsWith('col:');
+
+const CATEGORY_ICONS: Record<FurnitureCategoryId, typeof Sofa> = {
+  'room:living': Sofa,
+  'room:bedroom': BedDouble,
+  'room:kitchen': CookingPot,
+  'room:dining': Utensils,
+  'room:bathroom': Bath,
+  'room:office': Monitor,
+  'room:kids': Baby,
+  'room:laundry': WashingMachine,
+  'room:outdoor': Sun,
+  'item:seating': Armchair,
+  'item:beds': Bed,
+  'item:tables': Table2,
+  'item:storage': Archive,
+  'item:appliances': Refrigerator,
+  'item:plumbing': ShowerHead,
+  'item:lighting': Lamp,
+  'item:electronics': Tv,
+  'item:textiles': Blinds,
+  'item:decor': Frame,
+  'item:plants': Sprout,
+  'item:structure': Columns2,
+  'item:hobbies': Dumbbell,
+  'item:pets': PawPrint,
+  'item:people': User,
+  'item:misc': Box,
+};
 
 interface Shelf {
   key: string;
@@ -307,7 +385,6 @@ interface Shelf {
   items: AssetDefinition[];
 }
 
-/** Splits a listing into titled shelves, Sims buy-mode style. */
 /** Versions of an item (`variantOf`: with or without books, tableware…) follow it on the shelf. */
 function besideBase(items: AssetDefinition[]): AssetDefinition[] {
   const ids = new Set(items.map((a) => a.id));
@@ -324,7 +401,7 @@ function besideBase(items: AssetDefinition[]): AssetDefinition[] {
   return out;
 }
 
-/** The library is browsed by type (seating, beds, storage…): one shelf per type, or per group within one type. */
+/** Splits a listing into titled shelves: one shelf per type in All, or per group within a room/item category. */
 function shelves(list: AssetDefinition[], cat: CatFilter): Shelf[] {
   if (cat === 'recent') return [{ key: cat, title: '', items: list }];
   const byKey = new Map<string, Shelf & { rank: number }>();
@@ -337,8 +414,9 @@ function shelves(list: AssetDefinition[], cat: CatFilter): Shelf[] {
     if (cat === 'all') {
       // Whole catalogue: one shelf per type.
       add(a.type, ASSET_TYPE_LABELS[a.type], ASSET_TYPE_ORDER.indexOf(a.type), a);
+    } else if (isFurnitureCategoryId(cat)) {
+      add(`${a.type}|${a.group}`, a.group, categoryShelfRank(cat, a.type, a.group), a);
     } else {
-      // One type: shelves by group, ordered as in ASSET_GROUPS.
       add(`${a.type}|${a.group}`, a.group, groupRank(a.type, a.group), a);
     }
   }
@@ -359,6 +437,13 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   const [query, setQuery] = useState('');
   const [favOnly, setFavOnly] = useState(false);
   const [cat, setCat] = useState<CatFilter>('all');
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const chooseCat = (next: CatFilter) => {
+    setCat(next);
+    resultsRef.current?.scrollTo({ top: 0 });
+  };
+
   // Saved groups still called "Group 3" get names from their contents once their items resolve.
   useEffect(() => {
     if (cat === 'groups') renameGenericSavedGroups();
@@ -370,13 +455,14 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     setQuery('');
     setFavOnly(false);
     setCat(`col:${showCol.id}`);
+    resultsRef.current?.scrollTo({ top: 0 });
   }, [showCol]);
   const collection = isCollectionFilter(cat) ? collections.find((c) => `col:${c.id}` === cat) : undefined;
   // A deleted collection (or one removed by undo) falls back to everything.
   useEffect(() => {
     if (isCollectionFilter(cat) && !collection) setCat('all');
   }, [cat, collection]);
-  // Inspector → Show in library: open the item's room (or Imported models), clear filters, then
+  // Inspector → Show in library: open the item's primary category, clear filters, then
   // scroll its card into view and flash it.
   const reveal = useEditorStore((s) => s.libraryReveal);
   const [revealedId, setRevealedId] = useState<string | null>(null);
@@ -384,9 +470,10 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
     if (!reveal) return;
     const asset = getAsset(project, reveal.assetId);
     if (!asset) return;
+    const targetCat = primaryItemCategoryOf(asset);
     setQuery('');
     setFavOnly(false);
-    setCat(asset.type as CatFilter);
+    setCat(targetCat);
     // The shelf re-renders after the filter change: retry until the card exists.
     let tries = 0;
     const t = window.setInterval(() => {
@@ -395,6 +482,9 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
         ?.closest<HTMLElement>('.asset-card');
       if (!el && ++tries < 25) return;
       window.clearInterval(t);
+      document
+        .querySelector<HTMLElement>(`[data-testid="lib-cat-${CSS.escape(targetCat)}"]`)
+        ?.scrollIntoView({ block: 'nearest' });
       if (!el) return;
       el.scrollIntoView({ block: 'center' });
       setRevealedId(reveal.assetId);
@@ -420,33 +510,71 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
   );
   const q = query.trim().toLowerCase();
   // Groups: the user's saved groups, then the ready-made ones by shelf, as ordinary item cards —
-  // under the Groups entry of the dropdown, and among the results when searching everything.
-  const groupMatch = (a: { name: string; tags: string[]; description?: string; group: string }) =>
-    !q || `${a.name} ${a.tags.join(' ')} ${a.description ?? ''} ${a.group}`.toLowerCase().includes(q);
+  // under the Groups entry of the sidebar, and among the results when searching everything.
+  const groupMatch = useMemo(
+    () => (a: { name: string; tags: string[]; description?: string; group: string }) =>
+      !q || `${a.name} ${a.tags.join(' ')} ${a.description ?? ''} ${a.group}`.toLowerCase().includes(q),
+    [q],
+  );
+  // Pack items resolve in place when `packs` changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const allSavedGroups = useMemo(() => savedGroupAssets(savedGroups), [savedGroups, packs]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const allReadyGroups = useMemo(() => savedGroupAssets(readyGroups()), [packs]);
+  const matchedSavedGroups = useMemo(() => allSavedGroups.filter(groupMatch), [allSavedGroups, groupMatch]);
+  const matchedReadyGroups = useMemo(() => allReadyGroups.filter(groupMatch), [allReadyGroups, groupMatch]);
   const showGroups = cat === 'groups' || (cat === 'all' && !!q && !favOnly);
-  const groupItems = showGroups ? savedGroupAssets(savedGroups).filter(groupMatch) : [];
-  const readyItems = showGroups ? savedGroupAssets(readyGroups()).filter(groupMatch) : [];
+  const groupItems = showGroups ? matchedSavedGroups : [];
+  const readyItems = showGroups ? matchedReadyGroups : [];
+
+  // Items matching the search query and favourites toggle (before category selection).
+  const baseList = useMemo(
+    () =>
+      all.filter((a) => {
+        if (q) {
+          const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''} ${furnitureCategorySearchText(a)} ${a.plant ? plantSearchText(a.plant) : ''} ${servicesSearchText(a.services)}`;
+          if (!hay.toLowerCase().includes(q)) return false;
+        }
+        if (favOnly && !favourites.includes(a.id)) return false;
+        return true;
+      }),
+    [all, q, favOnly, favourites],
+  );
+
+  // Live item counts per category so the left rail shows exact counts (and live search counts).
+  const catCounts = useMemo(() => {
+    const counts = new Map<FurnitureCategoryId, number>();
+    for (const a of baseList) {
+      for (const id of furnitureCategoriesOf(a).all) {
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [baseList]);
+
+  const recentSet = useMemo(() => new Set(recents), [recents]);
+  const recentCount = useMemo(
+    () => baseList.reduce((n, a) => n + (recentSet.has(a.id) ? 1 : 0), 0),
+    [baseList, recentSet],
+  );
+  const totalGroupCount = matchedSavedGroups.length + matchedReadyGroups.length;
+
   // A collection: its items and groups in order (search narrows it); items whose pack is gone are counted.
   const collectionAll = collection ? collection.items.map((id) => getAsset(project, id)) : [];
   const collectionMissing = collectionAll.filter((a) => !a).length;
   const collectionItems = (collectionAll.filter(Boolean) as AssetDefinition[]).filter((a) => groupMatch({ ...a, description: a.description }) && (!favOnly || favourites.includes(a.id)));
-  const list = all.filter((a) => {
-    if (q) {
-      const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''} ${a.plant ? plantSearchText(a.plant) : ''} ${servicesSearchText(a.services)}`;
-      if (!hay.toLowerCase().includes(q)) return false;
+
+  const list = useMemo(() => {
+    if (cat === 'all') return baseList;
+    if (cat === 'recent') {
+      return baseList
+        .filter((a) => recentSet.has(a.id))
+        .sort((a, b) => recents.indexOf(a.id) - recents.indexOf(b.id));
     }
-    if (favOnly && !favourites.includes(a.id)) return false;
-    if (cat === 'all') return true;
-    if (cat === 'recent') return recents.includes(a.id);
-    if (cat === 'groups' || isCollectionFilter(cat)) return false;
-    return a.type === cat;
-  });
-  if (cat === 'recent') list.sort((a, b) => recents.indexOf(a.id) - recents.indexOf(b.id));
-  const present = new Set<string>(all.map((a) => a.type));
-  // The dropdown: All and Recent, then the types, then groups and collections.
-  const catGroups: { label: string | null; items: { value: CatFilter; label: string }[] }[] = [
-    { label: 'Types', items: ASSET_TYPE_ORDER.filter((t) => present.has(t)).map((t) => ({ value: t as CatFilter, label: ASSET_TYPE_LABELS[t] })) },
-  ];
+    if (cat === 'groups' || isCollectionFilter(cat)) return [];
+    return baseList.filter((a) => furnitureCategoriesOf(a).all.has(cat));
+  }, [baseList, cat, recentSet, recents]);
+
   const groupShelves = [
     ...(groupItems.length ? [{ key: 'saved-groups', title: 'Your groups', items: groupItems }] : []),
     ...READY_GROUP_SHELVES.map((title) => ({
@@ -466,6 +594,33 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
           // Searching everything also finds groups.
           ...(showGroups && (groupItems.length || readyItems.length) ? [{ key: 'search-groups', title: 'Groups', items: [...groupItems, ...readyItems] }] : []),
         ];
+
+  const renderCatBtn = (
+    value: CatFilter,
+    label: string,
+    Icon: typeof Sofa,
+    count: number,
+    tooltip?: string,
+  ) => {
+    const active = cat === value;
+    const empty = (q || favOnly) && count === 0 && !active;
+    return (
+      <button
+        key={value}
+        type="button"
+        className={`lib-cat-btn${active ? ' on' : ''}${empty ? ' empty' : ''}`}
+        onClick={() => chooseCat(value)}
+        aria-pressed={active}
+        title={tooltip ?? label}
+        data-testid={`lib-cat-${value}`}
+      >
+        <Icon size={13} aria-hidden />
+        <span className="lib-cat-label">{label}</span>
+        <span className="lib-cat-count num">{count}</span>
+      </button>
+    );
+  };
+
   return (
     <div className="furniture-tab">
       <div className="lib-filters">
@@ -498,7 +653,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
             onClick={(e) => {
               const r = e.currentTarget.getBoundingClientRect();
               openContextMenu(r.left, r.bottom + 4, [
-                ...collections.map((c) => ({ label: `${c.name} (${c.items.length})`, checked: `col:${c.id}` === cat, run: () => setCat(`col:${c.id}`) })),
+                ...collections.map((c) => ({ label: `${c.name} (${c.items.length})`, checked: `col:${c.id}` === cat, run: () => chooseCat(`col:${c.id}`) })),
                 ...(collections.length ? [{ separator: true, label: '' }] : []),
                 { label: 'New collection…', run: () => newCollection() },
               ]);
@@ -509,113 +664,117 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
             <FolderHeart size={16} />
           </IconButton>
         </div>
-        <select
-          className="input select"
-          aria-label="Filter by type, groups or collection"
-          value={cat}
-          onChange={(e) => {
-            if (e.target.value === '__new-collection') newCollection();
-            else setCat(e.target.value as CatFilter);
-          }}
-          data-testid="library-category-select"
-        >
-          <option value="all">All</option>
-          <option value="recent">Recent</option>
-          {catGroups
-            .filter((g) => g.items.length)
-            .map((g) => (
-              <optgroup key={g.label} label={g.label ?? ''}>
-                {g.items.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          <optgroup label="Groups">
-            <option value="groups">Groups — yours & ready-made</option>
-          </optgroup>
-          <optgroup label="Collections">
-            {collections.map((c) => (
-              <option key={c.id} value={`col:${c.id}`}>
-                {c.name} ({c.items.length})
-              </option>
-            ))}
-            <option value="__new-collection">New collection…</option>
-          </optgroup>
-        </select>
-        {collection && (
-          <div className="collection-head" data-testid="collection-head">
-            <div className="collection-head-text">
-              <strong>{collection.name}</strong>
-              <span className="shelf-count">{collection.items.length}</span>
-              {collection.description && <p className="field-hint">{collection.description}</p>}
-            </div>
-            <IconButton label="Edit collection" onClick={() => editCollection(collection.id)} data-testid="collection-edit">
-              <Pencil size={14} />
-            </IconButton>
-            <IconButton label="Delete collection" onClick={() => void removeCollection(collection.id)} data-testid="collection-delete">
-              <Trash2 size={14} />
-            </IconButton>
+      </div>
+
+      <div className="furniture-split">
+        <nav className="lib-cat-rail" aria-label="Furniture categories" data-testid="library-categories">
+          <div className="lib-cat-group">
+            {renderCatBtn('all', 'All items', LayoutGrid, baseList.length, 'All items · Tất cả')}
+            {renderCatBtn('recent', 'Recent', Clock, recentCount, 'Recently placed · Gần đây')}
+            {renderCatBtn('groups', 'Groups', Component, totalGroupCount, 'Room & furniture groups · Nhóm mẫu & đã lưu')}
           </div>
-        )}
-      </div>
-      <div className="asset-shelves" data-testid="asset-grid">
-        {groups.map((g) => (
-          <section key={g.key} className="asset-shelf" aria-label={g.title || undefined}>
-            {g.title && (
-              <h3 className="lib-h shelf-h">
-                {g.title} <span className="shelf-count">{g.items.length}</span>
-              </h3>
-            )}
-            <div className="asset-grid">
-              {g.items.map((a) => (
-                <AssetCard key={a.id} asset={a} info={info} revealed={a.id === revealedId} />
-              ))}
+
+          {collections.length > 0 && (
+            <div className="lib-cat-group">
+              <div className="lib-cat-heading">Collections</div>
+              {collections.map((c) =>
+                renderCatBtn(`col:${c.id}`, c.name, Folder, c.items.length, `${c.name} (${c.items.length})`),
+              )}
             </div>
-          </section>
-        ))}
-        {collection && collectionItems.length === 0 && (
-          <p className="field-hint pad">
-            {collection.items.length
-              ? 'Nothing in this collection matches your search.'
-              : 'Right-click any item or group in the library and choose “Add to” this collection.'}
-          </p>
-        )}
-        {collection && collectionMissing > 0 && (
-          <p className="field-hint pad">
-            {collectionMissing} item{collectionMissing > 1 ? 's are' : ' is'} not available here (their content pack is not installed).
-          </p>
-        )}
-        {cat === 'groups' && groupItems.length === 0 && readyItems.length === 0 && (
-          <p className="field-hint pad">No groups match your search.</p>
-        )}
-        {cat === 'groups' && !q && savedGroups.length === 0 && (
-          <p className="field-hint pad">
-            Your own groups: select placed items, right-click and choose “Save to library as a group”. They
-            appear here in every project.
-          </p>
-        )}
-        {list.length === 0 && groups.length === 0 && cat !== 'groups' && !collection && (
-          <p className="field-hint pad">
-            {favOnly
-              ? 'Star items to collect them here.'
-              : cat === 'recent'
-                ? 'Items you place appear here.'
-                : 'No items match your search.'}
-          </p>
-        )}
+          )}
+
+          <div className="lib-cat-group" data-testid="library-cat-rooms">
+            <div className="lib-cat-heading">By room</div>
+            {ROOM_CATEGORIES.map((c) =>
+              renderCatBtn(c.id, c.label, CATEGORY_ICONS[c.id], catCounts.get(c.id) ?? 0, `${c.label} · ${c.vn}`),
+            )}
+          </div>
+
+          <div className="lib-cat-group" data-testid="library-cat-items">
+            <div className="lib-cat-heading">By item</div>
+            {ITEM_CATEGORIES.map((c) =>
+              renderCatBtn(c.id, c.label, CATEGORY_ICONS[c.id], catCounts.get(c.id) ?? 0, `${c.label} · ${c.vn}`),
+            )}
+          </div>
+        </nav>
+
+        <div className="furniture-results" ref={resultsRef}>
+          {collection && (
+            <div className="collection-head" data-testid="collection-head">
+              <div className="collection-head-text">
+                <strong>{collection.name}</strong>
+                <span className="shelf-count">{collection.items.length}</span>
+                {collection.description && <p className="field-hint">{collection.description}</p>}
+              </div>
+              <IconButton label="Edit collection" onClick={() => editCollection(collection.id)} data-testid="collection-edit">
+                <Pencil size={14} />
+              </IconButton>
+              <IconButton label="Delete collection" onClick={() => void removeCollection(collection.id)} data-testid="collection-delete">
+                <Trash2 size={14} />
+              </IconButton>
+            </div>
+          )}
+
+          <div className="asset-shelves" data-testid="asset-grid">
+            {groups.map((g) => (
+              <section key={g.key} className="asset-shelf" aria-label={g.title || undefined}>
+                {g.title && (
+                  <h3 className="lib-h shelf-h">
+                    {g.title} <span className="shelf-count">{g.items.length}</span>
+                  </h3>
+                )}
+                <div className="asset-grid">
+                  {g.items.map((a) => (
+                    <AssetCard key={a.id} asset={a} info={info} revealed={a.id === revealedId} />
+                  ))}
+                </div>
+              </section>
+            ))}
+            {collection && collectionItems.length === 0 && (
+              <p className="field-hint pad">
+                {collection.items.length
+                  ? 'Nothing in this collection matches your search.'
+                  : 'Right-click any item or group in the library and choose “Add to” this collection.'}
+              </p>
+            )}
+            {collection && collectionMissing > 0 && (
+              <p className="field-hint pad">
+                {collectionMissing} item{collectionMissing > 1 ? 's are' : ' is'} not available here (their content pack is not installed).
+              </p>
+            )}
+            {cat === 'groups' && groupItems.length === 0 && readyItems.length === 0 && (
+              <p className="field-hint pad">No groups match your search.</p>
+            )}
+            {cat === 'groups' && !q && savedGroups.length === 0 && (
+              <p className="field-hint pad">
+                Your own groups: select placed items, right-click and choose “Save to library as a group”. They
+                appear here in every project.
+              </p>
+            )}
+            {list.length === 0 && groups.length === 0 && cat !== 'groups' && !collection && (
+              <p className="field-hint pad">
+                {favOnly
+                  ? 'Star items to collect them here.'
+                  : cat === 'recent'
+                    ? 'Items you place appear here.'
+                    : 'No items match your search.'}
+              </p>
+            )}
+          </div>
+
+          {!isMobile && (
+            <button
+              type="button"
+              className="import-model"
+              onClick={() => useDialogStore.getState().open('import-model')}
+            >
+              <Upload size={14} /> Import GLB / glTF model
+            </button>
+          )}
+        </div>
       </div>
+
       {info && <AssetInfoCard control={info} />}
-      {!isMobile && (
-        <button
-          type="button"
-          className="import-model"
-          onClick={() => useDialogStore.getState().open('import-model')}
-        >
-          <Upload size={14} /> Import GLB / glTF model
-        </button>
-      )}
     </div>
   );
 }
@@ -720,7 +879,7 @@ function AssetCard({
             ? []
             : [
                 {
-                  label: `Show in ${ASSET_TYPE_LABELS[asset.type]} › ${asset.group}`,
+                  label: `Show in ${FURNITURE_CATEGORY_BY_ID.get(primaryItemCategoryOf(asset))?.label ?? ASSET_TYPE_LABELS[asset.type]} › ${asset.group}`,
                   run: () => useEditorStore.getState().set({ libraryReveal: { assetId: asset.id, nonce: Date.now() } }),
                 },
               ]),

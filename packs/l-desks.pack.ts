@@ -16,6 +16,9 @@
  * - Compact corner: two 50 cm runs with a 45° inner corner, a two-shelf tower, a corner monitor riser.
  * - Built-in: fitted between walls, with a floor-to-ceiling bookcase tower, a drawer cabinet under the
  *   return and oak wall shelves above both runs.
+ * - Soft-curve two-person: pastel sage-green lacquered L desk with rounded outer corners, a smooth
+ *   concave inner curve, two flush drawers with scalloped wave finger pulls and three freestanding
+ *   rounded slab/column floor legs.
  */
 import {
   bookRow,
@@ -46,6 +49,7 @@ const materials: PackMaterial[] = [
   { id: 'rgb-violet', name: 'RGB strip, violet', category: 'solid', color: '#8a63ff', roughness: 0.4, emissive: '#8a63ff', emissiveIntensity: 1.3 },
   { id: 'rgb-cyan', name: 'RGB strip, cyan', category: 'solid', color: '#3fd6ff', roughness: 0.4, emissive: '#3fd6ff', emissiveIntensity: 1.3 },
   { id: 'rgb-red', name: 'RGB strip, red', category: 'solid', color: '#ff3b4a', roughness: 0.4, emissive: '#ff3b4a', emissiveIntensity: 1.3 },
+  { id: 'lacquer-butter', name: 'Buttercream lacquer', category: 'solid', color: '#dfd082', roughness: 0.46 },
 ];
 
 // ───────────── Shared geometry ─────────────
@@ -340,6 +344,209 @@ function builtIn(size: Size3): Part[] {
   return parts;
 }
 
+// ───────────── Soft-curve two-person L desk ─────────────
+
+const arcPts = (cx: number, cz: number, r: number, a0: number, a1: number, n = 8): V2[] =>
+  range(n + 1).map((i) => {
+    const a = a0 + ((a1 - a0) * i) / n;
+    return [cx + Math.cos(a) * r, cz + Math.sin(a) * r] as V2;
+  });
+
+/** Vertical prism in the XY plane extruded from z0 to z0 + thick (mirrors cleanly under mirrorX). */
+function panelXY(slot: string, outline: V2[], z0: number, thick: number): Part {
+  const xs = outline.map((p) => p[0]);
+  const ys = outline.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return {
+    shape: 'prism',
+    outline: outline.map(([x, y]) => [x - cx, cy - y] as V2),
+    height: thick,
+    position: [cx, cy, z0],
+    rotation: [Math.PI / 2, 0, 0],
+    slot,
+    plan: false,
+  };
+}
+
+/** Vertical prism in the ZY plane extruded from x1 - thick to x1 (mirrors cleanly under mirrorX). */
+function panelZY(slot: string, outline: V2[], x1: number, thick: number): Part {
+  const zs = outline.map((p) => p[0]);
+  const ys = outline.map((p) => p[1]);
+  const cz = (Math.min(...zs) + Math.max(...zs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return {
+    shape: 'prism',
+    outline: outline.map(([z, y]) => [y - cy, z - cz] as V2),
+    height: thick,
+    position: [x1, cy, cz],
+    rotation: [0, 0, Math.PI / 2],
+    slot,
+    plan: false,
+  };
+}
+
+function scallopFront(u0: number, u1: number, y0: number, y1: number): V2[] {
+  const uc = (u0 + u1) / 2;
+  const hw = Math.min(0.1, (u1 - u0) * 0.31);
+  const ch = Math.min(0.028, (y1 - y0) * 0.37);
+  const wave = range(17).map((k) => {
+    const u = uc + hw - (2 * hw * k) / 16;
+    return [u, y0 + ch * 0.5 * (1 + Math.cos((Math.PI * (u - uc)) / hw))] as V2;
+  });
+  return [[u0, y1], [u1, y1], [u1, y0], ...wave, [u0, y0]];
+}
+
+function slabLegOutline(u0: number, u1: number, y0: number, y1: number, rFront: number, rBack: number): V2[] {
+  const rf = Math.min(rFront, (u1 - u0) * 0.34, (y1 - y0) * 0.35);
+  const rb = Math.min(rBack, (u1 - u0) * 0.12, (y1 - y0) * 0.2);
+  return [
+    [u0, y1],
+    [u1, y1],
+    ...arcPts(u1 - rf, y0 + rf, rf, 0, -Math.PI / 2, 10),
+    ...arcPts(u0 + rb, y0 + rb, rb, -Math.PI / 2, -Math.PI, 4),
+  ];
+}
+
+function softCurveAvocado(size: Size3): Part[] {
+  const { w, d, h: ys } = size;
+  const xL = -w / 2;
+  const xR = w / 2;
+  const zB = -d / 2;
+  const zF = d / 2;
+  const rd = clamp(0.58, 0.44, d - 0.42);
+  const rw = clamp(0.56, 0.44, w - 0.42);
+  const xi = xL + rw;
+  const zi = zB + rd;
+
+  const rOut = Math.min(0.076, rd * 0.18, rw * 0.18);
+  const rBack = 0.01;
+  const spanMain = xR - rOut - xi;
+  const spanRet = zF - rOut - zi;
+  const rIn = clamp(Math.min(spanMain, spanRet) * 0.24, 0.09, 0.18);
+  const icx = xi + rIn;
+  const icz = zi + rIn;
+
+  // Drawer spans centred along the straight user-facing zone of each wing.
+  const mainZone: V2 = [icx + 0.025, xR - rOut - 0.02];
+  const mw = clamp((mainZone[1] - mainZone[0]) * 0.78, 0.26, 0.68);
+  const mc = (mainZone[0] + mainZone[1]) / 2;
+  const mx: V2 = [mc - mw / 2, mc + mw / 2];
+
+  const retZone: V2 = [icz + 0.025, zF - rOut - 0.02];
+  const rzw = clamp((retZone[1] - retZone[0]) * 0.78, 0.24, 0.64);
+  const rzc = (retZone[0] + retZone[1]) / 2;
+  const rz: V2 = [rzc - rzw / 2, rzc + rzw / 2];
+
+  const pocketDepth = 0.042;
+  const lOutline = (inset: number, pockets = false): V2[] => {
+    const x0 = xL + inset;
+    const x1 = xR - inset;
+    const z0 = zB + inset;
+    const z1 = zF - inset;
+    const xiI = xi - inset;
+    const ziI = zi - inset;
+    const ro = Math.max(0.008, rOut - inset);
+    const rb = Math.max(0.004, rBack - inset);
+    const ri = rIn + inset;
+    return [
+      ...arcPts(x0 + rb, z0 + rb, rb, Math.PI, Math.PI * 1.5, 4),
+      ...arcPts(x1 - rb, z0 + rb, rb, -Math.PI / 2, 0, 4),
+      ...arcPts(x1 - ro, ziI - ro, ro, 0, Math.PI / 2, 10),
+      ...(pockets ? ([[mx[1], ziI], [mx[1], ziI - pocketDepth], [mx[0], ziI - pocketDepth], [mx[0], ziI]] as V2[]) : []),
+      ...arcPts(icx, icz, ri, -Math.PI / 2, -Math.PI, 10),
+      ...(pockets ? ([[xiI, rz[0]], [xiI - pocketDepth, rz[0]], [xiI - pocketDepth, rz[1]], [xiI, rz[1]]] as V2[]) : []),
+      ...arcPts(xiI - ro, z1 - ro, ro, 0, Math.PI / 2, 10),
+      ...arcPts(x0 + rb, z1 - rb, rb, Math.PI / 2, Math.PI, 4),
+    ];
+  };
+
+  const topT = 0.025;
+  const yTop0 = ys - topT;
+  const apronH = 0.082;
+  const yApron1 = yTop0 - 0.0025;
+  const yApron0 = yApron1 - apronH;
+
+  // Convex 2D plan-footprint plates tucked inside the seamless 3D top slab.
+  const pIn = 0.004;
+  const roP = Math.max(0.008, rOut - pIn);
+  const rbP = Math.max(0.004, rBack - pIn);
+  const mainPlan: V2[] = [
+    ...arcPts(xL + pIn + rbP, zB + pIn + rbP, rbP, Math.PI, Math.PI * 1.5, 3),
+    ...arcPts(xR - pIn - rbP, zB + pIn + rbP, rbP, -Math.PI / 2, 0, 3),
+    ...arcPts(xR - pIn - roP, zi - pIn - roP, roP, 0, Math.PI / 2, 8),
+    [xL + pIn, zi - pIn],
+  ];
+  const retPlan: V2[] = [
+    [xL + pIn, zi - pIn],
+    [xi - pIn, zi - pIn],
+    ...arcPts(xi - pIn - roP, zF - pIn - roP, roP, 0, Math.PI / 2, 8),
+    ...arcPts(xL + pIn + rbP, zF - pIn - rbP, rbP, Math.PI / 2, Math.PI, 3),
+  ];
+  const cPlan = rIn * 0.62;
+  const parts: Part[] = [
+    // Seamless curved L-top with eased upper chamfer.
+    prism('top', lOutline(0.0025), ys - 0.0025, 0.0025, o),
+    prism('top', lOutline(0), yTop0, topT - 0.0025, o),
+    prism('top', mainPlan, ys - 0.019, 0.006),
+    prism('top', retPlan, ys - 0.019, 0.006),
+    prism('top', [[xi - pIn, zi - pIn], [xi - pIn + cPlan, zi - pIn], [xi - pIn, zi - pIn + cPlan]], ys - 0.019, 0.006),
+    // Recessed horizontal shadow-reveal neck & continuous curved apron with recessed drawer pockets.
+    prism('body', lOutline(0.004), yApron1, 0.0055, o),
+    prism('body', lOutline(0, true), yApron0, apronH, o),
+  ];
+
+  // Flush drawers on both wings with tangential scalloped wave finger-pull cutouts & enclosed boxes.
+  const gap = 0.004;
+  parts.push(
+    panelXY('body', scallopFront(mx[0] + gap, mx[1] - gap, yApron0, yApron1 - gap), zi - 0.02, 0.019),
+    span('body', [mx[0], mx[1]], [yApron0, yApron0 + 0.014], [Math.max(zB + 0.05, zi - 0.36), zi - pocketDepth], o),
+    panelZY('body', scallopFront(rz[0] + gap, rz[1] - gap, yApron0, yApron1 - gap), xi - 0.001, 0.019),
+    span('body', [Math.max(xL + 0.05, xi - 0.36), xi - pocketDepth], [yApron0, yApron0 + 0.014], [rz[0], rz[1]], o),
+  );
+
+  // Three freestanding rounded floor legs ("dùng chân bàn thay vì gắn vào tường"):
+  // 1) Return-end full-height waterfall slab leg flush with the flat end face behind the rounded front corner.
+  const legY0 = 0.003;
+  const legY1 = yApron0 + 0.012;
+  const retLegX: V2 = [xL + 0.002, xi - rOut];
+  parts.push(
+    panelXY('body', slabLegOutline(retLegX[0] + 0.0025, retLegX[1] - 0.0025, legY0 + 0.002, legY1, 0.108, 0.01), zF - 0.044, 0.003),
+    panelXY('body', slabLegOutline(retLegX[0], retLegX[1], legY0, legY1, 0.11, 0.012), zF - 0.041, 0.038),
+    panelXY('body', slabLegOutline(retLegX[0] + 0.0025, retLegX[1] - 0.0025, legY0 + 0.002, legY1, 0.108, 0.01), zF - 0.003, 0.003),
+    span('body', [retLegX[0] + 0.04, retLegX[1] - 0.13], [0, legY0], [zF - 0.035, zF - 0.01], o),
+  );
+
+  // 2) Main-end full-height waterfall slab leg with matching rounded bottom-front corner.
+  const mainLegZ: V2 = [zB + 0.002, zi - rOut];
+  parts.push(
+    panelZY('body', slabLegOutline(mainLegZ[0] + 0.0025, mainLegZ[1] - 0.0025, legY0 + 0.002, legY1, 0.108, 0.01), xR - 0.041, 0.003),
+    panelZY('body', slabLegOutline(mainLegZ[0], mainLegZ[1], legY0, legY1, 0.11, 0.012), xR - 0.003, 0.038),
+    panelZY('body', slabLegOutline(mainLegZ[0] + 0.0025, mainLegZ[1] - 0.0025, legY0 + 0.002, legY1, 0.108, 0.01), xR, 0.003),
+    span('body', [xR - 0.035, xR - 0.01], [0, legY0], [mainLegZ[0] + 0.04, mainLegZ[1] - 0.13], o),
+  );
+
+  // 3) Back-corner curved pedestal leg + recessed structural back rails.
+  const cw = clamp(rw * 0.62, 0.27, 0.35);
+  const cd = clamp(rd * 0.62, 0.27, 0.36);
+  const cr = Math.min(0.095, cw * 0.32, cd * 0.32);
+  const cb = 0.012;
+  const cornerLeg: V2[] = [
+    ...arcPts(xL + 0.002 + cb, zB + 0.002 + cb, cb, Math.PI, Math.PI * 1.5, 4),
+    ...arcPts(xL + cw - cb, zB + 0.002 + cb, cb, -Math.PI / 2, 0, 4),
+    ...arcPts(xL + cw - cr, zB + cd - cr, cr, 0, Math.PI / 2, 10),
+    ...arcPts(xL + 0.002 + cb, zB + cd - cb, cb, Math.PI / 2, Math.PI, 4),
+  ];
+  parts.push(
+    prism('body', cornerLeg, legY0, legY1 - legY0, o),
+    span('body', [xL + 0.03, xL + cw - 0.06], [0, legY0], [zB + 0.03, zB + cd - 0.06], o),
+    span('body', [xL + cw - 0.01, xR - 0.044], [yApron0, yApron0 + 0.055], [zB + 0.004, zB + 0.038], o),
+    span('body', [xL + 0.004, xL + 0.038], [yApron0, yApron0 + 0.055], [zB + cd - 0.01, zF - 0.044], o),
+  );
+
+  return parts;
+}
+
 // ───────────── Items ─────────────
 
 type Finish = [name: string, ...materials: string[]];
@@ -351,6 +558,7 @@ interface DeskSpec {
   size: Size3;
   min: Size3;
   max: Size3;
+  price?: PackItem['price'];
   slots: [id: string, label: string][];
   finishes: Finish[];
   build: (s: Size3) => Part[];
@@ -368,6 +576,7 @@ function lPair(p: DeskSpec): PackItem[] {
     defaultSize: p.size,
     minSize: p.min,
     maxSize: p.max,
+    ...(p.price ? { price: p.price } : {}),
     wallSnap: true,
     tags: ['l-shaped desk', 'corner desk', 'bàn chữ l', ...p.tags],
     slots: p.slots.map(([id, label], i) => matSlot(id, label, first[i + 1])),
@@ -495,13 +704,46 @@ const items: PackItem[] = [
     ],
     build: builtIn,
   }),
+  ...lPair({
+    id: 'soft-curve-avocado-l-desk',
+    name: 'Soft-curve two-person L desk',
+    description: 'A pastel lacquered two-station L desk with rounded outer corners, a smooth curved inner corner, two flush drawers with scalloped wave finger pulls and full floor-standing rounded slab legs.',
+    tags: [
+      'sage green',
+      'pastel',
+      'curved desk',
+      'double desk',
+      'two-person desk',
+      'drawers',
+      'bedroom',
+      'kids',
+      'study',
+      'bàn học đôi',
+      'bàn đôi',
+      'bàn góc bo tròn',
+      'xanh lá',
+    ],
+    size: S3(1.9, 1.75, 0.75),
+    min: S3(1.35, 1.25, 0.72),
+    max: S3(2.6, 2.4, 0.78),
+    price: { vnd: 6_800_000, estimate: true },
+    slots: [['top', 'Top'], ['body', 'Apron, drawers & legs']],
+    finishes: [
+      ['Sage green', 'laminate-sage', 'laminate-sage'],
+      ['Cream lacquer', 'laminate-cream', 'laminate-cream'],
+      ['Buttercream', 'lacquer-butter', 'lacquer-butter'],
+      ['Dusty pink', 'laminate-pink', 'laminate-pink'],
+      ['Oak & warm white', 'wood-oak-light', 'paint-warm-white'],
+    ],
+    build: softCurveAvocado,
+  }),
 ];
 
 export default definePack({
   name: 'L-shaped desks',
   version: '1.0.0',
   author: 'Neest',
-  description: 'Detailed corner desks with left- and right-hand returns: steel-frame oak, gaming, executive, dual-motor standing, compact and built-in.',
+  description: 'Detailed corner desks with left- and right-hand returns: steel-frame oak, gaming, executive, dual-motor standing, compact, built-in and soft-curve two-person.',
   license: 'CC0-1.0',
   items,
   materials,

@@ -919,7 +919,9 @@ export interface AssetSpec {
   light?: AssetDefinition['light'];
   description?: string;
   brand?: AssetDefinition['brand'];
+  price?: AssetDefinition['price'];
   plant?: AssetDefinition['plant'];
+  services?: AssetDefinition['services'];
   variants?: AssetDefinition['variants'];
   models?: AssetDefinition['models'];
   model?: AssetDefinition['model'];

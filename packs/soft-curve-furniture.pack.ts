@@ -783,12 +783,133 @@ const rolledBed = defineItem({
   },
 });
 
+// ───────────── 12. Wall-backed peninsula dining table on turned bead leg ─────────────
+
+const wallPeninsulaBeadTable = defineItem({
+  id: 'wall-peninsula-bead-table',
+  name: 'Wall-backed peninsula dining table on turned bead leg',
+  category: 'dining',
+  type: 'surfaces',
+  group: 'Dining tables',
+  wallSnap: true,
+  tags: [
+    'dining table',
+    'peninsula table',
+    'breakfast table',
+    'wall table',
+    'half-oval',
+    'sage green',
+    'pastel',
+    'turned leg',
+    'pedestal',
+    'kitchen',
+    'bàn ăn',
+    'bàn ăn sát tường',
+    'bàn bán đảo',
+    'bàn ăn nhỏ',
+  ],
+  description:
+    'A compact wall-backed peninsula dining table with a flat wall edge, generously rounded front corners, a rounded-bottom wall support panel and a sculptural white turned pedestal leg with a central bead orb.',
+  defaultSize: { w: 0.8, d: 1.25, h: 0.76 },
+  minSize: { w: 0.65, d: 0.9, h: 0.72 },
+  maxSize: { w: 1.15, d: 1.85, h: 0.92 },
+  price: { vnd: 4_800_000, estimate: true },
+  slots: [matSlot('top', 'Top & wall panel', 'laminate-sage'), matSlot('base', 'Turned pedestal leg', 'paint-satin-white')],
+  variants: [
+    { id: 'cream-white', name: 'Cream lacquer & white', materials: { top: 'laminate-cream', base: 'paint-satin-white' } },
+    { id: 'butter-white', name: 'Butter yellow & white', materials: { top: 'paint-butter', base: 'paint-satin-white' } },
+    { id: 'pink-white', name: 'Dusty pink & white', materials: { top: 'laminate-pink', base: 'paint-satin-white' } },
+    { id: 'oak-white', name: 'Light oak & warm white', materials: { top: 'wood-oak-light', base: 'paint-warm-white' } },
+    { id: 'walnut-cream', name: 'Walnut & cream plaster', materials: { top: 'wood-walnut', base: 'venetian-white' } },
+    { id: 'marble-white', name: 'Beige marble & white', materials: { top: 'stone-marble-beige', base: 'paint-satin-white' } },
+  ],
+  build: (size) => {
+    const { w, d, h } = size;
+    const topT = 0.036;
+    const H = h - topT;
+
+    // Flat back edge against the wall (-z), generously rounded front corners (+z).
+    const rFrontBase = Math.min(0.145, w * 0.23, d * 0.22);
+    const peninsulaOutline = (inset: number): V2[] => {
+      const x1 = w / 2 - inset;
+      const z0 = -d / 2 + inset;
+      const z1 = d / 2 - inset;
+      const rb = Math.max(0.002, 0.005 - inset);
+      const rf = Math.max(0.015, rFrontBase - inset);
+      return [
+        ...arc(-x1 + rb, z0 + rb, rb, rb, Math.PI, Math.PI * 1.5, 2),
+        ...arc(x1 - rb, z0 + rb, rb, rb, -Math.PI / 2, 0, 2),
+        ...arc(x1 - rf, z1 - rf, rf, rf, 0, Math.PI / 2, 12),
+        ...arc(-x1 + rf, z1 - rf, rf, rf, Math.PI / 2, Math.PI, 12),
+      ];
+    };
+    const parts: Part[] = easedSlab('top', peninsulaOutline, H, topT, 0.006);
+
+    // Matching wall-end vertical support panel with generously rounded bottom corners.
+    const pw = clamp(w * 0.72, 0.42, w - 0.14);
+    const yP0 = 0.004;
+    const yP1 = H + 0.008;
+    const rPanel = Math.min(0.09, pw * 0.24, (yP1 - yP0) * 0.25);
+    const panelOutline = (inset: number): V2[] => {
+      const xh = pw / 2 - inset;
+      const y0 = yP0 + inset;
+      const rr = Math.max(0.01, rPanel - inset);
+      return [
+        [-xh, yP1],
+        [xh, yP1],
+        ...arc(xh - rr, y0 + rr, rr, rr, 0, -Math.PI / 2, 10),
+        ...arc(-xh + rr, y0 + rr, rr, rr, -Math.PI / 2, -Math.PI, 10),
+      ];
+    };
+    const zBack = -d / 2 + 0.002;
+    parts.push(
+      panelXY('top', panelOutline(0.0025), zBack, 0.003),
+      panelXY('top', panelOutline(0), zBack + 0.003, 0.026),
+      panelXY('top', panelOutline(0.0025), zBack + 0.029, 0.003),
+      span('top', [-pw / 2 + rPanel + 0.02, pw / 2 - rPanel - 0.02], [0, yP0], [zBack + 0.006, zBack + 0.026], o),
+      span('top', [-pw / 2 + 0.025, pw / 2 - 0.025], [H - 0.042, H + 0.006], [zBack + 0.028, zBack + 0.085], o),
+    );
+
+    // Sculptural turned white pedestal leg near the front: tall tapered lower cone, central sphere orb
+    // around 60% height, tall upper inverted conical flare and sub-top mounting plate.
+    const rFoot = clamp(Math.min(w, d) * 0.132, 0.09, 0.118);
+    const zPed = d / 2 - Math.max(rFoot + 0.12, d * 0.19);
+    const rNeck = rFoot * 0.39;
+    const yW1 = H * 0.52;
+    const yW2 = H * 0.685;
+    const yOrb = (yW1 + yW2) / 2;
+    const halfBand = (yW2 - yW1) / 2;
+    const rSphere = Math.hypot(rNeck, halfBand);
+    const thMax = Math.asin(clamp(halfBand / rSphere, -0.98, 0.98));
+    const orbProfile: V2[] = range(17).map((i) => {
+      const th = -thMax + (2 * thMax * i) / 16;
+      return [rSphere * Math.cos(th), yOrb + rSphere * Math.sin(th)] as V2;
+    });
+    const rTopCone = rFoot * 0.9;
+    const rPlate = rFoot * 1.1;
+    const profile: V2[] = [
+      [0, 0],
+      [rFoot - 0.003, 0],
+      [rFoot, 0.005],
+      ...orbProfile,
+      [rTopCone, H - 0.013],
+      [rPlate, H - 0.011],
+      [rPlate, H - 0.002],
+      [rPlate - 0.004, H + 0.003],
+      [0, H + 0.003],
+    ];
+    parts.push(lathe('base', [0, 0, zPed], profile, { segments: 36, plan: false }));
+
+    return keep(parts, size);
+  },
+});
+
 export default definePack({
   name: 'Soft-curve furniture & lighting',
   version: '1.0.0',
   author: 'Neest',
   description:
-    'Sculptural, rounded pieces in walnut, oak, bouclé and velvet: a stacked-sphere pedestal table, an oval-back chair, a leaf pendant, a dome sconce, an arched tea table, a palm-leaf fan, a fluted oval coffee table, a floating vanity shelf, a shouldered mirror, a donut pouf and a rolled-headboard bed. All resize freely.',
+    'Sculptural, rounded pieces in walnut, oak, bouclé and velvet: a stacked-sphere pedestal table, a wall-backed peninsula table on a turned bead leg, an oval-back chair, a leaf pendant, a dome sconce, an arched tea table, a palm-leaf fan, a fluted oval coffee table, a floating vanity shelf, a shouldered mirror, a donut pouf and a rolled-headboard bed. All resize freely.',
   license: 'CC0-1.0',
-  items: [spherePedestalTable, ovalBackChair, leafPendant, domeSconce, archedTeaTable, palmLeafFan, flutedOvalTable, vanityShelf, shoulderedMirror, donutPouf, rolledBed],
+  items: [spherePedestalTable, wallPeninsulaBeadTable, ovalBackChair, leafPendant, domeSconce, archedTeaTable, palmLeafFan, flutedOvalTable, vanityShelf, shoulderedMirror, donutPouf, rolledBed],
 });

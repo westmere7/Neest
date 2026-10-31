@@ -2641,6 +2641,14 @@
    "file": "l-desks_gaming-l-desk-riser-right.webp",
    "fp": "f1dfdc20433180d1"
   },
+  "l-desks:soft-curve-avocado-l-desk-left": {
+   "file": "l-desks_soft-curve-avocado-l-desk-left.webp",
+   "fp": "36cdadb4b9013016"
+  },
+  "l-desks:soft-curve-avocado-l-desk-right": {
+   "file": "l-desks_soft-curve-avocado-l-desk-right.webp",
+   "fp": "1a1ba17503a0d63c"
+  },
   "l-desks:steel-frame-oak-l-desk-left": {
    "file": "l-desks_steel-frame-oak-l-desk-left.webp",
    "fp": "3eb371a41bc6239d"
@@ -4056,6 +4064,10 @@
   "soft-curve-furniture:stacked-donut-pouf": {
    "file": "soft-curve-furniture_stacked-donut-pouf.webp",
    "fp": "cdc7cd1f5fe817ce"
+  },
+  "soft-curve-furniture:wall-peninsula-bead-table": {
+   "file": "soft-curve-furniture_wall-peninsula-bead-table.webp",
+   "fp": "50fc4470fafae4ed"
   },
   "soft-curve-kitchen:arch-groove-sideboard": {
    "file": "soft-curve-kitchen_arch-groove-sideboard.webp",
