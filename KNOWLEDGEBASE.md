@@ -194,7 +194,7 @@ Principles that must hold:
 | `RenderSettings` | quality draft/balanced/high, exposure, timeOfDay, sunAzimuth/Intensity, envIntensity, shadows, background, wallDisplay full/cutaway/fade/hidden, cutawayHeight, showCeilings, showRoomLabels, hiddenCategories |
 | `guest` | `startCameraId` (Guest View and guest export only; the editor always opens on a fitted view), `spawn`, `spawnAngle` |
 | `Callout` | `target` = `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; `offset` (plan metres, label from anchor), `lift` (3D float height), `title`, `note` (Markdown subset), `showInfo`, `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
-| `ServicePoint` | Services mode (§10 "Services"): `kind` (14 kinds in `domain/model/services.ts`), `x`,`y`, `host` wall/floor/ceiling, `wallId` (wall points follow that wall's face), `height` (wall points), `rotation` (facing), `label`, `note`. Per layout option (`servicePoints`) |
+| `ServicePoint` | Connections mode (§10 "Services"): `kind` (14 kinds in `domain/model/services.ts`), `x`,`y`, `host` wall/floor/ceiling, `wallId` (wall points follow that wall's face), `height` (wall points), `rotation` (facing), `label`, `note`. Per layout option (`servicePoints`) |
 | `ServiceRun` | `system` power/water/drain, `level` wall/floor/ceiling (drain: floor only), `hot` (water), `points` (plan polyline), `height` (wall runs), `label`. Per layout option (`serviceRuns`) |
 | `PlacedObject.serviceLinks` | per system `{ pin, skip[] }`: the point the user connected by hand, and points they disconnected; absent = automatic |
 
@@ -566,8 +566,9 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
 ### Services: power & plumbing (src/features/services)
 
 One reference system for electric, water supply and drainage, so items that need them are placed with them in mind.
-Not a technical layout: no fittings, valves or pipe sizes. Shown only in **Services mode** (rail → Services, `U`;
-`editor.servicesMode`), in 2D and 3D; it never shows in normal views, exports or the guest viewer.
+Not a technical layout: no fittings, valves or pipe sizes. Called **Connections** everywhere in the interface (rail
+button, panel, Inspector section, menus); code and saved data keep the name *services* (`servicePoints`, `serviceRuns`,
+`editor.servicesMode`), as Notes kept *callout*. Shown only in that mode (rail → Connections, `U`), in 2D and 3D; it never shows in normal views, exports or the guest viewer.
 
 - **Model** (`domain/model/services.ts`, import-free): systems `power` (amber `#f5b400`), `water` (blue `#1e90ff`, hot
   lines and the hot half of mixer points red `#ff5a4a`), `drain` (green `#1fbf75`); unmet needs `#ff3b5c`. Point kinds
@@ -581,7 +582,7 @@ Not a technical layout: no fittings, valves or pipe sizes. Shown only in **Servi
   items define `services` themselves. 344 items have needs (2026-10-23): electronics, AC (own circuit), lamps (ceiling
   and wall lights wired), appliances (ovens, hobs, washers, dryers, dishwashers, water heaters: own circuit), sinks and
   basins (hot & cold + waste), toilets (soil), showers (floor drain), lit/motorised furniture and built-ins. Shown in
-  the library hover card only (`ServiceNeeds`, slim glyphs), the Inspector and Services mode; search matches
+  the library hover card only (`ServiceNeeds`, slim glyphs), the Inspector and Connections mode; search matches
   "power", "water", "drain".
 - **Connections** (`domain/geometry/services.ts › resolveServices`, cached per project in `features/services/needs.ts`):
   each need of each visible item connects to the nearest compatible point (`pointsMeeting`) within reach of its
@@ -1846,3 +1847,5 @@ Known limitations (also in README):
      in `packs/soft-curve-furniture.pack.ts` (`wallSnap: true`, flat wall back `-z` with rounded-bottom wall support panel,
      rounded front corners, and a white `lathe` turned pedestal leg with a central bead orb and flared upper cone; default
      Sage green & satin white plus 6 pastel/wood/marble finishes) (done).
+145. "Connections it is" (rename Services) + "in the item details panel, leave Connections way below, above More but under
+     Finishes" → every visible label says Connections; the item's Connections section sits between Finishes and More (done).

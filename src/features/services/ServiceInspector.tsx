@@ -125,7 +125,7 @@ export function ItemServices({ project, objectId }: { project: Project; objectId
   const state = servicesState(project, derived).needs.filter((n) => n.objectId === objectId);
   const u = project.settings;
   return (
-    <Section title="Services">
+    <Section title="Connections">
       <div className="svc-needs">
         {state.map((n) => {
           const options = compatiblePoints(project, derived, o, n.system, needs);
@@ -182,7 +182,7 @@ export function ItemServices({ project, objectId }: { project: Project; objectId
         )
       ) : (
         <Button size="sm" onClick={() => setServicesMode(true)} data-testid="show-services">
-          Show in Services mode
+          Show in Connections
         </Button>
       )}
     </Section>

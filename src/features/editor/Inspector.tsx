@@ -141,7 +141,7 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
         </>
       );
     } else if ((s.kind === 'service' && project.servicePoints?.[s.id]) || (s.kind === 'run' && project.serviceRuns?.[s.id])) {
-      eyebrow = s.kind === 'service' ? 'Services point' : 'Services run';
+      eyebrow = s.kind === 'service' ? 'Connection point' : 'Connection run';
       body = s.kind === 'service' ? <ServicePointInspector project={project} id={s.id} /> : <ServiceRunInspector project={project} id={s.id} />;
       actions = (
         <>
@@ -600,7 +600,6 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
         {asset && <ObjectModels project={project} objectId={objectId} asset={asset} />}
         {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
       </Section>
-      <ItemServices project={project} objectId={objectId} />
       {asset?.plant && (
         <Section title="Plant care">
           <PlantCare plant={asset.plant} units={u.units} details />
@@ -662,6 +661,7 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
           ))}
         </Section>
       )}
+      <ItemServices project={project} objectId={objectId} />
       <Section title="More" defaultOpen={false}>
         <Toggle label="Locked" checked={o.locked} onChange={(v) => upd(v ? 'Lock object' : 'Unlock object', { locked: v })} />
         <Toggle label="Hidden" checked={o.hidden} onChange={(v) => upd(v ? 'Hide object' : 'Show object', { hidden: v })} />

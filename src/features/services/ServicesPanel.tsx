@@ -25,7 +25,7 @@ import { needsOfProject, servicesState } from './needs';
 import './services.css';
 
 /**
- * The Services panel (left, in the library's place while Services mode is on): systems with
+ * The Connections panel ("services" in code; left, in the library's place while the mode is on): systems with
  * show/hide, the points and runs to add, items whose needs nothing serves yet, routing and totals.
  */
 export function ServicesPanel() {
@@ -49,13 +49,13 @@ export function ServicesPanel() {
   const levels = SERVICE_SYSTEM_INFO[runSystem].levels;
 
   return (
-    <aside className="library floating services-panel" aria-label="Services" data-testid="services-panel">
+    <aside className="library floating services-panel" aria-label="Connections" data-testid="services-panel">
       <header className="library-head">
         <div className="svc-title">
-          <strong>Services</strong>
+          <strong>Connections</strong>
           <span>Power & plumbing · X-ray</span>
         </div>
-        <IconButton label="Leave Services mode" shortcut="U" onClick={() => setServicesMode(false)} data-testid="services-close">
+        <IconButton label="Leave Connections" shortcut="U" onClick={() => setServicesMode(false)} data-testid="services-close">
           <X size={16} />
         </IconButton>
       </header>
@@ -166,7 +166,7 @@ export function ServicesPanel() {
           </div>
         </Section>
 
-        <Section title={unmet.length ? `Not connected (${unmet.length})` : 'Connections'}>
+        <Section title={unmet.length ? `Not connected (${unmet.length})` : 'Items'}>
           {unmet.length ? (
             <>
               <ul className="svc-issues">

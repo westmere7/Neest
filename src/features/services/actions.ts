@@ -143,7 +143,7 @@ export function servicesMenuItems(hit: SelItem | null, world: Vec2, link: Servic
     { label: 'Route runs to sources', run: () => void connectToSources() },
     { separator: true, label: '' },
     { label: 'Select all points & runs', shortcut: 'Ctrl+A', run: selectAll },
-    { label: 'Leave Services mode', shortcut: 'U', run: () => setServicesMode(false) },
+    { label: 'Leave Connections', shortcut: 'U', run: () => setServicesMode(false) },
   );
   return items;
 }

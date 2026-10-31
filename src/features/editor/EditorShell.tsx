@@ -432,7 +432,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           tooltipSide="right"
           className="library-hero-btn"
           onClick={() => {
-            // The Services panel takes the library's place: the library leaves Services mode.
+            // The Connections panel takes the library's place: the library leaves Connections.
             if (servicesMode) set({ servicesMode: false, libraryOpen: true, libraryTab: 'furniture' });
             else if (inFurnitureLib) set({ libraryOpen: false });
             else set({ libraryOpen: true, libraryTab: 'furniture' });
@@ -571,10 +571,10 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         </IconButton>
       </div>
 
-      {/* Services: power & plumbing reference in an X-ray view */}
-      <div className="tool-rail-group floating" role="group" aria-label="Services">
+      {/* Connections: power & plumbing reference in an X-ray view ("services" in code and data) */}
+      <div className="tool-rail-group floating" role="group" aria-label="Connections">
         <IconButton
-          label="Services (power & plumbing)"
+          label="Connections (power & plumbing)"
           shortcut="U"
           active={servicesMode}
           tooltipSide="right"
@@ -583,7 +583,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           data-testid="tool-services"
         >
           <Zap size={18} />
-          <span className="rail-btn-label">Services</span>
+          <span className="rail-btn-label">Connections</span>
         </IconButton>
       </div>
 
