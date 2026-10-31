@@ -74,7 +74,7 @@ export function storedModelId(asset: AssetDefinition | null | undefined, id?: st
   return m && m !== list[0] ? m.id : undefined;
 }
 
-const changesNothing = (m: AssetModelVariant) => !m.hide?.length && !m.props && !m.slots?.length;
+const changesNothing = (m: AssetModelVariant) => !m.hide?.length && !m.props && !m.slots?.length && !m.build;
 
 /** Material slots of an asset across all its models (for slot defaults of any placed model). */
 export function allModelSlots(asset: AssetDefinition): MaterialSlot[] {
@@ -127,7 +127,9 @@ export function withModel(asset: AssetDefinition | null, id?: string | null): As
     slots,
     models: undefined,
     build: (size) => {
-      const base = hide.size ? asset.build(size).filter((p) => !hide.has(p.slot)) : asset.build(size);
+      // A model with its own form replaces the item's parts.
+      const form = m.build ? m.build(size) : asset.build(size);
+      const base = hide.size ? form.filter((p) => !hide.has(p.slot)) : form;
       return [...base, ...props(size)];
     },
   };

@@ -912,3 +912,8 @@
 .library:not(.sheet) .lib-cat-rail.collapsed .lib-cat-heading {
   display: none;
 }
+/* The collapsed rail's instant tooltip: vertically centred on its button. */
+.ui-tooltip.lib-cat-tip {
+  transform: translateY(-50%);
+  opacity: 1;
+}

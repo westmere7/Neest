@@ -216,6 +216,11 @@ export interface AssetModelVariant {
    * Collisions and the selection box still use the item's own size.
    */
   reach?: { front?: number; back?: number };
+  /**
+   * A different form of the item (an open portal instead of one on a half wall): these parts replace the
+   * item's own (`hide` still applies to them) and give the plan outline. Same size box as the item.
+   */
+  build?: (size: Size3) => Part[];
 }
 
 /** A hand-made colour variant of an asset (see `AssetDefinition.variants`). */

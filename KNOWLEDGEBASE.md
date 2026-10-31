@@ -1068,6 +1068,13 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   stools size from min(w, d); local helpers `stick` (box between points), `sidePlate`, `radialDisc`/`radialRing`,
   `profileR` (lathe radius at a height) and `gasColumn`. Prices are in itemPrices.json like every pack (`AssetSpec`
   has no `price` field).
+- **Counter stools** (`packs/counter-stools.pack.ts`, 42, kitchen › Stools & benches): upholstered counter and bar stools in
+  the modern-organic style (shell, barrel, scoop, half-moon, wingback, channel-tufted, buttoned, oak-rimmed, cane and
+  slatted backs; tapered splayed oak/walnut legs with seat rail and footrest ring, swivel plates, round pedestals; backless
+  round, square and saddle seats). One config-driven builder; the back keeps its height above the seat when resized.
+- **Bins** (`packs/bins.pack.ts`, 36): kitchen pedal, soft-close, sensor, recycling, gap and swing-lid bins, compost caddy,
+  sorting stacks (storage › Baskets & boxes); bathroom pedal and ceramic bins (plumbing › Bathroom accessories); woven,
+  wood, leather and mesh wastebaskets; 120/240 L wheelie bins and a twin recycling stand.
 - **Tests**: `src/packs/packs.test.ts` loads the real `/packs`, runs `describeAssetChecks` on every pack item, and checks namespacing, textures, reload replacement and the build fallback. Run it with `npx vitest run src/packs`.
 - **Materials** (`data/materials/catalog.ts`): ≈380 materials in 12 categories (wallpapers sit in "Paint & wallpaper";
   no new category, so older builds still load projects); defaults in `DEFAULT_MATERIALS`. 52 procedural patterns
@@ -1861,3 +1868,14 @@ Known limitations (also in README):
      to make a compact dining table" → models **Dining ledge** / **Ledge, other side**: the cap becomes one oak top reaching
      40 cm past a face at bar height (1.0 m) with a slim black leg. New model field `reach: { front?, back? }`: such props may
      extend past the item's depth and draw in the plan (`withModel`, `describeAssetChecks` allow it) (done).
+148. "Add a model variant so this portal can have a lining" → half-wall portal models **Half wall / Dining ledge / Ledge,
+     other side, oak lining** (`halfWallLining`: lining round the opening down to the half wall's top; slot "Opening lining").
+     "Hover tooltip should be instant" → the collapsed category rail shows its own tooltip at once (`CategoryRail`). Layer
+     and Model back one above the other, the Model label and picker on one line (done).
+149. "Combine these 2 objects and round the corner" + "same radius" → **Corner portal with half wall and dining ledge**
+     (`corner-portal-half-wall`): the half-wall run (ledge inside the L by default; models: ledge outside, plain cap) and an
+     oak-lined leg run joined by a curved soffit, centre-line radius 0.28 m like a rounded 10 cm wall corner, lining all
+     round. Run B is built along x, mirrored (`mirrorX`) and turned (`quarterTurn`). 60LTN "Danh's option 3": the two
+     portals replaced by it, lined up with them (done).
+150. "Add a lot more stools to fit this style of seating" (reference photos) + "a lot more trash bins" → counter-stools
+     pack (42) and bins pack (36) (done).

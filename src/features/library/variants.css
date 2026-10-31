@@ -212,13 +212,36 @@
   outline: 2px solid var(--accent-ring);
   outline-offset: 1px;
 }
+/* The Inspector's Model: label and picker on one line. */
 .object-models {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-top: 8px;
+}
+.object-models > .field-label {
+  margin: 0;
 }
 .aic-models {
   margin-top: 2px;
+}
+
+/* Inspector: the model list floats over the panel (like the Layer dropdown) instead of pushing it down. */
+.object-models .model-picker-wrap {
+  position: relative;
+}
+.object-models .mp-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  box-shadow: var(--shadow-lg);
+}
+.object-models .mp-list {
+  width: max-content;
+  max-width: 260px;
+}
+.object-models .mp-list button {
+  white-space: nowrap;
 }

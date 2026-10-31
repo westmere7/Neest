@@ -303,7 +303,7 @@ export function describeAssetChecks(assets: AssetDefinition[]): void {
           expect(parts.length).toBeLessThanOrEqual(MAX_PARTS * 2);
           // The plan outline comes from the item's own parts; props only when the model reaches past the item (a ledge).
           const outline = (ps: Part[]) => ps.filter((p) => p.plan !== false).map((p) => JSON.stringify(p));
-          const own = new Set([...outline(asset.build(size)), ...(model.reach ? outline(model.props?.(size) ?? []) : [])]);
+          const own = new Set([...outline(model.build ? model.build(size) : asset.build(size)), ...(model.reach ? outline(model.props?.(size) ?? []) : [])]);
           const shown = outline(parts);
           expect(shown.length, 'some part is in the plan').toBeGreaterThan(0);
           for (const p of shown) expect(own.has(p), `plan part not from the item: ${p.slice(0, 80)}`).toBe(true);

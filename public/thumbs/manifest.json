@@ -541,6 +541,150 @@
    "file": "bidet.webp",
    "fp": "0b363b660c9d3acc"
   },
+  "bins:bamboo-lid-pedal-bin-20l": {
+   "file": "bins_bamboo-lid-pedal-bin-20l.webp",
+   "fp": "7ab244ce71cd9c99"
+  },
+  "bins:brass-wire-lattice-wastebasket": {
+   "file": "bins_brass-wire-lattice-wastebasket.webp",
+   "fp": "6a5f3867d0611a76"
+  },
+  "bins:brushed-steel-pedal-bin-30l": {
+   "file": "bins_brushed-steel-pedal-bin-30l.webp",
+   "fp": "545522f394b8a3e0"
+  },
+  "bins:brushed-steel-pedal-bin-5l": {
+   "file": "bins_brushed-steel-pedal-bin-5l.webp",
+   "fp": "b60047ef7527c505"
+  },
+  "bins:butterfly-lid-pedal-bin-30l": {
+   "file": "bins_butterfly-lid-pedal-bin-30l.webp",
+   "fp": "fc7ac0a1f23bac62"
+  },
+  "bins:countertop-compost-caddy-5l": {
+   "file": "bins_countertop-compost-caddy-5l.webp",
+   "fp": "e3436c836093885a"
+  },
+  "bins:cream-round-pedal-bin-12l": {
+   "file": "bins_cream-round-pedal-bin-12l.webp",
+   "fp": "511e1812b1be5def"
+  },
+  "bins:d-shape-step-bin-30l": {
+   "file": "bins_d-shape-step-bin-30l.webp",
+   "fp": "06f9aa405b162347"
+  },
+  "bins:door-hung-under-sink-bin-8l": {
+   "file": "bins_door-hung-under-sink-bin-8l.webp",
+   "fp": "4b27a72c4a4a07b3"
+  },
+  "bins:dual-recycling-pedal-bin": {
+   "file": "bins_dual-recycling-pedal-bin.webp",
+   "fp": "204fbc05e53c18c3"
+  },
+  "bins:glazed-ceramic-wastebasket": {
+   "file": "bins_glazed-ceramic-wastebasket.webp",
+   "fp": "98b486597bd83814"
+  },
+  "bins:japanese-stacking-sorting-bins": {
+   "file": "bins_japanese-stacking-sorting-bins.webp",
+   "fp": "de01a313338bbe77"
+  },
+  "bins:oak-cane-square-wastebasket": {
+   "file": "bins_oak-cane-square-wastebasket.webp",
+   "fp": "14c393ec0422251a"
+  },
+  "bins:paper-recycling-box": {
+   "file": "bins_paper-recycling-box.webp",
+   "fp": "2b0d7ea19af90147"
+  },
+  "bins:plastic-flip-lid-bin-15l": {
+   "file": "bins_plastic-flip-lid-bin-15l.webp",
+   "fp": "b7798eca16d326ee"
+  },
+  "bins:rattan-round-wastebasket": {
+   "file": "bins_rattan-round-wastebasket.webp",
+   "fp": "b5f2c87c313473eb"
+  },
+  "bins:rectangular-sensor-bin-45l": {
+   "file": "bins_rectangular-sensor-bin-45l.webp",
+   "fp": "f3e98a29ca2da799"
+  },
+  "bins:rectangular-soft-close-bin-40l": {
+   "file": "bins_rectangular-soft-close-bin-40l.webp",
+   "fp": "07eb31f9eb867326"
+  },
+  "bins:round-sensor-bin-30l": {
+   "file": "bins_round-sensor-bin-30l.webp",
+   "fp": "bbf47e6a51ff8f08"
+  },
+  "bins:round-swing-lid-office-bin-25l": {
+   "file": "bins_round-swing-lid-office-bin-25l.webp",
+   "fp": "8be8d83ccd479540"
+  },
+  "bins:sage-soft-close-step-bin-20l": {
+   "file": "bins_sage-soft-close-step-bin-20l.webp",
+   "fp": "d1606f33d27b8f47"
+  },
+  "bins:seagrass-belly-wastebasket": {
+   "file": "bins_seagrass-belly-wastebasket.webp",
+   "fp": "f658e41c9571b9f5"
+  },
+  "bins:slim-rectangular-pedal-bin-6l": {
+   "file": "bins_slim-rectangular-pedal-bin-6l.webp",
+   "fp": "2252145426d6123d"
+  },
+  "bins:slim-rolling-gap-bin-25l": {
+   "file": "bins_slim-rolling-gap-bin-25l.webp",
+   "fp": "c651774f497df0f6"
+  },
+  "bins:slim-sensor-bin-9l": {
+   "file": "bins_slim-sensor-bin-9l.webp",
+   "fp": "3e83a9f8c9580a2e"
+  },
+  "bins:square-swing-lid-bin-40l": {
+   "file": "bins_square-swing-lid-bin-40l.webp",
+   "fp": "b00ef745d5c1708b"
+  },
+  "bins:stacking-recycling-crates": {
+   "file": "bins_stacking-recycling-crates.webp",
+   "fp": "9f52daf1d926e30a"
+  },
+  "bins:steel-mesh-wastepaper-basket": {
+   "file": "bins_steel-mesh-wastepaper-basket.webp",
+   "fp": "bd74ffb907a24df1"
+  },
+  "bins:stitched-leather-wastebasket": {
+   "file": "bins_stitched-leather-wastebasket.webp",
+   "fp": "1b3e9b5aff4030f8"
+  },
+  "bins:tall-pedal-bin-45l": {
+   "file": "bins_tall-pedal-bin-45l.webp",
+   "fp": "c36f4e690e84e5f1"
+  },
+  "bins:three-bin-recycling-station": {
+   "file": "bins_three-bin-recycling-station.webp",
+   "fp": "deeae1f6c260fcf4"
+  },
+  "bins:turned-teak-wastebasket": {
+   "file": "bins_turned-teak-wastebasket.webp",
+   "fp": "e96fc184f773caea"
+  },
+  "bins:twin-recycling-bin-stand": {
+   "file": "bins_twin-recycling-bin-stand.webp",
+   "fp": "0c6c1678e82c95a3"
+  },
+  "bins:wheelie-bin-120l": {
+   "file": "bins_wheelie-bin-120l.webp",
+   "fp": "83e5911de5c63f2c"
+  },
+  "bins:wheelie-bin-240l": {
+   "file": "bins_wheelie-bin-240l.webp",
+   "fp": "c0bfe26b64019c81"
+  },
+  "bins:white-mini-pedal-bin-3l": {
+   "file": "bins_white-mini-pedal-bin-3l.webp",
+   "fp": "184e5e6a5ecf651d"
+  },
   "bistro-set": {
    "file": "bistro-set.webp",
    "fp": "a538e1787deecdd3"
@@ -1568,6 +1712,174 @@
   "counter-stool-backed": {
    "file": "counter-stool-backed.webp",
    "fp": "6f4e497efc6c4248"
+  },
+  "counter-stools:backless-round-boucle-counter-stool-oak": {
+   "file": "counter-stools_backless-round-boucle-counter-stool-oak.webp",
+   "fp": "3d18b8917c714294"
+  },
+  "counter-stools:backless-round-leather-bar-stool-walnut": {
+   "file": "counter-stools_backless-round-leather-bar-stool-walnut.webp",
+   "fp": "6d04ea42f1613191"
+  },
+  "counter-stools:backless-square-linen-counter-stool-walnut": {
+   "file": "counter-stools_backless-square-linen-counter-stool-walnut.webp",
+   "fp": "13ac10e6f5cbe692"
+  },
+  "counter-stools:backless-swivel-boucle-pedestal-stool": {
+   "file": "counter-stools_backless-swivel-boucle-pedestal-stool.webp",
+   "fp": "39ab140091640a9e"
+  },
+  "counter-stools:black-cane-back-bar-stool-walnut": {
+   "file": "counter-stools_black-cane-back-bar-stool-walnut.webp",
+   "fp": "17a0aac3b0de50e0"
+  },
+  "counter-stools:black-leather-scoop-bar-stool": {
+   "file": "counter-stools_black-leather-scoop-bar-stool.webp",
+   "fp": "3373a909d3710f81"
+  },
+  "counter-stools:boucle-barrel-bar-stool-oak": {
+   "file": "counter-stools_boucle-barrel-bar-stool-oak.webp",
+   "fp": "fdbb0dee6b625392"
+  },
+  "counter-stools:boucle-barrel-counter-stool-oak": {
+   "file": "counter-stools_boucle-barrel-counter-stool-oak.webp",
+   "fp": "ee7a69d0d552002a"
+  },
+  "counter-stools:brass-kick-scoop-bar-stool": {
+   "file": "counter-stools_brass-kick-scoop-bar-stool.webp",
+   "fp": "7b8c3cfcc5dce077"
+  },
+  "counter-stools:button-tufted-velvet-shell-bar-stool": {
+   "file": "counter-stools_button-tufted-velvet-shell-bar-stool.webp",
+   "fp": "d5294d58f01400eb"
+  },
+  "counter-stools:cane-back-linen-counter-stool-oak": {
+   "file": "counter-stools_cane-back-linen-counter-stool-oak.webp",
+   "fp": "098e3819b2943066"
+  },
+  "counter-stools:channel-back-corduroy-counter-stool": {
+   "file": "counter-stools_channel-back-corduroy-counter-stool.webp",
+   "fp": "0dd5a92a951db895"
+  },
+  "counter-stools:cognac-leather-barrel-counter-stool": {
+   "file": "counter-stools_cognac-leather-barrel-counter-stool.webp",
+   "fp": "abc8b55413100a41"
+  },
+  "counter-stools:deep-wrap-corduroy-tub-bar-stool": {
+   "file": "counter-stools_deep-wrap-corduroy-tub-bar-stool.webp",
+   "fp": "26ed0d0971c44adb"
+  },
+  "counter-stools:half-moon-sage-boucle-counter-stool": {
+   "file": "counter-stools_half-moon-sage-boucle-counter-stool.webp",
+   "fp": "e988b9f5b9c7156f"
+  },
+  "counter-stools:herringbone-saddle-counter-stool-oak": {
+   "file": "counter-stools_herringbone-saddle-counter-stool-oak.webp",
+   "fp": "c6e87094b902ae03"
+  },
+  "counter-stools:herringbone-shell-counter-stool-smoked-oak": {
+   "file": "counter-stools_herringbone-shell-counter-stool-smoked-oak.webp",
+   "fp": "a76e33e24f7dbecb"
+  },
+  "counter-stools:leather-saddle-bar-stool-oak": {
+   "file": "counter-stools_leather-saddle-bar-stool-oak.webp",
+   "fp": "d633a2b84ff594e7"
+  },
+  "counter-stools:linen-half-moon-bar-stool-walnut": {
+   "file": "counter-stools_linen-half-moon-bar-stool-walnut.webp",
+   "fp": "593f6227f9a6e13c"
+  },
+  "counter-stools:linen-low-scoop-counter-stool-walnut": {
+   "file": "counter-stools_linen-low-scoop-counter-stool-walnut.webp",
+   "fp": "c5a2fc76696cc84f"
+  },
+  "counter-stools:low-arm-linen-scoop-counter-stool": {
+   "file": "counter-stools_low-arm-linen-scoop-counter-stool.webp",
+   "fp": "58c0a63dca48c783"
+  },
+  "counter-stools:low-backrest-boucle-counter-stool-oak": {
+   "file": "counter-stools_low-backrest-boucle-counter-stool-oak.webp",
+   "fp": "b956a97da480a61a"
+  },
+  "counter-stools:oak-rimmed-boucle-shell-counter-stool": {
+   "file": "counter-stools_oak-rimmed-boucle-shell-counter-stool.webp",
+   "fp": "42cc4cf3bb42add4"
+  },
+  "counter-stools:oak-slatted-back-counter-stool": {
+   "file": "counter-stools_oak-slatted-back-counter-stool.webp",
+   "fp": "5b01b2d91613a38a"
+  },
+  "counter-stools:oak-veneer-shell-boucle-counter-stool": {
+   "file": "counter-stools_oak-veneer-shell-boucle-counter-stool.webp",
+   "fp": "6fc7d6f3fee6e917"
+  },
+  "counter-stools:performance-weave-shell-counter-stool": {
+   "file": "counter-stools_performance-weave-shell-counter-stool.webp",
+   "fp": "e71bfacb205ec5e8"
+  },
+  "counter-stools:piped-boucle-shell-counter-stool": {
+   "file": "counter-stools_piped-boucle-shell-counter-stool.webp",
+   "fp": "ee9da34bd9374d6a"
+  },
+  "counter-stools:rounded-bucket-linen-bar-stool": {
+   "file": "counter-stools_rounded-bucket-linen-bar-stool.webp",
+   "fp": "7a20af3220b68601"
+  },
+  "counter-stools:rust-velvet-scoop-counter-stool-walnut": {
+   "file": "counter-stools_rust-velvet-scoop-counter-stool-walnut.webp",
+   "fp": "528adc32a1ba1f48"
+  },
+  "counter-stools:soft-square-back-linen-counter-stool": {
+   "file": "counter-stools_soft-square-back-linen-counter-stool.webp",
+   "fp": "0efe80dadf8a384b"
+  },
+  "counter-stools:square-back-tan-leather-bar-stool": {
+   "file": "counter-stools_square-back-tan-leather-bar-stool.webp",
+   "fp": "0ba694de9810aba6"
+  },
+  "counter-stools:square-leg-shell-counter-stool-smoked-oak": {
+   "file": "counter-stools_square-leg-shell-counter-stool-smoked-oak.webp",
+   "fp": "dba16c794c2bbd8d"
+  },
+  "counter-stools:swivel-boucle-barrel-counter-stool-oak-base": {
+   "file": "counter-stools_swivel-boucle-barrel-counter-stool-oak-base.webp",
+   "fp": "a5dc7e4814e2357c"
+  },
+  "counter-stools:swivel-boucle-tub-pedestal-counter-stool": {
+   "file": "counter-stools_swivel-boucle-tub-pedestal-counter-stool.webp",
+   "fp": "1533cd5e024d4ab9"
+  },
+  "counter-stools:swivel-channel-back-bar-stool-oak-base": {
+   "file": "counter-stools_swivel-channel-back-bar-stool-oak-base.webp",
+   "fp": "6db27ba50a0989c1"
+  },
+  "counter-stools:swivel-linen-scoop-bar-stool-walnut-base": {
+   "file": "counter-stools_swivel-linen-scoop-bar-stool-walnut-base.webp",
+   "fp": "47bf82a4eba4e63e"
+  },
+  "counter-stools:swivel-square-back-pedestal-counter-stool": {
+   "file": "counter-stools_swivel-square-back-pedestal-counter-stool.webp",
+   "fp": "73c90af6e7555771"
+  },
+  "counter-stools:swivel-tan-leather-pedestal-bar-stool": {
+   "file": "counter-stools_swivel-tan-leather-pedestal-bar-stool.webp",
+   "fp": "725e97dc012fd372"
+  },
+  "counter-stools:teddy-barrel-counter-stool-white-oak": {
+   "file": "counter-stools_teddy-barrel-counter-stool-white-oak.webp",
+   "fp": "f6257b33d38c98f3"
+  },
+  "counter-stools:walnut-rimmed-leather-shell-bar-stool": {
+   "file": "counter-stools_walnut-rimmed-leather-shell-bar-stool.webp",
+   "fp": "9772d3d99696c24d"
+  },
+  "counter-stools:walnut-slat-back-bar-stool": {
+   "file": "counter-stools_walnut-slat-back-bar-stool.webp",
+   "fp": "cbc03d68c27c2d93"
+  },
+  "counter-stools:wingback-boucle-bar-stool-walnut": {
+   "file": "counter-stools_wingback-boucle-bar-stool-walnut.webp",
+   "fp": "28988176b9a6c728"
   },
   "crib": {
    "file": "crib.webp",
@@ -3713,6 +4025,22 @@
    "file": "portal-frames_corner-bedroom-enclosure_model_sidelight.webp",
    "fp": "c7616684933fb39e"
   },
+  "portal-frames:corner-portal-half-wall": {
+   "file": "portal-frames_corner-portal-half-wall.webp",
+   "fp": "99e07f25147ef506"
+  },
+  "portal-frames:corner-portal-half-wall@model:half-wall": {
+   "file": "portal-frames_corner-portal-half-wall_model_half-wall.webp",
+   "fp": "544d8e419c2b5af1"
+  },
+  "portal-frames:corner-portal-half-wall@model:ledge-outside": {
+   "file": "portal-frames_corner-portal-half-wall_model_ledge-outside.webp",
+   "fp": "123f850f3df7a290"
+  },
+  "portal-frames:corner-portal-half-wall@model:open": {
+   "file": "portal-frames_corner-portal-half-wall_model_open.webp",
+   "fp": "1e67a3cd21d1e032"
+  },
   "portal-frames:desk-nook-portal": {
    "file": "portal-frames_desk-nook-portal.webp",
    "fp": "f7b7249f8f0541f2"
@@ -3728,6 +4056,18 @@
   "portal-frames:half-wall-portal@model:ledge-back": {
    "file": "portal-frames_half-wall-portal_model_ledge-back.webp",
    "fp": "f450c14b0e107af0"
+  },
+  "portal-frames:half-wall-portal@model:ledge-back-lined": {
+   "file": "portal-frames_half-wall-portal_model_ledge-back-lined.webp",
+   "fp": "071437b57d146730"
+  },
+  "portal-frames:half-wall-portal@model:ledge-lined": {
+   "file": "portal-frames_half-wall-portal_model_ledge-lined.webp",
+   "fp": "7fca44c88995efd5"
+  },
+  "portal-frames:half-wall-portal@model:lined": {
+   "file": "portal-frames_half-wall-portal_model_lined.webp",
+   "fp": "86e1a3ce78f2d26e"
   },
   "portal-frames:kitchen-portal": {
    "file": "portal-frames_kitchen-portal.webp",

@@ -556,6 +556,17 @@ function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1): Part[] {
 
 const HALF_WALL_SPEC: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: HALF_WALL, cove: true, clear: 1.2 };
 
+/** Timber lining for the half-wall portal's models (as on the oak-lined portals). */
+const HALF_WALL_LINING = matSlot('lining', 'Opening lining', 'wood-oak-light');
+
+/**
+ * Oak lining round the half-wall portal's opening: from the wall along the soffit, round the curve and
+ * down the leg, stopping on the half wall's top (the cap or the dining ledge).
+ */
+function halfWallLining(size: Size3): Part {
+  return liningInside({ ...portalGeo(size, HALF_WALL_SPEC), yb: HALF_WALL }, 0.04, size.d);
+}
+
 const halfWall = portal({
   id: 'half-wall-portal',
   name: 'Portal on a half wall with LED cove',
@@ -572,6 +583,24 @@ const halfWall = portal({
     { id: 'half-wall', name: 'Half wall' },
     { id: 'ledge', name: 'Dining ledge', hide: ['shelf'], slots: [SHELF, LEDGE_LEG], reach: { front: LEDGE }, props: (s) => diningLedge(s, HALF_WALL_SPEC, 1) },
     { id: 'ledge-back', name: 'Ledge, other side', hide: ['shelf'], slots: [SHELF, LEDGE_LEG], reach: { back: LEDGE }, props: (s) => diningLedge(s, HALF_WALL_SPEC, -1) },
+    // The same three with an oak lining round the opening.
+    { id: 'lined', name: 'Half wall, oak lining', slots: [HALF_WALL_LINING], props: (s) => [halfWallLining(s)] },
+    {
+      id: 'ledge-lined',
+      name: 'Dining ledge, oak lining',
+      hide: ['shelf'],
+      slots: [SHELF, LEDGE_LEG, HALF_WALL_LINING],
+      reach: { front: LEDGE },
+      props: (s) => [...diningLedge(s, HALF_WALL_SPEC, 1), halfWallLining(s)],
+    },
+    {
+      id: 'ledge-back-lined',
+      name: 'Ledge, other side, oak lining',
+      hide: ['shelf'],
+      slots: [SHELF, LEDGE_LEG, HALF_WALL_LINING],
+      reach: { back: LEDGE },
+      props: (s) => [...diningLedge(s, HALF_WALL_SPEC, -1), halfWallLining(s)],
+    },
   ],
 });
 
@@ -832,6 +861,128 @@ const cornerRoom = defineItem({
   planDetail: enclosurePlan,
 });
 
+// ---------------------------------------------------------------------------
+// Corner portal: the half-wall portal (with its dining ledge) and the oak-lined L portal in one item,
+// their soffits joined round a curved corner
+// ---------------------------------------------------------------------------
+
+/** Wall thickness of both runs. */
+const CORNER_T = 0.2;
+/** Radius of the corner in plan, on the soffit's centre line (as a rounded 10 cm wall corner, 0.28 m). */
+const CORNER_R = 0.28;
+const CORNER_LINE = 0.04;
+const RUN_A_SPEC: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: HALF_WALL, clear: 1.2 };
+const RUN_B_SPEC: PortalSpec = { legs: 'right', leg: 0.22, head: 0.42, rR: 0.5, clear: 1.2, liningIn: CORNER_LINE };
+/** Run A as an open portal: no half wall, its leg down to the floor, lined all the way down. */
+const RUN_A_OPEN: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, clear: 1.2, liningIn: CORNER_LINE };
+
+/** Mirror parts left-to-right (x → -x). */
+function mirrorX(parts: Part[]): Part[] {
+  return parts.map((p) => {
+    const q: Part = { ...p, position: [-p.position[0], p.position[1], p.position[2]] };
+    if (p.rotation) q.rotation = [p.rotation[0], -p.rotation[1], -p.rotation[2]];
+    if (q.shape === 'prism') q.outline = q.outline.map(([x, z]) => [-x, z] as V2).reverse();
+    return q;
+  });
+}
+const shift = (parts: Part[], dx: number, dz: number): Part[] => parts.map((p) => ({ ...p, position: [p.position[0] + dx, p.position[1], p.position[2] + dz] }));
+
+/** A quarter ring in plan (centre cx, cz; radii r0 < r1) from angle a0 to a1. */
+function quarterRing(cx: number, cz: number, r0: number, r1: number, a0: number, a1: number): V2[] {
+  return dedupe([...arc(cx, cz, r1, r1, a0, a1, 14), ...arc(cx, cz, r0, r0, a1, a0, 14)]);
+}
+
+/**
+ * Item space: run B along the left edge (x = -w/2 face) from the corner at the back to its leg at the
+ * front; run A along the back edge from the corner to its leg at the right, its half wall carrying the
+ * dining ledge on the inside of the L (the front-right). A model puts the ledge outside instead.
+ */
+function cornerLayout({ w, d }: Size3) {
+  const t = CORNER_T;
+  const xB = -w / 2 + t / 2;
+  const zA = -d / 2 + t / 2;
+  const cx = xB + CORNER_R;
+  const cz = zA + CORNER_R;
+  return { t, xB, zA, cx, cz, lenA: w / 2 - cx, lenB: d / 2 - cz };
+}
+
+/** Run A's ledge (side +1 inside, -1 outside) or its plain cap (side 0), in item space: for the models. */
+function cornerRunTop(size: Size3, side: 1 | -1 | 0): Part[] {
+  const L = cornerLayout(size);
+  const sizeA: Size3 = { w: L.lenA, d: L.t, h: size.h };
+  const parts = side === 0 ? buildPortal(sizeA, RUN_A_SPEC).filter((p) => p.slot === 'shelf') : diningLedge(sizeA, RUN_A_SPEC, side);
+  return shift(parts, (L.cx + size.w / 2) / 2, L.zA);
+}
+
+function buildCornerPortal(size: Size3, open = false): Part[] {
+  const { h } = size;
+  const L = cornerLayout(size);
+  const sizeA: Size3 = { w: L.lenA, d: L.t, h };
+  const sizeB: Size3 = { w: L.lenB, d: L.t, h };
+  // Run A: the half-wall portal without its cap, the dining ledge on the inside, lining round the opening.
+  const runA = open
+    ? buildPortal(sizeA, RUN_A_OPEN)
+    : [
+        ...buildPortal(sizeA, RUN_A_SPEC).filter((p) => p.slot !== 'shelf'),
+        ...diningLedge(sizeA, RUN_A_SPEC, 1),
+        liningInside({ ...portalGeo(sizeA, RUN_A_SPEC), yb: HALF_WALL }, CORNER_LINE, L.t),
+      ];
+  // Run B: built along x with its leg at +x, then turned so the leg points to the front.
+  const runB = quarterTurn(mirrorX(buildPortal(sizeB, RUN_B_SPEC)), L.xB, (L.cz + size.d / 2) / 2);
+  // The curved soffit and its lining between the two runs.
+  const g = portalGeo(sizeA, RUN_A_SPEC);
+  const ring = quarterRing(L.cx, L.cz, CORNER_R - L.t / 2, CORNER_R + L.t / 2, Math.PI, (3 * Math.PI) / 2);
+  const liningRing = quarterRing(L.cx, L.cz, CORNER_R - L.t / 2 - 0.004, CORNER_R + L.t / 2 + 0.004, Math.PI, (3 * Math.PI) / 2);
+  return [
+    ...shift(runA, (L.cx + size.w / 2) / 2, L.zA),
+    ...runB,
+    { ...prism('frame', ring, g.yi, h - g.yi), plan: false },
+    { ...prism('lining', liningRing, g.yi - CORNER_LINE, CORNER_LINE - 0.001), plan: false },
+  ];
+}
+
+/** Plan: the soffit's two edges round the L (it is overhead, so only its outline is drawn). */
+function cornerPortalPlan(size: Size3): PlanStroke[] {
+  const L = cornerLayout(size);
+  const edge = (off: number): V2[] => {
+    const r = CORNER_R + off;
+    return [[L.xB - off, size.d / 2], ...arc(L.cx, L.cz, r, r, Math.PI, (3 * Math.PI) / 2, 14), [size.w / 2, L.zA - off]];
+  };
+  return [
+    { kind: 'poly', points: edge(L.t / 2) },
+    { kind: 'poly', points: edge(-L.t / 2) },
+  ];
+}
+
+const cornerPortal = defineItem({
+  id: 'corner-portal-half-wall',
+  name: 'Corner portal with half wall and dining ledge',
+  category: 'construction',
+  type: 'structure',
+  group: 'Portals & arches',
+  tags: ['corner portal', 'L-shaped soffit', 'half wall', 'dining ledge', 'breakfast bar', 'kitchen corner', 'khung vòm góc', 'tường lửng', ...TAGS],
+  description:
+    'Two portals joined round a soft curved corner: a soffit wrapping an open kitchen corner, one leg on a half wall carrying a bar-height dining ledge on the inside of the L (or outside, or a plain cap), the other a slim leg, the whole opening lined in timber.',
+  defaultSize: { w: 4.2, d: 2.9, h: CEILING },
+  minSize: { w: 2.8, d: 1.9, h: 2.3 },
+  maxSize: { w: 8.0, d: 6.0, h: 3.6 },
+  resizable: { w: true, d: true, h: true },
+  slots: [FRAME, SHELF, LEDGE_LEG, HALF_WALL_LINING],
+  variants: [
+    ...PAINT_VARIANTS,
+    { id: 'sage-lining', name: 'Sage lining', materials: { lining: 'paint-sage' } },
+    { id: 'walnut', name: 'Walnut ledge & lining', materials: { shelf: 'wood-walnut', lining: 'wood-walnut' } },
+  ],
+  build: (s) => buildCornerPortal(s),
+  planDetail: cornerPortalPlan,
+  models: [
+    { id: 'ledge-inside', name: 'Dining ledge inside' },
+    { id: 'ledge-outside', name: 'Dining ledge outside', hide: ['shelf', 'leg'], slots: [SHELF, LEDGE_LEG], reach: { back: LEDGE }, props: (s) => cornerRunTop(s, -1) },
+    { id: 'half-wall', name: 'Half wall, no ledge', hide: ['shelf', 'leg'], slots: [SHELF], props: (s) => cornerRunTop(s, 0) },
+    { id: 'open', name: 'Open portal', hide: ['shelf', 'leg'], build: (s) => buildCornerPortal(s, true) },
+  ],
+});
+
 export default definePack({
   name: 'Portal frames',
   version: '1.3.0',
@@ -839,5 +990,5 @@ export default definePack({
   description:
     'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal, rounded ceiling headers, an arched partition wall and an arched corner bedroom enclosure. All resize freely; the curves are rebuilt for every size.',
   license: 'CC0 (made for Neest)',
-  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, header, headerCove, archedWall, cornerRoom],
+  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, header, headerCove, archedWall, cornerRoom, cornerPortal],
 });
