@@ -1857,3 +1857,7 @@ Known limitations (also in README):
      type) beside a swatch grid (pref `materialView`, grid by default; the header button switches grid/list there); context
      menus cap at 340 px with ellipsis (full label on hover); right-click an item → **Show in library** (`showInLibrary` in
      `plan-2d/contextMenu.ts`, also the Inspector button; it leaves Connections) (done).
+147. "Allow this object (portal on a half wall) to have another model variant with the table extruding further inwards,
+     to make a compact dining table" → models **Dining ledge** / **Ledge, other side**: the cap becomes one oak top reaching
+     40 cm past a face at bar height (1.0 m) with a slim black leg. New model field `reach: { front?, back? }`: such props may
+     extend past the item's depth and draw in the plan (`withModel`, `describeAssetChecks` allow it) (done).

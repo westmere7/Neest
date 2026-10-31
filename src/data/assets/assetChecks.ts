@@ -296,13 +296,14 @@ export function describeAssetChecks(assets: AssetDefinition[]): void {
         'model %s keeps the outline and size at %s',
         (modelId, _label, size) => {
           const look = withModel(asset, modelId);
+          const model = models.find((m) => m.id === modelId)!;
           const parts = look.build(size);
           const lookSlots = new Set(look.slots.map((s) => s.id));
           expect(parts.length).toBeGreaterThan(0);
           expect(parts.length).toBeLessThanOrEqual(MAX_PARTS * 2);
-          // The plan outline only ever comes from the item's own parts, never from props.
+          // The plan outline comes from the item's own parts; props only when the model reaches past the item (a ledge).
           const outline = (ps: Part[]) => ps.filter((p) => p.plan !== false).map((p) => JSON.stringify(p));
-          const own = new Set(outline(asset.build(size)));
+          const own = new Set([...outline(asset.build(size)), ...(model.reach ? outline(model.props?.(size) ?? []) : [])]);
           const shown = outline(parts);
           expect(shown.length, 'some part is in the plan').toBeGreaterThan(0);
           for (const p of shown) expect(own.has(p), `plan part not from the item: ${p.slice(0, 80)}`).toBe(true);
@@ -315,8 +316,8 @@ export function describeAssetChecks(assets: AssetDefinition[]): void {
             const b = worldBounds(p);
             expect(b.min[0], `${where} x-min`).toBeGreaterThanOrEqual(-w / 2 - TOL);
             expect(b.max[0], `${where} x-max`).toBeLessThanOrEqual(w / 2 + TOL);
-            expect(b.min[2], `${where} z-min`).toBeGreaterThanOrEqual(-d / 2 - TOL);
-            expect(b.max[2], `${where} z-max`).toBeLessThanOrEqual(d / 2 + TOL);
+            expect(b.min[2], `${where} z-min`).toBeGreaterThanOrEqual(-d / 2 - (model.reach?.back ?? 0) - TOL);
+            expect(b.max[2], `${where} z-max`).toBeLessThanOrEqual(d / 2 + (model.reach?.front ?? 0) + TOL);
             expect(b.min[1], `${where} y-min`).toBeGreaterThanOrEqual(-TOL);
             expect(b.max[1], `${where} y-max`).toBeLessThanOrEqual(h + PROPS_ABOVE);
           }

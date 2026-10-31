@@ -499,17 +499,63 @@ const deskNook = portal({
   variants: [...PAINT_VARIANTS, { id: 'walnut', name: 'Walnut desk & shelves', materials: { shelf: 'wood-walnut' } }],
 });
 
+// ---------------------------------------------------------------------------
+// Half wall with a dining ledge (a model of the half-wall portal)
+// ---------------------------------------------------------------------------
+
+const HALF_WALL = 1.0;
+/** How far the dining ledge reaches out past the half wall's face. */
+const LEDGE = 0.4;
+const LEDGE_LEG = matSlot('leg', 'Ledge leg', 'metal-black-matte');
+
+/** Plan outline of a slab with a square end at x1 and its two x0 corners rounded (front rf, back rb). */
+function twoCorners(x0: number, x1: number, z0: number, z1: number, rf: number, rb: number): V2[] {
+  const f = Math.max(0.005, Math.min(rf, (z1 - z0) / 2 - 0.001, x1 - x0 - 0.001));
+  const b = Math.max(0.005, Math.min(rb, (z1 - z0) / 2 - 0.001, x1 - x0 - 0.001));
+  return dedupe([[x1, z0], [x1, z1], ...arc(x0 + f, z1 - f, f, f, Math.PI / 2, Math.PI, 10), ...arc(x0 + b, z0 + b, b, b, Math.PI, (3 * Math.PI) / 2, 10)]);
+}
+
+/**
+ * The half wall's cap widened into a compact dining ledge at bar height: one timber top flush with
+ * the cap over the whole half wall, reaching `LEDGE` past one face (`side` +1 front, −1 back), its
+ * free corner rounded, with a slim leg under that corner. Replaces the cap (the model hides it).
+ */
+function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1): Part[] {
+  const g = portalGeo(size, spec);
+  const { w, d } = size;
+  const H = HALF_WALL - 0.04;
+  const x0 = g.xr - clamp((g.xr - g.xl) * 0.55, 0.5, 1.6);
+  const rEnd = Math.min(d / 2 - 0.01, 0.3);
+  // In front coordinates: the wall's back face at -d/2, the ledge's edge at d/2 + LEDGE.
+  const outline = twoCorners(x0, w / 2, -d / 2, d / 2 + LEDGE, 0.22, rEnd).map(([x, z]) => [x, z * side] as V2);
+  const legX = x0 + 0.14;
+  const legZ = (d / 2 + LEDGE - 0.14) * side;
+  return [
+    prism('shelf', side === 1 ? outline : [...outline].reverse(), H, 0.04),
+    cyl('leg', [legX, H / 2, legZ], 0.022, H, { plan: false }),
+    cyl('leg', [legX, 0.004, legZ], 0.1, 0.008, { plan: false }),
+  ];
+}
+
+const HALF_WALL_SPEC: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: HALF_WALL, cove: true, clear: 1.2 };
+
 const halfWall = portal({
   id: 'half-wall-portal',
   name: 'Portal on a half wall with LED cove',
   description:
-    'A soffit from the wall that curves down onto a capped half wall reaching into the opening with a rounded end, lit along the ceiling line: frames a study platform or reading corner.',
-  tags: ['half wall', 'study platform', 'reading corner', 'LED cove', 'tường lửng'],
-  spec: { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: 1.0, cove: true, clear: 1.2 },
+    'A soffit from the wall that curves down onto a capped half wall reaching into the opening with a rounded end, lit along the ceiling line: frames a study platform or reading corner. Its Dining ledge model widens the timber cap into a compact bar-height dining table.',
+  tags: ['half wall', 'study platform', 'reading corner', 'LED cove', 'tường lửng', 'dining ledge', 'breakfast bar', 'bàn ăn gắn tường'],
+  spec: HALF_WALL_SPEC,
   size: { w: 2.6, d: 0.35, h: CEILING },
   min: { w: 1.6, d: 0.2, h: 2.3 },
   slots: [FRAME, SHELF, GLOW],
   variants: [...PAINT_VARIANTS, { id: 'walnut', name: 'Walnut cap', materials: { shelf: 'wood-walnut' } }],
+  // The cap widened into a compact bar-height dining ledge, on either face of the half wall.
+  models: [
+    { id: 'half-wall', name: 'Half wall' },
+    { id: 'ledge', name: 'Dining ledge', hide: ['shelf'], slots: [SHELF, LEDGE_LEG], reach: { front: LEDGE }, props: (s) => diningLedge(s, HALF_WALL_SPEC, 1) },
+    { id: 'ledge-back', name: 'Ledge, other side', hide: ['shelf'], slots: [SHELF, LEDGE_LEG], reach: { back: LEDGE }, props: (s) => diningLedge(s, HALF_WALL_SPEC, -1) },
+  ],
 });
 
 const oakLined = portal({
@@ -771,7 +817,7 @@ const cornerRoom = defineItem({
 
 export default definePack({
   name: 'Portal frames',
-  version: '1.2.0',
+  version: '1.3.0',
   author: 'Neest team',
   description:
     'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal, rounded ceiling headers, an arched partition wall and an arched corner bedroom enclosure. All resize freely; the curves are rebuilt for every size.',

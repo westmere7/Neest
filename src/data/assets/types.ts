@@ -210,6 +210,12 @@ export interface AssetModelVariant {
   props?: (size: Size3) => Part[];
   /** Material slots only this model's props use (slot ids must not clash with the item's). */
   slots?: MaterialSlot[];
+  /**
+   * A model whose props are part of the item's form rather than styling (a dining ledge on a half wall):
+   * they may reach this far (m) past the item's front (+z) or back (−z), and they draw in the 2D plan.
+   * Collisions and the selection box still use the item's own size.
+   */
+  reach?: { front?: number; back?: number };
 }
 
 /** A hand-made colour variant of an asset (see `AssetDefinition.variants`). */

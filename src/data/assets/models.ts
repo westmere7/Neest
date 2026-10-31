@@ -112,7 +112,9 @@ export function withModel(asset: AssetDefinition | null, id?: string | null): As
     if (!m.props) return [];
     try {
       const parts = m.props(size);
-      return Array.isArray(parts) ? parts.map((p) => (p.plan === false ? p : { ...p, plan: false })) : [];
+      // Styling props stay out of the plan; a model that reaches past the item (a ledge) draws its props.
+      if (!Array.isArray(parts)) return [];
+      return m.reach ? parts : parts.map((p) => (p.plan === false ? p : { ...p, plan: false }));
     } catch (e) {
       if (!warned) console.warn(`[models] ${asset.id} model "${m.id}" props failed:`, e);
       warned = true;

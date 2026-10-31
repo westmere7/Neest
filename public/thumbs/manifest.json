@@ -3721,6 +3721,14 @@
    "file": "portal-frames_half-wall-portal.webp",
    "fp": "570ac592333d8a7b"
   },
+  "portal-frames:half-wall-portal@model:ledge": {
+   "file": "portal-frames_half-wall-portal_model_ledge.webp",
+   "fp": "6f1da9ca852895e0"
+  },
+  "portal-frames:half-wall-portal@model:ledge-back": {
+   "file": "portal-frames_half-wall-portal_model_ledge-back.webp",
+   "fp": "c2595b45a9e9b917"
+  },
   "portal-frames:kitchen-portal": {
    "file": "portal-frames_kitchen-portal.webp",
    "fp": "8c0f56cbb0c23dce"
