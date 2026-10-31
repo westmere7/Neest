@@ -20,8 +20,10 @@ import {
   prism,
   range,
   rng,
+  rod,
   shakerFront,
   span,
+  type AssetModelVariant,
   type Part,
   type PlanStroke,
   type Size3,
@@ -73,7 +75,8 @@ function layout(w: number, d: number, h: number, desk = true) {
   const D = desk ? clamp(d - 0.75, 0.45, 0.6) : d - 0.032;
   const zf = zb + D;
   const ov = desk ? 0.04 : 0; // the desk overhangs the tower on its outer side
-  const tw = clamp(w * 0.25, 0.42, 0.6);
+  // Without the desk the tower is a slim 30 cm column, so the wardrobe gets the width.
+  const tw = desk ? clamp(w * 0.25, 0.42, 0.6) : 0.3;
   const rw = clamp(w * 0.2, 0.34, 0.45);
   const xt0 = x0 + ov;
   const xt1 = xt0 + tw;
@@ -95,19 +98,32 @@ function buildWall({ w, d, h }: Size3, desk: boolean): Part[] {
     const parts: Part[] = [];
 
     // ── Oak shelf tower ─────────────────────────────────────────────────────
-    parts.push(
-      span('oak', [xt0, xt0 + t], [0, h], [zb, zc]),
-      span('oak', [xt1 - t, xt1], [0, h], [zb, zc]),
-      span('oak', [xt0 + t, xt1 - t], [yU, h], [zb, zc]),
-      sp('oak', [xt0 + 0.002, xt1 - 0.002], [yU + 0.002, h - 0.002], [zc, zf], 0.002),
-      sp('oak', [xt0 + t, xt1 - t], [deskH, yU], [zb, zb + 0.012]),
-      // Closed base under the desk.
-      sp('oak', [xt0 + t, xt1 - t], [0.01, deskH - 0.035], [zc - 0.02, zc]),
-    );
+    parts.push(span('oak', [xt0, xt0 + t], [0, h], [zb, zc]), span('oak', [xt1 - t, xt1], [0, h], [zb, zc]));
+    if (desk) {
+      parts.push(
+        span('oak', [xt0 + t, xt1 - t], [yU, h], [zb, zc]),
+        sp('oak', [xt0 + 0.002, xt1 - 0.002], [yU + 0.002, h - 0.002], [zc, zf], 0.002),
+        sp('oak', [xt0 + t, xt1 - t], [deskH, yU], [zb, zb + 0.012]),
+        // Closed base under the desk.
+        sp('oak', [xt0 + t, xt1 - t], [0.01, deskH - 0.035], [zc - 0.02, zc]),
+      );
+    } else {
+      // Slim tower: the top is an open niche too (a shelf at the cabinet line, the top board above), and
+      // the base is a cabinet with an oak door and a brass knob.
+      parts.push(
+        span('oak', [xt0 + t, xt1 - t], [h - t, h], [zb, zc]),
+        sp('oak', [xt0 + t, xt1 - t], [yU - 0.025, yU], [zb + 0.012, zc - 0.005], 0.002),
+        sp('oak', [xt0 + t, xt1 - t], [deskH, h - t], [zb, zb + 0.012]),
+        sp('oak', [xt0 + t, xt1 - t], [0.01, deskH - 0.035], [zb, zb + 0.012]),
+        sp('oak', [xt0 + t + 0.002, xt1 - t - 0.002], [0.012, deskH - 0.039], [zc - 0.02, zc], 0.002),
+        sp('light', [xt0 + t + 0.01, xt1 - t - 0.01], [h - t - 0.006, h - t], [zc - 0.06, zc - 0.045]),
+        ...knob('metal', [xt1 - t - 0.04, deskH - 0.1, zc], 0.012),
+      );
+    }
     // Open shelves with a warm LED strip under each front edge (and under the cabinet above).
     const shelfYs = range(2).map((i) => deskH + ((yU - deskH) * (i + 1)) / 3);
     for (const y of shelfYs) parts.push(sp('oak', [xt0 + t, xt1 - t], [y - 0.025, y], [zb + 0.012, zc - 0.005], 0.002));
-    for (const y of [...shelfYs.map((s) => s - 0.025), yU]) {
+    for (const y of [...shelfYs.map((s) => s - 0.025), desk ? yU : yU - 0.025]) {
       parts.push(sp('light', [xt0 + t + 0.01, xt1 - t - 0.01], [y - 0.006, y], [zc - 0.06, zc - 0.045]));
     }
 
@@ -212,6 +228,92 @@ function wallPlan({ w, d, h }: Size3, desk: boolean): PlanStroke[] {
   return out;
 }
 
+// ── Model: the corner niche closed at the front, as a quick hanging spot ─────────
+
+const CLOTHES_A = matSlot('clothes', 'Hanging clothes', 'fabric-linen');
+const CLOTHES_B = matSlot('clothes2', 'Hanging clothes, dark', 'fabric-navy');
+
+/**
+ * Band along the column's front (z = zf) from `xFrom` round its rounded corner to where the side begins,
+ * between `o0` and `o1` in from the outer face.
+ */
+function frontBand(xFrom: number, x1: number, zf: number, rr: number, o0: number, o1: number, seg = 16): V2[] {
+  const cx = x1 - rr;
+  const cz = zf - rr;
+  const outer: V2[] = [[xFrom, zf - o0]];
+  const inner: V2[] = [];
+  for (const i of range(seg + 1)) {
+    const a = Math.PI / 2 - (i / seg) * (Math.PI / 2);
+    outer.push([cx + Math.cos(a) * (rr - o0), cz + Math.sin(a) * (rr - o0)]);
+    inner.push([cx + Math.cos(a) * (rr - o1), cz + Math.sin(a) * (rr - o1)]);
+  }
+  return [...outer, ...inner.reverse(), [xFrom, zf - o1]];
+}
+
+/** A flat shape facing front/back: `pts` are [x, y], extruded `t` along +z from z0. */
+function frontPlate(slot: string, pts: V2[], z0: number, t: number): Part {
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return { shape: 'prism', outline: pts.map(([x, y]) => [x - cx, -(y - cy)] as V2), height: t, position: [cx, cy, z0], rotation: [Math.PI / 2, 0, 0], slot, plan: false };
+}
+
+/**
+ * The niche closed at the front by a wall that follows the rounded corner (white outside, oak inside), so
+ * it opens only on the side; a brass rail along that side with wooden hangers and a few garments.
+ */
+function closedNiche({ w, d, h }: Size3, desk: boolean): Part[] {
+  const L = layout(w, d, h, desk);
+  const { x1, zb, zf, xr0, yU } = L;
+  const t = 0.018;
+  const rr = Math.min(0.12, (x1 - xr0) * 0.35);
+  const yB = clamp(h * 0.22, 0.45, 0.55);
+  const y0 = yB + 0.03;
+  const nicheTop = yU - 0.03;
+  // Starts just past the oak lining on the wardrobe side.
+  const xFrom = xr0 + 0.013;
+  const parts: Part[] = [
+    { ...prism('white', frontBand(xFrom, x1, zf, rr, 0, t), y0, nicheTop - y0), plan: false },
+    { ...prism('oak', frontBand(xFrom, x1, zf, rr, t + 0.001, t + 0.007), y0 + 0.001, nicheTop - y0 - 0.002), plan: false },
+  ];
+  // Rail from the back to the new front wall, along the open side, a little under the niche top.
+  const xc = (xFrom + x1) / 2;
+  const za = zb + 0.03;
+  const zz = zf - t - 0.012;
+  const yRail = nicheTop - 0.07;
+  parts.push(rod('metal', [xc, yRail, za], [xc, yRail, zz], 0.008, { segments: 12, plan: false }));
+  // Garments on wooden hangers: shoulders and a straight hem, two colours, varied lengths.
+  const lengths = [0.78, 0.62, 0.92, 0.56, 0.84];
+  const zs = range(lengths.length).map((i) => za + 0.07 + ((zz - za - 0.14) * i) / (lengths.length - 1));
+  const half = Math.min(0.17, (x1 - xFrom) / 2 - 0.012);
+  const yTop = yRail - 0.045;
+  zs.forEach((z, i) => {
+    const len = Math.min(lengths[i], yTop - (y0 + 0.06));
+    const tk = 0.028;
+    const shape: V2[] = [
+      [xc - half, yTop - 0.06],
+      [xc - 0.05, yTop],
+      [xc + 0.05, yTop],
+      [xc + half, yTop - 0.06],
+      [xc + half + 0.008, yTop - len],
+      [xc - half - 0.008, yTop - len],
+    ];
+    parts.push(
+      frontPlate(i % 2 === 0 ? 'clothes' : 'clothes2', shape, z - tk / 2, tk),
+      // Hanger: a bar along the shoulders and a hook up over the rail.
+      rod('oak', [xc - half + 0.02, yRail - 0.035, z], [xc + half - 0.02, yRail - 0.035, z], 0.007, { segments: 8, plan: false }),
+      rod('metal', [xc, yRail - 0.035, z], [xc, yRail + 0.012, z], 0.0025, { segments: 6, plan: false }),
+    );
+  });
+  return parts;
+}
+
+const NICHE_MODELS = (desk: boolean): AssetModelVariant[] => [
+  { id: 'open-niche', name: 'Open corner niche' },
+  { id: 'hanging-niche', name: 'Closed front, hanging rail', slots: [CLOTHES_A, CLOTHES_B], props: (s) => closedNiche(s, desk) },
+];
+
 const slots = [
   matSlot('oak', 'Oak tower & desk', 'laminate-oak'),
   matSlot('white', 'Wardrobe fronts', 'shaker-cream'),
@@ -234,6 +336,7 @@ const studyWall = defineItem({
   light: { color: '#ffcf8a', intensity: 0.35, distance: 2.2, y: 1.3 },
   build: (s) => buildWall(s, true),
   planDetail: (s) => wallPlan(s, true),
+  models: NICHE_MODELS(true),
 });
 
 /** The same wall without the desk: only as deep as the wardrobe, the tower keeps a ledge at desk height. */
@@ -245,7 +348,7 @@ const towerWall = defineItem({
   group: 'Wardrobes',
   tags: ['wardrobe', 'built-in', 'shaker', 'oak', 'shelves', 'led', 'niche', 'shelf tower', 'tủ quần áo', 'vietnamese', 'apartment'],
   description:
-    'A built-in bedroom wall without a desk: an oak shelf tower with LED-lit open shelves and a ledge over a closed base, a white shaker wardrobe with brass pulls, and a rounded column with an open oak corner niche.',
+    'A built-in bedroom wall without a desk: a slim 30 cm oak tower with LED-lit open shelves up to the ceiling over a cabinet with an oak door, a wide white shaker wardrobe with brass pulls, and a rounded column with an open oak corner niche.',
   defaultSize: { w: 2.0, d: 0.63, h: 2.4 },
   minSize: { w: 1.7, d: 0.5, h: 2.1 },
   maxSize: { w: 3.0, d: 0.66, h: 2.7 },
@@ -254,6 +357,7 @@ const towerWall = defineItem({
   light: { color: '#ffcf8a', intensity: 0.35, distance: 2.2, y: 1.3 },
   build: (s) => buildWall(s, false),
   planDetail: (s) => wallPlan(s, false),
+  models: NICHE_MODELS(false),
 });
 
 const TAU = Math.PI * 2;
@@ -273,7 +377,7 @@ function paint(ctx: CanvasRenderingContext2D, size: number, value: (u: number, v
 
 export default definePack({
   name: 'Wardrobe & study wall',
-  version: '1.0.0',
+  version: '1.1.0',
   author: 'Neest team',
   description: 'Built-in bedroom wall: oak shelf tower and study desk, white shaker wardrobe and a rounded corner niche.',
   license: 'CC0 (made for Neest)',

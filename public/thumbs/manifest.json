@@ -5343,11 +5343,19 @@
   },
   "wardrobe-study:wardrobe-shelf-tower-niche": {
    "file": "wardrobe-study_wardrobe-shelf-tower-niche.webp",
-   "fp": "c287f36166a4b047"
+   "fp": "507c9e0ee40d9970"
+  },
+  "wardrobe-study:wardrobe-shelf-tower-niche@model:hanging-niche": {
+   "file": "wardrobe-study_wardrobe-shelf-tower-niche_model_hanging-niche.webp",
+   "fp": "fc61f7ede09600a8"
   },
   "wardrobe-study:wardrobe-study-wall": {
    "file": "wardrobe-study_wardrobe-study-wall.webp",
    "fp": "bd59a80587931a2d"
+  },
+  "wardrobe-study:wardrobe-study-wall@model:hanging-niche": {
+   "file": "wardrobe-study_wardrobe-study-wall_model_hanging-niche.webp",
+   "fp": "536a915941415eaa"
   },
   "wardrobes-fullheight:acrylic-gloss-wardrobe-open-shelves-vn": {
    "file": "wardrobes-fullheight_acrylic-gloss-wardrobe-open-shelves-vn.webp",

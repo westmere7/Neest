@@ -1887,3 +1887,10 @@ Known limitations (also in README):
      Green -2, Red -3, Brown/White -9 with the pack's own polypropylene finishes). Read through Claude in Chrome (the store
      rate-limits fetches). No VN listed price could be read: estimate from the Korean Coupang listing, listed in
      `BRANDED_ESTIMATES` (done).
+153. "Add a variant so there's a wall on this side … a rack with some clothes hanging" + "the wall and opening should be
+     swapped" → wardrobe-study items (with and without desk), model **Closed front, hanging rail**: the corner niche closed
+     at the front by a wall following the rounded corner (white outside, oak inside), open only on the side, with a
+     brass rail along that side, wooden hangers and five garments (`closedNiche`) (done).
+154. "Reduce the niche (tower) to just 0.3 m so the wardrobe can be wider; use the top shelf as a niche as well and the
+     bottom one as a cabinet" → "Wardrobe with oak shelf tower & corner niche": a 30 cm tower (`layout` tw), its top an
+     open LED-lit niche, its base a cabinet with an oak door and brass knob; the desk version is unchanged (done).
