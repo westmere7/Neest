@@ -1879,3 +1879,11 @@ Known limitations (also in README):
      portals replaced by it, lined up with them (done).
 150. "Add a lot more stools to fit this style of seating" (reference photos) + "a lot more trash bins" → counter-stools
      pack (42) and bins pack (36) (done).
+151. "Add a variant without the table as an open portal, the lining all the way down" → corner portal model **Open
+     portal** (a model with its own `build`, new `AssetModelVariant.build`). Model list in the Inspector floats and keeps
+     names on one line (done).
+152. Shopee link + "alt link: uforuhome.com … 16L rolling trash can, add all variants" → `packs/branded-household.pack.ts`:
+     **UFORU 16L slim rolling trash can** (model DB1513; 360 × 235 × 675 mm with wheels; colours Cream White DB1513-1,
+     Green -2, Red -3, Brown/White -9 with the pack's own polypropylene finishes). Read through Claude in Chrome (the store
+     rate-limits fetches). No VN listed price could be read: estimate from the Korean Coupang listing, listed in
+     `BRANDED_ESTIMATES` (done).

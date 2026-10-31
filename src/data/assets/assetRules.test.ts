@@ -24,6 +24,8 @@ const root = path.resolve(__dirname, '../../..');
  * shop lists any more. New branded items must be sold in Vietnam, with their listed price.
  */
 const BRANDED_ESTIMATES = new Set<string>([
+  // Sold on Shopee VN, but its price there could not be read; estimated from its Korean Coupang listing.
+  'branded-household:uforu-16l-slim-rolling-trash-can',
   'bosch-dishwashers:sps2ikw04e',
   'branded-ac-outdoor-vn:mitsubishi-electric-pumy-p125vkm',
   'branded-ac-outdoor-vn:samsung-dvm-s-eco-am060fxmdgh',
