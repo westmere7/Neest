@@ -597,8 +597,11 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
       <Section title="Item">
         {asset && <ObjectPreview project={project} objectId={objectId} />}
         <TextField label="Label" value={o.name ?? asset?.name ?? ''} onCommit={(name) => upd('Rename object', { name })} />
-        <ItemLayerField project={project} ids={[objectId]} />
-        {asset && <ObjectModels project={project} objectId={objectId} asset={asset} />}
+        {/* Layer and model side by side, both compact. */}
+        <div className="item-meta-row">
+          <ItemLayerField project={project} ids={[objectId]} />
+          {asset && <ObjectModels project={project} objectId={objectId} asset={asset} />}
+        </div>
         {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
       </Section>
       {asset?.plant && (

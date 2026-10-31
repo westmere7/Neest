@@ -10,7 +10,7 @@
  * frame's depth, so corners stay circular at any width and height and only shrink when the opening
  * gets too small for them. Coordinates: x across the opening, y up, z through the frame (front +z).
  */
-import { cells, clamp, cyl, defineItem, definePack, line, matSlot, prism, range, ring, spaced, span, type Part, type AssetModelVariant, type PlanStroke, type Size3 } from '@/packs/kit';
+import { box, cells, clamp, cyl, defineItem, definePack, line, matSlot, prism, range, ring, spaced, span, type Part, type AssetModelVariant, type PlanStroke, type Size3 } from '@/packs/kit';
 
 type V2 = [number, number];
 const o = { plan: false };
@@ -506,7 +506,10 @@ const deskNook = portal({
 const HALF_WALL = 1.0;
 /** How far the dining ledge reaches out past the half wall's face. */
 const LEDGE = 0.4;
-const LEDGE_LEG = matSlot('leg', 'Ledge leg', 'metal-black-matte');
+const LEDGE_LEG = matSlot('leg', 'Ledge brackets', 'metal-black-matte');
+/** Bracket arm under the ledge and drop down the wall face (set back, so they hide under the top). */
+const BRACKET_ARM = 0.26;
+const BRACKET_DROP = 0.2;
 
 /** Plan outline of a slab with a square end at x1 and its two x0 corners rounded (front rf, back rb). */
 function twoCorners(x0: number, x1: number, z0: number, z1: number, rf: number, rb: number): V2[] {
@@ -518,7 +521,8 @@ function twoCorners(x0: number, x1: number, z0: number, z1: number, rf: number, 
 /**
  * The half wall's cap widened into a compact dining ledge at bar height: one timber top flush with
  * the cap over the whole half wall, reaching `LEDGE` past one face (`side` +1 front, −1 back), its
- * free corner rounded, with a slim leg under that corner. Replaces the cap (the model hides it).
+ * free corner rounded, carried by small triangular steel brackets on the wall face, set back under the
+ * top. Replaces the cap (the model hides it).
  */
 function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1): Part[] {
   const g = portalGeo(size, spec);
@@ -528,13 +532,26 @@ function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1): Part[] {
   const rEnd = Math.min(d / 2 - 0.01, 0.3);
   // In front coordinates: the wall's back face at -d/2, the ledge's edge at d/2 + LEDGE.
   const outline = twoCorners(x0, w / 2, -d / 2, d / 2 + LEDGE, 0.22, rEnd).map(([x, z]) => [x, z * side] as V2);
-  const legX = x0 + 0.14;
-  const legZ = (d / 2 + LEDGE - 0.14) * side;
-  return [
-    prism('shelf', side === 1 ? outline : [...outline].reverse(), H, 0.04),
-    cyl('leg', [legX, H / 2, legZ], 0.022, H, { plan: false }),
-    cyl('leg', [legX, 0.004, legZ], 0.1, 0.008, { plan: false }),
-  ];
+  const parts: Part[] = [prism('shelf', side === 1 ? outline : [...outline].reverse(), H, 0.04)];
+  // Brackets about every 80 cm along the half wall, 25 cm in from each end.
+  const a = x0 + 0.25;
+  const b = w / 2 - 0.35;
+  const n = b - a > 0.1 ? Math.max(2, Math.round((b - a) / 0.8) + 1) : 1;
+  const face = (d / 2 - 0.02) * side;
+  const t = 0.012;
+  const len = Math.hypot(BRACKET_ARM, BRACKET_DROP);
+  // A box long in z turned about x to run from the wall (low) up to the arm's tip.
+  const tilt = Math.atan2(-BRACKET_DROP, BRACKET_ARM * side);
+  for (const x of spaced(n, a, b)) {
+    const zArm: [number, number] = side === 1 ? [face, face + BRACKET_ARM] : [face - BRACKET_ARM, face];
+    const zPlate: [number, number] = side === 1 ? [face, face + t] : [face - t, face];
+    parts.push(
+      span('leg', [x - 0.015, x + 0.015], [H - t, H], zArm, { plan: false }),
+      span('leg', [x - 0.015, x + 0.015], [H - BRACKET_DROP, H], zPlate, { plan: false }),
+      box('leg', [x, H - BRACKET_DROP / 2, face + (BRACKET_ARM / 2) * side], [0.02, t, len], { rotation: [tilt, 0, 0], plan: false }),
+    );
+  }
+  return parts;
 }
 
 const HALF_WALL_SPEC: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: HALF_WALL, cove: true, clear: 1.2 };
