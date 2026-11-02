@@ -126,6 +126,7 @@ export interface GuestData {
   /** Height of the cutaway walls in the GLB, and whether orbiting starts with them. */
   cutaway?: number;
   cutawayOn?: boolean;
+  cutawayExternalOnly?: boolean;
   ceilingsOn?: boolean;
   lamps?: GuestLamp[];
   /** Live light pool sizes per quality (the fixtures nearest the view get them). */
@@ -345,6 +346,7 @@ function start(data: GuestData) {
   // ── What is shown (the View panel changes these) ──
   const show = {
     cutaway: !!data.cutawayOn,
+    cutawayExternalOnly: !!data.cutawayExternalOnly,
     ceilings: data.ceilingsOn !== false,
     notes: (data.callouts?.length ?? 0) > 0 && !data.notesHidden,
     rooms: !!data.roomsOn,
@@ -354,6 +356,7 @@ function start(data: GuestData) {
 
   // ── Model ──
   const clip = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6);
+  const clipInt = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1e6);
   const parts: Partial<Record<string, THREE.Object3D>> = {};
   const layerGroups: THREE.Object3D[] = [];
   let model: THREE.Object3D | null = null;
@@ -379,7 +382,17 @@ function start(data: GuestData) {
     await yieldToPaint();
     const gltf = await new GLTFLoader().parseAsync(bytes, '');
     {
-      const clipped = new Map<THREE.Material, THREE.Material>();
+      const clipped = new Map<string, THREE.Material>();
+      const clipCopy = (m: THREE.Material, p: THREE.Plane) => {
+        const key = `${m.uuid}:${p === clip ? 'e' : 'i'}`;
+        let c = clipped.get(key);
+        if (!c) {
+          c = m.clone();
+          c.clippingPlanes = [p];
+          clipped.set(key, c);
+        }
+        return c;
+      };
       const clipCopy = (m: THREE.Material) => {
         let c = clipped.get(m);
         if (!c) {
@@ -395,6 +408,15 @@ function start(data: GuestData) {
         if (typeof o.userData.neestLayer === 'string') layerGroups.push(o);
       });
       for (const role of ['openings', 'wall-details']) {
+        for (const child of parts[role]?.children ?? []) {
+          const plane = child.userData.neestExt ? clip : clipInt;
+          child.traverse((o) => {
+            const m = o as THREE.Mesh;
+            if (m.isMesh)
+              m.material = Array.isArray(m.material) ? m.material.map((x) => clipCopy(x, plane)) : clipCopy(m.material, plane);
+          });
+        }
+      }
         parts[role]?.traverse((o) => {
           const m = o as THREE.Mesh;
           if (m.isMesh)
@@ -416,6 +438,18 @@ function start(data: GuestData) {
   /** Walls (full when walking or without cutaway), ceilings and item layers. */
   function applyVisibility() {
     const cut = !walking && show.cutaway && parts['walls-cut'] ? (data.cutaway ?? 1.2) : null;
+    const extOnly = cut !== null && show.cutawayExternalOnly;
+    if (parts.walls) {
+      parts.walls.visible = cut === null || extOnly;
+      for (const c of parts.walls.children) c.visible = cut === null || !c.userData.neestExt;
+    }
+    if (parts['walls-cut']) {
+      parts['walls-cut'].visible = cut !== null;
+      if (cut !== null) for (const c of parts['walls-cut'].children) c.visible = !extOnly || !!c.userData.neestExt;
+    }
+    if (parts.ceilings) parts.ceilings.visible = show.ceilings && cut === null;
+    clip.constant = cut ?? 1e6;
+    clipInt.constant = cut !== null && !extOnly ? cut : 1e6;
     if (parts.walls) parts.walls.visible = cut === null;
     if (parts['walls-cut']) parts['walls-cut'].visible = cut !== null;
     if (parts.ceilings) parts.ceilings.visible = show.ceilings && cut === null;
@@ -801,6 +835,11 @@ function start(data: GuestData) {
   {
     const view = panel('View', () => setView(false));
     view.append(el('div', 'ng-label', 'Walls while orbiting'));
+    const extCheck = check('External walls only', show.cutawayExternalOnly, (on) => {
+      show.cutawayExternalOnly = on;
+      applyVisibility();
+    });
+    extCheck.style.display = show.cutaway ? '' : 'none';
     view.append(
       segmented<'full' | 'cutaway'>(
         [
@@ -810,11 +849,14 @@ function start(data: GuestData) {
         show.cutaway ? 'cutaway' : 'full',
         (v) => {
           show.cutaway = v === 'cutaway';
+          extCheck.style.display = show.cutaway ? '' : 'none';
           applyVisibility();
         },
       ),
     );
     view.append(
+    view.append(
+      extCheck,
       check('Ceilings', show.ceilings, (on) => {
         show.ceilings = on;
         applyVisibility();

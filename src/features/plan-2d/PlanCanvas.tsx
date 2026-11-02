@@ -24,6 +24,7 @@ import { createRunTool, createServicePointTool } from './tools/serviceTools';
 import { PointMarker, RUN_DASH, RUN_PX, ServicesSvg, runColor } from '@/features/services/ServicesSvg';
 import { hitServiceLink, hitServices } from '@/features/services/hit';
 import { servicesMenuItems } from '@/features/services/actions';
+import { notesMenuItems } from '@/features/callouts/actions';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './tools/types';
 import { openContextMenu } from '@/components/ContextMenu';
 import { floatingInsets } from '@/components/layoutInsets';
@@ -60,6 +61,8 @@ export function PlanCanvas() {
   const theme = usePrefsStore((s) => s.theme);
   const servicesMode = useEditorStore((s) => s.servicesMode);
   const servicesShown = useEditorStore((s) => s.servicesShown);
+  const notesMode = useEditorStore((s) => s.notesMode);
+  const hoveredNoteId = useEditorStore((s) => s.hoveredNoteId);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -412,6 +415,13 @@ export function PlanCanvas() {
       return;
     }
     const pi = info(e);
+    if (notesMode) {
+      const hit = hitTest(project, derived, pi.world, HIT_PX / camera.zoom, { callouts: true, objects: true, rooms: true, px: 1 / camera.zoom });
+      if (hit?.kind === 'callout' && !selection.some((s) => s.id === hit.id)) useEditorStore.getState().setSelection([hit]);
+      const items = notesMenuItems(hit, pi.world);
+      if (items.length) openContextMenu(e.clientX, e.clientY, items);
+      return;
+    }
     if (servicesMode) {
       const hit = hitServices(project, derived, pi.world, 1 / camera.zoom, servicesShown);
       const link = hit?.kind === 'service' ? null : hitServiceLink(project, derived, pi.world, 1 / camera.zoom, servicesShown);
@@ -427,12 +437,14 @@ export function PlanCanvas() {
   };
 
   const onDragOver = (e: React.DragEvent) => {
+    if (notesMode) return;
     if (e.dataTransfer.types.includes('application/x-neest-asset')) {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'copy';
     }
   };
   const onDrop = (e: React.DragEvent) => {
+    if (notesMode) return;
     const assetId = e.dataTransfer.getData('application/x-neest-asset');
     if (!assetId) return;
     e.preventDefault();
@@ -444,7 +456,18 @@ export function PlanCanvas() {
   const pal = servicesMode ? planPalette('draft', 'dark') : planPalette(planMode, theme);
   // Content packs reload live: a new options object redraws pack items.
   const packs = usePackVersion();
-  const calloutSel = useMemo(() => new Set(selection.filter((x) => x.kind === 'callout').map((x) => x.id)), [selection]);
+  const calloutSel = useMemo(() => {
+    const s = new Set(selection.filter((x) => x.kind === 'callout').map((x) => x.id));
+    if (hoveredNoteId) s.add(hoveredNoteId);
+    return s;
+  }, [selection, hoveredNoteId]);
+  const drawProject = useMemo(
+    () =>
+      notesMode && !project.layers.callouts?.visible
+        ? { ...project, layers: { ...project.layers, callouts: { ...project.layers.callouts, visible: true } } }
+        : project,
+    [project, notesMode],
+  );
   const selectedIds = useMemo(() => new Set(selection.map((x) => x.id)), [selection]);
   const drawOpts = useMemo<PlanDrawOptions>(
     () => ({
@@ -525,7 +548,7 @@ export function PlanCanvas() {
             <ServicesSvg project={project} derived={derived} px={px} shown={servicesShown} selected={selectedIds} hoverId={hover?.id ?? null} />
           </>
         ) : (
-          <PlanDrawing project={project} derived={derived} opts={drawOpts} />
+          <PlanDrawing project={drawProject} derived={derived} opts={drawOpts} />
         )}
         {!chromeHidden && (
           <SelectionLayer px={px} hoverId={hover?.id ?? null} />
@@ -634,7 +657,7 @@ function SelectionLayer({ px, hoverId }: { px: number; hoverId: string | null })
         </g>
       );
     }
-    if (handle.type === 'node' || handle.type === 'curve' || handle.type === 'room-label' || handle.type === 'run-vertex')
+    if (handle.type === 'node' || handle.type === 'curve' || handle.type === 'room-label' || handle.type === 'callout-anchor' || handle.type === 'run-vertex')
       return <circle key={i} cx={p.x} cy={p.y} r={r * 1.1} className={`handle ${handle.type}`} strokeWidth={1.5 * px} />;
     return <rect key={i} x={p.x - r} y={p.y - r} width={2 * r} height={2 * r} className="handle" strokeWidth={1.5 * px} />;
   });

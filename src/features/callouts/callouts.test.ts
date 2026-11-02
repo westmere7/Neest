@@ -5,21 +5,26 @@ import { describe, expect, it } from 'vitest';
 import { createEmptyProject } from '@/domain/model/defaults';
 import { CalloutSchema, ProjectSchema, type Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
-import { calloutAnchor } from '@/domain/geometry/callouts';
+import { calloutAnchor, calloutLabelPoint, setCalloutAnchorPoint } from '@/domain/geometry/callouts';
 import type { D } from '@/domain/commands/walls';
 import { addWallChain } from '@/domain/commands/walls';
 import { deleteEntities, duplicateEntities, placeObject, reconcileRooms } from '@/domain/commands/entities';
 import { addCallout, detachCallouts, updateCallout } from '@/domain/commands/callouts';
 import { addOption, switchOption } from '@/domain/commands/options';
 import { repairProject } from '@/storage/migrations';
-import { hitTest } from '@/features/plan-2d/hitTest';
+import { hitTest, selectionHandles } from '@/features/plan-2d/hitTest';
 import { buildDxf } from '@/features/exports/dxf';
 import { buildSheet, defaultSheetOptions } from '@/features/exports/sheet';
 import { buildPlanImageSvg } from '@/features/exports/planExports';
 import { buildDemoProject } from '@/features/projects/demoProject';
 import { calloutInfo, calloutLines, lineText, parseInline, parseNote, safeHref, wrapRuns } from './content';
-import { calloutExtent, layoutCallout, visibleCallouts } from './layout';
+import { calloutExtent, hitCalloutAnchor, layoutCallout, visibleCallouts } from './layout';
 import { CalloutsSvg } from './CalloutsSvg';
+import { NotesPanel } from './NotesPanel';
+import { describeCalloutTarget } from './CalloutInspector';
+import { hoverNoteInPanel, setNotesMode, toggleNotesMode } from './actions';
+import { useProjectStore } from '@/state/projectStore';
+import { useEditorStore } from '@/state/editorStore';
 
 const edit = (p: Project, fn: (d: D) => void): Project => produce(p, fn);
 
@@ -267,6 +272,127 @@ describe('callouts on the plan and in exports', () => {
     expect(dxf).toContain('Kitchen refit');
     // Text only, no leader, no end mark, no highlight: only TEXT entities on the notes layer.
     expect(dxf).not.toMatch(/\r\n0\r\n(LINE|CIRCLE|POLYLINE)\r\n8\r\nA-ANNO-NOTE/);
+  });
+
+  it('supports general comments (unpinned) alongside object/area comments in NotesPanel and enforces note-only ops in notesMode', () => {
+    const { p, obj, roomId } = base();
+    let genId = '';
+    let objNoteId = '';
+    let roomNoteId = '';
+    const q = edit(p, (d) => {
+      genId = addCallout(d, { target: { kind: 'general' }, title: 'Budget cap', note: 'Keep total under 150M VND' });
+      objNoteId = addCallout(d, { target: { kind: 'object', objectId: obj }, title: 'Side table finish', note: 'Walnut veneer' });
+      roomNoteId = addCallout(d, { target: { kind: 'room', roomId }, title: 'Flooring', note: 'Herringbone oak' });
+    });
+
+    // General comments have no spatial anchor and do not draw on the 2D plan SVG, while pinned ones do.
+    const dPlan = derivePlan(q);
+    expect(calloutAnchor(q, dPlan, q.callouts[genId].target)).toBeNull();
+    expect(layoutCallout(q, dPlan, q.callouts[genId], 0.02)).toBeNull();
+    expect(calloutInfo(q, dPlan, q.callouts[genId])).toEqual([]);
+    expect(describeCalloutTarget(q, genId)).toBe('General comment');
+    const svg = renderToStaticMarkup(createElement(CalloutsSvg, { project: q, derived: dPlan, px: 0.02, fontFamily: 'sans-serif' }));
+    expect(svg).not.toContain('Budget cap');
+    expect(svg).toContain('Side table finish');
+
+    // repairProject preserves general comments.
+    expect(repairProject(structuredClone(q)).project.callouts[genId]).toBeDefined();
+
+    // Load into store and test dedicated Comments mode + NotesPanel rendering + hover highlighting.
+    useProjectStore.getState().load(q);
+    useProjectStore.getInitialState().project = q;
+    useEditorStore.getState().setSelection([{ kind: 'object', id: obj }, { kind: 'callout', id: objNoteId }]);
+
+    setNotesMode(true);
+    const ed = useEditorStore.getState();
+    expect(ed.notesMode).toBe(true);
+    expect(ed.tool).toBe('callout');
+    // Non-note selection is filtered out upon entering notesMode.
+    expect(ed.selection).toEqual([{ kind: 'callout', id: objNoteId }]);
+
+    // While notesMode is on, non-note tools and non-note selections are blocked.
+    useEditorStore.getState().setTool('wall');
+    expect(useEditorStore.getState().tool).toBe('callout');
+    useEditorStore.getState().setTool('select');
+    expect(useEditorStore.getState().tool).toBe('select');
+    useEditorStore.getState().setSelection([{ kind: 'object', id: obj }, { kind: 'callout', id: genId }]);
+    expect(useEditorStore.getState().selection).toEqual([{ kind: 'callout', id: genId }]);
+
+    // Hovering an object-linked note in the panel highlights the linked object.
+    hoverNoteInPanel(objNoteId);
+    expect(useEditorStore.getState().hoveredNoteId).toBe(objNoteId);
+    expect(useEditorStore.getState().hover).toEqual({ kind: 'object', id: obj });
+
+    // Hovering a room-linked note highlights the room.
+    hoverNoteInPanel(roomNoteId);
+    expect(useEditorStore.getState().hover).toEqual({ kind: 'room', id: roomId });
+
+    // Hovering a general note highlights the callout itself.
+    hoverNoteInPanel(genId);
+    expect(useEditorStore.getState().hover).toEqual({ kind: 'callout', id: genId });
+
+    hoverNoteInPanel(null);
+    expect(useEditorStore.getState().hoveredNoteId).toBeNull();
+    expect(useEditorStore.getState().hover).toBeNull();
+
+    // NotesPanel renders both general and pinned comments.
+    const panelHtml = renderToStaticMarkup(createElement(NotesPanel));
+    expect(panelHtml).toContain('Budget cap');
+    expect(panelHtml).toContain('Side table finish');
+    expect(panelHtml).toContain('Flooring');
+    expect(panelHtml).toContain('General');
+
+    toggleNotesMode();
+    expect(useEditorStore.getState().notesMode).toBe(false);
+  });
+
+  it('allows moving the spot (anchor point) a comment points to in 2D and 3D (including midair height) while keeping its target', () => {
+    const { p, obj, roomId } = base();
+    let objNoteId = '';
+    let spotNoteId = '';
+    let roomNoteId = '';
+    const q0 = edit(p, (d) => {
+      objNoteId = addCallout(d, { target: { kind: 'object', objectId: obj }, offset: { x: 0.8, y: -0.6 }, title: 'Table note' });
+      spotNoteId = addCallout(d, { target: { kind: 'point', x: 2, y: 2, z: 0.4 }, offset: { x: 0.5, y: -0.5 }, title: 'Spot note' });
+      roomNoteId = addCallout(d, { target: { kind: 'room', roomId }, offset: { x: 0.6, y: -0.6 }, title: 'Room note' });
+    });
+    const d0 = derivePlan(q0);
+    const a0 = calloutAnchor(q0, d0, q0.callouts[objNoteId].target)!;
+    const labelBefore = calloutLabelPoint(a0, q0.callouts[objNoteId]);
+
+    // Selected callout exposes a callout-anchor handle at its anchor spot, and hitCalloutAnchor picks the dot.
+    expect(selectionHandles(q0, d0, [{ kind: 'callout', id: objNoteId }], 0.02)).toEqual([
+      { handle: { type: 'callout-anchor', calloutId: objNoteId }, p: { x: a0.x, y: a0.y } },
+    ]);
+    expect(hitCalloutAnchor(q0, d0, { x: a0.x, y: a0.y }, 0.02)?.id).toBe(objNoteId);
+
+    // Move the object note's spot to an arbitrary 3D position (including midair z = 1.45 m) and move the spot note and room note.
+    const q1 = edit(q0, (d) => {
+      setCalloutAnchorPoint(d, d0, d.callouts[objNoteId], { x: 1.2, y: 0.85, z: 1.45 }, true);
+      setCalloutAnchorPoint(d, d0, d.callouts[spotNoteId], { x: 2.5, y: 1.8, z: 1.9 }, true);
+      setCalloutAnchorPoint(d, d0, d.callouts[roomNoteId], { x: 1.5, y: 1.5, z: 0.8 }, true);
+    });
+
+    const a1 = calloutAnchor(q1, d0, q1.callouts[objNoteId].target)!;
+    expect(a1).toMatchObject({ x: 1.2, y: 0.85, z: 1.45 });
+    // The 2D label box stays in place when the anchor spot is moved.
+    const labelAfter = calloutLabelPoint(a1, q1.callouts[objNoteId]);
+    expect(labelAfter.x).toBeCloseTo(labelBefore.x, 3);
+    expect(labelAfter.y).toBeCloseTo(labelBefore.y, 3);
+
+    // Moving the object moves the custom anchor spot along with it.
+    const q2 = edit(q1, (d) => {
+      d.objects[obj].x += 0.5;
+      d.objects[obj].y += 0.25;
+    });
+    const a2 = calloutAnchor(q2, d0, q2.callouts[objNoteId].target)!;
+    expect(a2.x).toBeCloseTo(1.7, 3);
+    expect(a2.y).toBeCloseTo(1.1, 3);
+    expect(a2.z).toBeCloseTo(1.45, 3);
+
+    // Spot and room anchors reflect their moved 2D/3D positions.
+    expect(calloutAnchor(q1, d0, q1.callouts[spotNoteId].target)).toMatchObject({ x: 2.5, y: 1.8, z: 1.9 });
+    expect(calloutAnchor(q1, d0, q1.callouts[roomNoteId].target)).toMatchObject({ x: 1.5, y: 1.5, z: 0.8 });
   });
 });
 

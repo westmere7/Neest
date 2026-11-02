@@ -58,6 +58,7 @@ import './scene3d.css';
 import { movedElevation } from '@/features/plan-2d/tools/surfaces';
 import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 import { servicesMenuItems } from '@/features/services/actions';
+import { notesMenuItems } from '@/features/callouts/actions';
 
 type Projection = 'perspective' | 'orthographic';
 
@@ -487,6 +488,9 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const viewPanelOpen = useEditorStore((s) => s.viewPanelOpen);
   const servicesMode = useEditorStore((s) => s.servicesMode);
   const servicesShown = useEditorStore((s) => s.servicesShown);
+  const notesMode = useEditorStore((s) => s.notesMode);
+  const hoveredNoteId = useEditorStore((s) => s.hoveredNoteId);
+  const hover = useEditorStore((s) => s.hover);
   const isMobile = useIsMobile();
   useCanvasMeasureFix();
   const [projection, setProjection] = useState<Projection>('perspective');
@@ -532,19 +536,37 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   }, [walk]);
 
   // A drafting tool is active in 3D: left button belongs to the tool, orbit moves to the right button.
-  const drawing = !walk && workspace === '3d' && tool !== 'select' && tool !== 'pan';
+  const drawing = !walk && (workspace === '3d' || (workspace === 'split' && tool === 'callout')) && tool !== 'select' && tool !== 'pan';
   const panning3d = !walk && tool === 'pan';
-  const drag = useObjectDrag(project, derived, !walk && !drawing && !panning3d);
-  const selectedIds = useMemo(() => new Set(selection.map((s) => s.id)), [selection]);
-  // Items the selected notes point at (outlined differently from the selection).
+  const drag = useObjectDrag(project, derived, !walk && !drawing && !panning3d && !notesMode);
+  const selectedIds = useMemo(() => {
+    const s = new Set(selection.map((x) => x.id));
+    if (hoveredNoteId) s.add(hoveredNoteId);
+    return s;
+  }, [selection, hoveredNoteId]);
+  // Items the selected or hovered notes point at (outlined differently from the selection).
   const notedIds = useMemo(() => {
     const ids = new Set<string>();
     for (const s of selection) {
       const t = s.kind === 'callout' ? project.callouts?.[s.id]?.target : undefined;
       if (t?.kind === 'object') ids.add(t.objectId);
     }
+    if (hoveredNoteId) {
+      const t = project.callouts?.[hoveredNoteId]?.target;
+      if (t?.kind === 'object') ids.add(t.objectId);
+    }
+    if (notesMode && hover?.kind === 'object') {
+      ids.add(hover.id);
+    }
     return ids;
-  }, [selection, project.callouts]);
+  }, [selection, hoveredNoteId, notesMode, hover, project.callouts]);
+  const sceneProject = useMemo(
+    () =>
+      notesMode && !project.layers.callouts?.visible
+        ? { ...project, layers: { ...project.layers, callouts: { ...project.layers.callouts, visible: true } } }
+        : project,
+    [project, notesMode],
+  );
   const notesCamera = useRef<THREE.Camera | null>(null);
   // Right-click: the same menu as in the plan, for the item under the pointer (not after a right-drag orbit/pan).
   const rightDown = useRef<{ x: number; y: number } | null>(null);
@@ -558,14 +580,19 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     if (e.nativeEvent.type === 'contextmenu') {
       e.nativeEvent.preventDefault();
       if (rightDragged(e.nativeEvent)) return;
-      if (!ed.selection.some((s) => s.id === id)) ed.setSelection([item]);
-      const items = ed.servicesMode ? servicesMenuItems(item, { x: e.point.x, y: e.point.z }, null) : planContextMenuItems(item, { x: e.point.x, y: e.point.z });
+      if (!ed.notesMode && !ed.selection.some((s) => s.id === id)) ed.setSelection([item]);
+      const items = ed.notesMode
+        ? notesMenuItems(item, { x: e.point.x, y: e.point.z })
+        : ed.servicesMode
+          ? servicesMenuItems(item, { x: e.point.x, y: e.point.z }, null)
+          : planContextMenuItems(item, { x: e.point.x, y: e.point.z });
       if (items.length) {
         menuShown.current = e.nativeEvent.timeStamp;
         openContextMenu(e.nativeEvent.clientX, e.nativeEvent.clientY, items);
       }
       return;
     }
+    if (ed.notesMode) return;
     if (e.shiftKey) ed.toggleSelection(item);
     else ed.setSelection([item]);
     // Double-click an item: close in on it and orbit around it.
@@ -587,6 +614,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const options: SceneOptions = {
     wallDisplay: walk || xray ? 'full' : r.wallDisplay,
     cutawayHeight: r.cutawayHeight,
+    cutawayExternalOnly: r.cutawayExternalOnly,
     showCeilings: walk ? true : xray ? false : r.showCeilings,
     showRoomLabels: !walk && r.showRoomLabels,
     showDimensions: !walk && showDims,
@@ -657,16 +685,23 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
           const p = new THREE.Vector3();
           if (ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), p)) ground = { x: p.x, y: p.z };
         }
-        const items = useEditorStore.getState().servicesMode ? servicesMenuItems(null, ground, null) : planContextMenuItems(null, ground);
+        const ed = useEditorStore.getState();
+        const items = ed.notesMode
+          ? notesMenuItems(null, ground)
+          : ed.servicesMode
+            ? servicesMenuItems(null, ground, null)
+            : planContextMenuItems(null, ground);
         if (items.length) openContextMenu(e.clientX, e.clientY, items);
       }}
       onDragOver={(e) => {
+        if (notesMode) return;
         if (e.dataTransfer.types.includes('application/x-neest-asset')) {
           e.preventDefault();
           e.dataTransfer.dropEffect = 'copy';
         }
       }}
       onDrop={(e) => {
+        if (notesMode) return;
         const assetId = e.dataTransfer.getData('application/x-neest-asset');
         const live = liveScene.current;
         if (!assetId || !live) return;
@@ -765,7 +800,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         />
         {/* Callout labels are HTML: keep them off the loading screen. The services X-ray swaps materials, so it
             waits until the first load (and its async shader compile) is done. */}
-        <SceneContent project={project} derived={derived} registry={sharedRegistry} options={ready ? options : { ...options, showCallouts: false, services: undefined }} />
+        <SceneContent project={sceneProject} derived={derived} registry={sharedRegistry} options={ready ? options : { ...options, showCallouts: false, services: undefined }} />
         <NotesViewBridge target={notesCamera} />
         {!walk && (
           <group ref={helpersRef} visible={showHelpers}>
@@ -783,18 +818,18 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         </mesh>
         {/* Captures and renders need the scene on screen (a hidden one may show an older project). */}
         {active && <LiveBridge helpersRef={helpersRef} />}
-        {!walk && <ToolBridge3D enabled={workspace === '3d'} />}
-        {!walk && !drawing && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
+        {!walk && <ToolBridge3D enabled={workspace === '3d' || (workspace === 'split' && tool === 'callout')} />}
+        {!walk && (!drawing || tool === 'callout') && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
       </Canvas>
       {/* Note labels and leaders, laid out on screen over the canvas; hidden while loading and in walk mode. */}
       <NotesOverlay
-        project={project}
+        project={sceneProject}
         derived={derived}
         camera={notesCamera}
         visible={active && ready && !walk && !xray}
         selectedIds={options.selectedIds}
-        onSelect={drawing ? undefined : onCalloutSelect}
-        onEdit={drawing ? undefined : onCalloutEdit}
+        onSelect={drawing && tool !== 'callout' ? undefined : onCalloutSelect}
+        onEdit={drawing && tool !== 'callout' ? undefined : onCalloutEdit}
       />
       {!ready &&
         (switching ? (
@@ -1200,6 +1235,15 @@ function ViewPanel({
                 step={0.05}
                 format={(v) => `${v.toFixed(2)} m`}
                 onCommit={(v) => setRender('Change cut height', { cutawayHeight: v })}
+              />
+            )}
+            {r.wallDisplay === 'cutaway' && (
+              <Toggle
+                label="External walls only"
+                checked={r.cutawayExternalOnly}
+                onChange={(v) => setRender('Toggle external walls only', { cutawayExternalOnly: v })}
+                hint="Keep interior walls at full height"
+                testId="cutaway-external-only"
               />
             )}
             <Toggle

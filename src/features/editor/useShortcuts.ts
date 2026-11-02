@@ -8,6 +8,7 @@ import { flushSave } from '../projects/projectService';
 import { deleteSelection, duplicateSelection, nudgeSelection, rotateSelection, selectAll, toggleLockSelection } from './actions';
 import { groupSelection, ungroupSelection } from './groups';
 import { setServicesMode, toggleServicesMode } from '@/features/services/actions';
+import { setNotesMode, toggleNotesMode } from '@/features/callouts/actions';
 
 export const TOOL_SHORTCUTS: Record<string, ToolId> = {
   v: 'select',
@@ -35,7 +36,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'S', action: 'Split wall' },
   { keys: 'E', action: 'Extend / trim / join walls' },
   { keys: 'M', action: 'Measure' },
-  { keys: 'K', action: 'Note (click an item or spot, Alt-click a room, drag an area)' },
+  { keys: 'K', action: 'Comments & notes mode (general & pinned comments)' },
   { keys: 'U', action: 'Connections: power & plumbing in X-ray (sockets, water, drains)' },
   { keys: 'Shift (while drawing)', action: 'Lock angle to 45° steps' },
   { keys: 'Shift (while moving)', action: 'Keep the move on one axis (X or Y)' },
@@ -83,6 +84,10 @@ export function useEditorShortcuts(isMobile: boolean) {
 
       if (e.key === 'Escape') {
         if (planKeyRouter.cancel?.()) return;
+        if (ed.notesMode) {
+          if (ed.selection.length) return ed.clearSelection();
+          return setNotesMode(false);
+        }
         if (ed.tool !== 'select') return ed.setTool('select');
         if (ed.selection.length) return ed.clearSelection();
         if (ed.chromeHidden) return ed.set({ chromeHidden: false });
@@ -122,12 +127,14 @@ export function useEditorShortcuts(isMobile: boolean) {
       }
       if (mod && key === 'g') {
         e.preventDefault();
+        if (ed.notesMode) return;
         if (e.shiftKey) ungroupSelection();
         else groupSelection();
         return;
       }
       if (mod && key === 'l') {
         e.preventDefault();
+        if (ed.notesMode) return;
         toggleLockSelection();
         return;
       }
@@ -165,8 +172,15 @@ export function useEditorShortcuts(isMobile: boolean) {
       if (key === '4') return ed.set({ workspace: '3d' });
       if (key === '5' && !isMobile) return ed.set({ workspace: 'split' });
       if (key === 'p' && ed.workspace === '3d' && !isMobile) return ed.set({ viewPanelOpen: !ed.viewPanelOpen });
-      if (key === 'l' && e.shiftKey && !isMobile) return ed.set({ layersPanelOpen: !ed.layersPanelOpen });
-      if (key === 'u' && !isMobile && ed.workspace !== 'walk') return toggleServicesMode();
+      if (key === 'l' && e.shiftKey && !isMobile) {
+        if (ed.notesMode) return;
+        return ed.set({ layersPanelOpen: !ed.layersPanelOpen });
+      }
+      if (key === 'u' && !isMobile && ed.workspace !== 'walk') {
+        if (ed.notesMode) return;
+        return toggleServicesMode();
+      }
+      if (key === 'k' && !isMobile && ed.workspace !== 'walk') return toggleNotesMode();
       // While placing, R turns what is being placed (the tool handles it when it has the keys; this is
       // the fallback): it never switches to the room tool under a ghost.
       if (key === 'r' && !mod && (ed.tool === 'place' || ed.tool === 'opening')) {

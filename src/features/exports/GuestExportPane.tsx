@@ -347,6 +347,14 @@ export function GuestExport({ project, busy, run }: PaneProps) {
             onCommit={(cutawayHeight) => setGuest('Set guest cutaway height', { cutawayHeight })}
           />
         </div>
+        {g.wallDisplay === 'cutaway' && (
+          <Toggle
+            label="External walls only"
+            hint="Cut exterior walls only; keep interior walls at full height"
+            checked={g.cutawayExternalOnly}
+            onChange={(cutawayExternalOnly) => setGuest('Toggle guest external walls only', { cutawayExternalOnly })}
+          />
+        )}
         {hiddenLayers > 0 && (
           <Toggle
             label={`Include hidden item layers (${hiddenLayers})`}

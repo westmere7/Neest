@@ -124,6 +124,7 @@ export function calloutInfo(project: Project, derived: DerivedPlan | null, c: Ca
     if (r.ceilingHeight) lines.push(`Ceiling ${len(r.ceilingHeight)}`);
     return lines;
   }
+  if (t.kind === 'general') return [];
   if (t.kind === 'region') return [`Area ${formatArea(calloutRegionArea(t), s.areaUnit, s.precision)}`];
   return t.z > 0.01 ? [`Height ${len(t.z)}`] : [];
 }

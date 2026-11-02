@@ -314,10 +314,11 @@ export const ObjectGroupSchema = z.object({
 
 /** What a callout points at: a spot (with a height), a placed item, a room or a drawn area. */
 export const CalloutTargetSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('general') }),
   z.object({ kind: z.literal('point'), x: num, y: num, z: num.default(0) }),
-  z.object({ kind: z.literal('object'), objectId: Id }),
-  z.object({ kind: z.literal('room'), roomId: Id }),
-  z.object({ kind: z.literal('region'), points: z.array(Vec2Schema).min(3).max(64) }),
+  z.object({ kind: z.literal('object'), objectId: Id, dx: num.optional(), dy: num.optional(), dz: num.optional() }),
+  z.object({ kind: z.literal('room'), roomId: Id, dx: num.optional(), dy: num.optional(), dz: num.optional() }),
+  z.object({ kind: z.literal('region'), points: z.array(Vec2Schema).min(3).max(64), dx: num.optional(), dy: num.optional(), dz: num.optional() }),
 ]);
 
 export const CALLOUT_COLORS = ['teal', 'brass', 'coral', 'blue', 'slate', 'red', 'orange', 'yellow', 'green', 'cyan', 'violet', 'pink', 'black'] as const;
@@ -508,6 +509,8 @@ export const RenderSettingsSchema = z.object({
   background: HexColor.default('#dfe3e6'),
   wallDisplay: WallDisplaySchema.default('full'),
   cutawayHeight: num.min(0.3).max(5).default(1.2),
+  /** Cutaway mode: cut only external walls to `cutawayHeight` and keep interior walls at full height. */
+  cutawayExternalOnly: z.boolean().default(false),
   showCeilings: z.boolean().default(false),
   showRoomLabels: z.boolean().default(false),
   hiddenCategories: z.array(z.string()).default([]),
@@ -607,6 +610,8 @@ export const GuestSettingsSchema = z
     /** Walls while orbiting (walking always shows full walls; guests can switch). */
     wallDisplay: z.enum(['full', 'cutaway']).default('full'),
     cutawayHeight: num.min(0.3).max(5).default(1.2),
+    /** Cutaway mode: cut only external walls and keep interior walls at full height. */
+    cutawayExternalOnly: z.boolean().default(false),
     quality: z.enum(['fast', 'balanced', 'high']).default('balanced'),
     shadows: z.boolean().default(true),
     /** Hours (5–21); null = the 3D view's time of day. */

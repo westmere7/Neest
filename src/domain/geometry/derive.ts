@@ -1,9 +1,10 @@
-import type { Project, Room } from '../model/schema';
+import { isDividerWall, type Project, type Room, type Vec2 } from '../model/schema';
 import { computeDiagnostics, type Diagnostic } from '../validation/diagnostics';
 import { detectRoomFaces, matchFacesToRooms, type RoomFace } from './rooms';
-import { computeWallNetwork, type WallNetwork } from './walls';
-import { boundsOf, unionBounds, type Bounds } from './vec';
-import { rectPolygon } from './polygon';
+import { computeWallNetwork, type JunctionHub, type WallNetwork } from './walls';
+import { add, boundsOf, leftNormal, scale, unionBounds, type Bounds } from './vec';
+import { pointInPolygon, rectPolygon } from './polygon';
+import { pointAt } from './wallPath';
 
 /** Everything the 2D/3D views and exports derive from the persisted model. */
 export interface DerivedPlan {
@@ -74,4 +75,40 @@ export function planBounds(project: Project, network: WallNetwork): Bounds | nul
     b = unionBounds(b, boundsOf(rectPolygon(o.x, o.y, o.width, o.depth, o.rotation)));
   }
   return b;
+}
+
+/**
+ * IDs of the external walls of a plan (cut when cutaway is set to "External walls only").
+ * Uses walls explicitly typed as `exterior` when the plan has any; otherwise falls back to
+ * non-partition room boundary walls whose outer face looks outside the building.
+ */
+export function externalWallIds(derived: Pick<DerivedPlan, 'network' | 'faces'>): Set<string> {
+  const walls = [...derived.network.walls.values()].filter((g) => !isDividerWall(g.wall) && !g.wall.hidden);
+  const explicit = walls.filter((g) => g.wall.role === 'exterior');
+  if (explicit.length > 0) return new Set(explicit.map((g) => g.wall.id));
+  if (derived.faces.length === 0) {
+    return new Set(walls.filter((g) => g.wall.role !== 'partition').map((g) => g.wall.id));
+  }
+  const roomWalls = new Set(derived.faces.flatMap((f) => f.wallIds));
+  const insideAnyRoom = (p: Vec2) => derived.faces.some((f) => pointInPolygon(p, f.centerline));
+  const out = new Set<string>();
+  for (const g of walls) {
+    if (g.wall.role === 'partition' || !roomWalls.has(g.wall.id)) continue;
+    const { p, tangent } = pointAt(g.path, g.path.length / 2);
+    const n = leftNormal(tangent);
+    const step = g.h + 0.05;
+    const leftIn = insideAnyRoom(add(p, scale(n, step)));
+    const rightIn = insideAnyRoom(add(p, scale(n, -step)));
+    if (!leftIn || !rightIn) out.add(g.wall.id);
+  }
+  return out;
+}
+
+/** Whether a junction hub touches an external wall (and is therefore cut in external-only cutaway). */
+export function isHubExternal(
+  hub: JunctionHub,
+  network: Pick<WallNetwork, 'nodeWalls'>,
+  externalIds: ReadonlySet<string>,
+): boolean {
+  return (network.nodeWalls.get(hub.nodeId) ?? []).some((id) => externalIds.has(id));
 }

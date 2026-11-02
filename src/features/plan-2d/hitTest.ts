@@ -5,7 +5,8 @@ import { pointInFace } from '@/domain/geometry/rooms';
 import { piecePolygon } from '@/domain/geometry/walls';
 import { pointAt, projectOnPath } from '@/domain/geometry/wallPath';
 import { add, dist, leftNormal, rotate, scale } from '@/domain/geometry/vec';
-import { hitCallout } from '@/features/callouts/layout';
+import { calloutAnchor } from '@/domain/geometry/callouts';
+import { hitCallout, layoutCallout, visibleCallouts } from '@/features/callouts/layout';
 import type { SelItem } from '@/state/editorStore';
 import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 
@@ -17,6 +18,8 @@ export type Handle =
   | { type: 'object-rotate'; objectId: string }
   | { type: 'object-resize'; objectId: string; sx: -1 | 0 | 1; sy: -1 | 0 | 1 }
   | { type: 'room-label'; roomId: string }
+  /** The spot (anchor point) a callout points to. */
+  | { type: 'callout-anchor'; calloutId: string }
   /** A bend or end of a services run. */
   | { type: 'run-vertex'; runId: string; index: number };
 
@@ -85,6 +88,12 @@ export function selectionHandles(project: Project, derived: DerivedPlan, selecti
     const face = derived.roomFaces.get(s.id);
     const r = project.rooms[s.id];
     if (face && r) out.push({ handle: { type: 'room-label', roomId: r.id }, p: add(face.label, r.labelOffset) });
+  } else if (s.kind === 'callout') {
+    const c = project.callouts?.[s.id];
+    if (c && !project.layers.callouts?.locked) {
+      const a = calloutAnchor(project, derived, c.target);
+      if (a) out.push({ handle: { type: 'callout-anchor', calloutId: c.id }, p: { x: a.x, y: a.y } });
+    }
   }
   return out;
 }
@@ -226,6 +235,23 @@ export function marqueeSelect(project: Project, derived: DerivedPlan, a: Vec2, b
       if (isObjectHidden(project, o) || isObjectLocked(project, o)) continue;
       if (rectPolygon(o.x, o.y, o.width, o.depth, o.rotation).every(inside)) out.push({ kind: 'object', id: o.id });
     }
+  }
+  return out;
+}
+
+/** Callouts whose anchor or label box centre lies inside a marquee rectangle (for Comments mode). */
+export function marqueeCallouts(project: Project, derived: DerivedPlan, a: Vec2, b: Vec2, px: number): SelItem[] {
+  const minX = Math.min(a.x, b.x);
+  const maxX = Math.max(a.x, b.x);
+  const minY = Math.min(a.y, b.y);
+  const maxY = Math.max(a.y, b.y);
+  const inside = (q: Vec2) => q.x >= minX && q.x <= maxX && q.y >= minY && q.y <= maxY;
+  const out: SelItem[] = [];
+  for (const c of visibleCallouts(project)) {
+    const l = layoutCallout(project, derived, c, px);
+    if (!l) continue;
+    const mid = { x: l.box.x + l.box.w / 2, y: l.box.y + l.box.h / 2 };
+    if (inside(mid) || inside(l.anchor)) out.push({ kind: 'callout', id: c.id });
   }
   return out;
 }

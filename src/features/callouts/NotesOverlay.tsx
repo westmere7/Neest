@@ -3,7 +3,10 @@ import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
 import type { Callout, Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
+import { calloutAnchor, setCalloutAnchorPoint } from '@/domain/geometry/callouts';
 import { floatingInsets, type Insets } from '@/components/layoutInsets';
+import { useProjectStore } from '@/state/projectStore';
+import { liveScene } from '@/features/scene-3d/sceneRuntime';
 import { CalloutCard } from './CalloutCard';
 import { visibleCallouts } from './layout';
 import { callout3DPoints } from './Callouts3D';
@@ -77,11 +80,23 @@ export function NotesViewBridge({ target }: { target: MutableRefObject<THREE.Cam
   return null;
 }
 
+type MarkEls = { line?: SVGLineElement | null; end?: SVGElement | null; hit?: SVGCircleElement | null };
+
 /** Leader and end mark of one note, as SVG updated every frame. */
-function NoteMarks({ c, on, refs }: { c: Callout; on: boolean; refs: Map<string, { line?: SVGLineElement | null; end?: SVGElement | null }> }) {
+function NoteMarks({
+  c,
+  on,
+  refs,
+  onAnchorDown,
+}: {
+  c: Callout;
+  on: boolean;
+  refs: Map<string, MarkEls>;
+  onAnchorDown?: (e: React.PointerEvent<SVGCircleElement>, id: string) => void;
+}) {
   const main = labelColors(c).main;
   const dash = leaderDash(c);
-  const set = (k: 'line' | 'end') => (el: SVGElement | null) => {
+  const set = (k: keyof MarkEls) => (el: SVGElement | null) => {
     const r = refs.get(c.id) ?? {};
     (r as Record<string, unknown>)[k] = el;
     refs.set(c.id, r);
@@ -107,6 +122,17 @@ function NoteMarks({ c, on, refs }: { c: Callout; on: boolean; refs: Map<string,
         />
       )}
       {c.end === 'arrow' && <path ref={set('end')} fill={main} stroke="#fff" strokeWidth={0.8} strokeLinejoin="round" />}
+      {onAnchorDown && (
+        <circle
+          ref={set('hit')}
+          r={9}
+          fill="transparent"
+          style={{ pointerEvents: 'auto', cursor: 'grab' }}
+          data-testid="callout-anchor-3d"
+          data-callout-id={c.id}
+          onPointerDown={(e) => onAnchorDown(e, c.id)}
+        />
+      )}
     </g>
   );
 }
@@ -114,7 +140,8 @@ function NoteMarks({ c, on, refs }: { c: Callout; on: boolean; refs: Map<string,
 /**
  * Note labels over the 3D view: HTML cards and SVG leaders laid out on screen every frame (see
  * `layoutNotes3D`), so labels can keep clear of each other and of the building. The floor highlight
- * stays in the scene (`Callouts3D`). In the editor a click selects a note and a double-click edits it.
+ * stays in the scene (`Callouts3D`). In the editor a click selects a note, dragging its anchor dot
+ * moves the spot it points to, and a double-click edits it.
  */
 export function NotesOverlay({
   project,
@@ -135,10 +162,73 @@ export function NotesOverlay({
 }) {
   const layer = useRef<HTMLDivElement>(null);
   const cards = useRef(new Map<string, HTMLDivElement | null>());
-  const marks = useRef(new Map<string, { line?: SVGLineElement | null; end?: SVGElement | null }>());
+  const marks = useRef(new Map<string, MarkEls>());
   const latest = useRef({ project, derived, visible });
   latest.current = { project, derived, visible };
   const notes = visible ? visibleCallouts(project) : [];
+
+  const handleAnchorDown = (e: React.PointerEvent<SVGCircleElement>, id: string) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    onSelect?.(id, e.shiftKey);
+    const { project: p0, derived: d0 } = latest.current;
+    if (p0.layers.callouts?.locked) return;
+    const c0 = p0.callouts?.[id];
+    const a0 = c0 ? calloutAnchor(p0, d0, c0.target) : null;
+    const cam = camera.current;
+    const host = layer.current;
+    if (!c0 || !a0 || !cam || !host) return;
+
+    const startScreen = { x: e.clientX, y: e.clientY };
+    const anchor3D = new THREE.Vector3(a0.x, a0.z, a0.y);
+    const camDir = new THREE.Vector3();
+    cam.getWorldDirection(camDir);
+    const midairPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir, anchor3D);
+    const raycaster = new THREE.Raycaster();
+    let moved = false;
+
+    const onMove = (ev: PointerEvent) => {
+      if (!moved) {
+        if (Math.hypot(ev.clientX - startScreen.x, ev.clientY - startScreen.y) < 4) return;
+        moved = true;
+        useProjectStore.getState().begin('Move note spot');
+      }
+      const rect = host.getBoundingClientRect();
+      const ndc = new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1);
+      raycaster.setFromCamera(ndc, cam);
+
+      let hitPoint: THREE.Vector3 | null = null;
+      const scene = liveScene.current?.scene;
+      if (scene && !ev.shiftKey) {
+        const targets = ['objects', 'walls', 'openings', 'rooms']
+          .map((n) => scene.getObjectByName(n))
+          .filter((x): x is THREE.Object3D => !!x);
+        const hits = targets.length ? raycaster.intersectObjects(targets, true) : [];
+        if (hits.length) hitPoint = hits[0].point.clone();
+      }
+      if (!hitPoint) {
+        const p = new THREE.Vector3();
+        if (raycaster.ray.intersectPlane(midairPlane, p)) hitPoint = p;
+      }
+      if (!hitPoint) return;
+
+      const next = { x: hitPoint.x, y: hitPoint.z, z: Math.max(0, hitPoint.y) };
+      const curDerived = latest.current.derived;
+      useProjectStore.getState().preview((d) => {
+        const c = d.callouts?.[id];
+        if (c) setCalloutAnchorPoint(d, curDerived, c, next, true);
+      });
+    };
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      if (moved) useProjectStore.getState().commit();
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
 
   useEffect(() => {
     let raf = 0;
@@ -194,11 +284,16 @@ export function NotesOverlay({
           }
           m.end.style.visibility = '';
         }
+        if (m?.hit) {
+          m.hit.setAttribute('cx', String(n.anchor.x));
+          m.hit.setAttribute('cy', String(n.anchor.y));
+          m.hit.style.visibility = '';
+        }
       }
       // Notes whose target is behind the camera.
       for (const [id, card] of cards.current) if (card && !shown.has(id)) card.style.visibility = 'hidden';
       for (const [id, m] of marks.current)
-        if (!shown.has(id)) for (const e of [m.line, m.end]) if (e) e.style.visibility = 'hidden';
+        if (!shown.has(id)) for (const e of [m.line, m.end, m.hit]) if (e) e.style.visibility = 'hidden';
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
@@ -208,7 +303,13 @@ export function NotesOverlay({
     <div ref={layer} className="notes-layer" aria-hidden={!visible}>
       <svg className="notes-marks" width="100%" height="100%">
         {notes.map((c) => (
-          <NoteMarks key={`${c.id}-${c.line}-${c.end}`} c={c} on={!!selectedIds?.has(c.id)} refs={marks.current} />
+          <NoteMarks
+            key={`${c.id}-${c.line}-${c.end}`}
+            c={c}
+            on={!!selectedIds?.has(c.id)}
+            refs={marks.current}
+            onAnchorDown={onSelect ? handleAnchorDown : undefined}
+          />
         ))}
       </svg>
       {notes.map((c) => (

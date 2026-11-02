@@ -115,3 +115,15 @@ export function hitCallout(project: Project, derived: DerivedPlan | null, p: Vec
   }
   return null;
 }
+
+/** The callout whose anchor dot (the spot it points to) is under `p`, for picking/dragging the spot. */
+export function hitCalloutAnchor(project: Project, derived: DerivedPlan | null, p: Vec2, px: number, tol = 0): Callout | null {
+  const list = visibleCallouts(project);
+  const r = Math.max(8 * px, tol);
+  for (let i = list.length - 1; i >= 0; i--) {
+    const l = layoutCallout(project, derived, list[i], px);
+    if (!l) continue;
+    if (Math.hypot(p.x - l.anchor.x, p.y - l.anchor.y) <= r) return list[i];
+  }
+  return null;
+}

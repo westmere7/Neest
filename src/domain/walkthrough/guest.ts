@@ -41,6 +41,7 @@ export function guestSceneProject(project: Project): Project {
     showCeilings: g.ceilings,
     wallDisplay: g.wallDisplay,
     cutawayHeight: g.cutawayHeight,
+    cutawayExternalOnly: g.cutawayExternalOnly,
     showRoomLabels: g.roomLabels,
   };
   return { ...project, render };
