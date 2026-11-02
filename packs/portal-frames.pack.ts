@@ -518,21 +518,68 @@ function twoCorners(x0: number, x1: number, z0: number, z1: number, rf: number, 
   return dedupe([[x1, z0], [x1, z1], ...arc(x0 + f, z1 - f, f, f, Math.PI / 2, Math.PI, 10), ...arc(x0 + b, z0 + b, b, b, Math.PI, (3 * Math.PI) / 2, 10)]);
 }
 
+interface LedgeOpts {
+  /** Raised timber curb along the outer back edge and round the free end so dishes/food cannot slide off. */
+  raisedRim?: boolean;
+  /** Inset from g.xr where the raised rim stops so it clears an opening lining on the portal leg. */
+  rimClearRight?: number;
+}
+
+/**
+ * Plan outline of the U/J-shaped raised curb hugging the dining ledge's back edge (z0) from `xEnd`
+ * round the back corner `rb` and across the free end (x0) up to `zNose`, with a semicircular nose.
+ */
+function ledgeRimBand(x0: number, xEnd: number, z0: number, zNose: number, rb: number, tRim: number, inset = 0): V2[] {
+  const rOut = Math.max(0.004, rb - inset);
+  const rIn = Math.max(0.003, rb - tRim + inset);
+  const rCap = Math.max(0.002, tRim / 2 - inset);
+  const pts: V2[] = [
+    [xEnd - inset, z0 + inset],
+    ...arc(x0 + rb, z0 + rb, rOut, rOut, (3 * Math.PI) / 2, Math.PI, 12),
+    ...arc(x0 + tRim / 2, zNose, rCap, rCap, Math.PI, 0, 8),
+    ...arc(x0 + rb, z0 + rb, rIn, rIn, Math.PI, (3 * Math.PI) / 2, 12),
+    [xEnd - inset, z0 + tRim - inset],
+  ];
+  return dedupe(pts.reverse());
+}
+
 /**
  * The half wall's cap widened into a compact dining ledge at bar height: one timber top flush with
  * the cap over the whole half wall, reaching `LEDGE` past one face (`side` +1 front, −1 back), its
  * free corner rounded, carried by small triangular steel brackets on the wall face, set back under the
  * top. Replaces the cap (the model hides it).
  */
-function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1): Part[] {
+function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1, opts: LedgeOpts = {}): Part[] {
   const g = portalGeo(size, spec);
   const { w, d } = size;
   const H = HALF_WALL - 0.04;
   const x0 = g.xr - clamp((g.xr - g.xl) * 0.55, 0.5, 1.6);
-  const rEnd = Math.min(d / 2 - 0.01, 0.3);
+  const rf = 0.22;
+  const rEnd = opts.raisedRim ? Math.min(d * 0.7, (d + LEDGE) / 2 - 0.02, 0.18) : Math.min(d / 2 - 0.01, 0.3);
+  const z0 = -d / 2;
+  const z1 = d / 2 + LEDGE;
+  const flipZ = (pts: V2[]): V2[] => {
+    const mapped = pts.map(([x, z]) => [x, z * side] as V2);
+    return side === 1 ? mapped : mapped.reverse();
+  };
   // In front coordinates: the wall's back face at -d/2, the ledge's edge at d/2 + LEDGE.
-  const outline = twoCorners(x0, w / 2, -d / 2, d / 2 + LEDGE, 0.22, rEnd).map(([x, z]) => [x, z * side] as V2);
-  const parts: Part[] = [prism('shelf', side === 1 ? outline : [...outline].reverse(), H, 0.04)];
+  const parts: Part[] = [prism('shelf', flipZ(twoCorners(x0, w / 2, z0, z1, rf, rEnd)), H, 0.04)];
+
+  if (opts.raisedRim) {
+    const f = Math.max(0.005, Math.min(rf, (z1 - z0) / 2 - 0.001, w / 2 - x0 - 0.001));
+    const b = Math.max(0.005, Math.min(rEnd, (z1 - z0) / 2 - 0.001, w / 2 - x0 - 0.001));
+    const tRim = Math.min(0.024, b * 0.45);
+    const rimH = 0.095;
+    const capH = 0.004;
+    const xEnd = g.xr - (opts.rimClearRight ?? 0.002);
+    const zNose = Math.max(z0 + b + 0.02, z1 - f);
+    if (xEnd - x0 > b + 0.05) {
+      parts.push(
+        { ...prism('shelf', flipZ(ledgeRimBand(x0, xEnd, z0, zNose, b, tRim, 0)), HALF_WALL - 0.002, rimH - capH + 0.002), plan: false },
+        { ...prism('shelf', flipZ(ledgeRimBand(x0, xEnd, z0, zNose, b, tRim, 0.0025)), HALF_WALL + rimH - capH, capH), plan: false },
+      );
+    }
+  }
   // Brackets about every 80 cm along the half wall, 25 cm in from each end.
   const a = x0 + 0.25;
   const b = w / 2 - 0.35;
@@ -906,11 +953,16 @@ function cornerLayout({ w, d }: Size3) {
   return { t, xB, zA, cx, cz, lenA: w / 2 - cx, lenB: d / 2 - cz };
 }
 
+const CORNER_LEDGE_OPTS: LedgeOpts = { raisedRim: true, rimClearRight: CORNER_LINE + 0.001 };
+
 /** Run A's ledge (side +1 inside, -1 outside) or its plain cap (side 0), in item space: for the models. */
 function cornerRunTop(size: Size3, side: 1 | -1 | 0): Part[] {
   const L = cornerLayout(size);
   const sizeA: Size3 = { w: L.lenA, d: L.t, h: size.h };
-  const parts = side === 0 ? buildPortal(sizeA, RUN_A_SPEC).filter((p) => p.slot === 'shelf') : diningLedge(sizeA, RUN_A_SPEC, side);
+  const parts =
+    side === 0
+      ? buildPortal(sizeA, RUN_A_SPEC).filter((p) => p.slot === 'shelf')
+      : diningLedge(sizeA, RUN_A_SPEC, side, CORNER_LEDGE_OPTS);
   return shift(parts, (L.cx + size.w / 2) / 2, L.zA);
 }
 
@@ -924,7 +976,7 @@ function buildCornerPortal(size: Size3, open = false): Part[] {
     ? buildPortal(sizeA, RUN_A_OPEN)
     : [
         ...buildPortal(sizeA, RUN_A_SPEC).filter((p) => p.slot !== 'shelf'),
-        ...diningLedge(sizeA, RUN_A_SPEC, 1),
+        ...diningLedge(sizeA, RUN_A_SPEC, 1, CORNER_LEDGE_OPTS),
         liningInside({ ...portalGeo(sizeA, RUN_A_SPEC), yb: HALF_WALL }, CORNER_LINE, L.t),
       ];
   // Run B: built along x with its leg at +x, then turned so the leg points to the front.
@@ -962,7 +1014,7 @@ const cornerPortal = defineItem({
   group: 'Portals & arches',
   tags: ['corner portal', 'L-shaped soffit', 'half wall', 'dining ledge', 'breakfast bar', 'kitchen corner', 'khung vòm góc', 'tường lửng', ...TAGS],
   description:
-    'Two portals joined round a soft curved corner: a soffit wrapping an open kitchen corner, one leg on a half wall carrying a bar-height dining ledge on the inside of the L (or outside, or a plain cap), the other a slim leg, the whole opening lined in timber.',
+    'Two portals joined round a soft curved corner: a soffit wrapping an open kitchen corner, one leg on a half wall carrying a bar-height dining ledge with a raised curved timber rim along its outer edge and free end to keep dishes from sliding off (on the inside of the L, or outside, or a plain cap), the other a slim leg, the whole opening lined in timber.',
   defaultSize: { w: 4.2, d: 2.9, h: CEILING },
   minSize: { w: 2.8, d: 1.9, h: 2.3 },
   maxSize: { w: 8.0, d: 6.0, h: 3.6 },

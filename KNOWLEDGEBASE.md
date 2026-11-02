@@ -1894,3 +1894,37 @@ Known limitations (also in README):
 154. "Reduce the niche (tower) to just 0.3 m so the wardrobe can be wider; use the top shelf as a niche as well and the
      bottom one as a cabinet" → "Wardrobe with oak shelf tower & corner niche": a 30 cm tower (`layout` tw), its top an
      open LED-lit niche, its base a cabinet with an oak door and brass knob; the desk version is unchanged (done).
+155. "Tạo hình 3D cái bàn này để tôi có thể ghép vào những loại tủ khác nhau, cho phép chỉnh chiều rộng chiều cao" → added
+     `wardrobe-study:modular-waterfall-cabinet-desk` in `packs/wardrobe-study.pack.ts` (`resizable: { w: true, d: true, h: true }`,
+     `0.45–2.5 × 0.35–0.95 × 0.42–1.15 m`): flat butt-joint left end (`-x`) to pair flush against any cabinet/wardrobe (or
+     `Flip` to pair on `+x`), `35 mm` top slab with lengthwise oak grain flowing through a 24-step `R = 80 mm` curved waterfall
+     bend into a full-depth floor leg, models `Plain apron` / `With apron drawers` / `Slim top (no apron)`, and 7 wood/lacquer
+     finish variants (done).
+156. "Tạo gương treo tường, cho đổi viền màu trắng, gỗ và các màu hợp nội thất hiện tại" → added
+     `soft-curve-furniture:rounded-rect-wall-mirror` in `packs/soft-curve-furniture.pack.ts` (`mount: 'wall'`,
+     `defaultElevation: 0.35`, `resizable: { w: true, d: true, h: true }`): tall rounded-corner full-length wall mirror with
+     concealed wall cleat, recessed `glass-mirror` pane inside a 3D wrap-around bezel (`Slim rim` / `Wider frame bezel` /
+     `Minimal micro-rim` models), and 10 interior-matched frame finishes (Matte black default, Satin white, Cream lacquer,
+     Light oak, Oak veneer, Walnut, Sage green, Buttercream, Dusty pink, Brushed brass) (done).
+157. "Tạo hình tủ giày 3d này nhưng chỉ lấy 1/2 tủ bên dưới, bên trên tủ để ngăn chia ô để dựng khăn tắm" + "dưới gầm tủ để 2
+     đôi dép đi trong nhà, dù scale tủ theo chiều ngang thì kích thước dép cũng không đổi, thêm 1 variant mở 1 cánh tủ bên trong
+     là 3 tầng chứa giày dép" → added `soft-curve-furniture:curved-shoe-towel-cubby-cabinet` in
+     `packs/soft-curve-furniture.pack.ts` (`wallSnap: true`, `resizable: { w: true, d: true, h: true }`, `defaultSize: 0.8 × 0.36
+     × 1.36 m`): waist-height curved-waterfall oak shoe cabinet with 2 width-invariant pairs of open-toe indoor slippers in the
+     open floor bay, inset shaker doors hugging the curved top-right waterfall corner, and brass knobs, topped by a stepped-back
+     divided cubby organiser; models `With towels & slippers` (default), `Open door, 3 shoe tiers` (`reach: { front: 0.52 }`, left
+     shaker door swung open ~78° revealing 3 interior oak shelves stocked with fixed-width sneakers, loafers & guest slippers),
+     and `Empty cubbies`, plus 9 wood/lacquer finishes (done).
+158. "SỬA CÁI TỦ NÀY: Wardrobe with oak shelf tower & corner niche — PHẦN BÊN PHẢI TRONG CÙNG phần kệ để chiều ngang 40cm.
+     Phần bên trái để móc dạng pin treo quần áo bẩn, có 2 bộ trong đó, chiều sâu 35cm. Bên dưới là chia kệ để dép 2 tầng có sẵn
+     2 đôi dép ở đó" → updated `wardrobe-study:wardrobe-shelf-tower-niche` in `packs/wardrobe-study.pack.ts`: widened the oak
+     shelf tower to `40 cm` (`tw = 0.4`, flush with a `40 cm`-deep vanity desk when mirrored), set the rounded end column inward
+     depth to `35 cm` (`rw = 0.35`), and updated `hanging-niche` (now the default model, with `side-rack-empty` and `open-niche`
+     alongside it) so both the upper alcove and the lower 2-tier slipper bay stay closed on the bed-facing front by the curved
+     white wall and open to the side with 3 brass-and-oak cylindrical pin hooks holding 2 draped casual outfits (shirt +
+     two-legged trousers) above 2 fixed-size pairs of indoor slippers on the 2-tier oak rack (done).
+159. "Góc bàn ở bếp, chỗ cái bàn Corner portal with half wall and dining ledge Tạo phần cạnh nhô lên như hình để tránh rớt đồ ăn"
+     → updated `portal-frames:corner-portal-half-wall` (`diningLedge` / `ledgeRimBand` in `packs/portal-frames.pack.ts`) so both
+     `Dining ledge inside` and `Dining ledge outside` feature a `9.5 cm`-tall, `2.4 cm`-thick curved timber gallery rim (`shelf`
+     slot) running continuously from the portal leg lining along the non-seating back edge and curving smoothly around the
+     rounded free end (`r = 14 cm`) with a semicircular nose cap, leaving the seating side flush for bar stools (done).

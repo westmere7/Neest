@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import './loader';
 import { ASSET_CATALOG, ASSETS_BY_ID } from '@/data/assets/catalog';
-import { describeAssetChecks } from '@/data/assets/assetChecks';
+import { describeAssetChecks, worldBounds } from '@/data/assets/assetChecks';
 import { MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID } from '@/data/materials/catalog';
 import { patternInfo } from '@/data/materials/patterns';
 import { photoEntry } from '@/features/materials/photoTextures';
@@ -121,6 +121,67 @@ describe('pack models', () => {
       // Content slots only belong to the Filled model.
       expect(withModel(a, 'empty').slots.length, id).toBeLessThan(withModel(a, 'filled').slots.length);
     }
+  });
+
+  it('keeps indoor slippers fixed-size across widths and offers an open-door 3-tier shoe variant', () => {
+    const cab = ASSETS_BY_ID['soft-curve-furniture:curved-shoe-towel-cubby-cabinet'];
+    expect(assetModels(cab).map((m) => m.id)).toEqual(['with-towels', 'open-door', 'empty']);
+
+    const defLook = withModel(cab, 'with-towels');
+    const slippersAt = (w: number) =>
+      defLook
+        .build({ w, d: cab.defaultSize.d, h: cab.defaultSize.h })
+        .filter((p) => p.slot === 'slippers1' || p.slot === 'slippers2');
+    const sNarrow = slippersAt(0.55);
+    const sDefault = slippersAt(0.8);
+    const sWide = slippersAt(1.4);
+    expect(sDefault.length).toBe(8);
+    expect(sNarrow).toEqual(sDefault);
+    expect(sWide).toEqual(sDefault);
+
+    const openLook = withModel(cab, 'open-door');
+    const openParts = openLook.build(cab.defaultSize);
+    expect(openParts.some((p) => p.slot === 'shoes')).toBe(true);
+    expect(openParts.some((p) => p.slot === 'soles')).toBe(true);
+    expect(openParts.some((p) => p.slot === 'darkShoes')).toBe(true);
+    expect(Math.max(...openParts.map((p) => worldBounds(p).max[2]))).toBeGreaterThan(cab.defaultSize.d / 2 + 0.25);
+  });
+
+  it('gives wardrobe-shelf-tower-niche a 40 cm oak tower and 35 cm side-entry pin-hook & 2-tier slipper column', () => {
+    const wall = ASSETS_BY_ID['wardrobe-study:wardrobe-shelf-tower-niche'];
+    expect(assetModels(wall).map((m) => m.id)).toEqual(['hanging-niche', 'side-rack-empty', 'open-niche']);
+
+    // Check 40 cm tower (x0 + 0.4) and 35 cm right column (x1 - 0.35) in the 2D plan detail strokes.
+    const size = { w: 1.92, d: 0.63, h: 2.21 };
+    const strokes = wall.planDetail?.(size) ?? [];
+    const verticalXs = strokes
+      .filter((s): s is Extract<typeof s, { kind: 'line' }> => s.kind === 'line' && Math.abs(s.a[0] - s.b[0]) < 1e-6 && Math.abs(s.a[1] - s.b[1]) > 0.3)
+      .map((s) => Number(s.a[0].toFixed(4)));
+    expect(verticalXs).toContain(Number((-size.w / 2 + 0.4).toFixed(4)));
+    expect(verticalXs).toContain(Number((size.w / 2 - 0.35).toFixed(4)));
+
+    const sideLook = withModel(wall, 'hanging-niche');
+    const parts = sideLook.build(size);
+    expect(parts.filter((p) => p.slot === 'slippers1').length).toBe(4);
+    expect(parts.filter((p) => p.slot === 'slippers2').length).toBe(4);
+    expect(parts.some((p) => p.slot === 'clothes')).toBe(true);
+    expect(parts.some((p) => p.slot === 'clothes2')).toBe(true);
+  });
+
+  it('adds a raised curved rim on the dining ledge of corner-portal-half-wall', () => {
+    const portal = ASSETS_BY_ID['portal-frames:corner-portal-half-wall'];
+    const size = portal.defaultSize;
+    const shelfMaxY = (modelId: string) =>
+      Math.max(
+        ...withModel(portal, modelId)
+          .build(size)
+          .filter((p) => p.slot === 'shelf')
+          .map((p) => worldBounds(p).max[1]),
+      );
+    // Dining ledge inside & outside rise ~9.5 cm above the 1.0 m tabletop; plain half-wall cap stays at 1.0 m.
+    expect(shelfMaxY('ledge-inside')).toBeCloseTo(1.095, 3);
+    expect(shelfMaxY('ledge-outside')).toBeCloseTo(1.095, 3);
+    expect(shelfMaxY('half-wall')).toBeCloseTo(1.0, 3);
   });
 
   it('reports badly formed models and keeps the good ones', () => {

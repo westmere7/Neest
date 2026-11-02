@@ -83,5 +83,26 @@ describe('furnitureCategories multi-category classification', () => {
     const pm = furnitureCategoriesOf(penTable);
     expect(pm.rooms).toEqual(expect.arrayContaining(['room:dining', 'room:kitchen']));
     expect(pm.items).toContain('item:tables');
+
+    // Modular curved-waterfall add-on desk belongs to Study & office, Bedroom, Tables & desks, and Cabinets
+    const modDesk = ASSETS_BY_ID['wardrobe-study:modular-waterfall-cabinet-desk'];
+    expect(modDesk).toBeDefined();
+    const mm = furnitureCategoriesOf(modDesk);
+    expect(mm.rooms).toEqual(expect.arrayContaining(['room:office', 'room:bedroom']));
+    expect(mm.items).toEqual(expect.arrayContaining(['item:tables', 'item:storage']));
+
+    // Rounded-corner full-length wall mirror belongs to Bedroom, Living room, Bathroom, and Decor & art
+    const wallMirror = ASSETS_BY_ID['soft-curve-furniture:rounded-rect-wall-mirror'];
+    expect(wallMirror).toBeDefined();
+    const wm = furnitureCategoriesOf(wallMirror);
+    expect(wm.rooms).toEqual(expect.arrayContaining(['room:bedroom', 'room:living', 'room:bathroom']));
+    expect(wm.items).toContain('item:decor');
+
+    // Curved-waterfall shoe cabinet with towel cubbies belongs to Bathroom, Living room, Bedroom, and Cabinets
+    const shoeTowel = ASSETS_BY_ID['soft-curve-furniture:curved-shoe-towel-cubby-cabinet'];
+    expect(shoeTowel).toBeDefined();
+    const stm = furnitureCategoriesOf(shoeTowel);
+    expect(stm.rooms).toEqual(expect.arrayContaining(['room:bathroom', 'room:living', 'room:bedroom']));
+    expect(stm.items).toContain('item:storage');
   });
 });

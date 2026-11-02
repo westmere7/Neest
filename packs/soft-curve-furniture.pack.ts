@@ -21,6 +21,7 @@ import {
   ellipsePoints,
   knob,
   lathe,
+  line,
   matSlot,
   plantBox,
   prism,
@@ -33,6 +34,7 @@ import {
   torus,
   turnedLeg,
   type Part,
+  type PlanStroke,
   type Size3,
   type V2,
   type V3,
@@ -904,12 +906,573 @@ const wallPeninsulaBeadTable = defineItem({
   },
 });
 
+// ───────────── 13. Rounded-corner full-length wall mirror ─────────────
+
+function buildRoundedWallMirror(size: Size3, rimStyle: 'slim' | 'wide' | 'micro' = 'slim'): Part[] {
+  const { w, d, h } = size;
+  const z0 = -d / 2;
+  const z1 = d / 2;
+  const r = clamp(Math.min(w, h) * 0.095, 0.02, 0.044);
+  const wantBezel =
+    rimStyle === 'wide'
+      ? clamp(Math.min(w, h) * 0.058, 0.018, 0.028)
+      : rimStyle === 'micro'
+        ? clamp(Math.min(w, h) * 0.012, 0.004, 0.006)
+        : clamp(Math.min(w, h) * 0.024, 0.008, 0.013);
+  const bezel = Math.min(wantBezel, r - 0.004);
+
+  const cleatT = clamp(d * 0.12, 0.002, 0.005);
+  const rimRecess = clamp(d * 0.16, 0.003, 0.007);
+  const glassT = clamp(d * 0.12, 0.0025, 0.004);
+  const lipT = Math.min(0.0015, rimRecess * 0.4);
+  const zGlassFront = z1 - rimRecess;
+  const zGlassBack = zGlassFront - glassT;
+  const zBody0 = z0 + cleatT - 0.0005;
+  const zBody1 = zGlassBack + 0.001;
+
+  const seg = 8;
+  const outer = roundRectPoints(0, h / 2, w, h, r, seg);
+  const outerEase = roundRectPoints(0, h / 2, w - 0.0024, h - 0.0024, Math.max(0.002, r - 0.0012), seg);
+  const inner = roundRectPoints(0, h / 2, w - 2 * bezel, h - 2 * bezel, Math.max(0.003, r - bezel), seg);
+
+  const parts: Part[] = [
+    // Concealed wall-mounting cleat so the outer frame floats slightly proud of the wall.
+    span('frame', [-w / 2 + r + 0.01, w / 2 - r - 0.01], [r + 0.02, h - r - 0.02], [z0, z0 + cleatT], o),
+    // Full wrap-around backing body (drives the 2D plan footprint).
+    panelXY('frame', outer, zBody0, zBody1 - zBody0, true),
+    // Recessed mirror glass pane inside the raised perimeter rim.
+    panelXY('mirror', inner, zGlassBack, glassT),
+  ];
+
+  const zRim0 = zGlassBack - 0.002;
+  const zRim1 = z1 - lipT + 0.0005;
+  for (const k of range(outer.length)) {
+    const kn = (k + 1) % outer.length;
+    parts.push(panelXY('frame', [outer[k], outer[kn], inner[kn], inner[k]], zRim0, zRim1 - zRim0));
+    parts.push(panelXY('frame', [outerEase[k], outerEase[kn], inner[kn], inner[k]], z1 - lipT, lipT));
+  }
+
+  return keep(parts, size);
+}
+
+function roundedWallMirrorPlan({ w, d }: Size3): PlanStroke[] {
+  return [line([-w / 2 + 0.012, d / 2 - 0.005], [w / 2 - 0.012, d / 2 - 0.005])];
+}
+
+const roundedRectWallMirror = defineItem({
+  id: 'rounded-rect-wall-mirror',
+  name: 'Rounded-corner full-length wall mirror',
+  category: 'bedroom',
+  type: 'decor',
+  group: 'Mirrors',
+  mount: 'wall',
+  defaultElevation: 0.35,
+  wallSnap: true,
+  resizable: { w: true, d: true, h: true },
+  tags: [
+    'mirror',
+    'wall mirror',
+    'full length mirror',
+    'dressing mirror',
+    'vanity mirror',
+    'rounded rectangle',
+    'slim frame',
+    'wood frame',
+    'white frame',
+    'bedroom',
+    'hallway',
+    'gương',
+    'gương treo tường',
+    'gương toàn thân',
+    'gương soi',
+  ],
+  description:
+    'A tall, slim wall-mounted full-length mirror with softly rounded corners and a recessed glass pane inside a sleek wrap-around frame; resize width and height freely and switch between matte black, white, oak, walnut and pastel finishes.',
+  defaultSize: { w: 0.42, d: 0.035, h: 1.5 },
+  minSize: { w: 0.25, d: 0.02, h: 0.45 },
+  maxSize: { w: 1.2, d: 0.07, h: 2.2 },
+  price: { vnd: 1_800_000, estimate: true },
+  slots: [matSlot('frame', 'Frame', 'metal-black-matte'), matSlot('mirror', 'Mirror', 'glass-mirror')],
+  build: (s) => buildRoundedWallMirror(s, 'slim'),
+  planDetail: roundedWallMirrorPlan,
+  models: [
+    { id: 'slim-rim', name: 'Slim rim' },
+    { id: 'wood-frame', name: 'Wider frame bezel', build: (s) => buildRoundedWallMirror(s, 'wide') },
+    { id: 'micro-rim', name: 'Minimal micro-rim', build: (s) => buildRoundedWallMirror(s, 'micro') },
+  ],
+  variants: [
+    { id: 'satin-white', name: 'Satin white', materials: { frame: 'paint-satin-white' } },
+    { id: 'cream-lacquer', name: 'Cream lacquer', materials: { frame: 'laminate-cream' } },
+    { id: 'light-oak', name: 'Light oak', materials: { frame: 'wood-oak-light' } },
+    { id: 'natural-oak', name: 'Oak veneer', materials: { frame: 'laminate-oak' } },
+    { id: 'walnut', name: 'Walnut', materials: { frame: 'wood-walnut' } },
+    { id: 'sage-green', name: 'Sage green', materials: { frame: 'laminate-sage' } },
+    { id: 'buttercream', name: 'Buttercream', materials: { frame: 'paint-butter' } },
+    { id: 'dusty-pink', name: 'Dusty pink', materials: { frame: 'laminate-pink' } },
+    { id: 'brushed-brass', name: 'Brushed brass', materials: { frame: 'metal-brass' } },
+  ],
+});
+
+// ───────────── 14. Curved-waterfall shoe cabinet with towel cubby top ─────────────
+
+/** Counter-clockwise [x, y] outline with radius `r` at 3 corners and `rTR` at the top-right (+x, +y) corner. */
+function doorRectXY(x0: number, x1: number, y0: number, y1: number, r: number, rTR: number, seg = 4): V2[] {
+  return [
+    ...arc(x0 + r, y0 + r, r, r, Math.PI, 1.5 * Math.PI, seg),
+    ...arc(x1 - r, y0 + r, r, r, -0.5 * Math.PI, 0, seg),
+    ...arc(x1 - rTR, y1 - rTR, rTR, rTR, 0, 0.5 * Math.PI, seg),
+    ...arc(x0 + r, y1 - r, r, r, 0.5 * Math.PI, Math.PI, seg),
+  ];
+}
+
+/** Quarter-circle waterfall band in [x, y] around (cx, cy) from +y (π/2) to +x (0). */
+function waterfallBendXY(cx: number, cy: number, rOut: number, rIn: number, seg = 20): V2[] {
+  return [...arc(cx, cy, rOut, rOut, Math.PI / 2, 0, seg), ...arc(cx, cy, rIn, rIn, 0, Math.PI / 2, seg)];
+}
+
+/** Lengthwise-grained horizontal board (rotated 90° around Y so wood grain runs along X). */
+function grainedTop(slot: string, x0: number, x1: number, y0: number, y1: number, d: number, zc = 0, plan = true): Part {
+  const part: Part = {
+    shape: 'box',
+    size: [d, y1 - y0, x1 - x0],
+    position: [(x0 + x1) / 2, (y0 + y1) / 2, zc],
+    rotation: [0, Math.PI / 2, 0],
+    bevel: 0.002,
+    slot,
+  };
+  if (!plan) part.plan = false;
+  return part;
+}
+
+/** Asymmetric left/right contoured footbed outline in local [x, z] (heel at -len/2, toe at +len/2). */
+function slipperFootOutline(wid: number, len: number, side: -1 | 1): V2[] {
+  const fore = arc(side * wid * 0.025, len * 0.05, wid * 0.49, len * 0.45, 0, Math.PI, 8);
+  const heel = arc(-side * wid * 0.02, -len * 0.11, wid * 0.41, len * 0.39, Math.PI, Math.PI * 2, 8);
+  return dedupe([...fore, ...heel]);
+}
+
+/** Single open-toe indoor slide slipper (cushioned footbed + hollow arched instep strap), fixed width & height. */
+function buildSingleSlipper(slot: string, cx: number, cz: number, y0: number, wid: number, len: number, side: -1 | 1): Part[] {
+  const soleH = 0.016;
+  const strapOuter = arc(cx, y0 + soleH - 0.003, wid * 0.49, 0.036, 0, Math.PI, 10);
+  const strapInner = arc(cx, y0 + soleH - 0.001, wid * 0.36, 0.023, Math.PI, 0, 10);
+  const zStrap0 = cz - len * 0.02;
+  const strapLen = len * 0.36;
+  return [
+    { ...prism(slot, slipperFootOutline(wid, len, side), y0 + 0.001, soleH), position: [cx, y0 + 0.001, cz], plan: false },
+    panelXY(slot, dedupe([...strapOuter, ...strapInner]), zStrap0, strapLen, false),
+  ];
+}
+
+/**
+ * Two pairs of indoor house slippers tucked into the open floor bay under the cabinet.
+ * Width, height and pair spacing are completely independent of `w` so horizontal scaling never stretches them.
+ */
+function floorIndoorSlippers({ d }: Size3): Part[] {
+  const z1 = d / 2;
+  const wid1 = 0.092;
+  const len1 = Math.min(0.25, d - 0.042);
+  const cz1 = z1 - 0.014 - len1 / 2;
+
+  const wid2 = 0.086;
+  const len2 = Math.min(0.234, d - 0.048);
+  const cz2 = z1 - 0.022 - len2 / 2;
+
+  const cxPair1 = -0.114;
+  const cxPair2 = 0.114;
+  const sep1 = wid1 / 2 + 0.005;
+  const sep2 = wid2 / 2 + 0.005;
+
+  return [
+    ...buildSingleSlipper('slippers1', cxPair1 - sep1, cz1, 0, wid1, len1, -1),
+    ...buildSingleSlipper('slippers1', cxPair1 + sep1, cz1 + 0.005, 0, wid1, len1, 1),
+    ...buildSingleSlipper('slippers2', cxPair2 - sep2, cz2 + 0.004, 0, wid2, len2, -1),
+    ...buildSingleSlipper('slippers2', cxPair2 + sep2, cz2, 0, wid2, len2, 1),
+  ];
+}
+
+/** Single structured shoe (sneaker or loafer) of fixed width `wid`, for interior cabinet shelves. */
+function buildShelfShoe(
+  soleSlot: string,
+  upperSlot: string,
+  cx: number,
+  cz: number,
+  y0: number,
+  wid: number,
+  len: number,
+  maxH: number,
+  side: -1 | 1,
+  style: 'sneaker' | 'loafer',
+): Part[] {
+  const soleH = style === 'sneaker' ? 0.014 : 0.009;
+  const hw = wid * 0.42;
+  const vampH = Math.min(style === 'sneaker' ? 0.046 : 0.038, maxH * 0.62);
+  const collarH = Math.min(style === 'sneaker' ? 0.074 : 0.054, maxH);
+  return [
+    { ...prism(soleSlot, slipperFootOutline(wid, len, side), y0 + 0.001, soleH), position: [cx, y0 + 0.001, cz], plan: false },
+    cushion(upperSlot, [cx - hw, cx + hw], [y0 + soleH - 0.001, y0 + vampH], [cz - len * 0.1, cz + len * 0.44], { softness: 0.42, plan: false }),
+    cushion(upperSlot, [cx - hw * 0.96, cx + hw * 0.96], [y0 + soleH - 0.001, y0 + collarH], [cz - len * 0.45, cz + len * 0.08], {
+      softness: 0.38,
+      plan: false,
+    }),
+  ];
+}
+
+const SLIPPER_CREAM = matSlot('slippers1', 'Indoor slippers (pair 1)', 'fabric-cream');
+const SLIPPER_SAGE = matSlot('slippers2', 'Indoor slippers (pair 2)', 'fabric-linen-sage');
+const SHOE_TAN = matSlot('shoes', 'Tan leather shoes', 'leather-tan');
+const SHOE_WHITE = matSlot('soles', 'Sneakers & soles', 'leather-white');
+const SHOE_BLACK = matSlot('darkShoes', 'Black loafers', 'leather-smooth-black');
+
+function buildShoeTowelCabinet(size: Size3, openLeftDoor = false): Part[] {
+  const { w, d, h } = size;
+  const x0 = -w / 2;
+  const x1 = w / 2;
+  const z0 = -d / 2;
+  const z1 = d / 2;
+
+  // ── 1. Lower curved-waterfall shoe cabinet (0 .. yBaseTop) ──
+  const yBaseTop = clamp(h * 0.69, 0.7, 1.02);
+  const yShoe = clamp(yBaseTop * 0.19, 0.13, 0.19);
+  const t = 0.02;
+  const R = clamp(Math.min(w * 0.13, yBaseTop * 0.12), t + 0.025, 0.095);
+  const zf = z1 - 0.004; // inset door face
+  const doorT = 0.018;
+  const zDoor0 = zf - doorT;
+
+  const carcassOutline: V2[] = [
+    [x0 + t - 0.002, yShoe + t - 0.002],
+    [x1 - t + 0.002, yShoe + t - 0.002],
+    ...arc(x1 - R, yBaseTop - R, R - t + 0.002, R - t + 0.002, 0, Math.PI / 2, 12),
+    [x0 + t - 0.002, yBaseTop - t + 0.002],
+  ];
+
+  const parts: Part[] = [
+    // Left full-depth gable down to floor.
+    span('oak', [x0, x0 + t], [0, yBaseTop - t + 0.002], [z0, z1], { bevel: 0.002 }),
+    // Lengthwise-grained top board flowing into the right waterfall curve.
+    grainedTop('oak', x0, x1 - R + 0.008, yBaseTop - t, yBaseTop, d, 0, true),
+    // Smooth 20-step curved waterfall top-right corner.
+    panelXY('oak', waterfallBendXY(x1 - R, yBaseTop - R, R, R - t, 20), z0, d, true),
+    // Right vertical waterfall gable down to floor.
+    span('oak', [x1 - t, x1], [0, yBaseTop - R + 0.008], [z0, z1], { bevel: 0.002, plan: false }),
+    // Open bottom everyday-shoe bay back panel & bottom frame rail under the doors.
+    span('oak', [x0 + t - 0.002, x1 - t + 0.002], [0, yShoe + 0.004], [z0, z0 + 0.016], o),
+    span('oak', [x0 + t - 0.002, x1 - t + 0.002], [yShoe, yShoe + t], [z0, z1 - 0.002], { bevel: 0.0015, plan: false }),
+  ];
+
+  if (!openLeftDoor) {
+    // Closed state: recessed interior cabinet carcass behind the inset doors.
+    parts.push(panelXY('oak', dedupe(carcassOutline), z0, zDoor0 - 0.002 - z0));
+  } else {
+    // Open-door state: hollow oak interior back panel + 2 shelves forming 3 shoe tiers.
+    const zBackFront = z0 + 0.016;
+    const zShelfFront = zDoor0 - 0.008;
+    parts.push(panelXY('oak', dedupe(carcassOutline), z0, 0.016));
+
+    const yBotInner = yShoe + t;
+    const yTopInner = yBaseTop - t;
+    const ts = 0.015;
+    const tierH = (yTopInner - yBotInner - 2 * ts) / 3;
+    const yS1 = yBotInner + tierH;
+    const yS2 = yS1 + ts + tierH;
+    parts.push(
+      span('oak', [x0 + t - 0.002, x1 - t + 0.002], [yS1, yS1 + ts], [zBackFront - 0.002, zShelfFront], { bevel: 0.0015, plan: false }),
+      span('oak', [x0 + t - 0.002, x1 - t + 0.002], [yS2, yS2 + ts], [zBackFront - 0.002, zShelfFront], { bevel: 0.0015, plan: false }),
+    );
+
+    // Populate the 3 tiers with fixed-width shoes & slippers (more pairs fit when widened, never stretched).
+    const tierYs = [yBotInner, yS1 + ts, yS2 + ts];
+    const shoeL = Math.min(0.238, zShelfFront - zBackFront - 0.014);
+    const czShoe = zShelfFront - 0.008 - shoeL / 2;
+    const shoeW = 0.082;
+    const shoeSep = shoeW / 2 + 0.005;
+    const innerW = w - 2 * t - 0.028;
+    const nPairs = clamp(Math.floor((innerW + 0.02) / 0.205), 2, 4);
+    const xStart = x0 + t + 0.016 + shoeSep + shoeW / 2;
+    const xEnd = x1 - t - 0.016 - shoeSep - shoeW / 2;
+    const maxShoeH = Math.max(0.052, tierH - 0.024);
+
+    for (const tIdx of range(3)) {
+      const yT = tierYs[tIdx];
+      for (const pIdx of range(nPairs)) {
+        const px = nPairs === 1 ? 0 : xStart + ((xEnd - xStart) * pIdx) / (nPairs - 1);
+        if (tIdx === 2) {
+          // Top tier: casual low-top sneakers with crisp white soles.
+          const up = pIdx % 2 === 0 ? 'shoes' : pIdx % 3 === 1 ? 'soles' : 'darkShoes';
+          const sl = up === 'soles' ? 'darkShoes' : 'soles';
+          parts.push(
+            ...buildShelfShoe(sl, up, px - shoeSep, czShoe, yT, shoeW, shoeL, maxShoeH, -1, 'sneaker'),
+            ...buildShelfShoe(sl, up, px + shoeSep, czShoe, yT, shoeW, shoeL, maxShoeH, 1, 'sneaker'),
+          );
+        } else if (tIdx === 1) {
+          // Middle tier: smart leather loafers.
+          const up = pIdx % 2 === 0 ? 'darkShoes' : 'shoes';
+          const sl = up === 'darkShoes' ? 'soles' : 'darkShoes';
+          parts.push(
+            ...buildShelfShoe(sl, up, px - shoeSep, czShoe, yT, shoeW * 0.96, shoeL * 0.97, maxShoeH, -1, 'loafer'),
+            ...buildShelfShoe(sl, up, px + shoeSep, czShoe, yT, shoeW * 0.96, shoeL * 0.97, maxShoeH, 1, 'loafer'),
+          );
+        } else {
+          // Bottom interior tier: guest slide sandals & slippers.
+          const slot = pIdx % 2 === 0 ? 'slippers2' : 'slippers1';
+          parts.push(
+            ...buildSingleSlipper(slot, px - shoeSep, czShoe, yT, shoeW * 1.02, shoeL * 0.96, -1),
+            ...buildSingleSlipper(slot, px + shoeSep, czShoe, yT, shoeW * 1.02, shoeL * 0.96, 1),
+          );
+        }
+      }
+    }
+  }
+
+  // Inset shaker doors with rounded inner corners; rightmost door hugs the curved waterfall corner.
+  const nDoors = w >= 1.05 ? 3 : 2;
+  const dx0 = x0 + t + 0.0025;
+  const dx1 = x1 - t - 0.0025;
+  const dy0 = yShoe + t + 0.0025;
+  const dy1 = yBaseTop - t - 0.0025;
+  const dGap = 0.003;
+  const dW = (dx1 - dx0 - dGap * (nDoors - 1)) / nDoors;
+  const rail = clamp(dW * 0.13, 0.03, 0.044);
+
+  for (const i of range(nDoors)) {
+    const a = dx0 + i * (dW + dGap);
+    const b = a + dW;
+
+    if (openLeftDoor && i === 0) {
+      // Left shaker door swung open ~78° outward on its left hinge, revealing the 3 shoe tiers.
+      const ry = -1.36;
+      const c = Math.cos(ry);
+      const s = Math.sin(ry);
+      const hx = a + 0.004;
+      const hz = zf - 0.002;
+      const pt = (u: number, y: number, v: number): V3 => [hx + u * c + v * s, y, hz - u * s + v * c];
+      const openBox = (slot: string, u0: number, u1: number, yA: number, yB: number, v0: number, v1: number): Part => ({
+        shape: 'box',
+        size: [u1 - u0, yB - yA, v1 - v0],
+        position: pt((u0 + u1) / 2, (yA + yB) / 2, (v0 + v1) / 2),
+        rotation: [0, ry, 0],
+        bevel: 0.0015,
+        slot,
+        plan: false,
+      });
+
+      parts.push(
+        openBox('doors', rail - 0.002, dW - rail + 0.002, dy0 + rail - 0.002, dy1 - rail + 0.002, -doorT + 0.004, -0.004),
+        openBox('doors', 0, rail, dy0, dy1, -doorT, 0),
+        openBox('doors', dW - rail, dW, dy0, dy1, -doorT, 0),
+        openBox('doors', rail, dW - rail, dy1 - rail, dy1, -doorT, 0),
+        openBox('doors', rail, dW - rail, dy0, dy0 + rail, -doorT, 0),
+      );
+      // Concealed metal cup hinges near top and bottom of the open door.
+      for (const hy of [dy0 + 0.085, dy1 - 0.085]) {
+        parts.push(openBox('metal', 0.002, 0.016, hy - 0.016, hy + 0.016, -doorT - 0.004, -doorT + 0.001));
+      }
+      // Brass knob on the outer face of the swung-open door.
+      const uk = dW - rail * 0.55;
+      const yk = dy1 - rail * 0.62;
+      parts.push(
+        rod('metal', pt(uk, yk, 0.0005), pt(uk, yk, 0.011), 0.0033, { plan: false }),
+        sphere('metal', pt(uk, yk, 0.0155), 0.0095, { scale: [1, 1, 0.7], rotation: [0, ry, 0], plan: false }),
+      );
+      continue;
+    }
+
+    const isRightmost = i === nDoors - 1;
+    const rOutTR = isRightmost ? Math.max(0.008, R - t - 0.0025) : 0.004;
+    const rInTR = isRightmost ? Math.max(0.012, rOutTR - rail) : 0.014;
+    const dOuter = doorRectXY(a, b, dy0, dy1, 0.004, rOutTR, 4);
+    const dInner = doorRectXY(a + rail, b - rail, dy0 + rail, dy1 - rail, 0.014, rInTR, 4);
+
+    parts.push(panelXY('doors', dOuter, zDoor0, doorT - 0.006));
+    for (const k of range(dOuter.length)) {
+      const kn = (k + 1) % dOuter.length;
+      parts.push(panelXY('doors', [dOuter[k], dOuter[kn], dInner[kn], dInner[k]], zf - 0.006, 0.006));
+    }
+
+    // Small round brass knob near the top meeting stile, matching the reference photo.
+    const lone = nDoors % 2 === 1 && i === nDoors - 1;
+    const kx = i % 2 === 0 && !lone ? b - rail * 0.55 : a + rail * 0.55;
+    const ky = dy1 - rail * 0.62;
+    parts.push(...knob('metal', [kx, ky, zf + 0.0005], 0.0095));
+  }
+
+  // ── 2. Upper open divided cubby organiser for bath towels (yBaseTop .. h) ──
+  const setbackX = clamp(R * 0.72, 0.045, 0.07);
+  const xCub1 = x1 - setbackX;
+  const zCub1 = z1 - clamp(d * 0.08, 0.02, 0.032);
+  const dCub = zCub1 - z0;
+  const zCubMid = (z0 + zCub1) / 2;
+  const tc = 0.018;
+  const cubbyH = h - yBaseTop;
+  const rCub = clamp(Math.min((xCub1 - x0) * 0.12, cubbyH * 0.2), tc + 0.016, 0.058);
+
+  const cubBackOutline: V2[] = [
+    [x0 + tc - 0.002, yBaseTop - 0.002],
+    [xCub1 - tc + 0.002, yBaseTop - 0.002],
+    ...arc(xCub1 - rCub, h - rCub, rCub - tc + 0.002, rCub - tc + 0.002, 0, Math.PI / 2, 10),
+    [x0 + tc - 0.002, h - tc + 0.002],
+  ];
+
+  parts.push(
+    span('oak', [x0, x0 + tc], [yBaseTop - 0.002, h - tc + 0.002], [z0, zCub1], { bevel: 0.002, plan: false }),
+    grainedTop('oak', x0, xCub1 - rCub + 0.006, h - tc, h, dCub, zCubMid, false),
+    panelXY('oak', waterfallBendXY(xCub1 - rCub, h - rCub, rCub, rCub - tc, 16), z0, dCub, false),
+    span('oak', [xCub1 - tc, xCub1], [yBaseTop - 0.006, h - rCub + 0.006], [z0, zCub1], { bevel: 0.002, plan: false }),
+    panelXY('oak', dedupe(cubBackOutline), z0, 0.014, false),
+  );
+
+  const ix0 = x0 + tc;
+  const ix1 = xCub1 - tc;
+  const iy0 = yBaseTop;
+  const iy1 = h - tc;
+  const iz0 = z0 + 0.014;
+  const iz1 = zCub1 - 0.004;
+  const td = 0.015;
+
+  const nCols = clamp(Math.round((ix1 - ix0) / 0.23), 2, 4);
+  const nRows = clamp(Math.round((iy1 - iy0) / 0.19), 2, 4);
+  const colW = (ix1 - ix0 - td * (nCols - 1)) / nCols;
+  const rowH = (iy1 - iy0 - td * (nRows - 1)) / nRows;
+
+  for (const rIdx of range(nRows - 1)) {
+    const sy = iy0 + (rIdx + 1) * rowH + rIdx * td;
+    parts.push(span('oak', [ix0 - 0.002, ix1 + 0.002], [sy, sy + td], [iz0, iz1], { bevel: 0.0015, plan: false }));
+  }
+  for (const cIdx of range(nCols - 1)) {
+    const sx = ix0 + (cIdx + 1) * colW + cIdx * td;
+    parts.push(span('oak', [sx, sx + td], [iy0 - 0.002, iy1 + 0.002], [iz0, iz1 - 0.002], { bevel: 0.0015, plan: false }));
+  }
+
+  // ── 3. Folded & rolled plush bath towels inside the cubbies ──
+  const zMid = (iz0 + iz1) / 2;
+  const tDepth = Math.max(0.08, iz1 - iz0 - 0.024);
+
+  for (const rIdx of range(nRows)) {
+    const cy0 = iy0 + rIdx * (rowH + td);
+    const cy1 = cy0 + rowH;
+    for (const cIdx of range(nCols)) {
+      const cx0 = ix0 + cIdx * (colW + td);
+      const cx1 = cx0 + colW;
+      const xc = (cx0 + cx1) / 2;
+      const cw = cx1 - cx0;
+
+      if ((cIdx + rIdx) % 2 === 0) {
+        // Neatly stacked folded bath towels.
+        const tw = Math.max(0.06, cw - 0.026);
+        const nStack = rowH >= 0.165 ? 3 : 2;
+        const th = Math.min(0.036, (rowH - 0.026) / nStack);
+        for (const k of range(nStack)) {
+          const ty0 = cy0 + 0.0015 + k * (th + 0.002);
+          const inset = k * 0.003;
+          parts.push(
+            span('towels', [xc - tw / 2 + inset, xc + tw / 2 - inset], [ty0, ty0 + th], [zMid - tDepth / 2, zMid + tDepth / 2], {
+              bevel: Math.min(0.012, th * 0.38),
+              plan: false,
+            }),
+          );
+        }
+      } else {
+        // Spa-rolled bath towels oriented front-to-back (2 on the shelf + 1 nestled on top when room allows).
+        const rr = Math.min(cw * 0.21, (rowH - 0.02) * 0.27, 0.042);
+        const dx = rr + 0.003;
+        const yBot = cy0 + rr + 0.0015;
+        for (const s of [-1, 1]) {
+          parts.push({ ...cyl('towels', [xc + s * dx, yBot, zMid], rr, tDepth, { segments: 18, plan: false }), rotation: [Math.PI / 2, 0, 0] });
+        }
+        const yTopRoll = yBot + rr * 1.72;
+        if (yTopRoll + rr <= cy1 - 0.012) {
+          parts.push({ ...cyl('towels', [xc, yTopRoll, zMid], rr * 0.96, tDepth, { segments: 18, plan: false }), rotation: [Math.PI / 2, 0, 0] });
+        }
+      }
+    }
+  }
+
+  return parts;
+}
+
+const shoeTowelCabinet = defineItem({
+  id: 'curved-shoe-towel-cubby-cabinet',
+  name: 'Curved-waterfall shoe cabinet with towel cubbies',
+  category: 'bathroom',
+  type: 'storage',
+  group: 'Hallway storage',
+  wallSnap: true,
+  resizable: { w: true, d: true, h: true },
+  tags: [
+    'shoe cabinet',
+    'slippers',
+    'house slippers',
+    'towel storage',
+    'bath towels',
+    'cubby shelf',
+    'curved cabinet',
+    'waterfall edge',
+    'oak',
+    'entryway',
+    'bedroom',
+    'bathroom',
+    'tủ giày',
+    'dép đi trong nhà',
+    'tủ khăn tắm',
+    'tủ chia ô',
+    'kệ khăn tắm',
+  ],
+  description:
+    'A waist-height oak shoe cabinet with two pairs of indoor slippers in the open floor bay, inset shaker doors with brass knobs (including an open-door three-tier shoe storage option) and a smooth curved waterfall right side, topped by a divided cubby organiser stacked with plush bath towels.',
+  defaultSize: { w: 0.8, d: 0.36, h: 1.36 },
+  minSize: { w: 0.55, d: 0.28, h: 1.05 },
+  maxSize: { w: 1.4, d: 0.55, h: 1.85 },
+  price: { vnd: 5_400_000, estimate: true },
+  slots: [
+    matSlot('oak', 'Cabinet & cubbies', 'laminate-oak'),
+    matSlot('doors', 'Cabinet doors', 'laminate-oak'),
+    matSlot('metal', 'Knobs', 'metal-brass'),
+    matSlot('towels', 'Bath towels', 'fabric-terry-white'),
+  ],
+  models: [
+    {
+      id: 'with-towels',
+      name: 'With towels & slippers',
+      slots: [SLIPPER_CREAM, SLIPPER_SAGE],
+      props: (size) => floorIndoorSlippers(size),
+    },
+    {
+      id: 'open-door',
+      name: 'Open door, 3 shoe tiers',
+      slots: [SLIPPER_CREAM, SLIPPER_SAGE, SHOE_TAN, SHOE_WHITE, SHOE_BLACK],
+      reach: { front: 0.52 },
+      build: (size) => buildShoeTowelCabinet(size, true),
+      props: (size) => floorIndoorSlippers(size),
+    },
+    { id: 'empty', name: 'Empty cubbies', hide: ['towels'] },
+  ],
+  variants: [
+    { id: 'oak-cream', name: 'Oak & cream doors', materials: { doors: 'laminate-cream' } },
+    { id: 'light-oak', name: 'Light oak & oat towels', materials: { oak: 'wood-oak-light', doors: 'wood-oak-light', towels: 'fabric-boucle-oat' } },
+    { id: 'oak-white', name: 'Oak & satin white doors', materials: { oak: 'wood-oak-light', doors: 'paint-satin-white' } },
+    { id: 'oak-sage', name: 'Oak & sage green doors', materials: { doors: 'laminate-sage', towels: 'fabric-waffle-white' } },
+    { id: 'all-sage', name: 'Sage green & oat', materials: { oak: 'laminate-sage', doors: 'laminate-sage', towels: 'fabric-boucle-oat' } },
+    { id: 'cream-lacquer', name: 'Cream lacquer', materials: { oak: 'laminate-cream', doors: 'laminate-cream', towels: 'fabric-linen-sage' } },
+    { id: 'walnut', name: 'Walnut & oat towels', materials: { oak: 'wood-walnut', doors: 'wood-walnut', towels: 'fabric-boucle-oat' } },
+    { id: 'satin-white', name: 'Satin white', materials: { oak: 'paint-satin-white', doors: 'paint-satin-white', metal: 'metal-black-matte', towels: 'fabric-linen-sage' } },
+  ],
+  planDetail: ({ w, d, h }) => {
+    const yBaseTop = clamp(h * 0.69, 0.7, 1.02);
+    const R = clamp(Math.min(w * 0.13, yBaseTop * 0.12), 0.045, 0.095);
+    const setbackX = clamp(R * 0.72, 0.045, 0.07);
+    const zCub1 = d / 2 - clamp(d * 0.08, 0.02, 0.032);
+    return [line([-w / 2, zCub1], [w / 2 - setbackX, zCub1]), line([w / 2 - setbackX, -d / 2], [w / 2 - setbackX, zCub1])];
+  },
+  build: (size) => buildShoeTowelCabinet(size, false),
+});
+
 export default definePack({
   name: 'Soft-curve furniture & lighting',
-  version: '1.0.0',
+  version: '1.2.0',
   author: 'Neest',
   description:
-    'Sculptural, rounded pieces in walnut, oak, bouclé and velvet: a stacked-sphere pedestal table, a wall-backed peninsula table on a turned bead leg, an oval-back chair, a leaf pendant, a dome sconce, an arched tea table, a palm-leaf fan, a fluted oval coffee table, a floating vanity shelf, a shouldered mirror, a donut pouf and a rolled-headboard bed. All resize freely.',
+    'Sculptural, rounded pieces in walnut, oak, bouclé and velvet: a stacked-sphere pedestal table, a wall-backed peninsula table on a turned bead leg, an oval-back chair, a leaf pendant, a dome sconce, an arched tea table, a palm-leaf fan, a fluted oval coffee table, a floating vanity shelf, a shouldered mirror, a rounded-corner full-length wall mirror, a curved-waterfall shoe & towel cubby cabinet, a donut pouf and a rolled-headboard bed. All resize freely.',
   license: 'CC0-1.0',
-  items: [spherePedestalTable, wallPeninsulaBeadTable, ovalBackChair, leafPendant, domeSconce, archedTeaTable, palmLeafFan, flutedOvalTable, vanityShelf, shoulderedMirror, donutPouf, rolledBed],
+  items: [spherePedestalTable, wallPeninsulaBeadTable, ovalBackChair, leafPendant, domeSconce, archedTeaTable, palmLeafFan, flutedOvalTable, vanityShelf, shoulderedMirror, roundedRectWallMirror, shoeTowelCabinet, donutPouf, rolledBed],
 });

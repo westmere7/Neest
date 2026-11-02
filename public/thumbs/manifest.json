@@ -4031,7 +4031,7 @@
   },
   "portal-frames:corner-portal-half-wall": {
    "file": "portal-frames_corner-portal-half-wall.webp",
-   "fp": "99e07f25147ef506"
+   "fp": "4321ce853c5d7c78"
   },
   "portal-frames:corner-portal-half-wall@model:half-wall": {
    "file": "portal-frames_corner-portal-half-wall_model_half-wall.webp",
@@ -4039,7 +4039,7 @@
   },
   "portal-frames:corner-portal-half-wall@model:ledge-outside": {
    "file": "portal-frames_corner-portal-half-wall_model_ledge-outside.webp",
-   "fp": "123f850f3df7a290"
+   "fp": "90850d4e72063b79"
   },
   "portal-frames:corner-portal-half-wall@model:open": {
    "file": "portal-frames_corner-portal-half-wall_model_open.webp",
@@ -4377,6 +4377,22 @@
    "file": "soft-curve-furniture_arched-leg-tea-table.webp",
    "fp": "5f5fbedeb496829d"
   },
+  "soft-curve-furniture:curved-shoe-towel-cubby-cabinet": {
+   "file": "soft-curve-furniture_curved-shoe-towel-cubby-cabinet.webp",
+   "fp": "d9000623f395af4c"
+  },
+  "soft-curve-furniture:curved-shoe-towel-cubby-cabinet@model:empty": {
+   "file": "soft-curve-furniture_curved-shoe-towel-cubby-cabinet_model_empty.webp",
+   "fp": "289572004e754dea"
+  },
+  "soft-curve-furniture:curved-shoe-towel-cubby-cabinet@model:open-door": {
+   "file": "soft-curve-furniture_curved-shoe-towel-cubby-cabinet_model_open-door.webp",
+   "fp": "b53926079cb3ab6e"
+  },
+  "soft-curve-furniture:curved-shoe-towel-cubby-cabinet@model:with-towels": {
+   "file": "soft-curve-furniture_curved-shoe-towel-cubby-cabinet_model_with-towels.webp",
+   "fp": "5d1368c904dcb5b3"
+  },
   "soft-curve-furniture:dome-wall-sconce": {
    "file": "soft-curve-furniture_dome-wall-sconce.webp",
    "fp": "0e5089c8e70d8e47"
@@ -4404,6 +4420,18 @@
   "soft-curve-furniture:rolled-headboard-bed": {
    "file": "soft-curve-furniture_rolled-headboard-bed.webp",
    "fp": "06d325ce816ccf46"
+  },
+  "soft-curve-furniture:rounded-rect-wall-mirror": {
+   "file": "soft-curve-furniture_rounded-rect-wall-mirror.webp",
+   "fp": "79062600599809a8"
+  },
+  "soft-curve-furniture:rounded-rect-wall-mirror@model:micro-rim": {
+   "file": "soft-curve-furniture_rounded-rect-wall-mirror_model_micro-rim.webp",
+   "fp": "d292b317cca4f0f1"
+  },
+  "soft-curve-furniture:rounded-rect-wall-mirror@model:wood-frame": {
+   "file": "soft-curve-furniture_rounded-rect-wall-mirror_model_wood-frame.webp",
+   "fp": "6ae6b017b5253123"
   },
   "soft-curve-furniture:shouldered-mirror": {
    "file": "soft-curve-furniture_shouldered-mirror.webp",
@@ -5341,13 +5369,29 @@
    "file": "wardrobe.webp",
    "fp": "c558794bd025a6e1"
   },
+  "wardrobe-study:modular-waterfall-cabinet-desk": {
+   "file": "wardrobe-study_modular-waterfall-cabinet-desk.webp",
+   "fp": "4b04e1edd0676522"
+  },
+  "wardrobe-study:modular-waterfall-cabinet-desk@model:drawers": {
+   "file": "wardrobe-study_modular-waterfall-cabinet-desk_model_drawers.webp",
+   "fp": "12c934a6134cc56c"
+  },
+  "wardrobe-study:modular-waterfall-cabinet-desk@model:slim": {
+   "file": "wardrobe-study_modular-waterfall-cabinet-desk_model_slim.webp",
+   "fp": "1e4600deb85dc08b"
+  },
   "wardrobe-study:wardrobe-shelf-tower-niche": {
    "file": "wardrobe-study_wardrobe-shelf-tower-niche.webp",
-   "fp": "507c9e0ee40d9970"
+   "fp": "397adb5dee00cc1e"
   },
   "wardrobe-study:wardrobe-shelf-tower-niche@model:hanging-niche": {
    "file": "wardrobe-study_wardrobe-shelf-tower-niche_model_hanging-niche.webp",
-   "fp": "fc61f7ede09600a8"
+   "fp": "64789f585c560592"
+  },
+  "wardrobe-study:wardrobe-shelf-tower-niche@model:side-rack-empty": {
+   "file": "wardrobe-study_wardrobe-shelf-tower-niche_model_side-rack-empty.webp",
+   "fp": "fe5b18bf039b4e15"
   },
   "wardrobe-study:wardrobe-study-wall": {
    "file": "wardrobe-study_wardrobe-study-wall.webp",

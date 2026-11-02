@@ -12,9 +12,11 @@
 import {
   barPull,
   clamp,
+  dedupe,
   defineItem,
   definePack,
   knob,
+  lathe,
   line,
   matSlot,
   prism,
@@ -75,9 +77,9 @@ function layout(w: number, d: number, h: number, desk = true) {
   const D = desk ? clamp(d - 0.75, 0.45, 0.6) : d - 0.032;
   const zf = zb + D;
   const ov = desk ? 0.04 : 0; // the desk overhangs the tower on its outer side
-  // Without the desk the tower is a slim 30 cm column, so the wardrobe gets the width.
-  const tw = desk ? clamp(w * 0.25, 0.42, 0.6) : 0.3;
-  const rw = clamp(w * 0.2, 0.34, 0.45);
+  // Without the desk: 40 cm oak shelf tower on one end and 35 cm side-entry column on the other.
+  const tw = desk ? clamp(w * 0.25, 0.42, 0.6) : 0.4;
+  const rw = desk ? clamp(w * 0.2, 0.34, 0.45) : 0.35;
   const xt0 = x0 + ov;
   const xt1 = xt0 + tw;
   const xr0 = x1 - rw;
@@ -87,8 +89,8 @@ function layout(w: number, d: number, h: number, desk = true) {
   return { x0, x1, zb, zf, D, tw, xt0, xt1, xr0, n, yU, deskH, dw: tw + ov };
 }
 
-/** The whole wall; `desk` = false leaves out the desk that runs forward from the tower. */
-function buildWall({ w, d, h }: Size3, desk: boolean): Part[] {
+/** The whole wall; `desk` = false leaves out the desk; `sideHookRack` builds the side-entry pin-hook & 2-tier slipper column. */
+function buildWall({ w, d, h }: Size3, desk: boolean, sideHookRack = false): Part[] {
     const L = layout(w, d, h, desk);
     const { x1, zb, zf, xt0, xt1, xr0, n, yU, deskH, dw } = L;
     const x0 = L.x0;
@@ -184,37 +186,95 @@ function buildWall({ w, d, h }: Size3, desk: boolean): Part[] {
       parts.push(...knob('white', [px, yU + 0.06, zf], 0.013));
     }
 
-    // ── Right column: rounded corner, open oak corner niche ────────────────
+    // ── Right column: rounded corner, open oak corner niche or side-entry pin-hook & slipper rack ──
     const rr = Math.min(0.12, (x1 - xr0) * 0.35);
     const yB = clamp(h * 0.22, 0.45, 0.55);
     const xf = x1 - rr; // fronts end where the rounded corner begins
     const nicheTop = yU - 0.03;
-    for (const [y0, y1, kY] of [
-      [0, yB, yB - 0.06],
-      [yU, h, yU + 0.06],
-    ] as [number, number, number][]) {
-      parts.push(prism('white', roundedCorner(xf, x1, zb, zf, rr), y0, y1 - y0));
-      const base = y0 === 0 ? plinth : y0;
-      parts.push(span('white', [xr0, xf], [base, y1], [zb, zc]));
-      parts.push(...shakerFront('white', [xr0, xf], [base, y1], zc, 0.02, { rail: 0.06 }));
-      parts.push(...knob('white', [xr0 + 0.05, kY, zf], 0.013));
-    }
-    parts.push(sp('white', [xr0, xf], [0, plinth], [zb, zc - 0.03]));
-    // Oak niche: bottom, top, back and the lining on the wardrobe side.
     const nicheOutline = roundedCorner(xr0, x1, zb, zf, rr);
-    parts.push(
-      { ...prism('oak', nicheOutline, yB, 0.03), plan: false },
-      { ...prism('oak', nicheOutline, nicheTop, 0.03), plan: false },
-      sp('oak', [xr0, x1 - 0.01], [yB + 0.03, nicheTop], [zb, zb + 0.015]),
-      sp('oak', [xr0, xr0 + 0.012], [yB + 0.03, nicheTop], [zb + 0.015, zf - 0.005]),
-    );
-    // Double socket on the niche back.
-    const sx = (xr0 + x1) / 2 - 0.02;
-    const sy = Math.min(yB + 0.32, nicheTop - 0.1);
-    parts.push(
-      sp('white', [sx - 0.04, sx + 0.04], [sy - 0.06, sy + 0.06], [zb + 0.015, zb + 0.024], 0.004),
-      sp('white', [sx - 0.025, sx + 0.025], [sy - 0.045, sy + 0.045], [zb + 0.024, zb + 0.028], 0.003),
-    );
+
+    if (!sideHookRack) {
+      for (const [y0, y1, kY] of [
+        [0, yB, yB - 0.06],
+        [yU, h, yU + 0.06],
+      ] as [number, number, number][]) {
+        parts.push(prism('white', roundedCorner(xf, x1, zb, zf, rr), y0, y1 - y0));
+        const base = y0 === 0 ? plinth : y0;
+        parts.push(span('white', [xr0, xf], [base, y1], [zb, zc]));
+        parts.push(...shakerFront('white', [xr0, xf], [base, y1], zc, 0.02, { rail: 0.06 }));
+        parts.push(...knob('white', [xr0 + 0.05, kY, zf], 0.013));
+      }
+      parts.push(sp('white', [xr0, xf], [0, plinth], [zb, zc - 0.03]));
+      // Oak niche: bottom, top, back and the lining on the wardrobe side.
+      parts.push(
+        { ...prism('oak', nicheOutline, yB, 0.03), plan: false },
+        { ...prism('oak', nicheOutline, nicheTop, 0.03), plan: false },
+        sp('oak', [xr0, x1 - 0.01], [yB + 0.03, nicheTop], [zb, zb + 0.015]),
+        sp('oak', [xr0, xr0 + 0.012], [yB + 0.03, nicheTop], [zb + 0.015, zf - 0.005]),
+      );
+      // Double socket on the niche back.
+      const sx = (xr0 + x1) / 2 - 0.02;
+      const sy = Math.min(yB + 0.32, nicheTop - 0.1);
+      parts.push(
+        sp('white', [sx - 0.04, sx + 0.04], [sy - 0.06, sy + 0.06], [zb + 0.015, zb + 0.024], 0.004),
+        sp('white', [sx - 0.025, sx + 0.025], [sy - 0.045, sy + 0.045], [zb + 0.024, zb + 0.028], 0.003),
+      );
+    } else {
+      // Top cupboard (yU .. h) keeps its rounded corner and shaker door; everything below opens to the +x side.
+      parts.push(
+        prism('white', roundedCorner(xf, x1, zb, zf, rr), yU, h - yU),
+        span('white', [xr0, xf], [yU, h], [zb, zc]),
+        ...shakerFront('white', [xr0, xf], [yU, h], zc, 0.02, { rail: 0.06 }),
+        ...knob('white', [xr0 + 0.05, yU + 0.06, zf], 0.013),
+      );
+
+      // Recessed rounded plinth at floor level.
+      parts.push({
+        ...prism('white', roundedCorner(xr0 + 0.01, x1 - 0.014, zb, zf - 0.024, Math.max(0.02, rr - 0.02)), 0, plinth),
+        plan: false,
+      });
+
+      const deckT = 0.022;
+      const ySlip0 = plinth + deckT;
+      const yMid = (ySlip0 + yB - 0.016) / 2;
+      const xWall = xr0 + 0.014;
+      const xFromOak = xWall + 0.001;
+
+      // Seamless curved white front wall (bed side) for both the lower 2-tier slipper bay and upper pin-hook alcove.
+      parts.push(
+        { ...prism('oak', nicheOutline, plinth, deckT), plan: false },
+        { ...prism('white', frontBand(xr0 + 0.002, x1, zf, rr, 0, t), ySlip0, yB - ySlip0), plan: false },
+        { ...prism('oak', frontBand(xFromOak, x1, zf, rr, t + 0.001, t + 0.008), ySlip0 + 0.001, yB - ySlip0 - 0.002), plan: false },
+        { ...prism('oak', nicheOutline, yB, 0.03), plan: false },
+        { ...prism('white', frontBand(xr0 + 0.002, x1, zf, rr, 0, t), yB + 0.03, nicheTop - (yB + 0.03)), plan: false },
+        { ...prism('oak', frontBand(xFromOak, x1, zf, rr, t + 0.001, t + 0.008), yB + 0.031, nicheTop - (yB + 0.032)), plan: false },
+        { ...prism('oak', nicheOutline, nicheTop, 0.03), plan: false },
+      );
+
+      // Oak back & inner walls (35 cm inward depth from x1) + middle shelf dividing the bottom into 2 slipper tiers.
+      const innerShelfOutline = roundedCorner(xWall, x1 - 0.004, zb + 0.015, zf - t - 0.009, Math.max(0.015, rr - t - 0.009));
+      parts.push(
+        sp('oak', [xr0 + 0.001, x1 - 0.008], [ySlip0 - 0.002, yB + 0.002], [zb + 0.001, zb + 0.015]),
+        sp('oak', [xr0 + 0.001, xWall], [ySlip0 - 0.002, yB + 0.002], [zb + 0.015, zf - t - 0.005]),
+        { ...prism('oak', innerShelfOutline, yMid, 0.016), plan: false },
+        sp('oak', [xr0 + 0.001, x1 - 0.008], [yB + 0.028, nicheTop + 0.002], [zb + 0.001, zb + 0.015]),
+        sp('oak', [xr0 + 0.001, xWall], [yB + 0.028, nicheTop + 0.002], [zb + 0.015, zf - t - 0.005]),
+      );
+
+      // Horizontal oak peg rail & 3 cylindrical pin hooks (móc dạng pin) mounted on the inner wall.
+      const yPin = nicheTop - 0.135;
+      const zRail0 = zb + 0.028;
+      const zRail1 = zf - rr - 0.006;
+      parts.push(sp('oak', [xWall, xWall + 0.016], [yPin - 0.03, yPin + 0.03], [zRail0, zRail1], 0.003));
+      const zP0 = zRail0 + 0.062;
+      const zP2 = zRail1 - 0.052;
+      for (const zh of [zP0, (zP0 + zP2) / 2, zP2]) {
+        parts.push(
+          rod('metal', [xWall + 0.017, yPin, zh], [xWall + 0.123, yPin, zh], 0.008, { segments: 12, plan: false }),
+          rod('oak', [xWall + 0.124, yPin, zh], [xWall + 0.143, yPin, zh], 0.021, { segments: 18, plan: false }),
+        );
+      }
+    }
 
     return parts;
 }
@@ -232,6 +292,8 @@ function wallPlan({ w, d, h }: Size3, desk: boolean): PlanStroke[] {
 
 const CLOTHES_A = matSlot('clothes', 'Hanging clothes', 'fabric-linen');
 const CLOTHES_B = matSlot('clothes2', 'Hanging clothes, dark', 'fabric-navy');
+const TOWER_SLIPPER_A = matSlot('slippers1', 'Slippers (upper tier)', 'fabric-cream');
+const TOWER_SLIPPER_B = matSlot('slippers2', 'Slippers (lower tier)', 'fabric-linen-sage');
 
 /**
  * Band along the column's front (z = zf) from `xFrom` round its rounded corner to where the side begins,
@@ -309,9 +371,149 @@ function closedNiche({ w, d, h }: Size3, desk: boolean): Part[] {
   return parts;
 }
 
+/** Elliptical arc helper in 2D. */
+const arc2 = (cx: number, cy: number, rx: number, ry: number, a0: number, a1: number, n: number): V2[] =>
+  range(n + 1).map((i) => {
+    const a = a0 + ((a1 - a0) * i) / n;
+    return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry] as V2;
+  });
+
+/** Open-toe indoor slipper oriented along X (toes pointing -x into the side-entry slipper shelf). */
+function sidewaysSlipper(slot: string, cx: number, cz: number, y0: number, len: number, wid: number, footSide: -1 | 1): Part[] {
+  const soleH = 0.016;
+  const fore = arc2(-len * 0.05, footSide * wid * 0.025, len * 0.45, wid * 0.49, Math.PI / 2, 1.5 * Math.PI, 8);
+  const heel = arc2(len * 0.11, -footSide * wid * 0.02, len * 0.39, wid * 0.41, -Math.PI / 2, Math.PI / 2, 8);
+  const strapOuter = arc2(cz, y0 + soleH - 0.003, wid * 0.49, 0.036, 0, Math.PI, 10);
+  const strapInner = arc2(cz, y0 + soleH - 0.001, wid * 0.36, 0.023, Math.PI, 0, 10);
+  return [
+    { ...prism(slot, dedupe([...fore, ...heel]), y0 + 0.001, soleH), position: [cx, y0 + 0.001, cz], plan: false },
+    sidePlate(slot, dedupe([...strapOuter, ...strapInner]), cx - len * 0.34, len * 0.36),
+  ];
+}
+
+/**
+ * Two casual worn outfits (shirt + trousers each) draped from the pin hooks in the 35 cm side alcove,
+ * plus two fixed-size pairs of indoor slippers on the 2-tier side-opening slipper rack below.
+ */
+function towerSideHooksAndSlippers({ w, d, h }: Size3): Part[] {
+  const { x1, zb, zf, xr0, yU } = layout(w, d, h, false);
+  const rr = Math.min(0.12, (x1 - xr0) * 0.35);
+  const yB = clamp(h * 0.22, 0.45, 0.55);
+  const nicheTop = yU - 0.03;
+  const xWall = xr0 + 0.014;
+  const yPin = nicheTop - 0.135;
+  const zRail0 = zb + 0.028;
+  const zRail1 = zf - rr - 0.006;
+  const zP0 = zRail0 + 0.062;
+  const zP2 = zRail1 - 0.052;
+  const zP1 = (zP0 + zP2) / 2;
+  const pinStep = zP1 - zP0;
+
+  const availDrop = yPin - (yB + 0.055);
+  const hw = clamp(pinStep * 0.44, 0.044, 0.076);
+  const parts: Part[] = [];
+
+  const legProf = (H: number): V2[] => [
+    [0, Math.min(0.05, H * 0.16)],
+    [0.68, Math.min(0.04, H * 0.13)],
+    [0.76, 0],
+    [0.92, 0],
+    [0.98, H * 0.45],
+    [1, H * 0.85],
+    [0.85, H],
+    [0, H],
+  ];
+
+  // 2 worn outfits (smoothly draped shirt + two tubular trouser legs) on the first two pins; front pin stays bare.
+  const outfits: [number, string, string, number, number][] = [
+    [zP0, 'clothes2', 'clothes', 0.63, 0.92],
+    [zP1, 'clothes', 'clothes2', 0.57, 0.85],
+  ];
+  for (const [zh, topSlot, botSlot, fTop, fBot] of outfits) {
+    const topL = Math.min(fTop, availDrop * 0.65);
+    const botL = Math.min(fBot, availDrop * 0.91);
+    const shirtProf: V2[] = [
+      [0, -topL * 0.84],
+      [0.62, -topL * 0.86],
+      [0.72, -topL],
+      [0.88, -topL],
+      [0.98, -topL * 0.72],
+      [1, -topL * 0.45],
+      [0.86, -topL * 0.2],
+      [0.52, -topL * 0.07],
+      [0.28, 0],
+      [0, 0],
+    ];
+    const yLegTop = yPin - topL * 0.72;
+    const yLegBot = yPin - botL;
+    const legH1 = yLegTop - (yLegBot + 0.014);
+    const legH2 = yLegTop - yLegBot;
+    const rzLeg = hw * 0.39;
+
+    parts.push(
+      // Trouser waistband loop on the inner brass stem + two softly tapered hollow-cuff trouser legs below.
+      sp(botSlot, [xWall + 0.028, xWall + 0.062], [yPin - 0.11, yPin + 0.015], [zh - 0.022, zh + 0.022], 0.006),
+      lathe(botSlot, [xWall + 0.18, yLegBot + 0.014, zh - hw * 0.44], legProf(legH1), {
+        segments: 22,
+        scale: [0.044, 1, rzLeg],
+        rotation: [0, 0, -0.04],
+        plan: false,
+      }),
+      lathe(botSlot, [xWall + 0.192, yLegBot, zh + hw * 0.44], legProf(legH2), {
+        segments: 22,
+        scale: [0.046, 1, rzLeg],
+        rotation: [0, 0, -0.05],
+        plan: false,
+      }),
+      // Softly draped shirt/jacket gathered right behind the round oak pin button head.
+      lathe(topSlot, [xWall + 0.104, yPin + 0.012, zh], shirtProf, {
+        segments: 28,
+        scale: [0.082, 1, hw],
+        rotation: [0, 0, 0.14],
+        plan: false,
+      }),
+    );
+  }
+
+  // 2 pairs of fixed-size indoor slippers on the 2-tier side-opening slipper rack below.
+  const plinth = 0.06;
+  const ySlip0 = plinth + 0.022;
+  const yMid = (ySlip0 + yB - 0.016) / 2;
+  const sLen = 0.236;
+  const sWid = 0.088;
+  const sepZ = sWid / 2 + 0.006;
+  const cxSlip = x1 - 0.032 - sLen / 2;
+  const czSlip = (zb + 0.025 + (zf - rr - 0.01)) / 2;
+
+  parts.push(
+    ...sidewaysSlipper('slippers1', cxSlip, czSlip - sepZ, yMid + 0.016, sLen, sWid, -1),
+    ...sidewaysSlipper('slippers1', cxSlip + 0.005, czSlip + sepZ, yMid + 0.016, sLen, sWid, 1),
+    ...sidewaysSlipper('slippers2', cxSlip + 0.004, czSlip - sepZ, ySlip0, sLen, sWid, -1),
+    ...sidewaysSlipper('slippers2', cxSlip, czSlip + sepZ, ySlip0, sLen, sWid, 1),
+  );
+
+  return parts;
+}
+
 const NICHE_MODELS = (desk: boolean): AssetModelVariant[] => [
   { id: 'open-niche', name: 'Open corner niche' },
   { id: 'hanging-niche', name: 'Closed front, hanging rail', slots: [CLOTHES_A, CLOTHES_B], props: (s) => closedNiche(s, desk) },
+];
+
+const TOWER_WALL_MODELS: AssetModelVariant[] = [
+  {
+    id: 'hanging-niche',
+    name: 'Side pin hooks & 2-tier slipper rack',
+    slots: [CLOTHES_A, CLOTHES_B, TOWER_SLIPPER_A, TOWER_SLIPPER_B],
+    build: (s) => buildWall(s, false, true),
+    props: (s) => towerSideHooksAndSlippers(s),
+  },
+  {
+    id: 'side-rack-empty',
+    name: 'Side pin hooks & slipper rack, empty',
+    build: (s) => buildWall(s, false, true),
+  },
+  { id: 'open-niche', name: 'Open corner niche & base cabinet' },
 ];
 
 const slots = [
@@ -339,16 +541,16 @@ const studyWall = defineItem({
   models: NICHE_MODELS(true),
 });
 
-/** The same wall without the desk: only as deep as the wardrobe, the tower keeps a ledge at desk height. */
+/** The same wall without the desk: 40 cm oak shelf tower, shaker wardrobe, and 35 cm side-entry pin-hook & 2-tier slipper column. */
 const towerWall = defineItem({
   id: 'wardrobe-shelf-tower-niche',
   name: 'Wardrobe with oak shelf tower & corner niche',
   category: 'bedroom',
   type: 'storage',
   group: 'Wardrobes',
-  tags: ['wardrobe', 'built-in', 'shaker', 'oak', 'shelves', 'led', 'niche', 'shelf tower', 'tủ quần áo', 'vietnamese', 'apartment'],
+  tags: ['wardrobe', 'built-in', 'shaker', 'oak', 'shelves', 'led', 'niche', 'shelf tower', 'coat hooks', 'slippers', 'tủ quần áo', 'vietnamese', 'apartment'],
   description:
-    'A built-in bedroom wall without a desk: a slim 30 cm oak tower with LED-lit open shelves up to the ceiling over a cabinet with an oak door, a wide white shaker wardrobe with brass pulls, and a rounded column with an open oak corner niche.',
+    'A built-in bedroom wall without a desk: a 40 cm oak tower with LED-lit open shelves up to the ceiling over a cabinet with an oak door, a wide white shaker wardrobe with brass pulls, and a 35 cm rounded column with side-entry pin hooks for two worn outfits over a two-tier slipper rack.',
   defaultSize: { w: 2.0, d: 0.63, h: 2.4 },
   minSize: { w: 1.7, d: 0.5, h: 2.1 },
   maxSize: { w: 3.0, d: 0.66, h: 2.7 },
@@ -357,7 +559,130 @@ const towerWall = defineItem({
   light: { color: '#ffcf8a', intensity: 0.35, distance: 2.2, y: 1.3 },
   build: (s) => buildWall(s, false),
   planDetail: (s) => wallPlan(s, false),
-  models: NICHE_MODELS(false),
+  models: TOWER_WALL_MODELS,
+});
+
+// ── Standalone modular curved-waterfall add-on desk ─────────────────────────────
+
+/**
+ * Standalone version of the curved-waterfall oak desk so users can butt its flat left end (-x)
+ * seamlessly against any wardrobe, bookcase or cabinet (or Flip/mirror to attach on the right)
+ * while resizing width, depth and height freely.
+ */
+function buildModularDesk({ w, d, h }: Size3, mode: 'plain' | 'drawers' | 'slim' = 'plain'): Part[] {
+  const x0 = -w / 2;
+  const x1 = w / 2;
+  const z0 = -d / 2;
+  const z1 = d / 2;
+  const top = clamp(h * 0.047, 0.028, 0.035);
+  const R = clamp(Math.min(w * 0.18, h * 0.18), top + 0.015, 0.08);
+  const xTopEnd = x1 - R + 0.01;
+  const topLen = xTopEnd - x0;
+
+  // Quarter-circle waterfall bend between the horizontal top and vertical floor leg.
+  const seg = 24;
+  const bend: V2[] = [];
+  for (const i of range(seg + 1)) {
+    const a = Math.PI / 2 - (i / seg) * (Math.PI / 2);
+    bend.push([x1 - R + Math.cos(a) * R, h - R + Math.sin(a) * R]);
+  }
+  for (const i of range(seg + 1)) {
+    const a = (i / seg) * (Math.PI / 2);
+    bend.push([x1 - R + Math.cos(a) * (R - top), h - R + Math.sin(a) * (R - top)]);
+  }
+
+  const parts: Part[] = [
+    // Rotated 90° around Y so wood-veneer grain (along local V) runs lengthwise along the desk (+x).
+    {
+      shape: 'box',
+      size: [d, top, topLen],
+      position: [(x0 + xTopEnd) / 2, h - top / 2, 0],
+      rotation: [0, Math.PI / 2, 0],
+      bevel: 0.004,
+      slot: 'oak',
+    },
+    // Smooth 24-step curved waterfall corner (included in 2D plan so the full w × d footprint is covered).
+    { ...frontPlate('oak', bend, z0, d), plan: undefined },
+    // Full-depth vertical waterfall leg down to the floor; tucks 1 cm into the bend.
+    sp('oak', [x1 - top, x1], [0, h - R + 0.01], [z0, z1], 0.004),
+  ];
+
+  if (mode !== 'slim') {
+    const apronDrop = clamp(h * 0.213, 0.085, 0.16);
+    const zBack = z0 + clamp(d * 0.08, 0.024, 0.044);
+    const zFront = mode === 'drawers' ? z1 - clamp(d * 0.05, 0.022, 0.026) : z1 - clamp(d * 0.08, 0.024, 0.044);
+    // Recessed apron running flush from the cabinet-butt end (-x) into the waterfall leg (+x).
+    parts.push(sp('oak', [x0, x1 - top + 0.004], [h - apronDrop, h - top + 0.004], [zBack, zFront]));
+
+    if (mode === 'drawers') {
+      const nD = clamp(Math.round((w - top) / 0.55), 1, 3);
+      const dx0 = x0 + 0.012;
+      const dx1 = x1 - top - 0.01;
+      const gap = 0.003;
+      const cellW = (dx1 - dx0 - gap * (nD - 1)) / nD;
+      for (const i of range(nD)) {
+        const a = dx0 + i * (cellW + gap);
+        parts.push(sp('oak', [a, a + cellW], [h - apronDrop + 0.004, h - top - 0.014], [zFront, zFront + 0.018], 0.003));
+      }
+    }
+  }
+
+  return parts;
+}
+
+function modularDeskPlan({ w, d, h }: Size3): PlanStroke[] {
+  const top = clamp(h * 0.047, 0.028, 0.035);
+  return [line([w / 2 - top, -d / 2], [w / 2 - top, d / 2])];
+}
+
+const modularDesk = defineItem({
+  id: 'modular-waterfall-cabinet-desk',
+  name: 'Modular curved-waterfall add-on desk',
+  category: 'office',
+  type: 'surfaces',
+  group: 'Desks',
+  description:
+    'A standalone 35 mm oak add-on desk with a flat butt-joint end that pairs flush against any wardrobe, bookcase or cabinet and a smooth curved waterfall leg at the outer end; resize width, depth and height freely.',
+  tags: [
+    'desk',
+    'waterfall desk',
+    'modular desk',
+    'add-on desk',
+    'cabinet desk',
+    'return desk',
+    'vanity desk',
+    'bedroom',
+    'study',
+    'oak',
+    'bàn ghép tủ',
+    'bàn học',
+    'bàn làm việc',
+    'bàn trang điểm',
+    'bàn nối tủ',
+  ],
+  defaultSize: { w: 1.15, d: 0.55, h: 0.75 },
+  minSize: { w: 0.45, d: 0.35, h: 0.42 },
+  maxSize: { w: 2.5, d: 0.95, h: 1.15 },
+  resizable: { w: true, d: true, h: true },
+  wallSnap: true,
+  price: { vnd: 3_200_000, estimate: true },
+  slots: [matSlot('oak', 'Desk', 'laminate-oak')],
+  build: (s) => buildModularDesk(s, 'plain'),
+  planDetail: modularDeskPlan,
+  models: [
+    { id: 'plain', name: 'Plain apron' },
+    { id: 'drawers', name: 'With apron drawers', build: (s) => buildModularDesk(s, 'drawers') },
+    { id: 'slim', name: 'Slim top (no apron)', build: (s) => buildModularDesk(s, 'slim') },
+  ],
+  variants: [
+    { id: 'light-oak', name: 'Light oak', materials: { oak: 'wood-oak-light' } },
+    { id: 'white-oak', name: 'White oak', materials: { oak: 'wood-white-oak' } },
+    { id: 'walnut', name: 'Walnut', materials: { oak: 'wood-walnut' } },
+    { id: 'smoked-oak', name: 'Smoked oak', materials: { oak: 'wood-smoked-oak' } },
+    { id: 'shaker-cream', name: 'Cream lacquer', materials: { oak: 'shaker-cream' } },
+    { id: 'warm-white', name: 'Warm white', materials: { oak: 'laminate-white-matte' } },
+    { id: 'sage-green', name: 'Sage green', materials: { oak: 'laminate-sage' } },
+  ],
 });
 
 const TAU = Math.PI * 2;
@@ -377,11 +702,11 @@ function paint(ctx: CanvasRenderingContext2D, size: number, value: (u: number, v
 
 export default definePack({
   name: 'Wardrobe & study wall',
-  version: '1.1.0',
+  version: '1.2.0',
   author: 'Neest team',
-  description: 'Built-in bedroom wall: oak shelf tower and study desk, white shaker wardrobe and a rounded corner niche.',
+  description: 'Built-in bedroom wall: oak shelf tower and study desk, white shaker wardrobe, rounded corner niche and standalone modular waterfall add-on desk.',
   license: 'CC0 (made for Neest)',
-  items: [studyWall, towerWall],
+  items: [studyWall, towerWall, modularDesk],
   patterns: [
     {
       id: 'satin-lacquer',
