@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1793633867425,
+  "updatedAt": 1793634065184,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -2042,7 +2042,7 @@
       "assetId": "clock-wall",
       "name": null,
       "x": 0.02,
-      "y": 4.25,
+      "y": 4.3,
       "elevation": 2.2,
       "rotation": 4.71238898038469,
       "width": 0.4,
