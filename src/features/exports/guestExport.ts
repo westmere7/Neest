@@ -271,6 +271,7 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
     shadows: g.shadows,
     cutaway: g.cutawayHeight,
     cutawayOn: g.wallDisplay === 'cutaway',
+    cutawayExternalOnly: g.cutawayExternalOnly,
     ceilingsOn: g.ceilings,
     lamps: guestLamps(project),
     lampBudgets: { fast: budget('fast'), balanced: budget('balanced'), high: budget('high') },

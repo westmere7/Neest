@@ -78,6 +78,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       background: '#dfe3e6',
       wallDisplay: 'full',
       cutawayHeight: 1.2,
+      cutawayExternalOnly: false,
       showCeilings: false,
       showRoomLabels: false,
       hiddenCategories: [],

@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { PlacedObject, Project, RenderSettings, WallDisplay } from '@/domain/model/schema';
-import type { DerivedPlan } from '@/domain/geometry/derive';
+import { externalWallIds, isHubExternal, type DerivedPlan } from '@/domain/geometry/derive';
 import type { JunctionHub, WallGeometry } from '@/domain/geometry/walls';
 import { pointAt } from '@/domain/geometry/wallPath';
 import { formatArea, formatLength } from '@/domain/model/units';
@@ -37,6 +37,7 @@ import { neededSystems } from '@/domain/model/services';
 export interface SceneOptions {
   wallDisplay: WallDisplay;
   cutawayHeight: number;
+  cutawayExternalOnly?: boolean;
   showCeilings: boolean;
   showRoomLabels: boolean;
   showDimensions: boolean;
@@ -714,6 +715,13 @@ export function SceneContent({
     [project, registry, models.map, shadows],
   );
   const cut = options.wallDisplay === 'cutaway' ? options.cutawayHeight : undefined;
+  const externalIds = useMemo(
+    () => (cut !== undefined && options.cutawayExternalOnly ? externalWallIds(derived) : null),
+    [cut, options.cutawayExternalOnly, derived],
+  );
+  const wallCut = (wallId: string) => (cut !== undefined && (!externalIds || externalIds.has(wallId)) ? cut : undefined);
+  const hubCut = (h: JunctionHub) =>
+    cut !== undefined && (!externalIds || isHubExternal(h, derived.network, externalIds)) ? cut : undefined;
   const b = derived.bounds;
   const center = useMemo(
     () => new THREE.Vector3(b ? (b.minX + b.maxX) / 2 : 0, 0, b ? (b.minY + b.maxY) / 2 : 0),
@@ -748,7 +756,7 @@ export function SceneContent({
                 g={g}
                 project={project}
                 registry={registry}
-                cut={cut}
+                cut={wallCut(g.wall.id)}
                 fade={options.wallDisplay === 'fade'}
                 center={center}
                 shadows={shadows}
@@ -763,13 +771,13 @@ export function SceneContent({
                 g={g}
                 project={project}
                 registry={registry}
-                cut={cut}
+                cut={wallCut(g.wall.id)}
                 shadows={shadows}
                 onPick={structurePick}
               />
             ))}
           {derived.network.hubs.map((h) => (
-            <HubMesh key={h.nodeId} hub={h} material={hubMat} cut={cut} shadows={shadows} />
+            <HubMesh key={h.nodeId} hub={h} material={hubMat} cut={hubCut(h)} shadows={shadows} />
           ))}
         </group>
       )}
@@ -785,7 +793,7 @@ export function SceneContent({
                   spanId={sp.id}
                   project={project}
                   ctx={ctx}
-                  cut={cut}
+                  cut={wallCut(g.wall.id)}
                   onPick={structurePick}
                 />
               )),

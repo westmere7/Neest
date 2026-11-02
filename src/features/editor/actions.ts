@@ -7,6 +7,7 @@ import { confirmAction, toast } from '@/state/uiStores';
 import { groupFromSelection } from './groups';
 import { transientGroups } from '@/features/library/savedGroupAssets';
 import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
+import { duplicateCallouts, translateCallouts } from '@/domain/commands/callouts';
 import { allServiceIds, moveServiceRuns, moveServicePoints } from '@/domain/commands/services';
 import { SERVICE_POINTS, SERVICE_SYSTEM_INFO } from '@/domain/model/services';
 import { derivePlan } from '@/domain/geometry/derive';
@@ -91,6 +92,12 @@ export async function deleteSelection(): Promise<void> {
  */
 export function duplicateSelection(): void {
   const project = ps().project;
+  const callouts = es().selection.filter((s) => s.kind === 'callout');
+  if (project && callouts.length && callouts.length === es().selection.length) {
+    const ids = ps().execute('Duplicate comment', (d) => duplicateCallouts(d, callouts.map((s) => s.id), { x: 0.3, y: 0.3 }));
+    if (ids?.length) es().setSelection(ids.map((id) => ({ kind: 'callout', id }) as SelItem));
+    return;
+  }
   // Services points and runs: copies beside the originals.
   const svc = es().selection.filter((s) => s.kind === 'service' || s.kind === 'run');
   if (project && svc.length && svc.length === es().selection.length) {
@@ -157,6 +164,7 @@ function placeCopies(project: NonNullable<ReturnType<typeof ps>['project']>, ids
 }
 
 export function rotateSelection(delta = Math.PI / 2): void {
+  if (es().notesMode) return;
   const project = ps().project;
   const ids = es()
     .selection.filter(
@@ -168,6 +176,7 @@ export function rotateSelection(delta = Math.PI / 2): void {
 }
 
 export function mirrorSelection(): void {
+  if (es().notesMode) return;
   const project = ps().project;
   const ids = es()
     .selection.filter(
@@ -194,14 +203,24 @@ export function nudgeSelection(dx: number, dy: number): void {
     }
   }
   const openings = sel.filter((s) => s.kind === 'opening').map((s) => s.id);
+  const callouts = sel.filter((s) => s.kind === 'callout' && project.callouts?.[s.id]).map((s) => s.id);
   const derived = derivePlan(project);
   const svc = Object.fromEntries(sel.filter((s) => s.kind === 'service' && project.servicePoints?.[s.id]).map((s) => [s.id, servicePointAt(derived, project.servicePoints[s.id])]));
   const runs = Object.fromEntries(sel.filter((s) => s.kind === 'run' && project.serviceRuns?.[s.id]).map((s) => [s.id, project.serviceRuns[s.id].points]));
-  if (!objIds.length && !nodeIds.size && !openings.length && !Object.keys(svc).length && !Object.keys(runs).length) return;
+  if (!objIds.length && !nodeIds.size && !openings.length && !callouts.length && !Object.keys(svc).length && !Object.keys(runs).length) return;
   ps().execute('Nudge', (d) => {
     moveServicePoints(d, derived, svc, { x: dx, y: dy });
     moveServiceRuns(d, runs, { x: dx, y: dy });
     translateObjects(d, objIds, { x: dx, y: dy });
+    if (callouts.length) {
+      translateCallouts(d, callouts, { x: dx, y: dy });
+      for (const id of callouts) {
+        const c = d.callouts?.[id];
+        if (c && (c.target.kind === 'object' || c.target.kind === 'room')) {
+          c.offset = { x: c.offset.x + dx, y: c.offset.y + dy };
+        }
+      }
+    }
     if (nodeIds.size) {
       translateNodes(d, [...nodeIds], { x: dx, y: dy });
       insertJunctions(
@@ -228,6 +247,7 @@ export function flipOpening(id: string, what: 'side' | 'hinge'): void {
 }
 
 export function toggleLockSelection(): void {
+  if (es().notesMode) return;
   const project = ps().project;
   const sel = es().selection;
   if (!project || !sel.length) return;
@@ -247,6 +267,10 @@ export function reverseWall(id: string): void {
 export function selectAll(): void {
   const project = ps().project;
   if (!project) return;
+  if (es().notesMode) {
+    es().setSelection(Object.keys(project.callouts ?? {}).map((id) => ({ kind: 'callout' as const, id })));
+    return;
+  }
   if (es().servicesMode) {
     es().setSelection(allServiceIds(project).map((id) => ({ kind: project.servicePoints?.[id] ? 'service' : 'run', id }) as SelItem));
     return;

@@ -146,6 +146,13 @@ export interface EditorState {
   runLevel: ServiceHost;
   runHot: boolean;
   runHeight: number;
+  /**
+   * Dedicated Comments & Notes mode (top-bar Comments icon, K): opens the Comments panel, shows all
+   * notes, and restricts viewport & keyboard operations to note-only actions (like Figma comment mode).
+   */
+  notesMode: boolean;
+  /** Note id currently hovered in the Comments panel (highlights the note and its linked object/room). */
+  hoveredNoteId: string | null;
 
   setTool(tool: ToolId): void;
   setSelection(sel: SelItem[]): void;
@@ -210,19 +217,29 @@ export const useEditorStore = create<EditorState>((set) => ({
   runLevel: 'wall',
   runHot: false,
   runHeight: 0.3,
+  notesMode: false,
+  hoveredNoteId: null,
 
-  setTool: (tool) => set({ tool, hint: null, snapLabel: null }),
-  setSelection: (selection) => set({ selection: expandSelection(selection) }),
+  setTool: (tool) =>
+    set((s) => {
+      if (s.notesMode && tool !== 'select' && tool !== 'pan' && tool !== 'callout') return s;
+      return { tool, hint: null, snapLabel: null };
+    }),
+  setSelection: (selection) =>
+    set((s) => ({
+      selection: s.notesMode ? selection.filter((x) => x.kind === 'callout') : expandSelection(selection),
+    })),
   toggleSelection: (item) =>
     set((s) => {
+      if (s.notesMode && item.kind !== 'callout') return s;
       // A grouped item toggles with its whole group.
-      const items = expandSelection([item]);
+      const items = s.notesMode ? [item] : expandSelection([item]);
       const exists = s.selection.some((x) => x.id === item.id);
       const ids = new Set(items.map((x) => x.id));
       return { selection: exists ? s.selection.filter((x) => !ids.has(x.id)) : [...s.selection, ...items.filter((x) => !s.selection.some((y) => y.id === x.id))] };
     }),
   clearSelection: () => set({ selection: [] }),
-  setHover: (hover) => set((s) => (s.hover?.id === hover?.id ? s : { hover })),
+  setHover: (hover) => set((s) => (s.hover?.id === hover?.id && s.hover?.kind === hover?.kind ? s : { hover })),
   // Picking another item, door or window to place drops a Duplicate's template.
   set: (partial) =>
     set({

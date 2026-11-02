@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Dialog } from '@/components/Overlays';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Button, LengthField, Select, Toggle } from '@/components/ui';
+import { Button, Select, Toggle } from '@/components/ui';
 import { CALLOUT_COLORS, type Callout, type CalloutTarget, type Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { calloutAnchor } from '@/domain/geometry/callouts';
@@ -13,48 +12,21 @@ import { getObjectAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { CALLOUT_PALETTE, safeHref } from './content';
-import { NOTE_LINE_WIDTH, arrowHead, endPx, labelColors, leaderDash, noteStyle } from './style';
-import { toast, usePrefsStore } from '@/state/uiStores';
-import { CalloutCard } from './CalloutCard';
 
 type TargetKind = CalloutTarget['kind'];
-
-const SIZES: [Callout['size'], string][] = [
-  ['s', 'Small'],
-  ['m', 'Medium'],
-  ['l', 'Large'],
-];
-
-/** [value, label] pairs as select options. */
-const opts = <T extends string>(list: [T, string][]) => list.map(([value, label]) => ({ value, label }));
-
-/** The leader and end mark as they will look (at screen size). */
-function LeaderPreview({ c }: { c: Callout }) {
-  const main = labelColors(c).main;
-  const a = { x: 24, y: 40 };
-  const b = { x: 216, y: 12 };
-  const dash = leaderDash(c);
-  const r = endPx(c);
-  const tri = arrowHead(a, b, r);
-  return (
-    <svg className="callout-leader-preview" viewBox="0 0 240 52" width="100%" height="52" aria-hidden="true">
-      {c.line !== 'none' && (
-        <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={main} strokeWidth={NOTE_LINE_WIDTH[c.lineWeight]} strokeDasharray={dash?.join(' ')} strokeLinecap="round" />
-      )}
-      {c.end === 'dot' && <circle cx={a.x} cy={a.y} r={r} fill={main} stroke="#fff" strokeWidth={1.4} />}
-      {c.end === 'ring' && <circle cx={a.x} cy={a.y} r={r} fill="#fff" stroke={main} strokeWidth={Math.max(1.6, r / 2.6)} />}
-      {c.end === 'arrow' && <path d={tri.map((p, i) => `${i ? 'L' : 'M'}${p.x} ${p.y}`).join('') + 'Z'} fill={main} stroke="#fff" strokeWidth={0.8} strokeLinejoin="round" />}
-    </svg>
-  );
-}
 
 /** The targets a callout can switch between from where it is now: the spot, the item and room under it, its area. */
 function targetChoices(project: Project, c: Callout): { kind: TargetKind; label: string; target: CalloutTarget }[] {
   const derived = derivePlan(project);
   const a = calloutAnchor(project, derived, c.target);
-  if (!a) return [];
+  const out: { kind: TargetKind; label: string; target: CalloutTarget }[] = [
+    { kind: 'general', label: 'General comment', target: { kind: 'general' } },
+  ];
+  if (!a) {
+    out.push({ kind: 'point', label: 'Spot', target: { kind: 'point', x: 0, y: 0, z: 0 } });
+    return out;
+  }
   const p = { x: a.x, y: a.y };
-  const out: { kind: TargetKind; label: string; target: CalloutTarget }[] = [];
   out.push({ kind: 'point', label: 'Spot', target: c.target.kind === 'point' ? c.target : { kind: 'point', x: a.x, y: a.y, z: a.z } });
   const item =
     c.target.kind === 'object'
@@ -76,21 +48,17 @@ function targetChoices(project: Project, c: Callout): { kind: TargetKind; label:
 
 /**
  * The callout pop-up: what it points to, its title and note (with a small formatting toolbar and
- * links), the target's facts, colour, 3D float height and visibility. Changes apply on Save as one
- * undo step; Cancel on a callout that was just placed removes it again.
+ * links), the target's facts, and colour. Changes apply on Save as one undo step; Cancel on a
+ * callout that was just placed removes it again.
  */
 export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: boolean; onClose: () => void }) {
   const project = useProjectStore((s) => s.project);
   const callout = project?.callouts?.[id];
   const [draft, setDraft] = useState<Callout | null>(() => (callout ? structuredClone(callout) : null));
   const [link, setLink] = useState<{ text: string; url: string } | null>(null);
-  // Style, 3D height and visibility stay folded away until asked for.
-  const [more, setMore] = useState(false);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const choices = useMemo(() => (project && callout ? targetChoices(project, callout) : []), [project, callout]);
-  const derived = useMemo(() => (project ? derivePlan(project) : null), [project]);
   if (!project || !callout || !draft) return null;
-  const s = project.settings;
   const set = (patch: Partial<Callout>) => setDraft({ ...draft, ...patch });
 
   const close = (saved: boolean) => {
@@ -159,13 +127,11 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
   };
 
   const kind = draft.target.kind;
-  const preview: Project = { ...project, callouts: { ...project.callouts, [id]: draft } };
 
   return (
     <Dialog
       title={isNew ? 'New note' : 'Edit note'}
       onClose={() => close(false)}
-      wide
       testId="callout-dialog"
       footer={
         <>
@@ -204,7 +170,7 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
               value={draft.title}
               maxLength={120}
               data-autofocus
-              placeholder={draft.showInfo && kind !== 'point' ? 'Leave empty to use the item or room name' : 'Optional'}
+              placeholder={draft.showInfo && kind !== 'point' && kind !== 'general' ? 'Leave empty to use the item or room name' : 'Optional'}
               onChange={(e) => set({ title: e.target.value })}
               data-testid="callout-title"
             />
@@ -265,7 +231,7 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
               data-testid="callout-note"
             />
           </div>
-          {kind !== 'point' && (
+          {kind !== 'point' && kind !== 'general' && (
             <Toggle
               label={kind === 'object' ? 'Show the item’s name, maker, size and finish' : kind === 'room' ? 'Show the room’s name and area' : 'Show the area’s size'}
               checked={draft.showInfo}
@@ -287,62 +253,6 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
               ))}
             </div>
           </div>
-          <button type="button" className="callout-more-toggle" aria-expanded={more} onClick={() => setMore(!more)} data-testid="note-more">
-            {more ? <ChevronDown size={14} /> : <ChevronRight size={14} />} More options
-            {!more && <span className="callout-more-hint">style, line, 3D height, visibility</span>}
-          </button>
-          {more && (
-            <div className="callout-more" data-testid="note-style">
-              <div className="callout-more-grid">
-                <Select label="Label" value={draft.box} onChange={(box) => set({ box })} options={opts([['card', 'Card'], ['solid', 'Filled'], ['outline', 'Outline'], ['text', 'Text only']])} />
-                <Select label="Text size" value={draft.size} onChange={(size) => set({ size })} options={opts(SIZES)} />
-                <Select label="Line" value={draft.line} onChange={(line) => set({ line })} options={opts([['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted'], ['none', 'None']])} />
-                <Select
-                  label="Line weight"
-                  value={draft.lineWeight}
-                  disabled={draft.line === 'none'}
-                  onChange={(lineWeight) => set({ lineWeight })}
-                  options={opts([['thin', 'Thin'], ['regular', 'Regular'], ['bold', 'Bold']])}
-                />
-                <Select label="End mark" value={draft.end} onChange={(end) => set({ end })} options={opts([['dot', 'Dot'], ['ring', 'Ring'], ['arrow', 'Arrow'], ['none', 'None']])} />
-                <Select label="End size" value={draft.endSize} disabled={draft.end === 'none'} onChange={(endSize) => set({ endSize })} options={opts(SIZES)} />
-                <LengthField label="Float height in 3D" value={draft.lift} unit={s.units} precision={s.precision} min={0} max={5} onCommit={(lift) => set({ lift })} />
-                {draft.target.kind === 'point' && (
-                  <LengthField
-                    label="Spot height"
-                    value={draft.target.z}
-                    unit={s.units}
-                    precision={s.precision}
-                    min={0}
-                    max={20}
-                    onCommit={(z) => draft.target.kind === 'point' && set({ target: { ...draft.target, z } })}
-                  />
-                )}
-              </div>
-              {kind !== 'point' && <Toggle label="Highlight what it points to" checked={draft.highlight} onChange={(highlight) => set({ highlight })} />}
-              <Toggle label="Visible" checked={!draft.hidden} onChange={(v) => set({ hidden: !v })} />
-              <div className="btn-row">
-                <Button
-                  size="sm"
-                  title="New notes start with this style"
-                  onClick={() => {
-                    usePrefsStore.getState().setNoteStyle(noteStyle(draft));
-                    toast.success('Default note style saved', 'New notes start with this style.');
-                  }}
-                >
-                  Use this style for new notes
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="callout-side">
-          <div className="callout-preview-label">Preview</div>
-          <div className="callout-preview">
-            <CalloutCard project={preview} derived={derived} callout={draft} />
-            <LeaderPreview c={draft} />
-          </div>
-          <div className="callout-syntax">**bold** · *italic* · [text](https://…) · lines starting “- ” or “1. ” make lists</div>
         </div>
       </div>
     </Dialog>

@@ -628,7 +628,7 @@ export function Segmented<T extends string>({
   );
 }
 
-export function Toggle({ label, checked, onChange, hint }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string }) {
+export function Toggle({ label, checked, onChange, hint, testId }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string; testId?: string }) {
   const id = useId();
   return (
     <div className="toggle-row">
@@ -640,6 +640,7 @@ export function Toggle({ label, checked, onChange, hint }: { label: string; chec
         id={id}
         type="button"
         role="switch"
+        data-testid={testId}
         aria-checked={checked}
         className={`switch${checked ? ' on' : ''}`}
         onClick={() => onChange(!checked)}

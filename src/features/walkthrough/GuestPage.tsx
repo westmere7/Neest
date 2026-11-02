@@ -93,6 +93,7 @@ function useFullscreen(): { can: boolean; on: boolean; toggle: () => void } {
 /** What guests have switched on (starts from the project's guest settings). */
 interface GuestShow {
   cutaway: boolean;
+  cutawayExternalOnly: boolean;
   ceilings: boolean;
   notes: boolean;
   rooms: boolean;
@@ -103,6 +104,7 @@ interface GuestShow {
 
 const initialShow = (p: Project): GuestShow => ({
   cutaway: p.guest.wallDisplay === 'cutaway',
+  cutawayExternalOnly: p.guest.cutawayExternalOnly,
   ceilings: p.guest.ceilings,
   notes: p.guest.notes === 'shown',
   rooms: p.guest.roomLabels,
@@ -378,6 +380,7 @@ export default function GuestPage({ projectId }: { projectId: string }) {
           options={{
             wallDisplay: cut ? 'cutaway' : 'full',
             cutawayHeight: g.cutawayHeight,
+            cutawayExternalOnly: show.cutawayExternalOnly,
             showCeilings: show.ceilings && !cut,
             showRoomLabels: show.rooms && !walk,
             showDimensions: false,
@@ -463,6 +466,16 @@ export default function GuestPage({ projectId }: { projectId: string }) {
             <label className="guest-check">
               <input type="checkbox" checked={show.ceilings} onChange={(e) => set({ ceilings: e.target.checked })} /> Ceilings
             </label>
+            {show.cutaway && (
+              <label className="guest-check">
+                <input
+                  type="checkbox"
+                  checked={show.cutawayExternalOnly}
+                  onChange={(e) => set({ cutawayExternalOnly: e.target.checked })}
+                />{' '}
+                External walls only
+              </label>
+            )}
             {g.notes !== 'off' && Object.keys(source.callouts).length > 0 && (
               <label className="guest-check">
                 <input type="checkbox" checked={show.notes} onChange={(e) => set({ notes: e.target.checked })} /> Notes

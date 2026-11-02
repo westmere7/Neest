@@ -15,6 +15,10 @@ export interface PointerInfo {
   alt: boolean;
   mod: boolean;
   pointerType: string;
+  /** In 3D: object id hit directly by the 3D raycaster (null when the 3D ray hit no object; undefined in 2D). */
+  pickedObjectId?: string | null;
+  /** In 3D: height (metres) of the 3D surface hit by the raycaster. */
+  worldZ?: number;
 }
 
 export interface GhostObject {

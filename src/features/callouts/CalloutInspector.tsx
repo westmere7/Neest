@@ -12,6 +12,7 @@ export function describeCalloutTarget(project: Project, id: string): string {
   const c = project.callouts?.[id];
   if (!c) return '';
   const t = c.target;
+  if (t.kind === 'general') return 'General comment';
   if (t.kind === 'object') {
     const o = project.objects[t.objectId];
     return o ? `Points to ${o.name || getObjectAsset(project, o)?.name || 'an item'}` : 'Points to an item';

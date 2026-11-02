@@ -40,6 +40,8 @@ import {
 } from 'lucide-react';
 import { ServicesPanel } from '@/features/services/ServicesPanel';
 import { toggleServicesMode } from '@/features/services/actions';
+import { NotesPanel } from '@/features/callouts/NotesPanel';
+import { setNotesMode, toggleNotesMode } from '@/features/callouts/actions';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type PlanMode, type ToolId, type Workspace } from '@/state/editorStore';
 import { useDialogStore } from '@/state/uiStores';
@@ -73,6 +75,7 @@ export function EditorShell() {
   const libraryWidth = useEditorStore((s) => s.libraryWidth);
   const layersOpen = useEditorStore((s) => s.layersPanelOpen);
   const servicesMode = useEditorStore((s) => s.servicesMode);
+  const notesMode = useEditorStore((s) => s.notesMode);
   const isMobile = useIsMobile();
   useEditorShortcuts(isMobile);
   useDropAsset();
@@ -108,10 +111,10 @@ export function EditorShell() {
 
   return (
     <div
-      className={`editor ws-${workspace}${chromeHidden ? ' chrome-hidden' : ''}${isMobile ? ' is-mobile' : ''}${servicesMode ? ' services-on' : ''}`}
+      className={`editor ws-${workspace}${chromeHidden ? ' chrome-hidden' : ''}${isMobile ? ' is-mobile' : ''}${servicesMode ? ' services-on' : ''}${notesMode ? ' notes-on' : ''}`}
       style={
         {
-          '--lib-offset': !isMobile && workspace === '3d' && (servicesMode || libraryOpen) ? `${servicesMode ? 308 : libraryWidth + 8}px` : '0px',
+          '--lib-offset': !isMobile && workspace === '3d' && !notesMode && (servicesMode || libraryOpen) ? `${servicesMode ? 308 : libraryWidth + 8}px` : '0px',
           '--rail-offset': !isMobile && workspace === '3d' ? 'calc(var(--rail-w) + 18px)' : '0px',
         } as React.CSSProperties
       }
@@ -134,11 +137,17 @@ export function EditorShell() {
         <>
           <TopBar isMobile={isMobile} />
           {!isMobile && (showPlan || workspace === '3d') && <ToolRail in3d={workspace === '3d'} />}
-          {servicesMode && !isMobile && workspace !== 'walk' ? <ServicesPanel /> : libraryOpen && workspace !== 'walk' && <LibraryPanel isMobile={isMobile} />}
-          {/* In the walkthrough it only shows the Project panel. */}
-          <Inspector isMobile={isMobile} />
-          {workspace !== 'walk' && !isMobile && <MaterialPanel />}
-          {layersOpen && !isMobile && <LayersPanel />}
+          {!notesMode && (servicesMode && !isMobile && workspace !== 'walk' ? <ServicesPanel /> : libraryOpen && workspace !== 'walk' && <LibraryPanel isMobile={isMobile} />)}
+          {/* In Comments mode, NotesPanel replaces the right-side Inspector & panels. */}
+          {notesMode && !isMobile && workspace !== 'walk' ? (
+            <NotesPanel />
+          ) : (
+            <>
+              <Inspector isMobile={isMobile} />
+              {workspace !== 'walk' && !isMobile && <MaterialPanel />}
+              {layersOpen && !isMobile && <LayersPanel />}
+            </>
+          )}
           {showPlan && <CanvasControls />}
           {!isMobile && <StatusBar />}
           {isMobile && <MobileBar />}
@@ -270,6 +279,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
   const projectId = useProjectStore((s) => s.project!.id);
   const projectShown = useEditorStore(projectPanelShown);
   const layersOpen = useEditorStore((s) => s.layersPanelOpen);
+  const notesMode = useEditorStore((s) => s.notesMode);
   const open = useDialogStore((s) => s.open);
   const current = workspace === 'plan' ? `plan:${planMode}` : workspace;
   const setView = (v: string) => {
@@ -331,10 +341,11 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
           {!isMobile && (
             <IconButton
               label="Project overview"
-              active={projectShown}
+              active={projectShown && !notesMode}
               onClick={() => {
+                if (notesMode) setNotesMode(false);
                 const ed = useEditorStore.getState();
-                if (projectShown) return ed.set({ projectPanelOpen: false });
+                if (projectShown && !notesMode) return ed.set({ projectPanelOpen: false });
                 // Bring it up even when a selection or a drawing tool's options hold its place.
                 ed.set({ projectPanelOpen: true, selection: [] });
                 if (ed.workspace !== 'walk' && !projectPanelShown(useEditorStore.getState()))
@@ -349,11 +360,25 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
             <IconButton
               label="Item layers"
               shortcut="Shift+L"
-              active={layersOpen}
-              onClick={() => useEditorStore.getState().set({ layersPanelOpen: !layersOpen })}
+              active={layersOpen && !notesMode}
+              onClick={() => {
+                if (notesMode) setNotesMode(false);
+                useEditorStore.getState().set({ layersPanelOpen: !layersOpen || notesMode });
+              }}
               data-testid="toggle-layers-panel"
             >
               <Layers size={17} />
+            </IconButton>
+          )}
+          {!isMobile && (
+            <IconButton
+              label="Comments & notes"
+              shortcut="K"
+              active={notesMode}
+              onClick={toggleNotesMode}
+              data-testid="toggle-notes-mode"
+            >
+              <MessageSquareText size={17} />
             </IconButton>
           )}
           {!isMobile && (
@@ -416,11 +441,12 @@ function ToolRail({ in3d }: { in3d: boolean }) {
   const openingKind = useEditorStore((s) => s.openingKind);
   const viewPanelOpen = useEditorStore((s) => s.viewPanelOpen);
   const servicesMode = useEditorStore((s) => s.servicesMode);
+  const notesMode = useEditorStore((s) => s.notesMode);
   const set = useEditorStore((s) => s.set);
 
-  const inFurnitureLib = libraryOpen && (libraryTab === 'furniture' || libraryTab === 'materials');
+  const inFurnitureLib = !notesMode && libraryOpen && (libraryTab === 'furniture' || libraryTab === 'materials');
   const inBuildGroup = (g: 'walls' | 'doors' | 'windows') =>
-    libraryOpen && libraryTab === 'build' && buildGroup === g;
+    !notesMode && libraryOpen && libraryTab === 'build' && buildGroup === g;
 
   return (
     <nav className="tool-rail" aria-label="Tools" data-testid="tool-rail">
@@ -429,6 +455,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Library"
           active={inFurnitureLib}
+          disabled={notesMode}
           tooltipSide="right"
           className="library-hero-btn"
           onClick={() => {
@@ -464,6 +491,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Walls"
           shortcut="W"
+          disabled={notesMode}
           active={inBuildGroup('walls') || tool === 'wall' || tool === 'curve' || tool === 'room'}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -484,6 +512,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Doors"
           shortcut="D"
+          disabled={notesMode}
           active={inBuildGroup('doors') || (tool === 'opening' && !openingKind.startsWith('window'))}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -503,6 +532,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         </IconButton>
         <IconButton
           label="Windows"
+          disabled={notesMode}
           active={inBuildGroup('windows') || (tool === 'opening' && openingKind.startsWith('window'))}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -524,6 +554,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Split wall"
           shortcut="S"
+          disabled={notesMode}
           active={tool === 'split'}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -536,6 +567,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Extend / trim / join walls"
           shortcut="E"
+          disabled={notesMode}
           active={tool === 'extend'}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -548,6 +580,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Measure"
           shortcut="M"
+          disabled={notesMode}
           active={tool === 'measure'}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -558,12 +591,15 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           <span className="rail-btn-label">Measure</span>
         </IconButton>
         <IconButton
-          label="Note"
+          label="Comments & notes"
           shortcut="K"
-          active={tool === 'callout'}
+          active={notesMode || tool === 'callout'}
           tooltipSide="right"
           className="rail-labeled-btn"
-          onClick={() => setTool('callout')}
+          onClick={() => {
+            if (!notesMode) setNotesMode(true);
+            else setTool(tool === 'callout' ? 'select' : 'callout');
+          }}
           data-testid="tool-callout"
         >
           <MessageSquareText size={18} />
@@ -576,6 +612,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Connections (power & plumbing)"
           shortcut="U"
+          disabled={notesMode}
           active={servicesMode}
           tooltipSide="right"
           className="rail-labeled-btn rail-services-btn"

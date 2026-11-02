@@ -1,6 +1,7 @@
 import type { Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { pointAt } from '@/domain/geometry/wallPath';
+import { calloutAnchor, calloutLabelPoint } from '@/domain/geometry/callouts';
 import type { SelItem } from '@/state/editorStore';
 
 /** Plan bounds (x, y) and height range (z) of what is selected. */
@@ -57,6 +58,19 @@ export function selectionBounds(project: Project, derived: DerivedPlan, selectio
     } else if (s.kind === 'node') {
       const n = project.nodes[s.id];
       if (n) add(n.x, n.y, 0, 0);
+    } else if (s.kind === 'callout') {
+      const c = project.callouts?.[s.id];
+      if (!c) continue;
+      const a = calloutAnchor(project, derived, c.target);
+      if (!a) continue;
+      if (a.outline) {
+        for (const p of a.outline) add(p.x, p.y, 0, a.z);
+      } else {
+        add(a.x - 0.5, a.y - 0.5, a.z, a.z + Math.max(0.5, c.lift));
+        add(a.x + 0.5, a.y + 0.5, a.z, a.z + Math.max(0.5, c.lift));
+      }
+      const lp = calloutLabelPoint(a, c);
+      add(lp.x, lp.y, a.z, a.z + Math.max(0.5, c.lift));
     }
   }
   return Number.isFinite(b.minX) ? b : null;

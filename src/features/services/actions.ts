@@ -24,7 +24,15 @@ export function setServicesMode(on: boolean): void {
   const tool = on ? (['select', 'pan', 'service', 'run'].includes(ed.tool) ? ed.tool : 'select') : SERVICE_TOOLS.has(ed.tool) ? 'select' : ed.tool;
   // Keep only what can be picked in the new mode (items that need services stay selected).
   const keep = (s: SelItem) => (on ? SERVICE_KINDS.has(s.kind) || s.kind === 'object' : !SERVICE_KINDS.has(s.kind));
-  ed.set({ servicesMode: on, tool, selection: ed.selection.filter(keep), hover: null, hint: null, snapLabel: null });
+  ed.set({
+    servicesMode: on,
+    ...(on ? { notesMode: false, hoveredNoteId: null } : {}),
+    tool,
+    selection: ed.selection.filter(keep),
+    hover: null,
+    hint: null,
+    snapLabel: null,
+  });
   // The workspace may be the walkthrough: Services mode is for the plan and 3D views.
   if (on && ed.workspace === 'walk') ed.set({ workspace: '3d' });
 }

@@ -2,13 +2,15 @@ import { isDividerWall } from '@/domain/model/schema';
 import type { PlacedObject, Vec2 } from '@/domain/model/schema';
 import { clampOpenings, insertJunctions, joinTangent, setNodePositions, settleNode, updateWalls } from '@/domain/commands/walls';
 import { clampOpening, normalizeRotation, updateObjects, updateOpening } from '@/domain/commands/entities';
+import { calloutAnchor, setCalloutAnchorPoint } from '@/domain/geometry/callouts';
 import { projectOnPath } from '@/domain/geometry/wallPath';
 import { add, angleOf, dist, dot, leftNormal, rotate, round, scale, sub } from '@/domain/geometry/vec';
 import { formatAngle, formatLength } from '@/domain/model/units';
 import { getAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type SelItem } from '@/state/editorStore';
-import { hitHandle, hitTest, marqueeSelect, selectionHandles, type Handle } from '../hitTest';
+import { hitCalloutAnchor } from '@/features/callouts/layout';
+import { hitHandle, hitTest, marqueeCallouts, marqueeSelect, selectionHandles, type Handle } from '../hitTest';
 import { WALL_HUG_MOVE, hugWall } from './placeTools';
 import type { PointerInfo, Tool, ToolEnv, ToolOverlay } from './types';
 import { movedElevation } from './surfaces';
@@ -48,6 +50,8 @@ type Gesture =
   | { type: 'label'; roomId: string; start: Vec2; base: Vec2 }
   /** Dragging a callout's label: its offset from the anchor changes. */
   | { type: 'callout'; id: string; start: Vec2; base: Vec2 }
+  /** Dragging the spot (anchor point) a callout points to. */
+  | { type: 'callout-anchor'; id: string; start: Vec2; base: Vec2 }
   /** Dragging one bend (or end) of a services run. */
   | { type: 'run-vertex'; runId: string; index: number };
 
@@ -78,9 +82,15 @@ export function createSelectTool(): Tool {
   const store = () => useProjectStore.getState();
   const editor = () => useEditorStore.getState();
 
-  /** What is under the pointer: in Services mode only points, runs and the items that need services. */
+  /** What is under the pointer: in Comments mode only notes; in Services mode only points, runs and the items that need services. */
   const pick = (env: ToolEnv, p: Vec2): SelItem | null => {
     const ed = editor();
+    if (ed.notesMode) {
+      const hit = hitTest(env.project(), env.derived(), p, env.tol(), { callouts: true, px: env.px() });
+      if (hit) return hit;
+      const anchor = hitCalloutAnchor(env.project(), env.derived(), p, env.px(), env.tol());
+      return anchor ? { kind: 'callout', id: anchor.id } : null;
+    }
     return ed.servicesMode ? hitServices(env.project(), env.derived(), p, env.px(), ed.servicesShown) : hitTest(env.project(), env.derived(), p, env.tol());
   };
 
@@ -187,6 +197,12 @@ export function createSelectTool(): Tool {
       editor().setHover(null);
       return;
     }
+    const anchorHit = hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
+    if (anchorHit) {
+      env.setCursor('move');
+      editor().setHover({ kind: 'callout', id: anchorHit.id });
+      return;
+    }
     const hit = pick(env, e.world);
     editor().setHover(hit && hit.kind !== 'room' ? hit : null);
     env.setCursor(hit && hit.kind !== 'room' ? 'pointer' : 'default');
@@ -237,8 +253,25 @@ export function createSelectTool(): Tool {
           const r = project.rooms[h.roomId];
           store().begin('Move room label');
           gesture = { type: 'label', roomId: h.roomId, start: e.world, base: { ...r.labelOffset } };
+        } else if (h.type === 'callout-anchor') {
+          const c = project.callouts?.[h.calloutId];
+          const a = c ? calloutAnchor(project, derived, c.target) : null;
+          if (c && a && !project.layers.callouts?.locked) {
+            store().begin('Move note spot');
+            gesture = { type: 'callout-anchor', id: c.id, start: e.world, base: { x: a.x, y: a.y } };
+          }
         }
         return;
+      }
+      const anchorHit = hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
+      if (anchorHit && !project.layers.callouts?.locked) {
+        const a = calloutAnchor(project, derived, anchorHit.target);
+        if (a) {
+          editor().setSelection([{ kind: 'callout', id: anchorHit.id }]);
+          store().begin('Move note spot');
+          gesture = { type: 'callout-anchor', id: anchorHit.id, start: e.world, base: { x: a.x, y: a.y } };
+          return;
+        }
       }
       const hit = pick(env, e.world);
       const wasSelected = !!hit && sel.some((s) => s.id === hit.id);
@@ -547,6 +580,16 @@ export function createSelectTool(): Tool {
           });
           return;
         }
+        case 'callout-anchor': {
+          const nextPos = add(gesture.base, sub(e.world, gesture.start));
+          const id = gesture.id;
+          const derived = env.derived();
+          store().preview((d) => {
+            const c = d.callouts?.[id];
+            if (c) setCalloutAnchorPoint(d, derived, c, nextPos, true);
+          });
+          return;
+        }
       }
     },
 
@@ -562,14 +605,18 @@ export function createSelectTool(): Tool {
             if (g.shift) editor().toggleSelection(g.hit);
             else editor().setSelection([g.hit]);
           }
-          if (!g.hit && !editor().servicesMode) {
+          if (!g.hit && !editor().servicesMode && !editor().notesMode) {
             const room = hitTest(project, env.derived(), e.world, env.tol(), { rooms: true });
             if (room) editor().setSelection(g.shift ? [...editor().selection, room] : [room]);
           }
           break;
         }
         case 'marquee': {
-          const items = editor().servicesMode ? marqueeServices(project, env.derived(), g.a, g.b, editor().servicesShown) : marqueeSelect(project, env.derived(), g.a, g.b);
+          const items = editor().notesMode
+            ? marqueeCallouts(project, env.derived(), g.a, g.b, env.px())
+            : editor().servicesMode
+              ? marqueeServices(project, env.derived(), g.a, g.b, editor().servicesShown)
+              : marqueeSelect(project, env.derived(), g.a, g.b);
           editor().setSelection(g.additive ? [...editor().selection, ...items.filter((i) => !editor().selection.some((s) => s.id === i.id))] : items);
           break;
         }
@@ -601,6 +648,7 @@ export function createSelectTool(): Tool {
         case 'resize':
         case 'label':
         case 'callout':
+        case 'callout-anchor':
         case 'run-vertex':
         case 'slide-opening':
           store().commit();
@@ -631,12 +679,13 @@ export function createSelectTool(): Tool {
         return;
       }
       // A callout: open its editor. An item: select it and close in on it. A room: select it and edit its name.
-      const call = hitTest(env.project(), env.derived(), e.world, env.tol(), { callouts: true });
+      const call = hitTest(env.project(), env.derived(), e.world, env.tol(), { callouts: true, px: env.px() });
       if (call) {
         editor().setSelection([call]);
         useDialogStore.getState().open('callout', { id: call.id });
         return;
       }
+      if (editor().notesMode) return;
       const item = hitTest(env.project(), env.derived(), e.world, env.tol(), { rooms: false, walls: false, objects: true, openings: true });
       if (item) {
         editor().setSelection([item]);
@@ -659,4 +708,3 @@ export function createSelectTool(): Tool {
     },
   };
 }
-

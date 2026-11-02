@@ -5,6 +5,7 @@ import { Html } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import type { Vec2 } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
+import { calloutAnchor, setCalloutAnchorPoint } from '@/domain/geometry/callouts';
 import { snapPoint, type SnapContext } from '@/domain/geometry/snapping';
 import { dist } from '@/domain/geometry/vec';
 import { axisLockLabel, createAxisLock, snapOnAxis, type LockAxis } from '@/domain/geometry/axisLock';
@@ -156,7 +157,22 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
       const { camera, scene, size } = get();
       raycaster.setFromCamera(ndc, camera);
       let hit: THREE.Vector3 | null = null;
-      if (tool === 'opening' || tool === 'split' || tool === 'extend') {
+      let pickedObjectId: string | null | undefined = undefined;
+      if (tool === 'callout') {
+        pickedObjectId = null;
+        const targets = ['objects', 'walls', 'openings', 'rooms']
+          .map((n) => scene.getObjectByName(n))
+          .filter((x): x is THREE.Object3D => !!x);
+        const hits = targets.length ? raycaster.intersectObjects(targets, true) : [];
+        if (hits.length) {
+          hit = hits[0].point.clone();
+          let cur: THREE.Object3D | null = hits[0].object;
+          while (cur && !cur.userData?.kind) cur = cur.parent;
+          if (cur?.userData?.kind === 'object' && typeof cur.userData.id === 'string') {
+            pickedObjectId = cur.userData.id;
+          }
+        }
+      } else if (tool === 'opening' || tool === 'split' || tool === 'extend') {
         const walls = scene.getObjectByName('walls');
         const hits = walls ? raycaster.intersectObject(walls, true) : [];
         if (hits.length) hit = hits[0].point.clone();
@@ -175,10 +191,17 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
         alt: e.altKey,
         mod: e.ctrlKey || e.metaKey,
         pointerType: 'pointerType' in e ? (e as PointerEvent).pointerType : 'mouse',
+        ...(pickedObjectId !== undefined ? { pickedObjectId, worldZ: Math.max(0, Math.round(hit.y * 100) / 100) } : {}),
       };
     };
     const onDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
+      const rect = el.getBoundingClientRect();
+      const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+      const { camera, scene } = get();
+      raycaster.setFromCamera(ndc, camera);
+      const gizmo = scene.getObjectByName('neest-gizmo');
+      if (gizmo && raycaster.intersectObject(gizmo, true).length) return;
       const i = toInfo(e);
       if (i) active.onPointerDown?.(i, env);
     };
@@ -794,6 +817,129 @@ function ServicePointGizmo({ pointId, controlsRef }: { pointId: string; controls
   );
 }
 
+/**
+ * 3D gizmo for the spot (anchor point) a selected comment points to. Provides X, Z and Y (height)
+ * arrows so the spot can be moved anywhere on surfaces or in midair.
+ */
+function CalloutAnchorGizmo({ calloutId, controlsRef }: { calloutId: string; controlsRef: React.MutableRefObject<OrbitControlsImpl | null> }) {
+  const project = useProjectStore((s) => s.project!);
+  const gl = useThree((s) => s.gl);
+  const get = useThree((s) => s.get);
+  const [hot, setHot] = useState<string | null>(null);
+  const [readout, setReadout] = useState<string | null>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const centerRef = useRef(new THREE.Vector3());
+  const c = project.callouts?.[calloutId];
+  const derived = useMemo(() => derivePlan(project), [project]);
+  const anchor = c ? calloutAnchor(project, derived, c.target) : null;
+  if (anchor) centerRef.current.set(anchor.x, anchor.z, anchor.y);
+  useFrame(() => {
+    const { camera, size } = get();
+    groupRef.current?.scale.setScalar(worldPerPixel(camera, centerRef.current, size.height) * 56);
+  });
+  if (!c || !anchor || project.layers.callouts?.locked) return null;
+  const units = project.settings;
+  const X = new THREE.Vector3(1, 0, 0);
+  const Y = new THREE.Vector3(0, 1, 0);
+  const Z = new THREE.Vector3(0, 0, 1);
+  const axes: { key: string; group: 'x' | 'y' | 'z'; dir: THREE.Vector3; axis: THREE.Vector3; color: string }[] = [
+    { key: 'x+', group: 'x', dir: X, axis: X, color: AXIS_COLORS.x },
+    { key: 'x-', group: 'x', dir: X.clone().negate(), axis: X, color: AXIS_COLORS.x },
+    { key: 'z+', group: 'z', dir: Z, axis: Z, color: AXIS_COLORS.z },
+    { key: 'z-', group: 'z', dir: Z.clone().negate(), axis: Z, color: AXIS_COLORS.z },
+    { key: 'y+', group: 'y', dir: Y, axis: Y, color: AXIS_COLORS.y },
+    { key: 'y-', group: 'y', dir: Y.clone().negate(), axis: Y, color: AXIS_COLORS.y },
+  ];
+  const hotGroup = axes.find((a) => a.key === hot)?.group;
+
+  const startDrag = (e: ThreeEvent<PointerEvent>, axis: THREE.Vector3, group: 'x' | 'y' | 'z') => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    const origin = centerRef.current.clone();
+    const t0 = closestOnLine(e.ray.origin, e.ray.direction, origin, axis);
+    if (t0 === null) return;
+    const a0 = { x: anchor.x, y: anchor.y, z: anchor.z };
+    const raycaster = new THREE.Raycaster();
+    const el = gl.domElement;
+    if (controlsRef.current) controlsRef.current.enabled = false;
+    useProjectStore.getState().begin('Move note spot');
+    const move = (ev: PointerEvent) => {
+      const rect = el.getBoundingClientRect();
+      raycaster.setFromCamera(new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1), get().camera);
+      const t = closestOnLine(raycaster.ray.origin, raycaster.ray.direction, origin, axis);
+      if (t === null) return;
+      const snap = !ev.altKey && useEditorStore.getState().snap.grid;
+      const step = group === 'y' ? 0.05 : units.gridSize / 2;
+      let along = t - t0;
+      if (snap) along = Math.round(along / step) * step;
+      if (group === 'y') {
+        const nz = Math.max(0, a0.z + along);
+        setReadout(`Height ${formatLength(nz, units.units, units.precision)}`);
+        useProjectStore.getState().preview((d) => {
+          const cur = d.callouts?.[calloutId];
+          if (cur) setCalloutAnchorPoint(d, derived, cur, { x: a0.x, y: a0.y, z: nz }, true);
+        });
+      } else {
+        const nx = a0.x + axis.x * along;
+        const ny = a0.y + axis.z * along;
+        setReadout(`${group === 'x' ? 'Δx' : 'Δz'} ${along >= 0 ? '+' : '−'}${formatLength(Math.abs(along), units.units, units.precision)}`);
+        useProjectStore.getState().preview((d) => {
+          const cur = d.callouts?.[calloutId];
+          if (cur) setCalloutAnchorPoint(d, derived, cur, { x: nx, y: ny, z: a0.z }, true);
+        });
+      }
+    };
+    const done = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', done);
+      useProjectStore.getState().commit();
+      setHot(null);
+      setReadout(null);
+      if (controlsRef.current) controlsRef.current.enabled = true;
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', done);
+  };
+
+  const quat = (dir: THREE.Vector3) => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+  return (
+    <group name="neest-gizmo" userData={{ helper: true }}>
+      <group ref={groupRef} position={[anchor.x, anchor.z, anchor.y]}>
+        {axes.map((a) => {
+          const isHot = hotGroup === a.group;
+          return (
+            <group
+              key={a.key}
+              position={a.dir.clone().multiplyScalar(0.28).toArray()}
+              quaternion={quat(a.dir)}
+              onPointerDown={(e) => {
+                setHot(a.key);
+                startDrag(e, a.axis, a.group);
+              }}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                setHot((h) => h ?? a.key);
+                gl.domElement.style.cursor = a.group === 'y' ? 'ns-resize' : 'move';
+              }}
+              onPointerOut={() => {
+                setHot((h) => (h === a.key ? null : h));
+                gl.domElement.style.cursor = '';
+              }}
+            >
+              <ArrowShape color={a.color} hot={isHot} />
+            </group>
+          );
+        })}
+      </group>
+      {readout && (
+        <Html position={[anchor.x, anchor.z + 0.35, anchor.y]} center style={{ pointerEvents: 'none' }}>
+          <div className="label3d accent">{readout}</div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
 type ResizeAxis = 'rx' | 'rz' | 'ry';
 /** The item size an arrow's resize tab changes: X and Z take whichever of width/depth lines up with them. */
 function resizeKey(rotation: number, m: ResizeAxis): 'width' | 'depth' | 'height' {
@@ -924,6 +1070,8 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
   if (openingSel) return <OpeningGizmo openingId={openingSel.id} controlsRef={controlsRef} />;
   if (selection.length === 1 && selection[0].kind === 'service' && project.servicePoints?.[selection[0].id])
     return <ServicePointGizmo pointId={selection[0].id} controlsRef={controlsRef} />;
+  if (selection.length === 1 && selection[0].kind === 'callout' && project.callouts?.[selection[0].id])
+    return <CalloutAnchorGizmo calloutId={selection[0].id} controlsRef={controlsRef} />;
   if (!n || locked) return null;
   const single = n === 1 ? objs[0] : null;
   // The ring wraps the item, or the whole selection (every item's far corner) for a group.

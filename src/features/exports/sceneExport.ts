@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Project } from '@/domain/model/schema';
-import { derivePlan } from '@/domain/geometry/derive';
+import { derivePlan, externalWallIds, isHubExternal } from '@/domain/geometry/derive';
 import { getAsset } from '@/data/assets/registry';
 import {
   buildCeiling,
@@ -55,6 +55,7 @@ function roleGroup(name: string, role: SceneRole): THREE.Group {
  */
 export async function buildExportScene(project: Project, o: SceneExportOptions): Promise<{ root: THREE.Group; registry: MaterialRegistry }> {
   const derived = derivePlan(project);
+  const extIds = externalWallIds(derived);
   const registry = new MaterialRegistry();
   registry.normalMaps = !!o.surfaceDetail;
   registry.exportDetail = !!o.surfaceDetail;
@@ -70,12 +71,17 @@ export async function buildExportScene(project: Project, o: SceneExportOptions):
       if (geo) {
         const mesh = new THREE.Mesh(geo, wallMaterials(project, g, registry));
         mesh.name = `Wall ${g.wall.id}`;
+        mesh.userData.neestExt = extIds.has(g.wall.id);
         group.add(mesh);
       }
     }
     for (const h of derived.network.hubs) {
       const geo = buildHubGeometry(h, cut);
-      if (geo) group.add(new THREE.Mesh(geo, registry.get(project, 'plaster-white')));
+      if (geo) {
+        const hm = new THREE.Mesh(geo, registry.get(project, 'plaster-white'));
+        hm.userData.neestExt = isHubExternal(h, derived.network, extIds);
+        group.add(hm);
+      }
     }
     root.add(group);
   };
@@ -88,6 +94,7 @@ export async function buildExportScene(project: Project, o: SceneExportOptions):
     const extras = buildWallExtras(g, { project, registry, shadows: false });
     if (extras) {
       extras.name = `Wall details ${g.wall.id}`;
+      extras.userData.neestExt = extIds.has(g.wall.id);
       details.add(extras);
     }
   }
@@ -100,6 +107,7 @@ export async function buildExportScene(project: Project, o: SceneExportOptions):
       if (op) {
         const grp = buildOpening(op, g, sp, ctx);
         grp.name = op.kind;
+        grp.userData.neestExt = extIds.has(g.wall.id);
         openings.add(grp);
       }
     }
