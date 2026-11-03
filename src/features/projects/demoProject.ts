@@ -196,16 +196,14 @@ function addDemoCallouts(d: Project) {
     offset: { x: 2.4, y: 0.15 },
     lift: 1.9,
     color: 'coral',
-    title: 'Kitchen refit',
-    note: '1. New quartz worktops\n2. Move the hob to the island\n3. Under-cabinet LED strips\nBudget: **85 million VND**',
+    note: '**Kitchen refit**\n\n1. New quartz worktops\n2. Move the hob to the island\n3. Under-cabinet LED strips\nBudget: **85 million VND**',
   });
   addCallout(d, {
     target: { kind: 'point', x: 0.25, y: 6.3, z: 1.8 },
     offset: { x: -1.05, y: 0.55 },
     lift: 0.9,
     color: 'blue',
-    title: 'Extractor fan',
-    note: 'Ducted fan above the window, 100 mm duct to the outside wall.',
+    note: '**Extractor fan**\n\nDucted fan above the window, 100 mm duct to the outside wall.',
   });
 }
 

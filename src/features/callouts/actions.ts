@@ -5,7 +5,7 @@ import type { MenuItem } from '@/components/ContextMenu';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type SelItem } from '@/state/editorStore';
 import { useDialogStore } from '@/state/uiStores';
-import { createCalloutAt } from '@/features/plan-2d/tools/calloutTool';
+import { createCalloutAt, spotOnItem } from '@/features/plan-2d/tools/calloutTool';
 import { selectAll } from '@/features/editor/actions';
 
 /** Turns dedicated Comments & Notes mode on or off. */
@@ -120,7 +120,7 @@ export function notesMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
     const name = o.name || getObjectAsset(project, o)?.name || 'item';
     items.push({
       label: `Comment on "${name}"…`,
-      run: () => void createCalloutAt({ kind: 'object', objectId: hit.id }, px),
+      run: () => void createCalloutAt(spotOnItem(project, hit.id), px),
     });
   } else if (hit?.kind === 'room' && project.rooms[hit.id]) {
     const r = project.rooms[hit.id];

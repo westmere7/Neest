@@ -192,12 +192,24 @@ export function wrapRuns(runs: Run[], width: number, firstPrefix: Run | null, in
 /** Characters per line of a label. */
 export const CALLOUT_WRAP = 34;
 
-/** All lines of a callout label: title, facts (when shown), then the note, wrapped. */
+/** A note's first line as plain text (menus, selection labels), or `fallback` when it has no text. */
+export function noteSummary(c: Pick<Callout, 'note'>, max = 40, fallback = 'Note'): string {
+  const first = parseNote(c.note)[0];
+  const text = first ? first.runs.map((r) => r.text).join('').trim() : '';
+  if (!text) return fallback;
+  return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+}
+
+/** The facts heading a note: an item's or room's name leads in bold; a spot's height or an area's size stays a fact. */
+export function noteHeading(c: Callout, info: string[]): string {
+  return info.length && (c.target.kind === 'object' || c.target.kind === 'room') ? info.shift()! : '';
+}
+
+/** All lines of a callout label: facts (when shown; an item or room name as a heading), then the note, wrapped. */
 export function calloutLines(project: Project, derived: DerivedPlan | null, c: Callout, width = CALLOUT_WRAP): Line[] {
   const out: Line[] = [];
   const info = c.showInfo ? calloutInfo(project, derived, c) : [];
-  // Without a title, the first fact (the item or room name) is the title.
-  const title = c.title.trim() || (info.length ? info.shift()! : '');
+  const title = noteHeading(c, info);
   if (title) for (const l of wrapRuns([{ text: title, bold: true }], width, null, 0)) out.push({ runs: l, role: 'title', indent: 0 });
   for (const f of info) for (const l of wrapRuns([{ text: f }], width, null, 0)) out.push({ runs: l, role: 'info', indent: 0 });
   for (const b of parseNote(c.note)) {

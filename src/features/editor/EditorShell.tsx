@@ -455,10 +455,11 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Library"
           active={inFurnitureLib}
-          disabled={notesMode}
           tooltipSide="right"
           className="library-hero-btn"
           onClick={() => {
+            // Opening the library leaves Comments & notes mode (it hides the library while on).
+            if (notesMode) setNotesMode(false);
             // The Connections panel takes the library's place: the library leaves Connections.
             if (servicesMode) set({ servicesMode: false, libraryOpen: true, libraryTab: 'furniture' });
             else if (inFurnitureLib) set({ libraryOpen: false });
@@ -478,7 +479,11 @@ function ToolRail({ in3d }: { in3d: boolean }) {
             shortcut={t.key}
             active={tool === t.id}
             tooltipSide="right"
-            onClick={() => setTool(t.id)}
+            onClick={() => {
+              // Select is the normal editor again: it leaves Comments & notes mode (Pan keeps it).
+              if (notesMode && t.id === 'select') setNotesMode(false);
+              setTool(t.id);
+            }}
             data-testid={`tool-${t.id}`}
           >
             {t.icon}
@@ -491,7 +496,6 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Walls"
           shortcut="W"
-          disabled={notesMode}
           active={inBuildGroup('walls') || tool === 'wall' || tool === 'curve' || tool === 'room'}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -512,7 +516,6 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Doors"
           shortcut="D"
-          disabled={notesMode}
           active={inBuildGroup('doors') || (tool === 'opening' && !openingKind.startsWith('window'))}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -532,7 +535,6 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         </IconButton>
         <IconButton
           label="Windows"
-          disabled={notesMode}
           active={inBuildGroup('windows') || (tool === 'opening' && openingKind.startsWith('window'))}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -554,7 +556,6 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Split wall"
           shortcut="S"
-          disabled={notesMode}
           active={tool === 'split'}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -567,7 +568,6 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Extend / trim / join walls"
           shortcut="E"
-          disabled={notesMode}
           active={tool === 'extend'}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -580,7 +580,6 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Measure"
           shortcut="M"
-          disabled={notesMode}
           active={tool === 'measure'}
           tooltipSide="right"
           className="rail-labeled-btn"
@@ -596,14 +595,11 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           active={notesMode || tool === 'callout'}
           tooltipSide="right"
           className="rail-labeled-btn"
-          onClick={() => {
-            if (!notesMode) setNotesMode(true);
-            else setTool(tool === 'callout' ? 'select' : 'callout');
-          }}
+          onClick={toggleNotesMode}
           data-testid="tool-callout"
         >
           <MessageSquareText size={18} />
-          <span className="rail-btn-label">Callout</span>
+          <span className="rail-btn-label">Notes</span>
         </IconButton>
       </div>
 
@@ -612,7 +608,6 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         <IconButton
           label="Connections (power & plumbing)"
           shortcut="U"
-          disabled={notesMode}
           active={servicesMode}
           tooltipSide="right"
           className="rail-labeled-btn rail-services-btn"

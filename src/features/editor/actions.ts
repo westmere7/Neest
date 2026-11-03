@@ -8,6 +8,7 @@ import { groupFromSelection } from './groups';
 import { transientGroups } from '@/features/library/savedGroupAssets';
 import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 import { duplicateCallouts, translateCallouts } from '@/domain/commands/callouts';
+import { noteSummary } from '@/features/callouts/content';
 import { allServiceIds, moveServiceRuns, moveServicePoints } from '@/domain/commands/services';
 import { SERVICE_POINTS, SERVICE_SYSTEM_INFO } from '@/domain/model/services';
 import { derivePlan } from '@/domain/geometry/derive';
@@ -33,8 +34,10 @@ export function describeSelection(project: Project, sel: SelItem[]): string {
       return project.objects[s.id]?.name ?? 'Object';
     case 'room':
       return project.rooms[s.id]?.name ?? 'Room';
-    case 'callout':
-      return project.callouts?.[s.id]?.title || 'Note';
+    case 'callout': {
+      const c = project.callouts?.[s.id];
+      return c ? noteSummary(c) : 'Note';
+    }
     case 'service': {
       const p = project.servicePoints?.[s.id];
       return p ? p.label || SERVICE_POINTS[p.kind].name : 'Point';

@@ -172,14 +172,9 @@ export function useEditorShortcuts(isMobile: boolean) {
       if (key === '4') return ed.set({ workspace: '3d' });
       if (key === '5' && !isMobile) return ed.set({ workspace: 'split' });
       if (key === 'p' && ed.workspace === '3d' && !isMobile) return ed.set({ viewPanelOpen: !ed.viewPanelOpen });
-      if (key === 'l' && e.shiftKey && !isMobile) {
-        if (ed.notesMode) return;
-        return ed.set({ layersPanelOpen: !ed.layersPanelOpen });
-      }
-      if (key === 'u' && !isMobile && ed.workspace !== 'walk') {
-        if (ed.notesMode) return;
-        return toggleServicesMode();
-      }
+      // Layers, Connections and other tools leave Comments & notes mode (editorStore subscription).
+      if (key === 'l' && e.shiftKey && !isMobile) return ed.set({ layersPanelOpen: !ed.layersPanelOpen });
+      if (key === 'u' && !isMobile && ed.workspace !== 'walk') return toggleServicesMode();
       if (key === 'k' && !isMobile && ed.workspace !== 'walk') return toggleNotesMode();
       // While placing, R turns what is being placed (the tool handles it when it has the keys; this is
       // the fallback): it never switches to the room tool under a ghost.
@@ -192,6 +187,7 @@ export function useEditorShortcuts(isMobile: boolean) {
         if (isMobile && tool !== 'select' && tool !== 'pan') return;
         // Building tools work on the normal view: they leave Services mode.
         if (ed.servicesMode && tool !== 'select' && tool !== 'pan') setServicesMode(false);
+        if (ed.notesMode && tool === 'select') setNotesMode(false);
         useEditorStore.getState().setTool(tool);
       }
     };

@@ -329,6 +329,21 @@ export const NOTE_ENDS = ['dot', 'ring', 'arrow', 'none'] as const;
 export const NOTE_SIZES = ['s', 'm', 'l'] as const;
 export const NOTE_WEIGHTS = ['thin', 'regular', 'bold'] as const;
 
+/** Pictures per note, and the longest stored data URL (images are downscaled on import, see features/callouts/images.ts). */
+export const NOTE_IMAGE_MAX = 8;
+export const NOTE_IMAGE_MAX_CHARS = 3_000_000;
+
+/** A picture attached to a note, embedded as a data URL so the project file stays self-contained. */
+export const NoteImageSchema = z.object({
+  id: Id,
+  src: z
+    .string()
+    .max(NOTE_IMAGE_MAX_CHARS)
+    .regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/),
+  w: num.positive(),
+  h: num.positive(),
+});
+
 /**
  * A floating note pinned to a spot, item, room or area. Drawn on the plan (and plan exports) as a
  * leader from the anchor to a label box, and in 3D as a label floating above the anchor.
@@ -340,9 +355,18 @@ export const CalloutSchema = z.object({
   offset: Vec2Schema.default({ x: 0.9, y: -0.9 }),
   /** How far the 3D label floats above the anchor (metres). */
   lift: num.default(0.7),
+  /**
+   * Retired: notes have a body only. Kept so older files load; `repairProject` folds a non-empty
+   * title into the note as a bold first line and clears it.
+   */
   title: z.string().max(120).default(''),
   /** Note text with light formatting: **bold**, *italic*, [link](https://…), "- " bullets, "1. " lists. */
   note: z.string().max(4000).default(''),
+  /**
+   * Pictures, shown only where the note is read in full (Notes panel, editor, Inspector), never on
+   * the floating labels in the plan, the 3D view or exports. Bad entries load as none.
+   */
+  images: z.array(NoteImageSchema).max(NOTE_IMAGE_MAX).catch([]).default([]),
   /** Also list the target's facts (item name, maker, size; room name and area; area size). */
   showInfo: z.boolean().default(true),
   color: z.enum(CALLOUT_COLORS).default('teal'),
@@ -759,6 +783,7 @@ export type ItemLayer = z.infer<typeof ItemLayerSchema>;
 export type CalloutTarget = z.infer<typeof CalloutTargetSchema>;
 export type Callout = z.infer<typeof CalloutSchema>;
 export type CalloutColor = (typeof CALLOUT_COLORS)[number];
+export type NoteImage = z.infer<typeof NoteImageSchema>;
 export type ServicePoint = z.infer<typeof ServicePointSchema>;
 export type ServiceRun = z.infer<typeof ServiceRunSchema>;
 export type MaterialCategory = z.infer<typeof MaterialCategorySchema>;

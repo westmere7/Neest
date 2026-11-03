@@ -12,6 +12,8 @@ import { getObjectAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { CALLOUT_PALETTE, safeHref } from './content';
+import { NoteImagesEditor, addNoteImages } from './NoteImages';
+import { imageFilesOf } from './images';
 
 type TargetKind = CalloutTarget['kind'];
 
@@ -47,8 +49,8 @@ function targetChoices(project: Project, c: Callout): { kind: TargetKind; label:
 }
 
 /**
- * The callout pop-up: what it points to, its title and note (with a small formatting toolbar and
- * links), the target's facts, and colour. Changes apply on Save as one undo step; Cancel on a
+ * The callout pop-up: what it points to, its note (with a small formatting toolbar and links),
+ * pictures, the target's facts, and colour. Changes apply on Save as one undo step; Cancel on a
  * callout that was just placed removes it again.
  */
 export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: boolean; onClose: () => void }) {
@@ -59,7 +61,8 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const choices = useMemo(() => (project && callout ? targetChoices(project, callout) : []), [project, callout]);
   if (!project || !callout || !draft) return null;
-  const set = (patch: Partial<Callout>) => setDraft({ ...draft, ...patch });
+  // Functional update: images arrive asynchronously, after more typing may have happened.
+  const set = (patch: Partial<Callout>) => setDraft((cur) => (cur ? { ...cur, ...patch } : cur));
 
   const close = (saved: boolean) => {
     if (!saved && isNew) {
@@ -70,7 +73,7 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
     onClose();
   };
   const save = () => {
-    const { id: _id, ...patch } = draft;
+    const { id: _id, ...patch } = { ...draft, title: '' };
     useProjectStore.getState().execute(isNew ? 'Add note' : 'Edit note', (d) => updateCallout(d, id, patch));
     onClose();
   };
@@ -163,18 +166,6 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
               }}
             />
           )}
-          <label className="field">
-            <span className="field-label">Title</span>
-            <input
-              className="input"
-              value={draft.title}
-              maxLength={120}
-              data-autofocus
-              placeholder={draft.showInfo && kind !== 'point' && kind !== 'general' ? 'Leave empty to use the item or room name' : 'Optional'}
-              onChange={(e) => set({ title: e.target.value })}
-              data-testid="callout-title"
-            />
-          </label>
           <div className="field">
             <span className="field-label">Note</span>
             <div className="callout-toolbar" role="toolbar" aria-label="Formatting">
@@ -218,8 +209,16 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
               className="input"
               value={draft.note}
               maxLength={4000}
-              placeholder="Write a note…"
+              rows={6}
+              data-autofocus
+              placeholder="Write a note… (paste or drop images to attach them)"
               onChange={(e) => set({ note: e.target.value })}
+              onPaste={(e) => {
+                const files = imageFilesOf(e.clipboardData);
+                if (!files.length) return;
+                e.preventDefault();
+                void addNoteImages(draft.images, files).then((images) => set({ images }));
+              }}
               onKeyDown={(e) => {
                 if (!(e.ctrlKey || e.metaKey)) return;
                 const key = e.key.toLowerCase();
@@ -230,6 +229,11 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
               }}
               data-testid="callout-note"
             />
+          </div>
+          <div className="field">
+            <span className="field-label">Images</span>
+            <NoteImagesEditor images={draft.images} onChange={(images) => set({ images })} />
+            <span className="field-hint">Shown in the note’s full view (Notes panel, Inspector), not on the plan or in 3D.</span>
           </div>
           {kind !== 'point' && kind !== 'general' && (
             <Toggle

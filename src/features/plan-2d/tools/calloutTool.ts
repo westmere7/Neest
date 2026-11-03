@@ -1,4 +1,4 @@
-import { CalloutSchema, type CalloutTarget, type Vec2 } from '@/domain/model/schema';
+import { CalloutSchema, type CalloutTarget, type Project, type Vec2 } from '@/domain/model/schema';
 import { addCallout } from '@/domain/commands/callouts';
 import { calloutAnchor, setCalloutAnchorPoint } from '@/domain/geometry/callouts';
 import { add, dist, rotate, sub } from '@/domain/geometry/vec';
@@ -11,19 +11,32 @@ import type { Tool, ToolEnv } from './types';
 
 const DRAG_PX = 5;
 
-/** What a click at `p` points a callout at: the item under it, the room with Alt, otherwise the spot. */
+/**
+ * A spot note on top of an item (its footprint centre, at its top). New notes on furniture start as
+ * spots so they stay put when the furniture is moved or swapped; the editor can attach them to the item.
+ */
+export function spotOnItem(project: Project, objectId: string): CalloutTarget {
+  const a = calloutAnchor(project, null, { kind: 'object', objectId });
+  return a ? { kind: 'point', x: a.x, y: a.y, z: a.z } : { kind: 'object', objectId };
+}
+
+/**
+ * What a click at `p` points a callout at. A spot by default, also on furniture (in the plan it sits
+ * on the item's top, in 3D at the picked point); Shift attaches it to the item under it, Alt to the room.
+ */
 export function calloutTargetAt(
   env: ToolEnv,
   p: Vec2,
   alt: boolean,
   pickedObjectId?: string | null,
   worldZ = 0,
+  attach = false,
 ): CalloutTarget {
   const project = env.project();
   const derived = env.derived();
   const r3 = (n: number) => Math.round(n * 1000) / 1000;
   if (pickedObjectId !== undefined) {
-    if (pickedObjectId && !alt && project.objects[pickedObjectId]) {
+    if (attach && pickedObjectId && !alt && project.objects[pickedObjectId]) {
       const o = project.objects[pickedObjectId];
       const local = rotate({ x: p.x - o.x, y: p.y - o.y }, -o.rotation);
       return {
@@ -45,13 +58,14 @@ export function calloutTargetAt(
     }
     return { kind: 'point', x: p.x, y: p.y, z: worldZ };
   }
-  const item = hitTest(project, derived, p, env.tol(), { objects: true });
-  if (item && !alt) return { kind: 'object', objectId: item.id };
   if (alt) {
     const room = hitTest(project, derived, p, env.tol(), { rooms: true });
     if (room) return { kind: 'room', roomId: room.id };
   }
-  return { kind: 'point', x: p.x, y: p.y, z: 0 };
+  const item = hitTest(project, derived, p, env.tol(), { objects: true });
+  const o = item ? project.objects[item.id] : undefined;
+  if (o && attach) return { kind: 'object', objectId: o.id };
+  return { kind: 'point', x: p.x, y: p.y, z: o ? r3(o.elevation + o.height) : 0 };
 }
 
 /** Adds a callout, selects it and opens its editor. */
@@ -69,8 +83,8 @@ export function createCalloutAt(target: CalloutTarget, px: number): string | und
 }
 
 /**
- * Callout tool: click an item (or a spot) to pin a callout, Alt-click inside a room to pin it to
- * the room, drag to mark an area. Clicking an existing note label moves the label; dragging its
+ * Callout tool: click to pin a callout to that spot (on furniture too), Shift-click to attach it to
+ * the item, Alt-click inside a room to pin it to the room, drag to mark an area. Clicking an existing note label moves the label; dragging its
  * anchor dot moves the spot it points to; double-clicking edits it.
  */
 export function createCalloutTool(): Tool {
@@ -80,7 +94,7 @@ export function createCalloutTool(): Tool {
   return {
     id: 'callout',
     cursor: 'crosshair',
-    hint: 'Click an item or a spot to pin a note · Alt-click inside a room for the room · drag to mark an area · drag a note dot to move its spot.',
+    hint: 'Click to pin a note to a spot · Shift-click to attach it to the item · Alt-click for the room · drag to mark an area · drag a note dot to move its spot.',
     busy: () => start !== null || moveCallout !== null,
     onPointerDown(e, env) {
       if (e.button !== 0) return;
@@ -144,7 +158,7 @@ export function createCalloutTool(): Tool {
           }
         }
         env.setCursor('crosshair');
-        const t = calloutTargetAt(env, e.world, e.alt, e.pickedObjectId, e.worldZ);
+        const t = calloutTargetAt(env, e.world, e.alt, e.pickedObjectId, e.worldZ, e.shift);
         useEditorStore.getState().setHover(t.kind === 'object' ? { kind: 'object', id: t.objectId } : t.kind === 'room' ? { kind: 'room', id: t.roomId } : null);
         return;
       }
@@ -177,7 +191,7 @@ export function createCalloutTool(): Tool {
             { x: Math.min(a.x, b.x), y: Math.max(a.y, b.y) },
           ],
         };
-      } else target = calloutTargetAt(env, s.world, e.alt, e.pickedObjectId, e.worldZ);
+      } else target = calloutTargetAt(env, s.world, e.alt, e.pickedObjectId, e.worldZ, e.shift);
       useEditorStore.getState().setHover(null);
       createCalloutAt(target, env.px());
       if (!useEditorStore.getState().notesMode) env.finish();

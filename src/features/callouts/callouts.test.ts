@@ -11,13 +11,17 @@ import { addWallChain } from '@/domain/commands/walls';
 import { deleteEntities, duplicateEntities, placeObject, reconcileRooms } from '@/domain/commands/entities';
 import { addCallout, detachCallouts, updateCallout } from '@/domain/commands/callouts';
 import { addOption, switchOption } from '@/domain/commands/options';
-import { repairProject } from '@/storage/migrations';
+import { foldNoteTitle, repairProject } from '@/storage/migrations';
+import { calloutTargetAt, spotOnItem } from '@/features/plan-2d/tools/calloutTool';
+import type { ToolEnv } from '@/features/plan-2d/tools/types';
 import { hitTest, selectionHandles } from '@/features/plan-2d/hitTest';
 import { buildDxf } from '@/features/exports/dxf';
 import { buildSheet, defaultSheetOptions } from '@/features/exports/sheet';
 import { buildPlanImageSvg } from '@/features/exports/planExports';
 import { buildDemoProject } from '@/features/projects/demoProject';
-import { calloutInfo, calloutLines, lineText, parseInline, parseNote, safeHref, wrapRuns } from './content';
+import { calloutInfo, calloutLines, lineText, noteSummary, parseInline, parseNote, safeHref, wrapRuns } from './content';
+import { CalloutCard } from './CalloutCard';
+import { notesOn } from './ItemNotes';
 import { calloutExtent, hitCalloutAnchor, layoutCallout, visibleCallouts } from './layout';
 import { CalloutsSvg } from './CalloutsSvg';
 import { NotesPanel } from './NotesPanel';
@@ -27,6 +31,11 @@ import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 
 const edit = (p: Project, fn: (d: D) => void): Project => produce(p, fn);
+const foldTitle = (c: { title: string; note: string }) => {
+  const copy = { ...c };
+  foldNoteTitle(copy);
+  return copy;
+};
 
 function base() {
   let obj = '';
@@ -280,9 +289,9 @@ describe('callouts on the plan and in exports', () => {
     let objNoteId = '';
     let roomNoteId = '';
     const q = edit(p, (d) => {
-      genId = addCallout(d, { target: { kind: 'general' }, title: 'Budget cap', note: 'Keep total under 150M VND' });
-      objNoteId = addCallout(d, { target: { kind: 'object', objectId: obj }, title: 'Side table finish', note: 'Walnut veneer' });
-      roomNoteId = addCallout(d, { target: { kind: 'room', roomId }, title: 'Flooring', note: 'Herringbone oak' });
+      genId = addCallout(d, { target: { kind: 'general' }, note: '**Budget cap**\n\nKeep total under 150M VND' });
+      objNoteId = addCallout(d, { target: { kind: 'object', objectId: obj }, note: '**Side table finish**\n\nWalnut veneer' });
+      roomNoteId = addCallout(d, { target: { kind: 'room', roomId }, note: '**Flooring**\n\nHerringbone oak' });
     });
 
     // General comments have no spatial anchor and do not draw on the 2D plan SVG, while pinned ones do.
@@ -310,11 +319,11 @@ describe('callouts on the plan and in exports', () => {
     // Non-note selection is filtered out upon entering notesMode.
     expect(ed.selection).toEqual([{ kind: 'callout', id: objNoteId }]);
 
-    // While notesMode is on, non-note tools and non-note selections are blocked.
-    useEditorStore.getState().setTool('wall');
-    expect(useEditorStore.getState().tool).toBe('callout');
+    // While notesMode is on, Select and Pan keep it and non-note selections are filtered out.
     useEditorStore.getState().setTool('select');
     expect(useEditorStore.getState().tool).toBe('select');
+    expect(useEditorStore.getState().notesMode).toBe(true);
+    useEditorStore.getState().setTool('callout');
     useEditorStore.getState().setSelection([{ kind: 'object', id: obj }, { kind: 'callout', id: genId }]);
     expect(useEditorStore.getState().selection).toEqual([{ kind: 'callout', id: genId }]);
 
@@ -396,3 +405,91 @@ describe('callouts on the plan and in exports', () => {
   });
 });
 
+describe('note body, images, default spot and leaving notes mode', () => {
+  const png1x1 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+  it('folds an old title into the note as a bold first line, in every layout option', () => {
+    expect(foldTitle({ title: 'Kitchen *refit*', note: 'New worktops' })).toEqual({ title: '', note: '**Kitchen refit**\n\nNew worktops' });
+    expect(foldTitle({ title: 'Only a title', note: '  ' })).toEqual({ title: '', note: '**Only a title**' });
+    expect(foldTitle({ title: '', note: 'Body' })).toEqual({ title: '', note: 'Body' });
+
+    const { p } = base();
+    let id = '';
+    const q = edit(p, (d) => {
+      id = addCallout(d, { target: { kind: 'point', x: 1, y: 1, z: 0 }, title: 'Old title', note: 'Body' });
+      // The first option (with the note) is stored away; the new active one is a copy.
+      addOption(d, 'duplicate');
+    });
+    const repaired = repairProject(structuredClone(q)).project;
+    const stored = repaired.options!.find((o) => o.plan)!.plan!.callouts![id];
+    expect(stored).toMatchObject({ title: '', note: '**Old title**\n\nBody' });
+    expect(Object.values(repaired.callouts).every((c) => c.title === '' && c.note.startsWith('**Old title**'))).toBe(true);
+  });
+
+  it('labels a note by its first line', () => {
+    expect(noteSummary({ note: '**Kitchen refit**\n\n1. Worktops' })).toBe('Kitchen refit');
+    expect(noteSummary({ note: '' })).toBe('Note');
+    expect(noteSummary({ note: 'x'.repeat(60) }, 10)).toBe('xxxxxxxxx…');
+  });
+
+  it('keeps valid images, drops bad ones, and shows them only in the full view', () => {
+    const ok = CalloutSchema.parse({ id: 'c1', target: { kind: 'general' }, images: [{ id: 'img_1', src: png1x1, w: 1, h: 1 }] });
+    expect(ok.images).toHaveLength(1);
+    expect(CalloutSchema.parse({ id: 'c2', target: { kind: 'general' } }).images).toEqual([]);
+    const bad = CalloutSchema.parse({ id: 'c3', target: { kind: 'general' }, images: [{ id: 'img_2', src: 'https://example.com/a.png', w: 1, h: 1 }] });
+    expect(bad.images).toEqual([]);
+
+    const p = createEmptyProject();
+    const floating = renderToStaticMarkup(createElement(CalloutCard, { project: p, derived: null, callout: ok }));
+    const full = renderToStaticMarkup(createElement(CalloutCard, { project: p, derived: null, callout: ok, images: true }));
+    expect(floating).not.toContain('<img');
+    expect(full).toContain(png1x1);
+  });
+
+  it('pins a spot by default, also on furniture; Shift attaches the note to the item', () => {
+    const { p, obj } = base();
+    const env = { project: () => p, derived: () => derivePlan(p), tol: () => 0.05 } as unknown as ToolEnv;
+    const o = p.objects[obj];
+    expect(calloutTargetAt(env, { x: 1, y: 1 }, false)).toEqual({ kind: 'point', x: 1, y: 1, z: o.elevation + o.height });
+    expect(calloutTargetAt(env, { x: 1, y: 1 }, false, undefined, 0, true)).toEqual({ kind: 'object', objectId: obj });
+    expect(calloutTargetAt(env, { x: 3, y: 2 }, false)).toEqual({ kind: 'point', x: 3, y: 2, z: 0 });
+    // 3D: the picked point on the item, unless Shift.
+    expect(calloutTargetAt(env, { x: 1.1, y: 1 }, false, obj, 0.5)).toEqual({ kind: 'point', x: 1.1, y: 1, z: 0.5 });
+    expect(calloutTargetAt(env, { x: 1.1, y: 1 }, false, obj, 0.5, true)).toMatchObject({ kind: 'object', objectId: obj });
+    // The item panel's note button makes a spot on top of the item, and lists spot notes standing on it.
+    expect(spotOnItem(p, obj)).toEqual({ kind: 'point', x: 1, y: 1, z: 0.55 });
+    let spot = '';
+    const q = edit(p, (d) => {
+      spot = addCallout(d, { target: spotOnItem(p, obj), note: 'Check finish' });
+      addCallout(d, { target: { kind: 'point', x: 3, y: 2, z: 0 }, note: 'Elsewhere' });
+    });
+    expect(notesOn(q, { kind: 'object', id: obj }).map((c) => c.id)).toEqual([spot]);
+  });
+
+  it('leaves notes mode when another tool or mode is picked', () => {
+    const { p } = base();
+    useProjectStore.getState().load(p);
+    const ed = () => useEditorStore.getState();
+    const picks = [
+      () => ed().setTool('wall'),
+      () => ed().set({ servicesMode: true }),
+      () => ed().set({ layersPanelOpen: true }),
+      () => ed().set({ workspace: 'walk' }),
+    ];
+    for (const pick of picks) {
+      ed().set({ servicesMode: false, layersPanelOpen: false, workspace: 'plan', tool: 'select' });
+      setNotesMode(true);
+      expect(ed().notesMode).toBe(true);
+      pick();
+      expect(ed().notesMode).toBe(false);
+    }
+    // Switching between 2D and 3D, and Pan, keep it.
+    ed().set({ servicesMode: false, layersPanelOpen: false, workspace: 'plan' });
+    setNotesMode(true);
+    ed().set({ workspace: '3d' });
+    ed().setTool('pan');
+    expect(ed().notesMode).toBe(true);
+    setNotesMode(false);
+    ed().set({ workspace: 'plan', tool: 'select' });
+  });
+});

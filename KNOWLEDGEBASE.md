@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-03 (Comments & notes mode, external-walls-only cutaway; guest viewer build fixed).
+Last updated: 2026-11-03 (notes: body only, images in the full view, spot by default, notes mode ends on other tools).
 
 ---
 
@@ -193,7 +193,7 @@ Principles that must hold:
 | `CameraPreset` | projection, position, target, fov, zoom, optional `wallDisplay` |
 | `RenderSettings` | quality draft/balanced/high, exposure, timeOfDay, sunAzimuth/Intensity, envIntensity, shadows, background, wallDisplay full/cutaway/fade/hidden, cutawayHeight, showCeilings, showRoomLabels, hiddenCategories |
 | `guest` | `startCameraId` (Guest View and guest export only; the editor always opens on a fitted view), `spawn`, `spawnAngle` |
-| `Callout` | `target` = `general` (no location: listed in the Notes panel only) / `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; object, room and region targets take optional `dx/dy/dz` (the pinned spot relative to the item's top centre in its own frame, the room anchor or the area centroid); `offset` (plan metres, label from anchor), `lift` (3D float height), `title`, `note` (Markdown subset), `showInfo`, `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
+| `Callout` | `target` = `general` (no location: listed in the Notes panel only) / `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; object, room and region targets take optional `dx/dy/dz` (the pinned spot relative to the item's top centre in its own frame, the room anchor or the area centroid); `offset` (plan metres, label from anchor), `lift` (3D float height), `title` (retired, folded into `note` on load), `note` (Markdown subset), `images` (data URLs, full view only), `showInfo`, `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
 | `ServicePoint` | Connections mode (§10 "Services"): `kind` (14 kinds in `domain/model/services.ts`), `x`,`y`, `host` wall/floor/ceiling, `wallId` (wall points follow that wall's face), `height` (wall points), `rotation` (facing), `label`, `note`. Per layout option (`servicePoints`) |
 | `ServiceRun` | `system` power/water/drain, `level` wall/floor/ceiling (drain: floor only), `hot` (water), `points` (plan polyline), `height` (wall runs), `label`. Per layout option (`serviceRuns`) |
 | `PlacedObject.serviceLinks` | per system `{ pin, skip[] }`: the point the user connected by hand, and points they disconnected; absent = automatic |
@@ -507,17 +507,30 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 
 Called **Notes** everywhere in the interface; the code and saved data keep the name *callout* (`project.callouts`,
 `layers.callouts`, tool id `callout`) so older projects load unchanged. A floating note pointing at an item, a room,
-a drawn area or any spot. Tool **K** (rail "Note"): click an item → item note, Alt-click → the room, empty space →
-spot, drag → rectangular area. Right-click menu: "Add note" on an item, "Add note to room" on a room, "Add note here"
-on empty space (3D uses the floor point under the pointer). An item's or room's panel header has a note icon (it
-replaced the old collapse button; lit when the selection has notes): one note opens its editor, several give a menu,
-none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once (Cancel on a new note removes it).
+a drawn area or any spot. Tool **K** (rail "Notes"): a click pins a **spot** note, also on furniture (in the plan it
+sits on the item's top, in 3D at the picked point: the user swaps furniture a lot and notes must not follow or vanish
+with it); **Shift-click** attaches the note to the item, Alt-click to the room, drag marks a rectangular area
+(`calloutTool.ts › calloutTargetAt`). Right-click "Add note" on an item and the item panel's note icon also make a spot
+on the item (`spotOnItem`); "Add note to room" pins the room, "Add note here" a spot on empty space (3D uses the floor
+point under the pointer). An item's or room's panel header has a note icon (lit when the selection has notes: notes
+pinned to it, and for items spot notes standing on its footprint, `notesOn`): one note opens its editor, several give
+a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once (Cancel on a new note removes it).
 
-- Editor (`CalloutDialog`): the essentials up front — Points to (a dropdown: spot / item / room under it / area),
-  title, note with a toolbar (bold, italic, lists, link form, Ctrl+B/I/K, Ctrl+Enter saves), show the target's facts
-  (`calloutInfo`), colour — and a live preview (card + leader). Everything else is folded under **More options**:
-  label look, text size, line, line weight, end mark, end size, 3D float height, spot height, highlight, visible,
-  "Use this style for new notes" (saved in prefs `noteStyle`, applied by `createCalloutAt`).
+- **Notes have a body only.** `Callout.title` is retired: nothing edits or draws it, and `repairProject` folds an old
+  title into the note as a bold first line (`foldNoteTitle`, every layout option). Short labels (menus, the status
+  bar) use the note's first line (`content.ts › noteSummary`). With "show the facts" on, an item's or room's name heads
+  the label in bold (`noteHeading`); a spot's height and an area's size stay ordinary fact lines.
+- Editor (`CalloutDialog`): Points to (a dropdown: general / spot / item / room under it / area), the note with a
+  toolbar (bold, italic, lists, link form, Ctrl+B/I/K, Ctrl+Enter saves; it gets the focus), **Images**, show the
+  target's facts (`calloutInfo`), colour.
+- **Images** (`Callout.images`, ≤ 8 `NoteImage {id, src, w, h}`, bad entries load as none): embedded data URLs so the
+  project file stays self-contained and syncs through `projects/`. `images.ts › readNoteImage` decodes, scales the long
+  side to 1600 px and re-encodes as WebP (JPEG fallback), stepping down until it fits 3 M characters (a 2400 × 1600 PNG
+  of 3.3 MB stored 18 KB). Add with the Add image button, paste into the note field, or drop on the image strip (editor,
+  Notes panel composer and inline edit: `NoteImages.tsx › NoteImagesEditor`). **Shown only in the full view**: the
+  Notes panel, the Inspector and the editor (`CalloutCard images`), with a click-to-enlarge viewer (arrows, Esc closes
+  only the viewer). Floating labels in the plan and 3D, render captures, sheets, DXF and the guest export never show
+  or carry them.
 - Style fields on `Callout` (all defaulted, so old notes keep the original look): `box` card/solid/outline/text,
   `size` s/m/l, `line` solid/dashed/dotted/none, `lineWeight` thin/regular/bold, `end` dot/ring/arrow/none,
   `endSize` s/m/l, `highlight` (shade the target). `style.ts` holds the shared numbers (`labelColors`,
@@ -551,9 +564,11 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   Inspector, the finish panel and the Layers panel with `NotesPanel` (`.notes-panel`, registered in `layoutInsets`).
   Entering keeps only note selections, leaves Connections and switches Walk to 3D. The panel lists every note with
   its target chip, adds **general** comments (no location) inline, edits, recolours, hides, focuses and deletes;
-  hovering a row highlights the note and its item or room (`hoverNoteInPanel`, `editor.hoveredNoteId`). The rest of
-  the rail (walls, doors, windows, split, measure, Connections, library) is disabled while it is on, and the note tool
-  stays armed after each placement. In 3D the tool pins the exact picked point (`pickedObjectId`/`worldZ`), stored as
+  hovering a row highlights the note and its item or room (`hoverNoteInPanel`, `editor.hoveredNoteId`). The note tool
+  stays armed after each placement. **Picking another tool or mode leaves it**: any tool but note/select/pan, Connections,
+  the Layers panel or Walk (a subscription in `editorStore.ts`), plus the rail's Library and Select buttons and V
+  (explicit `setNotesMode(false)`); switching between 2D and 3D and Pan keep it. The rail's Notes button, the top-bar
+  icon and K toggle it. In 3D the tool pins the exact picked point (`pickedObjectId`/`worldZ`), stored as
   `dx/dy/dz` on the target. In 2D the note tool also drags a label (moves `offset`) or the anchor dot
   (`hitCalloutAnchor` → `setCalloutAnchorPoint`, which keeps the label still and the target kind unchanged), and
   double-click edits.
@@ -1328,6 +1343,12 @@ construction documents.
   a syntax error in `src/guest-viewer/main.ts` (a half-applied edit on 2026-11-02 left two `clipCopy` declarations
   and old visibility lines behind) only shows in `npm run typecheck` / `lint`, but it stops `npm run dev` (its
   `predev` builds the viewer) and the launchers. Run typecheck before committing.
+- **Typing in a dialog field jumped to another field**: `Dialog` (components/Overlays.tsx) re-ran its focus effect
+  whenever `onClose` changed, and callers pass a new arrow each render, so every keystroke that re-rendered the dialog
+  focused `[data-autofocus]` again (the note body lost focus to the old title field). The effect now runs once per
+  opening and reads `onClose` through a ref; keep it that way.
+- **`npm test` may end with "Timeout calling onTaskUpdate"** (an unhandled vitest worker RPC timeout) while every test
+  passes: it happens on a busy machine with or without changes. Check the "Test Files … passed" line.
 
 ## 17. Recipes
 
@@ -1977,3 +1998,9 @@ Known limitations (also in README):
 164. "Dig the update first then fix it" → the guest viewer runtime no longer built after that commit (duplicate
      `clipCopy`, leftover traverse loop and visibility lines, a doubled `view.append(`), which stopped `npm run dev`;
      cleaned up and checked in an exported guest HTML: external-only and full cutaway both correct (done).
+165. "Editing the note contents rejects the edit and jumps to the title; remove the title so notes are body only; even
+     on furniture place notes as a Spot by default; allow images in a note, shown only in the full view, not on the
+     floating labels; leave notes mode when another tool or mode is picked" → `Dialog` focus effect runs once (pitfall in
+     §16); `title` retired and folded into the body on load (60LTN has 8 such notes); spot by default with Shift to
+     attach to the item; `Callout.images` with downscaled WebP data URLs, a full-size viewer, add/paste/drop; notes mode
+     ends on other tools, Connections, Layers, Library, Select and Walk (§10 Notes) (done).

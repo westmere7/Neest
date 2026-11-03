@@ -456,3 +456,148 @@
   gap: 6px;
   padding-top: 2px;
 }
+
+/* Note images: thumbnails in the note's full view (Notes panel, Inspector, editor), never on floating labels. */
+.note-images,
+.note-images-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.note-image-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  background: var(--surface-2);
+  cursor: zoom-in;
+}
+.note-image-thumb img,
+.note-image-open img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.note-image-open {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.note-image-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 62%);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.note-image-thumb.editable:hover .note-image-remove,
+.note-image-remove:focus-visible {
+  opacity: 1;
+}
+.note-image-add {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 11px;
+  cursor: pointer;
+}
+.note-image-add:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.note-images-editor.drop-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-xs);
+}
+.note-lightbox {
+  --lb-pad-x: 64px;
+  --lb-pad-y: 48px;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  background: rgb(10 12 14 / 86%);
+}
+.note-lightbox img {
+  max-width: calc(100vw - 2 * var(--lb-pad-x));
+  max-height: calc(100vh - 2 * var(--lb-pad-y));
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 40px rgb(0 0 0 / 45%);
+  background: #fff;
+}
+.note-lightbox-btn {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 14%);
+  color: #fff;
+  cursor: pointer;
+}
+.note-lightbox-btn:hover {
+  background: rgb(255 255 255 / 26%);
+}
+.note-lightbox-btn.close {
+  top: 14px;
+  right: 14px;
+}
+.note-lightbox-btn.prev {
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.note-lightbox-btn.next {
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.note-lightbox-count {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgb(255 255 255 / 80%);
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .note-lightbox {
+    --lb-pad-x: 12px;
+    --lb-pad-y: 56px;
+  }
+}

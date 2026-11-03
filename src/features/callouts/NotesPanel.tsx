@@ -14,7 +14,7 @@ import {
   VectorSquare,
   X,
 } from 'lucide-react';
-import { CALLOUT_COLORS, type Callout, type CalloutColor, type Project } from '@/domain/model/schema';
+import { CALLOUT_COLORS, type Callout, type CalloutColor, type NoteImage, type Project } from '@/domain/model/schema';
 import { addCallout, deleteCallouts, updateCallout } from '@/domain/commands/callouts';
 import { derivePlan, type DerivedPlan } from '@/domain/geometry/derive';
 import { calloutRegionArea } from '@/domain/geometry/callouts';
@@ -27,6 +27,8 @@ import { useDialogStore, usePrefsStore } from '@/state/uiStores';
 import { CALLOUT_PALETTE } from './content';
 import { CalloutCard } from './CalloutCard';
 import { hoverNoteInPanel, setNotesMode } from './actions';
+import { NoteImagesEditor, addNoteImages } from './NoteImages';
+import { imageFilesOf } from './images';
 
 function targetChip(project: Project, derived: DerivedPlan, c: Callout): { icon: React.ReactNode; label: string; kindLabel: string } {
   const t = c.target;
@@ -66,13 +68,13 @@ export function NotesPanel() {
   const hoveredNoteId = useEditorStore((s) => s.hoveredNoteId);
 
   const [addingGeneral, setAddingGeneral] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
   const [newNote, setNewNote] = useState('');
+  const [newImages, setNewImages] = useState<NoteImage[]>([]);
   const [newColor, setNewColor] = useState<CalloutColor>(() => usePrefsStore.getState().noteStyle?.color ?? 'teal');
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
   const [editNote, setEditNote] = useState('');
+  const [editImages, setEditImages] = useState<NoteImage[]>([]);
   const [editColor, setEditColor] = useState<CalloutColor>('teal');
 
   const derived = useMemo(() => (project ? derivePlan(project) : null), [project]);
@@ -84,41 +86,48 @@ export function NotesPanel() {
   const layerVisible = project.layers.callouts?.visible ?? true;
 
   const handleCreateGeneral = () => {
-    const title = newTitle.trim();
     const note = newNote.trim();
-    if (!title && !note) return;
+    if (!note && !newImages.length) return;
     const style = usePrefsStore.getState().noteStyle;
     const id = execute('Add general comment', (d) =>
       addCallout(d, {
         ...style,
         color: newColor,
         target: { kind: 'general' },
-        title,
         note,
+        images: newImages,
       }),
     );
-    setNewTitle('');
     setNewNote('');
+    setNewImages([]);
     setAddingGeneral(false);
     if (id) setSelection([{ kind: 'callout', id }]);
   };
 
   const startInlineEdit = (c: Callout) => {
     setEditingId(c.id);
-    setEditTitle(c.title);
     setEditNote(c.note);
+    setEditImages(c.images);
     setEditColor(c.color);
   };
 
   const saveInlineEdit = (id: string) => {
     execute('Edit comment', (d) =>
       updateCallout(d, id, {
-        title: editTitle.trim(),
         note: editNote,
+        images: editImages,
         color: editColor,
       }),
     );
     setEditingId(null);
+  };
+
+  /** Images pasted into a comment field are attached to it. */
+  const pasteImages = (e: React.ClipboardEvent, current: NoteImage[], apply: (next: NoteImage[]) => void) => {
+    const files = imageFilesOf(e.clipboardData);
+    if (!files.length) return;
+    e.preventDefault();
+    void addNoteImages(current, files).then(apply);
   };
 
   const handleDelete = (id: string) => {
@@ -170,7 +179,8 @@ export function NotesPanel() {
           <span>+ Add comment</span>
         </button>
         <div className="notes-mode-hint">
-          Click an item or spot, Alt-click a room, or drag an area on the plan to pin a comment.
+          Click anywhere to pin a comment to that spot (on furniture too) · Shift-click to attach it to the item · Alt-click
+          for the room · drag for an area.
         </div>
       </div>
 
@@ -192,22 +202,15 @@ export function NotesPanel() {
               ))}
             </div>
           </div>
-          <input
-            className="input"
-            placeholder="Title (optional)"
-            value={newTitle}
-            maxLength={120}
-            autoFocus
-            onChange={(e) => setNewTitle(e.target.value)}
-            data-testid="notes-general-title"
-          />
           <textarea
             className="input"
             placeholder="Write a comment…"
             rows={3}
             value={newNote}
             maxLength={4000}
+            autoFocus
             onChange={(e) => setNewNote(e.target.value)}
+            onPaste={(e) => pasteImages(e, newImages, setNewImages)}
             onKeyDown={(e) => {
               if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
@@ -216,11 +219,12 @@ export function NotesPanel() {
             }}
             data-testid="notes-general-body"
           />
+          <NoteImagesEditor images={newImages} onChange={setNewImages} />
           <div className="notes-composer-foot">
             <Button size="sm" variant="ghost" onClick={() => setAddingGeneral(false)}>
               Cancel
             </Button>
-            <Button size="sm" variant="primary" disabled={!newTitle.trim() && !newNote.trim()} onClick={handleCreateGeneral} data-testid="notes-general-submit">
+            <Button size="sm" variant="primary" disabled={!newNote.trim() && !newImages.length} onClick={handleCreateGeneral} data-testid="notes-general-submit">
               Add comment
             </Button>
           </div>
@@ -306,22 +310,15 @@ export function NotesPanel() {
 
                 {isEditing ? (
                   <div className="notes-inline-edit" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                    <input
-                      className="input"
-                      placeholder="Title (optional)"
-                      value={editTitle}
-                      maxLength={120}
-                      autoFocus
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      data-testid={`note-edit-title-${c.id}`}
-                    />
                     <textarea
                       className="input"
                       placeholder="Write a comment…"
                       rows={3}
                       value={editNote}
                       maxLength={4000}
+                      autoFocus
                       onChange={(e) => setEditNote(e.target.value)}
+                      onPaste={(e) => pasteImages(e, editImages, setEditImages)}
                       onKeyDown={(e) => {
                         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                           e.preventDefault();
@@ -330,6 +327,7 @@ export function NotesPanel() {
                       }}
                       data-testid={`note-edit-body-${c.id}`}
                     />
+                    <NoteImagesEditor images={editImages} onChange={setEditImages} />
                     <div className="notes-inline-foot">
                       <div className="notes-mini-colors">
                         {CALLOUT_COLORS.slice(0, 7).map((col) => (
@@ -355,7 +353,7 @@ export function NotesPanel() {
                   </div>
                 ) : (
                   <div className="notes-item-body">
-                    <CalloutCard project={project} derived={derived} callout={c} />
+                    <CalloutCard project={project} derived={derived} callout={c} images />
                   </div>
                 )}
               </div>

@@ -31,7 +31,7 @@ export function CalloutInspector({ project, derived, id }: { project: Project; d
     <div className="pad callout-inspector">
       <p className="field-hint">{describeCalloutTarget(project, id)}</p>
       <div className="callout-preview" style={{ marginBottom: 10 }}>
-        <CalloutCard project={project} derived={derived} callout={c} />
+        <CalloutCard project={project} derived={derived} callout={c} images />
       </div>
       <Toggle label="Visible" checked={!c.hidden} onChange={(v) => exec(v ? 'Show note' : 'Hide note', (d) => updateCallout(d, id, { hidden: !v }))} />
       <div className="btn-row">

@@ -98,6 +98,14 @@ function attachCatalogPhotos(raw: RawProject): void {
   }
 }
 
+/** Moves a retired note title into the body as a bold first line (asterisks dropped so the markup holds). */
+export function foldNoteTitle(c: { title: string; note: string }): void {
+  const title = c.title.replace(/\*/g, '').trim();
+  c.title = '';
+  if (!title) return;
+  c.note = (`**${title}**` + (c.note.trim() ? `\n\n${c.note}` : '')).slice(0, 4000);
+}
+
 /** Removes dangling references so the editor never renders broken geometry. */
 export function repairProject(project: Project): MigrationResult {
   const warnings: string[] = [];
@@ -142,6 +150,9 @@ export function repairProject(project: Project): MigrationResult {
     }
   }
   if (droppedCallouts) warnings.push(`${droppedCallouts} callout(s) pointed at missing items or rooms and were removed.`);
+  // Notes no longer have a title: an old title becomes the note's bold first line.
+  for (const c of Object.values(p.callouts ?? {})) foldNoteTitle(c);
+  for (const opt of p.options ?? []) for (const c of Object.values(opt.plan?.callouts ?? {})) foldNoteTitle(c);
   // Services: a wall point whose wall is gone keeps its spot; ids match their keys.
   for (const [key, s] of Object.entries(p.servicePoints ?? {})) {
     if (s.id !== key) s.id = key;

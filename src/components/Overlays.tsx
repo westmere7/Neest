@@ -22,6 +22,10 @@ export function Dialog({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const prevFocus = useRef<Element | null>(null);
+  // Callers often pass a new onClose each render; the focus effect below must run once per opening,
+  // or every keystroke in a field that re-renders the dialog steals focus back to [data-autofocus].
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     prevFocus.current = document.activeElement;
     const el = ref.current;
@@ -34,7 +38,7 @@ export function Dialog({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
       if (e.key === 'Tab') {
         const f = focusables();
@@ -54,7 +58,7 @@ export function Dialog({
       el?.removeEventListener('keydown', onKey);
       (prevFocus.current as HTMLElement | null)?.focus?.();
     };
-  }, [onClose]);
+  }, []);
   return (
     <div className="modal-backdrop" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
       <div

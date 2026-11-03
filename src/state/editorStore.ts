@@ -149,6 +149,7 @@ export interface EditorState {
   /**
    * Dedicated Comments & Notes mode (top-bar Comments icon, K): opens the Comments panel, shows all
    * notes, and restricts viewport & keyboard operations to note-only actions (like Figma comment mode).
+   * Picking another tool or mode leaves it.
    */
   notesMode: boolean;
   /** Note id currently hovered in the Comments panel (highlights the note and its linked object/room). */
@@ -220,11 +221,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   notesMode: false,
   hoveredNoteId: null,
 
-  setTool: (tool) =>
-    set((s) => {
-      if (s.notesMode && tool !== 'select' && tool !== 'pan' && tool !== 'callout') return s;
-      return { tool, hint: null, snapLabel: null };
-    }),
+  // Picking another tool in Comments & notes mode leaves the mode (see the subscription below).
+  setTool: (tool) => set({ tool, hint: null, snapLabel: null }),
   setSelection: (selection) =>
     set((s) => ({
       selection: s.notesMode ? selection.filter((x) => x.kind === 'callout') : expandSelection(selection),
@@ -269,6 +267,19 @@ useEditorStore.subscribe((s, prev) => {
   if (!s.materialPicker) return;
   const selChanged = s.selection !== prev.selection && selectionKey(s.selection) !== selectionKey(prev.selection);
   if (selChanged || s.workspace === 'walk' || s.chromeHidden) s.set({ materialPicker: null });
+});
+
+/** Tools that belong to Comments & notes mode; any other tool leaves it. */
+const NOTE_MODE_TOOLS: ReadonlySet<ToolId> = new Set(['callout', 'select', 'pan']);
+
+// Comments & notes mode ends by itself when another tool or mode is picked: a drawing or placing tool,
+// Connections, the Layers panel or the walkthrough (switching between 2D and 3D keeps it).
+useEditorStore.subscribe((s, prev) => {
+  if (!s.notesMode || !prev.notesMode) return;
+  const otherTool = s.tool !== prev.tool && !NOTE_MODE_TOOLS.has(s.tool);
+  const otherMode =
+    (s.servicesMode && !prev.servicesMode) || (s.layersPanelOpen && !prev.layersPanelOpen) || (s.workspace === 'walk' && prev.workspace !== 'walk');
+  if (otherTool || otherMode) s.set({ notesMode: false, hoveredNoteId: null, hover: null });
 });
 
 export const selectionIds = (sel: SelItem[]) => sel.map((s) => s.id);

@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import type { Callout, Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
-import { calloutInfo, parseNote, type Run } from './content';
+import { calloutInfo, noteHeading, parseNote, type Run } from './content';
 import { NOTE_SIZE_SCALE, labelColors } from './style';
+import { NoteImages } from './NoteImages';
 import './callouts.css';
 
 function runs(list: Run[], interactive: boolean): ReactNode[] {
@@ -22,23 +23,28 @@ function runs(list: Run[], interactive: boolean): ReactNode[] {
   });
 }
 
-/** A callout label as HTML: the 3D overlay and the editor's preview. */
+/**
+ * A callout label as HTML: the 3D overlay, the Notes panel and the Inspector. `images` adds the note's
+ * pictures (the full view); floating labels leave them out.
+ */
 export function CalloutCard({
   project,
   derived,
   callout,
   interactive = true,
   selected = false,
+  images = false,
 }: {
   project: Project;
   derived: DerivedPlan | null;
   callout: Callout;
   interactive?: boolean;
   selected?: boolean;
+  images?: boolean;
 }) {
   const colors = labelColors(callout);
   const info = callout.showInfo ? calloutInfo(project, derived, callout) : [];
-  const title = callout.title.trim() || (info.length ? info.shift()! : '');
+  const title = noteHeading(callout, info);
   const blocks = parseNote(callout.note);
   const lists: ReactNode[] = [];
   let list: { kind: 'bullet' | 'number'; items: ReactNode[]; start?: number } | null = null;
@@ -93,7 +99,8 @@ export function CalloutCard({
         </div>
       )}
       {lists.length > 0 && <div className="callout-note">{lists}</div>}
-      {!title && !info.length && !lists.length && <div className="callout-empty">Callout</div>}
+      {images && <NoteImages images={callout.images} />}
+      {!title && !info.length && !lists.length && !(images && callout.images.length) && <div className="callout-empty">Note</div>}
     </div>
   );
 }
