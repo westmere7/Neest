@@ -279,7 +279,9 @@ export const SectionEditSchema = z.object({ n: z.number().int().min(1).max(64), 
 export const ItemEditsSchema = z.object({
   params: z.record(z.string().max(40), z.union([num, z.boolean(), z.string().max(60)])).optional(),
   sections: z.object({ x: SectionEditSchema.optional(), y: SectionEditSchema.optional() }).optional(),
-  parts: z.record(z.string().regex(/^d{1,4}$/), PartEditSchema).optional(),
+  parts: z.record(z.string().regex(/^\d{1,4}$/), PartEditSchema).optional(),
+  /** Each part edit stands alone: attached parts do not follow (they do by default). */
+  detached: z.boolean().optional(),
 });
 
 export const PlacedObjectSchema = z.object({

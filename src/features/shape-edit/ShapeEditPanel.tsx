@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Eye, EyeOff, RotateCcw, Shapes, X } from 'lucide-react';
-import { editedParts, partBox, partLabels, sectionInfo } from '@/data/assets/itemEdits';
+import { editedParts, partBox, partLabels, partsFollowing, sectionInfo } from '@/data/assets/itemEdits';
 import type { AssetParam } from '@/data/assets/types';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
@@ -16,6 +16,7 @@ import {
   setParam,
   setPartCentre,
   setPartSize,
+  setPartsFollow,
   setSectionSize,
   setShapeEditState,
   togglePartHidden,
@@ -51,6 +52,7 @@ export function ShapeEditPanel() {
   const editedCount = Object.keys(e?.parts ?? {}).length;
   const hiddenCount = parts.filter((p) => p.hidden).length;
   const box = picked ? partBox(picked.part) : null;
+  const followers = picked && !shapeEdit.detached ? partsFollowing(parts.map((p) => p.base), picked.index).length : 0;
   const round = picked && ['cylinder', 'sphere', 'torus', 'lathe'].includes(picked.part.shape);
   const sectionRow = (axis: 'x' | 'y') => {
     const s = sections[axis];
@@ -190,6 +192,15 @@ export function ShapeEditPanel() {
                   </div>
                 </>
               )}
+              {!picked.hidden && (
+                <p className="field-hint" data-testid="shape-followers">
+                  {shapeEdit.detached
+                    ? 'Only this part changes (attached parts stay).'
+                    : followers
+                      ? `${followers} attached part${followers === 1 ? '' : 's'} follow${followers === 1 ? 's' : ''} it (outlined in blue).`
+                      : 'Nothing is attached to it.'}
+                </p>
+              )}
               <div className="btn-row">
                 <Button size="sm" variant="subtle" onClick={() => togglePartHidden(picked.index, !picked.hidden)}>
                   {picked.hidden ? <Eye size={13} /> : <EyeOff size={13} />} {picked.hidden ? 'Show part' : 'Hide part'}
@@ -202,6 +213,12 @@ export function ShapeEditPanel() {
           </Section>
         )}
         <Section title={`Parts (${parts.length})`}>
+          <Toggle
+            label="Attached parts follow"
+            hint="Shelves between walls, strips and handles on a part change with it"
+            checked={!shapeEdit.detached}
+            onChange={setPartsFollow}
+          />
           <div className="shape-part-list" role="list" data-testid="shape-part-list">
             {parts.map((p) => (
               <div
@@ -214,6 +231,7 @@ export function ShapeEditPanel() {
                 <button type="button" className="shape-part-name" onClick={() => setShapeEditState({ part: shapeEdit.part === p.index ? null : p.index, section: null })}>
                   {labels[p.index]}
                   {p.edited && !p.hidden && <span className="shape-part-tag">edited</span>}
+                  {p.linked && <span className="shape-part-tag follows">follows</span>}
                 </button>
                 <IconButton label={p.hidden ? 'Show part' : 'Hide part'} onClick={() => togglePartHidden(p.index, !p.hidden)}>
                   {p.hidden ? <EyeOff size={13} /> : <Eye size={13} />}

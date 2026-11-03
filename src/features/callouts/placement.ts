@@ -41,6 +41,8 @@ export interface PlaceOptions {
   gap?: number;
   /** Pixels of each edge covered by floating panels: labels stay inside the free area. */
   insets?: { l: number; r: number; t: number; b: number };
+  /** Fixed things on screen labels keep clear of where they can (note pins, which stay on their spots). */
+  avoid?: ScreenRect[];
   iterations?: number;
 }
 
@@ -73,8 +75,10 @@ export function placeNoteLabels(items: LabelInput[], view: { w: number; h: numbe
     r.y = Math.max(area.y, Math.min(area.y + area.h - r.h, r.y));
   };
   const obstacle = o.mode === 'clear' ? o.obstacle : null;
+  const avoid = o.avoid ?? [];
   rects.forEach((r) => {
     if (obstacle) pushOut(r, obstacle, gap * 2, area);
+    for (const a of avoid) pushOut(r, a, gap, area);
     clamp(r);
   });
   // Push overlapping labels apart along the axis where they overlap least, half each.
@@ -104,6 +108,7 @@ export function placeNoteLabels(items: LabelInput[], view: { w: number; h: numbe
       }
     rects.forEach((r) => {
       if (obstacle) pushOut(r, obstacle, gap * 2, area);
+      for (const a of avoid) pushOut(r, a, gap, area);
       clamp(r);
     });
     if (!moved) break;

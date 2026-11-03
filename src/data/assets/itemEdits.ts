@@ -276,6 +276,122 @@ export interface EditedPart {
   base: Part;
   hidden: boolean;
   edited: boolean;
+  /** Changed because a part it is attached to was edited (see `propagate`). */
+  linked: boolean;
+}
+
+type Box = { min: V3; max: V3 };
+/** How close two faces must be to count as joined (builders leave 0–3 mm reveals). */
+const TOUCH = 0.004;
+
+/** Overlap of two boxes on an axis (negative: the gap between them). */
+const overlapOn = (a: Box, b: Box, i: Axis) => Math.min(a.max[i], b.max[i]) - Math.max(a.min[i], b.min[i]);
+
+/** The other two axes overlap or touch, at least one of them by more than a touch: the faces really meet (an edge or an area, not a corner). */
+function facesMeet(a: Box, b: Box, i: Axis): boolean {
+  const others = ([0, 1, 2] as Axis[]).filter((j) => j !== i).map((j) => overlapOn(a, b, j));
+  return others.every((o) => o >= -TOUCH) && others.some((o) => o > TOUCH);
+}
+
+/** `q` sits against `p` along axis i: 'hi' beyond p's max face, 'lo' below its min face, or null. */
+function touching(q: Box, p: Box, i: Axis): 'hi' | 'lo' | null {
+  if (Math.abs(q.min[i] - p.max[i]) <= TOUCH && facesMeet(q, p, i)) return 'hi';
+  if (Math.abs(q.max[i] - p.min[i]) <= TOUCH && facesMeet(q, p, i)) return 'lo';
+  return null;
+}
+
+/** `q` lies within `p` along these axes (give or take a touch). */
+const within = (q: Box, p: Box, axes: Axis[]) => axes.every((j) => q.min[j] >= p.min[j] - TOUCH && q.max[j] <= p.max[j] + TOUCH);
+const othersOf = (...skip: Axis[]): Axis[] => ([0, 1, 2] as Axis[]).filter((j) => !skip.includes(j));
+
+/** Whether two parts are joined face to face on any axis (attached to each other). */
+export function attached(q: Box, p: Box): boolean {
+  return ([0, 1, 2] as Axis[]).some((i) => touching(q, p, i) !== null);
+}
+
+/** The part refitted so its item-space box becomes `to` (it was `from`), axis by axis. */
+function refit(p: Part, from: Box, to: Box): Part {
+  let q = p;
+  for (const i of [0, 1, 2] as Axis[]) {
+    if (Math.abs(to.min[i] - from.min[i]) < 1e-9 && Math.abs(to.max[i] - from.max[i]) < 1e-9) continue;
+    const b = partBounds(q);
+    q = fitAxis(q, i, b.min[i], b.max[i], to.min[i], to.max[i]);
+  }
+  return q;
+}
+
+/**
+ * Connected edits: the parts attached to an edited part follow it, then the parts attached to those,
+ * and so on. Per axis, a part against a moved face is stretched so it stays against it (a shelf
+ * between two niche walls lengthens when a wall moves), or moves with it when it is thin along that
+ * axis (a door on a carcass, a strip on a wall); a part mounted on another's face and lying within
+ * its extent keeps its place in proportion (a handle on a widened door, lights under a stretched shelf).
+ * A part only follows through a joint when its joined face lies within the moved part's face (it is
+ * held by it: a shelf in a wall, a strip on a panel), so a small part never drags a big one along.
+ * Each part follows the first edited part that reaches it; parts with their own edits do not follow.
+ */
+function propagate(base: Part[], changed: Map<number, Part>): Map<number, Part> {
+  const b0: Box[] = base.map((p) => partBounds(p));
+  const out = new Map(changed);
+  const queue = [...changed.keys()];
+  const done = new Set(changed.keys());
+  while (queue.length) {
+    const i = queue.shift()!;
+    const p0 = b0[i];
+    const p1 = partBounds(out.get(i)!);
+    const dMin = [0, 1, 2].map((a) => p1.min[a] - p0.min[a]);
+    const dMax = [0, 1, 2].map((a) => p1.max[a] - p0.max[a]);
+    if (dMin.every((v) => Math.abs(v) < 1e-9) && dMax.every((v) => Math.abs(v) < 1e-9)) continue;
+    for (let q = 0; q < base.length; q++) {
+      if (done.has(q)) continue;
+      const q0 = b0[q];
+      if (!attached(q0, p0)) continue;
+      const to: Box = { min: [...q0.min] as V3, max: [...q0.max] as V3 };
+      let moved = false;
+      for (const a of [0, 1, 2] as Axis[]) {
+        const size = q0.max[a] - q0.min[a];
+        const thin = size <= THIN;
+        const side = touching(q0, p0, a);
+        if (side && within(q0, p0, othersOf(a))) {
+          const d = side === 'hi' ? dMax[a] : dMin[a];
+          if (Math.abs(d) < 1e-9) continue;
+          if (thin) {
+            to.min[a] += d;
+            to.max[a] += d;
+          } else if (side === 'hi') to.min[a] = Math.min(to.max[a] - 0.005, to.min[a] + d);
+          else to.max[a] = Math.max(to.min[a] + 0.005, to.max[a] + d);
+          moved = true;
+          continue;
+        }
+        if (side) continue;
+        // Mounted on one of p's faces (joined on another axis, lying within that face): keep its place in proportion.
+        if (Math.abs(dMin[a]) < 1e-9 && Math.abs(dMax[a]) < 1e-9) continue;
+        const mounted = othersOf(a).some((j) => touching(q0, p0, j) !== null && within(q0, p0, othersOf(j)));
+        if (!mounted) continue;
+        const len0 = p0.max[a] - p0.min[a];
+        const k = len0 > 1e-6 ? (p1.max[a] - p1.min[a]) / len0 : 1;
+        const map = (v: number) => p1.min[a] + (v - p0.min[a]) * k;
+        if (thin) {
+          const c = map((q0.min[a] + q0.max[a]) / 2);
+          to.min[a] = c - size / 2;
+          to.max[a] = c + size / 2;
+        } else {
+          to.min[a] = map(q0.min[a]);
+          to.max[a] = map(q0.max[a]);
+        }
+        moved = true;
+      }
+      if (!moved) continue;
+      try {
+        out.set(q, refit(base[q], q0, to));
+      } catch {
+        continue;
+      }
+      done.add(q);
+      queue.push(q);
+    }
+  }
+  return out;
 }
 
 /** The item's parts before part edits: built with its settings, sections applied. */
@@ -305,19 +421,50 @@ export function editedParts(asset: AssetDefinition, size: Size3, edits: ItemEdit
     console.warn(`[edits] ${asset.id}: shape settings failed, built as is`, e);
     base = asset.build(size);
   }
+  const own = new Map<number, Part>();
+  const fitting = new Set<number>();
+  base.forEach((p, index) => {
+    const e = edits?.parts?.[String(index)];
+    if (!e || e.sig !== partSig(p)) return;
+    fitting.add(index);
+    try {
+      own.set(index, applyPartEdit(p, e));
+    } catch {
+      own.set(index, p);
+    }
+  });
+  // Attached parts follow (unless the item's edits say each part goes alone).
+  let all = own;
+  if (own.size && !edits?.detached) {
+    try {
+      all = propagate(base, own);
+    } catch {
+      all = own;
+    }
+  }
   return base.map((p, index) => {
     const e = edits?.parts?.[String(index)];
-    const fits = !!e && e.sig === partSig(p);
-    let part = p;
-    if (fits) {
-      try {
-        part = applyPartEdit(p, e);
-      } catch {
-        part = p;
-      }
-    }
-    return { index, part, base: p, hidden: fits && !!e!.hidden, edited: fits };
+    const fits = fitting.has(index);
+    return { index, part: all.get(index) ?? p, base: p, hidden: fits && !!e!.hidden, edited: fits, linked: !fits && all.has(index) };
   });
+}
+
+/**
+ * The parts held by part `index` (joined to one of its faces and lying within it): they follow it when it
+ * changes, and the parts they hold follow them in turn. For the editor's highlight.
+ */
+export function partsFollowing(base: Part[], index: number): number[] {
+  const p = base[index];
+  if (!p) return [];
+  const p0 = partBounds(p);
+  const out: number[] = [];
+  base.forEach((q, i) => {
+    if (i === index) return;
+    const q0 = partBounds(q);
+    const held = ([0, 1, 2] as Axis[]).some((a) => touching(q0, p0, a) !== null && within(q0, p0, othersOf(a)));
+    if (held) out.push(i);
+  });
+  return out;
 }
 
 /** Section edges of the item as edited, for the editor: positions now, as found, and the axis range. */
@@ -370,7 +517,9 @@ export function cleanEdits(asset: AssetDefinition, e: ItemEdits | undefined | nu
     if (keep.move || keep.grow || keep.hidden) parts[k] = keep;
   }
   if (Object.keys(parts).length) out.parts = parts;
-  return isEmptyEdits(out) ? null : out;
+  if (isEmptyEdits(out)) return null;
+  if (e.detached) out.detached = true;
+  return out;
 }
 
 /** Stable text of edits (sorted keys), the cache key of a derived asset. */

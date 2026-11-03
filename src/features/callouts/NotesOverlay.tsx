@@ -10,7 +10,7 @@ import { liveScene } from '@/features/scene-3d/sceneRuntime';
 import { CalloutCard } from './CalloutCard';
 import { visibleCallouts } from './layout';
 import { callout3DPoints } from './Callouts3D';
-import { inView, placeNoteLabels, screenBounds, type LabelInput, type NotePlacement, type PlacedLabel } from './placement';
+import { inView, placeNoteLabels, screenBounds, type LabelInput, type NotePlacement, type PlacedLabel, type ScreenRect } from './placement';
 import { NOTE_LINE_WIDTH, arrowHead, endPx, labelColors, leaderDash } from './style';
 
 export interface NoteOnScreen {
@@ -51,6 +51,7 @@ export function layoutNotes3D(
   h: number,
   size: (c: Callout) => { w: number; h: number } | null,
   insets?: Insets,
+  avoid?: ScreenRect[],
 ): NoteOnScreen[] {
   const mode: NotePlacement = project.render.notePlacement ?? 'close';
   const inputs: (LabelInput & { c: Callout })[] = [];
@@ -64,7 +65,7 @@ export function layoutNotes3D(
     if (!anchor || !prefer || !s || !inView(anchor, { w, h })) continue;
     inputs.push({ id: c.id, c, anchor, prefer, w: s.w, h: s.h });
   }
-  const placed = placeNoteLabels(inputs, { w, h }, { mode, insets, obstacle: mode === 'clear' ? buildingRect(project, derived, camera, w, h) : null });
+  const placed = placeNoteLabels(inputs, { w, h }, { mode, insets, avoid, obstacle: mode === 'clear' ? buildingRect(project, derived, camera, w, h) : null });
   return inputs.map((it, i) => ({ c: it.c, anchor: it.anchor, placed: placed[i] }));
 }
 
@@ -282,9 +283,11 @@ export function NotesOverlay({
         insetsAt = now;
       }
       const shown = new Set<string>();
-      // Icons: a pin on every spot; only opened notes get a card and a leader.
+      // Icons: a pin on every spot; only opened notes get a card and a leader, kept clear of the pins.
+      const pinRects: ScreenRect[] = [];
       if (disp === 'icon') {
         const at = noteAnchors(p, d, cam, w, h);
+        for (const a of at.values()) if (a) pinRects.push({ x: a.x - 15, y: a.y - 36, w: 30, h: 36 });
         for (const [id, pin] of pins.current) {
           const a = at.get(id);
           if (!pin) continue;
@@ -296,7 +299,7 @@ export function NotesOverlay({
         if (disp === 'icon' && !open.has(c.id)) return null;
         const card = cards.current.get(c.id);
         return card ? { w: card.offsetWidth, h: card.offsetHeight } : null;
-      }, insets)) {
+      }, insets, pinRects)) {
         shown.add(n.c.id);
         const { rect, attach } = n.placed;
         const card = cards.current.get(n.c.id);

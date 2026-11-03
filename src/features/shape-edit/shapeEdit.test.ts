@@ -17,6 +17,7 @@ import {
   setParam,
   setPartCentre,
   setPartSize,
+  setPartsFollow,
   setSectionSize,
   togglePartHidden,
 } from './actions';
@@ -96,6 +97,26 @@ describe('shape editor', () => {
     resetShape();
     expect(obj(id).edits).toBeUndefined();
     expect(getObjectAsset(null, obj(id))).toBe(asset);
+  });
+
+  it('lets attached parts follow a moved wall, or each part move alone', () => {
+    const id = setup();
+    enterShapeEdit(id);
+    const asset = getAsset(null, WARDROBE)!;
+    const size = () => ({ w: obj(id).width, d: obj(id).depth, h: obj(id).height });
+    const shelfEnd = () => partBox(editedParts(asset, size(), obj(id).edits)[6].part).max[0];
+    const end0 = shelfEnd();
+    dragPart(1, [0.1, 0, 0], [0, 0, 0]);
+    expect(shelfEnd()).toBeCloseTo(end0 + 0.1, 6);
+    // Off: the shelf goes back where it was and the setting is stored with the edits.
+    setPartsFollow(false);
+    expect(obj(id).edits?.detached).toBe(true);
+    expect(shelfEnd()).toBeCloseTo(end0, 6);
+    dragPart(1, [0.05, 0, 0], [0, 0, 0]);
+    expect(shelfEnd()).toBeCloseTo(end0, 6);
+    setPartsFollow(true);
+    expect(obj(id).edits?.detached).toBeUndefined();
+    expect(shelfEnd()).toBeCloseTo(end0 + 0.15, 6);
   });
 
   it('changes and resets a portal setting; the default stores nothing', () => {

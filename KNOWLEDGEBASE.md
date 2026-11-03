@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-04 (note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-04 (connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -555,7 +555,9 @@ a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens 
   "Clear of the walls" moves it off the building's screen box, then overlapping labels are pushed apart (sideways when
   moving vertically would hit the building) and kept inside the area the floating panels leave free
   (`floatingInsets`). Notes whose subject is off-screen are hidden. Setting: 3D view panel → Note placement
-  (`render.notePlacement` close / further / clear). Render captures and the guest viewer use the same layout.
+  (`render.notePlacement` close / further / clear). In Icons display an opened card is drawn above the pins
+  (z-index) and placed clear of them (`placeNoteLabels` `avoid`: the pins' screen boxes, fixed), so every pin stays
+  visible. Render captures and the guest viewer use the same layout.
   Click selects, double-click edits. Hidden while the scene loads and in walk mode.
 - **Note display** (`render.noteDisplay`, 3D view panel next to Note placement): **Full** cards, **Compact** (one line:
   the item's or room's name, else the note's first line; `CalloutCard compact`), or **Icons** (a round pin with a tail
@@ -606,7 +608,14 @@ spec-built families have named settings (portal leg width, soffit drop, corner r
   edits)`, a derived asset `<id>@shape:<hash>`, so the 3D view, plan, DXF, GLB, guest export, previews and surfaces
   all use the edited shape; walk collisions stay the item's box. Order: build with settings → sections (piecewise
   linear remap; thin parts near an edge move with it, others stretch with their section; prisms remapped point by
-  point) → part edits (only while `sig` still matches). Edits are cleaned on every change (defaults and no-ops
+  point) → part edits (only while `sig` still matches) → **connected edits** (`propagate`): parts held by an edited
+  part follow it, then the parts they hold, and so on. Held = joined to one of its faces (within 4 mm, meeting on an
+  edge or area) and lying within that face, so a small part never drags a big one. Per axis a part against a moved face
+  stretches to stay against it (shelves between niche walls), or moves with it when it is thin along that axis (a door,
+  a strip); a part mounted on a face keeps its place in proportion (handles, lights under a shelf). Each part follows
+  the first edited part that reaches it; parts with their own edits do not follow. The panel's "Attached parts follow"
+  switch (`shapeEdit.detached` → `edits.detached`) turns it off; a picked part outlines the parts it holds in blue
+  (`partsFollowing`), and the list tags followers "follows". Edits are cleaned on every change (defaults and no-ops
   dropped; nothing left = field removed). Duplicates keep them. An item with edits keeps its model variant (the
   picker says so); reset the shape to change it.
 
@@ -1355,6 +1364,10 @@ construction documents.
    off the model. Use the camera view offset (`FreeAreaOffset`) instead. Any code that clones the live camera
    for an output must call `clearViewOffset()` on the clone.
 7. **WebGL screenshots are black** in tooling without `preserveDrawingBuffer`; it is enabled in dev only.
+- **A lost backslash dropped every part edit on reload**: the edits schema was written through a script and its
+  part-key pattern became `/^d{1,4}$/` instead of `/^\d{1,4}$/`, so saved part edits failed validation and loaded as
+  none (`.catch(undefined)`). Fixed 2026-11-04; `itemEdits.test.ts` now round-trips part edits through the schema.
+  When scripting edits of regexes, check the result.
 - **Shape editor gizmo got no pointer**: X-rayed walls in front of it took the hit. In the shape editor X-rayed
   meshes have no raycast (restored when the X-ray ends).
 - **`structuredClone` of an immer draft throws** (DataCloneError): clone from the committed state, not from inside the
@@ -2140,3 +2153,9 @@ Known limitations (also in README):
      view, HTML export); panel buttons instead of switches for Info / Notes / View; phone portrait and landscape layout
      with tap-to-hide; QR code and Share on the live link; the guest pane reduced to Share, Basics and folded More
      settings. 60LTN's live link republished (done).
+172. "The edit feature should be interconnected: editing a niche wall should also extend the niche shelves; go through
+     all compatible items again" + "make sure the note is always on top but other icons still visible" → connected edits
+     (§10 Shape editor): parts held by an edited part follow it (stretch, move or keep their place in proportion), with an
+     "Attached parts follow" switch, blue outlines for what a picked part holds and "follows" tags; every editable item
+     re-run with moves and resizes of its parts. Opened note cards are above pins and placed clear of them (editor and
+     guest view). Also fixed: saved part edits were lost on reload (schema pattern) (done).

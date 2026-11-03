@@ -42,4 +42,18 @@ describe('3D note label layout', () => {
     expect(screenBounds([{ x: 1, y: 5 }, null, { x: 9, y: 2 }])).toEqual({ x: 1, y: 2, w: 8, h: 3 });
     expect(screenBounds([null])).toBeNull();
   });
+
+  it('keeps an opened card clear of the pins on screen (they stay on their spots)', () => {
+    const view = { w: 800, h: 600 };
+    const label = { id: 'a', anchor: { x: 400, y: 330 }, prefer: { x: 400, y: 300 }, w: 160, h: 60 };
+    // A pin right under where the card would sit.
+    const pin: ScreenRect = { x: 385, y: 250, w: 30, h: 36 };
+    const [free] = placeNoteLabels([label], view, { mode: 'close' });
+    const overlaps = (r: ScreenRect) => r.x < pin.x + pin.w && pin.x < r.x + r.w && r.y < pin.y + pin.h && pin.y < r.y + r.h;
+    expect(overlaps(free.rect)).toBe(true);
+    const [placed] = placeNoteLabels([label], view, { mode: 'close', avoid: [pin] });
+    expect(overlaps(placed.rect)).toBe(false);
+    // It moves as little as it can.
+    expect(Math.hypot(placed.rect.x - free.rect.x, placed.rect.y - free.rect.y)).toBeLessThan(120);
+  });
 });

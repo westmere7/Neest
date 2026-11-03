@@ -946,12 +946,15 @@ function start(data: GuestData) {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const inputs: (LabelInput & { n: (typeof callouts)[number] })[] = [];
+    /** Pins on screen: the opened card keeps clear of them (they stay on their spots). */
+    const pinRects: ScreenRect[] = [];
     for (const n of callouts) {
       const a = toScreen(n.anchor);
       const l = toScreen(n.label);
       const visible = !!a && !!l && inView(a, { w, h });
       // Pins: on every spot in view; only the opened note gets its card and leader.
       if (mode === 'icon' && visible) {
+        pinRects.push({ x: a!.x - 15, y: a!.y - 36, w: 30, h: 36 });
         n.pin.style.visibility = 'visible';
         n.pin.style.transform = `translate(${Math.round(a!.x)}px, ${Math.round(a!.y)}px)`;
         n.pin.classList.toggle('open', openNote === n.id);
@@ -980,6 +983,7 @@ function start(data: GuestData) {
       {
         mode: data.notePlacement ?? 'close',
         obstacle,
+        avoid: pinRects,
         insets: {
           l: side.offsetHeight > 90 && w > 900 ? side.offsetWidth + 24 : 0,
           r: 0,

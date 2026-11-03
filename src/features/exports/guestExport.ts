@@ -127,7 +127,8 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-callout.ng-compact{max-width:200px;font-weight:600}
 .ng-callout.ng-compact>*{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ng-callout.ng-compact>*+*{display:none}
-.ng-pin{position:absolute;left:0;top:0;visibility:hidden;width:26px;height:26px;margin:-34px 0 0 -13px;padding:0;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;background:var(--main);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);cursor:pointer;pointer-events:auto}
+.ng-callout{z-index:2}
+.ng-pin{z-index:1;position:absolute;left:0;top:0;visibility:hidden;width:26px;height:26px;margin:-34px 0 0 -13px;padding:0;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;background:var(--main);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);cursor:pointer;pointer-events:auto}
 .ng-pin::after{content:"";position:absolute;left:50%;top:100%;margin-left:-5px;border:5px solid transparent;border-top:7px solid #fff}
 .ng-pin svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 .ng-pin.open{outline:2px solid var(--main);outline-offset:2px}

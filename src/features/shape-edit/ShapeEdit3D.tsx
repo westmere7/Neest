@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { useThree, type ThreeEvent } from '@react-three/fiber';
 import type { ItemEdits, PlacedObject, Project } from '@/domain/model/schema';
 import { objectSlotMaterialId } from '@/data/assets/registry';
-import { editedParts, partBox, partSig, sectionInfo, type EditedPart } from '@/data/assets/itemEdits';
+import { editedParts, partBox, partSig, partsFollowing, sectionInfo, type EditedPart } from '@/data/assets/itemEdits';
 import { partGeometry } from '@/features/scene-3d/builders';
 import type { MaterialRegistry } from '@/features/scene-3d/materialRegistry';
 import { useEditorStore } from '@/state/editorStore';
@@ -19,6 +19,7 @@ import { dragPart, editBase, resetPart, setShapeEditState, togglePartHidden } fr
 
 const OUTLINE = new THREE.LineBasicMaterial({ color: '#8fd3c0', transparent: true, opacity: 0.16, depthWrite: false });
 const OUTLINE_HOVER = new THREE.LineBasicMaterial({ color: '#c8f1e6', transparent: true, opacity: 0.6, depthWrite: false });
+const OUTLINE_FOLLOWS = new THREE.LineBasicMaterial({ color: '#7cc9ff', transparent: true, opacity: 0.75, depthTest: false, depthWrite: false });
 const OUTLINE_PICKED = new THREE.LineBasicMaterial({ color: '#ffb547', transparent: true, opacity: 0.95, depthTest: false, depthWrite: false });
 const OUTLINE_HIDDEN = new THREE.LineDashedMaterial({ color: '#9aa4ad', transparent: true, opacity: 0.35, dashSize: 0.03, gapSize: 0.02, depthWrite: false });
 const TINT = new THREE.MeshBasicMaterial({ color: '#ffb547', transparent: true, opacity: 0.22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
@@ -53,11 +54,13 @@ function withDrag(edits: ItemEdits | undefined, parts: EditedPart[], drag: Drag 
   return { ...edits, parts: { ...edits?.parts, [String(drag.index)]: { ...pe, move: add(pe.move, drag.move), grow: add(pe.grow, drag.grow) } } };
 }
 
-function PartMesh({ p, material, picked, hovered, onPick, onHover, onMenu }: {
+function PartMesh({ p, material, picked, hovered, follows, onPick, onHover, onMenu }: {
   p: EditedPart;
   material: THREE.Material;
   picked: boolean;
   hovered: boolean;
+  /** Attached to the picked part: it follows when that part changes. */
+  follows: boolean;
   onPick: (e: ThreeEvent<MouseEvent>) => void;
   onHover: (on: boolean) => void;
   onMenu: (e: ThreeEvent<MouseEvent>) => void;
@@ -93,9 +96,9 @@ function PartMesh({ p, material, picked, hovered, onPick, onHover, onMenu }: {
       <lineSegments
         ref={lines}
         geometry={edges}
-        material={p.hidden ? OUTLINE_HIDDEN : picked ? OUTLINE_PICKED : hovered ? OUTLINE_HOVER : OUTLINE}
+        material={p.hidden ? OUTLINE_HIDDEN : picked ? OUTLINE_PICKED : follows ? OUTLINE_FOLLOWS : hovered ? OUTLINE_HOVER : OUTLINE}
         raycast={() => null}
-        renderOrder={picked ? 20 : 6}
+        renderOrder={picked ? 20 : follows ? 12 : 6}
       />
     </group>
   );
@@ -215,6 +218,10 @@ export function ShapeEditObject({ project, obj, registry }: { project: Project; 
   const parts = useMemo(() => (asset && drag ? editedParts(asset, size, withDrag(obj.edits, base, drag)) : base), [asset, size, obj.edits, base, drag]);
   const group = useRef<THREE.Group>(null);
   const picked = shapeEdit?.part ?? null;
+  const following = useMemo(
+    () => (picked !== null && !shapeEdit?.detached ? new Set(partsFollowing(base.map((p) => p.base), picked)) : new Set<number>()),
+    [base, picked, shapeEdit?.detached],
+  );
   const sections = useMemo(() => (asset && shapeEdit?.section ? sectionInfo(asset, size, obj.edits) : null), [asset, size, obj.edits, shapeEdit?.section]);
   if (!asset || !shapeEdit) return null;
   const pickedPart = picked !== null ? parts[picked] : undefined;
@@ -254,6 +261,7 @@ export function ShapeEditObject({ project, obj, registry }: { project: Project; 
           material={registry.get(project, objectSlotMaterialId(obj, asset, p.part.slot))}
           picked={picked === p.index}
           hovered={shapeEdit.hover === p.index}
+          follows={following.has(p.index)}
           onPick={(e) => {
             e.stopPropagation();
             if (e.delta > 4) return;

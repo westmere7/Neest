@@ -112,6 +112,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   pointer-events: auto;
+  /* Below opened cards: a card is always on top. */
+  z-index: 1;
 }
 /* The tail pointing at the spot. */
 .note-pin::after {
@@ -133,6 +135,7 @@
   outline-offset: 2px;
 }
 .callout-3d {
+  z-index: 2;
   position: absolute;
   left: 0;
   top: 0;

@@ -14,6 +14,8 @@ import {
   withEdits,
 } from './itemEdits';
 import type { AssetDefinition, Part, Size3 } from './types';
+
+type V3 = [number, number, number];
 import { PlacedObjectSchema, type ItemEdits } from '@/domain/model/schema';
 
 const finite = (parts: Part[]) =>
@@ -254,7 +256,66 @@ describe('shape settings (portal frames)', () => {
   });
 });
 
+describe('connected edits', () => {
+  const STUDY = 'wardrobe-study:wardrobe-study-wall';
+  const box = (p: Part) => partBounds(p);
+
+  it('a niche wall carries the shelves, their lights and the back panel between the walls', () => {
+    const a = byId(STUDY);
+    const size = a.defaultSize;
+    const base = a.build(size);
+    // Part 1: the tower's right wall; parts 6, 7 shelves between the walls, 8–10 LED strips under them, 4 the back.
+    const edits: ItemEdits = { parts: { '1': { sig: partSig(base[1]), move: [0.1, 0, 0] } } };
+    const out = editedParts(a, size, edits);
+    expect(box(out[1].part).min[0]).toBeCloseTo(box(base[1]).min[0] + 0.1, 6);
+    for (const i of [6, 7]) {
+      // The shelf's right end follows the wall; its left end stays on the other wall.
+      expect(box(out[i].part).max[0], `shelf ${i}`).toBeCloseTo(box(base[i]).max[0] + 0.1, 6);
+      expect(box(out[i].part).min[0], `shelf ${i}`).toBeCloseTo(box(base[i]).min[0], 6);
+      expect(out[i].linked).toBe(true);
+    }
+    // Lights under the shelves stretch with them; the back panel too.
+    for (const i of [8, 9, 4]) expect(box(out[i].part).max[0], `part ${i}`).toBeGreaterThan(box(base[i]).max[0] + 0.05);
+    // The far wall does not move.
+    expect(out[0].part).toEqual(base[0]);
+    // Each part on its own when the edits say so.
+    const alone = editedParts(a, size, { ...edits, detached: true });
+    expect(alone[6].part).toEqual(base[6]);
+    expect(alone.some((p) => p.linked)).toBe(false);
+  });
+
+  it('keeps every editable item sound when any of its parts moves or grows with its attached parts', () => {
+    let spread = 0;
+    let tried = 0;
+    for (const a of editable()) {
+      const size = a.defaultSize;
+      const base = a.build(size);
+      // A few parts per item: the first, a middle one and the last.
+      for (const i of [...new Set([0, Math.floor(base.length / 2), base.length - 1])]) {
+        for (const pe of [{ move: [0.05, 0, 0] as V3 }, { grow: [0, 0.06, 0] as V3 }, { grow: [-0.02, 0, 0.03] as V3 }]) {
+          const out = editedParts(a, size, { parts: { [String(i)]: { sig: partSig(base[i]), ...pe } } });
+          tried++;
+          expect(out.length, a.id).toBe(base.length);
+          expect(finite(out.map((p) => p.part)), `${a.id} part ${i}`).toBe(true);
+          // Nothing flies off: every part stays near the item's box.
+          expect(inside(out.map((p) => p.part), size, 0.2), `${a.id} part ${i}`).toBe(true);
+          spread += out.filter((p) => p.linked).length / base.length;
+        }
+      }
+    }
+    // On average an edit pulls along some parts, never most of the item.
+    expect(spread / tried).toBeGreaterThan(0.01);
+    expect(spread / tried).toBeLessThan(0.35);
+  });
+});
+
 describe('stored edits', () => {
+  it('survive saving and loading (part keys, the detached flag)', () => {
+    const edits = { parts: { '12': { sig: 'box:oak', move: [0, 0.1, 0] as V3 } }, detached: true };
+    const o = PlacedObjectSchema.parse({ id: 'o1', assetId: 'wardrobe', x: 0, y: 0, width: 1.2, depth: 0.6, height: 2, edits });
+    expect(o.edits).toEqual(edits);
+  });
+
   it('drops what changes nothing', () => {
     const a = byId('wardrobe');
     expect(cleanEdits(a, { parts: { '1': { sig: 'box:body', move: [0, 0, 0], grow: [0, 0, 0] } }, sections: { y: { n: 2, d: [0, 0] } } })).toBeNull();

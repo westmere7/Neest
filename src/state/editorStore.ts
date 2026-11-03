@@ -78,6 +78,8 @@ export interface ShapeEditState {
   hover: number | null;
   section: { axis: 'x' | 'y'; index: number } | null;
   returnTo: Workspace;
+  /** Part edits stand alone (attached parts do not follow); stored on the item's edits as `detached`. */
+  detached: boolean;
 }
 
 export interface EditorState {

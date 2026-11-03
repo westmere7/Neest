@@ -49,7 +49,7 @@ export function enterShapeEdit(objectId: string): void {
     workspace: '3d',
     selection: [{ kind: 'object', id: objectId }],
     hover: null,
-    shapeEdit: { objectId, part: null, hover: null, section: null, returnTo },
+    shapeEdit: { objectId, part: null, hover: null, section: null, returnTo, detached: !!o.edits?.detached },
   });
   ed.requestFocus();
 }
@@ -115,9 +115,21 @@ export function setSectionSize(axis: 'x' | 'y', index: number, size: number): vo
   });
 }
 
+/** Attached parts follow part edits (on) or each part goes alone (off). */
+export function setPartsFollow(follow: boolean): void {
+  const ed = useEditorStore.getState();
+  if (!ed.shapeEdit) return;
+  ed.set({ shapeEdit: { ...ed.shapeEdit, detached: !follow } });
+  const project = useProjectStore.getState().project;
+  if (project?.objects[ed.shapeEdit.objectId]?.edits?.parts)
+    updateEdits(follow ? 'Attached parts follow' : 'Parts move alone', (e) => ({ ...e, detached: follow ? undefined : true }));
+}
+
 /** Changes one part's edit (from its current values: grow and move add up). */
 export function editPart(index: number, label: string, change: (pe: PartEdit) => PartEdit): void {
-  updateEdits(label, (e, o, asset) => {
+  const detached = useEditorStore.getState().shapeEdit?.detached;
+  updateEdits(label, (e0, o, asset) => {
+    const e = { ...e0, detached: detached ? true : undefined };
     const parts = editedParts(asset, { w: o.width, d: o.depth, h: o.height }, e);
     const p = parts[index];
     if (!p) return e;
