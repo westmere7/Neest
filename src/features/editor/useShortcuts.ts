@@ -9,6 +9,7 @@ import { deleteSelection, duplicateSelection, nudgeSelection, rotateSelection, s
 import { groupSelection, ungroupSelection } from './groups';
 import { setServicesMode, toggleServicesMode } from '@/features/services/actions';
 import { setNotesMode, toggleNotesMode } from '@/features/callouts/actions';
+import { exitShapeEdit, setShapeEditState, togglePartHidden } from '@/features/shape-edit/actions';
 
 export const TOOL_SHORTCUTS: Record<string, ToolId> = {
   v: 'select',
@@ -76,6 +77,26 @@ export function useEditorShortcuts(isMobile: boolean) {
       const editActive = planActive || ed.workspace === '3d';
       const mod = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
+
+      // Shape editor: only its own keys and undo/redo; every other tool and mode stays off.
+      if (ed.shapeEdit) {
+        const part = ed.shapeEdit.part;
+        if (e.key === 'Escape') {
+          if (part !== null) setShapeEditState({ part: null });
+          else exitShapeEdit();
+        } else if (mod && (key === 'z' || key === 'y')) {
+          e.preventDefault();
+          if (key === 'y' || e.shiftKey) ps.redo();
+          else ps.undo();
+        } else if (!mod && part !== null && (key === 'h' || e.key === 'Delete' || e.key === 'Backspace')) {
+          e.preventDefault();
+          togglePartHidden(part, true);
+        } else if (mod && key === 's') {
+          e.preventDefault();
+          void flushSave().then(() => toast.success('Saved locally'));
+        }
+        return;
+      }
 
       if (editActive && planKeyRouter.current?.(e)) {
         e.preventDefault();

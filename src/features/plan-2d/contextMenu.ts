@@ -20,11 +20,15 @@ import { groupSelection, groupState, saveSelectionToLibrary, ungroupSelection } 
 import { createCalloutAt, spotOnItem } from './tools/calloutTool';
 import { isObjectLocked, itemLayerOf } from '@/domain/commands/itemLayers';
 import { moveSelectionToLayer, newLayerFromSelection } from '@/features/editor/itemLayerActions';
+import { canEditItem, enterShapeEdit } from '@/features/shape-edit/actions';
 
 /** Opens the library on an item's shelf and flashes its card (leaves Connections, which shares the panel's place). */
 export function showInLibrary(assetId: string): void {
   useEditorStore.getState().set({ servicesMode: false, libraryOpen: true, libraryTab: 'furniture', libraryReveal: { assetId, nonce: Date.now() } });
 }
+
+/** Phones and small tablets (the editor's mobile layout): no shape editor there. */
+const isMobileLayout = () => window.matchMedia?.('(max-width: 820px), (pointer: coarse) and (max-width: 1024px)').matches ?? false;
 
 /** Layers listed by name in the right-click menu; with more, the menu opens the Layers panel. */
 const MENU_LAYERS = 6;
@@ -66,6 +70,9 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
       ...(g.canGroup || g.canUngroup || g.count >= 1 ? [{ separator: true, label: '' }] : []),
       // A spot on the item: furniture moves and gets swapped a lot, the note stays put (the editor can attach it).
       { label: 'Add note', run: () => void createCalloutAt(spotOnItem(project, hit.id), px) },
+      ...(o && g.count <= 1 && ed.workspace === '3d' && canEditItem(project, hit.id) && !isMobileLayout()
+        ? [{ label: 'Edit shape…', run: () => enterShapeEdit(hit.id), disabled: isObjectLocked(project, o) || project.layers.furniture.locked }]
+        : []),
       ...(o && !project.customAssets[o.assetId] ? [{ label: 'Show in library', run: () => showInLibrary(o.assetId) }] : []),
       { label: 'Duplicate', shortcut: 'Ctrl+D', run: duplicateSelection },
       { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },

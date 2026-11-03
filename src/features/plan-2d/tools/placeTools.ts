@@ -255,6 +255,7 @@ export function createPlaceTool(): Tool {
       ghostObject: {
         assetId: asset.id,
         model: t ? t.model : placementModel(asset),
+        ...(t?.edits ? { edits: t.edits } : {}),
         x: ghost.x,
         y: ghost.y,
         rotation: ghost.rotation,
@@ -308,6 +309,7 @@ export function createPlaceTool(): Tool {
           name: t?.name ?? undefined,
         });
         if (t?.mirrored) d.objects[nid].mirrored = true;
+        if (t?.edits) d.objects[nid].edits = structuredClone(t.edits);
         return nid;
       });
       usePrefsStore.getState().pushRecentAsset(asset.id);

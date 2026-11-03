@@ -1,5 +1,5 @@
 import type { Project } from '@/domain/model/schema';
-import { getAsset } from '@/data/assets/registry';
+import { getAsset, getObjectAsset } from '@/data/assets/registry';
 import { partBounds } from '@/data/assets/plantParts';
 import type { AssetDefinition, Part, Size3 } from '@/data/assets/types';
 import { isObjectHidden } from '@/domain/commands/itemLayers';
@@ -59,7 +59,8 @@ export function surfaceUnder(project: Project, asset: AssetDefinition, size: Siz
     const lz = dx * s + dy * c;
     if (o.mirrored) lx = -lx;
     if (Math.abs(lx) > o.width / 2 || Math.abs(lz) > o.depth / 2) continue;
-    const support = getAsset(project, o.assetId);
+    // As built, shape edits included (a shelf moved in the shape editor is where things stand).
+    const support = getObjectAsset(project, o);
     if (!support || !SUPPORT_TYPES.has(support.type) || support.category === 'custom') continue;
     // The highest part of the support right under the point (its own parts, not a model's props).
     let h: number | null = null;

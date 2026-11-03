@@ -245,3 +245,11 @@
 .object-models .mp-list button {
   white-space: nowrap;
 }
+.object-models {
+  flex-wrap: wrap;
+}
+/* Shape edits hold the model: the note sits on its own line under the picker. */
+.object-models > .field-hint {
+  flex-basis: 100%;
+  margin: 0;
+}

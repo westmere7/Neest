@@ -41,13 +41,15 @@ import {
 import { ServicesPanel } from '@/features/services/ServicesPanel';
 import { toggleServicesMode } from '@/features/services/actions';
 import { NotesPanel } from '@/features/callouts/NotesPanel';
+import { ShapeEditPanel } from '@/features/shape-edit/ShapeEditPanel';
+import { exitShapeEdit } from '@/features/shape-edit/actions';
 import { setNotesMode, toggleNotesMode } from '@/features/callouts/actions';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type PlanMode, type ToolId, type Workspace } from '@/state/editorStore';
 import { useDialogStore } from '@/state/uiStores';
 import { derivePlan } from '@/domain/geometry/derive';
 import { formatLength } from '@/domain/model/units';
-import { IconButton, Segmented, Toggle } from '@/components/ui';
+import { Button, IconButton, Segmented, Toggle } from '@/components/ui';
 import { useIsMobile } from '@/components/hooks';
 import { Logo } from '@/components/Logo';
 import { navigate } from '@/app/App';
@@ -76,8 +78,13 @@ export function EditorShell() {
   const layersOpen = useEditorStore((s) => s.layersPanelOpen);
   const servicesMode = useEditorStore((s) => s.servicesMode);
   const notesMode = useEditorStore((s) => s.notesMode);
+  const shaping = useEditorStore((s) => !!s.shapeEdit);
   const isMobile = useIsMobile();
   useEditorShortcuts(isMobile);
+  // The shape editor is a desktop tool.
+  useEffect(() => {
+    if (isMobile && shaping) exitShapeEdit();
+  }, [isMobile, shaping]);
   useDropAsset();
 
   // Split view and drafting tools are desktop-only.
@@ -111,10 +118,10 @@ export function EditorShell() {
 
   return (
     <div
-      className={`editor ws-${workspace}${chromeHidden ? ' chrome-hidden' : ''}${isMobile ? ' is-mobile' : ''}${servicesMode ? ' services-on' : ''}${notesMode ? ' notes-on' : ''}`}
+      className={`editor ws-${workspace}${chromeHidden ? ' chrome-hidden' : ''}${isMobile ? ' is-mobile' : ''}${servicesMode ? ' services-on' : ''}${notesMode ? ' notes-on' : ''}${shaping ? ' shape-on' : ''}`}
       style={
         {
-          '--lib-offset': !isMobile && workspace === '3d' && !notesMode && (servicesMode || libraryOpen) ? `${servicesMode ? 308 : libraryWidth + 8}px` : '0px',
+          '--lib-offset': !isMobile && workspace === '3d' && !notesMode && !shaping && (servicesMode || libraryOpen) ? `${servicesMode ? 308 : libraryWidth + 8}px` : '0px',
           '--rail-offset': !isMobile && workspace === '3d' ? 'calc(var(--rail-w) + 18px)' : '0px',
         } as React.CSSProperties
       }
@@ -136,10 +143,12 @@ export function EditorShell() {
       {!chromeHidden && (
         <>
           <TopBar isMobile={isMobile} />
-          {!isMobile && (showPlan || workspace === '3d') && <ToolRail in3d={workspace === '3d'} />}
-          {!notesMode && (servicesMode && !isMobile && workspace !== 'walk' ? <ServicesPanel /> : libraryOpen && workspace !== 'walk' && <LibraryPanel isMobile={isMobile} />)}
-          {/* In Comments mode, NotesPanel replaces the right-side Inspector & panels. */}
-          {notesMode && !isMobile && workspace !== 'walk' ? (
+          {!isMobile && !shaping && (showPlan || workspace === '3d') && <ToolRail in3d={workspace === '3d'} />}
+          {!notesMode && !shaping && (servicesMode && !isMobile && workspace !== 'walk' ? <ServicesPanel /> : libraryOpen && workspace !== 'walk' && <LibraryPanel isMobile={isMobile} />)}
+          {/* In Comments mode, NotesPanel replaces the right-side Inspector & panels; in the shape editor, its panel does. */}
+          {shaping && !isMobile ? (
+            <ShapeEditPanel />
+          ) : notesMode && !isMobile && workspace !== 'walk' ? (
             <NotesPanel />
           ) : (
             <>
@@ -148,7 +157,7 @@ export function EditorShell() {
               {layersOpen && !isMobile && <LayersPanel />}
             </>
           )}
-          {showPlan && <CanvasControls />}
+          {showPlan && !shaping && <CanvasControls />}
           {!isMobile && <StatusBar />}
           {isMobile && <MobileBar />}
         </>
@@ -280,6 +289,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
   const projectShown = useEditorStore(projectPanelShown);
   const layersOpen = useEditorStore((s) => s.layersPanelOpen);
   const notesMode = useEditorStore((s) => s.notesMode);
+  const shaping = useEditorStore((s) => !!s.shapeEdit);
   const open = useDialogStore((s) => s.open);
   const current = workspace === 'plan' ? `plan:${planMode}` : workspace;
   const setView = (v: string) => {
@@ -296,11 +306,19 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
           </IconButton>
           {!isMobile && <Logo size={22} />}
           <ProjectName />
-          <OptionSwitcher />
+          {!shaping && <OptionSwitcher />}
           <SaveIndicator />
         </div>
       </div>
       <div className="topbar-center">
+        {shaping ? (
+          <div className="topbar-island floating shape-banner" data-testid="shape-banner">
+            <span>Editing shape · other tools are off</span>
+            <Button size="sm" variant="primary" onClick={exitShapeEdit}>
+              Done
+            </Button>
+          </div>
+        ) : (
         <div className="topbar-island floating">
           <Segmented
             label="View"
@@ -315,6 +333,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
             }))}
           />
         </div>
+        )}
       </div>
       <div className="topbar-right">
         <div className="topbar-island floating">
@@ -337,6 +356,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
             <Redo2 size={17} />
           </IconButton>
         </div>
+        {!shaping && (
         <div className="topbar-island floating">
           {!isMobile && (
             <IconButton
@@ -409,6 +429,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
             </IconButton>
           )}
         </div>
+        )}
       </div>
     </header>
   );
@@ -827,6 +848,7 @@ function StatusBar() {
   const cursor = useEditorStore((s) => s.cursor);
   const selection = useEditorStore((s) => s.selection);
   const workspace = useEditorStore((s) => s.workspace);
+  const shaping = useEditorStore((s) => !!s.shapeEdit);
   const project = useProjectStore((s) => s.project!);
   const derived = useMemo(() => derivePlan(project), [project]);
   const diagnostics = derived.diagnostics;
@@ -836,7 +858,9 @@ function StatusBar() {
   return (
     <footer className="status-bar floating" data-testid="status-bar">
       <span className="status-tool">
-        {workspace === 'walk'
+        {shaping
+          ? '3D · Edit shape'
+          : workspace === 'walk'
           ? 'Walkthrough'
           : workspace === '3d'
             ? tool === 'select'
@@ -844,7 +868,9 @@ function StatusBar() {
               : `3D · ${toolLabel}`
             : toolLabel}
       </span>
-      <span className="status-hint">{hint}</span>
+      <span className="status-hint">
+        {shaping ? 'Click a part to pick it · arrows move it, cubes pull a side (Alt: free) · H hides it · Esc drops it, then leaves' : hint}
+      </span>
       <span className="status-spacer" />
       {snapLabel && <span className="status-snap">⌖ {snapLabel}</span>}
       {cursor && workspace !== 'walk' && (

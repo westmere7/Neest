@@ -48,6 +48,8 @@ import { GlobalIllumination } from './globalIllumination';
 import { namedView, presetView, type CameraView, type NamedView } from './cameraViews';
 import { liveScene, sharedRegistry } from './sceneRuntime';
 import { axisLockFeedback3D, hitsGizmo, TransformGizmo, ToolBridge3D } from './edit3d';
+import { ShapeEditObject } from '@/features/shape-edit/ShapeEdit3D';
+import { setShapeEditState } from '@/features/shape-edit/actions';
 import { attachTrackpadOrbit, type OrbitLike } from './trackpadOrbit';
 import { createAxisLock, onAxis, snapOnAxis } from '@/domain/geometry/axisLock';
 import { clientCompute, useCanvasMeasureFix } from './useCanvasMeasureFix';
@@ -490,6 +492,9 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const servicesShown = useEditorStore((s) => s.servicesShown);
   const notesMode = useEditorStore((s) => s.notesMode);
   const hoveredNoteId = useEditorStore((s) => s.hoveredNoteId);
+  const shapeEditId = useEditorStore((s) => s.shapeEdit?.objectId ?? null);
+  const shapeObject = shapeEditId && mode !== 'walk' ? project.objects[shapeEditId] : undefined;
+  const shaping = !!shapeObject;
   const hover = useEditorStore((s) => s.hover);
   const isMobile = useIsMobile();
   useCanvasMeasureFix();
@@ -538,7 +543,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   // A drafting tool is active in 3D: left button belongs to the tool, orbit moves to the right button.
   const drawing = !walk && (workspace === '3d' || (workspace === 'split' && tool === 'callout')) && tool !== 'select' && tool !== 'pan';
   const panning3d = !walk && tool === 'pan';
-  const drag = useObjectDrag(project, derived, !walk && !drawing && !panning3d && !notesMode);
+  const drag = useObjectDrag(project, derived, !walk && !drawing && !panning3d && !notesMode && !shaping);
   const selectedIds = useMemo(() => {
     const s = new Set(selection.map((x) => x.id));
     if (hoveredNoteId) s.add(hoveredNoteId);
@@ -625,8 +630,9 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     selectedIds: walk || !showHelpers ? undefined : selectedIds,
     onPick: walk || drawing ? undefined : onPick,
     onObjectPointerDown: walk || drawing ? undefined : drag.onObjectPointerDown,
-    showCallouts: !walk && !xray,
+    showCallouts: !walk && !xray && !shaping,
     services: xray ? { shown: servicesShown } : undefined,
+    ...(shaping ? { shapeEditId: shapeObject.id, selectedIds: undefined } : {}),
   };
 
   const dpr: [number, number] =
@@ -673,7 +679,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
       onContextMenu={(e) => {
         e.preventDefault();
         // An item already opened its menu for this click; otherwise offer the empty-space menu.
-        if (walk || drawing || menuShown.current === e.nativeEvent.timeStamp || rightDragged(e.nativeEvent))
+        if (walk || drawing || shaping || menuShown.current === e.nativeEvent.timeStamp || rightDragged(e.nativeEvent))
           return;
         // The floor point under the pointer (for "Add note here").
         let ground = { x: 0, y: 0 };
@@ -733,6 +739,11 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         frameloop={active || !ready ? 'always' : 'never'}
         onCreated={(state) => state.setEvents({ compute: clientCompute as never })}
         onPointerMissed={(e) => {
+          // In the shape editor a click beside the item drops the picked part, never the item.
+          if (shaping) {
+            if (e.button === 0) setShapeEditState({ part: null });
+            return;
+          }
           if (!walk && !drawing && e.button === 0) useEditorStore.getState().clearSelection();
         }}
       >
@@ -801,6 +812,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         {/* Callout labels are HTML: keep them off the loading screen. The services X-ray swaps materials, so it
             waits until the first load (and its async shader compile) is done. */}
         <SceneContent project={sceneProject} derived={derived} registry={sharedRegistry} options={ready ? options : { ...options, showCallouts: false, services: undefined }} />
+        {shapeObject && <ShapeEditObject project={project} obj={shapeObject} registry={sharedRegistry} />}
         <NotesViewBridge target={notesCamera} />
         {!walk && (
           <group ref={helpersRef} visible={showHelpers}>
@@ -818,15 +830,15 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         </mesh>
         {/* Captures and renders need the scene on screen (a hidden one may show an older project). */}
         {active && <LiveBridge helpersRef={helpersRef} />}
-        {!walk && <ToolBridge3D enabled={workspace === '3d' || (workspace === 'split' && tool === 'callout')} />}
-        {!walk && (!drawing || tool === 'callout') && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
+        {!walk && <ToolBridge3D enabled={!shaping && (workspace === '3d' || (workspace === 'split' && tool === 'callout'))} />}
+        {!walk && !shaping && (!drawing || tool === 'callout') && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
       </Canvas>
       {/* Note labels and leaders, laid out on screen over the canvas; hidden while loading and in walk mode. */}
       <NotesOverlay
         project={sceneProject}
         derived={derived}
         camera={notesCamera}
-        visible={active && ready && !walk && !xray}
+        visible={active && ready && !walk && !xray && !shaping}
         selectedIds={options.selectedIds}
         onSelect={drawing && tool !== 'callout' ? undefined : onCalloutSelect}
         onEdit={drawing && tool !== 'callout' ? undefined : onCalloutEdit}

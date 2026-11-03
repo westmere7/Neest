@@ -53,6 +53,8 @@ export interface SceneOptions {
   showCallouts?: boolean;
   /** Services mode: the building as an X-ray, only items that need services, plus points, runs and connections. */
   services?: Omit<ServicesViewOptions, 'onPick' | 'selectedIds'>;
+  /** Shape editor: this item is left out (the editor draws it) and everything else turns to X-ray, not pickable. */
+  shapeEditId?: string;
 }
 
 /** Sun direction from time of day (hours) and azimuth (degrees, 0 = north/-y, clockwise). */
@@ -731,10 +733,11 @@ export function SceneContent({
   const hubMat = registry.get(project, 'plaster-white');
   const services = options.services;
   // In Services mode walls, doors and floors are not pickable (only points, runs and service items).
-  const structurePick = services ? undefined : options.onPick;
+  const shapeEditId = options.shapeEditId;
+  const structurePick = services || shapeEditId ? undefined : options.onPick;
   const planRef = useRef<THREE.Group>(null);
   const objects = Object.values(project.objects).filter((o) => {
-    if (isObjectHidden(project, o) || !project.layers.furniture.visible) return false;
+    if (o.id === shapeEditId || isObjectHidden(project, o) || !project.layers.furniture.visible) return false;
     if (services && !neededSystems(getAsset(project, o.assetId)?.services).some((s) => services.shown[s])) return false;
     // Lights of hidden items still shine (LampLights reads every object).
     return !isAssetHidden(getAsset(project, o.assetId), options.hiddenCategories);
@@ -742,7 +745,7 @@ export function SceneContent({
   return (
     <group name="neest-plan" ref={planRef}>
       <ClippedMaterialSync />
-      {services && <XRayGhost root={planRef} />}
+      {(services || shapeEditId) && <XRayGhost root={planRef} objects={!!shapeEditId} />}
       {services && (
         <Services3D project={project} derived={derived} options={{ ...services, selectedIds: options.selectedIds, onPick: options.onPick }} />
       )}
@@ -816,8 +819,8 @@ export function SceneContent({
             obj={o}
             ctx={ctx}
             modelsVersion={models.version}
-            onPick={options.onPick}
-            onPointerDown={options.onObjectPointerDown}
+            onPick={shapeEditId ? undefined : options.onPick}
+            onPointerDown={shapeEditId ? undefined : options.onObjectPointerDown}
           />
         ))}
       </group>

@@ -1138,3 +1138,24 @@
   transform: rotate(180deg);
 }
 
+
+/* Inspector → Item: the shape editor's entry (and reset when the item has shape edits). */
+.shape-entry {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.shape-entry .field-hint {
+  margin: 0;
+}
+.shape-entry .link-btn {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}

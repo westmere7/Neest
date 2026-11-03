@@ -10,7 +10,7 @@
  * frame's depth, so corners stay circular at any width and height and only shrink when the opening
  * gets too small for them. Coordinates: x across the opening, y up, z through the frame (front +z).
  */
-import { box, cells, clamp, cyl, defineItem, definePack, line, matSlot, prism, range, ring, spaced, span, type Part, type AssetModelVariant, type PlanStroke, type Size3 } from '@/packs/kit';
+import { box, cells, clamp, cyl, defineItem, definePack, line, matSlot, prism, range, ring, spaced, span, type Part, type AssetModelVariant, type AssetParam, type ParamValues, type PlanStroke, type Size3 } from '@/packs/kit';
 
 type V2 = [number, number];
 const o = { plan: false };
@@ -362,6 +362,35 @@ interface ItemCfg {
   models?: AssetModelVariant[];
 }
 
+/**
+ * Shape-editor settings of a portal: leg width, soffit drop, corner radii (rounded corners), the arch's
+ * rise (basket arch) and the leg niches. Defaults are the item's own spec, so an unedited item is unchanged.
+ */
+function portalParams(s: PortalSpec): AssetParam[] {
+  const len = (id: string, label: string, v: number, min: number, max: number): AssetParam => ({ id, label, kind: 'length', default: v, min, max, step: 0.01 });
+  const out: AssetParam[] = [len('leg', s.legs === 'both' ? 'Leg width' : 'Pier width', s.leg, 0.06, 0.8), len('head', 'Soffit drop', s.head, 0.08, 1.2)];
+  if (!s.shape || s.shape === 'round') {
+    if (s.legs === 'both') out.push(len('rL', 'Left corner radius', s.rL ?? 0.3, 0, 1.5));
+    out.push(len('rR', s.legs === 'both' ? 'Right corner radius' : 'Corner radius', s.rR ?? 0.3, 0, 1.5));
+  }
+  if (s.shape === 'ellipse') out.push({ id: 'flat', label: 'Arch rise', kind: 'length', default: s.flat ?? 0.4, min: 0.1, max: 1, step: 0.05, hint: 'Share of the half-span' });
+  if (s.niche) out.push({ id: 'niche', label: 'Lit niches in the legs', kind: 'toggle', default: true });
+  return out;
+}
+
+/** The spec with shape-editor settings applied (a changed leg width replaces uneven legs). */
+function specWith(s: PortalSpec, p?: ParamValues): PortalSpec {
+  if (!p) return s;
+  const out: PortalSpec = { ...s };
+  if (typeof p.leg === 'number' && p.leg !== s.leg) Object.assign(out, { leg: p.leg, legL: undefined, legR: undefined });
+  if (typeof p.head === 'number') out.head = p.head;
+  if (typeof p.rL === 'number') out.rL = p.rL;
+  if (typeof p.rR === 'number') out.rR = p.rR;
+  if (typeof p.flat === 'number') out.flat = p.flat;
+  if (p.niche === false) out.niche = undefined;
+  return out;
+}
+
 function portal(c: ItemCfg) {
   const min: Size3 = { w: 1.0, d: 0.1, h: 2.1, ...c.min };
   const max: Size3 = { w: 6.0, d: 0.8, h: 3.6, ...c.max };
@@ -380,8 +409,9 @@ function portal(c: ItemCfg) {
     slots: c.slots ?? [FRAME],
     variants: c.variants ?? PAINT_VARIANTS,
     ...(c.models ? { models: c.models } : {}),
-    build: (size) => buildPortal(size, c.spec),
-    planDetail: (size) => portalPlan(size, c.spec),
+    params: portalParams(c.spec),
+    build: (size, p) => buildPortal(size, specWith(c.spec, p)),
+    planDetail: (size, p) => portalPlan(size, specWith(c.spec, p)),
   });
 }
 

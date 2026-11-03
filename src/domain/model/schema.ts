@@ -255,6 +255,33 @@ export const RoomSchema = z.object({
 /** One system's connection override on a placed item (see `PlacedObject.serviceLinks`). */
 export const ServiceLinkSchema = z.object({ pin: Id.nullable().default(null), skip: z.array(Id).max(50).default([]) });
 
+const Vec3T = z.tuple([num, num, num]);
+
+/**
+ * An edit of one sub-item (part) of an item in the shape editor: resized about its centre by `grow`
+ * and moved by `move` (metres along the item's own axes), or hidden. `sig` (shape and finish slot) is
+ * what the part was; the edit is ignored once the part at that index is something else.
+ */
+export const PartEditSchema = z.object({
+  sig: z.string().min(1).max(80),
+  move: Vec3T.optional(),
+  grow: Vec3T.optional(),
+  hidden: z.boolean().optional(),
+});
+
+/** Moved section edges along one axis: `n` edges were found, each moved by `d[i]` metres. */
+export const SectionEditSchema = z.object({ n: z.number().int().min(1).max(64), d: z.array(num).max(64) });
+
+/**
+ * Shape-editor changes of a placed item (see data/assets/itemEdits.ts): its shape settings, moved
+ * dividers (x) and shelves (y), and edits of single parts by index.
+ */
+export const ItemEditsSchema = z.object({
+  params: z.record(z.string().max(40), z.union([num, z.boolean(), z.string().max(60)])).optional(),
+  sections: z.object({ x: SectionEditSchema.optional(), y: SectionEditSchema.optional() }).optional(),
+  parts: z.record(z.string().regex(/^d{1,4}$/), PartEditSchema).optional(),
+});
+
 export const PlacedObjectSchema = z.object({
   id: Id,
   assetId: Id,
@@ -277,6 +304,8 @@ export const PlacedObjectSchema = z.object({
   model: z.string().max(60).optional(),
   /** Item layer (`Project.itemLayers`) this item is filed under; absent = unassigned. */
   layerId: Id.optional(),
+  /** Shape-editor changes (sub-items, sections, settings); absent = the item as its asset builds it. Bad edits load as none. */
+  edits: ItemEditsSchema.optional().catch(undefined),
   /**
    * Services connections the user changed (Services mode). Per system: `pin` = the point chosen by
    * hand (null = the nearest compatible point in reach), `skip` = points the user disconnected, which
@@ -782,6 +811,8 @@ export type Opening = z.infer<typeof OpeningSchema>;
 export type RoomType = z.infer<typeof RoomTypeSchema>;
 export type Room = z.infer<typeof RoomSchema>;
 export type PlacedObject = z.infer<typeof PlacedObjectSchema>;
+export type ItemEdits = z.infer<typeof ItemEditsSchema>;
+export type PartEdit = z.infer<typeof PartEditSchema>;
 export type ObjectGroup = z.infer<typeof ObjectGroupSchema>;
 export type ItemLayer = z.infer<typeof ItemLayerSchema>;
 export type CalloutTarget = z.infer<typeof CalloutTargetSchema>;

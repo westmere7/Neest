@@ -5,6 +5,7 @@ import { ASSETS_BY_ID } from './catalog';
 import type { AssetDefinition, Part, PlanStroke, Size3 } from './types';
 import { dropPackKeys, subscribePacks } from '@/packs/events';
 import { slotDefaultMaterial, withModel } from './models';
+import { withEdits } from './itemEdits';
 
 /** Asset lookup across the built-in catalogue and the project's imported models. */
 export function getAsset(project: Pick<Project, 'customAssets'> | null, assetId: string): AssetDefinition | null {
@@ -15,9 +16,9 @@ export function getAsset(project: Pick<Project, 'customAssets'> | null, assetId:
   return extraResolver?.(assetId) ?? null;
 }
 
-/** The asset a placed item shows: its asset in the item's model variant (see ./models). */
-export function getObjectAsset(project: Pick<Project, 'customAssets'> | null, obj: Pick<PlacedObject, 'assetId' | 'model'>): AssetDefinition | null {
-  return withModel(getAsset(project, obj.assetId), obj.model);
+/** The asset a placed item shows: its asset in the item's model variant (see ./models), with its shape edits (see ./itemEdits). */
+export function getObjectAsset(project: Pick<Project, 'customAssets'> | null, obj: Pick<PlacedObject, 'assetId' | 'model' | 'edits'>): AssetDefinition | null {
+  return withEdits(withModel(getAsset(project, obj.assetId), obj.model), obj.edits);
 }
 
 /** Extra asset source installed by the app (saved groups as library items: `savedgroup:<id>`). */

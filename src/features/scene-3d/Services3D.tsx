@@ -28,17 +28,18 @@ const GHOSTED = new Set(['walls', 'openings', 'rooms']);
 
 /**
  * Turns the building into an X-ray while mounted: walls, doors, windows and floors get a faint
- * see-through material, walls and floors their edges. Meshes rebuilt meanwhile are caught on the
- * next frame; everything is put back on unmount.
+ * see-through material, walls and floors their edges. With `objects` the placed items turn see-through
+ * too (the shape editor: everything but the item being edited, which is drawn outside `neest-plan`).
+ * Meshes rebuilt meanwhile are caught on the next frame; everything is put back on unmount.
  */
-export function XRayGhost({ root }: { root: React.RefObject<THREE.Group | null> }) {
+export function XRayGhost({ root, objects = false }: { root: React.RefObject<THREE.Group | null>; objects?: boolean }) {
   const touched = useRef(new Set<THREE.Mesh>());
   useFrame(() => {
     const g = root.current;
     if (!g) return;
     for (const child of g.children) {
-      if (!GHOSTED.has(child.name)) continue;
-      const edges = child.name !== 'openings';
+      if (!GHOSTED.has(child.name) && !(objects && child.name === 'objects')) continue;
+      const edges = child.name !== 'openings' && child.name !== 'objects';
       child.traverse((o) => {
         const m = o as THREE.Mesh;
         if (!m.isMesh || m.userData.xrayEdge) return;
@@ -50,6 +51,11 @@ export function XRayGhost({ root }: { root: React.RefObject<THREE.Group | null> 
         m.material = ghost;
         m.castShadow = false;
         m.receiveShadow = false;
+        // In the shape editor nothing in X-ray may catch the pointer (the edited item and its gizmo get every hit).
+        if (objects && !m.userData.xrayRaycast) {
+          m.userData.xrayRaycast = m.raycast;
+          m.raycast = () => undefined;
+        }
         if (edges && m.geometry && !m.children.some((c) => c.userData.xrayEdge)) {
           const lines = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 28), EDGE);
           lines.raycast = () => undefined;
@@ -67,8 +73,10 @@ export function XRayGhost({ root }: { root: React.RefObject<THREE.Group | null> 
         if (m.userData.xrayOrig) m.material = m.userData.xrayOrig;
         const sh = m.userData.xrayShadow as [boolean, boolean] | undefined;
         if (sh) [m.castShadow, m.receiveShadow] = sh;
+        if (m.userData.xrayRaycast) m.raycast = m.userData.xrayRaycast;
         delete m.userData.xrayOrig;
         delete m.userData.xrayShadow;
+        delete m.userData.xrayRaycast;
         for (const c of [...m.children]) {
           if (!c.userData.xrayEdge) continue;
           m.remove(c);

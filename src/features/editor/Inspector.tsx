@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowLeftRight, Copy, Eye, EyeOff, FlipHorizontal2, Focus, LibraryBig, Lock, Minus, PanelRightClose, RotateCw, Scissors, Spline, Trash2, Unlock, X } from 'lucide-react';
+import { ArrowLeftRight, Copy, Eye, EyeOff, FlipHorizontal2, Focus, LibraryBig, Lock, Minus, PanelRightClose, RotateCw, Scissors, Shapes, Spline, Trash2, Unlock, X } from 'lucide-react';
 import type { OpeningKind, Project, RoomType, WallRole } from '@/domain/model/schema';
 import { isPassageKind, isWindowKind } from '@/domain/model/schema';
 import { OPENING_PRESETS, ROOM_TYPE_LABELS } from '@/domain/model/defaults';
@@ -40,6 +40,7 @@ import { ObjectVariants } from './ObjectVariants';
 import { ObjectModels } from './ObjectModels';
 import { scalePct, scaledSize } from './objectScale';
 import { withModel } from '@/data/assets/models';
+import { canEditItem, enterShapeEdit } from '@/features/shape-edit/actions';
 
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
   useProjectStore.getState().execute(label, fn);
@@ -575,6 +576,8 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
 
 function ObjectInspector({ project, objectId, isMobile }: { project: Project; objectId: string; isMobile: boolean }) {
   const o = project.objects[objectId];
+  // The shape editor works in the 3D view only.
+  const workspace = useEditorStore((s) => s.workspace);
   const asset = getAsset(project, o.assetId);
   // Finishes list the slots of the item's model (a bare model has no book or decor slots).
   const shown = withModel(asset, o.model);
@@ -600,6 +603,21 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
         <ItemLayerField project={project} ids={[objectId]} />
         {asset && <ObjectModels project={project} objectId={objectId} asset={asset} />}
         {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
+        {!isMobile && workspace === '3d' && canEditItem(project, objectId) && (
+          <div className="shape-entry">
+            <Button size="sm" variant="subtle" disabled={locked} onClick={() => enterShapeEdit(objectId)} data-testid="edit-shape">
+              <Shapes size={14} /> Edit shape
+            </Button>
+            {o.edits && (
+              <span className="field-hint" data-testid="shape-edited">
+                Shape edited ·{' '}
+                <button type="button" className="link-btn" disabled={locked} onClick={() => exec('Reset shape', (d) => void delete d.objects[objectId].edits)}>
+                  reset
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </Section>
       {asset?.plant && (
         <Section title="Plant care">

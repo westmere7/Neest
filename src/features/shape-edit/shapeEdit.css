@@ -1,0 +1,108 @@
+/* Shape editor panel: in the Inspector's place (registered in layoutInsets like the Notes panel). */
+.shape-panel {
+  top: calc(10px + var(--topbar-h) + 10px);
+  right: 10px;
+  bottom: calc(10px + var(--status-h) + 10px);
+  width: 330px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 25;
+}
+.shape-panel-head,
+.shape-panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.shape-panel-foot {
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
+}
+.shape-panel-foot .field-hint {
+  flex: 1;
+  margin: 0;
+}
+.shape-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.shape-panel-title div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.shape-panel-title span {
+  color: var(--text-3);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shape-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 12px 12px;
+}
+.shape-sections + .shape-sections {
+  margin-top: 8px;
+}
+.shape-part-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shape-part-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 340px;
+  overflow: auto;
+}
+.shape-part-row {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+}
+.shape-part-row:hover {
+  background: var(--surface-2);
+}
+.shape-part-row.on {
+  background: color-mix(in srgb, #ffb547 22%, transparent);
+}
+.shape-part-row.hidden .shape-part-name {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+.shape-part-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.shape-part-tag {
+  font-size: 10.5px;
+  color: #c98a2b;
+}
+.shape-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 12px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}

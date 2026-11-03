@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-03 (guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-03 (shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -575,6 +575,36 @@ a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens 
   (`hitCalloutAnchor` → `setCalloutAnchorPoint`, which keeps the label still and the target kind unchanged), and
   double-click edits.
 
+### Shape editor (edit mode for sub-items, src/features/shape-edit)
+
+A sub-item editor, not a mesh editor: an item's own parts (doors, shelves, dividers, legs, tops, frames) are moved,
+resized, scaled or hidden, its sections (compartments between dividers, levels between fixed shelves) resized, and
+spec-built families have named settings (portal leg width, soffit drop, corner radii, arch rise, niches).
+
+- **Who has it:** `canEditShape` (see §12 Asset rules 13): 578 of 1355 items (2026-11-03). Opened from the
+  Inspector's Item section ("Edit shape") or the item's right-click menu, **in the 3D view only**, desktop only, not
+  on locked items.
+- **While on** (`editor.shapeEdit`): the item is drawn part by part (`ShapeEdit3D.tsx`); everything else is X-ray
+  (`XRayGhost objects`, not pickable: X-rayed meshes lose their raycast in this mode). Editable parts get a faint
+  outline, the hovered part a brighter one, the picked part an orange outline, a tint and a gizmo: arrows move it
+  along the item's axes, cubes drag one face (the opposite face stays); 5 mm steps, Alt free. A drag previews live
+  and is one undo step. Hovering or focusing a section field shows that section as a light box.
+- **No other tool:** `editorStore` drops any other tool, mode, panel or view request (`withoutOtherModes`, `setTool`);
+  the rail, library, layers and finish panels and the view switcher are gone; `ShapeEditPanel` takes the
+  Inspector's place. Keys: Esc drops the part, then leaves; H / Delete hides the picked part; Ctrl+Z / Ctrl+Y.
+- **Panel:** Shape (settings), Sections (widths left to right, heights bottom to top; setting a section moves its
+  next edge, the last one its previous edge; the neighbour absorbs it), the picked part (width/height/depth,
+  centre X/Y/Z, scale %, diameter for round parts, hide, reset) and the part list (named by finish slot, hide/show,
+  "edited" tag). Footer: summary and reset all.
+- **Model:** `PlacedObject.edits` (optional; absent = the plain asset): `params`, `sections.{x,y}` = { n edges found,
+  d offsets }, `parts[index]` = { sig, move, grow, hidden }. `getObjectAsset` → `withEdits(withModel(asset, model),
+  edits)`, a derived asset `<id>@shape:<hash>`, so the 3D view, plan, DXF, GLB, guest export, previews and surfaces
+  all use the edited shape; walk collisions stay the item's box. Order: build with settings → sections (piecewise
+  linear remap; thin parts near an edge move with it, others stretch with their section; prisms remapped point by
+  point) → part edits (only while `sig` still matches). Edits are cleaned on every change (defaults and no-ops
+  dropped; nothing left = field removed). Duplicates keep them. An item with edits keeps its model variant (the
+  picker says so); reset the shape to change it.
+
 ### Item layers (Layers panel)
 
 - Top bar → Layers icon (`toggle-layers-panel`, Shift+L, desktop) toggles `editor.layersPanelOpen` and the floating
@@ -859,6 +889,32 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
      portals, walls, half walls, stairs, balustrades, platforms, pipe boxing). 87 items have none (2026-10-22).
    - Caveats: split-AC outdoor-unit rows and the soundbar's subwoofer carry the whole set's price, so placing both
      halves counts it twice. Large estimates (hot tub, ofuro, fine-wood antiques) are rough.
+13. **Editable sub-items (shape editor):** structure and built furniture (`canEditShape` in
+   `data/assets/itemEdits.ts`: structure but radiators, storage but baskets, tables but outdoor ones, beds, sofas,
+   dining/living chairs, stools and benches, kids' furniture; never branded items or shipped meshes) open in the
+   shape editor, which edits what `build` returns. Build them so that works:
+   - **One part per real piece.** A door, a shelf, a divider, a leg, a desk top is its own part, never merged into a
+     neighbour or split into slices; the editor lists, picks, moves, resizes and hides parts one by one.
+   - **Stable part order.** Keep the same parts in the same order at every size where you can; add parts that come
+     and go with the size (extra doors, shelves) at the end of the list. Edits are stored by part index plus shape
+     and slot, and silently stop applying when the part at an index changes.
+   - **Real dividers and shelves.** Sections are found from the parts: upright panels at most 5 cm thick that stand
+     55 %+ of the height and 30 %+ of the depth, in the same slot as the item's own end panels, divide it across;
+     flat panels at most 5 cm thick across 35 %+ of the width and 30 %+ of the depth, in the slot of its top or
+     bottom, divide it up. The side edges of tall parts in the plan outline (`plan` not false) count too (a niche, a
+     carcass block, a sofa arm). Model compartments with such panels and blocks, and give props (clothes, books,
+     towels) their own slot and `plan: false` so they never count.
+   - **Outlines along the axes.** Arches and curved panels as `prism` parts unturned or turned a quarter about x
+     (`panelXY`-style) are remapped point by point, so their curves follow a moved section edge. Other turns stretch
+     the whole part.
+   - **Named settings for spec-built families.** When a family is built from a spec (`portal(c)` in
+     portal-frames), add `params` (`AssetParam`: length / count / toggle / choice, with `min` and `max`) and read
+     them from `build(size, params)`; a missing value is the spec's own, so unedited items build exactly as before.
+     `itemEdits.test.ts` checks every item with params: defaults rebuild the item unchanged, every setting at its
+     limits builds inside the item's box.
+   - Items that make no sense to edit stay out by type or shelf (`EDITABLE` in itemEdits.ts); a new kind of item
+     that should be editable needs its type or shelf added there.
+
 
 ### People and shipped models
 
@@ -1288,6 +1344,12 @@ construction documents.
    off the model. Use the camera view offset (`FreeAreaOffset`) instead. Any code that clones the live camera
    for an output must call `clearViewOffset()` on the clone.
 7. **WebGL screenshots are black** in tooling without `preserveDrawingBuffer`; it is enabled in dev only.
+- **Shape editor gizmo got no pointer**: X-rayed walls in front of it took the hit. In the shape editor X-rayed
+  meshes have no raycast (restored when the X-ray ends).
+- **`structuredClone` of an immer draft throws** (DataCloneError): clone from the committed state, not from inside the
+  `execute` recipe. The shape editor's second edit on an item failed that way.
+- **A console `import('/src/…')` after a hot update** returns the module as first loaded, not the patched one: add
+  `?t=${Date.now()}` when driving app actions from the console after editing them.
    Production captures use `captureView` (render + `toDataURL` in the same task).
 8. **Hidden preview panes don't run rAF.** In tooling panes, `requestAnimationFrame` may not fire at all, so
    `useFrame` logic (camera director, view offset) does not run until a screenshot forces a frame. Tooling
@@ -2033,3 +2095,13 @@ Known limitations (also in README):
      hidden while orbiting, Ghost walking; pane settings Layout options and Note pictures (§11, §14). The in-app Guest
      view is unchanged. Tests in `guestExport.test.ts`; checked in an exported file (two options, Notes, picture
      viewer, Show, Option B, Ghost through the sofa, phone layout) (done).
+168. "Allow structural items (and certain non-branded furniture) a special edit mode, like Blender: enter from the context
+     menu or the info panel, isolate the item, edit its basic geometry (a wardrobe's niche, main compartment width…),
+     highlight editable parts, no other tool while on; not branded items; test carefully" + "don't break existing items;
+     don't push automatically" + "a sub-item editing system, go through all items, exclude branded and nonsense" + "other
+     objects in X-ray, subtle highlights, only the picked part highlighted with a gizmo; radius for arches and portals,
+     scaling" + "lock model variants on edited items" + "3D mode only" + "other agents must follow a guideline" + "show
+     me variants of a wardrobe with an attached table" → the shape editor (§10, §12 rule 13): parts, sections and
+     settings; 578 items after a pass over all 1355; tests in itemEdits.test.ts and shape-edit/shapeEdit.test.ts;
+     checked in the browser on the niche wardrobe, the study-desk wardrobe (seven variants) and a portal. Committed
+     locally, not pushed (done).

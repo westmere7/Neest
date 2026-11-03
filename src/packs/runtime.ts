@@ -223,9 +223,9 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
           variantOf: item.variantOf ? (spec.items.some((x) => x.id === item.variantOf) ? ns(item.variantOf) : item.variantOf) : undefined,
           models: item.models ? checkModels(item.models, `Item "${item.id}"`, report, matId) : undefined,
           variants: item.variants?.map((v) => ({ ...v, materials: Object.fromEntries(Object.entries(v.materials ?? {}).map(([k, m]) => [k, matId(m)])) })),
-          build: (size) => {
+          build: (size, params) => {
             try {
-              const parts = item.build(size);
+              const parts = item.build(size, params);
               if (!Array.isArray(parts) || parts.length === 0) throw new Error('build() returned no parts');
               return parts;
             } catch (e) {
@@ -235,9 +235,9 @@ export function applyPacks(modules: Record<string, unknown>): LoadedPack[] {
             }
           },
           planDetail: item.planDetail
-            ? (size) => {
+            ? (size, params) => {
                 try {
-                  return item.planDetail!(size);
+                  return item.planDetail!(size, params);
                 } catch {
                   return [];
                 }

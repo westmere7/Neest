@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Opening, OpeningDesign, OpeningKind, Vec2, WallRole } from '@/domain/model/schema';
+import type { Opening, OpeningDesign, OpeningKind, PlacedObject, Vec2, WallRole } from '@/domain/model/schema';
 import type { MaterialTarget } from '@/domain/commands/entities';
 import type { ServiceHost, ServicePointKind, ServiceSystem } from '@/domain/model/services';
 
@@ -62,7 +62,22 @@ export interface PlaceTemplate {
   mirrored: boolean;
   materials: Record<string, string>;
   model?: string;
+  /** Shape-editor changes of the original (the copy is built the same). */
+  edits?: PlacedObject['edits'];
   name: string | null;
+}
+
+/**
+ * The shape editor ("edit mode") on one item: the item alone in the 3D view, its sub-items
+ * highlighted and editable. `part` is the picked part (index in the item's parts), `hover` the part
+ * under the pointer, `section` the section whose field is active; `returnTo` is the view to go back to.
+ */
+export interface ShapeEditState {
+  objectId: string;
+  part: number | null;
+  hover: number | null;
+  section: { axis: 'x' | 'y'; index: number } | null;
+  returnTo: Workspace;
 }
 
 export interface EditorState {
@@ -154,6 +169,11 @@ export interface EditorState {
   notesMode: boolean;
   /** Note id currently hovered in the Comments panel (highlights the note and its linked object/room). */
   hoveredNoteId: string | null;
+  /**
+   * Shape editor on an item (Inspector → Edit shape, or its right-click menu). While on, no other tool,
+   * mode or view can start: those requests are dropped (see `set` and `setTool`).
+   */
+  shapeEdit: ShapeEditState | null;
 
   setTool(tool: ToolId): void;
   setSelection(sel: SelItem[]): void;
@@ -220,9 +240,11 @@ export const useEditorStore = create<EditorState>((set) => ({
   runHeight: 0.3,
   notesMode: false,
   hoveredNoteId: null,
+  shapeEdit: null,
 
   // Picking another tool in Comments & notes mode leaves the mode (see the subscription below).
-  setTool: (tool) => set({ tool, hint: null, snapLabel: null }),
+  // The shape editor allows no other tool.
+  setTool: (tool) => set((s) => (s.shapeEdit && tool !== 'select' ? s : { tool, hint: null, snapLabel: null })),
   setSelection: (selection) =>
     set((s) => ({
       selection: s.notesMode ? selection.filter((x) => x.kind === 'callout') : expandSelection(selection),
@@ -240,15 +262,32 @@ export const useEditorStore = create<EditorState>((set) => ({
   setHover: (hover) => set((s) => (s.hover?.id === hover?.id && s.hover?.kind === hover?.kind ? s : { hover })),
   // Picking another item, door or window to place drops a Duplicate's template.
   set: (partial) =>
-    set({
-      ...partial,
-      ...('placeAssetId' in partial && !('placeTemplate' in partial) ? { placeTemplate: null } : {}),
-      ...('openingKind' in partial && !('openingTemplate' in partial) ? { openingTemplate: null } : {}),
+    set((s) => {
+      const p = s.shapeEdit && !('shapeEdit' in partial) ? withoutOtherModes(partial) : partial;
+      return {
+        ...p,
+        ...('placeAssetId' in p && !('placeTemplate' in p) ? { placeTemplate: null } : {}),
+        ...('openingKind' in p && !('openingTemplate' in p) ? { openingTemplate: null } : {}),
+      };
     }),
   requestFit: () => set((s) => ({ fitRequest: s.fitRequest + 1 })),
   requestFocus: () => set((s) => ({ focusRequest: s.focusRequest + 1 })),
   requestCamera: (view) => set({ cameraRequest: { view, nonce: Math.random() } }),
 }));
+
+/**
+ * While the shape editor is on, requests that would start another tool, mode, panel or view are dropped
+ * (the editor ends them itself when it starts and leaves through Done or Esc).
+ */
+function withoutOtherModes(partial: Partial<EditorState>): Partial<EditorState> {
+  const p = { ...partial };
+  if (p.tool && p.tool !== 'select') delete p.tool;
+  if (p.workspace && p.workspace !== '3d') delete p.workspace;
+  for (const k of ['servicesMode', 'notesMode', 'layersPanelOpen', 'libraryOpen', 'chromeHidden', 'viewPanelOpen'] as const) if (p[k]) delete p[k];
+  delete p.placeAssetId;
+  delete p.materialPicker;
+  return p;
+}
 
 /**
  * Widens a selection to whole groups of placed items. Installed by the editor

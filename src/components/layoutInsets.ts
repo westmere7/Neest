@@ -20,7 +20,7 @@ export function floatingInsets(host: DOMRect): Insets {
     const r = rect(el);
     if (r.width && r.left < midX) insets.l = Math.max(insets.l, r.right - host.left);
   }
-  for (const el of document.querySelectorAll('.inspector:not(.sheet), .material-panel, .layers-panel, .notes-panel')) {
+  for (const el of document.querySelectorAll('.inspector:not(.sheet), .material-panel, .layers-panel, .notes-panel, .shape-panel')) {
     const r = rect(el);
     if (r.width && r.left > midX) insets.r = Math.max(insets.r, host.right - r.left);
   }

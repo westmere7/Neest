@@ -88,6 +88,23 @@ export type Part = PartShape & {
   uv?: [number, number];
 };
 
+/** Values of an item's shape settings by id. */
+export type ParamValues = Record<string, number | boolean | string>;
+
+/** A named shape setting of an item (see `AssetDefinition.params`). */
+export interface AssetParam {
+  id: string;
+  label: string;
+  /** A length in metres, a whole number, an on/off switch or one of a few choices. */
+  kind: 'length' | 'count' | 'toggle' | 'choice';
+  default: number | boolean | string;
+  min?: number;
+  max?: number;
+  step?: number;
+  options?: { value: string; label: string }[];
+  hint?: string;
+}
+
 /** Extra 2D plan detail drawn on top of the derived footprint, in local [x, z] coords. */
 export type PlanStroke =
   | { kind: 'line'; a: [number, number]; b: [number, number] }
@@ -118,8 +135,14 @@ export interface AssetDefinition {
   /** Default base elevation in metres (e.g. wall cabinets, wall lights). */
   defaultElevation: number;
   slots: MaterialSlot[];
-  build: (size: Size3) => Part[];
-  planDetail?: (size: Size3) => PlanStroke[];
+  /** Parts at a size; `params` are the item's shape settings (see `params`), absent = their defaults. */
+  build: (size: Size3, params?: ParamValues) => Part[];
+  planDetail?: (size: Size3, params?: ParamValues) => PlanStroke[];
+  /**
+   * Named shape settings guests of the shape editor can change (leg width, soffit drop…). `build` reads
+   * them from its second argument; a missing value means the default, so the item builds as before.
+   */
+  params?: AssetParam[];
   /** Optional emitted light (balanced and high render quality, and the path tracer). */
   light?: AssetLight;
   /** Optional one- or two-sentence description shown in the library's info card. */

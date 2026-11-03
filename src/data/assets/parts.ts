@@ -914,8 +914,9 @@ export interface AssetSpec {
   /** Defaults to true for wall-mounted assets, otherwise false. */
   wallSnap?: boolean;
   slots: MaterialSlot[];
-  build: (size: Size3) => Part[];
-  planDetail?: (size: Size3) => PlanStroke[];
+  build: AssetDefinition['build'];
+  planDetail?: AssetDefinition['planDetail'];
+  params?: AssetDefinition['params'];
   light?: AssetDefinition['light'];
   description?: string;
   brand?: AssetDefinition['brand'];

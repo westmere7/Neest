@@ -148,7 +148,7 @@ function placeCopies(project: NonNullable<ReturnType<typeof ps>['project']>, ids
       workspace,
       placeAssetId: o.assetId,
       placeRotation: o.rotation,
-      placeTemplate: { assetId: o.assetId, width: o.width, depth: o.depth, height: o.height, elevation: o.elevation, mirrored: o.mirrored, materials: { ...o.materials }, ...(o.model ? { model: o.model } : {}), name: o.name },
+      placeTemplate: { assetId: o.assetId, width: o.width, depth: o.depth, height: o.height, elevation: o.elevation, mirrored: o.mirrored, materials: { ...o.materials }, ...(o.model ? { model: o.model } : {}), ...(o.edits ? { edits: structuredClone(o.edits) } : {}), name: o.name },
       selection: [],
     });
     toast.info('Click to place the copy', 'R turns it, Shift-click places more, Esc cancels.');
