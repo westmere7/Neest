@@ -213,3 +213,47 @@
 .guest-live .btn-row {
   flex-wrap: wrap;
 }
+
+.guest-live-share {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.guest-live-qr {
+  flex: none;
+  width: 116px;
+  height: 116px;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+.guest-live-qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.guest-live-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guest-live-side .field-hint {
+  margin: 0;
+}
+
+/* Guest walkthrough pane: the file download under the live link, and the folded extra settings. */
+.guest-file {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.guest-more-title {
+  margin: 16px 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}

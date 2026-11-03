@@ -573,6 +573,11 @@ export const RenderSettingsSchema = z.object({
   walkFov: num.min(40).max(110).default(70),
   /** Where note labels float in 3D: close to what they point at, further out, or clear of the walls. */
   notePlacement: z.enum(['close', 'further', 'clear']).default('close'),
+  /**
+   * How notes float in 3D: the full card, one compact line, or a pin icon that opens the card when
+   * clicked. Also what a guest walkthrough opens with (guests can change it).
+   */
+  noteDisplay: z.enum(['full', 'compact', 'icon']).default('full'),
 });
 
 export const ProjectSettingsSchema = z.object({

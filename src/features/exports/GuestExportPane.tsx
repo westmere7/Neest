@@ -111,12 +111,48 @@ export function GuestExport({ project, busy, run }: PaneProps) {
     <div className="export-pane guest-export">
       <h3>Guest walkthrough</h3>
       <p className="field-hint">
-        One self-contained HTML file with the 3D model, layout options, notes, saved views, a 2D plan,
-        first-person walking and flying. Recipients just open it in a browser — no Neest account, no internet connection, nothing
-        loaded from your device. These settings also apply to the in-app Guest view.
+        A 3D walkthrough guests open in any browser, with your layout options, notes and saved views. Share a live link,
+        or send the single HTML file (it works offline). The in-app Guest view uses these settings too.
       </p>
 
-      <Section title="Welcome">
+      <Section title="Share">
+          <GuestLiveLink project={project} busy={busy} run={run} />
+        <div className="guest-file">
+          <div className="export-summary" data-testid="guest-size">
+            <strong>HTML</strong> ·{' '}
+            {measuring && size === null
+              ? 'estimating size…'
+              : size !== null
+                ? `about ${mb(size)}${measuring ? ' (updating…)' : ''}`
+                : 'size unknown'}{' '}
+            · opens offline, nothing loaded from the internet
+          </div>
+          <div className="btn-row">
+            <Button
+              variant="primary"
+              disabled={busy}
+              data-testid="download-guest"
+              onClick={() =>
+                run(async () => {
+                  const { buildGuestHtml } = await import('./guestExport');
+                  const html = await buildGuestHtml(project);
+                  downloadBlob(
+                    new Blob([html], { type: 'text/html' }),
+                    exportFilename(project.name, 'guest-walkthrough', 'html'),
+                  );
+                })
+              }
+            >
+              {busy ? 'Packaging…' : 'Download guest HTML'}
+            </Button>
+            <Button onClick={() => navigate(`/guest/${project.id}`)}>
+              <ExternalLink size={14} /> Open Guest view
+            </Button>
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Basics">
         <TextField
           label="Title"
           value={g.title}
@@ -124,6 +160,52 @@ export function GuestExport({ project, busy, run }: PaneProps) {
           maxLength={120}
           onCommit={(title) => setGuest('Set guest title', { title })}
         />
+        {options.length > 1 && (
+          <div className="field">
+            <span className="field-label">Layout options</span>
+            <Segmented<GuestSettings['options']>
+              label="Layout options"
+              size="sm"
+              value={g.options}
+              onChange={(v) => setGuest('Set guest layout options', { options: v })}
+              options={[
+                { value: 'all', label: `All ${options.length}` },
+                { value: 'active', label: 'Current only' },
+              ]}
+            />
+            <p className="field-hint">
+              {g.options === 'all'
+                ? `Guests switch between ${options.map((o) => o.name).join(', ')}; the file opens on ${activeName}.`
+                : `Only ${activeName} goes in the file.`}
+            </p>
+          </div>
+        )}
+        <div className="field">
+          <span className="field-label">Notes</span>
+          <Segmented<GuestSettings['notes']>
+            label="Notes"
+            size="sm"
+            value={g.notes}
+            onChange={(notes) => setGuest('Set guest notes', { notes })}
+            options={[
+              { value: 'shown', label: 'Shown' },
+              { value: 'hidden', label: 'Hidden at start' },
+              { value: 'off', label: 'Left out' },
+            ]}
+          />
+        </div>
+        {g.notes !== 'off' && (
+          <Toggle
+            label="Note pictures"
+            hint="In the Notes list, where guests read every note in full"
+            checked={g.noteImages}
+            onChange={(noteImages) => setGuest('Toggle guest note pictures', { noteImages })}
+          />
+        )}
+      </Section>
+
+      <div className="guest-more-title">More settings</div>
+      <Section title="Welcome" defaultOpen={false}>
         <TextField
           label="Subtitle"
           value={g.subtitle}
@@ -164,7 +246,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         </p>
       </Section>
 
-      <Section title="Views & tour">
+      <Section title="Views & tour" defaultOpen={false}>
         {project.cameras.length > 0 ? (
           <div className="guest-view-list" role="list" aria-label="Saved views offered to guests">
             {listed.map((c) => {
@@ -267,7 +349,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         )}
       </Section>
 
-      <Section title="Walkthrough">
+      <Section title="Walkthrough" defaultOpen={false}>
         <div className="grid-2">
           <Select
             label="Walking speed"
@@ -306,49 +388,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         </p>
       </Section>
 
-      <Section title="What guests see">
-        {options.length > 1 && (
-          <div className="field">
-            <span className="field-label">Layout options</span>
-            <Segmented<GuestSettings['options']>
-              label="Layout options"
-              size="sm"
-              value={g.options}
-              onChange={(v) => setGuest('Set guest layout options', { options: v })}
-              options={[
-                { value: 'all', label: `All ${options.length}` },
-                { value: 'active', label: 'Current only' },
-              ]}
-            />
-            <p className="field-hint">
-              {g.options === 'all'
-                ? `Guests switch between ${options.map((o) => o.name).join(', ')}; the file opens on ${activeName}.`
-                : `Only ${activeName} goes in the file.`}
-            </p>
-          </div>
-        )}
-        <div className="field">
-          <span className="field-label">Notes</span>
-          <Segmented<GuestSettings['notes']>
-            label="Notes"
-            size="sm"
-            value={g.notes}
-            onChange={(notes) => setGuest('Set guest notes', { notes })}
-            options={[
-              { value: 'shown', label: 'Shown' },
-              { value: 'hidden', label: 'Hidden at start' },
-              { value: 'off', label: 'Left out' },
-            ]}
-          />
-        </div>
-        {g.notes !== 'off' && (
-          <Toggle
-            label="Note pictures"
-            hint="In the Notes list, where guests read every note in full"
-            checked={g.noteImages}
-            onChange={(noteImages) => setGuest('Toggle guest note pictures', { noteImages })}
-          />
-        )}
+      <Section title="What guests see" defaultOpen={false}>
         <Toggle
           label="Room names"
           checked={g.roomLabels}
@@ -403,7 +443,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         </p>
       </Section>
 
-      <Section title="Light & quality">
+      <Section title="Light & quality" defaultOpen={false}>
         <div className="grid-2">
           <Select<GuestSettings['quality']>
             label="Quality"
@@ -448,7 +488,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         )}
       </Section>
 
-      <Section title="File">
+      <Section title="File" defaultOpen={false}>
         <div className="field">
           <span className="field-label">Texture resolution</span>
           <Segmented
@@ -475,41 +515,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         />
       </Section>
 
-      <Section title="Live link">
-        <GuestLiveLink project={project} busy={busy} run={run} />
-      </Section>
 
-      <div className="export-summary" data-testid="guest-size">
-        <strong>HTML</strong> ·{' '}
-        {measuring && size === null
-          ? 'estimating size…'
-          : size !== null
-            ? `about ${mb(size)}${measuring ? ' (updating…)' : ''}`
-            : 'size unknown'}{' '}
-        · opens offline, nothing loaded from the internet
-      </div>
-      <div className="btn-row">
-        <Button
-          variant="primary"
-          disabled={busy}
-          data-testid="download-guest"
-          onClick={() =>
-            run(async () => {
-              const { buildGuestHtml } = await import('./guestExport');
-              const html = await buildGuestHtml(project);
-              downloadBlob(
-                new Blob([html], { type: 'text/html' }),
-                exportFilename(project.name, 'guest-walkthrough', 'html'),
-              );
-            })
-          }
-        >
-          {busy ? 'Packaging…' : 'Download guest HTML'}
-        </Button>
-        <Button onClick={() => navigate(`/guest/${project.id}`)}>
-          <ExternalLink size={14} /> Open Guest view
-        </Button>
-      </div>
     </div>
   );
 }

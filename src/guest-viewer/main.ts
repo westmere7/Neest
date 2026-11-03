@@ -131,6 +131,9 @@ export interface GuestItemLayer {
 }
 
 export type GuestQuality = 'fast' | 'balanced' | 'high';
+/** Notes floating in the view: full cards, one line each, or a pin on each spot that opens its card. */
+export type NoteDisplay = 'full' | 'compact' | 'icon';
+type NoteMode = NoteDisplay | 'off';
 type LampBudget = { point: number; spot: number; shadows: number };
 
 export interface GuestData {
@@ -171,6 +174,8 @@ export interface GuestData {
   notesHidden?: boolean;
   /** Where note labels float (see placement.ts). */
   notePlacement?: NotePlacement;
+  /** How notes float at first: full cards, one compact line, or pins that open the card (guests can change it). */
+  noteDisplay?: NoteDisplay;
   roomsOn?: boolean;
   /** The layout options (at least one) and the one the file opens on. */
   options: GuestOption[];
@@ -254,19 +259,77 @@ function segmented<T extends string>(
   return box;
 }
 
+/** Line icons for the bar (24 × 24, drawn with the text colour). */
+const ICONS: Record<string, string> = {
+  walk: 'M7 16v-2.4C7 11.5 5.97 10.5 6 8c.03-2.7 1.49-6 4.5-6C12.37 2 13 3.8 13 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0ZM20 20v-2.4c0-2.1 1.03-3.1 1-5.6-.03-2.7-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z',
+  exit: 'M18 6 6 18M6 6l12 12',
+  tour: 'M6 4l14 8-14 8V4Z',
+  fly: 'M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z',
+  ghost: 'M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z',
+  full: 'M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3',
+  notes: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM8 8h8M8 12h5',
+  info: 'M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zM12 16v-4M12 8h.01',
+  view: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
+};
+
+function icon(name: string): SVGSVGElement {
+  const svg = document.createElementNS(SVG, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('class', 'ng-ico');
+  svg.setAttribute('aria-hidden', 'true');
+  const p = document.createElementNS(SVG, 'path');
+  p.setAttribute('d', ICONS[name] ?? '');
+  svg.append(p);
+  return svg;
+}
+
+/** A segmented choice that can also be set from outside (kept in step with another copy of it). */
+function choice<T extends string>(options: [T, string][], value: T, onChange: (v: T) => void): { box: HTMLDivElement; set: (v: T) => void } {
+  const box = el('div', 'ng-seg');
+  const buttons = options.map(([v, label]) => {
+    const btn = el('button', '', label);
+    btn.type = 'button';
+    btn.dataset.value = v;
+    btn.onclick = () => onChange(v);
+    box.append(btn);
+    return btn;
+  });
+  const set = (v: T) => buttons.forEach((b) => b.classList.toggle('on', b.dataset.value === v));
+  set(value);
+  return { box, set };
+}
+
 /**
- * An on/off button: a label and a small switch (aria-pressed), so guests can tell it apart from
- * the action buttons (which do something once) and the view buttons (which pick one view).
+ * An on/off button: an icon, a label and a small switch (aria-pressed), for a state that is on or off
+ * (fly, ghost, tour, full screen). Buttons that open a panel are `panelBtn`s, never switches.
  */
-function toggleEl(label: string, title?: string): { btn: HTMLButtonElement; set: (on: boolean) => void } {
+function toggleEl(label: string, title?: string, ico?: string): { btn: HTMLButtonElement; set: (on: boolean) => void } {
   const btn = el('button', 'ng-btn ng-toggle');
   btn.type = 'button';
-  btn.append(el('span', '', label), el('span', 'ng-switch'));
-  if (title) btn.title = title;
+  if (ico) btn.append(icon(ico));
+  btn.append(el('span', 'ng-lbl', label), el('span', 'ng-switch'));
+  btn.title = title ?? label;
+  btn.setAttribute('aria-label', label);
   const set = (on: boolean) => btn.setAttribute('aria-pressed', String(on));
   set(false);
   return { btn, set };
 }
+
+/** A button that opens a panel (Notes, Info, View): an icon and a label, lit while its panel is open. */
+function panelBtn(label: string, ico: string): { btn: HTMLButtonElement; set: (open: boolean) => void } {
+  const btn = el('button', 'ng-btn ng-pbtn');
+  btn.type = 'button';
+  btn.append(icon(ico), el('span', 'ng-lbl', label));
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+  const set = (open: boolean) => {
+    btn.setAttribute('aria-expanded', String(open));
+    btn.classList.toggle('on', open);
+  };
+  set(false);
+  return { btn, set };
+}
+
 
 /** Lets the browser paint (the loading screen) before a long synchronous step. Not rAF: it stalls in background tabs. */
 const yieldToPaint = () => new Promise<void>((r) => setTimeout(r, 30));
@@ -310,8 +373,8 @@ function loadingScreen(title: string) {
   };
 }
 
-/** Phone-sized screens: panels open one at a time, as sheets at the bottom. */
-const narrow = () => matchMedia('(max-width: 640px)').matches;
+/** Phone-sized screens, upright (panels are sheets at the bottom) or on their side: panels open one at a time. */
+const narrow = () => matchMedia('(max-width: 640px), (max-height: 500px)').matches;
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -403,6 +466,8 @@ function start(data: GuestData) {
     /** Pendants, ceiling lights and fans while orbiting (walking always shows them). */
     ceilingItems: false,
     notes: anyOption((o) => o.callouts.length > 0) && !data.notesHidden,
+    /** How notes float (off, pins, one line, full). */
+    noteMode: (data.notesHidden ? 'off' : (data.noteDisplay ?? 'full')) as NoteMode,
     rooms: !!data.roomsOn,
   };
   const layerOn = new Map(data.options.flatMap((o) => o.layers.map((l) => [l.id, l.on] as const)));
@@ -666,21 +731,30 @@ function start(data: GuestData) {
     });
   markOption();
   const views = el('div', 'ng-views');
-  const modeBtn = el('button', 'ng-btn ng-primary', 'Walk through');
-  const fly = toggleEl('Fly', 'Free-fly: move where you look, through walls (F)');
+  const modeBtn = el('button', 'ng-btn ng-primary');
+  const modeLabel = el('span', 'ng-lbl-keep', 'Walk through');
+  const modeIcon = el('span', 'ng-ico-wrap');
+  modeBtn.append(modeIcon, modeLabel);
+  const setModeBtn = (walkingNow: boolean) => {
+    modeIcon.replaceChildren(icon(walkingNow ? 'exit' : 'walk'));
+    modeLabel.textContent = walkingNow ? 'Exit walkthrough' : 'Walk through';
+  };
+  setModeBtn(false);
+  const fly = toggleEl('Fly', 'Free-fly: move where you look, through walls (F)', 'fly');
   fly.btn.style.display = 'none';
-  const ghost = toggleEl('Ghost', 'Walk through walls and furniture, staying on the floor (G)');
+  const ghost = toggleEl('Ghost', 'Walk through walls and furniture, staying on the floor (G)', 'ghost');
   ghost.btn.style.display = 'none';
   const help = el('div', 'ng-help');
   hud.append(side, views);
   root.append(hud, help);
-  // Bottom bar: the action on the left, on/off switches on the right.
+  // Bottom bar: the action, then on/off switches, then the buttons that open panels.
   const bar = el('div', 'ng-bar');
   const actions = el('div', 'ng-group');
   const toggles = el('div', 'ng-group ng-toggles');
+  const panelsGroup = el('div', 'ng-group ng-panels');
   actions.append(modeBtn);
   toggles.append(fly.btn, ghost.btn);
-  bar.append(actions, toggles);
+  bar.append(actions, toggles, panelsGroup);
   root.append(bar);
 
   const panel = (heading: string, onClose: () => void) => {
@@ -695,8 +769,8 @@ function start(data: GuestData) {
     return p;
   };
   const panelSetters: ((on: boolean) => void)[] = [];
-  const toggleButton = (label: string, p: HTMLElement, open: boolean) => {
-    const t = toggleEl(label);
+  const toggleButton = (label: string, p: HTMLElement, open: boolean, ico: string) => {
+    const t = panelBtn(label, ico);
     const set = (on: boolean) => {
       // On phones a panel is a sheet over the bottom of the view: one at a time.
       if (on && narrow()) panelSetters.forEach((s) => s !== set && s(false));
@@ -706,7 +780,7 @@ function start(data: GuestData) {
     t.btn.onclick = () => set(p.style.display === 'none');
     set(open);
     panelSetters.push(set);
-    toggles.append(t.btn);
+    panelsGroup.append(t.btn);
     return set;
   };
 
@@ -745,7 +819,7 @@ function start(data: GuestData) {
     };
     fillInfo();
     // Phones start with it closed: it would cover the view.
-    setInfo = toggleButton('Info', info, opt.info.open && !narrow());
+    setInfo = toggleButton('Info', info, opt.info.open && !narrow(), 'info');
   }
 
   // ── Notes: highlights in the scene; labels, leaders and end marks laid out on screen each frame ──
@@ -761,14 +835,22 @@ function start(data: GuestData) {
     anchor: THREE.Vector3;
     label: THREE.Vector3;
     card: HTMLDivElement;
+    /** Its pin ("Icons"): a click opens the card. */
+    pin: HTMLButtonElement;
     line: SVGLineElement | null;
     mark: SVGElement | null;
     endPx: number;
   };
   let callouts: PlacedNote[] = [];
+  /** The note opened from its pin (or Show) while notes float as pins. */
+  let openNote: string | null = null;
   /** (Re)builds the shown option's labels, leaders, end marks and floor highlights. */
   const buildCallouts = () => {
-    for (const n of callouts) n.card.remove();
+    for (const n of callouts) {
+      n.card.remove();
+      n.pin.remove();
+    }
+    openNote = null;
     marksSvg.replaceChildren();
     for (const o of [...calloutGroup.children]) {
       calloutGroup.remove(o);
@@ -822,11 +904,23 @@ function start(data: GuestData) {
       card.append(row);
     }
     calloutLayer.append(card);
+    const id = `n${i}`;
+    const pin = el('button', 'ng-pin');
+    pin.type = 'button';
+    pin.style.setProperty('--main', c.colors.main);
+    pin.setAttribute('aria-label', `Open note: ${c.lines[0]?.runs.map((r) => r.t).join('') ?? 'note'}`);
+    pin.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9h8M8 13h5"/></svg>';
+    pin.onclick = (e) => {
+      e.stopPropagation();
+      openNote = openNote === id ? null : id;
+    };
+    calloutLayer.append(pin);
     return {
-      id: `n${i}`,
+      id,
       anchor: new THREE.Vector3(...c.anchor),
       label: new THREE.Vector3(...c.label),
       card,
+      pin,
       line,
       mark,
       endPx: st.endPx,
@@ -844,7 +938,8 @@ function start(data: GuestData) {
   };
   const hide = (e: Element | null) => e && ((e as HTMLElement).style.visibility = 'hidden');
   const placeCallouts = () => {
-    const on = show.notes && !walking;
+    const mode = show.noteMode;
+    const on = mode !== 'off' && !walking;
     calloutGroup.visible = on;
     calloutLayer.style.display = on ? '' : 'none';
     if (!on) return;
@@ -854,11 +949,19 @@ function start(data: GuestData) {
     for (const n of callouts) {
       const a = toScreen(n.anchor);
       const l = toScreen(n.label);
-      if (!a || !l || !inView(a, { w, h })) {
+      const visible = !!a && !!l && inView(a, { w, h });
+      // Pins: on every spot in view; only the opened note gets its card and leader.
+      if (mode === 'icon' && visible) {
+        n.pin.style.visibility = 'visible';
+        n.pin.style.transform = `translate(${Math.round(a!.x)}px, ${Math.round(a!.y)}px)`;
+        n.pin.classList.toggle('open', openNote === n.id);
+      } else n.pin.style.visibility = 'hidden';
+      n.card.classList.toggle('ng-compact', mode === 'compact');
+      if (!visible || (mode === 'icon' && openNote !== n.id)) {
         [n.card, n.line, n.mark].forEach(hide);
         continue;
       }
-      inputs.push({ id: n.id, n, anchor: a, prefer: l, w: n.card.offsetWidth, h: n.card.offsetHeight });
+      inputs.push({ id: n.id, n, anchor: a!, prefer: l!, w: n.card.offsetWidth, h: n.card.offsetHeight });
     }
     // The building's box on screen, kept clear of labels in "clear of the walls" mode.
     let obstacle: ScreenRect | null = null;
@@ -1010,6 +1113,26 @@ function start(data: GuestData) {
   // ── Notes list: every note of the shown option in full, with its pictures; Show turns the view to it ──
   let fillNotes = () => {};
   let setNotes = (_on: boolean) => {};
+  /** How notes float in the view, from the Notes panel or the View panel (kept in step). */
+  const noteSwitches: ((m: NoteMode) => void)[] = [];
+  const setNoteMode = (m: NoteMode) => {
+    show.noteMode = m;
+    show.notes = m !== 'off';
+    openNote = null;
+    noteSwitches.forEach((s) => s(m));
+  };
+  const NOTE_MODES: [NoteMode, string][] = [
+    ['off', 'Off'],
+    ['icon', 'Icons'],
+    ['compact', 'Compact'],
+    ['full', 'Full'],
+  ];
+  const noteModeControl = () => {
+    const c = choice<NoteMode>(NOTE_MODES, show.noteMode, setNoteMode);
+    c.box.classList.add('ng-note-modes');
+    noteSwitches.push(c.set);
+    return c.box;
+  };
   /** Looks at a note's spot: turns the walker towards it, or glides the orbit view in to it. */
   const focusNote = (n: GuestNote) => {
     if (!n.at) return;
@@ -1033,6 +1156,8 @@ function start(data: GuestData) {
       );
     }
     const label = n.label >= 0 ? callouts[n.label] : undefined;
+    // Pins: Show opens the note's card.
+    if (label && show.noteMode === 'icon') openNote = label.id;
     if (label) {
       label.card.classList.remove('ng-flash');
       void label.card.offsetWidth;
@@ -1095,6 +1220,9 @@ function start(data: GuestData) {
   if (anyOption((o) => o.notes.length > 0)) {
     const notesPanel = panel('Notes', () => setNotes(false));
     notesPanel.classList.add('ng-notes');
+    if (anyOption((o) => o.callouts.length > 0)) {
+      notesPanel.append(el('div', 'ng-label', 'Notes in the 3D view'), noteModeControl());
+    }
     const list = el('div', 'ng-note-list');
     notesPanel.append(list);
     fillNotes = () => {
@@ -1103,7 +1231,7 @@ function start(data: GuestData) {
       for (const n of opt.notes) list.append(noteCard(n));
     };
     fillNotes();
-    setNotes = toggleButton('Notes', notesPanel, false);
+    setNotes = toggleButton('Notes', notesPanel, false, 'notes');
   }
 
   /** Shows another layout option: its model, walls to walk into, lamps, notes, labels, numbers and plan. */
@@ -1164,7 +1292,9 @@ function start(data: GuestData) {
     ceilingCheck.title = 'Pendants, ceiling lights and fans while orbiting (always shown when walking)';
     ceilingCheck.style.display = optionModels.some((m) => m.ceiling.length) ? '' : 'none';
     view.append(ceilingCheck);
-    if (anyOption((o) => o.callouts.length > 0)) view.append(check('Note labels', show.notes, (on) => (show.notes = on)));
+    if (anyOption((o) => o.callouts.length > 0)) {
+      view.append(el('div', 'ng-label', 'Notes in the view'), noteModeControl());
+    }
     if (anyOption((o) => o.rooms.length > 0)) view.append(check('Room names', show.rooms, (on) => (show.rooms = on)));
     const layerBox = el('div');
     view.append(layerBox);
@@ -1211,7 +1341,7 @@ function start(data: GuestData) {
         applyShadows();
       }),
     );
-    setView = toggleButton('View', view, false);
+    setView = toggleButton('View', view, false, 'view');
   }
 
   let walking = false;
@@ -1300,7 +1430,7 @@ function start(data: GuestData) {
   let tourIdx = -1;
   let tourNext = 0;
   const tourSecs = Math.max(3, data.tour?.seconds ?? 7);
-  const tour = data.cameras.length >= 2 ? toggleEl('Tour', 'Play the views one after another') : null;
+  const tour = data.cameras.length >= 2 ? toggleEl('Tour', 'Play the views one after another', 'tour') : null;
   const tourBtn = tour?.btn ?? null;
   const setTour = (on: boolean) => {
     tourOn = on;
@@ -1546,7 +1676,14 @@ function start(data: GuestData) {
       : ghosting
         ? `Ghost: walls and furniture let you through · W A S D to move · G to collide again · wheel: speed ${formatSpeed(walkSpeed)} · Esc to exit`
         : `Click or two-finger swipe to look · W A S D or pinch to move · Shift to run · F to fly · G: ghost · wheel: speed ${formatSpeed(walkSpeed)} · Esc to exit`;
+  let helpTimer = 0;
   const setHelp = () => {
+    // Touch screens: the hint shows for a few seconds, then gets out of the way.
+    if (touch) {
+      help.classList.remove('ng-faded');
+      window.clearTimeout(helpTimer);
+      helpTimer = window.setTimeout(() => help.classList.add('ng-faded'), 4500);
+    }
     help.textContent = walking
       ? touch
         ? flying
@@ -1605,7 +1742,7 @@ function start(data: GuestData) {
       if (planOpen) setPlan(false);
     }
     document.body.classList.toggle('ng-walking', on);
-    modeBtn.textContent = on ? 'Exit walkthrough' : 'Walk through';
+    setModeBtn(on);
     fly.btn.style.display = on ? '' : 'none';
     ghost.btn.style.display = on ? '' : 'none';
     controls.enabled = !on;
@@ -1630,6 +1767,24 @@ function start(data: GuestData) {
     applyVisibility();
   }
   modeBtn.onclick = () => setWalking(!walking);
+  // Touch: a tap on the scene (no drag) hides every control for an unobstructed view; another tap brings them back.
+  let tap: { id: number; x: number; y: number; t: number } | null = null;
+  let pointers = 0;
+  renderer.domElement.addEventListener('pointerdown', (e) => {
+    pointers++;
+    tap = e.pointerType === 'touch' && pointers === 1 ? { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() } : null;
+  });
+  const endTap = (e: PointerEvent) => {
+    pointers = Math.max(0, pointers - 1);
+    const t = tap;
+    tap = null;
+    if (!t || t.id !== e.pointerId || e.type !== 'pointerup') return;
+    if (Math.hypot(e.clientX - t.x, e.clientY - t.y) > 8 || performance.now() - t.t > 350) return;
+    const hidden = document.body.classList.toggle('ng-immersive');
+    if (hidden) panelSetters.forEach((s) => s(false));
+  };
+  window.addEventListener('pointerup', endTap);
+  window.addEventListener('pointercancel', endTap);
   const walkClassifier = createWheelClassifier();
   let walkDrag: { id: number; x: number; y: number; moved: boolean } | null = null;
   let suppressLockUntil = -Infinity;
@@ -1740,7 +1895,7 @@ function start(data: GuestData) {
   };
   const fsRoot = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
   if (fsDoc.fullscreenEnabled || fsDoc.webkitFullscreenEnabled) {
-    const full = toggleEl('Full screen', 'Full screen (Esc to leave)');
+    const full = toggleEl('Full screen', 'Full screen (Esc to leave)', 'full');
     const isFull = () => !!(fsDoc.fullscreenElement ?? fsDoc.webkitFullscreenElement);
     full.btn.onclick = () => {
       if (isFull()) void (fsDoc.exitFullscreen?.() ?? fsDoc.webkitExitFullscreen?.());

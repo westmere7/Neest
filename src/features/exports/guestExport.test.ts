@@ -268,6 +268,8 @@ describe('guest export data', () => {
     // Phones: safe areas and the narrow layout.
     expect(html).toMatch(/viewport-fit=cover/);
     expect(html).toMatch(/@media \(max-width:640px\)/);
+    // Phones on their side get the compact layout too.
+    expect(html).toMatch(/@media \(max-width:640px\),\(max-height:500px\)/);
   });
 
   it('carries every layout option, or only the active one', async () => {
@@ -378,5 +380,11 @@ describe('guest export data', () => {
     expect(runtime).toMatch(/neestCeiling/);
     expect(runtime).toMatch(/ng-lightbox/);
     expect(runtime).toMatch(/Ghost/);
+    // Panel buttons are not switches (aria-expanded), notes float on a switch, a tap hides the controls.
+    expect(runtime).toMatch(/ng-pbtn/);
+    expect(runtime).toMatch(/aria-expanded/);
+    expect(runtime).toMatch(/Notes in the 3D view/);
+    expect(runtime).toMatch(/ng-pin/);
+    expect(runtime).toMatch(/ng-immersive/);
   });
 });

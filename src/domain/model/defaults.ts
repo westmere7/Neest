@@ -85,6 +85,7 @@ export function createEmptyProject(opts: NewProjectOptions = {}): Project {
       fov: 45,
       walkFov: 70,
       notePlacement: 'close',
+      noteDisplay: 'full',
     },
     layers: {
       construction: { visible: true, locked: false },

@@ -70,15 +70,24 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-btn:focus-visible{outline:2px solid #a3cfc1;outline-offset:1px}
 .ng-primary{background:#6fb3a0;color:#0f2a26;border-color:transparent;font-weight:600}
 .ng-primary:hover{background:#a3cfc1}
-.ng-toggle{display:inline-flex;align-items:center;gap:8px}
+.ng-toggle,.ng-pbtn,.ng-primary{display:inline-flex;align-items:center;gap:7px}
+.ng-ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ng-ico-wrap{display:inline-flex}
+.ng-pbtn.on{background:rgba(111,179,160,.24);border-color:rgba(111,179,160,.65)}
 .ng-switch{position:relative;flex:none;width:26px;height:15px;border-radius:8px;background:rgba(255,255,255,.22);transition:background .15s}
 .ng-switch::after{content:"";position:absolute;left:2px;top:2px;width:11px;height:11px;border-radius:50%;background:#f2efe9;transition:transform .15s}
 .ng-toggle[aria-pressed=true]{border-color:rgba(111,179,160,.6)}
-.ng-toggle[aria-pressed=true] .ng-switch{background:#6fb3a0}
-.ng-toggle[aria-pressed=true] .ng-switch::after{transform:translateX(11px)}
+[aria-pressed=true]>.ng-switch{background:#6fb3a0}
+[aria-pressed=true]>.ng-switch::after{transform:translateX(11px)}
+.ng-note-modes{margin:4px 0 10px}
 .ng-bar{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:5px;border-radius:13px;background:rgba(29,31,34,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100vw - 24px);z-index:3}
 .ng-group{display:flex;gap:6px;align-items:center}
-.ng-toggles{padding-left:10px;border-left:1px solid rgba(255,255,255,.2)}
+.ng-toggles,.ng-panels{padding-left:10px;border-left:1px solid rgba(255,255,255,.2)}
+.ng-toggles:empty,.ng-panels:empty{display:none}
+.ng-hud,.ng-bar,.ng-help{transition:opacity .25s}
+.ng-help.ng-faded{opacity:0}
+.ng-immersive .ng-hud,.ng-immersive .ng-bar,.ng-immersive .ng-help,.ng-immersive .ng-panel{opacity:0;pointer-events:none!important}
+.ng-immersive .ng-hud *,.ng-immersive .ng-bar *{pointer-events:none!important}
 .ng-help{position:fixed;left:50%;bottom:calc(var(--ng-bar,46px) + 30px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:6px 12px;border-radius:8px;background:rgba(29,31,34,.7);color:#d9d6cf;font-size:12px;white-space:nowrap;z-index:3;pointer-events:none}
 .ng-loading{position:fixed;inset:0;z-index:8;display:grid;place-items:center;background:#1d1f22;transition:opacity .35s}
 .ng-loading.ng-done{opacity:0;pointer-events:none}
@@ -115,6 +124,13 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-box-solid,.ng-box-outline{border-left:1px solid var(--border);padding-left:10px}
 .ng-box-text{border:0;box-shadow:none;padding:2px 4px;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
 .ng-cl-title{font-weight:650}.ng-cl-info{color:var(--info);font-size:.92em}.ng-callout a{color:var(--link)}
+.ng-callout.ng-compact{max-width:200px;font-weight:600}
+.ng-callout.ng-compact>*{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ng-callout.ng-compact>*+*{display:none}
+.ng-pin{position:absolute;left:0;top:0;visibility:hidden;width:26px;height:26px;margin:-34px 0 0 -13px;padding:0;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;background:var(--main);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);cursor:pointer;pointer-events:auto}
+.ng-pin::after{content:"";position:absolute;left:50%;top:100%;margin-left:-5px;border:5px solid transparent;border-top:7px solid #fff}
+.ng-pin svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.ng-pin.open{outline:2px solid var(--main);outline-offset:2px}
 .ng-callout.ng-flash{animation:ng-flash 1.6s ease}
 @keyframes ng-flash{0%,40%{box-shadow:0 0 0 4px var(--main),0 2px 10px rgba(0,0,0,.18)}100%{box-shadow:0 2px 10px rgba(0,0,0,.18)}}
 .ng-opts{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:4px;border-radius:12px;background:rgba(29,31,34,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto}
@@ -156,16 +172,45 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-intro-sub{margin:0;color:#b0ada7}
 .ng-intro-text{margin:0;white-space:pre-line;line-height:1.55;color:#e4e1da}
 .ng-intro-card .ng-btn{align-self:flex-start;padding:10px 18px}
+/* Phones, upright or on their side: a slim title, an icon-only bar in one row, panels one at a time. */
+@media (max-width:640px),(max-height:500px){
+ .ng-bar{max-width:calc(100vw - 16px);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:4px;padding:4px;bottom:calc(10px + env(safe-area-inset-bottom));background:rgba(29,31,34,.62)}
+ .ng-group{gap:4px}
+ .ng-toggles,.ng-panels{padding-left:4px}
+ .ng-btn{padding:9px 10px}
+ .ng-bar .ng-lbl,.ng-bar .ng-switch{display:none}
+ .ng-bar .ng-toggle,.ng-bar .ng-pbtn{min-width:40px;justify-content:center;padding:9px}
+ .ng-bar .ng-toggle[aria-pressed=true]{background:rgba(111,179,160,.3)}
+ .ng-bar .ng-ico{width:18px;height:18px}
+ .ng-title{padding:6px 12px}.ng-title strong{font-size:14px}.ng-title span{display:none}
+ .ng-opts-label{display:none}
+ .ng-views::-webkit-scrollbar,.ng-bar::-webkit-scrollbar,.ng-opts::-webkit-scrollbar{display:none}
+ .ng-opts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+ .ng-callout{max-width:200px}
+ .ng-lightbox{--lb-px:12px;--lb-py:56px}
+}
+/* Phones on their side: one top row (title left, views right), side panels as tall as the screen allows. */
+@media (max-height:500px) and (min-width:641px){
+ .ng-hud{top:calc(8px + env(safe-area-inset-top))}
+ .ng-side{max-width:300px}
+ .ng-views{max-width:58vw;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;scrollbar-width:none}
+ .ng-panel{max-height:none;padding:8px 12px}
+ .ng-help,.ng-plan-hint{font-size:11px;bottom:calc(var(--ng-bar,46px) + 18px + env(safe-area-inset-bottom))}
+ .ng-intro-card{max-height:calc(100vh - 24px);padding:16px 20px}
+ .ng-intro-card h1{font-size:18px}
+}
+@media (max-height:500px) and (pointer:coarse){
+ .ng-walking .ng-stick{width:96px;height:96px;bottom:calc(var(--ng-bar,46px) + 20px + env(safe-area-inset-bottom))}
+ .ng-knob{left:28px;top:28px;width:40px;height:40px}
+ .ng-walking .ng-look{top:60px;bottom:calc(var(--ng-bar,46px) + 20px)}
+ .ng-flying .ng-updown{bottom:calc(var(--ng-bar,46px) + 20px + env(safe-area-inset-bottom))}
+}
 @media (max-width:640px){
  .ng-hud{flex-direction:column;flex-wrap:nowrap;gap:6px}
- .ng-side{max-width:100%}
- .ng-title{padding:7px 12px}.ng-title strong{font-size:14px}.ng-title span{font-size:11px}
+ .ng-side{max-width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
+ .ng-side .ng-btn{padding:7px 10px}
  .ng-views{max-width:100%;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;scrollbar-width:none;-webkit-overflow-scrolling:touch}
  .ng-views::-webkit-scrollbar,.ng-bar::-webkit-scrollbar{display:none}
- .ng-bar{left:8px;right:8px;transform:none;max-width:none;flex-wrap:wrap;justify-content:center;gap:6px;bottom:calc(8px + env(safe-area-inset-bottom))}
- .ng-group{display:contents}
- .ng-btn{padding:9px 10px}
- .ng-toggle{gap:6px}
  .ng-panel{position:fixed;left:8px;right:8px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom));max-height:48vh;z-index:4;box-shadow:0 -6px 24px rgba(0,0,0,.3)}
  .ng-help,.ng-plan-hint{white-space:normal;width:86vw;text-align:center;font-size:11px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom))}
  .ng-walking .ng-stick,.ng-flying .ng-updown{bottom:calc(var(--ng-bar,56px) + 60px + env(safe-area-inset-bottom))}
@@ -369,6 +414,7 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
     lampBudgets: { fast: budget('fast'), balanced: budget('balanced'), high: budget('high') },
     notesHidden: g.notes === 'hidden',
     notePlacement: r.notePlacement,
+    noteDisplay: r.noteDisplay ?? 'full',
     roomsOn: g.roomLabels,
     options,
     option: opts.start,

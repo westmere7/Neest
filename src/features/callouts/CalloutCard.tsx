@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Callout, Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
-import { calloutInfo, noteHeading, parseNote, type Run } from './content';
+import { calloutInfo, noteHeading, noteSummary, parseNote, type Run } from './content';
 import { NOTE_SIZE_SCALE, labelColors } from './style';
 import { NoteImages } from './NoteImages';
 import './callouts.css';
@@ -34,6 +34,7 @@ export function CalloutCard({
   interactive = true,
   selected = false,
   images = false,
+  compact = false,
 }: {
   project: Project;
   derived: DerivedPlan | null;
@@ -41,10 +42,32 @@ export function CalloutCard({
   interactive?: boolean;
   selected?: boolean;
   images?: boolean;
+  /** One line: the item's or room's name, else the note's first line (3D "Compact"). */
+  compact?: boolean;
 }) {
   const colors = labelColors(callout);
   const info = callout.showInfo ? calloutInfo(project, derived, callout) : [];
   const title = noteHeading(callout, info);
+  if (compact) {
+    return (
+      <div
+        className={`callout-card callout-compact box-${callout.box}${selected ? ' selected' : ''}`}
+        style={
+          {
+            '--callout-main': colors.main,
+            '--callout-fill': colors.fill ?? 'transparent',
+            '--callout-border': colors.stroke ?? 'transparent',
+            '--callout-text': colors.text,
+            '--note-scale': NOTE_SIZE_SCALE[callout.size],
+          } as React.CSSProperties
+        }
+        data-callout={callout.id}
+        title={noteSummary(callout, 200)}
+      >
+        {title || noteSummary(callout, 60)}
+      </div>
+    );
+  }
   const blocks = parseNote(callout.note);
   const lists: ReactNode[] = [];
   let list: { kind: 'bullet' | 'number'; items: ReactNode[]; start?: number } | null = null;

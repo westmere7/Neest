@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MutableRefObject } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
 import type { Callout, Project } from '@/domain/model/schema';
@@ -67,6 +67,24 @@ export function layoutNotes3D(
   const placed = placeNoteLabels(inputs, { w, h }, { mode, insets, obstacle: mode === 'clear' ? buildingRect(project, derived, camera, w, h) : null });
   return inputs.map((it, i) => ({ c: it.c, anchor: it.anchor, placed: placed[i] }));
 }
+
+/** Where each visible note points on screen (null when out of view): the 3D "Icons" display puts its pin there. */
+function noteAnchors(project: Project, derived: DerivedPlan, camera: THREE.Camera, w: number, h: number): Map<string, { x: number; y: number } | null> {
+  const out = new Map<string, { x: number; y: number } | null>();
+  for (const c of visibleCallouts(project)) {
+    const pts = callout3DPoints(project, derived, c, project.render.notePlacement ?? 'close');
+    const a = pts ? toScreen(pts.anchor, camera, w, h) : null;
+    out.set(c.id, a && inView(a, { w, h }) ? a : null);
+  }
+  return out;
+}
+
+/** A speech-bubble glyph for note pins. */
+const PIN_GLYPH = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M8 9h8M8 13h5" />
+  </svg>
+);
 
 /** Inside the Canvas: keeps `target` pointing at the current camera, for the overlay outside it. */
 export function NotesViewBridge({ target }: { target: MutableRefObject<THREE.Camera | null> }) {
@@ -142,6 +160,9 @@ function NoteMarks({
  * `layoutNotes3D`), so labels can keep clear of each other and of the building. The floor highlight
  * stays in the scene (`Callouts3D`). In the editor a click selects a note, dragging its anchor dot
  * moves the spot it points to, and a double-click edits it.
+ *
+ * `render.noteDisplay`: full cards, compact one-line cards, or pins on each spot ("Icons"); a pin opens
+ * its note's full card (and so does selecting the note), another click closes it.
  */
 export function NotesOverlay({
   project,
@@ -162,9 +183,14 @@ export function NotesOverlay({
 }) {
   const layer = useRef<HTMLDivElement>(null);
   const cards = useRef(new Map<string, HTMLDivElement | null>());
+  const pins = useRef(new Map<string, HTMLButtonElement | null>());
   const marks = useRef(new Map<string, MarkEls>());
-  const latest = useRef({ project, derived, visible });
-  latest.current = { project, derived, visible };
+  const display = project.render.noteDisplay ?? 'full';
+  const [openId, setOpenId] = useState<string | null>(null);
+  /** Notes shown as full cards in "Icons": the opened one and the selected ones. */
+  const opened = new Set([...(openId ? [openId] : []), ...(selectedIds ?? [])]);
+  const latest = useRef({ project, derived, visible, display, opened });
+  latest.current = { project, derived, visible, display, opened };
   const notes = visible ? visibleCallouts(project) : [];
 
   const handleAnchorDown = (e: React.PointerEvent<SVGCircleElement>, id: string) => {
@@ -239,12 +265,13 @@ export function NotesOverlay({
       raf = requestAnimationFrame(tick);
       const el = layer.current;
       const cam = camera.current;
-      const { project: p, derived: d, visible: v } = latest.current;
+      const { project: p, derived: d, visible: v, display: disp, opened: open } = latest.current;
       if (!el) return;
       if (!v || !cam) {
         el.style.visibility = 'hidden';
         return;
       }
+      if (disp !== 'icon') for (const pin of pins.current.values()) if (pin) pin.style.visibility = 'hidden';
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (!w || !h) return;
@@ -255,7 +282,18 @@ export function NotesOverlay({
         insetsAt = now;
       }
       const shown = new Set<string>();
+      // Icons: a pin on every spot; only opened notes get a card and a leader.
+      if (disp === 'icon') {
+        const at = noteAnchors(p, d, cam, w, h);
+        for (const [id, pin] of pins.current) {
+          const a = at.get(id);
+          if (!pin) continue;
+          pin.style.visibility = a ? '' : 'hidden';
+          if (a) pin.style.transform = `translate(${Math.round(a.x)}px, ${Math.round(a.y)}px)`;
+        }
+      }
       for (const n of layoutNotes3D(p, d, cam, w, h, (c) => {
+        if (disp === 'icon' && !open.has(c.id)) return null;
         const card = cards.current.get(c.id);
         return card ? { w: card.offsetWidth, h: card.offsetHeight } : null;
       }, insets)) {
@@ -312,6 +350,35 @@ export function NotesOverlay({
           />
         ))}
       </svg>
+      {display === 'icon' &&
+        notes.map((c) => (
+          <button
+            key={`pin-${c.id}`}
+            type="button"
+            ref={(el) => {
+              if (el) pins.current.set(c.id, el);
+              else pins.current.delete(c.id);
+            }}
+            className={`note-pin${openId === c.id ? ' open' : ''}${selectedIds?.has(c.id) ? ' selected' : ''}`}
+            style={{ visibility: 'hidden', '--callout-main': labelColors(c).main } as React.CSSProperties}
+            aria-label="Open note"
+            aria-expanded={opened.has(c.id)}
+            data-testid="note-pin"
+            data-callout-id={c.id}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenId((cur) => (cur === c.id ? null : c.id));
+              onSelect?.(c.id, e.shiftKey);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onEdit?.(c.id);
+            }}
+          >
+            {PIN_GLYPH}
+          </button>
+        ))}
       {notes.map((c) => (
         <div
           key={c.id}
@@ -333,7 +400,7 @@ export function NotesOverlay({
             onEdit?.(c.id);
           }}
         >
-          <CalloutCard project={project} derived={derived} callout={c} selected={!!selectedIds?.has(c.id)} />
+          <CalloutCard project={project} derived={derived} callout={c} selected={!!selectedIds?.has(c.id)} compact={display === 'compact'} />
         </div>
       ))}
     </div>
