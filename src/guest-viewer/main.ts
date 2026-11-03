@@ -393,15 +393,6 @@ function start(data: GuestData) {
         }
         return c;
       };
-      const clipCopy = (m: THREE.Material) => {
-        let c = clipped.get(m);
-        if (!c) {
-          c = m.clone();
-          c.clippingPlanes = [clip];
-          clipped.set(m, c);
-        }
-        return c;
-      };
       gltf.scene.traverse((o) => {
         const role = o.userData.neestRole as string | undefined;
         if (role) parts[role] = o;
@@ -416,12 +407,6 @@ function start(data: GuestData) {
               m.material = Array.isArray(m.material) ? m.material.map((x) => clipCopy(x, plane)) : clipCopy(m.material, plane);
           });
         }
-      }
-        parts[role]?.traverse((o) => {
-          const m = o as THREE.Mesh;
-          if (m.isMesh)
-            m.material = Array.isArray(m.material) ? m.material.map(clipCopy) : clipCopy(m.material);
-        });
       }
       model = gltf.scene;
       scene.add(gltf.scene);
@@ -450,10 +435,6 @@ function start(data: GuestData) {
     if (parts.ceilings) parts.ceilings.visible = show.ceilings && cut === null;
     clip.constant = cut ?? 1e6;
     clipInt.constant = cut !== null && !extOnly ? cut : 1e6;
-    if (parts.walls) parts.walls.visible = cut === null;
-    if (parts['walls-cut']) parts['walls-cut'].visible = cut !== null;
-    if (parts.ceilings) parts.ceilings.visible = show.ceilings && cut === null;
-    clip.constant = cut ?? 1e6;
     for (const g of layerGroups) g.visible = isLayerOn(g.userData.neestLayer as string);
     lampClock = 0;
     for (const s of spots) if (s.light.castShadow) s.light.shadow.needsUpdate = true;
@@ -854,7 +835,6 @@ function start(data: GuestData) {
         },
       ),
     );
-    view.append(
     view.append(
       extCheck,
       check('Ceilings', show.ceilings, (on) => {

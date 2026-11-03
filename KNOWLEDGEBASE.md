@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-10-22 (item layers: Layers panel for organising placed items).
+Last updated: 2026-11-03 (Comments & notes mode, external-walls-only cutaway; guest viewer build fixed).
 
 ---
 
@@ -193,7 +193,7 @@ Principles that must hold:
 | `CameraPreset` | projection, position, target, fov, zoom, optional `wallDisplay` |
 | `RenderSettings` | quality draft/balanced/high, exposure, timeOfDay, sunAzimuth/Intensity, envIntensity, shadows, background, wallDisplay full/cutaway/fade/hidden, cutawayHeight, showCeilings, showRoomLabels, hiddenCategories |
 | `guest` | `startCameraId` (Guest View and guest export only; the editor always opens on a fitted view), `spawn`, `spawnAngle` |
-| `Callout` | `target` = `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; `offset` (plan metres, label from anchor), `lift` (3D float height), `title`, `note` (Markdown subset), `showInfo`, `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
+| `Callout` | `target` = `general` (no location: listed in the Notes panel only) / `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; object, room and region targets take optional `dx/dy/dz` (the pinned spot relative to the item's top centre in its own frame, the room anchor or the area centroid); `offset` (plan metres, label from anchor), `lift` (3D float height), `title`, `note` (Markdown subset), `showInfo`, `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
 | `ServicePoint` | Connections mode (§10 "Services"): `kind` (14 kinds in `domain/model/services.ts`), `x`,`y`, `host` wall/floor/ceiling, `wallId` (wall points follow that wall's face), `height` (wall points), `rotation` (facing), `label`, `note`. Per layout option (`servicePoints`) |
 | `ServiceRun` | `system` power/water/drain, `level` wall/floor/ceiling (drain: floor only), `hot` (water), `points` (plan polyline), `height` (wall runs), `label`. Per layout option (`serviceRuns`) |
 | `PlacedObject.serviceLinks` | per system `{ pin, skip[] }`: the point the user connected by hand, and points they disconnected; absent = automatic |
@@ -546,6 +546,17 @@ none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once 
   filled label. Deleting an item deletes its notes; a deleted room's notes stay as spots.
 - Selected note's Inspector: preview, what it points to, Visible, Edit note…; Project panel → Layers has Notes
   (hide/lock); Annotations and the 3D view panel have a Notes toggle.
+- **Comments & notes mode** (`editor.notesMode`, `features/callouts/actions.ts › setNotesMode/toggleNotesMode`; K, the
+  rail's "Comments & notes" button or the top-bar icon, desktop only): arms the note tool and replaces the library, the
+  Inspector, the finish panel and the Layers panel with `NotesPanel` (`.notes-panel`, registered in `layoutInsets`).
+  Entering keeps only note selections, leaves Connections and switches Walk to 3D. The panel lists every note with
+  its target chip, adds **general** comments (no location) inline, edits, recolours, hides, focuses and deletes;
+  hovering a row highlights the note and its item or room (`hoverNoteInPanel`, `editor.hoveredNoteId`). The rest of
+  the rail (walls, doors, windows, split, measure, Connections, library) is disabled while it is on, and the note tool
+  stays armed after each placement. In 3D the tool pins the exact picked point (`pickedObjectId`/`worldZ`), stored as
+  `dx/dy/dz` on the target. In 2D the note tool also drags a label (moves `offset`) or the anchor dot
+  (`hitCalloutAnchor` → `setCalloutAnchorPoint`, which keeps the label still and the target kind unchanged), and
+  double-click edits.
 
 ### Item layers (Layers panel)
 
@@ -638,6 +649,11 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   modes: full / cutaway (geometry cut at height) / fade (near walls swap to translucent clones) / hidden. In
   cutaway, door/window assemblies use cached **clipped material copies** (`clippingPlanes` at the cut height,
   `gl.localClippingEnabled = true` in `Lighting`) so frames and glass never poke above the cut walls.
+  **External walls only** (`render.cutawayExternalOnly`, 3D view panel; `guest.cutawayExternalOnly` for the guest
+  view and export) cuts only the walls from `derive.ts › externalWallIds` (walls typed `exterior` when the plan has
+  any, otherwise non-partition room walls with outside on one face) and the hubs touching them (`isHubExternal`);
+  interior walls stay full height. The GLB marks walls, hubs, wall details and openings with `userData.neestExt`, and
+  the guest viewer clips them with two planes (`clip` for external, `clipInt` for interior).
 - `Scene3DView`: R3F `Canvas`, perspective/orthographic camera switch, OrbitControls, lighting (RoomEnvironment
   PMREM + hemisphere + time-of-day sun with shadows; lamp lights from `LampLights`), view panel (saved views,
   walls, quality & light, categories). On desktop the panel can be stashed (header button or `P`) and brought
@@ -1308,6 +1324,10 @@ construction documents.
   loaded tab takes longer), so the GLB got procedural stand-ins. Exports now wait up to 60 s.
 - **Guest view opened straight from the launcher had no chrome styles**: `.floating`/`.pane-loading` live in
   `editor.css`, which only the editor imported; `GuestPage` imports it too.
+- **A broken guest viewer still passes `npm test`**: the tests use the last good `src/generated/guest-viewer.js`, so
+  a syntax error in `src/guest-viewer/main.ts` (a half-applied edit on 2026-11-02 left two `clipCopy` declarations
+  and old visibility lines behind) only shows in `npm run typecheck` / `lint`, but it stops `npm run dev` (its
+  `predev` builds the viewer) and the launchers. Run typecheck before committing.
 
 ## 17. Recipes
 
@@ -1951,3 +1971,9 @@ Known limitations (also in README):
      with a 4% clamped edge margin so an unscaled `0.92 × 0.92` art box scaled to `cw × ch` maps edge-to-edge without mipmap seams
      at any resized proportion), with `3` framing models (`Slim gallery float frame`, `Framed with white museum mat`, `Frameless
      gallery canvas`) and `9` wood, lacquer & metal frame finishes (done).
+163. Comments & notes mode (commit "notes", 2026-11-02) → a dedicated mode with the Notes panel in place of the
+     Inspector, general comments, notes pinned to the exact picked point in 3D (`dx/dy/dz`), draggable note anchors, and
+     "External walls only" cutaway in the 3D view, the guest view and the guest export (§10 Notes, §11) (done).
+164. "Dig the update first then fix it" → the guest viewer runtime no longer built after that commit (duplicate
+     `clipCopy`, leftover traverse loop and visibility lines, a doubled `view.append(`), which stopped `npm run dev`;
+     cleaned up and checked in an exported guest HTML: external-only and full cutaway both correct (done).
