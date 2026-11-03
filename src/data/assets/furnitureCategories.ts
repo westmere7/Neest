@@ -659,8 +659,8 @@ export function furnitureCategoriesOf(a: AssetDefinition): AssetCategoryMembersh
   if (/\b(altar|shrine|thần tài|bàn thờ)\b/.test(txt)) {
     items.add('item:decor');
   }
-  // Screens, dividers & fireplaces bridge Decor and Structure
-  if (g === 'Screens & dividers' || g === 'Fireplaces') {
+  // Screens, dividers, fireplaces & integrated balcony window-curtain units bridge Decor/Textiles and Structure
+  if (g === 'Screens & dividers' || g === 'Fireplaces' || (g === 'Curtains & blinds' && /\b(balcony window|balcony door|cửa sổ ban công|cửa lùa ban công)\b/.test(txt))) {
     items.add('item:structure');
   }
   // Plants & flowers always in Plants

@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1793640770867,
+  "updatedAt": 1793668598334,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -3256,16 +3256,16 @@
       "id": "call_rpxgeidcl0",
       "target": {
         "kind": "point",
-        "x": 2.585,
-        "y": 2.146,
-        "z": 1
+        "x": 2.424,
+        "y": 2.136,
+        "z": 1.032
       },
       "offset": {
-        "x": 0.6467119783230227,
-        "y": -0.5543245528483052
+        "x": 0.808,
+        "y": -0.544
       },
       "lift": 0.7,
-      "title": "Cần 1 giải pháp để đồ ăn không rơi vào sofa",
+      "title": "Làm gờ để đồ ăn không rơi vào sofa",
       "note": "",
       "showInfo": true,
       "color": "teal",

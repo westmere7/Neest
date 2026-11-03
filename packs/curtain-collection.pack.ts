@@ -1039,6 +1039,236 @@ const panelTrack = defineItem({
   },
 });
 
+// 24. Floor-to-ceiling balcony sliding glass window/door with built-in double wave curtains
+type BalconyCurtainMode = 'parted' | 'sheer-closed' | 'all-closed';
+
+function lushWaveSheet(slot: string, x0: number, x1: number, y0: number, y1: number, zc: number, pitch: number, amp: number, t = 0.006): Part {
+  const n = Math.max(1, Math.round((x1 - x0) / pitch));
+  const p = (x1 - x0) / n;
+  const steps = n * 14;
+  const front: V2[] = [];
+  const back: V2[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const x = x0 + ((x1 - x0) * i) / steps;
+    const z = zc + amp * Math.sin((2 * Math.PI * (x - x0)) / p);
+    front.push([x, z + t / 2]);
+    back.push([x, z - t / 2]);
+  }
+  return prism(slot, [...front, ...back.reverse()], y0, y1 - y0);
+}
+
+function buildBalconyWindowCurtains(
+  { w, d, h }: { w: number; d: number; h: number },
+  mode: BalconyCurtainMode,
+  doorOpen: boolean,
+  railing: boolean,
+): Part[] {
+  const parts: Part[] = [];
+  const fx0 = -w / 2 + 0.012;
+  const fx1 = w / 2 - 0.012;
+  const fh = h - 0.008;
+  const fw = 0.04;
+  const sh = 0.028;
+
+  // 1. Optional exterior vertical-bar balcony guard rail behind the glass frame
+  if (railing) {
+    const zr0 = -d / 2 + 0.004;
+    const zr1 = -d / 2 + 0.028;
+    const rh = clamp(h * 0.4, 0.85, 1.08);
+    const rx0 = fx0 + 0.008;
+    const rx1 = fx1 - 0.008;
+    parts.push(
+      span('frame', [rx0, rx1], [rh - 0.024, rh], [zr0, zr1], NP),
+      span('frame', [rx0 + 0.018, rx1 - 0.018], [rh - 0.098, rh - 0.082], [zr0 + 0.004, zr1 - 0.004], NP),
+      span('frame', [rx0 + 0.018, rx1 - 0.018], [0.055, 0.071], [zr0 + 0.004, zr1 - 0.004], NP),
+      span('frame', [rx0, rx0 + 0.018], [0, rh - 0.024], [zr0 + 0.002, zr1 - 0.002], NP),
+      span('frame', [rx1 - 0.018, rx1], [0, rh - 0.024], [zr0 + 0.002, zr1 - 0.002], NP),
+    );
+    const nBars = clamp(Math.round((rx1 - rx0 - 0.14) / 0.115), 8, 52);
+    for (const bx of spaced(nBars, rx0 + 0.085, rx1 - 0.085)) {
+      parts.push(span('frame', [bx - 0.0055, bx + 0.0055], [0.071, rh - 0.098], [zr0 + 0.007, zr1 - 0.007], NP));
+    }
+  }
+
+  // 2. Slim dark aluminium balcony sliding glass door/window frame + transom + bi-parting sashes
+  const zf0 = -d / 2 + 0.042;
+  const fd = clamp(d * 0.22, 0.052, 0.08);
+  const zf1 = zf0 + fd;
+  const hasTransom = fh >= 2.04;
+  const yt0 = hasTransom ? fh - clamp(fh * 0.135, 0.28, 0.4) : fh - fw;
+  const yt1 = hasTransom ? yt0 + 0.046 : fh - fw;
+  const doorTop = yt0;
+
+  parts.push(
+    span('frame', [fx0, fx0 + fw], [0, fh], [zf0, zf1]),
+    span('frame', [fx1 - fw, fx1], [0, fh], [zf0, zf1]),
+    span('frame', [fx0 + fw, fx1 - fw], [fh - fw, fh], [zf0, zf1], NP),
+    span('frame', [fx0 + fw, fx1 - fw], [0, sh], [zf0, zf1]),
+    span('frame', [fx0 + fw, fx1 - fw], [sh, sh + 0.004], [zf0 + fd * 0.28, zf0 + fd * 0.36], NP),
+    span('frame', [fx0 + fw, fx1 - fw], [sh, sh + 0.004], [zf0 + fd * 0.64, zf0 + fd * 0.72], NP),
+  );
+
+  const iw = fx1 - fx0 - 2 * fw;
+  const qw = iw / 4;
+  const mw = 0.034;
+  const zFixed = zf0 + fd * 0.32;
+  const zSash = zf0 + fd * 0.68;
+  const sd = fd * 0.34;
+
+  if (hasTransom) {
+    parts.push(
+      span('frame', [fx0 + fw, fx1 - fw], [yt0, yt1], [zf0 + 0.002, zf1 - 0.002], NP),
+      span('frame', [-qw - mw / 2, -qw + mw / 2], [yt1, fh - fw], [zf0 + 0.004, zf1 - 0.004], NP),
+      span('frame', [qw - mw / 2, qw + mw / 2], [yt1, fh - fw], [zf0 + 0.004, zf1 - 0.004], NP),
+      span('glass', [fx0 + fw + 0.004, -qw - mw / 2 - 0.004], [yt1 + 0.004, fh - fw - 0.004], [zFixed - 0.003, zFixed + 0.003], NP),
+      span('glass', [-qw + mw / 2 + 0.004, qw - mw / 2 - 0.004], [yt1 + 0.004, fh - fw - 0.004], [zFixed - 0.003, zFixed + 0.003], NP),
+      span('glass', [qw + mw / 2 + 0.004, fx1 - fw - 0.004], [yt1 + 0.004, fh - fw - 0.004], [zFixed - 0.003, zFixed + 0.003], NP),
+    );
+  }
+
+  parts.push(
+    span('frame', [-qw - mw / 2, -qw + mw / 2], [sh + 0.004, doorTop], [zf0 + 0.004, zf0 + fd * 0.48], NP),
+    span('frame', [qw - mw / 2, qw + mw / 2], [sh + 0.004, doorTop], [zf0 + 0.004, zf0 + fd * 0.48], NP),
+    span('glass', [fx0 + fw + 0.004, -qw - mw / 2 - 0.004], [sh + 0.008, doorTop - 0.004], [zFixed - 0.003, zFixed + 0.003], NP),
+    span('glass', [qw + mw / 2 + 0.004, fx1 - fw - 0.004], [sh + 0.008, doorTop - 0.004], [zFixed - 0.003, zFixed + 0.003], NP),
+  );
+
+  const cw = clamp(w * 0.23, 0.28, 1.65);
+  const lw = qw + 0.018;
+  const sw = 0.032;
+  const sy0 = sh + 0.005;
+  const sy1 = doorTop - 0.004;
+  const hy0 = clamp(0.96, sy0 + 0.18, sy1 - 0.34);
+  const hy1 = Math.min(hy0 + 0.26, sy1 - 0.1);
+  const innerAbs = doorOpen ? Math.min(cw / 2 + 0.022, iw / 2 - lw - 0.008) : 0.002;
+  for (const s of [-1, 1] as const) {
+    const lx0 = s < 0 ? -innerAbs - lw : innerAbs;
+    const lx1 = s < 0 ? -innerAbs : innerAbs + lw;
+    const hx = s < 0 ? lx1 - sw / 2 : lx0 + sw / 2;
+    parts.push(
+      span('frame', [lx0, lx0 + sw], [sy0, sy1], [zSash - sd / 2, zSash + sd / 2], NP),
+      span('frame', [lx1 - sw, lx1], [sy0, sy1], [zSash - sd / 2, zSash + sd / 2], NP),
+      span('frame', [lx0 + sw, lx1 - sw], [sy0, sy0 + sw], [zSash - sd / 2, zSash + sd / 2], NP),
+      span('frame', [lx0 + sw, lx1 - sw], [sy1 - sw, sy1], [zSash - sd / 2, zSash + sd / 2], NP),
+      span('glass', [lx0 + sw + 0.003, lx1 - sw - 0.003], [sy0 + sw + 0.003, sy1 - sw - 0.003], [zSash - 0.003, zSash + 0.003], NP),
+      span('frame', [hx - 0.006, hx + 0.006], [hy0, hy1], [zSash + sd / 2, zSash + sd / 2 + 0.012], NP),
+    );
+  }
+
+  // 3. Concealed-cove two-layer floor-to-ceiling S-wave curtains (parted sheer + outer blackout stacks)
+  const zc0 = zf1 + 0.008;
+  const zc1 = d / 2 - 0.005;
+  const cd = zc1 - zc0;
+  const zs = zc0 + cd * 0.24;
+  const sa = Math.min(0.036, cd * 0.19);
+  const zb = zc0 + cd * 0.75;
+  const ba = Math.min(0.048, cd * 0.22);
+  const bw = clamp(w * 0.195, 0.24, 1.35);
+
+  if (mode === 'parted') {
+    const sxOut = Math.min(w / 2 - 0.006, Math.max(cw / 2 + 0.12, w / 2 - bw + 0.08));
+    parts.push(
+      lushWaveSheet('sheer', -sxOut, -cw / 2, 0.01, h - 0.003, zs, 0.085, sa, 0.004),
+      lushWaveSheet('sheer', cw / 2, sxOut, 0.01, h - 0.003, zs, 0.085, sa, 0.004),
+    );
+  } else {
+    parts.push(lushWaveSheet('sheer', -w / 2 + 0.006, w / 2 - 0.006, 0.01, h - 0.003, zs, 0.095, sa, 0.004));
+  }
+
+  if (mode === 'all-closed') {
+    const ca = Math.min(0.034, cd * 0.17);
+    parts.push(
+      lushWaveSheet('blackout', -w / 2 + 0.003, 0.025, 0.006, h - 0.001, zb - 0.004, 0.105, ca, 0.006),
+      lushWaveSheet('blackout', -0.025, w / 2 - 0.003, 0.006, h - 0.001, zb + 0.004, 0.105, ca, 0.006),
+    );
+  } else {
+    parts.push(
+      lushWaveSheet('blackout', -w / 2 + 0.003, -w / 2 + 0.003 + bw, 0.006, h - 0.001, zb, 0.072, ba, 0.006),
+      lushWaveSheet('blackout', w / 2 - 0.003 - bw, w / 2 - 0.003, 0.006, h - 0.001, zb, 0.072, ba, 0.006),
+    );
+  }
+
+  return parts;
+}
+
+const balconyWindowCurtains = defineItem({
+  category: 'living',
+  type: 'decor',
+  group: 'Curtains & blinds',
+  mount: 'wall',
+  id: 'balcony-window-double-curtains',
+  name: 'Balcony sliding glass window with double curtains',
+  tags: [
+    'balcony window',
+    'balcony door',
+    'sliding glass door',
+    'double curtains',
+    'sheer',
+    'blackout',
+    'wave curtain',
+    'floor to ceiling',
+    'cửa sổ ban công',
+    'cửa lùa ban công',
+    'rèm hai lớp',
+    'rèm âm trần',
+  ],
+  description:
+    'Floor-to-ceiling dark aluminium sliding glass balcony window and door with upper transom glazing, exterior vertical-bar guard rail, parted white sheer voile panels and warm sand-beige S-wave blackout drapes.',
+  defaultSize: { w: 3.4, d: 0.32, h: 2.7 },
+  minSize: { w: 1.4, d: 0.24, h: 1.8 },
+  maxSize: { w: 8, d: 0.5, h: 3.6 },
+  defaultElevation: 0,
+  price: { vnd: 18_500_000, estimate: true },
+  slots: [
+    matSlot('blackout', 'Outer curtains', 'linen-sand'),
+    matSlot('sheer', 'Sheer voile', 'sheer-white'),
+    matSlot('frame', 'Window & railing frame', 'metal-anthracite'),
+    matSlot('glass', 'Window glass', 'glass-clear'),
+  ],
+  models: [
+    { id: 'balcony-railing', name: 'Parted sheers & balcony railing' },
+    {
+      id: 'walk-out',
+      name: 'Walk-out sliding door (no railing)',
+      build: (s) => buildBalconyWindowCurtains(s, 'parted', true, false),
+    },
+    {
+      id: 'closed-glass',
+      name: 'Closed glass panels (no railing)',
+      build: (s) => buildBalconyWindowCurtains(s, 'parted', false, false),
+    },
+    {
+      id: 'sheer-drawn',
+      name: 'Sheer drawn full width',
+      build: (s) => buildBalconyWindowCurtains(s, 'sheer-closed', false, true),
+    },
+    {
+      id: 'all-drawn',
+      name: 'Blackout curtains drawn closed',
+      build: (s) => buildBalconyWindowCurtains(s, 'all-closed', false, true),
+    },
+  ],
+  variants: [
+    v('Oat linen & white sheer', { blackout: 'linen-oat', sheer: 'sheer-white' }),
+    v('Greige blackout & ivory', { blackout: 'blackout-greige', sheer: 'sheer-ivory' }),
+    v('Ivory linen & white sheer', { blackout: 'linen-ivory', sheer: 'sheer-white' }),
+    v('Stone grey & white sheer', { blackout: 'linen-stone', sheer: 'sheer-white' }),
+    v('Sage linen & ivory sheer', { blackout: 'linen-sage', sheer: 'sheer-ivory' }),
+    v('Champagne velvet & ivory', { blackout: 'velvet-champagne', sheer: 'sheer-ivory' }),
+    v('Charcoal & white sheer', { blackout: 'linen-charcoal', sheer: 'sheer-white' }),
+    v('White aluminium frame', { blackout: 'linen-sand', sheer: 'sheer-white', frame: 'metal-white-powder' }),
+    v('Oak frame & oat linen', { blackout: 'linen-oat', sheer: 'sheer-ivory', frame: 'laminate-oak' }),
+  ],
+  build: (s) => buildBalconyWindowCurtains(s, 'parted', true, true),
+  planDetail: ({ w, d }) => {
+    const zf = -d / 2 + 0.042 + clamp(d * 0.22, 0.052, 0.08) * 0.5;
+    return [
+      { kind: 'line', a: [-w / 2 + 0.042, zf], b: [w / 2 - 0.042, zf] },
+      { kind: 'line', a: [-w / 2 + 0.02, d * 0.22], b: [w / 2 - 0.02, d * 0.22] },
+    ];
+  },
+});
+
 const items: PackItem[] = [
   waveOpen,
   waveClosed,
@@ -1064,6 +1294,7 @@ const items: PackItem[] = [
   glassDoubleOneSide,
   verticalBlinds,
   panelTrack,
+  balconyWindowCurtains,
 ];
 
 export default definePack({

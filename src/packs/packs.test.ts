@@ -184,6 +184,58 @@ describe('pack models', () => {
     expect(shelfMaxY('half-wall')).toBeCloseTo(1.0, 3);
   });
 
+  it('gives modular-waterfall-cabinet-desk white drawers with 2 knobs and a width-invariant legged stool', () => {
+    const desk = ASSETS_BY_ID['wardrobe-study:modular-waterfall-cabinet-desk'];
+    expect(assetModels(desk).map((m) => m.id)).toEqual([
+      'drawers',
+      'pouf-stool',
+      'oak-drawers',
+      'no-stool',
+      'plain',
+      'slim',
+    ]);
+    expect(desk.slots.find((s) => s.id === 'front')?.defaultMaterial).toBe('laminate-white-matte');
+    expect(desk.slots.find((s) => s.id === 'knob')?.defaultMaterial).toBe('metal-brass');
+
+    const parts88 = desk.build({ w: 0.88, d: 0.4, h: 0.73 });
+    expect(parts88.filter((p) => p.slot === 'front').length).toBe(2);
+    // Each round knob builds 2 parts (stem rod + cap sphere) -> 4 knob parts for 2 drawers.
+    expect(parts88.filter((p) => p.slot === 'knob').length).toBe(4);
+    expect(parts88.some((p) => p.slot === 'stool')).toBe(true);
+
+    // Stool diameter stays constant (~33.6 cm) even when scaling desk width from 0.88 m to 1.8 m.
+    const stoolWidth = (w: number) => {
+      const sp = desk.build({ w, d: 0.55, h: 0.75 }).find((p) => p.slot === 'stool')!;
+      const b = worldBounds(sp);
+      return b.max[0] - b.min[0];
+    };
+    expect(stoolWidth(0.88)).toBeCloseTo(stoolWidth(1.8), 4);
+    expect(withModel(desk, 'no-stool').build(desk.defaultSize).some((p) => p.slot === 'stool')).toBe(false);
+    expect(withModel(desk, 'plain').build(desk.defaultSize).some((p) => p.slot === 'front')).toBe(false);
+  });
+
+  it('builds balcony-window-double-curtains with parted sheers, blackout stacks, sliding sashes and optional railing', () => {
+    const win = ASSETS_BY_ID['curtain-collection:balcony-window-double-curtains'];
+    expect(assetModels(win).map((m) => m.id)).toEqual([
+      'balcony-railing',
+      'walk-out',
+      'closed-glass',
+      'sheer-drawn',
+      'all-drawn',
+    ]);
+
+    const defParts = win.build(win.defaultSize);
+    expect(defParts.filter((p) => p.slot === 'sheer').length).toBe(2);
+    expect(defParts.filter((p) => p.slot === 'blackout').length).toBe(2);
+    expect(defParts.some((p) => p.slot === 'glass')).toBe(true);
+    // Railing model has vertical balusters behind the door frame; walk-out omits them.
+    const walkOutParts = withModel(win, 'walk-out').build(win.defaultSize);
+    expect(defParts.length).toBeGreaterThan(walkOutParts.length + 10);
+    // Sheer-drawn merges the sheer into a single continuous wave sheet across the width.
+    const sheerDrawnParts = withModel(win, 'sheer-drawn').build(win.defaultSize);
+    expect(sheerDrawnParts.filter((p) => p.slot === 'sheer').length).toBe(1);
+  });
+
   it('reports badly formed models and keeps the good ones', () => {
     const modules = {
       '/packs/test-models.pack.ts': {

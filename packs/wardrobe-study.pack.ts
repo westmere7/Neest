@@ -569,7 +569,9 @@ const towerWall = defineItem({
  * seamlessly against any wardrobe, bookcase or cabinet (or Flip/mirror to attach on the right)
  * while resizing width, depth and height freely.
  */
-function buildModularDesk({ w, d, h }: Size3, mode: 'plain' | 'drawers' | 'slim' = 'plain'): Part[] {
+type ModularDeskMode = 'drawers' | 'pouf-stool' | 'oak-drawers' | 'no-stool' | 'plain' | 'slim';
+
+function buildModularDesk({ w, d, h }: Size3, mode: ModularDeskMode = 'drawers'): Part[] {
   const x0 = -w / 2;
   const x1 = w / 2;
   const z0 = -d / 2;
@@ -607,23 +609,179 @@ function buildModularDesk({ w, d, h }: Size3, mode: 'plain' | 'drawers' | 'slim'
     sp('oak', [x1 - top, x1], [0, h - R + 0.01], [z0, z1], 0.004),
   ];
 
-  if (mode !== 'slim') {
-    const apronDrop = clamp(h * 0.213, 0.085, 0.16);
-    const zBack = z0 + clamp(d * 0.08, 0.024, 0.044);
-    const zFront = mode === 'drawers' ? z1 - clamp(d * 0.05, 0.022, 0.026) : z1 - clamp(d * 0.08, 0.024, 0.044);
-    // Recessed apron running flush from the cabinet-butt end (-x) into the waterfall leg (+x).
-    parts.push(sp('oak', [x0, x1 - top + 0.004], [h - apronDrop, h - top + 0.004], [zBack, zFront]));
+  const apronDrop = clamp(h * 0.215, 0.095, 0.16);
+  const yBot = h - apronDrop;
 
-    if (mode === 'drawers') {
-      const nD = clamp(Math.round((w - top) / 0.55), 1, 3);
-      const dx0 = x0 + 0.012;
-      const dx1 = x1 - top - 0.01;
-      const gap = 0.003;
+  if (mode !== 'slim') {
+    const hasDrawers = mode === 'drawers' || mode === 'pouf-stool' || mode === 'oak-drawers' || mode === 'no-stool';
+    const zBack = z0 + clamp(d * 0.07, 0.022, 0.042);
+
+    if (!hasDrawers) {
+      const zFront = z1 - clamp(d * 0.08, 0.024, 0.044);
+      parts.push(sp('oak', [x0, x1 - top + 0.004], [yBot, h - top + 0.004], [zBack, zFront]));
+    } else {
+      const doorT = 0.018;
+      const frameT = 0.012;
+      // Inset drawer fronts 2.8 cm behind z1 so round brass knobs sit flush within the desk depth.
+      const zFrontFace = z1 - 0.028;
+      const zCarcass = zFrontFace - doorT;
+      const zSurround = zFrontFace + 0.003;
+      const yDoorBot = yBot + frameT + 0.003;
+      const yDoorTop = h - top - 0.004;
+      const dyBend = Math.max(0, yDoorTop - (h - R));
+      const rIn = R - top;
+      const xBendInner = dyBend < rIn ? x1 - R + Math.sqrt(rIn * rIn - dyBend * dyBend) : x1 - top;
+      const rightCheekInner = Math.min(x1 - top - frameT, xBendInner - 0.006);
+
+      // Oak drawer box carcass + perimeter surround cheeks & bottom lip framing the inset drawers.
+      parts.push(
+        sp('oak', [x0, x1 - top + 0.004], [yBot, h - top + 0.004], [zBack, zCarcass]),
+        sp('oak', [x0, x1 - top + 0.004], [yBot, yBot + frameT], [zCarcass, zSurround]),
+        sp('oak', [x0, x0 + frameT], [yBot + frameT, h - top + 0.004], [zCarcass, zSurround]),
+        sp('oak', [rightCheekInner, x1 - top + 0.004], [yBot + frameT, h - top - 0.006], [zCarcass, zSurround]),
+      );
+
+      // Two side-by-side drawers with two centered round brass knobs (1 drawer only on ultra-narrow <52 cm widths).
+      const nD = w < 0.52 ? 1 : 2;
+      const dx0 = x0 + frameT + 0.003;
+      const dx1 = rightCheekInner - 0.003;
+      const gap = 0.004;
       const cellW = (dx1 - dx0 - gap * (nD - 1)) / nD;
+      const doorH = yDoorTop - yDoorBot;
+      const frontBevel = Math.min(0.003, doorH * 0.2, (doorT - 0.002) * 0.3);
+      const frontSlot = mode === 'oak-drawers' ? 'oak' : 'front';
+      const kr = clamp(apronDrop * 0.08, 0.0085, 0.012);
+      const ky = (yDoorBot + yDoorTop) / 2;
+
       for (const i of range(nD)) {
         const a = dx0 + i * (cellW + gap);
-        parts.push(sp('oak', [a, a + cellW], [h - apronDrop + 0.004, h - top - 0.014], [zFront, zFront + 0.018], 0.003));
+        parts.push(
+          sp(frontSlot, [a, a + cellW], [yDoorBot, yDoorTop], [zCarcass + 0.002, zFrontFace], frontBevel),
+          ...knob('knob', [a + cellW / 2, ky, zFrontFace - 0.002], kr),
+        );
       }
+    }
+  }
+
+  // Width-invariant round upholstered vanity stool with wooden legs tucked under the desk.
+  const stoolStyle = mode === 'drawers' || mode === 'oak-drawers' ? 'legged' : mode === 'pouf-stool' ? 'pouf' : 'none';
+  if (stoolStyle !== 'none') {
+    const kx0 = x0 + 0.024;
+    const kx1 = x1 - top - 0.024;
+    const clearW = kx1 - kx0;
+    const cx = (kx0 + kx1) / 2;
+    const sr = Math.min(0.168, clearW * 0.43, d * 0.42);
+    const cz = Math.min(0.02, z1 - sr - 0.012);
+    const sh = clamp(yBot - 0.125, 0.24, 0.435);
+
+    if (stoolStyle === 'legged') {
+      const legH = sh * 0.41;
+      const lr = clamp(sr * 0.088, 0.011, 0.015);
+      // Solid oak under-seat frame ring
+      parts.push(
+        lathe(
+          'oak',
+          [cx, legH - 0.006, cz],
+          [
+            [0, 0],
+            [sr * 0.82, 0],
+            [sr * 0.85, 0.022],
+            [0, 0.022],
+          ],
+          { segments: 24, plan: false },
+        ),
+      );
+      // 4 splayed solid-oak legs + cross stretchers
+      for (const k of range(4)) {
+        const ang = Math.PI / 4 + (k * Math.PI) / 2;
+        const cs = Math.cos(ang);
+        const sn = Math.sin(ang);
+        const bx = cx + cs * sr * 0.72;
+        const bz = cz + sn * sr * 0.72;
+        parts.push(
+          rod('oak', [cx + cs * sr * 0.56, legH + 0.008, cz + sn * sr * 0.56], [bx, 0.011, bz], lr, { plan: false }),
+          rod('oak', [bx, 0.001, bz], [bx, 0.013, bz], lr * 0.92, { plan: false }),
+        );
+      }
+      const c45 = Math.SQRT1_2 * sr * 0.646;
+      const yCross = legH * 0.46;
+      parts.push(
+        rod('oak', [cx - c45, yCross, cz - c45], [cx + c45, yCross, cz + c45], lr * 0.65, { plan: false }),
+        rod('oak', [cx - c45, yCross + 0.003, cz + c45], [cx + c45, yCross + 0.003, cz - c45], lr * 0.65, { plan: false }),
+      );
+      // Plush double-tier upholstered round pouf seat (2 mm above oak ring to avoid coplanarity)
+      const ySeat0 = legH + 0.018;
+      const ch = sh - ySeat0;
+      parts.push(
+        lathe(
+          'stool',
+          [cx, ySeat0, cz],
+          [
+            [0, 0],
+            [sr * 0.84, 0],
+            [sr * 0.96, ch * 0.08],
+            [sr, ch * 0.22],
+            [sr * 0.97, ch * 0.36],
+            [sr * 0.89, ch * 0.46],
+            [sr * 0.97, ch * 0.57],
+            [sr, ch * 0.72],
+            [sr * 0.95, ch * 0.86],
+            [sr * 0.82, ch * 0.95],
+            [sr * 0.52, ch * 0.99],
+            [0, ch],
+          ],
+          { segments: 28, plan: false },
+        ),
+      );
+    } else {
+      // 3-tier chubby stacked pouf on 4 turned solid-oak bun legs
+      const bunH = Math.min(0.052, sh * 0.13);
+      for (const k of range(4)) {
+        const ang = Math.PI / 4 + (k * Math.PI) / 2;
+        const bx = cx + Math.cos(ang) * sr * 0.6;
+        const bz = cz + Math.sin(ang) * sr * 0.6;
+        parts.push(
+          lathe(
+            'oak',
+            [bx, 0.001, bz],
+            [
+              [0, 0],
+              [0.016, 0],
+              [0.024, bunH * 0.45],
+              [0.021, bunH],
+              [0, bunH],
+            ],
+            { segments: 14, plan: false },
+          ),
+        );
+      }
+      const yPouf0 = bunH + 0.003;
+      const ph = sh - yPouf0;
+      parts.push(
+        lathe(
+          'stool',
+          [cx, yPouf0, cz],
+          [
+            [0, 0],
+            [sr * 0.82, 0],
+            [sr * 0.97, ph * 0.07],
+            [sr, ph * 0.17],
+            [sr * 0.96, ph * 0.26],
+            [sr * 0.85, ph * 0.32],
+            [sr * 0.96, ph * 0.39],
+            [sr, ph * 0.49],
+            [sr * 0.96, ph * 0.58],
+            [sr * 0.85, ph * 0.64],
+            [sr * 0.96, ph * 0.72],
+            [sr, ph * 0.83],
+            [sr * 0.93, ph * 0.92],
+            [sr * 0.76, ph * 0.97],
+            [sr * 0.45, ph * 0.995],
+            [0, ph],
+          ],
+          { segments: 28, plan: false },
+        ),
+      );
     }
   }
 
@@ -642,7 +800,7 @@ const modularDesk = defineItem({
   type: 'surfaces',
   group: 'Desks',
   description:
-    'A standalone 35 mm oak add-on desk with a flat butt-joint end that pairs flush against any wardrobe, bookcase or cabinet and a smooth curved waterfall leg at the outer end; resize width, depth and height freely.',
+    'A standalone 35 mm oak add-on vanity/study desk with two white under-desk drawers with brass knobs, a round upholstered legged stool tucked underneath, a flat butt-joint end for pairing flush against any cabinet, and a curved waterfall leg.',
   tags: [
     'desk',
     'waterfall desk',
@@ -651,6 +809,9 @@ const modularDesk = defineItem({
     'cabinet desk',
     'return desk',
     'vanity desk',
+    'drawers',
+    'stool',
+    'pouf',
     'bedroom',
     'study',
     'oak',
@@ -659,29 +820,41 @@ const modularDesk = defineItem({
     'bàn làm việc',
     'bàn trang điểm',
     'bàn nối tủ',
+    'bàn có ngăn kéo',
+    'ghế đôn',
   ],
   defaultSize: { w: 1.15, d: 0.55, h: 0.75 },
   minSize: { w: 0.45, d: 0.35, h: 0.42 },
   maxSize: { w: 2.5, d: 0.95, h: 1.15 },
   resizable: { w: true, d: true, h: true },
   wallSnap: true,
-  price: { vnd: 3_200_000, estimate: true },
-  slots: [matSlot('oak', 'Desk', 'laminate-oak')],
-  build: (s) => buildModularDesk(s, 'plain'),
+  price: { vnd: 3_900_000, estimate: true },
+  slots: [
+    matSlot('oak', 'Desk & stool legs', 'laminate-oak'),
+    matSlot('front', 'Drawer fronts', 'laminate-white-matte'),
+    matSlot('knob', 'Drawer knobs', 'metal-brass'),
+    matSlot('stool', 'Stool upholstery', 'fabric-boucle'),
+  ],
+  build: (s) => buildModularDesk(s, 'drawers'),
   planDetail: modularDeskPlan,
   models: [
-    { id: 'plain', name: 'Plain apron' },
-    { id: 'drawers', name: 'With apron drawers', build: (s) => buildModularDesk(s, 'drawers') },
-    { id: 'slim', name: 'Slim top (no apron)', build: (s) => buildModularDesk(s, 'slim') },
+    { id: 'drawers', name: 'White drawers, knobs & legged stool' },
+    { id: 'pouf-stool', name: 'With 3-tier pouf stool on bun legs', build: (s) => buildModularDesk(s, 'pouf-stool') },
+    { id: 'oak-drawers', name: 'Oak drawers, knobs & legged stool', hide: ['front'], build: (s) => buildModularDesk(s, 'oak-drawers') },
+    { id: 'no-stool', name: 'Drawers & knobs (no stool)', hide: ['stool'], build: (s) => buildModularDesk(s, 'no-stool') },
+    { id: 'plain', name: 'Plain apron (no drawers or stool)', hide: ['front', 'knob', 'stool'], build: (s) => buildModularDesk(s, 'plain') },
+    { id: 'slim', name: 'Slim top (no apron or stool)', hide: ['front', 'knob', 'stool'], build: (s) => buildModularDesk(s, 'slim') },
   ],
   variants: [
-    { id: 'light-oak', name: 'Light oak', materials: { oak: 'wood-oak-light' } },
-    { id: 'white-oak', name: 'White oak', materials: { oak: 'wood-white-oak' } },
-    { id: 'walnut', name: 'Walnut', materials: { oak: 'wood-walnut' } },
-    { id: 'smoked-oak', name: 'Smoked oak', materials: { oak: 'wood-smoked-oak' } },
-    { id: 'shaker-cream', name: 'Cream lacquer', materials: { oak: 'shaker-cream' } },
-    { id: 'warm-white', name: 'Warm white', materials: { oak: 'laminate-white-matte' } },
-    { id: 'sage-green', name: 'Sage green', materials: { oak: 'laminate-sage' } },
+    { id: 'mustard-stool', name: 'Mustard velvet stool', materials: { stool: 'fabric-velvet-mustard' } },
+    { id: 'oak-mustard', name: 'Light oak & mustard velvet', materials: { oak: 'wood-oak-light', front: 'wood-oak-light', stool: 'fabric-velvet-mustard' } },
+    { id: 'light-oak', name: 'Light oak & oat bouclé', materials: { oak: 'wood-oak-light', stool: 'fabric-boucle-oat' } },
+    { id: 'white-oak', name: 'White oak & blush velvet', materials: { oak: 'wood-white-oak', stool: 'fabric-velvet-blush' } },
+    { id: 'walnut', name: 'Walnut & cream bouclé', materials: { oak: 'wood-walnut', stool: 'fabric-boucle' } },
+    { id: 'smoked-oak', name: 'Smoked oak', materials: { oak: 'wood-smoked-oak', stool: 'fabric-boucle-oat' } },
+    { id: 'shaker-cream', name: 'Cream lacquer', materials: { oak: 'shaker-cream', front: 'shaker-cream', stool: 'fabric-velvet-mustard' } },
+    { id: 'warm-white', name: 'Warm white', materials: { oak: 'laminate-white-matte', front: 'laminate-white-matte', stool: 'fabric-boucle' } },
+    { id: 'sage-green', name: 'Sage green', materials: { oak: 'laminate-sage', stool: 'fabric-boucle-sage' } },
   ],
 });
 

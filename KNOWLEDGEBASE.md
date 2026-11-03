@@ -1474,9 +1474,10 @@ Known limitations (also in README):
     public/art/CREDITS.md) as square tiles rolled by half, so a canvas w × h with texture scale max(w, h) shows the
     painting exactly once (box faces are UV-mapped in metres about their centre). Sizes are fixed (done).
 56. "A lot more curtains, for doors and windows and big ones for full glass walls, in many colours and patterns" →
-    `curtain-collection` pack: 24 items (wave, sheer, double track, pinch pleat, eyelet, tab top, café, Roman,
+    `curtain-collection` pack: 25 items (wave, sheer, double track, pinch pleat, eyelet, tab top, café, Roman,
     pelmet drapes, cellular, door curtains, string curtain, sash, glass-wall sheers and pairs up to 12 m, vertical and
-    panel blinds), open/drawn versions via `variantOf`, 40+ fabrics and 11 printed patterns (done).
+    panel blinds, plus floor-to-ceiling balcony sliding glass window/door with built-in double curtains), open/drawn
+    versions via `variantOf`, 40+ fabrics and 11 printed patterns (done).
 57. "Show in library" button in the Inspector header (replaces rotate) → opens the library on the item's card (done).
 58. "Groups as the 3rd library tab with real thumbnails and normal placement" → saved groups are `savedgroup:<id>`
     assets (extra `getAsset` resolver), placed with the ghost and rotation like any item (done).
@@ -1928,3 +1929,18 @@ Known limitations (also in README):
      `Dining ledge inside` and `Dining ledge outside` feature a `9.5 cm`-tall, `2.4 cm`-thick curved timber gallery rim (`shelf`
      slot) running continuously from the portal leg lining along the non-seating back edge and curving smoothly around the
      rounded free end (`r = 14 cm`) with a semicircular nose cap, leaving the seating side flush for bar stools (done).
+160. "Modular curved-waterfall add-on desk — Bàn này có thêm ngăn kéo dưới bàn, cửa màu trắng" + "thêm 2 núm tay cầm , thêm 1
+     ghế đôn có chân dưới gầm bàn" → updated `wardrobe-study:modular-waterfall-cabinet-desk` in
+     `packs/wardrobe-study.pack.ts` (`4` slots: `oak`, `front` `laminate-white-matte`, `knob` `metal-brass`, `stool`
+     `fabric-boucle`): two inset white under-desk drawers with 2 centered round brass knobs and a width-invariant round
+     upholstered vanity stool on 4 splayed solid-oak legs with cross-stretchers tucked under the knee space (`6` models:
+     `White drawers, knobs & legged stool`, `With 3-tier pouf stool on bun legs`, `Oak drawers, knobs & legged stool`,
+     `Drawers & knobs (no stool)`, `Plain apron (no drawers or stool)`, `Slim top (no apron or stool)`; `9` wood & bouclé/velvet
+     colourways including Mustard velvet) (done).
+161. "Tạo 3D cửa sổ ban công có sẵn rèm như này" → added `curtain-collection:balcony-window-double-curtains` in
+     `packs/curtain-collection.pack.ts` (`mount: 'wall'`, `defaultElevation: 0`, `resizable: { w: true, d: true, h: true }`,
+     `defaultSize: 3.4 × 0.32 × 2.7 m`, bridging `Curtains & blinds` / `item:textiles` and `item:structure`): floor-to-ceiling dark
+     anthracite sliding glass balcony window/door with upper transom glazing, bi-parting sliding sashes, optional exterior
+     vertical-bar guard rail, concealed-cove parted white sheer voile panels and warm sand-beige S-wave blackout drapes (`5`
+     models: `Parted sheers & balcony railing`, `Walk-out sliding door (no railing)`, `Closed glass panels (no railing)`, `Sheer
+     drawn full width`, `Blackout curtains drawn closed`; `9` fabric & frame colourways) (done).

@@ -104,5 +104,12 @@ describe('furnitureCategories multi-category classification', () => {
     const stm = furnitureCategoriesOf(shoeTowel);
     expect(stm.rooms).toEqual(expect.arrayContaining(['room:bathroom', 'room:living', 'room:bedroom']));
     expect(stm.items).toContain('item:storage');
+
+    // Balcony sliding glass window with double curtains belongs to Living, Bedroom, Outdoor, Textiles, and Structure
+    const balWin = ASSETS_BY_ID['curtain-collection:balcony-window-double-curtains'];
+    expect(balWin).toBeDefined();
+    const bwm = furnitureCategoriesOf(balWin);
+    expect(bwm.rooms).toEqual(expect.arrayContaining(['room:living', 'room:bedroom', 'room:outdoor']));
+    expect(bwm.items).toEqual(expect.arrayContaining(['item:textiles', 'item:structure']));
   });
 });

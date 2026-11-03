@@ -1897,6 +1897,26 @@
    "file": "cube-storage_model_empty.webp",
    "fp": "dedc6ad48d16ce29"
   },
+  "curtain-collection:balcony-window-double-curtains": {
+   "file": "curtain-collection_balcony-window-double-curtains.webp",
+   "fp": "94578c61bf55e1c0"
+  },
+  "curtain-collection:balcony-window-double-curtains@model:all-drawn": {
+   "file": "curtain-collection_balcony-window-double-curtains_model_all-drawn.webp",
+   "fp": "8aad773e1b6dfacf"
+  },
+  "curtain-collection:balcony-window-double-curtains@model:closed-glass": {
+   "file": "curtain-collection_balcony-window-double-curtains_model_closed-glass.webp",
+   "fp": "de260097ef97f558"
+  },
+  "curtain-collection:balcony-window-double-curtains@model:sheer-drawn": {
+   "file": "curtain-collection_balcony-window-double-curtains_model_sheer-drawn.webp",
+   "fp": "97305876f57a7d3d"
+  },
+  "curtain-collection:balcony-window-double-curtains@model:walk-out": {
+   "file": "curtain-collection_balcony-window-double-curtains_model_walk-out.webp",
+   "fp": "fa757d5d7cb4e9a0"
+  },
   "curtain-collection:cafe-curtain": {
    "file": "curtain-collection_cafe-curtain.webp",
    "fp": "9ff8ff42b9a0864d"
@@ -5371,11 +5391,23 @@
   },
   "wardrobe-study:modular-waterfall-cabinet-desk": {
    "file": "wardrobe-study_modular-waterfall-cabinet-desk.webp",
-   "fp": "4b04e1edd0676522"
+   "fp": "49f4d31f93cf3adc"
   },
-  "wardrobe-study:modular-waterfall-cabinet-desk@model:drawers": {
-   "file": "wardrobe-study_modular-waterfall-cabinet-desk_model_drawers.webp",
-   "fp": "12c934a6134cc56c"
+  "wardrobe-study:modular-waterfall-cabinet-desk@model:no-stool": {
+   "file": "wardrobe-study_modular-waterfall-cabinet-desk_model_no-stool.webp",
+   "fp": "59371142d1672a9f"
+  },
+  "wardrobe-study:modular-waterfall-cabinet-desk@model:oak-drawers": {
+   "file": "wardrobe-study_modular-waterfall-cabinet-desk_model_oak-drawers.webp",
+   "fp": "1a73383d8fd2e6bc"
+  },
+  "wardrobe-study:modular-waterfall-cabinet-desk@model:plain": {
+   "file": "wardrobe-study_modular-waterfall-cabinet-desk_model_plain.webp",
+   "fp": "d9a94c29abfda793"
+  },
+  "wardrobe-study:modular-waterfall-cabinet-desk@model:pouf-stool": {
+   "file": "wardrobe-study_modular-waterfall-cabinet-desk_model_pouf-stool.webp",
+   "fp": "e3b66f81f473541b"
   },
   "wardrobe-study:modular-waterfall-cabinet-desk@model:slim": {
    "file": "wardrobe-study_modular-waterfall-cabinet-desk_model_slim.webp",
