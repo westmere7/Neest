@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-03 (notes: body only, images in the full view, spot by default, notes mode ends on other tools).
+Last updated: 2026-11-03 (Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -1343,6 +1343,13 @@ construction documents.
   a syntax error in `src/guest-viewer/main.ts` (a half-applied edit on 2026-11-02 left two `clipCopy` declarations
   and old visibility lines behind) only shows in `npm run typecheck` / `lint`, but it stops `npm run dev` (its
   `predev` builds the viewer) and the launchers. Run typecheck before committing.
+- **A Mac mouse wheel panned/orbited instead of zooming**: macOS Chrome, Safari and Edge report a physical wheel notch
+  as a pixel-mode `deltaY` of 4.000244140625 (multiples when a fast spin is accelerated), which the trackpad heuristics
+  (fractional, < 48 px, rapid stream) all read as a two-finger swipe; even read as a wheel it zoomed 0.6 % per notch.
+  `trackpad.ts › macWheelSteps` recognises that single-axis signature (y, or x for Shift + wheel) before the trackpad
+  rules, and `wheelDelta` turns each notch into 100 px (at most 3 per event), like a Windows notch. Free-spinning and
+  touch-surface mice (Magic Mouse) still send trackpad-like streams and behave as a trackpad. Browser zoom other than
+  100 % in Chrome scales the deltas and defeats the signature.
 - **Typing in a dialog field jumped to another field**: `Dialog` (components/Overlays.tsx) re-ran its focus effect
   whenever `onClose` changed, and callers pass a new arrow each render, so every keystroke that re-rendered the dialog
   focused `[data-autofocus]` again (the note body lost focus to the old title field). The effect now runs once per
@@ -2004,3 +2011,8 @@ Known limitations (also in README):
      §16); `title` retired and folded into the body on load (60LTN has 8 such notes); spot by default with Shift to
      attach to the item; `Callout.images` with downscaled WebP data URLs, a full-size viewer, add/paste/drop; notes mode
      ends on other tools, Connections, Layers, Library, Select and Walk (§10 Notes) (done).
+166. "Check Mac's mouse wheel behaviour for zooming, is something wrong?" → yes: on macOS Chrome/Safari/Edge a physical
+     wheel notch (deltaY 4.000244140625) was classified as a trackpad swipe, so the wheel panned the plan, orbited the
+     3D view, looked around in walk mode and turned item previews instead of zooming / changing speed, and the guest
+     plan zoomed 0.6 % per notch. Mac notches are now read as wheel notches of 100 px (§16 pitfall); tests in
+     `trackpad.test.ts`, checked with synthetic events in the plan and 3D view, not yet on a real Mac (done).
