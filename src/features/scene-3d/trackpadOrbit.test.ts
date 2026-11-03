@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { attachSafariGesture, createWheelClassifier } from '@/components/trackpad';
+import { attachSafariGesture, createWheelClassifier, resetScrollDeviceMemory } from '@/components/trackpad';
 import { attachTrackpadOrbit, dollyCamera, orbitCamera, panCamera, type OrbitLike } from './trackpadOrbit';
 
 function makeOrbit(ortho = false): OrbitLike {
@@ -31,6 +31,7 @@ function makeOrbit(ortho = false): OrbitLike {
 
 describe('trackpad wheel classifier & Safari gestures', () => {
   it('distinguishes pinch, 2D trackpad swipes, momentum streams, and discrete mouse wheels', () => {
+    resetScrollDeviceMemory();
     const c = createWheelClassifier();
 
     // Pinch (ctrlKey: true)
@@ -40,8 +41,10 @@ describe('trackpad wheel classifier & Safari gestures', () => {
     expect(c.classify(new WheelEvent('wheel', { deltaY: 3, deltaMode: 1 }), 500)).toBe('wheel');
     expect(c.classify(new WheelEvent('wheel', { deltaY: 120, deltaMode: 0 }), 900)).toBe('wheel');
 
-    // Trackpad swipe starting with small pixel delta locks subsequent momentum events into trackpad mode
-    expect(c.classify(new WheelEvent('wheel', { deltaX: 0, deltaY: 6, deltaMode: 0 }), 1500)).toBe('trackpad');
+    // Right after a mouse wheel a straight scroll goes with the mouse; a trackpad swipe shows itself by a
+    // diagonal step and locks its momentum events (even large straight ones) into trackpad mode
+    expect(c.classify(new WheelEvent('wheel', { deltaX: 0, deltaY: 6, deltaMode: 0 }), 1200)).toBe('wheel');
+    expect(c.classify(new WheelEvent('wheel', { deltaX: 1, deltaY: 6, deltaMode: 0 }), 1500)).toBe('trackpad');
     expect(c.classify(new WheelEvent('wheel', { deltaX: 0, deltaY: 64, deltaMode: 0 }), 1530)).toBe('trackpad');
 
     // Safari duplicate pinch suppression

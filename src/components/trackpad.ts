@@ -33,34 +33,78 @@ export interface WheelClassifier {
 }
 
 /**
+ * What scrolling comes from: `auto` tells it apart (below); `mouse` reads every scroll as a mouse wheel
+ * (zoom), `trackpad` as a trackpad swipe. Settings → 3D view → Scrolling sets it in the app (for mice that
+ * scroll smoothly, e.g. Logitech with Logi Options+ smooth scrolling, which no heuristic can tell apart).
+ */
+export type ScrollDevice = 'auto' | 'mouse' | 'trackpad';
+let scrollDevice: ScrollDevice = 'auto';
+export const setScrollDevice = (d: ScrollDevice): void => void (scrollDevice = d);
+export const getScrollDevice = (): ScrollDevice => scrollDevice;
+
+/** Events this close together (ms) belong to one scroll gesture. */
+const GESTURE_GAP = 250;
+
+/**
+ * The device seen last for sure, shared by every classifier on the page: a mouse (a line-mode or macOS
+ * notch event) or a trackpad (a pinch, a Safari gesture, a diagonal swipe). Ambiguous straight up/down
+ * scrolling goes with it, so a mouse that mixes notch steps with smooth in-between steps (Logitech wheels
+ * on macOS) zooms throughout instead of zooming and tilting by turns.
+ */
+let lastDevice: 'mouse' | 'trackpad' | null = null;
+
+/** Test hook: forget the device seen last. */
+export const resetScrollDeviceMemory = (): void => void (lastDevice = null);
+
+/**
  * Stateful classifier that distinguishes:
  * - `'pinch'`: two-finger trackpad pinch (`ctrlKey: true`)
  * - `'trackpad'`: two-finger trackpad swipe (continuous 2D pixel stream)
- * - `'wheel'`: discrete physical mouse wheel ticks (line/page mode, or the macOS notch signature)
+ * - `'wheel'`: physical mouse wheel ticks (line/page mode, the macOS notch signature, or a smooth mouse)
  * - `'ignore'`: duplicate `ctrlKey` wheel event emitted alongside Safari's `gesturechange`
+ *
+ * One scroll gesture (events less than 250 ms apart) keeps one reading; it only changes on proof: a
+ * diagonal event (never a mouse wheel) makes it a trackpad swipe, a notch or line event a mouse wheel.
  */
 export function createWheelClassifier(): WheelClassifier {
-  let trackpadUntil = -Infinity;
   let lastWheelAt = -Infinity;
   let lastSafariScaleAt = -Infinity;
+  let gesture: 'wheel' | 'trackpad' | null = null;
+
+  const decide = (kind: 'wheel' | 'trackpad', now: number): WheelKind => {
+    gesture = kind;
+    lastWheelAt = now;
+    return kind;
+  };
 
   return {
     markSafariPinch(now = performance.now()) {
       lastSafariScaleAt = now;
+      lastDevice = 'trackpad';
     },
     classify(e: WheelEvent, now = performance.now()): WheelKind {
       if (e.ctrlKey) {
         if (now - lastSafariScaleAt < 60) return 'ignore';
+        lastDevice = 'trackpad';
         return 'pinch';
       }
-      const dt = now - lastWheelAt;
-      lastWheelAt = now;
-
-      // Line or page mode is always a discrete physical mouse wheel, and so is a macOS wheel notch.
+      // Line or page mode is always a discrete physical mouse wheel; on macOS so is a notch.
       if (e.deltaMode !== 0 || macWheelSteps(e)) {
-        trackpadUntil = -Infinity;
-        return 'wheel';
+        lastDevice = 'mouse';
+        return decide('wheel', now);
       }
+      if (scrollDevice !== 'auto') return decide(scrollDevice === 'mouse' ? 'wheel' : 'trackpad', now);
+
+      const diagonal = e.deltaX !== 0 && e.deltaY !== 0;
+      if (diagonal) lastDevice = 'trackpad';
+      const dt = now - lastWheelAt;
+      // Within a gesture: keep its reading unless this event proves a trackpad.
+      if (gesture && dt >= 0 && dt < GESTURE_GAP) return decide(diagonal ? 'trackpad' : gesture, now);
+
+      // A new gesture.
+      if (diagonal) return decide('trackpad', now);
+      // Straight up/down or sideways only: whatever device was seen last for sure.
+      if (lastDevice) return decide(lastDevice === 'mouse' ? 'wheel' : 'trackpad', now);
 
       const legacy = e as WheelEvent & { wheelDeltaY?: number; wheelDeltaX?: number };
       const hasX = Math.abs(e.deltaX) > 0;
@@ -71,12 +115,7 @@ export function createWheelClassifier(): WheelClassifier {
         legacy.wheelDeltaY !== 0 &&
         Math.abs(legacy.wheelDeltaY) % 120 !== 0;
       const rapidStream = dt > 0 && dt < 35 && Math.abs(e.deltaY) < 90;
-
-      if (now < trackpadUntil || hasX || fractional || smallStart || smoothWebkit || rapidStream) {
-        trackpadUntil = now + 260;
-        return 'trackpad';
-      }
-      return 'wheel';
+      return decide(hasX || fractional || smallStart || smoothWebkit || rapidStream ? 'trackpad' : 'wheel', now);
     },
   };
 }

@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-03 (shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-03 (Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -1422,6 +1422,14 @@ construction documents.
   rules, and `wheelDelta` turns each notch into 100 px (at most 3 per event), like a Windows notch. Free-spinning and
   touch-surface mice (Magic Mouse) still send trackpad-like streams and behave as a trackpad. Browser zoom other than
   100 % in Chrome scales the deltas and defeats the signature.
+- **Logitech (and other smooth) mouse wheels on macOS zoomed and tilted by turns**: they mix exact notch steps
+  (4.000244 px, read as a wheel) with smooth in-between steps (read as a trackpad swipe, which orbits in 3D).
+  `createWheelClassifier` now keeps one reading per gesture (events < 250 ms apart; only a diagonal step turns a wheel
+  gesture into a trackpad swipe) and remembers the device seen last for sure, page-wide (a notch or line event =
+  mouse; a pinch, Safari gesture or diagonal step = trackpad); straight up/down scrolls go with it. Only the first
+  smooth steps before the page has ever seen a notch can still tilt. Settings → Scrolling (`prefs.scrollDevice`:
+  Automatic / Mouse wheel / Trackpad, `setScrollDevice`) forces it, for mice that never send a notch (Logi Options+
+  smooth scrolling). The guest viewer stays automatic.
 - **Typing in a dialog field jumped to another field**: `Dialog` (components/Overlays.tsx) re-ran its focus effect
   whenever `onClose` changed, and callers pass a new arrow each render, so every keystroke that re-rendered the dialog
   focused `[data-autofocus]` again (the note body lost focus to the old title field). The effect now runs once per
@@ -2105,3 +2113,7 @@ Known limitations (also in README):
      settings; 578 items after a pass over all 1355; tests in itemEdits.test.ts and shape-edit/shapeEdit.test.ts;
      checked in the browser on the niche wardrobe, the study-desk wardrobe (seven variants) and a portal. Committed
      locally, not pushed (done).
+169. "Scrolling my Logitech mouse on Mac is buggy, it zooms in and out but also tilts the camera" → one reading per
+     scroll gesture, a page-wide memory of the device seen last, and Settings → Scrolling (Automatic / Mouse wheel /
+     Trackpad) (§16 pitfall). Tests in `trackpad.test.ts`; replayed Logitech-style streams in the 3D view: pure zoom
+     once a notch has been seen, trackpad swipes still orbit. Not tried on a real Mac (done).

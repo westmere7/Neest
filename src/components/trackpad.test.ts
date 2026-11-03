@@ -1,9 +1,14 @@
-import { describe, expect, it } from 'vitest';
-import { MAC_WHEEL_STEP, createWheelClassifier, macWheelSteps, wheelDelta } from './trackpad';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { MAC_WHEEL_STEP, createWheelClassifier, macWheelSteps, resetScrollDeviceMemory, setScrollDevice, wheelDelta } from './trackpad';
 
 const wheel = (init: WheelEventInit) => new WheelEvent('wheel', init);
 
 describe('wheel input', () => {
+  beforeEach(() => {
+    resetScrollDeviceMemory();
+    setScrollDevice('auto');
+  });
+
   it('treats line and page deltas as a mouse wheel and converts them to pixels', () => {
     const c = createWheelClassifier();
     // Firefox reports a mouse notch as 3 lines once deltaMode is read.
@@ -55,5 +60,45 @@ describe('wheel input', () => {
     expect(macWheelSteps(wheel({ deltaY: 1, deltaMode: 1 }))).toBe(0);
     // Pixel deltas that are not macOS notches pass through unchanged.
     expect(wheelDelta(wheel({ deltaY: 4 }))).toEqual({ x: 0, y: 4 });
+  });
+
+  it('reads a Logitech wheel on macOS (notches mixed with smooth in-between steps) as a wheel all through', () => {
+    const c = createWheelClassifier();
+    // A scroll that starts with smooth steps before the first notch, events ~16 ms apart.
+    const stream = [1.5, 2.75, MAC_WHEEL_STEP, 6.3, MAC_WHEEL_STEP * 2, 3.1, 0.9];
+    const first = stream.map((dy, i) => c.classify(wheel({ deltaY: dy }), 1000 + i * 16));
+    // Before any proof the first steps go with the old guess, but from the first notch on it is a wheel.
+    expect(first.slice(2)).toEqual(['wheel', 'wheel', 'wheel', 'wheel', 'wheel']);
+    // The next scroll (after a pause) is a wheel from its very first smooth step: the device is known.
+    const next = [1.25, 2.5, 5.1, 2.2].map((dy, i) => c.classify(wheel({ deltaY: dy }), 3000 + i * 16));
+    expect(next).toEqual(['wheel', 'wheel', 'wheel', 'wheel']);
+    // Another view's classifier knows it too (one device per page).
+    expect(createWheelClassifier().classify(wheel({ deltaY: 3.3 }), 5000)).toBe('wheel');
+  });
+
+  it('keeps one reading per gesture; only a diagonal step turns a wheel gesture into a trackpad swipe', () => {
+    const c = createWheelClassifier();
+    // A trackpad swipe: never switches to a wheel mid-way, even on a large straight step.
+    const swipe = [[0.5, 1], [0, 3], [0, 60], [0, 12]].map(([x, y], i) => c.classify(wheel({ deltaX: x, deltaY: y }), 100 + i * 16));
+    expect(swipe).toEqual(['trackpad', 'trackpad', 'trackpad', 'trackpad']);
+    // After a mouse notch, a later gesture that turns out diagonal is a trackpad again from that step on.
+    expect(c.classify(wheel({ deltaY: MAC_WHEEL_STEP }), 2000)).toBe('wheel');
+    expect(c.classify(wheel({ deltaY: 2 }), 4000)).toBe('wheel');
+    expect(c.classify(wheel({ deltaY: 2, deltaX: 1 }), 4016)).toBe('trackpad');
+    expect(c.classify(wheel({ deltaY: 3 }), 4032)).toBe('trackpad');
+    // A pinch proves a trackpad too.
+    expect(c.classify(wheel({ deltaY: 2, ctrlKey: true }), 6000)).toBe('pinch');
+    expect(c.classify(wheel({ deltaY: 5 }), 8000)).toBe('trackpad');
+  });
+
+  it('follows the Scrolling setting when it is not automatic', () => {
+    const c = createWheelClassifier();
+    setScrollDevice('mouse');
+    expect(c.classify(wheel({ deltaY: 1.5, deltaX: 0.5 }), 0)).toBe('wheel');
+    setScrollDevice('trackpad');
+    expect(c.classify(wheel({ deltaY: 100 }), 1000)).toBe('trackpad');
+    // Pinches and line-mode wheels are what they are whatever the setting.
+    expect(c.classify(wheel({ deltaY: 2, ctrlKey: true }), 2000)).toBe('pinch');
+    expect(c.classify(wheel({ deltaY: 3, deltaMode: 1 }), 3000)).toBe('wheel');
   });
 });

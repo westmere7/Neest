@@ -5,6 +5,7 @@ import { useEditorStore } from '@/state/editorStore';
 import { useDialogStore, usePrefsStore, toast } from '@/state/uiStores';
 import { Dialog, PanelLoading } from '@/components/Overlays';
 import { Button, LengthField, Segmented, Select, Toggle, TextField } from '@/components/ui';
+import type { ScrollDevice } from '@/components/trackpad';
 import { ReplaceMaterialDialog } from '@/features/materials/MaterialUI';
 import { downloadBlob, exportFilename } from '@/features/exports/neestFile';
 import { SHORTCUT_LIST } from './useShortcuts';
@@ -378,6 +379,8 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
   const exec = useProjectStore((st) => st.execute);
   const focusSelection = usePrefsStore((st) => st.focusSelection);
   const setFocusSelection = usePrefsStore((st) => st.setFocusSelection);
+  const scrollDevice = usePrefsStore((st) => st.scrollDevice);
+  const setScrollDevice = usePrefsStore((st) => st.setScrollDevice);
   return (
     <Dialog title="Project settings" onClose={onClose} wide testId="settings-dialog">
       <div className="settings-grid">
@@ -415,6 +418,25 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
             <p className="field-hint">
               Selecting furniture moves the orbit pivot to it, so the view turns and zooms around it. Saved in
               this browser.
+            </p>
+          </section>
+          <section>
+            <h3>Scrolling</h3>
+            <Segmented<ScrollDevice>
+              label="Scrolling"
+              size="sm"
+              value={scrollDevice}
+              onChange={setScrollDevice}
+              options={[
+                { value: 'auto', label: 'Automatic', testId: 'scroll-auto' },
+                { value: 'mouse', label: 'Mouse wheel', testId: 'scroll-mouse' },
+                { value: 'trackpad', label: 'Trackpad', testId: 'scroll-trackpad' },
+              ]}
+            />
+            <p className="field-hint">
+              Mouse wheel: scrolling always zooms (2D and 3D), for mice that scroll smoothly, such as Logitech wheels
+              with Logi Options+ smooth scrolling. Trackpad: scrolling pans the plan and turns the 3D view. Automatic
+              tells them apart. Saved in this browser.
             </p>
           </section>
           <section>

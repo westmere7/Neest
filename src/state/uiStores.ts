@@ -4,6 +4,7 @@ import type { UserVariant } from '@/data/assets/variants';
 import type { MaterialDefinition } from '@/domain/model/schema';
 import type { AssetCategory } from '@/data/assets/types';
 import type { NoteStyle } from '@/features/callouts/style';
+import { setScrollDevice, type ScrollDevice } from '@/components/trackpad';
 
 /** A group of placed items saved to the library (Furniture → Saved groups), positions relative to its centre. */
 export interface SavedGroup {
@@ -78,6 +79,8 @@ interface PrefsState {
   repoSync: boolean;
   /** 3D view: the orbit pivot eases to the selected objects (off by default). */
   focusSelection: boolean;
+  /** What scrolling comes from (Settings → Scrolling): told apart automatically, or always a mouse wheel / trackpad. */
+  scrollDevice: ScrollDevice;
   /** Colour variants the user saved, by asset id. */
   assetVariants: Record<string, UserVariant[]>;
   libraryDensity: LibraryDensity;
@@ -99,6 +102,7 @@ interface PrefsState {
   dismissOnboarding(): void;
   setRepoSync(on: boolean): void;
   setFocusSelection(on: boolean): void;
+  setScrollDevice(d: ScrollDevice): void;
   saveAssetVariant(assetId: string, variant: UserVariant): void;
   deleteAssetVariant(assetId: string, id: string): void;
   setLibraryDensity(d: LibraryDensity): void;
@@ -127,6 +131,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   onboardingDismissed: false,
   repoSync: true,
   focusSelection: false,
+  scrollDevice: 'auto',
   assetVariants: {},
   libraryDensity: 'normal',
   libraryRailCollapsed: false,
@@ -184,6 +189,11 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   setFocusSelection(on) {
     set({ focusSelection: on });
     persist('focusSelection', on);
+  },
+  setScrollDevice(d) {
+    setScrollDevice(d);
+    set({ scrollDevice: d });
+    persist('scrollDevice', d);
   },
   saveAssetVariant(assetId, variant) {
     const cur = get().assetVariants;
@@ -247,7 +257,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   },
   async hydrate() {
     try {
-      const [fa, ra, fm, rm, ob, rs, av, ld, sg, fs, ns, rc, mv] = await Promise.all([
+      const [fa, ra, fm, rm, ob, rs, av, ld, sg, fs, ns, rc, mv, sd] = await Promise.all([
         preferenceRepository.get<string[]>('favouriteAssets'),
         preferenceRepository.get<string[]>('recentAssets'),
         preferenceRepository.get<string[]>('favouriteMaterials'),
@@ -261,7 +271,10 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         preferenceRepository.get<NoteStyle | null>('noteStyle'),
         preferenceRepository.get<boolean>('libraryRailCollapsed'),
         preferenceRepository.get<'grid' | 'list'>('materialView'),
+        preferenceRepository.get<ScrollDevice>('scrollDevice'),
       ]);
+      const scrollDevice: ScrollDevice = sd === 'mouse' || sd === 'trackpad' ? sd : 'auto';
+      setScrollDevice(scrollDevice);
       set({
         favouriteAssets: fa ?? [],
         recentAssets: ra ?? [],
@@ -276,6 +289,7 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         noteStyle: ns && typeof ns === 'object' ? ns : null,
         libraryRailCollapsed: rc === true,
         materialView: mv === 'list' ? 'list' : 'grid',
+        scrollDevice,
         loaded: true,
       });
     } catch {
