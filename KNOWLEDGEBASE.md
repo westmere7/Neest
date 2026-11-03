@@ -1937,10 +1937,17 @@ Known limitations (also in README):
      `White drawers, knobs & legged stool`, `With 3-tier pouf stool on bun legs`, `Oak drawers, knobs & legged stool`,
      `Drawers & knobs (no stool)`, `Plain apron (no drawers or stool)`, `Slim top (no apron or stool)`; `9` wood & bouclé/velvet
      colourways including Mustard velvet) (done).
-161. "Tạo 3D cửa sổ ban công có sẵn rèm như này" → added `curtain-collection:balcony-window-double-curtains` in
-     `packs/curtain-collection.pack.ts` (`mount: 'wall'`, `defaultElevation: 0`, `resizable: { w: true, d: true, h: true }`,
-     `defaultSize: 3.4 × 0.32 × 2.7 m`, bridging `Curtains & blinds` / `item:textiles` and `item:structure`): floor-to-ceiling dark
-     anthracite sliding glass balcony window/door with upper transom glazing, bi-parting sliding sashes, optional exterior
-     vertical-bar guard rail, concealed-cove parted white sheer voile panels and warm sand-beige S-wave blackout drapes (`5`
-     models: `Parted sheers & balcony railing`, `Walk-out sliding door (no railing)`, `Closed glass panels (no railing)`, `Sheer
-     drawn full width`, `Blackout curtains drawn closed`; `9` fabric & frame colourways) (done).
+161. "Tạo 3D cửa sổ ban công có sẵn rèm như này" + "Bỏ ban công giữ cửa sổ và rèm thôi" → added & refined
+     `curtain-collection:balcony-window-double-curtains` in `packs/curtain-collection.pack.ts` (`mount: 'wall'`,
+     `defaultElevation: 0`, `resizable: { w: true, d: true, h: true }`, `defaultSize: 3.4 × 0.32 × 2.7 m`, bridging `Curtains &
+     blinds` / `item:textiles` and `item:structure`): floor-to-ceiling dark anthracite sliding glass window/door sitting flush to
+     the back wall (no exterior balcony railing) with upper transom glazing, bi-parting sliding sashes, concealed-cove parted white
+     sheer voile panels and warm sand-beige S-wave blackout drapes (`4` models: `Parted curtains, sliding sash open`, `Parted
+     curtains, glass closed`, `Sheer drawn full width`, `Blackout curtains drawn closed`; `9` fabric & frame colourways) (done).
+162. "Tạo hình tranh treo tường chữ nhật ngang" → added `soft-curve-furniture:sage-watercolor-hills-painting` in
+     `packs/soft-curve-furniture.pack.ts` (`mount: 'wall'`, `defaultElevation: 1.35`, `resizable: { w: true, d: true, h: true }`,
+     `defaultSize: 1.2 × 0.04 × 0.75 m`, `Landscape paintings`): procedural cold-pressed watercolor & hand-torn white deckle-paper
+     layered sage/celadon/oat-olive/moss/forest rolling hills artwork (`sage-hills-watercolor` coloured pattern rolled by half-tile
+     with a 4% clamped edge margin so an unscaled `0.92 × 0.92` art box scaled to `cw × ch` maps edge-to-edge without mipmap seams
+     at any resized proportion), with `3` framing models (`Slim gallery float frame`, `Framed with white museum mat`, `Frameless
+     gallery canvas`) and `9` wood, lacquer & metal frame finishes (done).

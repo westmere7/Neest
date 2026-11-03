@@ -19,8 +19,10 @@ import {
   defineItem,
   definePack,
   ellipsePoints,
+  frame4,
   knob,
   lathe,
+  lerp,
   line,
   matSlot,
   plantBox,
@@ -33,6 +35,8 @@ import {
   sphere,
   torus,
   turnedLeg,
+  type PackMaterial,
+  type PackPattern,
   type Part,
   type PlanStroke,
   type Size3,
@@ -1467,12 +1471,505 @@ const shoeTowelCabinet = defineItem({
   build: (size) => buildShoeTowelCabinet(size, false),
 });
 
+// ───────────── 15. Horizontal sage watercolor hills wall painting ─────────────
+
+const sstep = (e0: number, e1: number, x: number): number => {
+  const t = clamp((x - e0) / (e1 - e0), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+
+function ih2(ix: number, iy: number, seed: number): number {
+  let h = (Math.imul(ix | 0, 0x27d4eb2d) ^ Math.imul(iy | 0, 0x165667b1) ^ (seed | 0)) | 0;
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+function vnoise2(x: number, y: number, seed: number): number {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const fx = x - ix;
+  const fy = y - iy;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+  const n00 = ih2(ix, iy, seed);
+  const n10 = ih2(ix + 1, iy, seed);
+  const n01 = ih2(ix, iy + 1, seed);
+  const n11 = ih2(ix + 1, iy + 1, seed);
+  return lerp(lerp(n00, n10, sx), lerp(n01, n11, sx), sy);
+}
+
+function fbm2(x: number, y: number, seed: number): number {
+  return (
+    0.57 * vnoise2(x, y, seed) +
+    0.29 * vnoise2(x * 2.03 + 11.7, y * 2.03 + 5.3, seed + 37) +
+    0.14 * vnoise2(x * 4.11 + 23.1, y * 4.11 + 17.9, seed + 73)
+  );
+}
+
+const ART_PAD = 0.04;
+const ART_SPAN = 1 - 2 * ART_PAD;
+
+/**
+ * Procedural cold-pressed watercolor & hand-torn deckle-paper layered sage hills artwork.
+ * Rolled by half the tile (matching `paintings.pack.ts`) with a 4% clamped edge margin so an
+ * unscaled `ART_SPAN × ART_SPAN` box stretched to `cw × ch` renders edge-to-edge with zero seams.
+ */
+function drawSageHillsWatercolor(ctx: CanvasRenderingContext2D, size: number): void {
+  const img = ctx.createImageData(size, size);
+  const data = img.data;
+  const half = size >> 1;
+  const aa = 1.35 / (size * ART_SPAN);
+
+  const U = new Float32Array(size);
+  const Y1 = new Float32Array(size);
+  const D1 = new Float32Array(size);
+  const Y2G = new Float32Array(size);
+  const Y2 = new Float32Array(size);
+  const Y3 = new Float32Array(size);
+  const D3 = new Float32Array(size);
+  const Y4A = new Float32Array(size);
+  const Y4BL = new Float32Array(size);
+  const Y4B = new Float32Array(size);
+  const Y5 = new Float32Array(size);
+  const STREAK = new Float32Array(size);
+
+  for (let x = 0; x < size; x++) {
+    const u = clamp((x / size - ART_PAD) / ART_SPAN, 0, 1);
+    U[x] = u;
+
+    // 1. Backmost pale celadon ridge with hand-torn white fibrous deckle crest
+    const tear1 = (fbm2(u * 26, 1.7, 101) - 0.5) * 0.011 + (vnoise2(u * 96, 3.1, 102) - 0.5) * 0.0042;
+    Y1[x] = 0.352 - 0.034 * Math.exp(-(((u - 0.35) / 0.27) ** 2)) + 0.116 * u ** 1.85 + 0.006 * Math.sin(u * 9.2 + 0.5) + tear1;
+    D1[x] = (0.0065 + 0.0055 * sstep(0.2, 0.85, u)) * (0.74 + 0.58 * fbm2(u * 38, 5.2, 103));
+
+    // 2. Smooth mint-sage ridge + translucent apple-sage watercolor brush glaze above it
+    const y2 = 0.458 + 0.068 * (1 - u) ** 2.3 - 0.007 * Math.sin(u * Math.PI) + (fbm2(u * 18, 7.3, 201) - 0.5) * 0.0035;
+    Y2[x] = y2;
+    const env2 =
+      Math.max(0, Math.sin(clamp((u - 0.15) / 0.72, 0, 1) * Math.PI)) *
+      (0.54 + 0.58 * Math.exp(-(((u - 0.68) / 0.14) ** 2)));
+    Y2G[x] = y2 - env2 * (0.04 + 0.01 * (fbm2(u * 22, 9.1, 205) - 0.5));
+
+    // 3. Warm oat-parchment olive S-wave with prominent white torn-paper deckle edge
+    const tear3 = (fbm2(u * 29, 11.4, 301) - 0.5) * 0.009 + (vnoise2(u * 105, 13.7, 302) - 0.5) * 0.0036;
+    Y3[x] =
+      0.516 -
+      0.016 * Math.exp(-(((u - 0.1) / 0.095) ** 2)) +
+      0.008 * Math.exp(-(((u - 0.28) / 0.1) ** 2)) -
+      0.012 * Math.exp(-(((u - 0.51) / 0.12) ** 2)) +
+      0.092 * (Math.max(0, u - 0.45) / 0.55) ** 1.52 +
+      tear3;
+    D3[x] = (0.006 + 0.0052 * sstep(0.06, 0.36, u)) * (0.72 + 0.62 * fbm2(u * 40, 14.8, 303));
+
+    // 4a. Lower-left muted olive-khaki diagonal torn paper fold
+    Y4A[x] = 0.688 - 0.22 * u + 0.007 * Math.sin(u * 14) + (fbm2(u * 32, 16.1, 401) - 0.5) * 0.0085;
+
+    // 4b. Lush mid-ground botanical moss hill + upper wet chartreuse-moss watercolor bloom
+    const y4b =
+      0.588 +
+      0.246 * Math.max(0, 1 - u / 0.55) ** 2.15 +
+      (0.014 * Math.max(0, u - 0.65)) / 0.35 +
+      (fbm2(u * 22, 19.3, 411) - 0.5) * 0.0042;
+    Y4B[x] = y4b;
+    const env4 =
+      Math.max(0, Math.sin(clamp((u - 0.36) / 0.47, 0, 1) * Math.PI)) *
+      (0.46 + 0.68 * Math.exp(-(((u - 0.73) / 0.095) ** 2)));
+    Y4BL[x] = y4b - env4 * (0.025 + 0.006 * (fbm2(u * 28, 21.7, 415) - 0.5));
+
+    // 5. Foreground deep botanical forest-sage dome
+    Y5[x] =
+      0.678 +
+      0.184 * Math.max(0, 1 - u / 0.68) ** 1.95 +
+      0.016 * (Math.max(0, u - 0.68) / 0.32) ** 1.6 +
+      (fbm2(u * 16, 25.4, 501) - 0.5) * 0.0035;
+
+    // Vertical wet watercolor brush-wash modulation across x
+    STREAK[x] =
+      (fbm2(u * 19, 31.2, 601) - 0.5) * 0.9 +
+      0.38 * Math.exp(-(((u - 0.72) / 0.065) ** 2)) -
+      0.18 * Math.exp(-(((u - 0.63) / 0.04) ** 2));
+  }
+
+  for (let y = 0; y < size; y++) {
+    const v = clamp((y / size - ART_PAD) / ART_SPAN, 0, 1);
+    const ty = (y + half) % size;
+    for (let x = 0; x < size; x++) {
+      const u = U[x];
+      const tx = (x + half) % size;
+
+      // Cold-pressed cotton paper tooth & broad watercolor granulation
+      const tooth = vnoise2(u * 155, v * 105, 701) - 0.5;
+      const cloud = fbm2(u * 7.5, v * 6.2, 709) - 0.5;
+      const brushV = vnoise2(u * 36, v * 6.5, 719) - 0.5;
+
+      // Base warm creamy off-white watercolor paper sky (#fafaf6)
+      let r = 250.5 - v * 3.5 + tooth * 3.2 + cloud * 2.2;
+      let g = 250.5 - v * 3.2 + tooth * 3.2 + cloud * 2.2;
+      let b = 246.0 - v * 4.2 + tooth * 3.0 + cloud * 2.4;
+
+      // Subtle lifted-paper shadow cast by Layer 1 onto the sky
+      const y1 = Y1[x];
+      if (v > y1 - 0.015 && v < y1 + aa) {
+        const sh = sstep(y1 - 0.015, y1, v) * (1 - sstep(y1 - aa, y1 + aa, v));
+        r -= sh * 14;
+        g -= sh * 13;
+        b -= sh * 13;
+      }
+
+      // Layer 1: Pale misty-celadon watercolor ridge + raw white torn-paper deckle crest
+      if (v > y1 - aa) {
+        const cov = sstep(y1 - aa, y1 + aa, v);
+        const d1 = D1[x];
+        const intoWash = sstep(y1 + d1 * 0.48, y1 + d1 * 1.4, v);
+        const depth1 = clamp((v - y1) / 0.2, 0, 1);
+        const wr = lerp(215, 198, u * 0.55 + depth1 * 0.45) + cloud * 10 + tooth * 4.8;
+        const wg = lerp(226, 213, u * 0.5 + depth1 * 0.5) + cloud * 9 + tooth * 4.5;
+        const wb = lerp(203, 185, u * 0.55 + depth1 * 0.45) + cloud * 10 + tooth * 4.8;
+        const lr = lerp(252.0 + tooth * 2.5, wr, intoWash);
+        const lg = lerp(252.5 + tooth * 2.5, wg, intoWash);
+        const lb = lerp(249.0 + tooth * 2.5, wb, intoWash);
+        r = lerp(r, lr, cov);
+        g = lerp(g, lg, cov);
+        b = lerp(b, lb, cov);
+      }
+
+      // Layer 2a: Translucent pale spring-apple watercolor brush halo
+      const y2g = Y2G[x];
+      const y2 = Y2[x];
+      if (y2g < y2 - 0.001 && v > y2g - aa) {
+        const cov = sstep(y2g - aa, y2g + aa * 1.4, v);
+        const rim = Math.exp(-(((v - y2g - 0.002) / 0.004) ** 2)) * 0.24;
+        const alpha = cov * clamp(0.56 + rim + cloud * 0.12, 0, 0.78);
+        const gr = 179 - rim * 20 + cloud * 8 + tooth * 4;
+        const gg = 211 - rim * 11 + cloud * 7 + tooth * 4;
+        const gb = 162 - rim * 20 + cloud * 8 + tooth * 4;
+        r = lerp(r, gr, alpha);
+        g = lerp(g, gg, alpha);
+        b = lerp(b, gb, alpha);
+      }
+
+      // Layer 2b: Smooth mint-sage watercolor ridge
+      if (v > y2 - aa) {
+        const cov = sstep(y2 - aa, y2 + aa, v);
+        const rim2 = Math.exp(-(((v - y2 - 0.0018) / 0.0032) ** 2));
+        const midPool = Math.exp(-(((u - 0.66) / 0.2) ** 2));
+        const lr = lerp(175, 152, midPool * 0.78) - rim2 * 13 + cloud * 9 + brushV * 5.5 + tooth * 4.5;
+        const lg = lerp(203, 187, midPool * 0.72) - rim2 * 9 + cloud * 8 + brushV * 5 + tooth * 4.2;
+        const lb = lerp(164, 143, midPool * 0.78) - rim2 * 13 + cloud * 9 + brushV * 5.5 + tooth * 4.5;
+        r = lerp(r, lr, cov);
+        g = lerp(g, lg, cov);
+        b = lerp(b, lb, cov);
+      }
+
+      // Overlap drop shadow cast by Layer 3's torn deckle onto Layer 2
+      const y3 = Y3[x];
+      if (v > y3 - 0.013 && v < y3 + aa) {
+        const sh = sstep(y3 - 0.013, y3, v) * (1 - sstep(y3 - aa, y3 + aa, v));
+        r -= sh * 19;
+        g -= sh * 17;
+        b -= sh * 17;
+      }
+
+      // Layer 3: Warm oat-parchment olive S-wave + crisp white hand-torn deckle crest
+      if (v > y3 - aa) {
+        const cov = sstep(y3 - aa, y3 + aa, v);
+        const d3 = D3[x];
+        const intoWash = sstep(y3 + d3 * 0.48, y3 + d3 * 1.35, v);
+        const depth3 = clamp((v - y3) / 0.18, 0, 1);
+        const crestShade = Math.exp(-(((v - y3 - d3 * 1.5) / 0.018) ** 2)) * sstep(0.15, 0.55, u) * (1 - sstep(0.65, 0.95, u));
+        const wr = lerp(196, 173, u * 0.42 + depth3 * 0.36) - crestShade * 14 + cloud * 10 + brushV * 5.5 + tooth * 4.8;
+        const wg = lerp(203, 184, u * 0.4 + depth3 * 0.36) - crestShade * 12 + cloud * 9 + brushV * 5 + tooth * 4.5;
+        const wb = lerp(172, 151, u * 0.44 + depth3 * 0.36) - crestShade * 14 + cloud * 10 + brushV * 5.5 + tooth * 4.8;
+        const lr = lerp(251.0 + tooth * 2.5, wr, intoWash);
+        const lg = lerp(251.5 + tooth * 2.5, wg, intoWash);
+        const lb = lerp(246.5 + tooth * 2.5, wb, intoWash);
+        r = lerp(r, lr, cov);
+        g = lerp(g, lg, cov);
+        b = lerp(b, lb, cov);
+      }
+
+      // Layer 4a: Lower-left muted olive-khaki diagonal torn fold
+      const y4a = Y4A[x];
+      if (u < 0.46 && v > y4a - 0.009) {
+        if (v < y4a + aa) {
+          const sh = sstep(y4a - 0.009, y4a, v) * (1 - sstep(y4a - aa, y4a + aa, v));
+          r -= sh * 18;
+          g -= sh * 17;
+          b -= sh * 17;
+        }
+        if (v > y4a - aa) {
+          const cov = sstep(y4a - aa, y4a + aa, v);
+          const tearRim = sstep(y4a, y4a + 0.005, v);
+          const wr = lerp(151, 132, clamp((v - y4a) / 0.16, 0, 1) * 0.6 + u * 0.7) + cloud * 9 + tooth * 4.8;
+          const wg = lerp(164, 148, clamp((v - y4a) / 0.16, 0, 1) * 0.6 + u * 0.7) + cloud * 8.5 + tooth * 4.5;
+          const wb = lerp(129, 114, clamp((v - y4a) / 0.16, 0, 1) * 0.6 + u * 0.7) + cloud * 9 + tooth * 4.8;
+          r = lerp(r, lerp(222, wr, tearRim), cov);
+          g = lerp(g, lerp(226, wg, tearRim), cov);
+          b = lerp(b, lerp(206, wb, tearRim), cov);
+        }
+      }
+
+      // Layer 4b bloom: Fresh wet chartreuse-moss watercolor bloom above Layer 4b
+      const y4bl = Y4BL[x];
+      const y4b = Y4B[x];
+      if (y4bl < y4b - 0.001 && v > y4bl - aa) {
+        const cov = sstep(y4bl - aa, y4bl + aa * 1.3, v);
+        const rim = Math.exp(-(((v - y4bl - 0.0018) / 0.0035) ** 2)) * 0.25;
+        const alpha = cov * clamp(0.62 + rim + cloud * 0.1, 0, 0.82);
+        const br = 128 - rim * 16 + cloud * 8 + tooth * 4;
+        const bg = 171 - rim * 10 + cloud * 7 + tooth * 4;
+        const bb = 104 - rim * 16 + cloud * 8 + tooth * 4;
+        r = lerp(r, br, alpha);
+        g = lerp(g, bg, alpha);
+        b = lerp(b, bb, alpha);
+      }
+
+      // Layer 4b: Lush mid-ground botanical moss-green hill
+      if (v > y4b - aa) {
+        const cov = sstep(y4b - aa, y4b + aa, v);
+        const rim4 = Math.exp(-(((v - y4b - 0.0016) / 0.003) ** 2));
+        const strk = STREAK[x];
+        const lr = lerp(116, 98, sstep(0.15, 0.78, u)) - strk * 18 - rim4 * 13 + cloud * 10 + brushV * 6 + tooth * 5;
+        const lg = lerp(150, 134, sstep(0.15, 0.78, u)) - strk * 15 - rim4 * 10 + cloud * 9 + brushV * 5.5 + tooth * 4.8;
+        const lb = lerp(97, 83, sstep(0.15, 0.78, u)) - strk * 16 - rim4 * 13 + cloud * 10 + brushV * 6 + tooth * 5;
+        r = lerp(r, lr, cov);
+        g = lerp(g, lg, cov);
+        b = lerp(b, lb, cov);
+      }
+
+      // Subtle translucent corner overlap on the far right crest of Layer 4b
+      if (u > 0.89 && v > y4b && v < y5Ref(U[x], Y5[x])) {
+        const rw = sstep(0.9, 0.99, u) * (1 - sstep(y4b + 0.02, y4b + 0.085, v)) * 0.22;
+        r = lerp(r, 162, rw);
+        g = lerp(g, 184, rw);
+        b = lerp(b, 146, rw);
+      }
+
+      // Layer 5: Foreground deep botanical forest-sage dome with vertical wet-wash brush streaks
+      const y5 = Y5[x];
+      if (v > y5 - aa) {
+        const cov = sstep(y5 - aa, y5 + aa, v);
+        const depth5 = clamp((v - y5) / Math.max(0.08, 1 - y5), 0, 1);
+        const rim5 = Math.exp(-(((v - y5 - 0.0018) / 0.0035) ** 2));
+        const strk = STREAK[x];
+        const leftShade = (1 - sstep(0.0, 0.38, u)) * 0.48;
+        const dryLift = Math.max(0, vnoise2(u * 48 + 3.1, v * 11 + 8.4, 809) - 0.68) * 24 * sstep(0.25, 0.85, depth5);
+        const lr =
+          lerp(86, 50, depth5 * 0.78 + leftShade * 0.34) -
+          strk * 15 -
+          rim5 * 10 +
+          dryLift * 0.9 +
+          cloud * 9.5 +
+          brushV * 6.5 +
+          tooth * 5.2;
+        const lg =
+          lerp(124, 85, depth5 * 0.75 + leftShade * 0.3) -
+          strk * 13 -
+          rim5 * 8 +
+          dryLift +
+          cloud * 8.5 +
+          brushV * 6.0 +
+          tooth * 5.0;
+        const lb =
+          lerp(75, 45, depth5 * 0.78 + leftShade * 0.34) -
+          strk * 14 -
+          rim5 * 10 +
+          dryLift * 0.85 +
+          cloud * 9.5 +
+          brushV * 6.5 +
+          tooth * 5.2;
+        r = lerp(r, lr, cov);
+        g = lerp(g, lg, cov);
+        b = lerp(b, lb, cov);
+      }
+
+      const idx = (ty * size + tx) * 4;
+      data[idx] = clamp(Math.round(r), 0, 255);
+      data[idx + 1] = clamp(Math.round(g), 0, 255);
+      data[idx + 2] = clamp(Math.round(b), 0, 255);
+      data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+const y5Ref = (_u: number, y5: number): number => y5;
+
+const packPatterns: PackPattern[] = [
+  {
+    id: 'sage-hills-watercolor',
+    name: 'Sage watercolor hills',
+    colored: true,
+    normalStrength: 0.16,
+    draw: drawSageHillsWatercolor,
+  },
+];
+
+const packMaterials: PackMaterial[] = [
+  {
+    id: 'sage-hills-art',
+    name: 'Sage watercolor hills canvas',
+    category: 'solid',
+    color: '#ffffff',
+    roughness: 0.86,
+    pattern: { id: 'sage-hills-watercolor', scale: 1, contrast: 1 },
+  },
+];
+
+type PaintingFrameStyle = 'float' | 'matted' | 'canvas';
+
+function sageArtPanel(cw: number, ch: number, cy: number, z0: number, z1: number): Part {
+  const half = ART_SPAN / 2;
+  return {
+    ...span('art', [-half, half], [-half, half], [z0, z1], o),
+    position: [0, cy, (z0 + z1) / 2],
+    scale: [cw / ART_SPAN, ch / ART_SPAN, 1],
+  };
+}
+
+function buildSageHillsPainting({ w, d, h }: Size3, style: PaintingFrameStyle): Part[] {
+  const z0 = -d / 2;
+  const z1 = d / 2;
+  const s = Math.min(w, h);
+
+  if (style === 'canvas') {
+    return keep(
+      [
+        span('mat', [-w / 2, w / 2], [0, h], [z0, z1 - 0.002], { bevel: 0.002, plan: true }),
+        sageArtPanel(Math.max(0.06, w - 0.003), Math.max(0.06, h - 0.003), h / 2, z1 - 0.005, z1),
+      ],
+      { w, d, h },
+    );
+  }
+
+  if (style === 'matted') {
+    const f = clamp(s * 0.028, 0.014, 0.026);
+    const matW = clamp(s * 0.105, 0.036, 0.085);
+    const cw = Math.max(0.08, w - 2 * (f + matW));
+    const ch = Math.max(0.08, h - 2 * (f + matW));
+    const zMatFront = z1 - 0.006;
+    return keep(
+      [
+        ...frame4('frame', [-w / 2, w / 2], [0, h], [z0, z1], f, { plan: true }),
+        span('frame', [-w / 2 + f, w / 2 - f], [f, h - f], [z0, z0 + 0.005], o),
+        span('mat', [-w / 2 + f + 0.002, w / 2 - f - 0.002], [f + 0.002, h - f - 0.002], [z0 + 0.0065, zMatFront - 0.006], o),
+        ...frame4('mat', [-w / 2 + f, w / 2 - f], [f, h - f], [zMatFront - 0.004, zMatFront], matW, o),
+        sageArtPanel(cw + 0.004, ch + 0.004, h / 2, zMatFront - 0.0075, zMatFront - 0.0045),
+      ],
+      { w, d, h },
+    );
+  }
+
+  // Default 'float': slim Scandinavian L-section gallery float frame with shadow reveal
+  const t = clamp(s * 0.02, 0.009, 0.018);
+  const gap = clamp(s * 0.011, 0.005, 0.009);
+  const cw = Math.max(0.08, w - 2 * (t + gap));
+  const ch = Math.max(0.08, h - 2 * (t + gap));
+  const zBack = z0 + 0.005;
+  const zArtFront = z1 - 0.003;
+  return keep(
+    [
+      ...frame4('frame', [-w / 2, w / 2], [0, h], [z0, z1], t, { plan: true }),
+      span('frame', [-w / 2 + t, w / 2 - t], [t, h - t], [z0, zBack], o),
+      span('mat', [-cw / 2 - 0.0015, cw / 2 + 0.0015], [h / 2 - ch / 2 - 0.0015, h / 2 + ch / 2 + 0.0015], [zBack + 0.0015, zArtFront - 0.002], o),
+      sageArtPanel(cw, ch, h / 2, zArtFront - 0.005, zArtFront),
+    ],
+    { w, d, h },
+  );
+}
+
+const sageWatercolorHillsPainting = defineItem({
+  id: 'sage-watercolor-hills-painting',
+  name: 'Horizontal sage watercolor hills painting',
+  category: 'decor',
+  type: 'decor',
+  group: 'Landscape paintings',
+  mount: 'wall',
+  wallSnap: true,
+  defaultElevation: 1.35,
+  resizable: { w: true, d: true, h: true },
+  tags: [
+    'painting',
+    'wall art',
+    'landscape painting',
+    'horizontal painting',
+    'watercolor',
+    'sage green',
+    'rolling hills',
+    'torn paper',
+    'minimalist art',
+    'botanical',
+    'framed art',
+    'living room',
+    'bedroom',
+    'tranh',
+    'tranh treo tường',
+    'tranh ngang',
+    'tranh chữ nhật ngang',
+    'tranh phong cảnh',
+    'tranh màu nước',
+  ],
+  description:
+    'A serene horizontal wall painting of layered sage, celadon and deep moss-green watercolor hills with hand-torn white deckle-paper edges against a warm off-white cotton paper sky; resize freely and choose a slim gallery float frame, white museum mat or frameless canvas.',
+  defaultSize: { w: 1.2, d: 0.04, h: 0.75 },
+  minSize: { w: 0.45, d: 0.025, h: 0.28 },
+  maxSize: { w: 2.4, d: 0.07, h: 1.5 },
+  price: { vnd: 1_450_000, estimate: true },
+  slots: [
+    matSlot('frame', 'Frame', 'wood-oak-light'),
+    matSlot('mat', 'Mat & canvas edge', 'fabric-white-cotton'),
+    matSlot('art', 'Artwork', 'sage-hills-art'),
+  ],
+  models: [
+    { id: 'gallery-float', name: 'Slim gallery float frame' },
+    { id: 'matted-frame', name: 'Framed with white museum mat', build: (s) => buildSageHillsPainting(s, 'matted') },
+    { id: 'frameless-canvas', name: 'Frameless gallery canvas', hide: ['frame'], build: (s) => buildSageHillsPainting(s, 'canvas') },
+  ],
+  variants: [
+    { id: 'natural-oak', name: 'Oak veneer', materials: { frame: 'laminate-oak' } },
+    { id: 'satin-white', name: 'Satin white', materials: { frame: 'paint-satin-white' } },
+    { id: 'matte-black', name: 'Matte black', materials: { frame: 'metal-black-matte' } },
+    { id: 'walnut', name: 'Walnut', materials: { frame: 'wood-walnut' } },
+    { id: 'brushed-brass', name: 'Brushed brass', materials: { frame: 'metal-brass' } },
+    { id: 'cream-lacquer', name: 'Cream lacquer', materials: { frame: 'laminate-cream' } },
+    { id: 'sage-green', name: 'Sage green', materials: { frame: 'laminate-sage' } },
+    { id: 'buttercream', name: 'Buttercream', materials: { frame: 'paint-butter' } },
+  ],
+  planDetail: ({ w, d, h }) => {
+    const t = clamp(Math.min(w, h) * 0.02, 0.009, 0.018);
+    return [line([-w / 2 + t, d / 2 - 0.003], [w / 2 - t, d / 2 - 0.003])];
+  },
+  build: (s) => buildSageHillsPainting(s, 'float'),
+});
+
 export default definePack({
   name: 'Soft-curve furniture & lighting',
-  version: '1.2.0',
+  version: '1.3.0',
   author: 'Neest',
   description:
-    'Sculptural, rounded pieces in walnut, oak, bouclé and velvet: a stacked-sphere pedestal table, a wall-backed peninsula table on a turned bead leg, an oval-back chair, a leaf pendant, a dome sconce, an arched tea table, a palm-leaf fan, a fluted oval coffee table, a floating vanity shelf, a shouldered mirror, a rounded-corner full-length wall mirror, a curved-waterfall shoe & towel cubby cabinet, a donut pouf and a rolled-headboard bed. All resize freely.',
+    'Sculptural, rounded pieces in walnut, oak, bouclé and velvet: a stacked-sphere pedestal table, a wall-backed peninsula table on a turned bead leg, an oval-back chair, a leaf pendant, a dome sconce, an arched tea table, a palm-leaf fan, a fluted oval coffee table, a floating vanity shelf, a shouldered mirror, a rounded-corner full-length wall mirror, a curved-waterfall shoe & towel cubby cabinet, a horizontal sage watercolor hills wall painting, a donut pouf and a rolled-headboard bed. All resize freely.',
   license: 'CC0-1.0',
-  items: [spherePedestalTable, wallPeninsulaBeadTable, ovalBackChair, leafPendant, domeSconce, archedTeaTable, palmLeafFan, flutedOvalTable, vanityShelf, shoulderedMirror, roundedRectWallMirror, shoeTowelCabinet, donutPouf, rolledBed],
+  patterns: packPatterns,
+  materials: packMaterials,
+  items: [
+    spherePedestalTable,
+    wallPeninsulaBeadTable,
+    ovalBackChair,
+    leafPendant,
+    domeSconce,
+    archedTeaTable,
+    palmLeafFan,
+    flutedOvalTable,
+    vanityShelf,
+    shoulderedMirror,
+    roundedRectWallMirror,
+    shoeTowelCabinet,
+    sageWatercolorHillsPainting,
+    donutPouf,
+    rolledBed,
+  ],
 });

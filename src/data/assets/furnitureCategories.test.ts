@@ -111,5 +111,12 @@ describe('furnitureCategories multi-category classification', () => {
     const bwm = furnitureCategoriesOf(balWin);
     expect(bwm.rooms).toEqual(expect.arrayContaining(['room:living', 'room:bedroom', 'room:outdoor']));
     expect(bwm.items).toEqual(expect.arrayContaining(['item:textiles', 'item:structure']));
+
+    // Horizontal sage watercolor hills wall painting belongs to Living room, Bedroom, and Decor & art
+    const sagePainting = ASSETS_BY_ID['soft-curve-furniture:sage-watercolor-hills-painting'];
+    expect(sagePainting).toBeDefined();
+    const spm = furnitureCategoriesOf(sagePainting);
+    expect(spm.rooms).toEqual(expect.arrayContaining(['room:living', 'room:bedroom']));
+    expect(spm.items).toContain('item:decor');
   });
 });

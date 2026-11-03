@@ -214,26 +214,44 @@ describe('pack models', () => {
     expect(withModel(desk, 'plain').build(desk.defaultSize).some((p) => p.slot === 'front')).toBe(false);
   });
 
-  it('builds balcony-window-double-curtains with parted sheers, blackout stacks, sliding sashes and optional railing', () => {
+  it('builds balcony-window-double-curtains with sliding glass window and double curtains only (no balcony railing)', () => {
     const win = ASSETS_BY_ID['curtain-collection:balcony-window-double-curtains'];
-    expect(assetModels(win).map((m) => m.id)).toEqual([
-      'balcony-railing',
-      'walk-out',
-      'closed-glass',
-      'sheer-drawn',
-      'all-drawn',
-    ]);
+    expect(assetModels(win).map((m) => m.id)).toEqual(['parted-open', 'closed-glass', 'sheer-drawn', 'all-drawn']);
 
     const defParts = win.build(win.defaultSize);
     expect(defParts.filter((p) => p.slot === 'sheer').length).toBe(2);
     expect(defParts.filter((p) => p.slot === 'blackout').length).toBe(2);
     expect(defParts.some((p) => p.slot === 'glass')).toBe(true);
-    // Railing model has vertical balusters behind the door frame; walk-out omits them.
-    const walkOutParts = withModel(win, 'walk-out').build(win.defaultSize);
-    expect(defParts.length).toBeGreaterThan(walkOutParts.length + 10);
+    // Window frame sits flush to the back wall (-d/2 + 4 mm), with no exterior railing balusters.
+    const closedParts = withModel(win, 'closed-glass').build(win.defaultSize);
+    expect(defParts.length).toBe(closedParts.length);
     // Sheer-drawn merges the sheer into a single continuous wave sheet across the width.
     const sheerDrawnParts = withModel(win, 'sheer-drawn').build(win.defaultSize);
     expect(sheerDrawnParts.filter((p) => p.slot === 'sheer').length).toBe(1);
+  });
+
+  it('builds the horizontal sage watercolor hills wall painting with procedural art and 3 frame models', () => {
+    const art = ASSETS_BY_ID['soft-curve-furniture:sage-watercolor-hills-painting'];
+    expect(art).toBeDefined();
+    expect(art.mount).toBe('wall');
+    expect(art.defaultSize.w).toBeGreaterThan(art.defaultSize.h);
+    expect(art.resizable).toEqual({ w: true, d: true, h: true });
+    expect(MATERIAL_CATALOG_BY_ID['soft-curve-furniture:sage-hills-art']?.texture?.patternId).toBe(
+      'soft-curve-furniture:sage-hills-watercolor',
+    );
+    expect(patternInfo('soft-curve-furniture:sage-hills-watercolor')?.colored).toBe(true);
+    expect(assetModels(art).map((m) => m.id)).toEqual(['gallery-float', 'matted-frame', 'frameless-canvas']);
+
+    const floatParts = art.build(art.defaultSize);
+    expect(floatParts.some((p) => p.slot === 'frame')).toBe(true);
+    expect(floatParts.some((p) => p.slot === 'art')).toBe(true);
+
+    const mattedParts = withModel(art, 'matted-frame').build({ w: 1.8, d: 0.045, h: 0.9 });
+    expect(mattedParts.filter((p) => p.slot === 'mat').length).toBeGreaterThanOrEqual(5);
+
+    const canvasParts = withModel(art, 'frameless-canvas').build({ w: 1.5, d: 0.035, h: 0.8 });
+    expect(canvasParts.some((p) => p.slot === 'frame')).toBe(false);
+    expect(canvasParts.some((p) => p.slot === 'art')).toBe(true);
   });
 
   it('reports badly formed models and keeps the good ones', () => {

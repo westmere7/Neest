@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1793668598334,
+  "updatedAt": 1793670668348,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -105,8 +105,8 @@
     },
     "n_hn3g6a0oii": {
       "id": "n_hn3g6a0oii",
-      "x": 2.6,
-      "y": 1.3599999999999994
+      "x": 2.4,
+      "y": 1.3599999999999997
     }
   },
   "walls": {
@@ -489,25 +489,6 @@
       },
       "locked": false,
       "hidden": false
-    },
-    "w_1s7nss57pi": {
-      "id": "w_1s7nss57pi",
-      "a": "n_hn3g6a0oii",
-      "b": "n_jv6513amah",
-      "thickness": 0.08,
-      "height": 2.7,
-      "baseElevation": 0,
-      "role": "partition",
-      "curve": null,
-      "materials": {
-        "left": "paint-warm-white",
-        "right": "paint-warm-white",
-        "top": "paint-pure-white"
-      },
-      "locked": false,
-      "hidden": false,
-      "style": "glass",
-      "styleMaterialId": "glass-clear"
     }
   },
   "openings": {
@@ -578,10 +559,10 @@
       "id": "win_v2h8znf6ps",
       "wallId": "w_3nh2215g9g",
       "kind": "window-single",
-      "offset": 0.76,
+      "offset": 0.885,
       "width": 1.1,
-      "height": 1.58,
-      "sillHeight": 0.9,
+      "height": 1.5,
+      "sillHeight": 1,
       "swingSide": "right",
       "hinge": "start",
       "openAngle": 0,
@@ -605,22 +586,6 @@
       "design": "win-slim",
       "frameMaterialId": "metal-anthracite",
       "panelMaterialId": "glass-clear"
-    },
-    "door_cvqy8waa07": {
-      "id": "door_cvqy8waa07",
-      "wallId": "w_1s7nss57pi",
-      "kind": "door-single",
-      "offset": 1.3,
-      "width": 0.9,
-      "height": 2.1,
-      "sillHeight": 0,
-      "swingSide": "left",
-      "hinge": "start",
-      "openAngle": 0,
-      "style": "glazed",
-      "design": "alu-clear",
-      "frameMaterialId": "paint-satin-white",
-      "panelMaterialId": "paint-satin-white"
     }
   },
   "rooms": {
@@ -655,45 +620,21 @@
       "name": "Living and Dining Room",
       "type": "living",
       "anchor": {
-        "x": 2.2686417810581267,
-        "y": 3.9680798738211127
+        "x": 2.2671857993434683,
+        "y": 2.6704892196191956
       },
       "boundaryWallIds": [
-        "w_1s7nss57pi",
         "w_25lple2f6s",
         "w_36njnulpwn",
-        "w_3nh2215g9g",
         "w_dogbv452x7",
+        "w_eufap7w644",
+        "w_f2wrra87el",
         "w_hs6qhzyomr",
         "w_pb2plwwg9b",
+        "w_xxryuyg8se",
         "w_yh679e85vf"
       ],
       "floorMaterialId": "wood-oak-natural",
-      "ceilingMaterialId": "paint-ceiling-white",
-      "showCeiling": true,
-      "ceilingHeight": null,
-      "showLabel": true,
-      "labelOffset": {
-        "x": 0,
-        "y": 0
-      }
-    },
-    "room_t6klkf7d1u": {
-      "id": "room_t6klkf7d1u",
-      "name": "Room 1",
-      "type": "other",
-      "anchor": {
-        "x": 2.2033866817771792,
-        "y": 0.6607491728437827
-      },
-      "boundaryWallIds": [
-        "w_1s7nss57pi",
-        "w_3nh2215g9g",
-        "w_eufap7w644",
-        "w_f2wrra87el",
-        "w_xxryuyg8se"
-      ],
-      "floorMaterialId": "concrete-grey",
       "ceilingMaterialId": "paint-ceiling-white",
       "showCeiling": true,
       "ceilingHeight": null,
@@ -1990,12 +1931,12 @@
       "id": "obj_ms09pgk8ji",
       "assetId": "rug-rect",
       "name": null,
-      "x": 1.05,
-      "y": 2.95,
+      "x": 0.93,
+      "y": 2.93,
       "elevation": 0,
       "rotation": 4.71238898038469,
-      "width": 2,
-      "depth": 1.4,
+      "width": 1.825,
+      "depth": 1.16,
       "height": 0.01,
       "mirrored": false,
       "materials": {
@@ -2425,8 +2366,8 @@
       "id": "obj_o72l5z3lq0",
       "assetId": "couches:piped-track-arm-2-seat",
       "name": null,
-      "x": 1.9500000000000002,
-      "y": 2.95,
+      "x": 1.99,
+      "y": 2.945,
       "elevation": 0,
       "rotation": 1.5707963267948966,
       "width": 1.6,
@@ -2486,7 +2427,7 @@
       "name": null,
       "x": 0.9,
       "y": 6,
-      "elevation": 0,
+      "elevation": 0.05,
       "rotation": 0,
       "width": 1.64,
       "depth": 0.08,
@@ -2496,22 +2437,6 @@
       "locked": false,
       "hidden": false,
       "layerId": "lay_aptbase01"
-    },
-    "obj_5pbncga7kh": {
-      "id": "obj_5pbncga7kh",
-      "assetId": "paintings:chosui-portrait-of-rabbit",
-      "name": null,
-      "x": 0.04799999999999999,
-      "y": 6.884958690539396,
-      "elevation": 1.291,
-      "rotation": -1.5707963267948966,
-      "width": 0.648,
-      "depth": 0.03,
-      "height": 0.519,
-      "mirrored": false,
-      "materials": {},
-      "locked": false,
-      "hidden": false
     },
     "obj_tsc35vidk0": {
       "id": "obj_tsc35vidk0",
@@ -2737,12 +2662,12 @@
       "id": "obj_9j2l6m6jm4",
       "assetId": "l-desks:soft-curve-avocado-l-desk-left",
       "name": null,
-      "x": 0.8,
+      "x": 0.9500000000000001,
       "y": 5.2,
       "elevation": 0,
       "rotation": -1.5707963267948966,
       "width": 1.51,
-      "depth": 1.41,
+      "depth": 1.71,
       "height": 0.75,
       "mirrored": false,
       "materials": {
@@ -2774,28 +2699,25 @@
       "id": "obj_2hkuvui1ch",
       "assetId": "wall-shelf",
       "name": null,
-      "x": 3.4295465325660492,
-      "y": 1.5014884680016196,
-      "elevation": 0.7620112043973664,
+      "x": 3.45,
+      "y": 1.55,
+      "elevation": 0.8,
       "rotation": 2.1984614349013e-16,
-      "width": 0.68,
+      "width": 0.69,
       "depth": 0.24,
-      "height": 0.2,
+      "height": 0.22,
       "mirrored": false,
-      "materials": {
-        "board": "paint-warm-white"
-      },
+      "materials": {},
       "locked": false,
-      "hidden": false,
-      "groupId": "grp_hhb32imtgo"
+      "hidden": false
     },
     "obj_ny7fm6k0z2": {
       "id": "obj_ny7fm6k0z2",
       "assetId": "vietnamese-home:phin-coffee-set",
       "name": null,
-      "x": 3.5824334440134122,
-      "y": 1.4802489007898347,
-      "elevation": 0.962,
+      "x": 3.585,
+      "y": 1.555,
+      "elevation": 1.02,
       "rotation": 0.21736009034338377,
       "width": 0.26,
       "depth": 0.18,
@@ -2803,8 +2725,7 @@
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false,
-      "groupId": "grp_hhb32imtgo"
+      "hidden": false
     },
     "obj_h6sjt5li84": {
       "id": "obj_h6sjt5li84",
@@ -2820,8 +2741,7 @@
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false,
-      "groupId": "grp_hhb32imtgo"
+      "hidden": false
     },
     "obj_znnzvjmhib": {
       "id": "obj_znnzvjmhib",
@@ -2834,22 +2754,6 @@
       "width": 0.25,
       "depth": 0.3,
       "height": 1.6,
-      "mirrored": false,
-      "materials": {},
-      "locked": false,
-      "hidden": false
-    },
-    "obj_aif8hr60am": {
-      "id": "obj_aif8hr60am",
-      "assetId": "houseplants:monstera",
-      "name": null,
-      "x": 1.75,
-      "y": 5.7,
-      "elevation": 0,
-      "rotation": 0,
-      "width": 0.665,
-      "depth": 0.665,
-      "height": 0.875,
       "mirrored": false,
       "materials": {},
       "locked": false,
@@ -2962,22 +2866,6 @@
       "locked": false,
       "hidden": false
     },
-    "obj_macrzzm1nv": {
-      "id": "obj_macrzzm1nv",
-      "assetId": "people:man-sofa",
-      "name": null,
-      "x": 1.6500000000000001,
-      "y": 3.35,
-      "elevation": 0,
-      "rotation": 1.5707963267948966,
-      "width": 0.589,
-      "depth": 1.167,
-      "height": 1.278,
-      "mirrored": false,
-      "materials": {},
-      "locked": false,
-      "hidden": false
-    },
     "obj_6v7lr84h3u": {
       "id": "obj_6v7lr84h3u",
       "assetId": "lived-in:shared-family-dishes",
@@ -3063,7 +2951,7 @@
       "assetId": "soft-curve-furniture:rounded-rect-wall-mirror",
       "name": null,
       "x": 4.4795,
-      "y": 6.16,
+      "y": 6.295,
       "elevation": 0.5,
       "rotation": 1.5707963267948966,
       "width": 0.42,
@@ -3073,22 +2961,6 @@
       "materials": {
         "frame": "paint-satin-white"
       },
-      "locked": false,
-      "hidden": false
-    },
-    "obj_h7lpadhq58": {
-      "id": "obj_h7lpadhq58",
-      "assetId": "paintings:hiroshige-oystercatchers",
-      "name": null,
-      "x": 4.482,
-      "y": 6.931209569250805,
-      "elevation": 1.7000000000000002,
-      "rotation": 1.5707963267948966,
-      "width": 0.758,
-      "depth": 0.03,
-      "height": 0.566,
-      "mirrored": false,
-      "materials": {},
       "locked": false,
       "hidden": false
     },
@@ -3129,7 +3001,7 @@
       "assetId": "soft-curve-furniture:curved-shoe-towel-cubby-cabinet",
       "name": null,
       "x": 4.317,
-      "y": 7.07,
+      "y": 7.17,
       "elevation": 0,
       "rotation": 1.5707963267948966,
       "width": 0.8,
@@ -3172,6 +3044,58 @@
       "materials": {},
       "locked": false,
       "hidden": false
+    },
+    "obj_pmm6zs86tx": {
+      "id": "obj_pmm6zs86tx",
+      "assetId": "curtain-collection:balcony-window-double-curtains",
+      "name": null,
+      "x": 1.21,
+      "y": 1.43,
+      "elevation": 0,
+      "rotation": 0,
+      "width": 2.41,
+      "depth": 0.24,
+      "height": 2.7,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
+    },
+    "obj_nv1cqrngy7": {
+      "id": "obj_nv1cqrngy7",
+      "assetId": "soft-curve-furniture:sage-watercolor-hills-painting",
+      "name": null,
+      "x": 0.05299999999999999,
+      "y": 7.23,
+      "elevation": 1.2000000000000002,
+      "rotation": -1.5707963267948966,
+      "width": 0.9,
+      "depth": 0.04,
+      "height": 0.57,
+      "mirrored": false,
+      "materials": {
+        "frame": "paint-satin-white"
+      },
+      "locked": false,
+      "hidden": false
+    },
+    "obj_r77r0zqidr": {
+      "id": "obj_r77r0zqidr",
+      "assetId": "soft-curve-furniture:sage-watercolor-hills-painting",
+      "name": null,
+      "x": 4.482,
+      "y": 7.1450000000000005,
+      "elevation": 1.5,
+      "rotation": 1.5707963267948966,
+      "width": 0.95,
+      "depth": 0.03,
+      "height": 0.51,
+      "mirrored": false,
+      "materials": {
+        "frame": "paint-satin-white"
+      },
+      "locked": false,
+      "hidden": false
     }
   },
   "groups": {
@@ -3191,10 +3115,6 @@
     "grp_cuk80qqr1s": {
       "id": "grp_cuk80qqr1s",
       "name": "Kitchen wall cabinet + 2 more"
-    },
-    "grp_hhb32imtgo": {
-      "id": "grp_hhb32imtgo",
-      "name": "Floating wall shelf & aloe vera with pups + 1 more"
     },
     "grp_dwpzg2iteh": {
       "id": "grp_dwpzg2iteh",
@@ -3319,6 +3239,58 @@
       },
       "lift": 0.7,
       "title": "Treo quần áo mặc dở",
+      "note": "",
+      "showInfo": true,
+      "color": "teal",
+      "hidden": false,
+      "box": "card",
+      "size": "m",
+      "line": "solid",
+      "lineWeight": "regular",
+      "end": "dot",
+      "endSize": "m",
+      "highlight": true
+    },
+    "call_w3txtk1ixx": {
+      "id": "call_w3txtk1ixx",
+      "target": {
+        "kind": "point",
+        "x": 4.147,
+        "y": 7.371,
+        "z": 0.65
+      },
+      "offset": {
+        "x": 0.35,
+        "y": -0.3
+      },
+      "lift": 0.7,
+      "title": "Chiều ngang phải đủ 3 đôi giày, cái tủ hiện tại đủ 2.5 đôi rất bực",
+      "note": "",
+      "showInfo": true,
+      "color": "teal",
+      "hidden": false,
+      "box": "card",
+      "size": "m",
+      "line": "solid",
+      "lineWeight": "regular",
+      "end": "dot",
+      "endSize": "m",
+      "highlight": true
+    },
+    "call_jd4wlse3ef": {
+      "id": "call_jd4wlse3ef",
+      "target": {
+        "kind": "point",
+        "x": 4.5,
+        "y": 5.701873565885691,
+        "z": 1.19
+      },
+      "offset": {
+        "x": 0.35,
+        "y": -0.3
+      },
+      "lift": 0.7,
+      "title": "Chỗ này nên để trống tuỳ mục đích sử dụng (chỗ tập gym, kệ, ...)",
       "note": "",
       "showInfo": true,
       "color": "teal",
@@ -6666,6 +6638,133 @@
         "name": "Neest starter library",
         "license": "Original (procedural, CC0-compatible)"
       }
+    },
+    "curtain-collection:blackout-greige": {
+      "id": "curtain-collection:blackout-greige",
+      "name": "Greige blackout",
+      "category": "fabric",
+      "color": "#b4aa9b",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.06,
+        "rotation": 0,
+        "contrast": 0.25
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "curtain-collection:blackout-greige",
+      "source": {
+        "name": "Curtain collection pack by Neest",
+        "license": "CC0-1.0"
+      }
+    },
+    "curtain-collection:sheer-ivory": {
+      "id": "curtain-collection:sheer-ivory",
+      "name": "Ivory sheer voile",
+      "category": "fabric",
+      "color": "#f2ead8",
+      "roughness": 0.9,
+      "metalness": 0,
+      "opacity": 0.48,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.03,
+        "rotation": 0,
+        "contrast": 0.25
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "curtain-collection:sheer-ivory",
+      "source": {
+        "name": "Curtain collection pack by Neest",
+        "license": "CC0-1.0"
+      }
+    },
+    "curtain-collection:linen-oat": {
+      "id": "curtain-collection:linen-oat",
+      "name": "Oat linen",
+      "category": "fabric",
+      "color": "#d9cdb8",
+      "roughness": 0.95,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "patternId": "weave",
+        "scale": 0.08,
+        "rotation": 0,
+        "contrast": 0.45
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "curtain-collection:linen-oat",
+      "source": {
+        "name": "Curtain collection pack by Neest",
+        "license": "CC0-1.0"
+      }
+    },
+    "laminate-oak": {
+      "id": "laminate-oak",
+      "name": "Oak-effect laminate",
+      "category": "laminate",
+      "color": "#cca77b",
+      "roughness": 0.5,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 0.7,
+        "patternId": "wood-grain",
+        "scale": 1
+      },
+      "photo": {
+        "setId": "oak-veneer",
+        "scale": 1.2,
+        "rotation": 0,
+        "contrast": 0.8,
+        "enabled": true
+      },
+      "overrideOf": null,
+      "catalogId": "laminate-oak",
+      "source": {
+        "name": "Neest starter library · photo: Poly Haven oak_veneer_01",
+        "license": "CC0 1.0 (photo texture); procedural fallback original",
+        "url": "https://polyhaven.com/a/oak_veneer_01"
+      }
+    },
+    "paint-butter": {
+      "id": "paint-butter",
+      "name": "Butter yellow",
+      "category": "paint",
+      "color": "#efdfa8",
+      "roughness": 0.9,
+      "metalness": 0,
+      "opacity": 1,
+      "emissive": null,
+      "emissiveIntensity": 0,
+      "texture": {
+        "rotation": 0,
+        "contrast": 0.35,
+        "patternId": "paint",
+        "scale": 1.2
+      },
+      "photo": null,
+      "overrideOf": null,
+      "catalogId": "paint-butter",
+      "source": {
+        "name": "Neest starter library",
+        "license": "Original (procedural, CC0-compatible)"
+      }
     }
   },
   "customAssets": {},
@@ -6699,7 +6798,7 @@
     "envIntensity": 0.3,
     "shadows": true,
     "background": "#4d5c66",
-    "wallDisplay": "full",
+    "wallDisplay": "cutaway",
     "cutawayHeight": 0.35,
     "cutawayExternalOnly": false,
     "showCeilings": false,

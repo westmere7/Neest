@@ -77,6 +77,10 @@
    "file": "05b1a7d663c31e82.webp",
    "tile": true
   },
+  "05beed723709cac2": {
+   "file": "05beed723709cac2.webp",
+   "tile": true
+  },
   "064906e909c0b590": {
    "file": "064906e909c0b590.webp",
    "tile": false
@@ -4380,6 +4384,7 @@
   "shelving:terry-towel": "ac56135f1db23396",
   "shelving:walnut-veneer": "c08e6b0e0c750d03",
   "shelving:white-wicker": "7539955d442ecee4",
+  "soft-curve-furniture:sage-hills-art": "05beed723709cac2",
   "soft-curve-kitchen:cream-glaze": "f77a59359153f057",
   "soft-curve-kitchen:sand-glaze": "c5140967eec5fb31",
   "soft-curve-kitchen:terracotta-glaze": "54c5a0cfd1802700",

@@ -1899,23 +1899,19 @@
   },
   "curtain-collection:balcony-window-double-curtains": {
    "file": "curtain-collection_balcony-window-double-curtains.webp",
-   "fp": "94578c61bf55e1c0"
+   "fp": "5239e77e1249762c"
   },
   "curtain-collection:balcony-window-double-curtains@model:all-drawn": {
    "file": "curtain-collection_balcony-window-double-curtains_model_all-drawn.webp",
-   "fp": "8aad773e1b6dfacf"
+   "fp": "a847d5ae3e8f5a33"
   },
   "curtain-collection:balcony-window-double-curtains@model:closed-glass": {
    "file": "curtain-collection_balcony-window-double-curtains_model_closed-glass.webp",
-   "fp": "de260097ef97f558"
+   "fp": "5d020396801924cf"
   },
   "curtain-collection:balcony-window-double-curtains@model:sheer-drawn": {
    "file": "curtain-collection_balcony-window-double-curtains_model_sheer-drawn.webp",
-   "fp": "97305876f57a7d3d"
-  },
-  "curtain-collection:balcony-window-double-curtains@model:walk-out": {
-   "file": "curtain-collection_balcony-window-double-curtains_model_walk-out.webp",
-   "fp": "fa757d5d7cb4e9a0"
+   "fp": "1dfffe9e56b74802"
   },
   "curtain-collection:cafe-curtain": {
    "file": "curtain-collection_cafe-curtain.webp",
@@ -4452,6 +4448,18 @@
   "soft-curve-furniture:rounded-rect-wall-mirror@model:wood-frame": {
    "file": "soft-curve-furniture_rounded-rect-wall-mirror_model_wood-frame.webp",
    "fp": "6ae6b017b5253123"
+  },
+  "soft-curve-furniture:sage-watercolor-hills-painting": {
+   "file": "soft-curve-furniture_sage-watercolor-hills-painting.webp",
+   "fp": "ac8e8655aa9ebf68"
+  },
+  "soft-curve-furniture:sage-watercolor-hills-painting@model:frameless-canvas": {
+   "file": "soft-curve-furniture_sage-watercolor-hills-painting_model_frameless-canvas.webp",
+   "fp": "733e654a24fda71d"
+  },
+  "soft-curve-furniture:sage-watercolor-hills-painting@model:matted-frame": {
+   "file": "soft-curve-furniture_sage-watercolor-hills-painting_model_matted-frame.webp",
+   "fp": "2bdbcb977e747003"
   },
   "soft-curve-furniture:shouldered-mirror": {
    "file": "soft-curve-furniture_shouldered-mirror.webp",
