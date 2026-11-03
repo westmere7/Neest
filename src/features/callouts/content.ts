@@ -205,6 +205,19 @@ export function noteHeading(c: Callout, info: string[]): string {
   return info.length && (c.target.kind === 'object' || c.target.kind === 'room') ? info.shift()! : '';
 }
 
+/** What a note points at, in a few words: General, the item's or room's name, Area (size) or Spot. */
+export function noteTargetLabel(project: Project, c: Callout): string {
+  const t = c.target;
+  if (t.kind === 'general') return 'General';
+  if (t.kind === 'object') {
+    const o = project.objects[t.objectId];
+    return o ? o.name || getObjectAsset(project, o)?.name || 'Item' : 'Item';
+  }
+  if (t.kind === 'room') return project.rooms[t.roomId]?.name || 'Room';
+  if (t.kind === 'region') return `Area (${formatArea(calloutRegionArea(t), project.settings.areaUnit, project.settings.precision)})`;
+  return 'Spot';
+}
+
 /** All lines of a callout label: facts (when shown; an item or room name as a heading), then the note, wrapped. */
 export function calloutLines(project: Project, derived: DerivedPlan | null, c: Callout, width = CALLOUT_WRAP): Line[] {
   const out: Line[] = [];

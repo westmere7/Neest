@@ -19,6 +19,7 @@ import { MaterialRegistry } from '@/features/scene-3d/materialRegistry';
 import { loadProjectModels } from '@/features/scene-3d/customModels';
 import { isObjectHidden } from '@/domain/commands/itemLayers';
 import { guestLayerId } from '@/domain/walkthrough/guest';
+import { isCeilingItem } from '@/data/assets/catalog';
 
 export interface SceneExportOptions {
   ceilings: boolean;
@@ -53,14 +54,15 @@ function roleGroup(name: string, role: SceneRole): THREE.Group {
  * baked into canvases (embedded by the exporter, never referenced by URL);
  * materials whose photo files are unavailable keep their procedural texture.
  */
-export async function buildExportScene(project: Project, o: SceneExportOptions): Promise<{ root: THREE.Group; registry: MaterialRegistry }> {
+export async function buildExportScene(
+  project: Project,
+  o: SceneExportOptions,
+  shared?: { registry: MaterialRegistry; models: Awaited<ReturnType<typeof loadProjectModels>> },
+): Promise<{ root: THREE.Group; registry: MaterialRegistry }> {
   const derived = derivePlan(project);
   const extIds = externalWallIds(derived);
-  const registry = new MaterialRegistry();
-  registry.normalMaps = !!o.surfaceDetail;
-  registry.exportDetail = !!o.surfaceDetail;
-  registry.bakePhotoSize = o.textureSize ?? 1024;
-  const models = await loadProjectModels(project.customAssets);
+  const registry = shared?.registry ?? exportRegistry(o);
+  const models = shared?.models ?? (await loadProjectModels(project.customAssets));
   const ctx: BuildContext = { project, registry, customModels: models, shadows: false };
   const root = new THREE.Group();
   root.name = project.name;
@@ -138,7 +140,10 @@ export async function buildExportScene(project: Project, o: SceneExportOptions):
         furn.add(lg);
       }
       const g = buildObject(obj, ctx);
-      g.name = obj.name ?? getAsset(project, obj.assetId)?.name ?? obj.assetId;
+      const asset = getAsset(project, obj.assetId);
+      g.name = obj.name ?? asset?.name ?? obj.assetId;
+      // Pendants, ceiling lights and fans: the guest viewer hides them while orbiting.
+      if (isCeilingItem(asset)) g.userData.neestCeiling = true;
       lg.add(g);
     }
     root.add(furn);
@@ -148,6 +153,14 @@ export async function buildExportScene(project: Project, o: SceneExportOptions):
   await registry.whenPhotosReady(60000);
   root.updateMatrixWorld(true);
   return { root, registry };
+}
+
+function exportRegistry(o: SceneExportOptions): MaterialRegistry {
+  const registry = new MaterialRegistry();
+  registry.normalMaps = !!o.surfaceDetail;
+  registry.exportDetail = !!o.surfaceDetail;
+  registry.bakePhotoSize = o.textureSize ?? 1024;
+  return registry;
 }
 
 /**
@@ -178,9 +191,31 @@ function indexGeometries(root: THREE.Object3D): () => void {
 /** Binary glTF (GLB) of the project scene. */
 export async function exportGlb(project: Project, o: SceneExportOptions): Promise<ArrayBuffer> {
   const { root, registry } = await buildExportScene(project, o);
+  return writeGlb([root], registry, o);
+}
+
+/**
+ * One GLB holding several layout options (each project is one option, in order): a top-level group
+ * per option with `userData.neestOption` = its index. The options share one material registry, so
+ * materials, textures and cached part geometry are stored once however many options use them.
+ */
+export async function exportOptionsGlb(projects: Project[], o: SceneExportOptions): Promise<ArrayBuffer> {
+  const registry = exportRegistry(o);
+  const models = await loadProjectModels(projects[0]?.customAssets ?? {});
+  const roots: THREE.Group[] = [];
+  for (const [i, p] of projects.entries()) {
+    const { root } = await buildExportScene(p, o, { registry, models });
+    root.name = `Option ${i + 1}`;
+    root.userData.neestOption = i;
+    roots.push(root);
+  }
+  return writeGlb(roots, registry, o);
+}
+
+async function writeGlb(roots: THREE.Group[], registry: MaterialRegistry, o: SceneExportOptions): Promise<ArrayBuffer> {
   const scene = new THREE.Scene();
-  scene.add(root);
-  const unindex = indexGeometries(root);
+  for (const root of roots) scene.add(root);
+  const unindex = indexGeometries(scene);
   try {
     const exporter = new GLTFExporter();
     const result = await exporter.parseAsync(scene, { binary: true, onlyVisible: true, maxTextureSize: o.textureSize ?? 1024 });
@@ -188,7 +223,7 @@ export async function exportGlb(project: Project, o: SceneExportOptions): Promis
     return result;
   } finally {
     unindex();
-    disposeTree(root);
+    for (const root of roots) disposeTree(root);
     registry.dispose();
   }
 }

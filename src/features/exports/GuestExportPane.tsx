@@ -15,6 +15,7 @@ import {
   Toggle,
 } from '@/components/ui';
 import { navigate } from '@/app/App';
+import { listOptions } from '@/domain/commands/options';
 import { downloadBlob, exportFilename } from './neestFile';
 
 interface PaneProps {
@@ -72,6 +73,8 @@ export function GuestExport({ project, busy, run }: PaneProps) {
   const order = g.viewIds ?? project.cameras.map((c) => c.id);
   const layers = guestLayers({ ...project, guest: { ...g, hiddenItems: true } });
   const hiddenLayers = layers.filter((l) => !l.on).length;
+  const { options, activeId } = listOptions(project);
+  const activeName = options.find((o) => o.id === activeId)?.name ?? 'the current option';
   const setViews = (ids: string[]) => setGuest('Choose guest views', { viewIds: ids });
   const moveView = (id: string, by: number) => {
     const ids = [...order];
@@ -107,8 +110,8 @@ export function GuestExport({ project, busy, run }: PaneProps) {
     <div className="export-pane guest-export">
       <h3>Guest walkthrough</h3>
       <p className="field-hint">
-        One self-contained HTML file with the 3D model, saved views, a 2D plan, first-person walking and
-        flying. Recipients just open it in a browser — no Neest account, no internet connection, nothing
+        One self-contained HTML file with the 3D model, layout options, notes, saved views, a 2D plan,
+        first-person walking and flying. Recipients just open it in a browser — no Neest account, no internet connection, nothing
         loaded from your device. These settings also apply to the in-app Guest view.
       </p>
 
@@ -297,11 +300,32 @@ export function GuestExport({ project, busy, run }: PaneProps) {
           />
         </div>
         <p className="field-hint">
-          Guests can also fly (F or the Fly button) and change speed with the mouse wheel.
+          Guests can also fly (F), walk through walls and furniture (G or Ghost) and change speed with the
+          mouse wheel.
         </p>
       </Section>
 
       <Section title="What guests see">
+        {options.length > 1 && (
+          <div className="field">
+            <span className="field-label">Layout options</span>
+            <Segmented<GuestSettings['options']>
+              label="Layout options"
+              size="sm"
+              value={g.options}
+              onChange={(v) => setGuest('Set guest layout options', { options: v })}
+              options={[
+                { value: 'all', label: `All ${options.length}` },
+                { value: 'active', label: 'Current only' },
+              ]}
+            />
+            <p className="field-hint">
+              {g.options === 'all'
+                ? `Guests switch between ${options.map((o) => o.name).join(', ')}; the file opens on ${activeName}.`
+                : `Only ${activeName} goes in the file.`}
+            </p>
+          </div>
+        )}
         <div className="field">
           <span className="field-label">Notes</span>
           <Segmented<GuestSettings['notes']>
@@ -316,6 +340,14 @@ export function GuestExport({ project, busy, run }: PaneProps) {
             ]}
           />
         </div>
+        {g.notes !== 'off' && (
+          <Toggle
+            label="Note pictures"
+            hint="In the Notes list, where guests read every note in full"
+            checked={g.noteImages}
+            onChange={(noteImages) => setGuest('Toggle guest note pictures', { noteImages })}
+          />
+        )}
         <Toggle
           label="Room names"
           checked={g.roomLabels}
@@ -364,8 +396,9 @@ export function GuestExport({ project, busy, run }: PaneProps) {
           />
         )}
         <p className="field-hint">
-          Guests can switch walls, ceilings, notes, room names, item layers and quality in the viewer's View
-          panel.
+          Guests can switch walls, ceilings, note labels, room names, item layers and quality in the viewer's
+          View panel. Ceiling lights and fans are hidden while orbiting (shown when walking) unless guests
+          turn them on there.
         </p>
       </Section>
 

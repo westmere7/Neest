@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-03 (Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-03 (guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -288,7 +288,9 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   duplicating (also "same walls, no furniture" and blank), renaming, reordering and deleting are ordinary undoable
   commands; the selection is cleared on a switch (ids belong to one option). No `options` = one implicit "Option A".
   Anything that must reach every option (e.g. `deleteMaterial` reassigning a material) uses `inEveryOption`.
-  Exports, the guest viewer and stats show the active option. The popover is portalled to `<body>` (above panels).
+  Exports, the in-app Guest view and stats show the active option; the guest HTML export carries every option (or only
+  the active one, `guest.options`) and guests switch between them (§14). `projectWithOption(p, id)` gives the project
+  with another option switched in, read-only. The popover is portalled to `<body>` (above panels).
   Pitfall: immer does not draft plain values assigned into a draft, so `putPlan` deep-copies any non-draft plan;
   otherwise editing a just-duplicated option in the same recipe wrote into the original option and undo history.
 - **Ready-made groups** (`src/data/groups/readyGroups.ts`): furnished setups shipped with Neest (bedrooms, living rooms,
@@ -529,8 +531,8 @@ a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens 
   of 3.3 MB stored 18 KB). Add with the Add image button, paste into the note field, or drop on the image strip (editor,
   Notes panel composer and inline edit: `NoteImages.tsx › NoteImagesEditor`). **Shown only in the full view**: the
   Notes panel, the Inspector and the editor (`CalloutCard images`), with a click-to-enlarge viewer (arrows, Esc closes
-  only the viewer). Floating labels in the plan and 3D, render captures, sheets, DXF and the guest export never show
-  or carry them.
+  only the viewer). Floating labels in the plan and 3D, render captures, sheets and DXF never show or carry them. The
+  guest HTML export carries them only in its Notes list (`guest.noteImages`, on by default), never on its labels.
 - Style fields on `Callout` (all defaulted, so old notes keep the original look): `box` card/solid/outline/text,
   `size` s/m/l, `line` solid/dashed/dotted/none, `lineWeight` thin/regular/bold, `end` dot/ring/arrow/none,
   `endSize` s/m/l, `highlight` (shade the target). `style.ts` holds the shared numbers (`labelColors`,
@@ -716,13 +718,21 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   ¼×–8× flying, kept separately for walk and fly while the page is open); the walk HUD shows it (`walk-speed`). The
   guest viewer does the same for walking and shows it in its hint. Trackpad gestures are unchanged.
 - Guest view (`#/guest/:id`, `GuestPage.tsx`) is view-only; the exported guest HTML embeds a GLB + the standalone
-  runtime (`src/guest-viewer/main.ts`). Both follow `project.guest` (see §14 "Guest walkthrough") and offer the same
+  runtime (`src/guest-viewer/main.ts`). **Only the HTML export** has: a **Layout** switcher under the title (one button per
+  option; switching swaps the model group, colliders, lamps, labels, notes, overview, layer list and plan drawing, keeps
+  the camera and walker), a **Notes** list (bar switch; every note of the shown option in full — target kind, facts,
+  paragraphs and lists, links, pictures with a picture viewer: arrows, Esc closes only it, click outside closes; **Show**
+  glides the orbit view in from above the walls, about 5.5–9 m out, or turns the walker towards it, and flashes its
+  label; general notes have no Show), **ceiling items hidden while orbiting** (pendants, ceiling lights, fans, hanging
+  plants, projectors: `isCeilingItem` = ceiling-mounted and not structure, so beams, soffits, arches and portals stay;
+  shown when walking, View panel → "Ceiling lights & fans"; their lamps keep shining) and **Ghost** walking (bar switch
+  or G while walking: walls and furniture let you through, still at eye height, kept within 2 m of the plan). Both follow `project.guest` (see §14 "Guest walkthrough") and offer the same
   things: saved views in the chosen order (+ Overview/Top), a 2D plan (pan/zoom, click a spot to walk there), walking
   with free-fly, a tour, an Overview panel (`domain/geometry/overview.ts › planOverview`, shared with the Inspector)
   and a View panel (walls full/cutaway, ceilings, notes, room names, item layers, quality, shadows), full screen,
   the app's loading screen (`FirstFrames.tsx` + `SceneLoading`), and a phone layout. Bottom-bar controls are of two
   kinds: the action button (filled: Walk through / Exit) and on/off switches (label + small switch, `aria-pressed`:
-  Fly, Tour, Info, View, Full screen); view buttons show the current view as a filled pill.
+  Fly, Ghost, Tour, Info, Notes, View, Full screen); view buttons show the current view as a filled pill.
 
 ## 12. Library & materials
 
@@ -1232,7 +1242,7 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
 | 3D render PNG (real-time) | `sceneRuntime.captureView`: renders the live scene with a clone of the live camera at the requested size (same position/orientation/vertical FOV, view offset cleared) |
 | 3D render PNG (path traced) | Render dialog → engine "Path traced": `renderPathTraced` with samples 32/128/512/1024, bounces 3/5/8, optional transparent background (§11) |
 | GLB | `sceneExport.ts`: standalone scene from the same builders → GLTFExporter (binary). The export registry bakes photo colour maps into canvases (1K for 2K floor sets, 512 px otherwise, JPEG in the GLB, colour gain folded in so glTF factors stay ≤ 1), skips normal/roughness maps, and awaits loads (`whenPhotosReady`); unavailable photos fall back to procedural |
-| Guest walkthrough | `guestExport.ts › buildGuestData/buildGuestHtml`, pane `GuestExportPane.tsx`. One HTML file = inline viewer runtime (three.js included, ~625 kB) + gzipped base64 GLB + `GuestData` (cameras, spawn, colliders, lamps, item layers, notes, room labels, overview numbers, plan SVG, settings). Settings live on `project.guest` (Zod defaults; `domain/walkthrough/guest.ts` has `guestViews`, `guestAutoViews`, `guestSceneProject`, `guestLayers`): title/subtitle, welcome card, Overview panel open/button/off, views and order, Overview+Top, 2D plan, opening view, start orbit/walk, tour (+ seconds), walk speed, eye height, walk FOV, notes shown/hidden/left out, room names, ceilings, walls full/cutaway (+ height), hidden item layers (included, start hidden), quality fast/balanced/high, shadows, time of day, background, texture size 512/1K/2K, surface detail (normal + packed metallic-roughness maps, JPEG). The GLB has role groups (`userData.neestRole`: walls, walls-cut, wall-details, openings, rooms, ceilings, furniture) and one group per item layer (`userData.neestLayer`); the viewer clips openings/details at the cut height. `exportGlb` indexes unindexed geometry (`mergeVertices`, same look, several times smaller); the GLB is gzipped (`CompressionStream`; the viewer unpacks with `DecompressionStream`). The model is cached by its inputs, so the pane's size estimate and the download build it once. Fonts are system-only; nothing is loaded: no URLs, no storage (the only `blob:` URLs are GLTFLoader's in-page image decodes). Sample flat ≈ 14 MB (Standard), 6.6 MB (Small), 44 MB (Sharp 2K) |
+| Guest walkthrough | `guestExport.ts › buildGuestData/buildGuestHtml`, pane `GuestExportPane.tsx`. One HTML file = inline viewer runtime (three.js included, ~625 kB) + gzipped base64 GLB + `GuestData` (cameras, settings, union bounds, and `options[]`: per layout option its name, spawn, colliders, bounds, lamps, item layers, note labels (`callouts`, wrapped lines), the Notes list (`notes`: full blocks, facts, pictures, anchor, label index), room labels, overview numbers, plan SVG; `option` = the one it opens on). Settings live on `project.guest` (Zod defaults; `domain/walkthrough/guest.ts` has `guestViews`, `guestAutoViews`, `guestSceneProject`, `guestLayers`, `guestOptions`): title/subtitle, layout options all/active only, note pictures, welcome card, Overview panel open/button/off, views and order, Overview+Top, 2D plan, opening view, start orbit/walk, tour (+ seconds), walk speed, eye height, walk FOV, notes shown/hidden/left out, room names, ceilings, walls full/cutaway (+ height), hidden item layers (included, start hidden), quality fast/balanced/high, shadows, time of day, background, texture size 512/1K/2K, surface detail (normal + packed metallic-roughness maps, JPEG). The GLB (`sceneExport.ts › exportOptionsGlb`) has one top-level group per layout option (`userData.neestOption` = index), built with one shared `MaterialRegistry` so textures, materials and cached part geometry are stored once (two options of the sample flat ≈ the size of one); inside, role groups (`userData.neestRole`: walls, walls-cut, wall-details, openings, rooms, ceilings, furniture) one group per item layer (`userData.neestLayer`) and ceiling items flagged `userData.neestCeiling`; the viewer clips openings/details at the cut height. `exportGlb` indexes unindexed geometry (`mergeVertices`, same look, several times smaller); the GLB is gzipped (`CompressionStream`; the viewer unpacks with `DecompressionStream`). The model is cached by its inputs, so the pane's size estimate and the download build it once. Fonts are system-only; nothing is loaded: no URLs, no storage (the only `blob:` URLs are GLTFLoader's in-page image decodes). Sample flat ≈ 14 MB (Standard), 6.6 MB (Small), 44 MB (Sharp 2K) |
 | `.neest`, JSON summary | `neestFile.ts`, `report.ts` |
 
 The Export dialog opens instantly: `EditorDialogs` renders the dialog frame at once with a `<Suspense>` fallback
@@ -2016,3 +2026,10 @@ Known limitations (also in README):
      3D view, looked around in walk mode and turned item previews instead of zooming / changing speed, and the guest
      plan zoomed 0.6 % per notch. Mac notches are now read as wheel notches of 100 px (§16 pitfall); tests in
      `trackpad.test.ts`, checked with synthetic events in the plan and 3D view, not yet on a real Mac (done).
+167. "Revamp the export system for the multi options and note system: guests see notes and browse options; the 3D
+     non-walk view hides ceiling objects (lights, fans; keep arches and portals); add a non-collision walk mode that
+     ignores collision except the floor" + "I was referring to the HTML export option, focus on that" → guest HTML
+     export: every layout option in one file with a Layout switcher, a Notes list with pictures and Show, ceiling items
+     hidden while orbiting, Ghost walking; pane settings Layout options and Note pictures (§11, §14). The in-app Guest
+     view is unchanged. Tests in `guestExport.test.ts`; checked in an exported file (two options, Notes, picture
+     viewer, Show, Option B, Ghost through the sofa, phone layout) (done).

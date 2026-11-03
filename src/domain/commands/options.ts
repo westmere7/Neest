@@ -67,6 +67,17 @@ export function listOptions(p: Pick<Project, 'options' | 'activeOptionId' | 'cre
   return { options: [{ id: 'default', name: 'Option A', createdAt: p.createdAt, plan: null }], activeId: 'default' };
 }
 
+/**
+ * The project as it looks with option `id` switched in (read-only: nothing is stored or swapped). The
+ * active option, an unknown id or a project without options returns the project itself.
+ */
+export function projectWithOption(p: Project, id: string): Project {
+  const { options, activeId } = listOptions(p);
+  const o = options.find((x) => x.id === id);
+  if (!o?.plan || id === activeId) return p;
+  return { ...p, ...emptyPlan(), ...o.plan, activeOptionId: id };
+}
+
 /** Turns the implicit single layout into an explicit "Option A". */
 function ensureOptions(d: D): LayoutOption[] {
   if (!d.options?.length) {

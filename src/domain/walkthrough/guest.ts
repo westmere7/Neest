@@ -1,4 +1,5 @@
 import type { CameraPreset, GuestSettings, Project, RenderSettings } from '@/domain/model/schema';
+import { listOptions, projectWithOption } from '@/domain/commands/options';
 
 /** Saved views offered to guests, in the chosen order (all of them, in project order, when none were chosen). */
 export function guestViews(project: Pick<Project, 'cameras' | 'guest'>): CameraPreset[] {
@@ -45,6 +46,19 @@ export function guestSceneProject(project: Project): Project {
     showRoomLabels: g.roomLabels,
   };
   return { ...project, render };
+}
+
+/**
+ * The layout options in the guest file, each as the project with that option switched in. Every option
+ * in the switcher's order (`guest.options` 'all'), or only the active one. `start` is the active option.
+ */
+export function guestOptions(project: Project): { options: { id: string; name: string; project: Project }[]; start: number } {
+  const { options, activeId } = listOptions(project);
+  const shown = project.guest.options === 'active' ? options.filter((o) => o.id === activeId) : options;
+  return {
+    options: shown.map((o) => ({ id: o.id, name: o.name, project: projectWithOption(project, o.id) })),
+    start: Math.max(0, shown.findIndex((o) => o.id === activeId)),
+  };
 }
 
 /** Item layers guests can toggle: id ('' = Unassigned), name, colour and whether it starts shown. */

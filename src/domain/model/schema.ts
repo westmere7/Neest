@@ -625,6 +625,10 @@ export const GuestSettingsSchema = z
     walkFov: num.min(40).max(110).nullable().default(null),
     /** Notes: shown, included but hidden until the guest shows them, or left out. */
     notes: z.enum(['shown', 'hidden', 'off']).default('shown'),
+    /** The Notes list carries the notes' pictures (guests open them full size). */
+    noteImages: z.boolean().default(true),
+    /** Layout options in the file: every option (guests switch between them) or only the active one. */
+    options: z.enum(['all', 'active']).default('all'),
     /** Room names and areas while orbiting (guests can toggle them). */
     roomLabels: z.boolean().default(false),
     /** Ceilings start shown (guests can toggle them). */

@@ -8,10 +8,13 @@ import { guestLayers, guestSceneProject, guestViews } from '@/domain/walkthrough
 import { addItemLayer, setObjectsLayer, updateItemLayer } from '@/domain/commands/itemLayers';
 import { deleteCameraPreset } from '@/domain/commands/entities';
 import type { D } from '@/domain/commands/walls';
+import { addOption, projectWithOption, renameOption, switchOption } from '@/domain/commands/options';
+import { addCallout } from '@/domain/commands/callouts';
+import { isCeilingItem } from '@/data/assets/catalog';
 
 // The model needs WebGL and canvases (not in jsdom); the runtime is a build output. Both are stand-ins here.
-const exportGlb = vi.fn(async () => new Uint8Array([103, 108, 84, 70]).buffer);
-vi.mock('./sceneExport', () => ({ exportGlb: (...a: unknown[]) => exportGlb(...(a as [])) }));
+const exportGlb = vi.fn(async (_projects: Project[], _o: unknown) => new Uint8Array([103, 108, 84, 70]).buffer);
+vi.mock('./sceneExport', () => ({ exportOptionsGlb: (...a: unknown[]) => exportGlb(...(a as [Project[], unknown])) }));
 vi.mock('@/generated/guest-viewer.js?raw', () => ({
   default: 'window.__viewer = true; // runtime </script> stand-in',
 }));
@@ -43,6 +46,8 @@ describe('guest settings', () => {
       eyeHeight: 1.6,
       walkFov: null,
       notes: 'shown',
+      noteImages: true,
+      options: 'all',
       roomLabels: false,
       ceilings: true,
       info: 'open',
@@ -172,9 +177,15 @@ describe('guest export data', () => {
     expect(data.startMode).toBe('walk');
     expect(data.walk).toEqual({ speed: 1.41, eye: 1.7, fov: 80 });
     expect(data.notesHidden).toBe(true);
-    expect(data.callouts?.length).toBeGreaterThan(0);
+    // One layout option (the project has none of its own), opened on.
+    expect(data.options.map((o) => o.name)).toEqual(['Option A']);
+    expect(data.option).toBe(0);
+    const [opt] = data.options;
+    expect(opt.callouts.length).toBeGreaterThan(0);
+    expect(opt.notes.length).toBeGreaterThanOrEqual(opt.callouts.length);
     expect(data.roomsOn).toBe(true);
-    expect(data.rooms?.length).toBeGreaterThan(0);
+    expect(opt.rooms.length).toBeGreaterThan(0);
+    expect(opt.colliders.length).toBeGreaterThan(0);
     expect(data.ceilingsOn).toBe(false);
     expect(data.cutawayOn).toBe(true);
     expect(data.cutaway).toBe(1.1);
@@ -182,8 +193,8 @@ describe('guest export data', () => {
     expect(data.shadows).toBe(false);
     expect(data.lampBudgets?.fast).toEqual({ point: 0, spot: 0, shadows: 0 });
     expect(data.tour).toEqual({ seconds: 5, auto: true });
-    expect(data.info?.open).toBe(false);
-    expect(data.info?.stats.map(([k]) => k)).toEqual([
+    expect(opt.info?.open).toBe(false);
+    expect(opt.info?.stats.map(([k]) => k)).toEqual([
       'Rooms',
       'Floor area',
       'Items',
@@ -191,8 +202,8 @@ describe('guest export data', () => {
       'Windows',
       'Wall length',
     ]);
-    expect(data.info?.rooms.length).toBe(data.rooms?.length);
-    expect(data.plan).toMatch(/^<svg[^>]+viewBox="/);
+    expect(opt.info?.rooms.length).toBe(opt.rooms.length);
+    expect(opt.plan).toMatch(/^<svg[^>]+viewBox="/);
     // The model is gzipped and decodes back to the GLB.
     expect(data.glbEncoding).toBe('gzip');
     const bytes = Uint8Array.from(atob(data.glb), (c) => c.charCodeAt(0));
@@ -203,7 +214,7 @@ describe('guest export data', () => {
     );
     expect(new TextDecoder().decode(glb.subarray(0, 4))).toBe('glTF');
     expect(exportGlb).toHaveBeenLastCalledWith(
-      expect.anything(),
+      [expect.anything()],
       expect.objectContaining({ ceilings: true, cutaway: 1.1, textureSize: 512, surfaceDetail: false }),
     );
   });
@@ -213,9 +224,10 @@ describe('guest export data', () => {
       Object.assign(d.guest, { notes: 'off', floorPlan: false, info: 'off', timeOfDay: 8 });
     });
     const data = await buildGuestData(p);
-    expect(data.callouts).toEqual([]);
-    expect(data.plan).toBeNull();
-    expect(data.info).toBeNull();
+    expect(data.options[0].callouts).toEqual([]);
+    expect(data.options[0].notes).toEqual([]);
+    expect(data.options[0].plan).toBeNull();
+    expect(data.options[0].info).toBeNull();
     // The saved "Overview" view replaces the automatic one (no duplicate buttons).
     expect(data.cameras.map((c) => c.name)).toEqual(['Overview', 'Living room', 'Top']);
     expect(data.start).toBe(0);
@@ -236,8 +248,8 @@ describe('guest export data', () => {
     const html = await buildGuestHtml(p);
     // Note hyperlinks are links guests may click, not something the page loads.
     const links = new Set(
-      (await buildGuestData(p)).callouts!.flatMap((c) =>
-        c.lines.flatMap((l) => l.runs.flatMap((r) => (r.h ? [r.h] : []))),
+      (await buildGuestData(p)).options[0].notes.flatMap((n) =>
+        n.blocks.flatMap((b) => b.runs.flatMap((r) => (r.h ? [r.h] : []))),
       ),
     );
     expect(links.size).toBeGreaterThan(0);
@@ -257,6 +269,74 @@ describe('guest export data', () => {
     expect(html).toMatch(/@media \(max-width:640px\)/);
   });
 
+  it('carries every layout option, or only the active one', async () => {
+    let a = '';
+    let b = '';
+    const p = edit(buildDemoProject(), (d) => {
+      b = addOption(d, 'shell', 'Empty shell');
+      a = d.options![0].id;
+      renameOption(d, a, 'Furnished');
+      switchOption(d, a);
+    });
+    expect(Object.keys(projectWithOption(p, b).objects)).toEqual([]);
+    expect(projectWithOption(p, a)).toBe(p);
+    const data = await buildGuestData(p);
+    expect(data.options.map((o) => o.name)).toEqual(['Furnished', 'Empty shell']);
+    expect(data.option).toBe(0);
+    const [furnished, shell] = data.options;
+    // Same walls, no furniture or notes in the shell.
+    expect(shell.rooms.length).toBe(furnished.rooms.length);
+    expect(shell.notes).toEqual([]);
+    expect(furnished.notes.length).toBeGreaterThan(0);
+    expect(shell.colliders.length).toBeLessThan(furnished.colliders.length);
+    // One model with both options, in order.
+    const [projects] = exportGlb.mock.lastCall!;
+    expect(projects.map((q) => Object.keys(q.objects).length)).toEqual([Object.keys(p.objects).length, 0]);
+    // Opening on the other option; or only the active option in the file.
+    const onShell = edit(p, (d) => void switchOption(d, b));
+    expect((await buildGuestData(onShell)).option).toBe(1);
+    const only = await buildGuestData(edit(onShell, (d) => void (d.guest.options = 'active')));
+    expect(only.options.map((o) => o.name)).toEqual(['Empty shell']);
+    expect(only.option).toBe(0);
+  });
+
+  it('lists every note in full for the Notes panel, with its pictures unless left out', async () => {
+    const src = 'data:image/webp;base64,UklGRg==';
+    const p = edit(buildDemoProject(), (d) => {
+      addCallout(d, {
+        target: { kind: 'general' },
+        note: '**Budget**\n\nA very long first paragraph that would be wrapped on a floating label but stays whole here.\n- one\n- two\n\n1. first',
+        images: [{ id: 'img_1', src, w: 1600, h: 900 }],
+      });
+    });
+    const data = await buildGuestData(p);
+    const { notes, callouts } = data.options[0];
+    const general = notes.find((n) => n.target === 'General')!;
+    // No place in the scene: listed, without a floating label.
+    expect(general.label).toBe(-1);
+    expect(general.at).toBeUndefined();
+    expect(general.blocks.map((b) => b.k)).toEqual(['p', 'p', 'b', 'b', 'n']);
+    expect(general.blocks[1].runs[0].t).toMatch(/stays whole here\.$/);
+    expect(general.images).toEqual([{ src, w: 1600, h: 900 }]);
+    // Notes with a place point at their floating label.
+    const placed = notes.filter((n) => n.label >= 0);
+    expect(placed.length).toBe(callouts.length);
+    expect(placed.every((n) => n.at?.length === 3)).toBe(true);
+    // The floating labels never carry pictures.
+    expect(JSON.stringify(callouts)).not.toContain('data:image');
+    const without = await buildGuestData(edit(p, (d) => void (d.guest.noteImages = false)));
+    expect(without.options[0].notes.find((n) => n.target === 'General')!.images).toEqual([]);
+  });
+
+  it('hides hanging fixtures, not the building, while orbiting', () => {
+    expect(isCeilingItem({ mount: 'ceiling', type: 'lighting' })).toBe(true);
+    expect(isCeilingItem({ mount: 'ceiling', type: 'appliances' })).toBe(true);
+    // Beams, soffits, arches and portals are structure.
+    expect(isCeilingItem({ mount: 'ceiling', type: 'structure' })).toBe(false);
+    expect(isCeilingItem({ mount: 'wall', type: 'lighting' })).toBe(false);
+    expect(isCeilingItem(null)).toBe(false);
+  });
+
   const runtimePath = resolve(__dirname, '../../generated/guest-viewer.js');
   it.runIf(existsSync(runtimePath))('ships a viewer runtime that loads nothing from outside', () => {
     const runtime = readFileSync(runtimePath, 'utf8');
@@ -267,5 +347,10 @@ describe('guest export data', () => {
     // On/off controls say so (aria-pressed), and full screen is offered where allowed.
     expect(runtime).toMatch(/aria-pressed/);
     expect(runtime).toMatch(/requestFullscreen/);
+    // Layout options, the Notes list with its picture viewer, ceiling items and ghost walking.
+    expect(runtime).toMatch(/neestOption/);
+    expect(runtime).toMatch(/neestCeiling/);
+    expect(runtime).toMatch(/ng-lightbox/);
+    expect(runtime).toMatch(/Ghost/);
   });
 });

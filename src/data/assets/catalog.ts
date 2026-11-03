@@ -87,6 +87,15 @@ export function isAssetHidden(asset: Pick<AssetDefinition, 'category' | 'mount'>
   return hidden.includes(asset.category) || (asset.mount === 'ceiling' && hidden.includes(CEILING_CATEGORY));
 }
 
+/**
+ * A fixture hanging from the ceiling (pendants, ceiling lights, fans, hanging plants, projectors):
+ * ceiling-mounted and not part of the building. Structure items (beams, soffits, arches, portals) are not.
+ * The guest walkthrough hides these while orbiting so the view from above stays clear.
+ */
+export function isCeilingItem(asset: Pick<AssetDefinition, 'mount' | 'type'> | null | undefined): boolean {
+  return !!asset && asset.mount === 'ceiling' && asset.type !== 'structure';
+}
+
 export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   living: 'Living room',
   bedroom: 'Bedroom',

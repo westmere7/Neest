@@ -3,19 +3,19 @@ import { derivePlan } from '@/domain/geometry/derive';
 import { planOverview } from '@/domain/geometry/overview';
 import { formatArea, formatLength } from '@/domain/model/units';
 import { buildColliders, defaultSpawn } from '@/domain/walkthrough/collision';
-import { guestAutoViews, guestLayerId, guestLayers, guestSceneProject, guestSubtitle, guestTitle, guestViews } from '@/domain/walkthrough/guest';
+import { guestAutoViews, guestLayerId, guestLayers, guestOptions, guestSceneProject, guestSubtitle, guestTitle, guestViews } from '@/domain/walkthrough/guest';
 import { isObjectHidden } from '@/domain/commands/itemLayers';
 import { getAsset } from '@/data/assets/registry';
 import { LAMP_BUDGET, resolveObjectLights } from '@/data/assets/lights';
 import { namedView } from '@/features/scene-3d/cameraViews';
 import { sunFromSettings } from '@/features/scene-3d/SceneContent';
-import type { GuestCallout, GuestCamera, GuestData, GuestLamp, GuestQuality } from '@/guest-viewer/main';
+import type { GuestCallout, GuestCamera, GuestData, GuestLamp, GuestNote, GuestOption, GuestQuality, GuestRun } from '@/guest-viewer/main';
 import { visibleCallouts } from '@/features/callouts/layout';
 import { callout3DPoints } from '@/features/callouts/Callouts3D';
-import { calloutLines } from '@/features/callouts/content';
+import { calloutInfo, calloutLines, noteHeading, noteTargetLabel, parseNote, type Run } from '@/features/callouts/content';
 import { NOTE_LINE_WIDTH, NOTE_SIZE_SCALE, endPx, labelColors, leaderDash } from '@/features/callouts/style';
 import { buildPlanImageSvg } from './planExports';
-import { exportGlb } from './sceneExport';
+import { exportOptionsGlb } from './sceneExport';
 
 function bufferToBase64(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
@@ -116,6 +116,36 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-box-solid,.ng-box-outline{border-left:1px solid var(--border);padding-left:10px}
 .ng-box-text{border:0;box-shadow:none;padding:2px 4px;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
 .ng-cl-title{font-weight:650}.ng-cl-info{color:var(--info);font-size:.92em}.ng-callout a{color:var(--link)}
+.ng-callout.ng-flash{animation:ng-flash 1.6s ease}
+@keyframes ng-flash{0%,40%{box-shadow:0 0 0 4px var(--main),0 2px 10px rgba(0,0,0,.18)}100%{box-shadow:0 2px 10px rgba(0,0,0,.18)}}
+.ng-opts{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:4px;border-radius:12px;background:rgba(29,31,34,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto}
+.ng-opts-label{color:#b0ada7;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:0 6px 0 8px}
+.ng-opts .ng-btn{background:transparent;border-color:transparent;padding:6px 10px}
+.ng-opts .ng-btn.on{background:#6fb3a0;color:#0f2a26;font-weight:600}
+.ng-side{max-height:calc(100vh - var(--ng-bar,46px) - 50px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+.ng-side>*{flex:none}.ng-side>.ng-panel{flex:0 1 auto;min-height:0}
+.ng-note-list{display:flex;flex-direction:column;gap:8px}
+.ng-note{padding:8px 10px 8px 11px;border-radius:8px;background:rgba(255,255,255,.06);border-left:4px solid var(--main);line-height:1.45}
+.ng-note-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px}
+.ng-note-target{font-size:11px;color:#b0ada7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ng-note-go{border:1px solid rgba(255,255,255,.18);background:transparent;color:#d9d6cf;border-radius:6px;padding:2px 8px;font:inherit;font-size:11px;cursor:pointer;flex:none}
+.ng-note-go:hover{background:rgba(255,255,255,.1)}
+.ng-note-title{font-weight:650}.ng-note-info{color:#b0ada7;font-size:12px}
+.ng-note p{margin:4px 0}.ng-note ul,.ng-note ol{margin:4px 0;padding-left:20px}
+.ng-note a{color:#a3cfc1}
+.ng-note-imgs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.ng-note-img{width:64px;height:64px;padding:0;border:1px solid rgba(255,255,255,.18);border-radius:6px;overflow:hidden;background:#111;cursor:zoom-in}
+.ng-note-img img{width:100%;height:100%;object-fit:cover;display:block}
+.ng-empty{margin:0;color:#b0ada7}
+.ng-lightbox{position:fixed;inset:0;z-index:9;display:none;place-items:center;background:rgba(10,11,12,.88);--lb-px:64px;--lb-py:48px}
+.ng-lightbox.open{display:grid}
+.ng-lightbox img{max-width:calc(100vw - 2*var(--lb-px));max-height:calc(100vh - 2*var(--lb-py));width:auto;height:auto;object-fit:contain;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.ng-lightbox .ng-btn{position:fixed;font-size:20px;line-height:1;padding:8px 13px}
+.ng-lb-close{top:calc(14px + env(safe-area-inset-top));right:calc(14px + env(safe-area-inset-right))}
+.ng-lb-prev,.ng-lb-next{top:50%;transform:translateY(-50%);display:none}
+.ng-lb-prev{left:12px}.ng-lb-next{right:12px}
+.ng-lb-many .ng-lb-prev,.ng-lb-many .ng-lb-next{display:block}
+.ng-lb-count{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);color:#d9d6cf;font-size:12px}
 .ng-plan{position:fixed;inset:0;display:none;background:#f4f3ef;z-index:2;cursor:grab;touch-action:none}
 .ng-plan.open{display:block}.ng-plan.drag{cursor:grabbing}
 .ng-plan svg{position:absolute;inset:0;width:100%;height:100%;user-select:none;-webkit-user-select:none}
@@ -141,17 +171,40 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-help,.ng-plan-hint{white-space:normal;width:86vw;text-align:center;font-size:11px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom))}
  .ng-walking .ng-stick,.ng-flying .ng-updown{bottom:calc(var(--ng-bar,56px) + 60px + env(safe-area-inset-bottom))}
  .ng-callout{max-width:200px}
+ .ng-opts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+ .ng-lightbox{--lb-px:12px;--lb-py:56px}
 }
 `;
 
 const r3 = (v: number) => Math.round(v * 1000) / 1000;
 
-/** Visible callouts as plain data for the guest viewer (no app code runs there). */
-function guestCallouts(project: Project, derived: ReturnType<typeof derivePlan>): GuestCallout[] {
-  return visibleCallouts(project).flatMap((c) => {
+const toRuns = (runs: Run[]): GuestRun[] =>
+  runs.map((r) => ({ t: r.text, ...(r.bold ? { b: 1 as const } : {}), ...(r.italic ? { i: 1 as const } : {}), ...(r.href ? { h: r.href } : {}) }));
+
+/**
+ * Visible notes as plain data for the guest viewer (no app code runs there): the floating labels (notes
+ * with a place in the scene) and the Notes list (every note, its full text and, when `images`, its pictures).
+ */
+function guestNotes(project: Project, derived: ReturnType<typeof derivePlan>, images: boolean): { callouts: GuestCallout[]; notes: GuestNote[] } {
+  const callouts: GuestCallout[] = [];
+  const notes: GuestNote[] = [];
+  for (const c of visibleCallouts(project)) {
     const pts = callout3DPoints(project, derived, c, project.render.notePlacement);
-    if (!pts) return [];
-    return [
+    const info = c.showInfo ? calloutInfo(project, derived, c) : [];
+    const heading = noteHeading(c, info);
+    notes.push({
+      label: pts ? callouts.length : -1,
+      color: labelColors(c).main,
+      // With the facts shown, the name or size is already in the note: the chip says what kind it is.
+      target: info.length || heading ? (({ object: 'Item', room: 'Room', region: 'Area' }) as Record<string, string>)[c.target.kind] ?? noteTargetLabel(project, c) : noteTargetLabel(project, c),
+      ...(heading ? { heading } : {}),
+      info,
+      blocks: parseNote(c.note).map((b) => ({ k: b.kind === 'bullet' ? ('b' as const) : b.kind === 'number' ? ('n' as const) : ('p' as const), ...(b.n !== undefined ? { n: b.n } : {}), runs: toRuns(b.runs) })),
+      images: images ? c.images.map((im) => ({ src: im.src, w: im.w, h: im.h })) : [],
+      ...(pts ? { at: [r3(pts.anchor.x), r3(pts.anchor.y), r3(pts.anchor.z)] as [number, number, number] } : {}),
+    });
+    if (!pts) continue;
+    callouts.push(
       {
         anchor: [r3(pts.anchor.x), r3(pts.anchor.y), r3(pts.anchor.z)],
         label: [r3(pts.label.x), r3(pts.label.y), r3(pts.label.z)],
@@ -162,14 +215,11 @@ function guestCallouts(project: Project, derived: ReturnType<typeof derivePlan>)
           return { main: k.main, fill: k.fill ?? 'transparent', border: k.stroke ?? 'transparent', text: k.text, info: k.info, link: k.link };
         })(),
         style: { box: c.box, scale: NOTE_SIZE_SCALE[c.size], line: c.line, lineWidth: NOTE_LINE_WIDTH[c.lineWeight] * 1.15, dash: leaderDash(c), end: c.end, endPx: endPx(c) },
-        lines: calloutLines(project, derived, c).map((l) => ({
-          role: l.role,
-          indent: l.indent,
-          runs: l.runs.map((r) => ({ t: r.text, ...(r.bold ? { b: 1 as const } : {}), ...(r.italic ? { i: 1 as const } : {}), ...(r.href ? { h: r.href } : {}) })),
-        })),
+        lines: calloutLines(project, derived, c).map((l) => ({ role: l.role, indent: l.indent, runs: toRuns(l.runs) })),
       },
-    ];
-  });
+    );
+  }
+  return { callouts, notes };
 }
 
 /** Lamp lights of the included items, tagged with their item layer. */
@@ -195,7 +245,7 @@ const toCamera = (v: { projection: 'perspective' | 'orthographic'; position: [nu
 /** The GLB settings that change the embedded model (everything else is cheap to rebuild). */
 function glbKey(project: Project): unknown[] {
   const g = project.guest;
-  return [project.nodes, project.walls, project.openings, project.rooms, project.objects, project.materials, project.customAssets, project.itemLayers, project.layers, project.settings, g.cutawayHeight, g.textureSize, g.surfaceDetail, g.hiddenItems];
+  return [project.nodes, project.walls, project.openings, project.rooms, project.objects, project.materials, project.customAssets, project.itemLayers, project.layers, project.settings, project.options, project.activeOptionId, g.options, g.cutawayHeight, g.textureSize, g.surfaceDetail, g.hiddenItems];
 }
 
 /** Gzips the model (geometry shrinks about 3×); the viewer unpacks it with the browser's DecompressionStream. */
@@ -214,7 +264,8 @@ function guestGlb(project: Project): Promise<EmbeddedGlb> {
   const key = glbKey(project);
   if (glbCache && glbCache.key.length === key.length && glbCache.key.every((k, i) => k === key[i])) return glbCache.glb;
   const g = project.guest;
-  const glb = exportGlb(project, { ceilings: true, furniture: true, cutaway: g.cutawayHeight, textureSize: g.textureSize, surfaceDetail: g.surfaceDetail, hiddenLayers: g.hiddenItems })
+  const projects = guestOptions(project).options.map((o) => o.project);
+  const glb = exportOptionsGlb(projects, { ceilings: true, furniture: true, cutaway: g.cutawayHeight, textureSize: g.textureSize, surfaceDetail: g.surfaceDetail, hiddenLayers: g.hiddenItems })
     .then(gzip)
     .then((z) => ({ b64: bufferToBase64(z.data), gzip: z.gzip }));
   glbCache = { key, glb };
@@ -224,64 +275,26 @@ function guestGlb(project: Project): Promise<EmbeddedGlb> {
   return glb;
 }
 
-/** Everything the viewer needs, as plain data (no app code runs in the exported file). */
-export async function buildGuestData(source: Project): Promise<GuestData> {
+/** One layout option's plan as viewer data: walking, lamps, notes, labels, numbers and the plan drawing. */
+function guestOption(name: string, source: Project): GuestOption {
   const project = guestSceneProject(source);
   const g = project.guest;
-  const r = project.render;
   const u = project.settings;
   const derived = derivePlan(project);
-  const glb = await guestGlb(source);
-  const home = namedView('home', derived.bounds);
-  const included = guestViews(project);
-  const cameras: GuestCamera[] = [
-    ...included.map((c) => toCamera(c, c.name)),
-    ...guestAutoViews(project).map((n) => (n === 'Overview' ? toCamera(home, n) : toCamera(namedView('top', derived.bounds), n))),
-  ];
-  const startPreset = project.cameras.find((c) => c.id === g.startCameraId);
-  const startView = startPreset ? toCamera(startPreset, startPreset.name) : toCamera(home, 'Overview');
-  const start = startPreset ? included.indexOf(startPreset) : cameras.findIndex((c, i) => i >= included.length && c.name === 'Overview');
   const spawn = defaultSpawn(project, derived.faces);
-  const sun = sunFromSettings(r);
   const ov = planOverview(project, derived);
-  const budget = (q: GuestQuality) => {
-    const b = LAMP_BUDGET[q === 'fast' ? 'draft' : q];
-    return { point: b.point, spot: b.spot, shadows: b.shadows };
-  };
+  const notes = g.notes === 'off' ? { callouts: [], notes: [] } : guestNotes(project, derived, g.noteImages);
   return {
-    title: guestTitle(project),
-    subtitle: guestSubtitle(project),
-    intro: g.intro ? g.welcome.trim() : null,
-    exportedAt: new Date().toISOString(),
-    glb: glb.b64,
-    ...(glb.gzip ? { glbEncoding: 'gzip' as const } : {}),
-    cameras,
-    start,
-    startView,
-    startMode: g.startMode,
+    name,
     spawn: { x: spawn.p.x, y: spawn.p.y, angle: spawn.angle },
-    walk: { speed: g.walkSpeed, eye: g.eyeHeight, fov: r.walkFov },
     colliders: buildColliders(project, derived.network).map((c) => [c.a.x, c.a.y, c.b.x, c.b.y].map(r3) as [number, number, number, number]),
     bounds: derived.bounds ?? { minX: -5, minY: -5, maxX: 5, maxY: 5 },
-    background: r.background,
-    sun: { dir: [sun.dir.x, sun.dir.y, sun.dir.z], color: `#${sun.color.getHexString()}`, intensity: sun.intensity },
-    envIntensity: r.envIntensity,
-    exposure: r.exposure,
-    quality: g.quality,
-    shadows: g.shadows,
-    cutaway: g.cutawayHeight,
-    cutawayOn: g.wallDisplay === 'cutaway',
-    cutawayExternalOnly: g.cutawayExternalOnly,
-    ceilingsOn: g.ceilings,
     lamps: guestLamps(project),
-    lampBudgets: { fast: budget('fast'), balanced: budget('balanced'), high: budget('high') },
     layers: guestLayers(project),
-    callouts: g.notes === 'off' ? [] : guestCallouts(project, derived),
-    notesHidden: g.notes === 'hidden',
-    notePlacement: r.notePlacement,
+    callouts: notes.callouts,
+    notes: notes.notes,
     wallTop: Math.max(0, ...Object.values(project.walls).map((w) => (w.baseElevation ?? 0) + w.height)),
     rooms: derived.faces.map((f, i) => ({ name: derived.faceRooms[i]?.name ?? 'Room', area: formatArea(f.area, u.areaUnit, u.precision), p: [r3(f.label.x), 1.2, r3(f.label.y)] })),
-    roomsOn: g.roomLabels,
     info:
       g.info === 'off'
         ? null
@@ -299,15 +312,75 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
             rooms: ov.rooms.map((rm) => [rm.name, formatArea(rm.area, u.areaUnit, 1)]),
           },
     plan: g.floorPlan ? buildPlanImageSvg(project, { pixelsPerMetre: 60, mode: 'furnished', transparent: false, annotations: true, furniture: true, callouts: false }).svg : null,
+  };
+}
+
+/** Everything the viewer needs, as plain data (no app code runs in the exported file). */
+export async function buildGuestData(source: Project): Promise<GuestData> {
+  const project = guestSceneProject(source);
+  const g = project.guest;
+  const r = project.render;
+  const derived = derivePlan(project);
+  const glb = await guestGlb(source);
+  const home = namedView('home', derived.bounds);
+  const included = guestViews(project);
+  const cameras: GuestCamera[] = [
+    ...included.map((c) => toCamera(c, c.name)),
+    ...guestAutoViews(project).map((n) => (n === 'Overview' ? toCamera(home, n) : toCamera(namedView('top', derived.bounds), n))),
+  ];
+  const startPreset = project.cameras.find((c) => c.id === g.startCameraId);
+  const startView = startPreset ? toCamera(startPreset, startPreset.name) : toCamera(home, 'Overview');
+  const start = startPreset ? included.indexOf(startPreset) : cameras.findIndex((c, i) => i >= included.length && c.name === 'Overview');
+  const sun = sunFromSettings(r);
+  const budget = (q: GuestQuality) => {
+    const b = LAMP_BUDGET[q === 'fast' ? 'draft' : q];
+    return { point: b.point, spot: b.spot, shadows: b.shadows };
+  };
+  const opts = guestOptions(source);
+  const options = opts.options.map((o) => guestOption(o.name, o.project));
+  // The sun's shadow area covers every option's plan.
+  const bounds = options.reduce(
+    (a, o) => ({ minX: Math.min(a.minX, o.bounds.minX), minY: Math.min(a.minY, o.bounds.minY), maxX: Math.max(a.maxX, o.bounds.maxX), maxY: Math.max(a.maxY, o.bounds.maxY) }),
+    options[opts.start].bounds,
+  );
+  return {
+    title: guestTitle(project),
+    subtitle: guestSubtitle(project),
+    intro: g.intro ? g.welcome.trim() : null,
+    exportedAt: new Date().toISOString(),
+    glb: glb.b64,
+    ...(glb.gzip ? { glbEncoding: 'gzip' as const } : {}),
+    cameras,
+    start,
+    startView,
+    startMode: g.startMode,
+    walk: { speed: g.walkSpeed, eye: g.eyeHeight, fov: r.walkFov },
+    bounds,
+    background: r.background,
+    sun: { dir: [sun.dir.x, sun.dir.y, sun.dir.z], color: `#${sun.color.getHexString()}`, intensity: sun.intensity },
+    envIntensity: r.envIntensity,
+    exposure: r.exposure,
+    quality: g.quality,
+    shadows: g.shadows,
+    cutaway: g.cutawayHeight,
+    cutawayOn: g.wallDisplay === 'cutaway',
+    cutawayExternalOnly: g.cutawayExternalOnly,
+    ceilingsOn: g.ceilings,
+    lampBudgets: { fast: budget('fast'), balanced: budget('balanced'), high: budget('high') },
+    notesHidden: g.notes === 'hidden',
+    notePlacement: r.notePlacement,
+    roomsOn: g.roomLabels,
+    options,
+    option: opts.start,
     tour: { seconds: g.tourSeconds, auto: g.tour },
   };
 }
 
 /**
  * Builds a single self-contained HTML file: the viewer runtime (three.js
- * included), the scene as an embedded GLB (textures inside), cameras, spawn
- * point, colliders, lamp lights, notes, room labels, the overview numbers and
- * the floor plan drawing. It references no external files, fonts, blob URLs
+ * included), the scene as an embedded GLB (textures inside, one group per
+ * layout option), cameras, and for each option its spawn point, colliders, lamp lights, notes (with
+ * their pictures), room labels, overview numbers and floor plan drawing. It references no external files, fonts, blob URLs
  * or browser storage.
  */
 export async function buildGuestHtml(project: Project): Promise<string> {
