@@ -10,7 +10,6 @@ import { LAMP_BUDGET, resolveObjectLights } from '@/data/assets/lights';
 import { namedView } from '@/features/scene-3d/cameraViews';
 import { sunFromSettings } from '@/features/scene-3d/SceneContent';
 import type { GuestCallout, GuestCamera, GuestData, GuestLamp, GuestNote, GuestOption, GuestQuality, GuestRun } from '@/guest-viewer/main';
-import { visibleCallouts } from '@/features/callouts/layout';
 import { callout3DPoints } from '@/features/callouts/Callouts3D';
 import { calloutInfo, calloutLines, noteHeading, noteTargetLabel, parseNote, type Run } from '@/features/callouts/content';
 import { NOTE_LINE_WIDTH, NOTE_SIZE_SCALE, endPx, labelColors, leaderDash } from '@/features/callouts/style';
@@ -188,7 +187,8 @@ const toRuns = (runs: Run[]): GuestRun[] =>
 function guestNotes(project: Project, derived: ReturnType<typeof derivePlan>, images: boolean): { callouts: GuestCallout[]; notes: GuestNote[] } {
   const callouts: GuestCallout[] = [];
   const notes: GuestNote[] = [];
-  for (const c of visibleCallouts(project)) {
+  // The guest Notes setting decides, not the editor's Notes layer (a working view); notes hidden one by one stay out.
+  for (const c of Object.values(project.callouts ?? {}).filter((x) => !x.hidden)) {
     const pts = callout3DPoints(project, derived, c, project.render.notePlacement);
     const info = c.showInfo ? calloutInfo(project, derived, c) : [];
     const heading = noteHeading(c, info);

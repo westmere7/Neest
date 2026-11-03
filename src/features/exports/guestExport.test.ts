@@ -11,6 +11,7 @@ import type { D } from '@/domain/commands/walls';
 import { addOption, projectWithOption, renameOption, switchOption } from '@/domain/commands/options';
 import { addCallout } from '@/domain/commands/callouts';
 import { isCeilingItem } from '@/data/assets/catalog';
+import { guestSlug } from './guestShare';
 
 // The model needs WebGL and canvases (not in jsdom); the runtime is a build output. Both are stand-ins here.
 const exportGlb = vi.fn(async (_projects: Project[], _o: unknown) => new Uint8Array([103, 108, 84, 70]).buffer);
@@ -326,6 +327,31 @@ describe('guest export data', () => {
     expect(JSON.stringify(callouts)).not.toContain('data:image');
     const without = await buildGuestData(edit(p, (d) => void (d.guest.noteImages = false)));
     expect(without.options[0].notes.find((n) => n.target === 'General')!.images).toEqual([]);
+  });
+
+  it("follows the guest Notes setting, not the editor's Notes layer", async () => {
+    const p = edit(buildDemoProject(), (d) => {
+      d.layers.callouts.visible = false;
+      const first = Object.values(d.callouts)[0];
+      first.hidden = true;
+    });
+    const total = Object.keys(p.callouts).length;
+    const data = await buildGuestData(p);
+    // Every note but the one hidden on its own, though the layer is off in the editor.
+    expect(data.options[0].notes.length).toBe(total - 1);
+    expect((await buildGuestData(edit(p, (d) => void (d.guest.notes = 'off')))).options[0].notes).toEqual([]);
+  });
+
+  it('names live links after the guest title, in plain letters, with part of the project id', () => {
+    const p = buildDemoProject();
+    const slug = guestSlug({ ...p, id: 'prj_hj93rtum5n', guest: { ...p.guest, title: 'Căn hộ Đà Nẵng — 60 m²' } });
+    expect(slug).toBe('can-ho-da-nang-60-m2-tum5n');
+    expect(guestSlug({ ...p, id: 'prj_x', name: '!!!', guest: { ...p.guest, title: '' } })).toMatch(/^walkthrough-[a-z0-9]+$/);
+    // Every slug fits the server's rule.
+    expect(/^[a-z0-9][a-z0-9-]{0,63}$/.test(guestSlug({ ...p, guest: { ...p.guest, title: 'x'.repeat(200) } }))).toBe(true);
+    // Projects without a link, and a broken stored one, load with none.
+    expect(GuestSettingsSchema.parse({ startCameraId: null, spawn: null, spawnAngle: 0 }).share).toBeNull();
+    expect(GuestSettingsSchema.parse({ startCameraId: null, spawn: null, spawnAngle: 0, share: { slug: 'Bad Slug', url: 'x', at: 1 } }).share).toBeNull();
   });
 
   it('hides hanging fixtures, not the building, while orbiting', () => {

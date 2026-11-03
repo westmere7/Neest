@@ -686,6 +686,12 @@ export const GuestSettingsSchema = z
     textureSize: z.union([z.literal(512), z.literal(1024), z.literal(2048)]).default(1024),
     /** Embed normal and roughness maps for surface relief (bigger file). */
     surfaceDetail: z.boolean().default(true),
+    /** The live link (GitHub Pages) this walkthrough was last published to: folder, address and time. */
+    share: z
+      .object({ slug: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/), url: z.string().max(300), at: num })
+      .nullable()
+      .catch(null)
+      .default(null),
   })
   .default({ startCameraId: null, spawn: null, spawnAngle: 0 });
 

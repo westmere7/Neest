@@ -17,6 +17,7 @@ import {
 import { navigate } from '@/app/App';
 import { listOptions } from '@/domain/commands/options';
 import { downloadBlob, exportFilename } from './neestFile';
+import { GuestLiveLink } from './GuestLiveLink';
 
 interface PaneProps {
   project: Project;
@@ -472,6 +473,10 @@ export function GuestExport({ project, busy, run }: PaneProps) {
           checked={g.surfaceDetail}
           onChange={(surfaceDetail) => setGuest('Toggle guest surface detail', { surfaceDetail })}
         />
+      </Section>
+
+      <Section title="Live link">
+        <GuestLiveLink project={project} busy={busy} run={run} />
       </Section>
 
       <div className="export-summary" data-testid="guest-size">
