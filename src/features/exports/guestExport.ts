@@ -415,7 +415,7 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
     lampBudgets: { fast: budget('fast'), balanced: budget('balanced'), high: budget('high') },
     notesHidden: g.notes === 'hidden',
     notePlacement: r.notePlacement,
-    noteDisplay: r.noteDisplay ?? 'full',
+    noteDisplay: g.noteDisplay,
     roomsOn: g.roomLabels,
     options,
     option: opts.start,

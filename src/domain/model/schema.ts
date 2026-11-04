@@ -663,6 +663,11 @@ export const GuestSettingsSchema = z
     notes: z.enum(['shown', 'hidden', 'off']).default('shown'),
     /** The Notes list carries the notes' pictures (guests open them full size). */
     noteImages: z.boolean().default(true),
+    /**
+     * How notes float in the exported walkthrough at start: pins that open the card when clicked (the
+     * default, so the view stays clear), compact one-line cards or full cards (guests can change it).
+     */
+    noteDisplay: z.enum(['full', 'compact', 'icon']).default('icon'),
     /** Layout options in the file: every option (guests switch between them) or only the active one. */
     options: z.enum(['all', 'active']).default('all'),
     /** Room names and areas while orbiting (guests can toggle them). */

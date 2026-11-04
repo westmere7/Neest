@@ -195,6 +195,22 @@ export function GuestExport({ project, busy, run }: PaneProps) {
           />
         </div>
         {g.notes !== 'off' && (
+          <div className="field">
+            <span className="field-label">Note style</span>
+            <Segmented<GuestSettings['noteDisplay']>
+              label="Note style"
+              size="sm"
+              value={g.noteDisplay}
+              onChange={(noteDisplay) => setGuest('Set guest note style', { noteDisplay })}
+              options={[
+                { value: 'icon', label: 'Icons' },
+                { value: 'compact', label: 'Compact' },
+                { value: 'full', label: 'Full' },
+              ]}
+            />
+          </div>
+        )}
+        {g.notes !== 'off' && (
           <Toggle
             label="Note pictures"
             hint="In the Notes list, where guests read every note in full"

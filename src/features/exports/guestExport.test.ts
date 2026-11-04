@@ -48,6 +48,7 @@ describe('guest settings', () => {
       walkFov: null,
       notes: 'shown',
       noteImages: true,
+      noteDisplay: 'icon',
       options: 'all',
       roomLabels: false,
       ceilings: true,
@@ -178,6 +179,9 @@ describe('guest export data', () => {
     expect(data.startMode).toBe('walk');
     expect(data.walk).toEqual({ speed: 1.41, eye: 1.7, fov: 80 });
     expect(data.notesHidden).toBe(true);
+    // Notes open as pins unless the export says otherwise, whatever the editor's 3D view shows.
+    expect(data.noteDisplay).toBe('icon');
+    expect((await buildGuestData(edit(p, (d) => void (d.guest.noteDisplay = 'compact')))).noteDisplay).toBe('compact');
     // One layout option (the project has none of its own), opened on.
     expect(data.options.map((o) => o.name)).toEqual(['Option A']);
     expect(data.option).toBe(0);
