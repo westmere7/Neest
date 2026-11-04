@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-04 (copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-04 (Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -2241,4 +2241,14 @@ Known limitations (also in README):
      copy, cut and paste), and Duplicate of several items keeps shape edits (single items already did). Tests in
      domain/commands/clipboard.test.ts and features/editor/clipboard.test.ts; checked in the browser: 28 items with a
      group and a shape-edited portal copied from 60LTN and pasted into another tab's project, and Paste here (done).
+180. "Build an item group following this ref, using the exact color. No need for the fridge. For the table, use existing
+     table. Add new items if you need to" → `packs/sage-shaker-kitchen.pack.ts` (13 items: sage shaker base cupboard,
+     blind corner, double sink with spring tap, hob over three drawers, terrazzo end pier, cream shaker and reeded-glass
+     wall cabinets, slim black hood, mint stack-tile splashback, oak LED shelf, chopping boards, copper casserole, bud
+     vase with mandarins; patterns `stack-bond` and `fine-terrazzo`) and the ready-made group "Sage shaker L kitchen
+     with oak bar" (Kitchens; the bar is the modular waterfall desk in its Slim model, chairs the bentwood café chair in
+     white). Colours were sampled from the photo, white-balanced on its white walls, then set so they render like the
+     photo beside the cream uppers (sage #5f6d55; the 3D view lights fronts ~1.4× brighter). Packs cannot use another
+     pack's patterns (`kitchen-collection:matte-lacquer` rendered plain and got no swatch). Checked in 3D from the
+     photo's angle (done).
      Checked on 60LTN's guest page at desktop and phone width: switching options still swaps the model and overview (done).
