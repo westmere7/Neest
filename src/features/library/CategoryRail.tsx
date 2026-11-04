@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { toUi } from '@/components/uiScale';
 import { PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react';
 import { usePrefsStore } from '@/state/uiStores';
 
@@ -65,7 +66,7 @@ export function CategoryRail({
       </nav>
       {tip &&
         createPortal(
-          <div role="tooltip" className="ui-tooltip lib-cat-tip" style={{ top: tip.top, left: tip.left }}>
+          <div role="tooltip" className="ui-tooltip lib-cat-tip" style={{ top: toUi(tip.top), left: toUi(tip.left) }}>
             <span>{tip.text}</span>
           </div>,
           document.body,

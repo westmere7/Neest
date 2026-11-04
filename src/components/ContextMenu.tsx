@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 import './components.css';
+import { fromUi, toUi } from './uiScale';
 
 export interface MenuItem {
   label: string;
@@ -61,14 +62,15 @@ export function ContextMenuHost() {
   }, [open]);
 
   if (!open) return null;
-  const maxX = window.innerWidth - 230;
-  const maxY = window.innerHeight - open.items.length * 32 - 16;
+  // Screen pixels; the menu is drawn at the interface scale (toUi).
+  const maxX = window.innerWidth - fromUi(230);
+  const maxY = window.innerHeight - fromUi(open.items.length * 32 + 16);
   return (
     <div
       ref={ref}
       className={`context-menu${open.items.some((it) => it.checked !== undefined) ? ' has-checks' : ''}`}
       role="menu"
-      style={{ left: Math.min(open.x, maxX), top: Math.max(8, Math.min(open.y, maxY)) }}
+      style={{ left: toUi(Math.min(open.x, maxX)), top: toUi(Math.max(8, Math.min(open.y, maxY))) }}
       onContextMenu={(e) => e.preventDefault()}
     >
       {open.items.map((item, i) =>

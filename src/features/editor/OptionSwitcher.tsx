@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { fromUi, toUi } from '@/components/uiScale';
 import {
   Check,
   ChevronDown,
@@ -43,7 +44,7 @@ export function OptionSwitcher() {
     if (!open) return;
     const place = () => {
       const r = ref.current?.getBoundingClientRect();
-      if (r) setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - 288)), top: r.bottom + 10 });
+      if (r) setPos({ left: toUi(Math.max(8, Math.min(r.left, window.innerWidth - fromUi(288)))), top: toUi(r.bottom + 10) });
     };
     place();
     window.addEventListener('resize', place);

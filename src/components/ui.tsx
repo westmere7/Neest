@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { toUi } from './uiScale';
 import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 import type { LengthUnit } from '@/domain/model/schema';
 import { formatLengthValue, parseLength } from '@/domain/model/units';
@@ -172,8 +173,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconBtnProps>(function I
             role="tooltip"
             className="ui-tooltip"
             style={{
-              top: coords ? `${coords.top}px` : '-9999px',
-              left: coords ? `${coords.left}px` : '-9999px',
+              top: coords ? `${toUi(coords.top)}px` : '-9999px',
+              left: coords ? `${toUi(coords.left)}px` : '-9999px',
               opacity: coords ? 1 : 0,
             }}
           >

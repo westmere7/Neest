@@ -12,7 +12,9 @@ Ground rules:
 - Update KNOWLEDGEBASE.md (status, pitfalls, conventions) when you change behaviour.
 - No backend, auth or network dependencies for core features.
 - `projects/` is shared with the team through git: remove projects you created only for testing.
-- New floating panels must be registered in `src/components/layoutInsets.ts` so views frame around them.
+- New floating panels must be registered in `src/components/layoutInsets.ts` so views frame around them, and new
+  top-level panels, bars, dialogs and popups added to the interface-scale list in `components.css` (popups placed at a
+  screen position use `toUi`; see KNOWLEDGEBASE §16 "Interface scale").
 - Adding library items or materials: follow **KNOWLEDGEBASE.md §12 "Asset rules"**. In short:
   - Put new content in a pack (`packs/<id>.pack.ts`). Never rename or remove existing item ids.
   - Every item needs a valid room, type and shelf, a specific name, a description and 3+ tags.

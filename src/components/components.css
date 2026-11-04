@@ -1,3 +1,40 @@
+/* ───────── Interface scale ─────────
+ * The chrome is drawn at --ui-scale (components/uiScale.ts): every top-level bar, panel, dialog, menu,
+ * tooltip and toast, and the home page. Only top-level containers: zoom multiplies, so nothing inside
+ * them is listed. The 2D plan and 3D view (and what is placed over them in screen pixels: note cards,
+ * the guest plan) stay at full scale so pointer maths stays in screen pixels. Popups placed at a screen
+ * position set it with toUi(). */
+.launcher,
+.topbar,
+.tool-rail,
+.library,
+.inspector,
+.material-panel,
+.layers-panel,
+.notes-panel,
+.shape-panel,
+.status-bar,
+.mobile-bar,
+.canvas-controls,
+.view-panel,
+.walk-hud,
+.split-3d-tools,
+.restore-ui,
+.guest-side,
+.guest-bar,
+.guest-views,
+.guest-intro,
+.modal-backdrop,
+.note-lightbox,
+.toast-host,
+.context-menu,
+.ui-tooltip,
+.option-menu,
+.view-quick-pop,
+.asset-info-card {
+  zoom: var(--ui-scale, 0.94);
+}
+
 /* ───────── Buttons ───────── */
 .btn {
   display: inline-flex;

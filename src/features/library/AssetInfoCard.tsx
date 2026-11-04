@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { fromUi, toUi } from '@/components/uiScale';
 import { ExternalLink, Maximize2 } from 'lucide-react';
 import type { LengthUnit, PlacedObject } from '@/domain/model/schema';
 import { formatLength } from '@/domain/model/units';
@@ -158,16 +159,17 @@ export function AssetInfoCard({ control }: { control: InfoCardControl }) {
       const panel = shown.card.closest('.library')?.getBoundingClientRect();
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const w = el.offsetWidth;
+      // Rectangles are in screen pixels, the card's own sizes and position in its scaled pixels (toUi).
+      const w = fromUi(el.offsetWidth);
       let left = (panel?.right ?? r.right) + GAP;
       const fits = left + w <= vw - MARGIN;
       if (!fits) left = Math.max(MARGIN, vw - w - MARGIN);
       const minTop = Math.max(MARGIN, panel?.top ?? MARGIN);
       const maxBottom = Math.min(vh - MARGIN, panel?.bottom ?? vh - MARGIN);
-      el.style.maxHeight = `${Math.max(120, maxBottom - minTop)}px`;
-      const top = Math.max(minTop, Math.min(r.top, maxBottom - el.offsetHeight));
-      el.style.left = `${Math.round(left)}px`;
-      el.style.top = `${Math.round(top)}px`;
+      el.style.maxHeight = `${toUi(Math.max(120, maxBottom - minTop))}px`;
+      const top = Math.max(minTop, Math.min(r.top, maxBottom - fromUi(el.offsetHeight)));
+      el.style.left = `${Math.round(toUi(left))}px`;
+      el.style.top = `${Math.round(toUi(top))}px`;
       // Over the panel (narrow window): let clicks and drags through to the cards.
       el.classList.toggle('passive', !fits);
     };

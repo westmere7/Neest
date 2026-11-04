@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-04 (3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-04 (interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -1480,6 +1480,14 @@ construction documents.
   opening and reads `onClose` through a ref; keep it that way.
 - **`npm test` may end with "Timeout calling onTaskUpdate"** (an unhandled vitest worker RPC timeout) while every test
   passes: it happens on a busy machine with or without changes. Check the "Test Files … passed" line.
+- **Interface scale (`--ui-scale`, 0.94)**: the chrome is drawn smaller with CSS `zoom` on its top-level containers
+  (list in components.css; `components/uiScale.ts` holds `UI_SCALE` and sets the variable). `zoom` scales an element's
+  `left`/`top` and sizes too, and nested zoom multiplies, so: put new top-level panels, bars, dialogs and popups in the
+  list, never their children; a popup placed at a screen position (pointer, `getBoundingClientRect`) sets it with
+  `toUi(px)` and turns its own `offsetWidth`-style sizes into screen pixels with `fromUi`; pointer deltas that size a
+  scaled panel (the library's width drag) go through `toUi`. The 2D plan, the 3D view and what is placed over them in
+  screen pixels (note cards, drei `Html`, the guest plan) are never scaled: their pointer maths mixes measured sizes
+  and screen rectangles. Change the scale in `uiScale.ts` and the `--ui-scale` fallback in tokens.css together.
 
 ## 17. Recipes
 
@@ -2206,4 +2214,9 @@ Known limitations (also in README):
      controls group (bottom right) shows Top, the saved views and Snapping in one group (§10 Scene3DView). Checked in
      the browser on 60LTN: Top goes orthographic top, View 1 to its saved camera, the mark clears on a press or scroll,
      the 2D plan keeps zoom, fit, grid and snapping (done).
+178. "Scale the entire UI of this app down by about 6%" → the chrome (bars, rails, panels, dialogs, menus, tooltips,
+     toasts, home page) is drawn at 94 % with CSS zoom (`--ui-scale`, `components/uiScale.ts`; §16 pitfall); the 2D
+     plan and 3D view stay at full scale so their pointer maths is unchanged. Popups placed at screen positions
+     (tooltips, context menus, option menu, item info card, quality menu, category tips) convert with `toUi`. Checked
+     in the browser: panel sizes, a menu under its button, the plan's drawing size, a dialog, the home page (done).
      Checked on 60LTN's guest page at desktop and phone width: switching options still swaps the model and overview (done).

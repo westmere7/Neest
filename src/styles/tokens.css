@@ -39,6 +39,8 @@
   --brass-400: #d0a650;
   --topbar-h: 48px;
   --status-h: 28px;
+  /* Interface scale (see components/uiScale.ts, which sets it at start-up): the chrome is drawn this size. */
+  --ui-scale: 0.94;
 }
 
 :root,

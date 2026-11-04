@@ -86,6 +86,7 @@ import { OpeningBuildOptions } from './OpeningBuildOptions';
 import './library.css';
 import { CategoryButton, CategoryHeading, CategoryRail, useRailCollapsed } from './CategoryRail';
 import { servicesSearchText } from '@/domain/model/services';
+import { toUi } from '@/components/uiScale';
 
 const BUILD_GROUP_TITLES = {
   walls: 'Walls',
@@ -196,7 +197,8 @@ export const LibraryPanel = memo(function LibraryPanel({ isMobile }: { isMobile:
           onPointerMove={(e) => {
             if (!resizing.current) return;
             set({
-              libraryWidth: Math.min(640, Math.max(330, resizing.current.w + e.clientX - resizing.current.x)),
+              // The pointer moves in screen pixels; the panel is sized in its scaled pixels.
+              libraryWidth: Math.min(640, Math.max(330, resizing.current.w + toUi(e.clientX - resizing.current.x))),
             });
           }}
           onPointerUp={() => (resizing.current = null)}

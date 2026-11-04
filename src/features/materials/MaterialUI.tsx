@@ -50,6 +50,7 @@ import { useIsMobile } from '@/components/hooks';
 import { swatchBackground } from './textureCache';
 import { getPhotoManifest, photoEntry, photoSetFailed, photoVersion, subscribePhotos } from './photoTextures';
 import './materials.css';
+import { fromUi, toUi } from '@/components/uiScale';
 
 /** Re-renders when photo textures finish loading (swatches switch from procedural to photo). */
 function usePhotoVersion(): number {
@@ -265,7 +266,8 @@ export function FinishPicker({
     if (!panel || !grid || !on) return;
     const g = grid.getBoundingClientRect();
     const r = on.getBoundingClientRect();
-    if (r.top < g.top || r.bottom > g.bottom) grid.scrollTop += r.top - g.top - (grid.clientHeight - r.height) / 2;
+    // Rectangles are screen pixels, scrollTop the grid's own (scaled) pixels.
+    if (r.top < g.top || r.bottom > g.bottom) grid.scrollTop += toUi(r.top - g.top - (fromUi(grid.clientHeight) - r.height) / 2);
   }, [panel]);
   const all = useMemo(() => availableMaterials(project), [project]);
   const usedIds = useMemo(() => new Set(Object.keys(project.materials)), [project.materials]);

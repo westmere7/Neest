@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { toUi } from '@/components/uiScale';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -683,7 +684,7 @@ function ViewRailButton({ open, onToggle }: { open: boolean; onToggle: () => voi
   const toggleMenu = () => {
     if (menu) return setMenu(null);
     const r = chevron.current?.getBoundingClientRect();
-    if (r) setMenu({ left: r.right + 10, top: r.top - 8 });
+    if (r) setMenu({ left: toUi(r.right + 10), top: toUi(r.top - 8) });
   };
   return (
     <div className="rail-view-quick">
