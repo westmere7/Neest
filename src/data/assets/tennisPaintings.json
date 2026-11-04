@@ -1,0 +1,54 @@
+[
+ {
+  "id": "tennis-court-impasto",
+  "kind": "sport",
+  "title": "Court in Impasto",
+  "artist": "Artist unknown",
+  "date": "contemporary",
+  "w": 0.598,
+  "h": 0.8,
+  "file": "art/tennis-court-impasto.webp",
+  "hash": "c62c0bef86",
+  "source": "Supplied by the project owner (photo of the painting)",
+  "licence": "Rights unknown: supplied for this project, not public domain"
+ },
+ {
+  "id": "tennis-centre-line",
+  "kind": "sport",
+  "title": "Centre Line",
+  "artist": "Artist unknown",
+  "date": "contemporary",
+  "w": 0.701,
+  "h": 1.2,
+  "file": "art/tennis-centre-line.webp",
+  "hash": "3ef8458317",
+  "source": "Supplied by the project owner (photo of the painting)",
+  "licence": "Rights unknown: supplied for this project, not public domain"
+ },
+ {
+  "id": "tennis-diagonal-court",
+  "kind": "sport",
+  "title": "Diagonal Court",
+  "artist": "Artist unknown",
+  "date": "contemporary",
+  "w": 0.791,
+  "h": 1,
+  "file": "art/tennis-diagonal-court.webp",
+  "hash": "4d29b82e85",
+  "source": "Supplied by the project owner (photo of the painting)",
+  "licence": "Rights unknown: supplied for this project, not public domain"
+ },
+ {
+  "id": "tennis-dark-green-court",
+  "kind": "sport",
+  "title": "Evening Doubles",
+  "artist": "Artist unknown",
+  "date": "contemporary",
+  "w": 0.644,
+  "h": 0.9,
+  "file": "art/tennis-dark-green-court.webp",
+  "hash": "cb44b101b7",
+  "source": "Supplied by the project owner (photo of the painting)",
+  "licence": "Rights unknown: supplied for this project, not public domain"
+ }
+]

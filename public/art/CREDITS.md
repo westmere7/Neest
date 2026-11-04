@@ -46,3 +46,10 @@ Public-domain artworks used by the Paintings pack (`npm run paintings`, tools/fe
 - **Oystercatchers**, Utagawa Hiroshige, c. 1833/34. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/19026
 - **Portrait of a Rabbit**, Yabu Chosui, 1867. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/42068
 - **Multitudes of Cranes**, Bokushin, spring 1863. CC0 1.0 (Art Institute of Chicago open access). https://www.artic.edu/artworks/41906
+
+## Tennis paintings
+
+- **Court in Impasto**, Artist unknown, contemporary. Rights unknown: supplied for this project, not public domain. Supplied by the project owner (photo of the painting)
+- **Centre Line**, Artist unknown, contemporary. Rights unknown: supplied for this project, not public domain. Supplied by the project owner (photo of the painting)
+- **Diagonal Court**, Artist unknown, contemporary. Rights unknown: supplied for this project, not public domain. Supplied by the project owner (photo of the painting)
+- **Evening Doubles**, Artist unknown, contemporary. Rights unknown: supplied for this project, not public domain. Supplied by the project owner (photo of the painting)

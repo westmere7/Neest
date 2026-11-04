@@ -196,5 +196,11 @@ const list = [...byId.values()].filter((x) => ids.has(x.id)).sort((a, b) => LIST
 await writeFile(dataPath, JSON.stringify(list, null, 1) + '\n');
 const credits = ['# Paintings', '', 'Public-domain artworks used by the Paintings pack (`npm run paintings`, tools/fetch-paintings.mjs).', ''];
 for (const x of list) credits.push(`- **${x.title}**, ${x.artist}, ${x.date}. ${x.licence}. ${x.source}`);
+// The tennis paintings are not downloaded by this script (see packs/paintings.pack.ts); keep their credits.
+const tennisPath = path.join(path.dirname(dataPath), 'tennisPaintings.json');
+if (existsSync(tennisPath)) {
+  credits.push('', '## Tennis paintings', '');
+  for (const x of JSON.parse(await readFile(tennisPath, 'utf8'))) credits.push(`- **${x.title}**, ${x.artist}, ${x.date}. ${x.licence}. ${x.source}`);
+}
 await writeFile(path.join(outDir, 'CREDITS.md'), credits.join('\n') + '\n');
 console.log(`${list.length} paintings`);

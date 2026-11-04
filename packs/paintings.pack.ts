@@ -2,12 +2,15 @@
  * Paintings — 44 public-domain artworks at their real sizes: abstract and modern (Kandinsky,
  * Mondrian, Malevich, Klee, af Klint, Delaunay, Marc), landscapes (Monet, Cézanne, Van Gogh,
  * Seurat, Caillebotte, Pissarro, Church, Hokusai, Hiroshige) and animals (Delacroix, Bonheur,
- * Cuyp, Steinlen and Japanese bird-and-flower prints).
+ * Cuyp, Steinlen and Japanese bird-and-flower prints), plus four contemporary tennis paintings (impasto
+ * courts seen from above) on the Sport paintings shelf.
  *
  * Images come from the Art Institute of Chicago open-access collection (CC0) and Wikimedia
  * Commons (public domain); `npm run paintings` (tools/fetch-paintings.mjs) downloads them into
  * public/art/ and lists them in src/data/assets/paintings.json, with credits in
- * public/art/CREDITS.md. Each image sits on a square tile rolled by half, so a canvas exactly
+ * public/art/CREDITS.md. The tennis paintings were supplied for this project as photos (artist unknown,
+ * not public domain); their tiles are in public/art/tennis-*.webp and they are listed in
+ * src/data/assets/tennisPaintings.json, which the fetch script leaves alone. Each image sits on a square tile rolled by half, so a canvas exactly
  * w × h with texture scale max(w, h) shows the painting once, edge to edge (box faces are
  * UV-mapped in metres about their centre). Resized paintings keep that: the artwork panel is built
  * at the painting's real size and stretched to the new canvas by its part scale (UVs come from the
@@ -19,10 +22,11 @@
  */
 import { clamp, defineItem, definePack, frame4, matSlot, span, type AssetPresetVariant, type PackItem, type PackMaterial, type Part } from '@/packs/kit';
 import PAINTINGS from '@/data/assets/paintings.json';
+import TENNIS from '@/data/assets/tennisPaintings.json';
 
 interface Painting {
   id: string;
-  kind: 'abstract' | 'landscape' | 'animals';
+  kind: 'abstract' | 'landscape' | 'animals' | 'sport';
   title: string;
   artist: string;
   date: string;
@@ -54,16 +58,17 @@ const ARTISTS: Record<string, string> = {
 };
 const PRINTS = /^(hokusai|hiroshige|koryusai|chosui|bokushin)-/;
 
-const styleOf = (p: Painting): Style => (PRINTS.test(p.id) ? 'mount' : p.kind === 'abstract' ? 'gallery' : 'gilt');
+// Abstracts and the thick-paint tennis canvases float in a slim gallery frame.
+const styleOf = (p: Painting): Style => (PRINTS.test(p.id) ? 'mount' : p.kind === 'abstract' || p.kind === 'sport' ? 'gallery' : 'gilt');
 
-const GROUP: Record<Painting['kind'], string> = { abstract: 'Abstract paintings', landscape: 'Landscape paintings', animals: 'Animal paintings' };
+const GROUP: Record<Painting['kind'], string> = { abstract: 'Abstract paintings', landscape: 'Landscape paintings', animals: 'Animal paintings', sport: 'Sport paintings' };
 
 const base = (): string => {
   const b = (import.meta.env?.BASE_URL as string | undefined) ?? '/';
   return b.endsWith('/') ? b : `${b}/`;
 };
 
-const list = PAINTINGS as Painting[];
+const list = [...PAINTINGS, ...TENNIS] as Painting[];
 
 const materials: PackMaterial[] = [
   { id: 'antique-gilt', name: 'Antique gilt', category: 'metal', color: '#b48a3c', roughness: 0.42, metalness: 0.75 },
@@ -125,9 +130,16 @@ function border(style: Style, p: Painting): { b: number; d: number; mat: number 
 
 const r3 = (x: number) => Math.round(x * 1000) / 1000;
 
-/** The artwork panel: the real-size picture stretched onto a canvas of cw × ch (see the header). */
+/**
+ * The artwork panel: the real-size picture stretched onto a canvas of cw × ch (see the header). Newer
+ * paintings (the tennis set) sit 1 mm inside the liner on each side, so their edges never share a plane
+ * with it (the original 44 are on the legacyCoplanar list as they were).
+ */
 function artPanel(p: Painting, cw: number, ch: number, b: number, z0: number, z1: number): Part {
-  return { ...span('art', [-p.w / 2, p.w / 2], [-p.h / 2, p.h / 2], [z0, z1]), position: [0, b + ch / 2, (z0 + z1) / 2], scale: [cw / p.w, ch / p.h, 1] };
+  const inset = p.kind === 'sport' ? 0.001 : 0;
+  const w = cw - 2 * inset;
+  const h = ch - 2 * inset;
+  return { ...span('art', [-p.w / 2, p.w / 2], [-p.h / 2, p.h / 2], [z0, z1]), position: [0, b + ch / 2, (z0 + z1) / 2], scale: [w / p.w, h / p.h, 1] };
 }
 
 function build(style: Style, p: Painting, size: { w: number; h: number }): Part[] {
@@ -175,12 +187,19 @@ function build(style: Style, p: Painting, size: { w: number; h: number }): Part[
   ];
 }
 
-const kindWord: Record<Painting['kind'], string> = { abstract: 'abstract', landscape: 'landscape', animals: 'animal' };
+const kindWord: Record<Painting['kind'], string> = { abstract: 'abstract', landscape: 'landscape', animals: 'animal', sport: 'tennis' };
 const frameWords: Record<Style, string> = {
   gallery: 'floating in a slim black gallery frame',
   gilt: 'in a stepped antique gilt frame with a linen liner',
   mount: 'behind a white mount in a slim oak frame',
 };
+
+/** A textured made-to-order canvas in Vietnam, by area, rounded to two significant digits. */
+function tennisPrice(p: Painting): number {
+  const vnd = 1_500_000 + 4_500_000 * p.w * p.h;
+  const step = 10 ** (Math.floor(Math.log10(vnd)) - 1);
+  return Math.round(vnd / step) * step;
+}
 
 function item(p: Painting): PackItem {
   const style = styleOf(p);
@@ -201,8 +220,16 @@ function item(p: Painting): PackItem {
     category: 'decor',
     type: 'decor',
     group: GROUP[p.kind],
-    tags: ['painting', 'wall art', kindWord[p.kind], surname, style === 'mount' ? 'print' : 'canvas', 'art'],
-    description: `${artist}, ${date}. A ${kindWord[p.kind]} work at its real size (${Math.round(p.w * 100)} × ${Math.round(p.h * 100)} cm; resizable), ${frameWords[style]}. Public domain.`,
+    tags:
+      p.kind === 'sport'
+        ? ['painting', 'wall art', 'tennis', 'sport', 'tennis court', 'impasto', 'canvas', 'art', 'tranh tennis']
+        : ['painting', 'wall art', kindWord[p.kind], surname, style === 'mount' ? 'print' : 'canvas', 'art'],
+    description:
+      p.kind === 'sport'
+        ? `A contemporary tennis painting: a court seen from above in thick green paint with tiny players (${Math.round(p.w * 100)} × ${Math.round(p.h * 100)} cm; resizable), ${frameWords[style]}. Artist unknown.`
+        : `${artist}, ${date}. A ${kindWord[p.kind]} work at its real size (${Math.round(p.w * 100)} × ${Math.round(p.h * 100)} cm; resizable), ${frameWords[style]}. Public domain.`,
+    // Tennis canvases are new items: a made-to-order textured canvas estimate by size (the others take theirs from itemPrices.json).
+    ...(p.kind === 'sport' ? { price: { vnd: tennisPrice(p), estimate: true } } : {}),
     defaultSize: size,
     // Resizable (the picture stretches to fill the canvas); depth stays the frame's.
     minSize: { w: r3(Math.max(2 * b + 0.05, size.w * 0.4)), d, h: r3(Math.max(2 * b + 0.05, size.h * 0.4)) },
@@ -220,7 +247,7 @@ export default definePack({
   name: 'Paintings',
   version: '1.0.0',
   author: 'Neest',
-  description: 'Public-domain paintings and prints at real size: abstracts, landscapes and animals, framed.',
+  description: 'Public-domain paintings and prints at real size (abstracts, landscapes and animals) and contemporary tennis paintings, framed.',
   license: 'Public domain (artworks); CC0-1.0 (pack)',
   materials,
   textures,

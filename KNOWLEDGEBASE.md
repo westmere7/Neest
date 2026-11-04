@@ -1625,6 +1625,7 @@ Known limitations (also in README):
     frame variants; `npm run paintings` (tools/fetch-paintings.mjs) downloads them into public/art/ (credits in
     public/art/CREDITS.md) as square tiles rolled by half, so a canvas w × h with texture scale max(w, h) shows the
     painting exactly once (box faces are UV-mapped in metres about their centre). Sizes are fixed (done).
+    Later joined by four tennis paintings (entry 173), 48 items in all.
 56. "A lot more curtains, for doors and windows and big ones for full glass walls, in many colours and patterns" →
     `curtain-collection` pack: 25 items (wave, sheer, double track, pinch pleat, eyelet, tab top, café, Roman,
     pelmet drapes, cellular, door curtains, string curtain, sash, glass-wall sheers and pairs up to 12 m, vertical and
@@ -2159,3 +2160,8 @@ Known limitations (also in README):
      "Attached parts follow" switch, blue outlines for what a picked part holds and "follows" tags; every editable item
      re-run with moves and resizes of its parts. Opened note cards are above pins and placed clear of them (editor and
      guest view). Also fixed: saved part edits were lost on reload (schema pattern) (done).
+173. "Use these exact images (just crop from this chat) and add some tennis themed paintings" → four tennis
+     paintings in the `paintings` pack on a new **Sport paintings** shelf (kind `sport`, slim gallery frame, estimate
+     prices by area). They are cropped from the supplied photos (rights unknown, not public domain), listed in
+     src/data/assets/tennisPaintings.json (the fetch script leaves them alone and keeps their CREDITS.md section), with
+     tiles in public/art/tennis-*.webp. Their art panel sits 1 mm inside the liner so no faces are coplanar (done).

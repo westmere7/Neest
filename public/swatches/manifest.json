@@ -477,6 +477,10 @@
    "file": "247df32593941836.webp",
    "tile": true
   },
+  "2516accd6e0b2c0e": {
+   "file": "2516accd6e0b2c0e.webp",
+   "tile": false
+  },
   "25a9825c52d56852": {
    "file": "25a9825c52d56852.webp",
    "tile": false
@@ -1569,6 +1573,10 @@
    "file": "71542e46e40f4bf5.webp",
    "tile": true
   },
+  "718ca149c831b520": {
+   "file": "718ca149c831b520.webp",
+   "tile": false
+  },
   "71afd509bbf8c2a4": {
    "file": "71afd509bbf8c2a4.webp",
    "tile": true
@@ -2052,6 +2060,10 @@
   "929adb0790673ed3": {
    "file": "929adb0790673ed3.webp",
    "tile": true
+  },
+  "92c4cc1b117b337a": {
+   "file": "92c4cc1b117b337a.webp",
+   "tile": false
   },
   "9315399136c21820": {
    "file": "9315399136c21820.webp",
@@ -2796,6 +2808,10 @@
   "c3e7d6636d7a6fb6": {
    "file": "c3e7d6636d7a6fb6.webp",
    "tile": true
+  },
+  "c4472e6ccbd9aac9": {
+   "file": "c4472e6ccbd9aac9.webp",
+   "tile": false
   },
   "c4707d8528942c9b": {
    "file": "c4707d8528942c9b.webp",
@@ -4303,6 +4319,10 @@
   "paintings:art-pissarro-snow-louveciennes": "f71afb72d068df5b",
   "paintings:art-seurat-grande-jatte": "d6f2fa186317a325",
   "paintings:art-steinlen-cat-on-cushion": "77b9199366192e9a",
+  "paintings:art-tennis-centre-line": "718ca149c831b520",
+  "paintings:art-tennis-court-impasto": "92c4cc1b117b337a",
+  "paintings:art-tennis-dark-green-court": "2516accd6e0b2c0e",
+  "paintings:art-tennis-diagonal-court": "c4472e6ccbd9aac9",
   "paintings:art-van-gogh-fishing-in-spring": "2655c2cd1e1fa01d",
   "paintings:canvas-linen": "f43927e6981a2975",
   "paper-art": "b28186e1e7a88df4",

@@ -227,6 +227,7 @@ export const ASSET_GROUPS: Record<AssetType, string[]> = {
     'Abstract paintings',
     'Landscape paintings',
     'Animal paintings',
+    'Sport paintings',
     'Mirrors',
     'Clocks',
     'Curtains & blinds',
