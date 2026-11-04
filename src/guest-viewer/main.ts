@@ -715,7 +715,7 @@ function start(data: GuestData) {
     optionBox = box;
     const select = el('select', 'ng-opts-select');
     optionSelect = select;
-    select.setAttribute('aria-label', 'Layout option');
+    select.setAttribute('aria-label', 'Option');
     data.options.forEach((o, i) => {
       const opt = el('option', '', o.name);
       opt.value = String(i);
@@ -729,7 +729,7 @@ function start(data: GuestData) {
     select.addEventListener('keydown', (e) => e.stopPropagation());
     const wrap = el('span', 'ng-opts-wrap');
     wrap.append(select, el('span', 'ng-opts-caret', '▾'));
-    box.append(el('span', 'ng-opts-label', 'Layout'), wrap);
+    box.append(el('span', 'ng-opts-label', 'Option'), wrap);
     side.append(box);
   }
   const markOption = () => {

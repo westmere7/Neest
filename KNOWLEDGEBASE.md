@@ -773,7 +773,7 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   ¼×–8× flying, kept separately for walk and fly while the page is open); the walk HUD shows it (`walk-speed`). The
   guest viewer does the same for walking and shows it in its hint. Trackpad gestures are unchanged.
 - Guest view (`#/guest/:id`, `GuestPage.tsx`) is view-only; the exported guest HTML embeds a GLB + the standalone
-  runtime (`src/guest-viewer/main.ts`). **Only the HTML export** has: a **Layout** switcher under the title (a drop-down: a
+  runtime (`src/guest-viewer/main.ts`). **Only the HTML export** has: an **Option** switcher under the title (labelled Option; a drop-down: a
   native `select` styled as a pill, so phones get their own picker and long names stay on one row; switching swaps the model group, colliders, lamps, labels, notes, overview, layer list and plan drawing, keeps
   the camera and walker), a **Notes** list (bar switch; every note of the shown option in full — target kind, facts,
   paragraphs and lists, links, pictures with a picture viewer: arrows, Esc closes only it, click outside closes; **Show**
@@ -2195,5 +2195,5 @@ Known limitations (also in README):
      view display; projects without it get Icons. Test in guestExport.test.ts; checked in the export pane (done).
      Republished 60LTN's live link with icons.
 176. "Drop-down for these please" (the Layout buttons in the live guest page) → the HTML guest viewer's Layout switcher
-     is one drop-down (native select, teal pill with a caret) instead of a button per option; one row on desktop and phones.
+     is one drop-down (native select, teal pill with a caret) instead of a button per option; one row on desktop and phones. Labelled "Option".
      Checked on 60LTN's guest page at desktop and phone width: switching options still swaps the model and overview (done).
