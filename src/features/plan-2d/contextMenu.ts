@@ -21,6 +21,7 @@ import { createCalloutAt, spotOnItem } from './tools/calloutTool';
 import { isObjectLocked, itemLayerOf } from '@/domain/commands/itemLayers';
 import { moveSelectionToLayer, newLayerFromSelection } from '@/features/editor/itemLayerActions';
 import { canEditItem, enterShapeEdit } from '@/features/shape-edit/actions';
+import { copySelection, pasteFromClipboard } from '@/features/editor/clipboard';
 
 /** Opens the library on an item's shelf and flashes its card (leaves Connections, which shares the panel's place). */
 export function showInLibrary(assetId: string): void {
@@ -43,6 +44,7 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
     return [
       { label: 'Add note here', shortcut: 'K', run: () => void createCalloutAt({ kind: 'point', x: world.x, y: world.y, z: 0 }, px) },
       { separator: true, label: '' },
+      { label: 'Paste here', shortcut: 'Ctrl+V', run: () => void pasteFromClipboard({ x: world.x, y: world.y }) },
       { label: 'Select all', shortcut: 'Ctrl+A', run: selectAll },
       { label: 'Fit plan to view', shortcut: 'F', run: () => ed.requestFit() },
       { separator: true, label: '' },
@@ -74,6 +76,13 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
         ? [{ label: 'Edit shape…', run: () => enterShapeEdit(hit.id), disabled: isObjectLocked(project, o) || project.layers.furniture.locked }]
         : []),
       ...(o && !project.customAssets[o.assetId] ? [{ label: 'Show in library', run: () => showInLibrary(o.assetId) }] : []),
+      { label: 'Copy', shortcut: 'Ctrl+C', run: () => void copySelection() },
+      {
+        label: 'Cut',
+        shortcut: 'Ctrl+X',
+        run: () => void copySelection(true),
+        disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)),
+      },
       { label: 'Duplicate', shortcut: 'Ctrl+D', run: duplicateSelection },
       { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },
       { label: 'Flip (mirror)', run: mirrorSelection, disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },

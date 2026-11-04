@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { preferenceRepository } from '@/storage/indexeddb/db';
 import type { UserVariant } from '@/data/assets/variants';
-import type { MaterialDefinition } from '@/domain/model/schema';
+import type { ItemEdits, MaterialDefinition } from '@/domain/model/schema';
 import type { AssetCategory } from '@/data/assets/types';
 import type { NoteStyle } from '@/features/callouts/style';
 import { setScrollDevice, type ScrollDevice } from '@/components/trackpad';
@@ -30,6 +30,8 @@ export interface SavedGroup {
     materials: Record<string, string>;
     /** Model variant (absent = default). */
     model?: string;
+    /** Shape-editor changes (settings, sections), so copies keep the exact shape. */
+    edits?: ItemEdits;
   }[];
   /** Plan footprint (metres). */
   size: { w: number; d: number };

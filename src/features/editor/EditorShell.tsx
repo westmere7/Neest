@@ -63,6 +63,7 @@ import { LayersPanel } from './LayersPanel';
 import { EditorDialogs } from './EditorDialogs';
 import { OptionSwitcher } from './OptionSwitcher';
 import { useEditorShortcuts } from './useShortcuts';
+import { useItemClipboard } from './clipboard';
 import { useSaveStore } from '../projects/projectService';
 import { preloadExport } from './EditorDialogs';
 import { describeSelection } from './actions';
@@ -83,6 +84,8 @@ export function EditorShell() {
   const shaping = useEditorStore((s) => !!s.shapeEdit);
   const isMobile = useIsMobile();
   useEditorShortcuts(isMobile);
+  // Ctrl+C / Ctrl+X / Ctrl+V of items, through the system clipboard (other tabs and projects too).
+  useItemClipboard();
   // The shape editor is a desktop tool.
   useEffect(() => {
     if (isMobile && shaping) exitShapeEdit();

@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-04 (interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-04 (copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -372,6 +372,23 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Moving: the 2D drag moves the whole selection, and the 3D body-drag moves group mates too (no wall hug for a
     group).
   - Shortcuts: Ctrl+G groups, Ctrl+Shift+G ungroups.
+- **Copy, cut and paste of items** (Ctrl+C / Ctrl+X / Ctrl+V; Ctrl+Shift+V in place; right-click Copy, Cut, and
+  "Paste here" on empty space): `domain/commands/clipboard.ts` (`copyPayload`, `parseClipboard`, `pasteObjects`) and
+  `features/editor/clipboard.ts` (`useItemClipboard` in EditorShell). The clipboard holds plain text: a self-contained
+  snapshot (kind `neest-clipboard`, v1) of the selected items (every field: shape edits, model, finishes, size, name),
+  their groups, the project materials and imported models they use, and their item layers, so it pastes into another
+  tab, window, project or layout option. Keys use the browser's copy / cut / paste events (no permission prompt);
+  menu commands use the Clipboard API and fall back to a same-browser copy in localStorage (`neest:clipboard`). Text
+  fields, a text selection, the shape editor and Notes mode keep the native behaviour. Paste: new ids; groups become
+  new groups ("… copy" back in the source project; fewer than two members = no group); missing materials and imported
+  models are added; layers match by id, then name, else Unassigned; copies come unlocked and shown, without services
+  pins; items whose pack is not installed are skipped (toast). Placement: back in the source project and option each
+  paste of one copy steps 3 grid steps further; elsewhere the items keep their coordinates; "Paste here" centres them
+  on the point. Pasted items are selected; from another project the view focuses them. Only items are copied (walls,
+  doors, windows, notes are not).
+- **Duplicate keeps the exact shape**: one item through `placeTemplate` (edits, model), several through a group
+  snapshot whose items now carry `edits` too (`groupFromSelection`, `placeSavedGroup`, and the ghost in
+  `savedGroupAsset`); saved library groups keep shape edits the same way.
 - **Saved groups**:
   - Right-click → "Save to library as a group" stores relative positions, sizes, finishes and copies of
     project-only materials in prefs (`savedGroups`, every project).
@@ -2219,4 +2236,9 @@ Known limitations (also in README):
      plan and 3D view stay at full scale so their pointer maths is unchanged. Popups placed at screen positions
      (tooltips, context menus, option menu, item info card, quality menu, category tips) convert with `toUi`. Checked
      in the browser: panel sizes, a menu under its button, the plan's drawing size, a dialog, the home page (done).
+179. "Allow copy and pasting items, including groups, and including cross tabs" + "duplicate should duplicate items in
+     their current exact shape edit and variant" → Ctrl+C / X / V of items through the system clipboard (§10 Groups:
+     copy, cut and paste), and Duplicate of several items keeps shape edits (single items already did). Tests in
+     domain/commands/clipboard.test.ts and features/editor/clipboard.test.ts; checked in the browser: 28 items with a
+     group and a shape-edited portal copied from 60LTN and pasted into another tab's project, and Paste here (done).
      Checked on 60LTN's guest page at desktop and phone width: switching options still swaps the model and overview (done).

@@ -3,6 +3,7 @@ import type { AssetDefinition, Part, PlanStroke } from '@/data/assets/types';
 import { getAsset, setAssetResolver } from '@/data/assets/registry';
 import { currentItem, withModel } from '@/data/assets/models';
 import { partBounds } from '@/data/assets/plantParts';
+import { withEdits } from '@/data/assets/itemEdits';
 import { usePrefsStore, type SavedGroup } from '@/state/uiStores';
 import { readyGroupById } from '@/data/groups/readyGroups';
 import { useProjectStore } from '@/state/projectStore';
@@ -34,7 +35,9 @@ export function savedGroupAsset(g: SavedGroup): AssetDefinition {
   const parts: Part[] = [];
   g.items.forEach((it, i) => {
     const cur = currentItem(it.assetId, it.model);
-    const a = withModel(getAsset(null, cur.assetId), cur.model);
+    // Built with the member's shape edits, so the ghost and thumbnail show its exact shape.
+    const plainAsset = withModel(getAsset(null, cur.assetId), cur.model);
+    const a = plainAsset && it.edits && cur.assetId === it.assetId ? withEdits(plainAsset, it.edits) : plainAsset;
     if (!a || a.id.startsWith(SAVED_GROUP_PREFIX)) return;
     for (const s of a.slots) slots.push({ id: `${i}:${s.id}`, label: `${a.name}: ${s.label}`, defaultMaterial: it.materials[s.id] ?? s.defaultMaterial });
     let built: Part[] = [];

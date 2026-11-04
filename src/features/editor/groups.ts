@@ -162,6 +162,7 @@ export function groupFromSelection(name?: string): SavedGroup | null {
       mirrored: o.mirrored,
       materials: { ...o.materials },
       ...(o.model ? { model: o.model } : {}),
+      ...(o.edits ? { edits: structuredClone(o.edits) } : {}),
     })),
     size: {
       w: Math.max(...objs.map((o) => o.x + extent(o))) - Math.min(...objs.map((o) => o.x - extent(o))),
@@ -200,6 +201,8 @@ export function placeSavedGroup(group: SavedGroup, at: Vec2, rotation = 0): void
         model: it.model,
       });
       if (it.mirrored) updateObjects(d, [id], { mirrored: true });
+      // The exact shape of the original (only while the item is the same library item).
+      if (it.edits && it.assetId === saved.assetId) d.objects[id].edits = structuredClone(it.edits);
       out.push(id);
     }
     if (out.length >= 2 && !group.ungrouped) groupObjects(d, out, group.name, group.description);
