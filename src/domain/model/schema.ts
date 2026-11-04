@@ -755,6 +755,7 @@ export const GroupSnapshotSchema = z.object({
         mirrored: z.boolean().default(false),
         materials: z.record(z.string(), z.string()).default({}),
         model: z.string().max(60).optional(),
+        edits: ItemEditsSchema.optional().catch(undefined),
       }),
     )
     .max(400),
