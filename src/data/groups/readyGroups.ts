@@ -453,6 +453,39 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
     ],
   },
   {
+    // From a reference photo (2026-11-04), colours sampled and white-balanced; no fridge. The left leg
+    // runs along the left wall (x = -1.5), the bar from the terrazzo pier into the room.
+    id: 'ready-sage-shaker-l-kitchen',
+    name: 'Sage shaker L kitchen with oak bar',
+    shelf: KITCHEN,
+    room: 'kitchen',
+    description:
+      'Sage green shaker cabinets with tan leather tab pulls in an L, a white terrazzo worktop and end pier, a double sink with a spring tap and an induction hob over three drawers; cream shaker and reeded-glass wall cabinets, a slim black hood, a pale mint stack-tile splashback and an oak LED shelf; an oak waterfall bar with two white bentwood chairs. About 3.5 × 2.3 m.',
+    items: [
+      { a: 'sage-shaker-kitchen:blind-corner-unit', x: -1.2, y: 0.3 },
+      { a: 'sage-shaker-kitchen:base-door-unit', x: -1.2, y: 1.0, r: FACE_RIGHT, w: 0.8 },
+      { a: 'sage-shaker-kitchen:base-door-unit', x: -0.675, y: 0.3, w: 0.45 },
+      { a: 'sage-shaker-kitchen:sink-unit', x: 0.05, y: 0.3 },
+      { a: 'sage-shaker-kitchen:hob-drawer-unit', x: 0.95, y: 0.3 },
+      { a: 'sage-shaker-kitchen:terrazzo-end-pier', x: 1.575, y: 0.3 },
+      { a: 'sage-shaker-kitchen:mint-stack-tile-splashback', x: -0.075, y: 0.006, w: 2.85, e: 0.9 },
+      { a: 'sage-shaker-kitchen:mint-stack-tile-splashback', x: -1.494, y: 1.0, r: FACE_RIGHT, w: 0.8, e: 0.9 },
+      { a: 'sage-shaker-kitchen:oak-led-shelf', x: -1.2, y: 0.12, e: 1.45 },
+      { a: 'sage-shaker-kitchen:wall-cabinet', x: -1.2, y: 0.175, w: 0.6, h: 0.55, e: 1.95 },
+      { a: 'sage-shaker-kitchen:reeded-glass-wall-cabinet', x: -0.6, y: 0.175, e: 1.5 },
+      { a: 'sage-shaker-kitchen:wall-cabinet', x: 0.1, y: 0.175, w: 0.8, e: 1.5 },
+      { a: 'sage-shaker-kitchen:wall-cabinet', x: 0.925, y: 0.175, w: 0.85, e: 1.5 },
+      { a: 'sage-shaker-kitchen:slim-black-hood', x: 0.95, y: 0.25, e: 1.38 },
+      // The oak bar: the waterfall add-on desk as a slim top, its flat end against the pier.
+      { a: 'wardrobe-study:modular-waterfall-cabinet-desk', md: 'slim', x: 1.575, y: 1.46, r: FACE_LEFT, w: 1.7, d: 0.45, h: 0.76, m: { oak: 'sage-shaker-kitchen:bar-oak' } },
+      { a: 'dining-chair-bentwood', x: 2.0, y: 1.2, r: FACE_LEFT, m: { frame: 'paint-satin-white', seat: 'paint-satin-white' } },
+      { a: 'dining-chair-bentwood', x: 2.0, y: 1.85, r: FACE_LEFT, m: { frame: 'paint-satin-white', seat: 'paint-satin-white' } },
+      { a: 'sage-shaker-kitchen:leaning-boards-utensils', x: -1.25, y: 0.12, e: 0.9 },
+      { a: 'sage-shaker-kitchen:copper-casserole', x: 1.1, y: 0.3, e: 0.905 },
+      { a: 'sage-shaker-kitchen:bud-vase-mandarins', x: 1.575, y: 0.95, r: FACE_LEFT, e: 0.76 },
+    ],
+  },
+  {
     id: 'ready-masonry-kitchen-vn',
     name: 'Vietnamese masonry kitchen (bếp xây)',
     shelf: KITCHEN,

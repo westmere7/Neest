@@ -417,6 +417,10 @@
    "file": "1e1b0adecd72a832.webp",
    "tile": true
   },
+  "1f0c184e55138f48": {
+   "file": "1f0c184e55138f48.webp",
+   "tile": true
+  },
   "1f2f486b0955ba8b": {
    "file": "1f2f486b0955ba8b.webp",
    "tile": false
@@ -667,6 +671,10 @@
   },
   "308af43dac401cac": {
    "file": "308af43dac401cac.webp",
+   "tile": true
+  },
+  "321fd705b5dfd6e8": {
+   "file": "321fd705b5dfd6e8.webp",
    "tile": true
   },
   "322a4c4ce6522bed": {
@@ -1885,6 +1893,10 @@
    "file": "863fbfba5bad8dc1.webp",
    "tile": true
   },
+  "8668977a8f62e692": {
+   "file": "8668977a8f62e692.webp",
+   "tile": true
+  },
   "8731750b6822df82": {
    "file": "8731750b6822df82.webp",
    "tile": false
@@ -2821,6 +2833,10 @@
    "file": "c48a61376feb3828.webp",
    "tile": true
   },
+  "c49497542869fa78": {
+   "file": "c49497542869fa78.webp",
+   "tile": false
+  },
   "c4cf7a6a548c708a": {
    "file": "c4cf7a6a548c708a.webp",
    "tile": false
@@ -3540,6 +3556,10 @@
   "f43927e6981a2975": {
    "file": "f43927e6981a2975.webp",
    "tile": true
+  },
+  "f48c05e9565c2c3c": {
+   "file": "f48c05e9565c2c3c.webp",
+   "tile": false
   },
   "f4e47f215bda77ad": {
    "file": "f4e47f215bda77ad.webp",
@@ -4388,6 +4408,11 @@
   "rug-seagrass": "3f9b2ee99c33fde3",
   "rug-sisal": "4f1f594d0238109d",
   "rug-wool-cream": "01fcdae284132ca8",
+  "sage-shaker-kitchen:bar-oak": "f48c05e9565c2c3c",
+  "sage-shaker-kitchen:leather-tab": "c49497542869fa78",
+  "sage-shaker-kitchen:mint-stack-tile": "321fd705b5dfd6e8",
+  "sage-shaker-kitchen:reeded-glass": "8668977a8f62e692",
+  "sage-shaker-kitchen:terrazzo-white": "1f0c184e55138f48",
   "shelving:binder-navy": "f12e974fea347e4e",
   "shelving:birch-pegboard": "22cf7fe002ad67a9",
   "shelving:black-iron-pipe": "05b1a7d663c31e82",
