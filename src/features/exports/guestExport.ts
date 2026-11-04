@@ -134,10 +134,14 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-pin.open{outline:2px solid var(--main);outline-offset:2px}
 .ng-callout.ng-flash{animation:ng-flash 1.6s ease}
 @keyframes ng-flash{0%,40%{box-shadow:0 0 0 4px var(--main),0 2px 10px rgba(0,0,0,.18)}100%{box-shadow:0 2px 10px rgba(0,0,0,.18)}}
-.ng-opts{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:4px;border-radius:12px;background:rgba(29,31,34,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto}
-.ng-opts-label{color:#b0ada7;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:0 6px 0 8px}
-.ng-opts .ng-btn{background:transparent;border-color:transparent;padding:6px 10px}
-.ng-opts .ng-btn.on{background:#6fb3a0;color:#0f2a26;font-weight:600}
+.ng-opts{display:flex;align-items:center;gap:4px;padding:4px;border-radius:12px;background:rgba(29,31,34,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto;cursor:pointer}
+.ng-opts-label{color:#b0ada7;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:0 6px 0 8px;flex:none}
+.ng-opts-wrap{position:relative;flex:1;min-width:0;display:flex}
+.ng-opts-select{-webkit-appearance:none;appearance:none;flex:1;min-width:0;max-width:100%;border:0;border-radius:9px;background:#6fb3a0;color:#0f2a26;font:inherit;font-weight:600;padding:6px 30px 6px 12px;cursor:pointer;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.ng-opts-select:hover{background:#82c2b0}
+.ng-opts-select:focus-visible{outline:2px solid #a3cfc1;outline-offset:1px}
+.ng-opts-select option{background:#26292d;color:#f2efe9;font-weight:400}
+.ng-opts-caret{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#0f2a26;font-size:12px;pointer-events:none}
 .ng-side{max-height:calc(100vh - var(--ng-bar,46px) - 50px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
 .ng-side>*{flex:none}.ng-side>.ng-panel{flex:0 1 auto;min-height:0}
 .ng-note-list{display:flex;flex-direction:column;gap:8px}
@@ -185,8 +189,7 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-bar .ng-ico{width:18px;height:18px}
  .ng-title{padding:6px 12px}.ng-title strong{font-size:14px}.ng-title span{display:none}
  .ng-opts-label{display:none}
- .ng-views::-webkit-scrollbar,.ng-bar::-webkit-scrollbar,.ng-opts::-webkit-scrollbar{display:none}
- .ng-opts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+ .ng-views::-webkit-scrollbar,.ng-bar::-webkit-scrollbar{display:none}
  .ng-callout{max-width:200px}
  .ng-lightbox{--lb-px:12px;--lb-py:56px}
 }
@@ -216,7 +219,6 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-help,.ng-plan-hint{white-space:normal;width:86vw;text-align:center;font-size:11px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom))}
  .ng-walking .ng-stick,.ng-flying .ng-updown{bottom:calc(var(--ng-bar,56px) + 60px + env(safe-area-inset-bottom))}
  .ng-callout{max-width:200px}
- .ng-opts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
  .ng-lightbox{--lb-px:12px;--lb-py:56px}
 }
 `;

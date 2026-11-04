@@ -706,29 +706,35 @@ function start(data: GuestData) {
     el('span', '', `${data.subtitle || 'View-only 3D walkthrough'} · made with Neest`),
   );
   side.append(title);
-  // Layout options: one button each (the file opens on the option that was active).
-  const optionButtons: HTMLButtonElement[] = [];
+  // Layout options: a drop-down (the file opens on the option that was active). A native select, so
+  // phones get their own picker and long option names never crowd the panel.
   let optionBox: HTMLElement | null = null;
+  let optionSelect: HTMLSelectElement | null = null;
   if (data.options.length > 1) {
-    const box = el('div', 'ng-opts');
+    const box = el('label', 'ng-opts');
     optionBox = box;
-    box.setAttribute('role', 'group');
-    box.setAttribute('aria-label', 'Layout options');
-    box.append(el('span', 'ng-opts-label', 'Layout'));
+    const select = el('select', 'ng-opts-select');
+    optionSelect = select;
+    select.setAttribute('aria-label', 'Layout option');
     data.options.forEach((o, i) => {
-      const btn = el('button', 'ng-btn', o.name);
-      btn.type = 'button';
-      btn.onclick = () => setOption(i);
-      optionButtons.push(btn);
-      box.append(btn);
+      const opt = el('option', '', o.name);
+      opt.value = String(i);
+      select.append(opt);
     });
+    select.onchange = () => {
+      setOption(Number(select.value));
+      select.blur();
+    };
+    // Arrow keys and letters belong to the select while it has focus, not to walking.
+    select.addEventListener('keydown', (e) => e.stopPropagation());
+    const wrap = el('span', 'ng-opts-wrap');
+    wrap.append(select, el('span', 'ng-opts-caret', '▾'));
+    box.append(el('span', 'ng-opts-label', 'Layout'), wrap);
     side.append(box);
   }
-  const markOption = () =>
-    optionButtons.forEach((x, i) => {
-      x.classList.toggle('on', i === cur);
-      x.setAttribute('aria-pressed', String(i === cur));
-    });
+  const markOption = () => {
+    if (optionSelect) optionSelect.value = String(cur);
+  };
   markOption();
   const views = el('div', 'ng-views');
   const modeBtn = el('button', 'ng-btn ng-primary');

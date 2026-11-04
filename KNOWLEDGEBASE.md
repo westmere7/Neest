@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-04 (guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-04 (guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -773,8 +773,8 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   ¼×–8× flying, kept separately for walk and fly while the page is open); the walk HUD shows it (`walk-speed`). The
   guest viewer does the same for walking and shows it in its hint. Trackpad gestures are unchanged.
 - Guest view (`#/guest/:id`, `GuestPage.tsx`) is view-only; the exported guest HTML embeds a GLB + the standalone
-  runtime (`src/guest-viewer/main.ts`). **Only the HTML export** has: a **Layout** switcher under the title (one button per
-  option; switching swaps the model group, colliders, lamps, labels, notes, overview, layer list and plan drawing, keeps
+  runtime (`src/guest-viewer/main.ts`). **Only the HTML export** has: a **Layout** switcher under the title (a drop-down: a
+  native `select` styled as a pill, so phones get their own picker and long names stay on one row; switching swaps the model group, colliders, lamps, labels, notes, overview, layer list and plan drawing, keeps
   the camera and walker), a **Notes** list (bar switch; every note of the shown option in full — target kind, facts,
   paragraphs and lists, links, pictures with a picture viewer: arrows, Esc closes only it, click outside closes; **Show**
   glides the orbit view in from above the walls, about 5.5–9 m out, or turns the walker towards it, and flashes its
@@ -2193,3 +2193,7 @@ Known limitations (also in README):
 175. "For html export, use icon for note by default" → the guest export has its own note style (`guest.noteDisplay`,
      default Icons; Export → Guest walkthrough → Note style: Icons / Compact / Full) instead of following the editor's 3D
      view display; projects without it get Icons. Test in guestExport.test.ts; checked in the export pane (done).
+     Republished 60LTN's live link with icons.
+176. "Drop-down for these please" (the Layout buttons in the live guest page) → the HTML guest viewer's Layout switcher
+     is one drop-down (native select, teal pill with a caret) instead of a button per option; one row on desktop and phones.
+     Checked on 60LTN's guest page at desktop and phone width: switching options still swaps the model and overview (done).
