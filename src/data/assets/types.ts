@@ -103,6 +103,20 @@ export interface AssetParam {
   step?: number;
   options?: { value: string; label: string }[];
   hint?: string;
+  /**
+   * A handle for a length setting in the shape editor's 3D view (a corner radius, a leg width, a soffit
+   * drop): where it sits in item space for these settings (every setting filled in), and which way
+   * dragging it adds to the value (`dir`: a unit vector in item space; `per`: value per metre of drag,
+   * default 1). Null when the setting has no handle at this size.
+   */
+  handle?: (size: Size3, params: ParamValues) => ParamHandle | null;
+}
+
+/** Where a setting's handle sits and which way it drags (see `AssetParam.handle`). */
+export interface ParamHandle {
+  at: [number, number, number];
+  dir: [number, number, number];
+  per?: number;
 }
 
 /** Extra 2D plan detail drawn on top of the derived footprint, in local [x, z] coords. */
@@ -230,7 +244,7 @@ export interface AssetModelVariant {
   /** Slots whose parts this model leaves out (props built into the item: books, tableware…). */
   hide?: string[];
   /** Extra props for this model, built for the item's size; they may rise above its top. */
-  props?: (size: Size3) => Part[];
+  props?: (size: Size3, params?: ParamValues) => Part[];
   /** Material slots only this model's props use (slot ids must not clash with the item's). */
   slots?: MaterialSlot[];
   /**
@@ -243,7 +257,7 @@ export interface AssetModelVariant {
    * A different form of the item (an open portal instead of one on a half wall): these parts replace the
    * item's own (`hide` still applies to them) and give the plan outline. Same size box as the item.
    */
-  build?: (size: Size3) => Part[];
+  build?: (size: Size3, params?: ParamValues) => Part[];
 }
 
 /** A hand-made colour variant of an asset (see `AssetDefinition.variants`). */

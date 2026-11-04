@@ -4,23 +4,10 @@ import { createEmptyProject } from '@/domain/model/defaults';
 import { placeObject } from '@/domain/commands/entities';
 import { getAsset, getObjectAsset } from '@/data/assets/registry';
 import { ASSET_CATALOG } from '@/data/assets/catalog';
-import { editedParts, partBox } from '@/data/assets/itemEdits';
+import { sectionInfo } from '@/data/assets/itemEdits';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
-import {
-  canEditItem,
-  dragPart,
-  enterShapeEdit,
-  exitShapeEdit,
-  resetShape,
-  scalePart,
-  setParam,
-  setPartCentre,
-  setPartSize,
-  setPartsFollow,
-  setSectionSize,
-  togglePartHidden,
-} from './actions';
+import { canEditItem, clearPartEdits, enterShapeEdit, exitShapeEdit, resetShape, setParam, setSectionEdges, setSectionSize } from './actions';
 
 const WARDROBE = 'wardrobe-study:wardrobe-study-wall';
 
@@ -69,54 +56,42 @@ describe('shape editor', () => {
     expect(useEditorStore.getState().tool).toBe('wall');
   });
 
-  it('edits sections, parts and settings one undo step at a time, again and again', () => {
+  it('resizes compartments by field and by handle drag, one undo step each, again and again', () => {
     const id = setup();
     enterShapeEdit(id);
     const past = () => useProjectStore.getState().past.length;
     const n0 = past();
     setSectionSize('x', 0, 0.4);
-    // A second and third edit start from the stored edits (they used to fail cloning a draft).
-    togglePartHidden(6, true);
-    dragPart(12, [0, 0, 0.1], [0, 0, 0.2]);
-    setPartSize(13, [0.6, null, null]);
-    setPartCentre(13, [null, 0.4, null]);
-    scalePart(30, 2);
-    expect(past()).toBe(n0 + 6);
+    // A second edit starts from the stored edits (it used to fail cloning a draft).
+    const asset = getAsset(null, WARDROBE)!;
+    const size = () => ({ w: obj(id).width, d: obj(id).depth, h: obj(id).height });
+    const edges = sectionInfo(asset, size(), obj(id).edits).x.edges;
+    setSectionEdges('x', edges.map((v, i) => (i === 1 ? v - 0.1 : v)));
+    expect(past()).toBe(n0 + 2);
     const e = obj(id).edits!;
     expect(e.sections?.x?.d[0]).toBeCloseTo(0.4 - 0.535, 3);
-    expect(e.parts?.['6']?.hidden).toBe(true);
-    expect(e.parts?.['12']?.grow).toEqual([0, 0, 0.2]);
-    const asset = getAsset(null, WARDROBE)!;
-    const size = { w: obj(id).width, d: obj(id).depth, h: obj(id).height };
-    const parts = editedParts(asset, size, e);
-    expect(partBox(parts[13].part).size[0]).toBeCloseTo(0.6, 3);
-    expect(partBox(parts[13].part).centre[1]).toBeCloseTo(0.4, 3);
+    expect(sectionInfo(asset, size(), e).x.edges[1]).toBeCloseTo(edges[1] - 0.1, 6);
     expect(getObjectAsset(null, obj(id))!.id).toMatch(/@shape:/);
     useProjectStore.getState().undo();
-    expect(obj(id).edits?.parts?.['30']).toBeUndefined();
+    expect(sectionInfo(asset, size(), obj(id).edits).x.edges[1]).toBeCloseTo(edges[1], 6);
     resetShape();
     expect(obj(id).edits).toBeUndefined();
     expect(getObjectAsset(null, obj(id))).toBe(asset);
   });
 
-  it('lets attached parts follow a moved wall, or each part move alone', () => {
-    const id = setup();
+  it('keeps part edits made with the earlier editor until they are cleared', () => {
+    const id = setup('desk');
+    // A desk has no components to resize, but an earlier part edit still opens the editor to clear it.
+    expect(canEditItem(useProjectStore.getState().project!, id)).toBe(false);
+    const sig = `${getAsset(null, 'desk')!.build(getAsset(null, 'desk')!.defaultSize)[0].shape}:${getAsset(null, 'desk')!.build(getAsset(null, 'desk')!.defaultSize)[0].slot}`;
+    useProjectStore.getState().execute('Old edit', (d) => {
+      d.objects[id].edits = { parts: { '0': { sig, grow: [0.1, 0, 0] } } };
+    });
+    expect(getObjectAsset(null, obj(id))!.id).toMatch(/@shape:/);
+    expect(canEditItem(useProjectStore.getState().project!, id)).toBe(true);
     enterShapeEdit(id);
-    const asset = getAsset(null, WARDROBE)!;
-    const size = () => ({ w: obj(id).width, d: obj(id).depth, h: obj(id).height });
-    const shelfEnd = () => partBox(editedParts(asset, size(), obj(id).edits)[6].part).max[0];
-    const end0 = shelfEnd();
-    dragPart(1, [0.1, 0, 0], [0, 0, 0]);
-    expect(shelfEnd()).toBeCloseTo(end0 + 0.1, 6);
-    // Off: the shelf goes back where it was and the setting is stored with the edits.
-    setPartsFollow(false);
-    expect(obj(id).edits?.detached).toBe(true);
-    expect(shelfEnd()).toBeCloseTo(end0, 6);
-    dragPart(1, [0.05, 0, 0], [0, 0, 0]);
-    expect(shelfEnd()).toBeCloseTo(end0, 6);
-    setPartsFollow(true);
-    expect(obj(id).edits?.detached).toBeUndefined();
-    expect(shelfEnd()).toBeCloseTo(end0 + 0.15, 6);
+    clearPartEdits();
+    expect(obj(id).edits).toBeUndefined();
   });
 
   it('changes and resets a portal setting; the default stores nothing', () => {

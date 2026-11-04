@@ -8,11 +8,14 @@ import {
   cleanEdits,
   detectSections,
   editedParts,
+  editsApply,
   isEmptyEdits,
+  paramHandles,
   partSig,
   sectionInfo,
   withEdits,
 } from './itemEdits';
+import { withModel } from './models';
 import type { AssetDefinition, Part, Size3 } from './types';
 
 type V3 = [number, number, number];
@@ -32,22 +35,39 @@ const inside = (parts: Part[], { w, d, h }: Size3, slack = 0.03) =>
   });
 
 const all = () => ASSET_CATALOG;
-const editable = () => all().filter(canEditShape);
+/** Items edits apply to (the engine is checked on all of them; older part edits must keep working). */
+const editable = () => all().filter(editsApply);
+/** Items the shape editor opens on: they have components to resize. */
+const withEditor = () => all().filter(canEditShape);
 const byId = (id: string): AssetDefinition => ASSETS_BY_ID[id] ?? getAsset(null, id)!;
 
 describe('which items have the shape editor', () => {
-  it('covers building parts and built furniture, never branded items, meshes or decor', () => {
+  it('edits apply to building parts and built furniture, never branded items, meshes or decor', () => {
     const list = editable();
     expect(list.length).toBeGreaterThan(300);
     expect(list.some((a) => a.brand || a.model)).toBe(false);
     const types = new Set(list.map((a) => a.type));
     expect([...types].sort()).toEqual(['beds', 'kids', 'seating', 'storage', 'structure', 'surfaces']);
-    for (const id of ['portal-frames:rounded-portal', 'column-square', 'wardrobe', 'bookcase', 'bed-double', 'sofa-3-seat', 'desk', 'kitchen-base-cabinet'])
-      expect(canEditShape(byId(id)), id).toBe(true);
-    // Shelves where editing parts makes no sense, and kinds left out altogether.
+    // Shelves where editing makes no sense, and kinds left out altogether.
     for (const id of ['radiator', 'laundry-basket', 'parasol', 'pouf-round', 'plant-monstera', 'floor-lamp', 'rug-rect', 'vase', 'generic-box', 'toaster'])
+      expect(editsApply(byId(id)) || canEditShape(byId(id)), id).toBe(false);
+    expect(all().filter((a) => a.brand).some(editsApply)).toBe(false);
+  });
+
+  it('opens only on items with components to resize: settings or compartments and levels', () => {
+    const list = withEditor();
+    expect(list.length).toBeGreaterThan(200);
+    for (const a of list) {
+      const s = detectSections(a.build(a.defaultSize), a.defaultSize);
+      expect(!!a.params?.length || s.x.length + s.y.length > 0, a.id).toBe(true);
+    }
+    for (const id of ['portal-frames:rounded-portal', 'portal-frames:corner-portal-half-wall', 'wardrobes-fullheight:dressing-mirror-niche-wardrobe', 'bookcase', 'sofa-3-seat'])
+      expect(canEditShape(byId(id)), id).toBe(true);
+    // Nothing to make variants from: a plain bed, a plain wardrobe, a desk, a column.
+    for (const id of ['bed-double', 'wardrobe', 'desk', 'column-square']) {
+      expect(editsApply(byId(id)), id).toBe(true);
       expect(canEditShape(byId(id)), id).toBe(false);
-    expect(all().filter((a) => a.brand).some(canEditShape)).toBe(false);
+    }
   });
 });
 
@@ -212,6 +232,50 @@ describe('shape settings of every item that has them', () => {
           expect(parts.length > 0 && finite(parts) && inside(parts, size), `${a.id} ${p.id}=${v}`).toBe(true);
         }
       }
+    }
+  });
+});
+
+describe('setting handles in the 3D view', () => {
+  it('every length setting of a portal has a handle that moves the way the value grows', () => {
+    const items = withEditor().filter((a) => a.params?.some((p) => p.handle));
+    expect(items.length).toBeGreaterThanOrEqual(18);
+    for (const a of items) {
+      const size = a.defaultSize;
+      for (const p of a.params!.filter((x) => x.kind === 'length')) expect(!!p.handle, `${a.id} ${p.id} has no handle`).toBe(true);
+      for (const { param, value, handle } of paramHandles(a, size, undefined)) {
+        // The handle sits on the item (within its box, a little proud of the front face).
+        const [x, y, z] = handle.at;
+        expect(Math.abs(x) <= size.w / 2 + 0.02 && y >= -0.02 && y <= size.h + 0.02 && Math.abs(z) <= size.d / 2 + 0.02, `${a.id} ${param.id} at ${handle.at}`).toBe(true);
+        // A little more of the value moves the handle along its direction (never against it).
+        const step = Math.min(0.03 / (handle.per ?? 1), (param.max! - value) / 2);
+        if (step <= 1e-4) continue;
+        const next = paramHandles(a, size, { [param.id]: value + step }).find((h) => h.param.id === param.id)!;
+        const moved = next.handle.at.reduce((s, v, i) => s + (v - handle.at[i]) * handle.dir[i], 0);
+        expect(moved, `${a.id} ${param.id}`).toBeGreaterThanOrEqual(-1e-6);
+      }
+    }
+  });
+
+  it('a corner radius handle follows the radius exactly where the curve meets the soffit', () => {
+    const a = byId('portal-frames:rounded-portal');
+    const h0 = paramHandles(a, a.defaultSize, undefined).find((h) => h.param.id === 'rR')!;
+    const h1 = paramHandles(a, a.defaultSize, { rR: h0.value + 0.1 }).find((h) => h.param.id === 'rR')!;
+    expect(h1.handle.at[0] - h0.handle.at[0]).toBeCloseTo(-0.1, 6);
+    expect(h1.handle.at[1]).toBeCloseTo(h0.handle.at[1], 6);
+  });
+
+  it("the corner portal's settings reach its models' half wall and ledge too", () => {
+    const a = byId('portal-frames:corner-portal-half-wall');
+    const size = a.defaultSize;
+    for (const model of ['ledge-inside', 'ledge-outside', 'half-wall', 'open']) {
+      const m = withModel(a, model);
+      const plain = m.build(size);
+      // Defaults change nothing (saved part edits keep pointing at the same parts).
+      expect(m.build(size, Object.fromEntries(a.params!.map((p) => [p.id, p.default]))), model).toEqual(plain);
+      const wide = editedParts(m, size, { params: { legA: 0.5 } }).map((p) => p.part);
+      expect(wide, model).not.toEqual(plain);
+      expect(wide.length, model).toBe(plain.length);
     }
   });
 });

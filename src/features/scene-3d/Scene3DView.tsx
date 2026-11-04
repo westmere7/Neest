@@ -739,9 +739,9 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         frameloop={active || !ready ? 'always' : 'never'}
         onCreated={(state) => state.setEvents({ compute: clientCompute as never })}
         onPointerMissed={(e) => {
-          // In the shape editor a click beside the item drops the picked part, never the item.
+          // In the shape editor a click beside the item drops the picked component, never the item.
           if (shaping) {
-            if (e.button === 0) setShapeEditState({ part: null });
+            if (e.button === 0) setShapeEditState({ section: null });
             return;
           }
           if (!walk && !drawing && e.button === 0) useEditorStore.getState().clearSelection();

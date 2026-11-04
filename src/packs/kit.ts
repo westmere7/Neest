@@ -18,7 +18,7 @@ export { PLANT_SPECIES, type PlantSpeciesId } from '@/data/assets/plantSpecies';
 export { builtInAsset } from '@/data/assets/catalog';
 /** Baked realistic people (npm run people): figure id → GLB file, hash, size [w, d, h] and slots. */
 export { default as PEOPLE_MODELS } from '@/data/assets/peopleModels.json';
-export type { AssetBrand, AssetCategory, AssetModel, AssetModelVariant, AssetParam, AssetPresetVariant, AssetType, Part, ParamValues, PlanStroke, PlantInfo, Size3, MaterialSlot } from '@/data/assets/types';
+export type { AssetBrand, AssetCategory, AssetModel, AssetModelVariant, AssetParam, AssetPresetVariant, ParamHandle, AssetType, Part, ParamValues, PlanStroke, PlantInfo, Size3, MaterialSlot } from '@/data/assets/types';
 
 /** An item (furniture/object) in a pack: the same fields as a built-in asset. */
 export type PackItem = AssetSpec;

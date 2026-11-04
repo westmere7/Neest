@@ -9,7 +9,7 @@ import { deleteSelection, duplicateSelection, nudgeSelection, rotateSelection, s
 import { groupSelection, ungroupSelection } from './groups';
 import { setServicesMode, toggleServicesMode } from '@/features/services/actions';
 import { setNotesMode, toggleNotesMode } from '@/features/callouts/actions';
-import { exitShapeEdit, setShapeEditState, togglePartHidden } from '@/features/shape-edit/actions';
+import { exitShapeEdit, setShapeEditState } from '@/features/shape-edit/actions';
 
 export const TOOL_SHORTCUTS: Record<string, ToolId> = {
   v: 'select',
@@ -80,17 +80,13 @@ export function useEditorShortcuts(isMobile: boolean) {
 
       // Shape editor: only its own keys and undo/redo; every other tool and mode stays off.
       if (ed.shapeEdit) {
-        const part = ed.shapeEdit.part;
         if (e.key === 'Escape') {
-          if (part !== null) setShapeEditState({ part: null });
+          if (ed.shapeEdit.section) setShapeEditState({ section: null });
           else exitShapeEdit();
         } else if (mod && (key === 'z' || key === 'y')) {
           e.preventDefault();
           if (key === 'y' || e.shiftKey) ps.redo();
           else ps.undo();
-        } else if (!mod && part !== null && (key === 'h' || e.key === 'Delete' || e.key === 'Backspace')) {
-          e.preventDefault();
-          togglePartHidden(part, true);
         } else if (mod && key === 's') {
           e.preventDefault();
           void flushSave().then(() => toast.success('Saved locally'));

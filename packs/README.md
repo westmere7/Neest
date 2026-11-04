@@ -50,27 +50,30 @@ The format:
 
 ## Make items editable in the shape editor
 
-Building parts and built furniture open in Neest's **shape editor**: people move, resize, scale and hide an item's
-parts, resize its sections (the compartments between dividers, the levels between fixed shelves) and change named
-settings. Which items get it: structure (not radiators), storage (not baskets and boxes), tables and desks (not
-outdoor ones), beds, sofas, dining and living chairs, stools and benches, kids' furniture. Never branded items or
-items with a shipped mesh. When you add such items:
+Neest's **shape editor** makes variants of an item by resizing its components: a wardrobe with a wider niche, a portal
+with a lower soffit or a smaller corner radius. It never edits single parts. Items edits apply to: structure (not
+radiators), storage (not baskets and boxes), tables and desks (not outdoor ones), beds, sofas, dining and living
+chairs, stools and benches, kids' furniture; never branded items or items with a shipped mesh. They open in the editor
+when they have components: named settings, or dividers and fixed shelves. When you add such items:
 
-- **Make each real piece one part.** A door, a shelf, a divider, a leg, a desk top: one part each, not merged with
-  its neighbours and not cut into slices.
-- **Keep the part order stable.** The same parts in the same order at every size where you can; parts that come and
-  go with the size (extra doors, more shelves) go at the end. Edits are stored by part index.
+- **Offer the components as named settings.** If your items are built from a spec object (see `portal()` in
+  `portal-frames.pack.ts`), add `params` (`{ id, label, kind: 'length' | 'count' | 'toggle' | 'choice', default, min,
+  max }`) for what makes a variant (opening size, leg width, corner radius, drop) and read them in
+  `build: (size, params) => …` (a model's `build` and `props` get them too). A missing value means the spec's own, so
+  the item builds exactly as before.
+- **Give geometric settings a handle.** A length setting such as a corner radius gets
+  `handle: (size, params) => ({ at: [x, y, z], dir: [dx, dy, dz] })`: where the handle sits on the geometry it shapes
+  (item space, front face) and which way dragging it makes the value grow.
 - **Build compartments from real panels.** Dividers: upright panels up to 5 cm thick, standing 55 %+ of the height and
   30 %+ of the depth, in the same slot as the item's end panels. Fixed shelves: flat panels up to 5 cm thick across
   35 %+ of the width and 30 %+ of the depth, in the slot of its top or bottom. Carcass blocks, niches and arms in the
-  plan outline mark sections too. The editor finds sections from these.
+  plan outline mark sections too. The editor finds compartments and levels from these and puts a drag handle on
+  each edge.
 - **Keep props apart.** Clothes, books, towels and other dressing get their own slot and `plan: false`.
 - **Draw arches as prisms** (unturned, or turned a quarter about x like `panelXY`): their curves then follow a
   moved section edge point by point.
-- **Offer named settings for spec-built families.** If your items are built from a spec object (see `portal()` in
-  `portal-frames.pack.ts`), add `params` (`{ id, label, kind: 'length' | 'count' | 'toggle' | 'choice', default, min,
-  max }`) and read them in `build: (size, params) => …`. A missing value means the spec's own, so the item builds
-  exactly as before. `npx vitest run src/data/assets/itemEdits.test.ts` checks every item with settings.
+- **Keep the part order stable** at every size and at the settings' defaults.
+- `npx vitest run src/data/assets/itemEdits.test.ts` checks every item with settings and every handle.
 
 ## Check a pack
 

@@ -19,8 +19,10 @@ Ground rules:
   - Give items a Vietnamese `price` in VND (branded: the researched listed price; props and building parts: none).
   - All vegetation goes in `category: 'plants'` with `plant: PLANT_SPECIES[...]`.
   - Branded items are real models sold in Vietnam, with `brand`, in `branded-*.pack.ts`.
-  - Structure and built furniture open in the shape editor: one part per real piece (door, shelf, divider, leg),
-    a stable part order, real divider and shelf panels, props in their own slot with `plan: false`, and `params`
-    for spec-built families (§12 rule 13, packs/README.md "Make items editable").
+  - Structure and built furniture open in the shape editor when they have components to resize: it makes
+    variants (wider opening, lower soffit, smaller radius), never edits single parts. Give spec-built families
+    `params` for those components, a `handle` for geometric lengths (radius, leg, drop), real divider and shelf
+    panels, props in their own slot with `plan: false`, and a stable part order (§12 rule 13, packs/README.md
+    "Make items editable").
   - Then run `npm run thumbs` and keep the generated `public/thumbs` and `public/swatches` files.
   - `src/data/assets/assetRules.test.ts` enforces these rules.

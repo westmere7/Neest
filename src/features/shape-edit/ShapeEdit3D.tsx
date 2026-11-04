@@ -1,30 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { Html } from '@react-three/drei';
 import { useThree, type ThreeEvent } from '@react-three/fiber';
 import type { ItemEdits, PlacedObject, Project } from '@/domain/model/schema';
+import { formatLength } from '@/domain/model/units';
 import { objectSlotMaterialId } from '@/data/assets/registry';
-import { editedParts, partBox, partSig, partsFollowing, sectionInfo, type EditedPart } from '@/data/assets/itemEdits';
+import { MIN_SECTION, editedParts, paramHandles, sectionInfo, sectionsOffered, type EditedPart } from '@/data/assets/itemEdits';
+import type { AssetParam } from '@/data/assets/types';
 import { partGeometry } from '@/features/scene-3d/builders';
 import type { MaterialRegistry } from '@/features/scene-3d/materialRegistry';
-import { useEditorStore } from '@/state/editorStore';
-import { openContextMenu } from '@/components/ContextMenu';
-import { dragPart, editBase, resetPart, setShapeEditState, togglePartHidden } from './actions';
+import { useEditorStore, type ShapeSection } from '@/state/editorStore';
+import { editBase, setParam, setSectionEdges, setShapeEditState } from './actions';
 
 /**
- * The item in the shape editor: drawn part by part so each sub-item can be hovered and picked. Every
- * editable part gets a faint outline; the picked part a tint, a bright outline and a gizmo (arrows
- * move it along the item's axes, the small cubes drag one of its faces). The active section shows as a
- * light box. A drag previews live and is stored as one undo step when released.
+ * The item in the shape editor. It is edited as a whole made of components, never part by part:
+ * - its sections (compartments across, levels up) light up under the pointer and are picked with a
+ *   click; every section edge has a handle (above the top for compartments, beside the right side for
+ *   levels) that drags the divider or shelf, so the sections on both sides change size;
+ * - its settings with a handle (corner radii, leg widths, soffit drop) get an orange handle on the
+ *   geometry they shape, dragged along the way the value grows, with the value shown while dragging.
+ * A drag previews live and is stored as one undo step when released (5 mm steps, Alt free).
  */
 
-const OUTLINE = new THREE.LineBasicMaterial({ color: '#8fd3c0', transparent: true, opacity: 0.16, depthWrite: false });
-const OUTLINE_HOVER = new THREE.LineBasicMaterial({ color: '#c8f1e6', transparent: true, opacity: 0.6, depthWrite: false });
-const OUTLINE_FOLLOWS = new THREE.LineBasicMaterial({ color: '#7cc9ff', transparent: true, opacity: 0.75, depthTest: false, depthWrite: false });
-const OUTLINE_PICKED = new THREE.LineBasicMaterial({ color: '#ffb547', transparent: true, opacity: 0.95, depthTest: false, depthWrite: false });
-const OUTLINE_HIDDEN = new THREE.LineDashedMaterial({ color: '#9aa4ad', transparent: true, opacity: 0.35, dashSize: 0.03, gapSize: 0.02, depthWrite: false });
-const TINT = new THREE.MeshBasicMaterial({ color: '#ffb547', transparent: true, opacity: 0.22, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-const SECTION = new THREE.MeshBasicMaterial({ color: '#6fb3a0', transparent: true, opacity: 0.14, depthWrite: false, side: THREE.DoubleSide });
-const AXIS_COLORS = ['#e5534b', '#57ab5a', '#539bf5'];
+type V3 = [number, number, number];
+
+const OUTLINE = new THREE.LineBasicMaterial({ color: '#8fd3c0', transparent: true, opacity: 0.14, depthWrite: false });
+const SECTION_HOVER = new THREE.MeshBasicMaterial({ color: '#6fb3a0', transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide });
+const SECTION_PICKED = new THREE.MeshBasicMaterial({ color: '#ffb547', transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
+const SECTION_EDGE = new THREE.LineBasicMaterial({ color: '#ffb547', transparent: true, opacity: 0.9, depthTest: false, depthWrite: false });
+const GUIDE = new THREE.LineDashedMaterial({ color: '#7fe0c6', transparent: true, opacity: 0.55, dashSize: 0.04, gapSize: 0.03, depthTest: false, depthWrite: false });
+const GUIDE_ON = new THREE.LineDashedMaterial({ color: '#ffffff', transparent: true, opacity: 0.9, dashSize: 0.04, gapSize: 0.03, depthTest: false, depthWrite: false });
+const SECTION_COLOR = '#5fd4b4';
+const PARAM_COLOR = '#ffb547';
 
 /** Edge lines of a (cached, shared) part geometry, cached alongside it. */
 const edgeCache = new WeakMap<THREE.BufferGeometry, THREE.EdgesGeometry>();
@@ -34,72 +41,12 @@ function edgesOf(g: THREE.BufferGeometry): THREE.EdgesGeometry {
   return e;
 }
 
-type V3 = [number, number, number];
-/** A gizmo drag under way: the part, and what it adds so far. */
-interface Drag {
-  index: number;
-  move: V3;
-  grow: V3;
-}
-
-/** The edits with a drag's preview added to one part. */
-function withDrag(edits: ItemEdits | undefined, parts: EditedPart[], drag: Drag | null): ItemEdits | undefined {
-  if (!drag) return edits;
-  const p = parts[drag.index];
-  if (!p) return edits;
-  const sig = partSig(p.base);
-  const cur = edits?.parts?.[String(drag.index)];
-  const pe = cur && cur.sig === sig ? cur : { sig };
-  const add = (a: V3 | undefined, b: V3): V3 => [(a?.[0] ?? 0) + b[0], (a?.[1] ?? 0) + b[1], (a?.[2] ?? 0) + b[2]];
-  return { ...edits, parts: { ...edits?.parts, [String(drag.index)]: { ...pe, move: add(pe.move, drag.move), grow: add(pe.grow, drag.grow) } } };
-}
-
-function PartMesh({ p, material, picked, hovered, follows, onPick, onHover, onMenu }: {
-  p: EditedPart;
-  material: THREE.Material;
-  picked: boolean;
-  hovered: boolean;
-  /** Attached to the picked part: it follows when that part changes. */
-  follows: boolean;
-  onPick: (e: ThreeEvent<MouseEvent>) => void;
-  onHover: (on: boolean) => void;
-  onMenu: (e: ThreeEvent<MouseEvent>) => void;
-}) {
+function PartMesh({ p, material }: { p: EditedPart; material: THREE.Material }) {
   const geometry = useMemo(() => partGeometry(p.part), [p.part]);
-  const edges = edgesOf(geometry);
-  const lines = useRef<THREE.LineSegments>(null);
-  useEffect(() => {
-    if (p.hidden) lines.current?.computeLineDistances();
-  }, [p.hidden, edges]);
-  const pos = p.part.position;
-  const rot = p.part.rotation ?? [0, 0, 0];
-  const scale = p.part.scale ?? [1, 1, 1];
   return (
-    <group position={pos} rotation={rot} scale={scale}>
-      {!p.hidden && (
-        <mesh
-          geometry={geometry}
-          material={material}
-          castShadow
-          receiveShadow
-          userData={{ shapePart: p.index }}
-          onClick={onPick}
-          onContextMenu={onMenu}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            onHover(true);
-          }}
-          onPointerOut={() => onHover(false)}
-        />
-      )}
-      {picked && !p.hidden && <mesh geometry={geometry} material={TINT} raycast={() => null} renderOrder={5} />}
-      <lineSegments
-        ref={lines}
-        geometry={edges}
-        material={p.hidden ? OUTLINE_HIDDEN : picked ? OUTLINE_PICKED : follows ? OUTLINE_FOLLOWS : hovered ? OUTLINE_HOVER : OUTLINE}
-        raycast={() => null}
-        renderOrder={picked ? 20 : follows ? 12 : 6}
-      />
+    <group position={p.part.position} rotation={p.part.rotation ?? [0, 0, 0]} scale={p.part.scale ?? [1, 1, 1]}>
+      <mesh geometry={geometry} material={material} castShadow receiveShadow />
+      <lineSegments geometry={edgesOf(geometry)} material={OUTLINE} raycast={() => null} renderOrder={6} />
     </group>
   );
 }
@@ -113,24 +60,16 @@ function axisParam(o: THREE.Vector3, d: THREE.Vector3, ray: THREE.Ray): number {
   return (b * ray.direction.dot(w) - d.dot(w)) / denom;
 }
 
-/** Arrows to move the picked part along the item's axes and cubes to drag its faces. */
-function PartGizmo({ group, box, onDrag, onDone }: {
-  group: React.RefObject<THREE.Group | null>;
-  box: { size: V3; centre: V3 };
-  onDrag: (move: V3, grow: V3) => void;
-  onDone: (move: V3, grow: V3) => void;
-}) {
+/**
+ * Starts a handle drag along item-space direction `dir` through item-space point `at`: calls `onMove`
+ * with the distance dragged (metres, along dir) and `onEnd` with the last one when released.
+ */
+function useAxisDrag() {
   const { camera, gl, controls } = useThree();
-  const [active, setActive] = useState<string | null>(null);
-  const start = (e: ThreeEvent<PointerEvent>, axis: 0 | 1 | 2, kind: 'move' | 'face', sign: 1 | -1) => {
-    if (e.button !== 0 || !group.current) return;
+  return (e: ThreeEvent<PointerEvent>, group: THREE.Group, at: V3, dir: V3, onMove: (t: number, ev: PointerEvent) => void, onEnd: () => void) => {
     e.stopPropagation();
-    const g = group.current;
-    const c = new THREE.Vector3(...box.centre);
-    const o = g.localToWorld(c.clone());
-    const tip = c.clone();
-    tip.setComponent(axis, tip.getComponent(axis) + 1);
-    const d = g.localToWorld(tip).sub(o).normalize();
+    const o = group.localToWorld(new THREE.Vector3(...at));
+    const d = group.localToWorld(new THREE.Vector3(at[0] + dir[0], at[1] + dir[1], at[2] + dir[2])).sub(o).normalize();
     const ray = new THREE.Raycaster();
     const rayAt = (ev: PointerEvent) => {
       const r = gl.domElement.getBoundingClientRect();
@@ -140,156 +79,302 @@ function PartGizmo({ group, box, onDrag, onDone }: {
     const t0 = axisParam(o, d, rayAt(e.nativeEvent));
     const ctrl = controls as unknown as { enabled: boolean } | null;
     if (ctrl) ctrl.enabled = false;
-    setActive(`${kind}${axis}${sign}`);
-    let last: { move: V3; grow: V3 } = { move: [0, 0, 0], grow: [0, 0, 0] };
-    const at = (ev: PointerEvent) => {
-      // 5 mm steps (Alt: free).
-      let t = axisParam(o, d, rayAt(ev)) - t0;
-      if (!ev.altKey) t = Math.round(t / 0.005) * 0.005;
-      const move: V3 = [0, 0, 0];
-      const grow: V3 = [0, 0, 0];
-      if (kind === 'move') move[axis] = t;
-      else {
-        // One face follows the pointer, the opposite face stays.
-        const g2 = Math.max(0.005 - box.size[axis], sign * t);
-        grow[axis] = g2;
-        move[axis] = (sign * g2) / 2;
-      }
-      return { move, grow };
-    };
-    const onMove = (ev: PointerEvent) => {
-      last = at(ev);
-      onDrag(last.move, last.grow);
-    };
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onUp);
+    const move = (ev: PointerEvent) => onMove(axisParam(o, d, rayAt(ev)) - t0, ev);
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
       if (ctrl) ctrl.enabled = true;
-      setActive(null);
-      onDone(last.move, last.grow);
+      onEnd();
     };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   };
-  const [cx, cy, cz] = box.centre;
+}
+
+/** A handle: a ball with a cone each way it drags (both ways, or only the way the value grows). */
+function Handle({ at, dir, color, on, both, size, onDown, onHover }: {
+  at: V3;
+  dir: V3;
+  color: string;
+  on: boolean;
+  /** Cones both ways (a section edge) or one cone, the way the value grows (a setting). */
+  both: boolean;
+  size: number;
+  onDown: (e: ThreeEvent<PointerEvent>) => void;
+  onHover: (on: boolean) => void;
+}) {
+  // Turn +y onto dir.
+  const q = useMemo(() => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...dir).normalize()), [dir]);
+  const c = on ? '#ffffff' : color;
+  const r = size;
+  const events = {
+    onPointerDown: (e: ThreeEvent<PointerEvent>) => e.button === 0 && onDown(e),
+    onPointerOver: (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation();
+      document.body.style.cursor = 'grab';
+      onHover(true);
+    },
+    onPointerOut: () => {
+      document.body.style.cursor = '';
+      onHover(false);
+    },
+  };
   return (
-    <group position={[cx, cy, cz]} renderOrder={30}>
-      {([0, 1, 2] as const).map((axis) => {
-        const len = Math.max(0.18, box.size[axis] / 2 + 0.16);
-        const color = AXIS_COLORS[axis];
-        // Arrow along +axis: shaft and head (geometry along y, turned onto the axis).
-        const rot: V3 = axis === 0 ? [0, 0, -Math.PI / 2] : axis === 2 ? [Math.PI / 2, 0, 0] : [0, 0, 0];
-        const dir = (k: number): V3 => [axis === 0 ? k : 0, axis === 1 ? k : 0, axis === 2 ? k : 0];
-        const on = (key: string) => active === key;
-        return (
-          <group key={axis}>
-            <group rotation={rot}>
-              <mesh position={[0, len / 2, 0]} renderOrder={31} onPointerDown={(e) => start(e, axis, 'move', 1)}>
-                <cylinderGeometry args={[0.008, 0.008, len, 8]} />
-                <meshBasicMaterial color={on(`move${axis}1`) ? '#ffffff' : color} depthTest={false} transparent opacity={0.9} />
-              </mesh>
-              <mesh position={[0, len, 0]} renderOrder={31} onPointerDown={(e) => start(e, axis, 'move', 1)}>
-                <coneGeometry args={[0.028, 0.08, 14]} />
-                <meshBasicMaterial color={on(`move${axis}1`) ? '#ffffff' : color} depthTest={false} transparent opacity={0.95} />
-              </mesh>
-            </group>
-            {([1, -1] as const).map((sign) => (
-              <mesh key={sign} position={dir((sign * box.size[axis]) / 2)} renderOrder={31} onPointerDown={(e) => start(e, axis, 'face', sign)}>
-                <boxGeometry args={[0.04, 0.04, 0.04]} />
-                <meshBasicMaterial color={on(`face${axis}${sign}`) ? '#ffffff' : color} depthTest={false} transparent opacity={0.85} />
-              </mesh>
-            ))}
-          </group>
-        );
-      })}
+    <group position={at} quaternion={q}>
+      <mesh renderOrder={41} {...events}>
+        <sphereGeometry args={[r, 16, 12]} />
+        <meshBasicMaterial color={c} depthTest={false} transparent opacity={0.95} toneMapped={false} />
+      </mesh>
+      {(both ? [1, -1] : [1]).map((s) => (
+        <mesh key={s} position={[0, s * r * 2.1, 0]} rotation={[s > 0 ? 0 : Math.PI, 0, 0]} renderOrder={41} {...events}>
+          <coneGeometry args={[r * 0.75, r * 1.5, 12]} />
+          <meshBasicMaterial color={c} depthTest={false} transparent opacity={0.9} toneMapped={false} />
+        </mesh>
+      ))}
     </group>
   );
 }
 
-/** The item being shape-edited, with its outlines, picked part, gizmo and active section. */
+/** A dashed guide line between two item-space points (where a section edge runs). */
+function Guide({ a, b, on }: { a: V3; b: V3; on: boolean }) {
+  const ref = useRef<THREE.LineSegments>(null);
+  const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3(...b)]), [a, b]);
+  useEffect(() => {
+    ref.current?.computeLineDistances();
+    return () => geometry.dispose();
+  }, [geometry]);
+  return <lineSegments ref={ref} geometry={geometry} material={on ? GUIDE_ON : GUIDE} raycast={() => null} renderOrder={40} />;
+}
+
+/** A drag under way: a section edge moving to `pos`, or a setting at `value`. */
+type Drag = { kind: 'edge'; axis: 'x' | 'y'; index: number; pos: number } | { kind: 'param'; param: AssetParam; value: number };
+
+/** The edits with a drag's preview applied. */
+function withDrag(edits: ItemEdits | undefined, drag: Drag | null, found: Record<'x' | 'y', { edges: number[]; found: number[] }> | null): ItemEdits | undefined {
+  if (!drag) return edits;
+  if (drag.kind === 'param') return { ...edits, params: { ...edits?.params, [drag.param.id]: drag.value } };
+  const s = found?.[drag.axis];
+  if (!s) return edits;
+  const edges = s.edges.map((v, i) => (i === drag.index ? drag.pos : v));
+  return { ...edits, sections: { ...edits?.sections, [drag.axis]: { n: edges.length, d: edges.map((v, i) => v - s.found[i]) } } };
+}
+
+/** The section box of `sec` (item space), from the section edges. */
+function sectionBox(sec: ShapeSection, s: { edges: number[]; lo: number; hi: number }, size: { w: number; d: number; h: number }): { pos: V3; size: V3 } | null {
+  const all = [s.lo, ...s.edges, s.hi];
+  const a = all[sec.index];
+  const b = all[sec.index + 1];
+  if (a === undefined || b === undefined) return null;
+  return sec.axis === 'x' ? { pos: [(a + b) / 2, size.h / 2, 0], size: [b - a, size.h + 0.004, size.d + 0.012] } : { pos: [0, (a + b) / 2, 0], size: [size.w + 0.012, b - a, size.d + 0.012] };
+}
+
+/** The item being shape-edited, with its sections, edge handles and setting handles. */
 export function ShapeEditObject({ project, obj, registry }: { project: Project; obj: PlacedObject; registry: MaterialRegistry }) {
   const shapeEdit = useEditorStore((s) => s.shapeEdit);
   const asset = editBase(project, obj);
   const size = useMemo(() => ({ w: obj.width, d: obj.depth, h: obj.height }), [obj.width, obj.depth, obj.height]);
   const [drag, setDrag] = useState<Drag | null>(null);
-  const base = useMemo(() => (asset ? editedParts(asset, size, obj.edits) : []), [asset, size, obj.edits]);
-  const parts = useMemo(() => (asset && drag ? editedParts(asset, size, withDrag(obj.edits, base, drag)) : base), [asset, size, obj.edits, base, drag]);
+  const dragRef = useRef<Drag | null>(null);
   const group = useRef<THREE.Group>(null);
-  const picked = shapeEdit?.part ?? null;
-  const following = useMemo(
-    () => (picked !== null && !shapeEdit?.detached ? new Set(partsFollowing(base.map((p) => p.base), picked)) : new Set<number>()),
-    [base, picked, shapeEdit?.detached],
-  );
-  const sections = useMemo(() => (asset && shapeEdit?.section ? sectionInfo(asset, size, obj.edits) : null), [asset, size, obj.edits, shapeEdit?.section]);
+  const startDrag = useAxisDrag();
+  const offered = !!asset && (sectionsOffered(asset) || !!obj.edits?.sections);
+  const committed = useMemo(() => (asset && offered ? sectionInfo(asset, size, obj.edits) : null), [asset, offered, size, obj.edits]);
+  const edits = useMemo(() => withDrag(obj.edits, drag, committed), [obj.edits, drag, committed]);
+  const parts = useMemo(() => (asset ? editedParts(asset, size, edits) : []), [asset, size, edits]);
+  const sections = useMemo(() => (asset && offered ? sectionInfo(asset, size, edits) : null), [asset, offered, size, edits]);
+  const handles = useMemo(() => (asset ? paramHandles(asset, size, edits?.params) : []), [asset, size, edits?.params]);
+  useEffect(() => () => void (document.body.style.cursor = ''), []);
   if (!asset || !shapeEdit) return null;
-  const pickedPart = picked !== null ? parts[picked] : undefined;
-  const box = pickedPart && !pickedPart.hidden ? partBox(pickedPart.part) : null;
-  const sec = shapeEdit.section;
-  let secBox: { pos: V3; size: V3 } | null = null;
-  if (sec && sections) {
-    const s = sections[sec.axis];
-    const all = [s.lo, ...s.edges, s.hi];
-    const a = all[sec.index];
-    const b = all[sec.index + 1];
-    if (a !== undefined && b !== undefined)
-      secBox = sec.axis === 'x' ? { pos: [(a + b) / 2, size.h / 2, 0], size: [b - a, size.h, size.d + 0.01] } : { pos: [0, (a + b) / 2, 0], size: [size.w + 0.01, b - a, size.d + 0.01] };
-  }
-  const menu = (index: number) => (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-    e.nativeEvent.preventDefault();
-    setShapeEditState({ part: index });
-    const p = parts[index];
-    openContextMenu(e.nativeEvent.clientX, e.nativeEvent.clientY, [
-      { label: 'Hide part', shortcut: 'H', run: () => togglePartHidden(index, true) },
-      { label: 'Reset part', disabled: !p?.edited, run: () => resetPart(index) },
-    ]);
+  const u = project.settings;
+  const fmt = (v: number) => formatLength(v, u.units, u.precision);
+  const set = (d: Drag | null) => {
+    dragRef.current = d;
+    setDrag(d);
   };
+
+  /** The section under an item-space point: a compartment when the item has them, else a level. */
+  const sectionAt = (p: THREE.Vector3): ShapeSection | null => {
+    if (!sections) return null;
+    for (const axis of ['x', 'y'] as const) {
+      const s = sections[axis];
+      if (!s.edges.length) continue;
+      const v = axis === 'x' ? p.x : p.y;
+      const all = [s.lo, ...s.edges, s.hi];
+      for (let i = 0; i < all.length - 1; i++) if (v >= all[i] - 1e-3 && v <= all[i + 1] + 1e-3) return { axis, index: i };
+    }
+    return null;
+  };
+  const local = (e: ThreeEvent<PointerEvent | MouseEvent>) => group.current!.worldToLocal(e.point.clone());
+
+  const edgeDown = (axis: 'x' | 'y', index: number) => (e: ThreeEvent<PointerEvent>) => {
+    if (!group.current || !sections) return;
+    const s = sections[axis];
+    const all = [s.lo, ...s.edges, s.hi];
+    const start = s.edges[index];
+    const lo = all[index] + MIN_SECTION;
+    const hi = all[index + 2] - MIN_SECTION;
+    const at = edgeHandleAt(axis, start);
+    setShapeEditState({ section: { axis, index: index + 1 } });
+    startDrag(
+      e,
+      group.current,
+      at,
+      axis === 'x' ? [1, 0, 0] : [0, 1, 0],
+      (t, ev) => {
+        let pos = start + t;
+        if (!ev.altKey) pos = Math.round(pos / 0.005) * 0.005;
+        set({ kind: 'edge', axis, index, pos: Math.min(hi, Math.max(lo, pos)) });
+      },
+      () => {
+        const d = dragRef.current;
+        set(null);
+        if (d?.kind === 'edge' && Math.abs(d.pos - start) > 1e-6) setSectionEdges(axis, s.edges.map((v, i) => (i === index ? d.pos : v)));
+      },
+    );
+  };
+
+  const paramDown = (param: AssetParam, value: number, at: V3, dir: V3, per: number) => (e: ThreeEvent<PointerEvent>) => {
+    if (!group.current) return;
+    setShapeEditState({ param: param.id });
+    startDrag(
+      e,
+      group.current,
+      at,
+      dir,
+      (t, ev) => {
+        let v = value + t * per;
+        const step = per === 1 ? 0.005 : (param.step ?? 0.01);
+        if (!ev.altKey) v = Math.round(v / step) * step;
+        set({ kind: 'param', param, value: Math.min(param.max ?? Infinity, Math.max(param.min ?? 0, v)) });
+      },
+      () => {
+        const d = dragRef.current;
+        set(null);
+        setShapeEditState({ param: null });
+        if (d?.kind === 'param' && Math.abs(d.value - value) > 1e-6) setParam(param.id, param.label, d.value);
+      },
+    );
+  };
+
+  /** Where a section edge's handle sits: above the top front edge (compartments), beside the right front edge (levels). */
+  function edgeHandleAt(axis: 'x' | 'y', pos: number): V3 {
+    return axis === 'x' ? [pos, size.h + 0.09, size.d / 2] : [size.w / 2 + 0.09, pos, size.d / 2];
+  }
+
+  const picked = shapeEdit.section;
+  const hover = shapeEdit.hover;
+  const pickedBox = picked && sections ? sectionBox(picked, sections[picked.axis], size) : null;
+  const hoverBox = hover && sections && !(picked && picked.axis === hover.axis && picked.index === hover.index) ? sectionBox(hover, sections[hover.axis], size) : null;
+  const r = Math.max(0.018, Math.min(0.035, Math.max(size.w, size.h) * 0.012));
+  const dragging = drag?.kind === 'param' ? handles.find((h) => h.param.id === drag.param.id) : undefined;
+  const edgeDrag = drag?.kind === 'edge' ? drag : null;
+
   return (
-    <group
-      ref={group}
-      name="shape-edit"
-      position={[obj.x, obj.elevation, obj.y]}
-      rotation={[0, -obj.rotation, 0]}
-      scale={[obj.mirrored ? -1 : 1, 1, 1]}
-    >
-      {parts.map((p) => (
-        <PartMesh
-          key={p.index}
-          p={p}
-          material={registry.get(project, objectSlotMaterialId(obj, asset, p.part.slot))}
-          picked={picked === p.index}
-          hovered={shapeEdit.hover === p.index}
-          follows={following.has(p.index)}
-          onPick={(e) => {
-            e.stopPropagation();
-            if (e.delta > 4) return;
-            setShapeEditState({ part: p.index, section: null });
-          }}
-          onHover={(on) => {
-            const cur = useEditorStore.getState().shapeEdit?.hover ?? null;
-            if (on) setShapeEditState({ hover: p.index });
-            else if (cur === p.index) setShapeEditState({ hover: null });
-          }}
-          onMenu={menu(p.index)}
-        />
-      ))}
-      {secBox && (
-        <mesh position={secBox.pos} material={SECTION} raycast={() => null} renderOrder={4}>
-          <boxGeometry args={secBox.size} />
+    <group ref={group} name="shape-edit" position={[obj.x, obj.elevation, obj.y]} rotation={[0, -obj.rotation, 0]} scale={[obj.mirrored ? -1 : 1, 1, 1]}>
+      <group
+        onPointerMove={(e) => {
+          if (dragRef.current || !sections) return;
+          e.stopPropagation();
+          setShapeEditState({ hover: sectionAt(local(e)) });
+        }}
+        onPointerOut={() => setShapeEditState({ hover: null })}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (e.delta > 4) return;
+          setShapeEditState({ section: sectionAt(local(e)) });
+        }}
+      >
+        {parts
+          .filter((p) => !p.hidden)
+          .map((p) => (
+            <PartMesh key={p.index} p={p} material={registry.get(project, objectSlotMaterialId(obj, asset, p.part.slot))} />
+          ))}
+      </group>
+      {hoverBox && (
+        <mesh position={hoverBox.pos} material={SECTION_HOVER} raycast={() => null} renderOrder={4}>
+          <boxGeometry args={hoverBox.size} />
         </mesh>
       )}
-      {box && picked !== null && (
-        <PartGizmo
-          group={group}
-          box={box}
-          onDrag={(move, grow) => setDrag({ index: picked, move, grow })}
-          onDone={(move, grow) => {
-            setDrag(null);
-            if ([...move, ...grow].some((v) => Math.abs(v) > 1e-9)) dragPart(picked, move, grow);
-          }}
-        />
+      {pickedBox && (
+        <group position={pickedBox.pos}>
+          <mesh material={SECTION_PICKED} raycast={() => null} renderOrder={4}>
+            <boxGeometry args={pickedBox.size} />
+          </mesh>
+          <lineSegments material={SECTION_EDGE} raycast={() => null} renderOrder={39}>
+            <edgesGeometry args={[new THREE.BoxGeometry(...pickedBox.size)]} />
+          </lineSegments>
+        </group>
+      )}
+      {sections &&
+        (['x', 'y'] as const).map((axis) =>
+          sections[axis].edges.map((pos, i) => {
+            // Bright: an edge of the picked section, or the one being dragged.
+            const on = (!!picked && picked.axis === axis && (picked.index === i || picked.index === i + 1)) || (edgeDrag?.axis === axis && edgeDrag.index === i);
+            const at = edgeHandleAt(axis, pos);
+            const a: V3 = axis === 'x' ? [pos, 0, size.d / 2 + 0.002] : [-size.w / 2, pos, size.d / 2 + 0.002];
+            const b: V3 = axis === 'x' ? [pos, size.h + 0.09, size.d / 2 + 0.002] : [size.w / 2 + 0.09, pos, size.d / 2 + 0.002];
+            return (
+              <group key={`${axis}${i}`}>
+                <Guide a={a} b={b} on={on} />
+                <Handle
+                  at={at}
+                  dir={axis === 'x' ? [1, 0, 0] : [0, 1, 0]}
+                  color={SECTION_COLOR}
+                  on={on}
+                  both
+                  size={r}
+                  onDown={edgeDown(axis, i)}
+                  onHover={(h) => setShapeEditState({ hover: h ? { axis, index: i } : null })}
+                />
+              </group>
+            );
+          }),
+        )}
+      {handles.map(({ param, value, handle }) => {
+        const on = shapeEdit.param === param.id;
+        const at: V3 = handle.at;
+        return (
+          <Handle
+            key={param.id}
+            at={at}
+            dir={handle.dir}
+            color={PARAM_COLOR}
+            on={on}
+            both={false}
+            size={r}
+            onDown={paramDown(param, value, at, handle.dir, handle.per ?? 1)}
+            onHover={(h) => {
+              if (!dragRef.current) setShapeEditState({ param: h ? param.id : null });
+            }}
+          />
+        );
+      })}
+      {(dragging || (shapeEdit.param && !drag)) &&
+        (() => {
+          const h = dragging ?? handles.find((x) => x.param.id === shapeEdit.param);
+          if (!h) return null;
+          const v = drag?.kind === 'param' ? drag.value : h.value;
+          return (
+            <Html position={h.handle.at} center style={{ pointerEvents: 'none' }} zIndexRange={[30, 0]}>
+              <div className="shape-handle-label">
+                {h.param.label}: <strong>{h.handle.per && h.handle.per !== 1 ? `${Math.round(v * 100)} %` : fmt(v)}</strong>
+              </div>
+            </Html>
+          );
+        })()}
+      {edgeDrag && sections && (
+        <Html position={edgeHandleAt(edgeDrag.axis, edgeDrag.pos)} center style={{ pointerEvents: 'none' }} zIndexRange={[30, 0]}>
+          <div className="shape-handle-label">
+            {(() => {
+              const s = sections[edgeDrag.axis];
+              const all = [s.lo, ...s.edges, s.hi];
+              const i = edgeDrag.index;
+              return `${fmt(all[i + 1] - all[i])} | ${fmt(all[i + 2] - all[i + 1])}`;
+            })()}
+          </div>
+        </Html>
       )}
     </group>
   );

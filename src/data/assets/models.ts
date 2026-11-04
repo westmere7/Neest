@@ -1,4 +1,4 @@
-import type { AssetDefinition, AssetModelVariant, MaterialSlot, Part } from './types';
+import type { AssetDefinition, AssetModelVariant, MaterialSlot, ParamValues, Part } from './types';
 import { subscribePacks } from '@/packs/events';
 
 /**
@@ -108,10 +108,10 @@ export function withModel(asset: AssetDefinition | null, id?: string | null): As
   const own = new Set((m.slots ?? []).map((s) => s.id));
   const slots = [...asset.slots.filter((s) => !hide.has(s.id) || own.has(s.id)), ...(m.slots ?? []).filter((s) => !asset.slots.some((x) => x.id === s.id))];
   let warned = false;
-  const props = (size: Parameters<AssetDefinition['build']>[0]): Part[] => {
+  const props = (size: Parameters<AssetDefinition['build']>[0], params?: ParamValues): Part[] => {
     if (!m.props) return [];
     try {
-      const parts = m.props(size);
+      const parts = params ? m.props(size, params) : m.props(size);
       // Styling props stay out of the plan; a model that reaches past the item (a ledge) draws its props.
       if (!Array.isArray(parts)) return [];
       return m.reach ? parts : parts.map((p) => (p.plan === false ? p : { ...p, plan: false }));
@@ -126,11 +126,12 @@ export function withModel(asset: AssetDefinition | null, id?: string | null): As
     id: `${asset.id}@model:${m.id}`,
     slots,
     models: undefined,
-    build: (size) => {
+    // Shape settings reach the model's form and props too (a corner portal's half wall follows its pier width).
+    build: (size, params) => {
       // A model with its own form replaces the item's parts.
-      const form = m.build ? m.build(size) : asset.build(size);
+      const form = m.build ? (params ? m.build(size, params) : m.build(size)) : params ? asset.build(size, params) : asset.build(size);
       const base = hide.size ? form.filter((p) => !hide.has(p.slot)) : form;
-      return [...base, ...props(size)];
+      return [...base, ...props(size, params)];
     },
   };
   byModel.set(m.id, def);

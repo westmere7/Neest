@@ -10,7 +10,7 @@
  * frame's depth, so corners stay circular at any width and height and only shrink when the opening
  * gets too small for them. Coordinates: x across the opening, y up, z through the frame (front +z).
  */
-import { box, cells, clamp, cyl, defineItem, definePack, line, matSlot, prism, range, ring, spaced, span, type Part, type AssetModelVariant, type AssetParam, type ParamValues, type PlanStroke, type Size3 } from '@/packs/kit';
+import { box, cells, clamp, cyl, defineItem, definePack, line, matSlot, prism, range, ring, spaced, span, type Part, type AssetModelVariant, type AssetParam, type ParamHandle, type ParamValues, type PlanStroke, type Size3 } from '@/packs/kit';
 
 type V2 = [number, number];
 const o = { plan: false };
@@ -362,27 +362,68 @@ interface ItemCfg {
   models?: AssetModelVariant[];
 }
 
+type HandleAt = (g: Geo) => ParamHandle;
+
+/**
+ * Where the shape editor's handles sit on a portal (its own space, front face): the leg width on the
+ * right leg's inner face (dragged inwards), the soffit drop under the middle of the soffit (dragged
+ * down), each corner radius where its curve meets the soffit (dragged along the soffit, away from the
+ * corner), the basket arch's rise where the arch springs from the right leg (dragged down).
+ */
+const PORTAL_HANDLES: Record<string, HandleAt> = {
+  leg: (g) => ({ at: [g.xr, (g.yb + g.yi - g.cr[1]) / 2, g.d / 2 + 0.01], dir: [-1, 0, 0] }),
+  legR: (g) => ({ at: [g.xr, (g.yb + g.yi - g.cr[1]) / 2, g.d / 2 + 0.01], dir: [-1, 0, 0] }),
+  legLeft: (g) => ({ at: [g.xl, (g.yb + g.yi - g.cl[1]) / 2, g.d / 2 + 0.01], dir: [1, 0, 0] }),
+  head: (g) => ({ at: [(g.xl + g.xr) / 2, g.yi, g.d / 2 + 0.01], dir: [0, -1, 0] }),
+  rL: (g) => ({ at: [g.xl + g.cl[0], g.yi, g.d / 2 + 0.01], dir: [1, 0, 0] }),
+  rR: (g) => ({ at: [g.xr - g.cr[0], g.yi, g.d / 2 + 0.01], dir: [-1, 0, 0] }),
+  flat: (g) => ({ at: [g.xr, g.yi - g.cr[1], g.d / 2 + 0.01], dir: [0, -1, 0], per: 1 / Math.max(0.05, g.cr[0]) }),
+};
+
+const lengthParam = (id: string, label: string, v: number, min: number, max: number, handle?: AssetParam['handle']): AssetParam => ({
+  id,
+  label,
+  kind: 'length',
+  default: v,
+  min,
+  max,
+  step: 0.01,
+  ...(handle ? { handle } : {}),
+});
+
 /**
  * Shape-editor settings of a portal: leg width, soffit drop, corner radii (rounded corners), the arch's
  * rise (basket arch) and the leg niches. Defaults are the item's own spec, so an unedited item is unchanged.
+ * The lengths have a handle in the editor's 3D view (`PORTAL_HANDLES`).
  */
 function portalParams(s: PortalSpec): AssetParam[] {
-  const len = (id: string, label: string, v: number, min: number, max: number): AssetParam => ({ id, label, kind: 'length', default: v, min, max, step: 0.01 });
-  const out: AssetParam[] = [len('leg', s.legs === 'both' ? 'Leg width' : 'Pier width', s.leg, 0.06, 0.8), len('head', 'Soffit drop', s.head, 0.08, 1.2)];
+  const handle = (id: string, at = id): AssetParam['handle'] => (size, p) => PORTAL_HANDLES[at](portalGeo(size, specWith(s, p)));
+  const len = (id: string, label: string, v: number, min: number, max: number, at = id) => lengthParam(id, label, v, min, max, handle(id, at));
+  // Uneven legs (a slim jamb and a broad pier) are two settings; even legs one.
+  const out: AssetParam[] = uneven(s)
+    ? [len('leg', 'Jamb width (left)', s.legL ?? s.leg, 0.06, 0.8, 'legLeft'), len('legR', 'Pier width (right)', s.legR!, 0.06, 1.2)]
+    : [len('leg', s.legs === 'both' ? 'Leg width' : 'Pier width', s.leg, 0.06, 0.8)];
+  out.push(len('head', 'Soffit drop', s.head, 0.08, 1.2));
   if (!s.shape || s.shape === 'round') {
     if (s.legs === 'both') out.push(len('rL', 'Left corner radius', s.rL ?? 0.3, 0, 1.5));
     out.push(len('rR', s.legs === 'both' ? 'Right corner radius' : 'Corner radius', s.rR ?? 0.3, 0, 1.5));
   }
-  if (s.shape === 'ellipse') out.push({ id: 'flat', label: 'Arch rise', kind: 'length', default: s.flat ?? 0.4, min: 0.1, max: 1, step: 0.05, hint: 'Share of the half-span' });
+  if (s.shape === 'ellipse') out.push({ id: 'flat', label: 'Arch rise', kind: 'length', default: s.flat ?? 0.4, min: 0.1, max: 1, step: 0.05, hint: 'Share of the half-span', handle: handle('flat') });
   if (s.niche) out.push({ id: 'niche', label: 'Lit niches in the legs', kind: 'toggle', default: true });
   return out;
 }
 
-/** The spec with shape-editor settings applied (a changed leg width replaces uneven legs). */
+/** A portal whose two legs differ (a slim jamb at a wall, a broad pier): its legs are two settings. */
+const uneven = (s: PortalSpec) => s.legs === 'both' && s.legR !== undefined && s.legR !== (s.legL ?? s.leg);
+
+/** The spec with shape-editor settings applied (with uneven legs, `leg` is the left jamb and `legR` the right pier). */
 function specWith(s: PortalSpec, p?: ParamValues): PortalSpec {
   if (!p) return s;
   const out: PortalSpec = { ...s };
-  if (typeof p.leg === 'number' && p.leg !== s.leg) Object.assign(out, { leg: p.leg, legL: undefined, legR: undefined });
+  if (uneven(s)) {
+    if (typeof p.leg === 'number') out.legL = p.leg;
+    if (typeof p.legR === 'number') out.legR = p.legR;
+  } else if (typeof p.leg === 'number' && p.leg !== s.leg) Object.assign(out, { leg: p.leg, legL: undefined, legR: undefined });
   if (typeof p.head === 'number') out.head = p.head;
   if (typeof p.rL === 'number') out.rL = p.rL;
   if (typeof p.rR === 'number') out.rR = p.rR;
@@ -953,6 +994,19 @@ const RUN_B_SPEC: PortalSpec = { legs: 'right', leg: 0.22, head: 0.42, rR: 0.5, 
 /** Run A as an open portal: no half wall, its leg down to the floor, lined all the way down. */
 const RUN_A_OPEN: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, clear: 1.2, liningIn: CORNER_LINE };
 
+/** The two runs' specs with the corner portal's shape settings (absent = the item as designed). */
+function cornerSpecs(p?: ParamValues): { a: PortalSpec; b: PortalSpec; open: PortalSpec } {
+  if (!p) return { a: RUN_A_SPEC, b: RUN_B_SPEC, open: RUN_A_OPEN };
+  const num = (k: string, v: number) => (typeof p[k] === 'number' ? (p[k] as number) : v);
+  const head = num('head', RUN_A_SPEC.head);
+  const runA = { leg: num('legA', RUN_A_SPEC.leg), rR: num('rA', RUN_A_SPEC.rR!), head };
+  return {
+    a: { ...RUN_A_SPEC, ...runA },
+    b: { ...RUN_B_SPEC, leg: num('legB', RUN_B_SPEC.leg), rR: num('rB', RUN_B_SPEC.rR!), head },
+    open: { ...RUN_A_OPEN, ...runA },
+  };
+}
+
 /** Mirror parts left-to-right (x → -x). */
 function mirrorX(parts: Part[]): Part[] {
   return parts.map((p) => {
@@ -986,19 +1040,21 @@ function cornerLayout({ w, d }: Size3) {
 const CORNER_LEDGE_OPTS: LedgeOpts = { raisedRim: true, rimClearRight: CORNER_LINE + 0.001 };
 
 /** Run A's ledge (side +1 inside, -1 outside) or its plain cap (side 0), in item space: for the models. */
-function cornerRunTop(size: Size3, side: 1 | -1 | 0): Part[] {
+function cornerRunTop(size: Size3, side: 1 | -1 | 0, params?: ParamValues): Part[] {
   const L = cornerLayout(size);
   const sizeA: Size3 = { w: L.lenA, d: L.t, h: size.h };
+  const specA = cornerSpecs(params).a;
   const parts =
     side === 0
-      ? buildPortal(sizeA, RUN_A_SPEC).filter((p) => p.slot === 'shelf')
-      : diningLedge(sizeA, RUN_A_SPEC, side, CORNER_LEDGE_OPTS);
+      ? buildPortal(sizeA, specA).filter((p) => p.slot === 'shelf')
+      : diningLedge(sizeA, specA, side, CORNER_LEDGE_OPTS);
   return shift(parts, (L.cx + size.w / 2) / 2, L.zA);
 }
 
-function buildCornerPortal(size: Size3, open = false): Part[] {
+function buildCornerPortal(size: Size3, open = false, params?: ParamValues): Part[] {
   const { h } = size;
   const L = cornerLayout(size);
+  const { a: RUN_A_SPEC, b: RUN_B_SPEC, open: RUN_A_OPEN } = cornerSpecs(params);
   const sizeA: Size3 = { w: L.lenA, d: L.t, h };
   const sizeB: Size3 = { w: L.lenB, d: L.t, h };
   // Run A: the half-wall portal without its cap, the dining ledge on the inside, lining round the opening.
@@ -1020,6 +1076,35 @@ function buildCornerPortal(size: Size3, open = false): Part[] {
     ...runB,
     { ...prism('frame', ring, g.yi, h - g.yi), plan: false },
     { ...prism('lining', liningRing, g.yi - CORNER_LINE, CORNER_LINE - 0.001), plan: false },
+  ];
+}
+
+/**
+ * Shape-editor settings of the corner portal: the soffit drop of both runs, and each run's leg width and
+ * corner radius, with handles on the inside faces of the L (run A along the back, run B along the left).
+ */
+function cornerPortalParams(): AssetParam[] {
+  const runA = (size: Size3, p: ParamValues, at: HandleAt): ParamHandle => {
+    const L = cornerLayout(size);
+    const sizeA: Size3 = { w: L.lenA, d: L.t, h: size.h };
+    const hd = at(portalGeo(sizeA, cornerSpecs(p).a));
+    return { ...hd, at: [hd.at[0] + (L.cx + size.w / 2) / 2, hd.at[1], hd.at[2] + L.zA] };
+  };
+  // Run B is built along x with its leg at +x, mirrored and turned a quarter: its x runs along item z.
+  const runB = (size: Size3, p: ParamValues, at: HandleAt): ParamHandle => {
+    const L = cornerLayout(size);
+    const sizeB: Size3 = { w: L.lenB, d: L.t, h: size.h };
+    const hd = at(portalGeo(sizeB, cornerSpecs(p).b));
+    const cz = (L.cz + size.d / 2) / 2;
+    return { ...hd, at: [L.xB + hd.at[2], hd.at[1], cz + hd.at[0]], dir: [hd.dir[2], hd.dir[1], hd.dir[0]] };
+  };
+  const pier: HandleAt = (g) => ({ at: [g.xr, (HALF_WALL + g.yi - g.cr[1]) / 2, g.d / 2 + 0.01], dir: [-1, 0, 0] });
+  return [
+    lengthParam('head', 'Soffit drop', RUN_A_SPEC.head, 0.08, 1.2, (s, p) => runA(s, p, PORTAL_HANDLES.head)),
+    lengthParam('legA', 'Half-wall pier width', RUN_A_SPEC.leg, 0.1, 0.8, (s, p) => runA(s, p, pier)),
+    lengthParam('rA', 'Corner radius (half-wall side)', RUN_A_SPEC.rR!, 0, 1.5, (s, p) => runA(s, p, PORTAL_HANDLES.rR)),
+    lengthParam('legB', 'Leg width (slim side)', RUN_B_SPEC.leg, 0.08, 0.8, (s, p) => runB(s, p, PORTAL_HANDLES.leg)),
+    lengthParam('rB', 'Corner radius (slim side)', RUN_B_SPEC.rR!, 0, 1.5, (s, p) => runB(s, p, PORTAL_HANDLES.rR)),
   ];
 }
 
@@ -1055,13 +1140,14 @@ const cornerPortal = defineItem({
     { id: 'sage-lining', name: 'Sage lining', materials: { lining: 'paint-sage' } },
     { id: 'walnut', name: 'Walnut ledge & lining', materials: { shelf: 'wood-walnut', lining: 'wood-walnut' } },
   ],
-  build: (s) => buildCornerPortal(s),
+  params: cornerPortalParams(),
+  build: (s, p) => buildCornerPortal(s, false, p),
   planDetail: cornerPortalPlan,
   models: [
     { id: 'ledge-inside', name: 'Dining ledge inside' },
-    { id: 'ledge-outside', name: 'Dining ledge outside', hide: ['shelf', 'leg'], slots: [SHELF, LEDGE_LEG], reach: { back: LEDGE }, props: (s) => cornerRunTop(s, -1) },
-    { id: 'half-wall', name: 'Half wall, no ledge', hide: ['shelf', 'leg'], slots: [SHELF], props: (s) => cornerRunTop(s, 0) },
-    { id: 'open', name: 'Open portal', hide: ['shelf', 'leg'], build: (s) => buildCornerPortal(s, true) },
+    { id: 'ledge-outside', name: 'Dining ledge outside', hide: ['shelf', 'leg'], slots: [SHELF, LEDGE_LEG], reach: { back: LEDGE }, props: (s, p) => cornerRunTop(s, -1, p) },
+    { id: 'half-wall', name: 'Half wall, no ledge', hide: ['shelf', 'leg'], slots: [SHELF], props: (s, p) => cornerRunTop(s, 0, p) },
+    { id: 'open', name: 'Open portal', hide: ['shelf', 'leg'], build: (s, p) => buildCornerPortal(s, true, p) },
   ],
 });
 

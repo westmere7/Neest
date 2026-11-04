@@ -1,14 +1,16 @@
 import type { ItemEdits, PartEdit } from '@/domain/model/schema';
 import { partBounds } from './plantParts';
-import type { AssetDefinition, ParamValues, Part, PlanStroke, Size3 } from './types';
+import type { AssetDefinition, AssetParam, ParamHandle, ParamValues, Part, PlanStroke, Size3 } from './types';
 
 /**
- * Shape editing of placed items (the shape editor, "edit mode"): an item's own shape settings
- * (`AssetDefinition.params`), its sections (the spaces between dividers and fixed shelves, found in
- * its parts) and its single parts (move, resize, hide). Pure: the 3D view, the plan, collisions and
- * exports see the result through `withEdits`, a derived asset with its own id (`<id>@shape:<hash>`),
- * so every cache keyed by asset id keeps edited and unedited items apart. An item without edits is
- * its asset, unchanged.
+ * Shape editing of placed items (the shape editor, "edit mode"). The editor makes variants of an item
+ * by resizing its components, never by taking it apart: its named shape settings
+ * (`AssetDefinition.params`: leg width, soffit drop, corner radii…, some with a handle in the 3D view)
+ * and its sections (compartments between dividers, levels between fixed shelves, found in its parts:
+ * a wider opening, a taller level). Single-part edits (move, resize, hide) are no longer offered;
+ * items that have them keep them. Pure: the 3D view, the plan, collisions and exports see the result
+ * through `withEdits`, a derived asset with its own id (`<id>@shape:<hash>`), so every cache keyed by
+ * asset id keeps edited and unedited items apart. An item without edits is its asset, unchanged.
  *
  * Order: build at the size with the settings → sections → part edits. Parts keep their index
  * through every step; a part edit only applies while the part at its index has the same shape and
@@ -34,15 +36,41 @@ const EDITABLE: Partial<Record<AssetDefinition['type'], { except?: string[]; onl
 };
 
 /**
- * Whether an item has the shape editor: building parts and non-branded built furniture (see
+ * Whether edits apply to an item at all: building parts and non-branded built furniture (see
  * `EDITABLE`). Never branded products, shipped meshes, imported models or saved groups.
  */
-export function canEditShape(asset: AssetDefinition | null | undefined): asset is AssetDefinition {
+export function editsApply(asset: AssetDefinition | null | undefined): asset is AssetDefinition {
   if (!asset || asset.brand || asset.model || asset.category === 'custom' || asset.id.startsWith('savedgroup:')) return false;
   const rule = EDITABLE[asset.type];
   if (!rule) return false;
   if (rule.only) return rule.only.includes(asset.group);
   return !rule.except?.includes(asset.group);
+}
+
+/** Whether the item's sections are offered: items with named settings are edited through those (a portal's legs are its leg width). */
+export const sectionsOffered = (asset: AssetDefinition): boolean => !asset.params?.length;
+
+const componentsCache = new WeakMap<AssetDefinition, boolean>();
+
+/**
+ * Whether an item has the shape editor: one that edits apply to (`editsApply`) with components to
+ * resize, named settings or sections found at its default size. Items without either (a chair, a
+ * plain bed) have nothing to make variants from and stay out.
+ */
+export function canEditShape(asset: AssetDefinition | null | undefined): asset is AssetDefinition {
+  if (!editsApply(asset)) return false;
+  if (asset.params?.length) return true;
+  let has = componentsCache.get(asset);
+  if (has === undefined) {
+    try {
+      const s = detectSections(asset.build(asset.defaultSize), asset.defaultSize);
+      has = s.x.length > 0 || s.y.length > 0;
+    } catch {
+      has = false;
+    }
+    componentsCache.set(asset, has);
+  }
+  return has;
 }
 
 /** Below this an extent counts as a panel's thickness: such parts move with a section edge but keep their size. */
@@ -252,6 +280,29 @@ export function resolveParams(asset: AssetDefinition, values: ParamValues | unde
   return Object.keys(out).length ? out : undefined;
 }
 
+/** Every setting of the item: stored values over the defaults. */
+export function paramValues(asset: AssetDefinition, values: ParamValues | undefined): ParamValues {
+  const out: ParamValues = {};
+  for (const p of asset.params ?? []) out[p.id] = p.default;
+  return { ...out, ...resolveParams(asset, values) };
+}
+
+/** The settings with a handle in the 3D view at this size, with where each sits now. */
+export function paramHandles(asset: AssetDefinition, size: Size3, values: ParamValues | undefined): { param: AssetParam; value: number; handle: ParamHandle }[] {
+  const all = paramValues(asset, values);
+  const out: { param: AssetParam; value: number; handle: ParamHandle }[] = [];
+  for (const param of asset.params ?? []) {
+    if (!param.handle || param.kind !== 'length') continue;
+    try {
+      const handle = param.handle(size, all);
+      if (handle && [...handle.at, ...handle.dir].every(Number.isFinite)) out.push({ param, value: Number(all[param.id]), handle });
+    } catch {
+      // A handle that cannot be placed is left out.
+    }
+  }
+  return out;
+}
+
 /** A part after its edit: resized about its centre (`grow`, metres along the item's axes), then moved. */
 export function applyPartEdit(p: Part, e: PartEdit | undefined): Part {
   if (!e) return p;
@@ -449,24 +500,6 @@ export function editedParts(asset: AssetDefinition, size: Size3, edits: ItemEdit
   });
 }
 
-/**
- * The parts held by part `index` (joined to one of its faces and lying within it): they follow it when it
- * changes, and the parts they hold follow them in turn. For the editor's highlight.
- */
-export function partsFollowing(base: Part[], index: number): number[] {
-  const p = base[index];
-  if (!p) return [];
-  const p0 = partBounds(p);
-  const out: number[] = [];
-  base.forEach((q, i) => {
-    if (i === index) return;
-    const q0 = partBounds(q);
-    const held = ([0, 1, 2] as Axis[]).some((a) => touching(q0, p0, a) !== null && within(q0, p0, othersOf(a)));
-    if (held) out.push(i);
-  });
-  return out;
-}
-
 /** Section edges of the item as edited, for the editor: positions now, as found, and the axis range. */
 export function sectionInfo(asset: AssetDefinition, size: Size3, edits: ItemEdits | undefined): Record<'x' | 'y', { edges: number[]; found: number[]; lo: number; hi: number }> {
   const params = resolveParams(asset, edits?.params);
@@ -548,7 +581,7 @@ const derivedByAsset = new WeakMap<AssetDefinition, Map<string, AssetDefinition>
 export function withEdits(asset: AssetDefinition, edits: ItemEdits | undefined | null): AssetDefinition;
 export function withEdits(asset: AssetDefinition | null, edits: ItemEdits | undefined | null): AssetDefinition | null;
 export function withEdits(asset: AssetDefinition | null, edits: ItemEdits | undefined | null): AssetDefinition | null {
-  if (!asset || !edits || isEmptyEdits(edits) || !canEditShape(asset)) return asset;
+  if (!asset || !edits || isEmptyEdits(edits) || !editsApply(asset)) return asset;
   const key = stableKey(edits);
   let byKey = derivedByAsset.get(asset);
   if (!byKey) derivedByAsset.set(asset, (byKey = new Map()));
@@ -578,19 +611,6 @@ export function withEdits(asset: AssetDefinition | null, edits: ItemEdits | unde
   };
   byKey.set(key, def);
   return def;
-}
-
-/** A part's name in the editor: its finish slot's label and its number among that slot's parts. */
-export function partLabels(asset: AssetDefinition, parts: Part[]): string[] {
-  const seen = new Map<string, number>();
-  const count = new Map<string, number>();
-  for (const p of parts) count.set(p.slot, (count.get(p.slot) ?? 0) + 1);
-  return parts.map((p) => {
-    const n = (seen.get(p.slot) ?? 0) + 1;
-    seen.set(p.slot, n);
-    const label = asset.slots.find((s) => s.id === p.slot)?.label ?? p.slot;
-    return count.get(p.slot)! > 1 ? `${label} ${n}` : label;
-  });
 }
 
 /** Item-space bounds of a part (for the editor's fields). */

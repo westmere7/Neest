@@ -72,14 +72,21 @@ export interface PlaceTemplate {
  * highlighted and editable. `part` is the picked part (index in the item's parts), `hover` the part
  * under the pointer, `section` the section whose field is active; `returnTo` is the view to go back to.
  */
+/** A section of an item in the shape editor: a compartment across (x) or a level up (y), counted from the left / bottom. */
+export interface ShapeSection {
+  axis: 'x' | 'y';
+  index: number;
+}
+
 export interface ShapeEditState {
   objectId: string;
-  part: number | null;
-  hover: number | null;
-  section: { axis: 'x' | 'y'; index: number } | null;
+  /** The picked component (a compartment or level): outlined, its edges' handles bright. */
+  section: ShapeSection | null;
+  /** The section under the pointer or a hovered field (a light box). */
+  hover: ShapeSection | null;
+  /** The setting whose handle or field is hovered or dragged (handle and field highlighted). */
+  param: string | null;
   returnTo: Workspace;
-  /** Part edits stand alone (attached parts do not follow); stored on the item's edits as `detached`. */
-  detached: boolean;
 }
 
 export interface EditorState {

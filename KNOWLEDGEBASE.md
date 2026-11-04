@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-04 (connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-04 (shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -582,41 +582,51 @@ a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens 
   (`hitCalloutAnchor` → `setCalloutAnchorPoint`, which keeps the label still and the target kind unchanged), and
   double-click edits.
 
-### Shape editor (edit mode for sub-items, src/features/shape-edit)
+### Shape editor (edit mode, src/features/shape-edit)
 
-A sub-item editor, not a mesh editor: an item's own parts (doors, shelves, dividers, legs, tops, frames) are moved,
-resized, scaled or hidden, its sections (compartments between dividers, levels between fixed shelves) resized, and
-spec-built families have named settings (portal leg width, soffit drop, corner radii, arch rise, niches).
+Makes **variants of an item by resizing its components**, never by taking it apart: a wardrobe with a wider niche, a
+portal with a lower soffit or a smaller corner radius. Components are the item's named settings (`AssetDefinition.params`:
+portal leg width, soffit drop, corner radii, arch rise, niches) and its sections (compartments between dividers, levels
+between fixed shelves, found in its parts). Single parts are not picked, moved or hidden any more (2026-11-04: the
+part-by-part editor split items too finely to be useful).
 
-- **Who has it:** `canEditShape` (see §12 Asset rules 13): 578 of 1355 items (2026-11-03). Opened from the
-  Inspector's Item section ("Edit shape") or the item's right-click menu, **in the 3D view only**, desktop only, not
-  on locked items.
-- **While on** (`editor.shapeEdit`): the item is drawn part by part (`ShapeEdit3D.tsx`); everything else is X-ray
-  (`XRayGhost objects`, not pickable: X-rayed meshes lose their raycast in this mode). Editable parts get a faint
-  outline, the hovered part a brighter one, the picked part an orange outline, a tint and a gizmo: arrows move it
-  along the item's axes, cubes drag one face (the opposite face stays); 5 mm steps, Alt free. A drag previews live
-  and is one undo step. Hovering or focusing a section field shows that section as a light box.
+- **Who has it:** `canEditShape` (see §12 Asset rules 13): items edits apply to (`editsApply`: structure and
+  non-branded built furniture) that have components, settings or sections found at the default size (cached per asset).
+  About 250 of the 578 (2026-11-04); a plain bed, plain wardrobe, desk or column has nothing to resize and stays out.
+  An item with edits stored earlier opens too, so they can be cleared. Opened from the Inspector's Item section ("Edit
+  shape") or the item's right-click menu, **in the 3D view only**, desktop only, not on locked items.
+- **Settings or sections:** items with settings are edited through them only (`sectionsOffered`: a portal's legs are its
+  leg width, not a section); items without settings through their sections. Stored section edits still show.
+- **While on** (`editor.shapeEdit`: `section` picked, `hover`, `param` highlighted): the item is drawn whole
+  (`ShapeEdit3D.tsx`) with faint part outlines; everything else is X-ray (`XRayGhost objects`, not pickable). Under the
+  pointer a section lights up (a compartment when the item has them, else a level); a click picks it (orange box).
+  Every section edge has a green two-way handle (compartments above the top front edge, levels beside the right front
+  edge) with a dashed guide down the edge: dragging moves the divider or shelf, the sections on both sides change, and
+  a label shows both widths. Settings with a `handle` get an orange one-way handle on the geometry they shape (see
+  below); dragging shows "Label: value" beside it. Drags preview live, 5 mm steps (Alt free), one undo step on release.
 - **No other tool:** `editorStore` drops any other tool, mode, panel or view request (`withoutOtherModes`, `setTool`);
   the rail, library, layers and finish panels and the view switcher are gone; `ShapeEditPanel` takes the
-  Inspector's place. Keys: Esc drops the part, then leaves; H / Delete hides the picked part; Ctrl+Z / Ctrl+Y.
-- **Panel:** Shape (settings), Sections (widths left to right, heights bottom to top; setting a section moves its
-  next edge, the last one its previous edge; the neighbour absorbs it), the picked part (width/height/depth,
-  centre X/Y/Z, scale %, diameter for round parts, hide, reset) and the part list (named by finish slot, hide/show,
-  "edited" tag). Footer: summary and reset all.
+  Inspector's place. Keys: Esc drops the picked section, then leaves; Ctrl+Z / Ctrl+Y.
+- **Panel:** Shape (settings; those with a handle have an orange edge and light up with it), Compartments / Levels
+  (widths left to right, heights bottom to top; setting one moves its next edge, the last one its previous edge; the
+  neighbour absorbs it; hovering shows the section, focusing picks it), "Earlier part edits" (count + Clear part
+  edits) when the item has any. Footer: summary and reset all.
+- **Setting handles** (`AssetParam.handle(size, params) → { at, dir, per? }`, item space; `paramHandles` places them):
+  value grows by `per` (default 1) per metre dragged along `dir`. Portals (`PORTAL_HANDLES` in portal-frames): leg width
+  on the right leg's inner face (inwards), soffit drop under the soffit's middle (down), each corner radius where its
+  curve meets the soffit (along the soffit, away from the corner), the basket arch's rise where it springs (down).
+  Uneven legs (the arched partition wall) are two settings, jamb (left) and pier (right). The corner portal has its own:
+  soffit drop, half-wall pier width and radius, slim leg width and radius, on the inside faces of the L.
+- **Models:** settings reach a model's form and props (`withModel` passes `params` to `build` and `props`), so the
+  corner portal's half wall and ledges follow its pier width.
 - **Model:** `PlacedObject.edits` (optional; absent = the plain asset): `params`, `sections.{x,y}` = { n edges found,
-  d offsets }, `parts[index]` = { sig, move, grow, hidden }. `getObjectAsset` → `withEdits(withModel(asset, model),
-  edits)`, a derived asset `<id>@shape:<hash>`, so the 3D view, plan, DXF, GLB, guest export, previews and surfaces
-  all use the edited shape; walk collisions stay the item's box. Order: build with settings → sections (piecewise
-  linear remap; thin parts near an edge move with it, others stretch with their section; prisms remapped point by
-  point) → part edits (only while `sig` still matches) → **connected edits** (`propagate`): parts held by an edited
-  part follow it, then the parts they hold, and so on. Held = joined to one of its faces (within 4 mm, meeting on an
-  edge or area) and lying within that face, so a small part never drags a big one. Per axis a part against a moved face
-  stretches to stay against it (shelves between niche walls), or moves with it when it is thin along that axis (a door,
-  a strip); a part mounted on a face keeps its place in proportion (handles, lights under a shelf). Each part follows
-  the first edited part that reaches it; parts with their own edits do not follow. The panel's "Attached parts follow"
-  switch (`shapeEdit.detached` → `edits.detached`) turns it off; a picked part outlines the parts it holds in blue
-  (`partsFollowing`), and the list tags followers "follows". Edits are cleaned on every change (defaults and no-ops
-  dropped; nothing left = field removed). Duplicates keep them. An item with edits keeps its model variant (the
+  d offsets }, and `parts[index]` = { sig, move, grow, hidden } from the earlier part editor (still applied, with
+  connected edits, `detached`; no longer made). `getObjectAsset` → `withEdits(withModel(asset, model), edits)`, a
+  derived asset `<id>@shape:<hash>`, so the 3D view, plan, DXF, GLB, guest export, previews and surfaces all use the
+  edited shape; walk collisions stay the item's box. Order: build with settings → sections (piecewise linear remap; thin
+  parts near an edge move with it, others stretch with their section; prisms remapped point by point) → part edits
+  (only while `sig` still matches) → connected edits (`propagate`). Edits are cleaned on every change (defaults and
+  no-ops dropped; nothing left = field removed). Duplicates keep them. An item with edits keeps its model variant (the
   picker says so); reset the shape to change it.
 
 ### Item layers (Layers panel)
@@ -908,15 +918,21 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
      portals, walls, half walls, stairs, balustrades, platforms, pipe boxing). 87 items have none (2026-10-22).
    - Caveats: split-AC outdoor-unit rows and the soundbar's subwoofer carry the whole set's price, so placing both
      halves counts it twice. Large estimates (hot tub, ofuro, fine-wood antiques) are rough.
-13. **Editable sub-items (shape editor):** structure and built furniture (`canEditShape` in
+13. **Editable items (shape editor):** structure and built furniture (`editsApply` in
    `data/assets/itemEdits.ts`: structure but radiators, storage but baskets, tables but outdoor ones, beds, sofas,
    dining/living chairs, stools and benches, kids' furniture; never branded items or shipped meshes) open in the
-   shape editor, which edits what `build` returns. Build them so that works:
-   - **One part per real piece.** A door, a shelf, a divider, a leg, a desk top is its own part, never merged into a
-     neighbour or split into slices; the editor lists, picks, moves, resizes and hides parts one by one.
-   - **Stable part order.** Keep the same parts in the same order at every size where you can; add parts that come
-     and go with the size (extra doors, shelves) at the end of the list. Edits are stored by part index plus shape
-     and slot, and silently stop applying when the part at an index changes.
+   shape editor when they have **components to resize** (`canEditShape`): named settings, or dividers and fixed shelves
+   that make sections. The editor makes variants (a wider opening, a lower soffit, a smaller radius); it never edits
+   single parts. Build them so that works:
+   - **Give a family its components as settings.** When a family is built from a spec (`portal(c)` in portal-frames),
+     add `params` (`AssetParam`: length / count / toggle / choice, with `min` and `max`) for what makes a variant
+     (opening width or height, leg or pier width, corner radius, drop, depth of a ledge) and read them from
+     `build(size, params)` (and in model `build` / `props`, which get them too). A missing value is the spec's own, so
+     unedited items build exactly as before. Two different legs are two settings, not one.
+   - **Give geometric settings a handle.** A length setting that shapes something visible (a radius, a leg, a drop)
+     gets `handle: (size, params) => ({ at, dir, per? })`: where it sits on that geometry (front face, item space) and
+     which way dragging adds to it. `itemEdits.test.ts` checks every handle lies on the item and moves the way its
+     value grows.
    - **Real dividers and shelves.** Sections are found from the parts: upright panels at most 5 cm thick that stand
      55 %+ of the height and 30 %+ of the depth, in the same slot as the item's own end panels, divide it across;
      flat panels at most 5 cm thick across 35 %+ of the width and 30 %+ of the depth, in the slot of its top or
@@ -924,12 +940,10 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
      carcass block, a sofa arm). Model compartments with such panels and blocks, and give props (clothes, books,
      towels) their own slot and `plan: false` so they never count.
    - **Outlines along the axes.** Arches and curved panels as `prism` parts unturned or turned a quarter about x
-     (`panelXY`-style) are remapped point by point, so their curves follow a moved section edge. Other turns stretch
-     the whole part.
-   - **Named settings for spec-built families.** When a family is built from a spec (`portal(c)` in
-     portal-frames), add `params` (`AssetParam`: length / count / toggle / choice, with `min` and `max`) and read
-     them from `build(size, params)`; a missing value is the spec's own, so unedited items build exactly as before.
-     `itemEdits.test.ts` checks every item with params: defaults rebuild the item unchanged, every setting at its
+     (`panelXY`-style) are remapped point by point, so their curves follow a moved section edge.
+   - **Stable part order.** Keep the same parts in the same order at every size and at the settings' defaults; part
+     edits stored by the earlier editor point at part indices.
+   - `itemEdits.test.ts` checks every item with params: defaults rebuild the item unchanged, every setting at its
      limits builds inside the item's box.
    - Items that make no sense to edit stay out by type or shelf (`EDITABLE` in itemEdits.ts); a new kind of item
      that should be editable needs its type or shelf added there.
@@ -2165,3 +2179,13 @@ Known limitations (also in README):
      prices by area). They are cropped from the supplied photos (rights unknown, not public domain), listed in
      src/data/assets/tennisPaintings.json (the fetch script leaves them alone and keeps their CREDITS.md section), with
      tiles in public/art/tennis-*.webp. Their art panel sits 1 mm inside the liner so no faces are coplanar (done).
+174. "Look at the edit mode again, a lot of items don't make sense … the mode isn't about editing the item components
+     individually, it's about resizing the components so we have more variants of the parent item, like wardrobe with
+     wider opening, portal with lower opening, smaller corner radius; add gizmo for the ones that support radius
+     adjustment" → the shape editor resizes components only (§10 Shape editor, §12 rule 13): sections picked in the
+     view with green edge handles, settings with orange handles (portal leg / jamb / pier width, soffit drop, corner
+     radii, arch rise) and a live value label; no part picking, list or gizmo. Only items with settings or sections
+     open it (about 250); earlier part edits keep applying and can be cleared. The corner portal gained settings
+     (soffit drop, pier and leg widths, both radii), and model variants now pass settings to their form and props.
+     Checked in the browser: a real drag on a portal's radius handle, a niche wardrobe widened 30 cm, the corner
+     portal's handles (done).

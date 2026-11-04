@@ -1,9 +1,9 @@
-import type { ItemEdits, PartEdit, PlacedObject, Project } from '@/domain/model/schema';
+import type { ItemEdits, PlacedObject, Project } from '@/domain/model/schema';
 import { getAsset } from '@/data/assets/registry';
 import { withModel } from '@/data/assets/models';
-import { MIN_SECTION, canEditShape, cleanEdits, editedParts, partBox, partSig, sectionInfo } from '@/data/assets/itemEdits';
+import { MIN_SECTION, canEditShape, cleanEdits, editsApply, sectionInfo } from '@/data/assets/itemEdits';
 import type { AssetDefinition } from '@/data/assets/types';
-import { useEditorStore } from '@/state/editorStore';
+import { useEditorStore, type ShapeSection } from '@/state/editorStore';
 import { useProjectStore } from '@/state/projectStore';
 import { toast } from '@/state/uiStores';
 
@@ -17,10 +17,12 @@ export function editBase(project: Pick<Project, 'customAssets'>, o: Pick<PlacedO
   return withModel(getAsset(project, o.assetId), o.model);
 }
 
-/** Whether the item can be opened in the shape editor. */
+/** Whether the item can be opened in the shape editor: it has components to resize, or edits made earlier to see or clear. */
 export function canEditItem(project: Project, objectId: string): boolean {
   const o = project.objects[objectId];
-  return !!o && canEditShape(editBase(project, o));
+  if (!o) return false;
+  const asset = editBase(project, o);
+  return canEditShape(asset) || (editsApply(asset) && !!o.edits);
 }
 
 /** Whether the shape editor can be opened now: it works in the 3D view only. */
@@ -49,7 +51,7 @@ export function enterShapeEdit(objectId: string): void {
     workspace: '3d',
     selection: [{ kind: 'object', id: objectId }],
     hover: null,
-    shapeEdit: { objectId, part: null, hover: null, section: null, returnTo, detached: !!o.edits?.detached },
+    shapeEdit: { objectId, section: null, hover: null, param: null, returnTo },
   });
   ed.requestFocus();
 }
@@ -62,11 +64,13 @@ export function exitShapeEdit(): void {
   ed.set({ shapeEdit: null, workspace: s.returnTo === 'walk' ? '3d' : s.returnTo, hover: null });
 }
 
-export function setShapeEditState(patch: Partial<Pick<NonNullable<ReturnType<typeof useEditorStore.getState>['shapeEdit']>, 'part' | 'hover' | 'section'>>): void {
+const sameSection = (a: ShapeSection | null, b: ShapeSection | null) => a === b || (!!a && !!b && a.axis === b.axis && a.index === b.index);
+
+export function setShapeEditState(patch: Partial<Pick<NonNullable<ReturnType<typeof useEditorStore.getState>['shapeEdit']>, 'section' | 'hover' | 'param'>>): void {
   const ed = useEditorStore.getState();
   if (!ed.shapeEdit) return;
   const next = { ...ed.shapeEdit, ...patch };
-  if (next.part === ed.shapeEdit.part && next.hover === ed.shapeEdit.hover && next.section === ed.shapeEdit.section) return;
+  if (sameSection(next.section, ed.shapeEdit.section) && sameSection(next.hover, ed.shapeEdit.hover) && next.param === ed.shapeEdit.param) return;
   ed.set({ shapeEdit: next });
 }
 
@@ -115,89 +119,17 @@ export function setSectionSize(axis: 'x' | 'y', index: number, size: number): vo
   });
 }
 
-/** Attached parts follow part edits (on) or each part goes alone (off). */
-export function setPartsFollow(follow: boolean): void {
-  const ed = useEditorStore.getState();
-  if (!ed.shapeEdit) return;
-  ed.set({ shapeEdit: { ...ed.shapeEdit, detached: !follow } });
-  const project = useProjectStore.getState().project;
-  if (project?.objects[ed.shapeEdit.objectId]?.edits?.parts)
-    updateEdits(follow ? 'Attached parts follow' : 'Parts move alone', (e) => ({ ...e, detached: follow ? undefined : true }));
-}
-
-/** Changes one part's edit (from its current values: grow and move add up). */
-export function editPart(index: number, label: string, change: (pe: PartEdit) => PartEdit): void {
-  const detached = useEditorStore.getState().shapeEdit?.detached;
-  updateEdits(label, (e0, o, asset) => {
-    const e = { ...e0, detached: detached ? true : undefined };
-    const parts = editedParts(asset, { w: o.width, d: o.depth, h: o.height }, e);
-    const p = parts[index];
-    if (!p) return e;
-    const sig = partSig(p.base);
-    const cur = e.parts?.[String(index)];
-    const pe: PartEdit = cur && cur.sig === sig ? { ...cur } : { sig };
-    return { ...e, parts: { ...e.parts, [String(index)]: change(pe) } };
+/** Moves section edges along an axis to these positions (a handle drag in the view), as one step. */
+export function setSectionEdges(axis: 'x' | 'y', edges: number[]): void {
+  updateEdits(axis === 'x' ? 'Resize compartments' : 'Resize levels', (e, o, asset) => {
+    const info = sectionInfo(asset, { w: o.width, d: o.depth, h: o.height }, e)[axis];
+    if (edges.length !== info.found.length) return e;
+    return { ...e, sections: { ...e.sections, [axis]: { n: edges.length, d: edges.map((v, i) => v - info.found[i]) } } };
   });
 }
 
-const add3 = (a: [number, number, number] | undefined, b: [number, number, number]): [number, number, number] => [
-  (a?.[0] ?? 0) + b[0],
-  (a?.[1] ?? 0) + b[1],
-  (a?.[2] ?? 0) + b[2],
-];
-
-/** Sets a part's size along item axes (null = unchanged), keeping its centre. */
-export function setPartSize(index: number, size: [number | null, number | null, number | null]): void {
-  editPart(index, 'Resize part', (pe) => {
-    const project = useProjectStore.getState().project!;
-    const o = project.objects[useEditorStore.getState().shapeEdit!.objectId];
-    const asset = editBase(project, o)!;
-    const now = partBox(editedParts(asset, { w: o.width, d: o.depth, h: o.height }, o.edits)[index].part).size;
-    const d: [number, number, number] = [0, 0, 0];
-    size.forEach((v, i) => {
-      if (v !== null) d[i] = Math.max(0.005, v) - now[i];
-    });
-    return { ...pe, grow: add3(pe.grow, d) };
-  });
-}
-
-/** Moves a part (its centre to `centre` along the given item axes; null = unchanged). */
-export function setPartCentre(index: number, centre: [number | null, number | null, number | null]): void {
-  editPart(index, 'Move part', (pe) => {
-    const project = useProjectStore.getState().project!;
-    const o = project.objects[useEditorStore.getState().shapeEdit!.objectId];
-    const asset = editBase(project, o)!;
-    const now = partBox(editedParts(asset, { w: o.width, d: o.depth, h: o.height }, o.edits)[index].part).centre;
-    const d: [number, number, number] = [0, 0, 0];
-    centre.forEach((v, i) => {
-      if (v !== null) d[i] = v - now[i];
-    });
-    return { ...pe, move: add3(pe.move, d) };
-  });
-}
-
-/** Scales a part evenly about its centre by `k` (1.1 = 10 % bigger). */
-export function scalePart(index: number, k: number): void {
-  const project = useProjectStore.getState().project!;
-  const o = project.objects[useEditorStore.getState().shapeEdit!.objectId];
-  const asset = editBase(project, o)!;
-  const now = partBox(editedParts(asset, { w: o.width, d: o.depth, h: o.height }, o.edits)[index].part).size;
-  editPart(index, 'Scale part', (pe) => ({ ...pe, grow: add3(pe.grow, [now[0] * (k - 1), now[1] * (k - 1), now[2] * (k - 1)]) }));
-}
-
-/** A drag of the part gizmo, as one step: moved and/or grown by these amounts. */
-export function dragPart(index: number, move: [number, number, number], grow: [number, number, number]): void {
-  editPart(index, grow.some((v) => v) ? 'Resize part' : 'Move part', (pe) => ({ ...pe, move: add3(pe.move, move), grow: add3(pe.grow, grow) }));
-}
-
-export const togglePartHidden = (index: number, hidden: boolean) => editPart(index, hidden ? 'Hide part' : 'Show part', (pe) => ({ ...pe, hidden }));
-
-export const resetPart = (index: number) =>
-  updateEdits('Reset part', (e) => {
-    const parts = { ...e.parts };
-    delete parts[String(index)];
-    return { ...e, parts };
-  });
+/** Drops part edits made with the earlier part-by-part editor (the item keeps its settings and sections). */
+export const clearPartEdits = () => updateEdits('Clear part edits', (e) => ({ ...e, parts: undefined, detached: undefined }));
 
 export const resetSections = () => updateEdits('Reset sections', (e) => ({ ...e, sections: undefined }));
 export const resetParams = () => updateEdits('Reset shape settings', (e) => ({ ...e, params: undefined }));

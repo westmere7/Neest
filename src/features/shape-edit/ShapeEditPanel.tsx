@@ -1,36 +1,18 @@
 import { useEffect, useMemo } from 'react';
-import { Eye, EyeOff, RotateCcw, Shapes, X } from 'lucide-react';
-import { editedParts, partBox, partLabels, partsFollowing, sectionInfo } from '@/data/assets/itemEdits';
+import { RotateCcw, Shapes, X } from 'lucide-react';
+import { sectionInfo, sectionsOffered } from '@/data/assets/itemEdits';
 import type { AssetParam } from '@/data/assets/types';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { Button, IconButton, LengthField, NumberField, Section, Select, Toggle } from '@/components/ui';
-import {
-  editBase,
-  exitShapeEdit,
-  resetParams,
-  resetPart,
-  resetSections,
-  resetShape,
-  scalePart,
-  setParam,
-  setPartCentre,
-  setPartSize,
-  setPartsFollow,
-  setSectionSize,
-  setShapeEditState,
-  togglePartHidden,
-} from './actions';
+import { clearPartEdits, editBase, exitShapeEdit, resetParams, resetSections, resetShape, setParam, setSectionSize, setShapeEditState } from './actions';
 import './shapeEdit.css';
 
-const AXES = ['Width', 'Height', 'Depth'] as const;
-const MOVE = ['Across (X)', 'Up (Y)', 'Front–back (Z)'] as const;
-
 /**
- * The shape editor's panel, in the Inspector's place: the item's shape settings, its sections (widths
- * of the compartments between dividers, heights between fixed shelves) and its parts. Picking a part
- * here or in the view shows its size and place, a uniform scale, a diameter for round parts, and hide
- * and reset. Done (or Esc) leaves the editor.
+ * The shape editor's panel, in the Inspector's place. The editor makes variants of the item by
+ * resizing its components: its shape settings (leg width, soffit drop, corner radii…; those with an
+ * orange handle in the view are highlighted with it) and its sections (compartment widths left to
+ * right, level heights bottom to top; picked in the view or here). Done (or Esc) leaves the editor.
  */
 export function ShapeEditPanel() {
   const project = useProjectStore((s) => s.project)!;
@@ -42,34 +24,29 @@ export function ShapeEditPanel() {
     if (!o || !asset) exitShapeEdit();
   }, [o, asset]);
   const size = useMemo(() => (o ? { w: o.width, d: o.depth, h: o.height } : { w: 1, d: 1, h: 1 }), [o]);
-  const parts = useMemo(() => (asset ? editedParts(asset, size, o?.edits) : []), [asset, size, o?.edits]);
-  const labels = useMemo(() => (asset ? partLabels(asset, parts.map((p) => p.part)) : []), [asset, parts]);
   const sections = useMemo(() => (asset ? sectionInfo(asset, size, o?.edits) : null), [asset, size, o?.edits]);
   if (!o || !asset || !sections) return null;
   const u = project.settings;
   const e = o.edits;
-  const picked = shapeEdit.part !== null ? parts[shapeEdit.part] : undefined;
-  const editedCount = Object.keys(e?.parts ?? {}).length;
-  const hiddenCount = parts.filter((p) => p.hidden).length;
-  const box = picked ? partBox(picked.part) : null;
-  const followers = picked && !shapeEdit.detached ? partsFollowing(parts.map((p) => p.base), picked.index).length : 0;
-  const round = picked && ['cylinder', 'sphere', 'torus', 'lathe'].includes(picked.part.shape);
+  const showSections = sectionsOffered(asset) || !!e?.sections;
+  const partEdits = Object.keys(e?.parts ?? {}).length;
+  const picked = shapeEdit.section;
   const sectionRow = (axis: 'x' | 'y') => {
     const s = sections[axis];
     if (!s.edges.length) return null;
     const all = [s.lo, ...s.edges, s.hi];
-    const label = axis === 'x' ? 'Section' : 'Level';
+    const label = axis === 'x' ? 'Compartment' : 'Level';
     return (
       <div className="shape-sections" data-testid={`shape-sections-${axis}`}>
-        <div className="field-label">{axis === 'x' ? 'Widths, left to right' : 'Heights, bottom to top'}</div>
+        <div className="field-label">{axis === 'x' ? 'Compartment widths, left to right' : 'Level heights, bottom to top'}</div>
         <div className="grid-2">
           {all.slice(0, -1).map((a, i) => (
             <div
               key={i}
-              onMouseEnter={() => setShapeEditState({ section: { axis, index: i } })}
-              onMouseLeave={() => setShapeEditState({ section: null })}
-              onFocus={() => setShapeEditState({ section: { axis, index: i }, part: null })}
-              onBlur={() => setShapeEditState({ section: null })}
+              className={`shape-section-field${picked?.axis === axis && picked.index === i ? ' on' : ''}`}
+              onMouseEnter={() => setShapeEditState({ hover: { axis, index: i } })}
+              onMouseLeave={() => setShapeEditState({ hover: null })}
+              onFocus={() => setShapeEditState({ section: { axis, index: i } })}
             >
               <LengthField
                 label={`${label} ${i + 1}`}
@@ -94,10 +71,24 @@ export function ShapeEditPanel() {
       return <Select key={p.id} label={p.label} value={String(v)} options={p.options ?? []} onChange={(x) => setParam(p.id, p.label, x)} />;
     if (p.kind === 'count')
       return <NumberField key={p.id} label={p.label} value={Number(v)} min={p.min ?? 0} max={p.max ?? 99} step={1} decimals={0} onCommit={(x) => setParam(p.id, p.label, Math.round(x))} />;
+    const field =
+      p.max !== undefined && p.max <= 1 && p.hint?.startsWith('Share') ? (
+        <NumberField label={p.label} value={Math.round(Number(v) * 100)} min={Math.round((p.min ?? 0) * 100)} max={100} step={5} decimals={0} suffix="%" onCommit={(x) => setParam(p.id, p.label, x / 100)} />
+      ) : (
+        <LengthField label={p.label} hint={p.hint} value={Number(v)} unit={u.units} precision={u.precision} min={p.min ?? 0} max={p.max ?? 30} testId={`param-${p.id}`} onCommit={(x) => setParam(p.id, p.label, x)} />
+      );
     return (
-      <LengthField key={p.id} label={p.label} hint={p.hint} value={Number(v)} unit={u.units} precision={u.precision} min={p.min ?? 0} max={p.max ?? 30} testId={`param-${p.id}`} onCommit={(x) => setParam(p.id, p.label, x)} />
+      <div
+        key={p.id}
+        className={`shape-param${p.handle ? ' has-handle' : ''}${shapeEdit.param === p.id ? ' on' : ''}`}
+        onMouseEnter={() => p.handle && setShapeEditState({ param: p.id })}
+        onMouseLeave={() => p.handle && setShapeEditState({ param: null })}
+      >
+        {field}
+      </div>
     );
   };
+  const hasSections = showSections && (sections.x.edges.length > 0 || sections.y.edges.length > 0);
   return (
     <aside className="shape-panel floating" aria-label="Edit shape" data-testid="shape-panel">
       <div className="shape-panel-head">
@@ -114,8 +105,9 @@ export function ShapeEditPanel() {
       </div>
       <div className="shape-panel-body">
         <p className="field-hint">
-          Click a part to pick it; drag the arrows to move it, the small cubes to pull one side. Everything else is in
-          X-ray while you edit. Esc drops the part, then leaves.
+          Make a variant of this item by resizing its components.
+          {asset.params?.some((p) => p.handle) && ' Drag the orange handles (corner radius, legs, soffit) or type the sizes.'}
+          {hasSections && ' Drag the green handles to move a divider or shelf; click a compartment to pick it.'} Esc leaves.
         </p>
         {!!asset.params?.length && (
           <Section title="Shape">
@@ -127,123 +119,35 @@ export function ShapeEditPanel() {
             )}
           </Section>
         )}
-        {(sections.x.edges.length > 0 || sections.y.edges.length > 0) && (
-          <Section title="Sections">
+        {hasSections && (
+          <Section title={sections.x.edges.length ? 'Compartments' : 'Levels'}>
             {sectionRow('x')}
             {sectionRow('y')}
             {e?.sections && (
               <Button size="sm" variant="subtle" onClick={resetSections}>
-                <RotateCcw size={13} /> Reset sections
+                <RotateCcw size={13} /> Reset sizes
               </Button>
             )}
           </Section>
         )}
-        {picked && box && (
-          <Section title={labels[picked.index] ?? 'Part'}>
-            <div data-testid="shape-part" className="shape-part-fields">
-              {picked.hidden ? (
-                <p className="notice">This part is hidden.</p>
-              ) : (
-                <>
-                  <div className="grid-3">
-                    {AXES.map((label, i) => (
-                      <LengthField
-                        key={label}
-                        label={label}
-                        value={box.size[i]}
-                        unit={u.units}
-                        precision={u.precision}
-                        min={0.005}
-                        max={30}
-                        testId={`part-size-${i}`}
-                        onCommit={(v) => setPartSize(picked.index, [i === 0 ? v : null, i === 1 ? v : null, i === 2 ? v : null])}
-                      />
-                    ))}
-                  </div>
-                  <div className="grid-3">
-                    {MOVE.map((label, i) => (
-                      <LengthField
-                        key={label}
-                        label={label}
-                        value={box.centre[i]}
-                        unit={u.units}
-                        precision={u.precision}
-                        min={-30}
-                        max={30}
-                        testId={`part-pos-${i}`}
-                        onCommit={(v) => setPartCentre(picked.index, [i === 0 ? v : null, i === 1 ? v : null, i === 2 ? v : null])}
-                      />
-                    ))}
-                  </div>
-                  <div className="grid-2">
-                    <NumberField label="Scale" value={100} min={10} max={500} step={5} decimals={0} suffix="%" onCommit={(pct) => pct !== 100 && scalePart(picked.index, pct / 100)} />
-                    {round && (
-                      <LengthField
-                        label="Diameter"
-                        value={Math.max(box.size[0], box.size[2])}
-                        unit={u.units}
-                        precision={u.precision}
-                        min={0.005}
-                        max={30}
-                        testId="part-diameter"
-                        onCommit={(v) => setPartSize(picked.index, [v, null, v])}
-                      />
-                    )}
-                  </div>
-                </>
-              )}
-              {!picked.hidden && (
-                <p className="field-hint" data-testid="shape-followers">
-                  {shapeEdit.detached
-                    ? 'Only this part changes (attached parts stay).'
-                    : followers
-                      ? `${followers} attached part${followers === 1 ? '' : 's'} follow${followers === 1 ? 's' : ''} it (outlined in blue).`
-                      : 'Nothing is attached to it.'}
-                </p>
-              )}
-              <div className="btn-row">
-                <Button size="sm" variant="subtle" onClick={() => togglePartHidden(picked.index, !picked.hidden)}>
-                  {picked.hidden ? <Eye size={13} /> : <EyeOff size={13} />} {picked.hidden ? 'Show part' : 'Hide part'}
-                </Button>
-                <Button size="sm" variant="subtle" disabled={!picked.edited} onClick={() => resetPart(picked.index)}>
-                  <RotateCcw size={13} /> Reset part
-                </Button>
-              </div>
-            </div>
+        {!asset.params?.length && !hasSections && <p className="notice">This item has no components to resize.</p>}
+        {partEdits > 0 && (
+          <Section title="Earlier part edits">
+            <p className="field-hint" data-testid="shape-part-edits">
+              {partEdits} part{partEdits === 1 ? ' was' : 's were'} changed one by one with the earlier editor. They still apply; clear them to go back to the
+              item's own parts.
+            </p>
+            <Button size="sm" variant="subtle" onClick={clearPartEdits}>
+              <RotateCcw size={13} /> Clear part edits
+            </Button>
           </Section>
         )}
-        <Section title={`Parts (${parts.length})`}>
-          <Toggle
-            label="Attached parts follow"
-            hint="Shelves between walls, strips and handles on a part change with it"
-            checked={!shapeEdit.detached}
-            onChange={setPartsFollow}
-          />
-          <div className="shape-part-list" role="list" data-testid="shape-part-list">
-            {parts.map((p) => (
-              <div
-                key={p.index}
-                role="listitem"
-                className={`shape-part-row${shapeEdit.part === p.index ? ' on' : ''}${p.hidden ? ' hidden' : ''}`}
-                onMouseEnter={() => setShapeEditState({ hover: p.index })}
-                onMouseLeave={() => setShapeEditState({ hover: null })}
-              >
-                <button type="button" className="shape-part-name" onClick={() => setShapeEditState({ part: shapeEdit.part === p.index ? null : p.index, section: null })}>
-                  {labels[p.index]}
-                  {p.edited && !p.hidden && <span className="shape-part-tag">edited</span>}
-                  {p.linked && <span className="shape-part-tag follows">follows</span>}
-                </button>
-                <IconButton label={p.hidden ? 'Show part' : 'Hide part'} onClick={() => togglePartHidden(p.index, !p.hidden)}>
-                  {p.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
-                </IconButton>
-              </div>
-            ))}
-          </div>
-        </Section>
       </div>
       <div className="shape-panel-foot">
         <span className="field-hint">
-          {e ? `${[editedCount && `${editedCount} part${editedCount === 1 ? '' : 's'} edited`, hiddenCount && `${hiddenCount} hidden`, e.sections && 'sections moved', e.params && 'settings changed'].filter(Boolean).join(' · ')}` : 'As it comes from the library'}
+          {e
+            ? [e.params && 'settings changed', e.sections && 'sizes changed', partEdits && `${partEdits} earlier part edit${partEdits === 1 ? '' : 's'}`].filter(Boolean).join(' · ')
+            : 'As it comes from the library'}
         </span>
         <IconButton label="Reset the whole shape" disabled={!e} onClick={resetShape}>
           <RotateCcw size={14} />
