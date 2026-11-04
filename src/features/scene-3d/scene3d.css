@@ -111,6 +111,53 @@
 .ws-split .inspector {
   right: 10px;
 }
+/* Views in the canvas controls group (3D view, bottom right): Top and the saved views. */
+.views-rail {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.views-rail-list {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+  max-width: 460px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.views-rail-list::-webkit-scrollbar {
+  display: none;
+}
+.views-rail-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.views-rail-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.views-rail-btn.on {
+  background: var(--accent-soft, color-mix(in srgb, var(--accent) 16%, transparent));
+  color: var(--accent);
+  font-weight: 600;
+}
+.views-rail-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 .walk-hud {
   left: 50%;
   bottom: calc(10px + var(--status-h) + 14px);

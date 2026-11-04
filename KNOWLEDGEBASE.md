@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-04 (guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-04 (3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden while orbiting, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -730,6 +730,11 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   PMREM + hemisphere + time-of-day sun with shadows; lamp lights from `LampLights`), view panel (saved views,
   walls, quality & light, categories). On desktop the panel can be stashed (header button or `P`) and brought
   back with the **View** button the tool rail shows in 3D; mobile only collapses it (there is no rail there).
+  **Views in the canvas controls** (bottom right, desktop 3D view, not in the shape editor; `ViewButtons` in
+  `scene-3d/ViewsRail.tsx`, rendered by `EditorShell › CanvasControls in3d`): **Top**, then every saved view in the
+  panel's order, then Snapping (the plan's zoom, fit and grid buttons are left out in 3D). A click goes through
+  `requestCamera` (a saved view brings its wall display and FOV); the view clicked last stays marked until a press or
+  scroll on the 3D canvas. Many views scroll sideways (the mouse wheel too), at most 460 px.
   **Kept alive:** once opened, `EditorShell` keeps the 3D view mounted on desktop when you switch to 2D/Outline
   (`.pane-hidden`: full size, invisible, no pointer events; `active={false}`). Hidden, it stops drawing (`frameloop
   never`, but a first load still finishes), freezes the project it was built from so 2D edits do not rebuild it,
@@ -2196,4 +2201,9 @@ Known limitations (also in README):
      Republished 60LTN's live link with icons.
 176. "Drop-down for these please" (the Layout buttons in the live guest page) → the HTML guest viewer's Layout switcher
      is one drop-down (native select, teal pill with a caret) instead of a button per option; one row on desktop and phones. Labelled "Option".
+177. "Add a small tool rail for views at the bottom of the 3d working space: a top view and all the custom views of the
+     view panel" + "maybe at bottom right, same group as the snap options" + "combine both" → in the 3D view the canvas
+     controls group (bottom right) shows Top, the saved views and Snapping in one group (§10 Scene3DView). Checked in
+     the browser on 60LTN: Top goes orthographic top, View 1 to its saved camera, the mark clears on a press or scroll,
+     the 2D plan keeps zoom, fit, grid and snapping (done).
      Checked on 60LTN's guest page at desktop and phone width: switching options still swaps the model and overview (done).

@@ -45,6 +45,7 @@ import { ShapeEditPanel } from '@/features/shape-edit/ShapeEditPanel';
 import { exitShapeEdit } from '@/features/shape-edit/actions';
 import { setNotesMode, toggleNotesMode } from '@/features/callouts/actions';
 import { useProjectStore } from '@/state/projectStore';
+import { ViewButtons } from '@/features/scene-3d/ViewsRail';
 import { useEditorStore, type PlanMode, type ToolId, type Workspace } from '@/state/editorStore';
 import { useDialogStore } from '@/state/uiStores';
 import { derivePlan } from '@/domain/geometry/derive';
@@ -157,7 +158,8 @@ export function EditorShell() {
               {layersOpen && !isMobile && <LayersPanel />}
             </>
           )}
-          {showPlan && !shaping && <CanvasControls />}
+          {/* Bottom right: zoom, grid and snapping in the plan; views and snapping in the 3D view (desktop). */}
+          {!shaping && (showPlan || (workspace === '3d' && !isMobile)) && <CanvasControls in3d={workspace === '3d'} />}
           {!isMobile && <StatusBar />}
           {isMobile && <MobileBar />}
         </>
@@ -737,7 +739,11 @@ function ViewRailButton({ open, onToggle }: { open: boolean; onToggle: () => voi
   );
 }
 
-function CanvasControls() {
+/**
+ * The canvas controls group at the bottom right. Plan: zoom, fit, grid and snapping. 3D view: the views
+ * (Top and the saved views) and snapping (it applies to 3D drags and tools; the grid toggle is plan-only).
+ */
+function CanvasControls({ in3d = false }: { in3d?: boolean }) {
   const zoom = useEditorStore((s) => s.planCamera.zoom);
   const gridVisible = useEditorStore((s) => s.gridVisible);
   const snap = useEditorStore((s) => s.snap);
@@ -750,7 +756,11 @@ function CanvasControls() {
   };
   const anySnap = snap.grid || snap.geometry || snap.angle || snap.guides;
   return (
-    <div className="canvas-controls floating" role="toolbar" aria-label="Canvas controls">
+    <div className={`canvas-controls floating${in3d ? ' in3d' : ''}`} role="toolbar" aria-label="Canvas controls">
+      {in3d ? (
+        <ViewButtons />
+      ) : (
+        <>
       <IconButton label="Zoom out" onClick={() => setZoom(1 / 1.25)} tooltipSide="top">
         <Minus size={16} />
       </IconButton>
@@ -768,16 +778,20 @@ function CanvasControls() {
       >
         <Maximize size={16} />
       </IconButton>
+        </>
+      )}
       <span className="tb-sep" />
-      <IconButton
-        label="Grid"
-        shortcut="G"
-        active={gridVisible}
-        onClick={() => useEditorStore.getState().set({ gridVisible: !gridVisible })}
-        tooltipSide="top"
-      >
-        <Grid3x3 size={16} />
-      </IconButton>
+      {!in3d && (
+        <IconButton
+          label="Grid"
+          shortcut="G"
+          active={gridVisible}
+          onClick={() => useEditorStore.getState().set({ gridVisible: !gridVisible })}
+          tooltipSide="top"
+        >
+          <Grid3x3 size={16} />
+        </IconButton>
+      )}
       <div className="popover-anchor">
         <IconButton
           label="Snapping"
