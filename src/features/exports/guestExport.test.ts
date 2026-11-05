@@ -176,8 +176,9 @@ describe('guest export data', () => {
     // The opening view (Overview preset) has no button but still opens the file.
     expect(data.start).toBe(-1);
     expect(data.startView?.name).toBe('Overview');
-    expect(data.startMode).toBe('walk');
-    expect(data.walk).toEqual({ speed: 1.41, eye: 1.7, fov: 80 });
+    // The HTML viewer is orbit-only: no first-person walk settings or colliders are shipped.
+    expect('startMode' in data).toBe(false);
+    expect('walk' in data).toBe(false);
     expect(data.notesHidden).toBe(true);
     // Notes open as pins unless the export says otherwise, whatever the editor's 3D view shows.
     expect(data.noteDisplay).toBe('icon');
@@ -190,7 +191,8 @@ describe('guest export data', () => {
     expect(opt.notes.length).toBeGreaterThanOrEqual(opt.callouts.length);
     expect(data.roomsOn).toBe(true);
     expect(opt.rooms.length).toBeGreaterThan(0);
-    expect(opt.colliders.length).toBeGreaterThan(0);
+    expect('colliders' in opt).toBe(false);
+    expect('spawn' in opt).toBe(false);
     expect(data.ceilingsOn).toBe(false);
     expect(data.cutawayOn).toBe(true);
     expect(data.cutaway).toBe(1.1);
@@ -295,7 +297,7 @@ describe('guest export data', () => {
     expect(shell.rooms.length).toBe(furnished.rooms.length);
     expect(shell.notes).toEqual([]);
     expect(furnished.notes.length).toBeGreaterThan(0);
-    expect(shell.colliders.length).toBeLessThan(furnished.colliders.length);
+    expect(shell.lamps).toEqual([]);
     // One model with both options, in order.
     const [projects] = exportGlb.mock.lastCall!;
     expect(projects.map((q) => Object.keys(q.objects).length)).toEqual([Object.keys(p.objects).length, 0]);
@@ -379,11 +381,11 @@ describe('guest export data', () => {
     // On/off controls say so (aria-pressed), and full screen is offered where allowed.
     expect(runtime).toMatch(/aria-pressed/);
     expect(runtime).toMatch(/requestFullscreen/);
-    // Layout options, the Notes list with its picture viewer, ceiling items and ghost walking.
+    // Layout options, the Notes list with its picture viewer, and ceiling items; no walkthrough mode.
     expect(runtime).toMatch(/neestOption/);
     expect(runtime).toMatch(/neestCeiling/);
     expect(runtime).toMatch(/ng-lightbox/);
-    expect(runtime).toMatch(/Ghost/);
+    expect(runtime).not.toMatch(/Walk through|Exit walkthrough|Ghost|requestPointerLock/);
     // Panel buttons are not switches (aria-expanded), notes float on a switch, a tap hides the controls.
     expect(runtime).toMatch(/ng-pbtn/);
     expect(runtime).toMatch(/aria-expanded/);

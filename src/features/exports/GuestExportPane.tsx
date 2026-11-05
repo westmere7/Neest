@@ -320,32 +320,21 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         />
         <Toggle
           label="2D plan"
-          hint="The floor plan; click a spot to walk there"
+          hint="The floor plan with pan and zoom"
           checked={g.floorPlan}
           onChange={(floorPlan) => setGuest('Toggle guest floor plan', { floorPlan })}
         />
-        <div className="grid-2">
-          <Select
-            label="Opening view"
-            value={g.startCameraId ?? '__overview__'}
-            onChange={(v) =>
-              setGuest('Set guest start view', { startCameraId: v === '__overview__' ? null : v })
-            }
-            options={[
-              { value: '__overview__', label: 'Overview' },
-              ...project.cameras.map((c) => ({ value: c.id, label: c.name })),
-            ]}
-          />
-          <Select<GuestSettings['startMode']>
-            label="Start"
-            value={g.startMode}
-            onChange={(startMode) => setGuest('Set guest start mode', { startMode })}
-            options={[
-              { value: 'orbit', label: 'Orbiting the view' },
-              { value: 'walk', label: 'Walking' },
-            ]}
-          />
-        </div>
+        <Select
+          label="Opening view"
+          value={g.startCameraId ?? '__overview__'}
+          onChange={(v) =>
+            setGuest('Set guest start view', { startCameraId: v === '__overview__' ? null : v })
+          }
+          options={[
+            { value: '__overview__', label: 'Overview' },
+            ...project.cameras.map((c) => ({ value: c.id, label: c.name })),
+          ]}
+        />
         <Toggle
           label="Play the tour on open"
           hint="Cycles the views until the guest takes over"
@@ -365,45 +354,6 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         )}
       </Section>
 
-      <Section title="Walkthrough" defaultOpen={false}>
-        <div className="grid-2">
-          <Select
-            label="Walking speed"
-            value={String(g.walkSpeed)}
-            onChange={(v) => setGuest('Set guest walking speed', { walkSpeed: parseFloat(v) })}
-            options={[0.5, 0.71, 1, 1.41, 2].map((s) => ({
-              value: String(s),
-              label: s === 1 ? 'Normal (1×)' : `${s}×`,
-            }))}
-          />
-          <NumberField
-            label="Eye height"
-            value={g.eyeHeight}
-            min={0.8}
-            max={2.2}
-            step={0.05}
-            decimals={2}
-            suffix="m"
-            onCommit={(eyeHeight) => setGuest('Set guest eye height', { eyeHeight })}
-          />
-          <Select
-            label="Field of view"
-            value={g.walkFov === null ? 'auto' : String(g.walkFov)}
-            onChange={(v) =>
-              setGuest('Set guest field of view', { walkFov: v === 'auto' ? null : parseInt(v, 10) })
-            }
-            options={[
-              { value: 'auto', label: `As in 3D view (${project.render.walkFov}°)` },
-              ...[55, 65, 70, 80, 90, 100].map((f) => ({ value: String(f), label: `${f}°` })),
-            ]}
-          />
-        </div>
-        <p className="field-hint">
-          Guests can also fly (F), walk through walls and furniture (G or Ghost) and change speed with the
-          mouse wheel.
-        </p>
-      </Section>
-
       <Section title="What guests see" defaultOpen={false}>
         <Toggle
           label="Room names"
@@ -417,7 +367,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         />
         <div className="grid-2">
           <Select<GuestSettings['wallDisplay']>
-            label="Walls while orbiting"
+            label="Walls"
             value={g.wallDisplay}
             onChange={(wallDisplay) => setGuest('Set guest walls', { wallDisplay })}
             options={[
@@ -454,8 +404,8 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         )}
         <p className="field-hint">
           Guests can switch walls, ceilings, note labels, room names, item layers and quality in the viewer's
-          View panel. Ceiling lights and fans are hidden while orbiting (shown when walking) unless guests
-          turn them on there.
+          View panel. Ceiling lights and fans start hidden so the view from above stays clear; guests can show
+          them there.
         </p>
       </Section>
 

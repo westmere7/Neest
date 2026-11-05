@@ -2,7 +2,6 @@ import type { Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { planOverview } from '@/domain/geometry/overview';
 import { formatArea, formatLength } from '@/domain/model/units';
-import { buildColliders, defaultSpawn } from '@/domain/walkthrough/collision';
 import { guestAutoViews, guestLayerId, guestLayers, guestOptions, guestSceneProject, guestSubtitle, guestTitle, guestViews } from '@/domain/walkthrough/guest';
 import { isObjectHidden } from '@/domain/commands/itemLayers';
 import { getAsset } from '@/data/assets/registry';
@@ -72,7 +71,6 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-primary:hover{background:#a3cfc1}
 .ng-toggle,.ng-pbtn,.ng-primary{display:inline-flex;align-items:center;gap:7px}
 .ng-ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.ng-ico-wrap{display:inline-flex}
 .ng-pbtn.on{background:rgba(111,179,160,.24);border-color:rgba(111,179,160,.65)}
 .ng-switch{position:relative;flex:none;width:26px;height:15px;border-radius:8px;background:rgba(255,255,255,.22);transition:background .15s}
 .ng-switch::after{content:"";position:absolute;left:2px;top:2px;width:11px;height:11px;border-radius:50%;background:#f2efe9;transition:transform .15s}
@@ -82,8 +80,8 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-note-modes{margin:4px 0 10px}
 .ng-bar{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:5px;border-radius:13px;background:rgba(29,31,34,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100vw - 24px);z-index:3}
 .ng-group{display:flex;gap:6px;align-items:center}
-.ng-toggles,.ng-panels{padding-left:10px;border-left:1px solid rgba(255,255,255,.2)}
-.ng-toggles:empty,.ng-panels:empty{display:none}
+.ng-group:empty{display:none}
+.ng-group:not(:empty)~.ng-group:not(:empty){padding-left:10px;border-left:1px solid rgba(255,255,255,.2)}
 .ng-hud,.ng-bar,.ng-help{transition:opacity .25s}
 .ng-help.ng-faded{opacity:0}
 .ng-immersive .ng-hud,.ng-immersive .ng-bar,.ng-immersive .ng-help,.ng-immersive .ng-panel{opacity:0;pointer-events:none!important}
@@ -108,14 +106,6 @@ button{-webkit-tap-highlight-color:transparent}
 @keyframes ng-rise{0%,35%{transform:scaleY(0);opacity:0}60%,80%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
 @keyframes ng-slide{from{transform:translateX(-100%)}to{transform:translateX(170%)}}
 @media (prefers-reduced-motion:reduce){.ng-plan-line,.ng-wall,.ng-steps li.now::after{animation:none;stroke-dashoffset:0;transform:none;opacity:1}}
-.ng-stick,.ng-look,.ng-updown{display:none}
-@media (pointer:coarse){
- .ng-walking .ng-stick{display:block;position:fixed;left:calc(24px + env(safe-area-inset-left));bottom:calc(120px + env(safe-area-inset-bottom));width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);touch-action:none}
- .ng-knob{position:absolute;left:38px;top:38px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.75)}
- .ng-walking .ng-look{display:block;position:fixed;right:0;top:120px;bottom:130px;width:50%;touch-action:none}
- .ng-flying .ng-updown{display:flex;flex-direction:column;gap:12px;position:fixed;right:calc(20px + env(safe-area-inset-right));bottom:calc(140px + env(safe-area-inset-bottom));z-index:4}
- .ng-updown .ng-btn{width:54px;height:54px;padding:0;font-size:18px;touch-action:none}
-}
 .ng-callouts,.ng-rooms{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .ng-marks{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .ng-room{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border-radius:7px;background:rgba(29,31,34,.72);white-space:nowrap;will-change:transform}
@@ -181,7 +171,7 @@ button{-webkit-tap-highlight-color:transparent}
 @media (max-width:640px),(max-height:500px){
  .ng-bar{max-width:calc(100vw - 16px);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:4px;padding:4px;bottom:calc(10px + env(safe-area-inset-bottom));background:rgba(29,31,34,.62)}
  .ng-group{gap:4px}
- .ng-toggles,.ng-panels{padding-left:4px}
+ .ng-group:not(:empty)~.ng-group:not(:empty){padding-left:4px}
  .ng-btn{padding:9px 10px}
  .ng-bar .ng-lbl,.ng-bar .ng-switch{display:none}
  .ng-bar .ng-toggle,.ng-bar .ng-pbtn{min-width:40px;justify-content:center;padding:9px}
@@ -203,12 +193,6 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-intro-card{max-height:calc(100vh - 24px);padding:16px 20px}
  .ng-intro-card h1{font-size:18px}
 }
-@media (max-height:500px) and (pointer:coarse){
- .ng-walking .ng-stick{width:96px;height:96px;bottom:calc(var(--ng-bar,46px) + 20px + env(safe-area-inset-bottom))}
- .ng-knob{left:28px;top:28px;width:40px;height:40px}
- .ng-walking .ng-look{top:60px;bottom:calc(var(--ng-bar,46px) + 20px)}
- .ng-flying .ng-updown{bottom:calc(var(--ng-bar,46px) + 20px + env(safe-area-inset-bottom))}
-}
 @media (max-width:640px){
  .ng-hud{flex-direction:column;flex-wrap:nowrap;gap:6px}
  .ng-side{max-width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
@@ -217,7 +201,6 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-views::-webkit-scrollbar,.ng-bar::-webkit-scrollbar{display:none}
  .ng-panel{position:fixed;left:8px;right:8px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom));max-height:48vh;z-index:4;box-shadow:0 -6px 24px rgba(0,0,0,.3)}
  .ng-help,.ng-plan-hint{white-space:normal;width:86vw;text-align:center;font-size:11px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom))}
- .ng-walking .ng-stick,.ng-flying .ng-updown{bottom:calc(var(--ng-bar,56px) + 60px + env(safe-area-inset-bottom))}
  .ng-callout{max-width:200px}
  .ng-lightbox{--lb-px:12px;--lb-py:56px}
 }
@@ -323,19 +306,16 @@ function guestGlb(project: Project): Promise<EmbeddedGlb> {
   return glb;
 }
 
-/** One layout option's plan as viewer data: walking, lamps, notes, labels, numbers and the plan drawing. */
+/** One layout option's plan as viewer data: lamps, notes, labels, numbers and the plan drawing. */
 function guestOption(name: string, source: Project): GuestOption {
   const project = guestSceneProject(source);
   const g = project.guest;
   const u = project.settings;
   const derived = derivePlan(project);
-  const spawn = defaultSpawn(project, derived.faces);
   const ov = planOverview(project, derived);
   const notes = g.notes === 'off' ? { callouts: [], notes: [] } : guestNotes(project, derived, g.noteImages);
   return {
     name,
-    spawn: { x: spawn.p.x, y: spawn.p.y, angle: spawn.angle },
-    colliders: buildColliders(project, derived.network).map((c) => [c.a.x, c.a.y, c.b.x, c.b.y].map(r3) as [number, number, number, number]),
     bounds: derived.bounds ?? { minX: -5, minY: -5, maxX: 5, maxY: 5 },
     lamps: guestLamps(project),
     layers: guestLayers(project),
@@ -401,8 +381,6 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
     cameras,
     start,
     startView,
-    startMode: g.startMode,
-    walk: { speed: g.walkSpeed, eye: g.eyeHeight, fov: r.walkFov },
     bounds,
     background: r.background,
     sun: { dir: [sun.dir.x, sun.dir.y, sun.dir.z], color: `#${sun.color.getHexString()}`, intensity: sun.intensity },
@@ -428,7 +406,7 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
 /**
  * Builds a single self-contained HTML file: the viewer runtime (three.js
  * included), the scene as an embedded GLB (textures inside, one group per
- * layout option), cameras, and for each option its spawn point, colliders, lamp lights, notes (with
+ * layout option), cameras, and for each option its lamp lights, notes (with
  * their pictures), room labels, overview numbers and floor plan drawing. It references no external files, fonts, blob URLs
  * or browser storage.
  */

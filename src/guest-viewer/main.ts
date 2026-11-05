@@ -10,17 +10,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { moveWithCollisions, type Collider } from '@/domain/walkthrough/move';
 import { attachTrackpadOrbit } from '@/features/scene-3d/trackpadOrbit';
-import { attachSafariGesture, createWheelClassifier, wheelDelta } from '@/components/trackpad';
-import {
-  FLY_SPEED,
-  FLY_SPEED_MAX,
-  formatSpeed,
-  stepSpeed,
-  WALK_SPEED,
-  WALK_SPEED_MAX,
-} from '@/domain/walkthrough/speed';
+import { wheelDelta } from '@/components/trackpad';
 import {
   inView,
   placeNoteLabels,
@@ -86,8 +77,6 @@ export interface GuestNote {
 /** One layout option (phương án): everything that differs between options. Its model is GLB group `neestOption`. */
 export interface GuestOption {
   name: string;
-  spawn: { x: number; y: number; angle: number };
-  colliders: [number, number, number, number][];
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
   lamps: GuestLamp[];
   layers: GuestItemLayer[];
@@ -152,9 +141,6 @@ export interface GuestData {
   start: number;
   /** The opening view (it may have no button). */
   startView?: GuestCamera;
-  startMode?: 'orbit' | 'walk';
-  /** Walking speed multiplier, eye height (m) and field of view (degrees). */
-  walk?: { speed: number; eye: number; fov: number };
   /** Every option's plan together (sun shadows, the orthographic views). */
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
   background: string;
@@ -189,9 +175,6 @@ declare global {
     NEEST_GUEST_DATA?: GuestData;
   }
 }
-
-/** Walker radius (m), as in the app. */
-const RADIUS = 0.22;
 
 const QUALITY: Record<GuestQuality, { pixelRatio: number; sunMap: number }> = {
   fast: { pixelRatio: 1, sunMap: 1024 },
@@ -261,11 +244,7 @@ function segmented<T extends string>(
 
 /** Line icons for the bar (24 × 24, drawn with the text colour). */
 const ICONS: Record<string, string> = {
-  walk: 'M7 16v-2.4C7 11.5 5.97 10.5 6 8c.03-2.7 1.49-6 4.5-6C12.37 2 13 3.8 13 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0ZM20 20v-2.4c0-2.1 1.03-3.1 1-5.6-.03-2.7-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z',
-  exit: 'M18 6 6 18M6 6l12 12',
   tour: 'M6 4l14 8-14 8V4Z',
-  fly: 'M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z',
-  ghost: 'M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z',
   full: 'M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3',
   notes: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM8 8h8M8 12h5',
   info: 'M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zM12 16v-4M12 8h.01',
@@ -301,7 +280,7 @@ function choice<T extends string>(options: [T, string][], value: T, onChange: (v
 
 /**
  * An on/off button: an icon, a label and a small switch (aria-pressed), for a state that is on or off
- * (fly, ghost, tour, full screen). Buttons that open a panel are `panelBtn`s, never switches.
+ * (tour, full screen). Buttons that open a panel are `panelBtn`s, never switches.
  */
 function toggleEl(label: string, title?: string, ico?: string): { btn: HTMLButtonElement; set: (on: boolean) => void } {
   const btn = el('button', 'ng-btn ng-toggle');
@@ -399,8 +378,6 @@ function start(data: GuestData) {
   let quality: GuestQuality = data.quality ?? 'balanced';
   let shadowsWanted = data.shadows !== false;
   const shadowsOn = () => shadowsWanted && quality !== 'fast';
-  const EYE = data.walk?.eye ?? 1.6;
-  const WALK_FOV = data.walk?.fov ?? 70;
   // Antialiasing is fixed when the canvas is made: on unless the file opens in Fast quality.
   const renderer = new THREE.WebGLRenderer({ antialias: quality !== 'fast' });
   renderer.setPixelRatio(Math.min(QUALITY[quality].pixelRatio, window.devicePixelRatio));
@@ -463,7 +440,7 @@ function start(data: GuestData) {
     cutaway: !!data.cutawayOn,
     cutawayExternalOnly: !!data.cutawayExternalOnly,
     ceilings: data.ceilingsOn !== false,
-    /** Pendants, ceiling lights and fans while orbiting (walking always shows them). */
+    /** Pendants, ceiling lights and fans (hidden by default so the view from above stays clear). */
     ceilingItems: false,
     notes: anyOption((o) => o.callouts.length > 0) && !data.notesHidden,
     /** How notes float (off, pins, one line, full). */
@@ -560,15 +537,15 @@ function start(data: GuestData) {
     loading.done();
   })().catch(onModelError);
   /**
-   * The shown option; its walls (full when walking or without cutaway), ceilings, ceiling items (only
-   * when walking, unless the guest shows them) and item layers.
+   * The shown option; its walls (full or cutaway), ceilings, ceiling items (hidden unless the guest
+   * shows them) and item layers.
    */
   function applyVisibility() {
     optionModels.forEach((m, i) => m.root && (m.root.visible = i === cur));
     const m = optionModels[cur];
     const parts = m?.parts ?? {};
-    for (const g of m?.ceiling ?? []) g.visible = walking || show.ceilingItems;
-    const cut = !walking && show.cutaway && parts['walls-cut'] ? (data.cutaway ?? 1.2) : null;
+    for (const g of m?.ceiling ?? []) g.visible = show.ceilingItems;
+    const cut = show.cutaway && parts['walls-cut'] ? (data.cutaway ?? 1.2) : null;
     const extOnly = cut !== null && show.cutawayExternalOnly;
     if (parts.walls) {
       parts.walls.visible = cut === null || extOnly;
@@ -640,7 +617,6 @@ function start(data: GuestData) {
     lampClock = 0;
   };
   const focus = new THREE.Vector3();
-  const fwd = new THREE.Vector3();
   const assignLamps = <L extends THREE.PointLight | THREE.SpotLight>(
     slots: Slot<L>[],
     kind: GuestLamp['kind'],
@@ -681,8 +657,7 @@ function start(data: GuestData) {
     lampClock -= dt;
     if (lampClock <= 0) {
       lampClock = 0.3;
-      if (walking) focus.copy(persp.position).addScaledVector(persp.getWorldDirection(fwd), 2.5);
-      else focus.copy(controls.target);
+      focus.copy(controls.target);
       assignLamps(points, 'point');
       assignLamps(spots, 'spot');
     }
@@ -693,11 +668,7 @@ function start(data: GuestData) {
   };
   buildLampPool();
 
-  const toColliders = (o: GuestOption): Collider[] =>
-    o.colliders.map(([ax, ay, bx, by]) => ({ a: { x: ax, y: ay }, b: { x: bx, y: by } }));
-  let colliders = toColliders(opt);
-
-  // ── HUD: title, overview and view panels on the left, views on the right, actions at the bottom ──
+  // ── HUD: title, overview and view panels on the left, views on the right, controls at the bottom ──
   const hud = el('div', 'ng-hud');
   const side = el('div', 'ng-side');
   const title = el('div', 'ng-title');
@@ -725,7 +696,7 @@ function start(data: GuestData) {
       setOption(Number(select.value));
       select.blur();
     };
-    // Arrow keys and letters belong to the select while it has focus, not to walking.
+    // Arrow keys and letters belong to the select while it has focus.
     select.addEventListener('keydown', (e) => e.stopPropagation());
     const wrap = el('span', 'ng-opts-wrap');
     wrap.append(select, el('span', 'ng-opts-caret', '▾'));
@@ -737,30 +708,14 @@ function start(data: GuestData) {
   };
   markOption();
   const views = el('div', 'ng-views');
-  const modeBtn = el('button', 'ng-btn ng-primary');
-  const modeLabel = el('span', 'ng-lbl-keep', 'Walk through');
-  const modeIcon = el('span', 'ng-ico-wrap');
-  modeBtn.append(modeIcon, modeLabel);
-  const setModeBtn = (walkingNow: boolean) => {
-    modeIcon.replaceChildren(icon(walkingNow ? 'exit' : 'walk'));
-    modeLabel.textContent = walkingNow ? 'Exit walkthrough' : 'Walk through';
-  };
-  setModeBtn(false);
-  const fly = toggleEl('Fly', 'Free-fly: move where you look, through walls (F)', 'fly');
-  fly.btn.style.display = 'none';
-  const ghost = toggleEl('Ghost', 'Walk through walls and furniture, staying on the floor (G)', 'ghost');
-  ghost.btn.style.display = 'none';
   const help = el('div', 'ng-help');
   hud.append(side, views);
   root.append(hud, help);
-  // Bottom bar: the action, then on/off switches, then the buttons that open panels.
+  // Bottom bar: on/off switches, then the buttons that open panels.
   const bar = el('div', 'ng-bar');
-  const actions = el('div', 'ng-group');
   const toggles = el('div', 'ng-group ng-toggles');
   const panelsGroup = el('div', 'ng-group ng-panels');
-  actions.append(modeBtn);
-  toggles.append(fly.btn, ghost.btn);
-  bar.append(actions, toggles, panelsGroup);
+  bar.append(toggles, panelsGroup);
   root.append(bar);
 
   const panel = (heading: string, onClose: () => void) => {
@@ -792,11 +747,6 @@ function start(data: GuestData) {
 
   let setInfo = (_on: boolean) => {};
   let setView = (_on: boolean) => {};
-  // Keyboard focus never stays on a button or checkbox, so W A S D, Space and Esc always reach the walker.
-  root.addEventListener('click', (e) => {
-    const t = e.target as HTMLElement;
-    if (t instanceof HTMLButtonElement || t instanceof HTMLInputElement) t.blur();
-  });
 
   // Overview numbers (of the shown option).
   let fillInfo = () => {};
@@ -945,7 +895,7 @@ function start(data: GuestData) {
   const hide = (e: Element | null) => e && ((e as HTMLElement).style.visibility = 'hidden');
   const placeCallouts = () => {
     const mode = show.noteMode;
-    const on = mode !== 'off' && !walking;
+    const on = mode !== 'off';
     calloutGroup.visible = on;
     calloutLayer.style.display = on ? '' : 'none';
     if (!on) return;
@@ -982,7 +932,7 @@ function start(data: GuestData) {
           for (const z of [ob.minY, ob.maxY]) corners.push(toScreen(new THREE.Vector3(x, y, z)));
       obstacle = corners.some((p) => !p) ? null : screenBounds(corners);
     }
-    // Keep clear of the title and view buttons at the top and the walk button at the bottom.
+    // Keep clear of the title and view buttons at the top and the bar at the bottom.
     const placed = placeNoteLabels(
       inputs,
       { w, h },
@@ -1028,7 +978,7 @@ function start(data: GuestData) {
     });
   };
 
-  // ── Room labels (while orbiting) ──
+  // ── Room labels ──
   const roomLayer = el('div', 'ng-rooms');
   root.insertBefore(roomLayer, calloutLayer);
   let roomLabels: { tag: HTMLDivElement; p: THREE.Vector3 }[] = [];
@@ -1043,7 +993,7 @@ function start(data: GuestData) {
   };
   buildRooms();
   const placeRooms = () => {
-    const on = show.rooms && !walking && roomLabels.length > 0;
+    const on = show.rooms && roomLabels.length > 0;
     roomLayer.style.display = on ? '' : 'none';
     if (!on) return;
     for (const r of roomLabels) {
@@ -1095,7 +1045,6 @@ function start(data: GuestData) {
     showLightbox();
   };
   const openLightbox = (images: GuestNote['images'], i: number) => {
-    if (document.pointerLockElement) document.exitPointerLock();
     lb = { images, i };
     lightbox.classList.add('open');
     showLightbox();
@@ -1143,28 +1092,22 @@ function start(data: GuestData) {
     noteSwitches.push(c.set);
     return c.box;
   };
-  /** Looks at a note's spot: turns the walker towards it, or glides the orbit view in to it. */
+  /** Looks at a note's spot: glides the orbit view in to it. */
   const focusNote = (n: GuestNote) => {
     if (!n.at) return;
     const at = new THREE.Vector3(...n.at);
     setTour(false);
     if (narrow()) setNotes(false);
-    if (walking) {
-      const d = at.clone().sub(persp.position);
-      yaw = Math.atan2(-d.x, -d.z);
-      pitch = Math.max(-1.3, Math.min(1.3, Math.atan2(d.y, Math.hypot(d.x, d.z))));
-    } else {
-      // Keep the side it is seen from, from above the walls, close enough to read the room around it.
-      const dir = camera === persp ? persp.position.clone().sub(controls.target) : new THREE.Vector3(0.6, 1, 0.8);
-      const dist = camera === persp ? Math.min(9, Math.max(5.5, dir.length() * 0.6)) : 7;
-      dir.y = Math.max(dir.y, 1.3 * Math.hypot(dir.x, dir.z));
-      dir.normalize();
-      const pos = at.clone().addScaledVector(dir, dist);
-      applyCamera(
-        { name: '', projection: 'perspective', position: pos.toArray(), target: n.at, fov: camera === persp ? persp.fov : 50 },
-        camera === persp,
-      );
-    }
+    // Keep the side it is seen from, from above the walls, close enough to read the room around it.
+    const dir = camera === persp ? persp.position.clone().sub(controls.target) : new THREE.Vector3(0.6, 1, 0.8);
+    const dist = camera === persp ? Math.min(9, Math.max(5.5, dir.length() * 0.6)) : 7;
+    dir.y = Math.max(dir.y, 1.3 * Math.hypot(dir.x, dir.z));
+    dir.normalize();
+    const pos = at.clone().addScaledVector(dir, dist);
+    applyCamera(
+      { name: '', projection: 'perspective', position: pos.toArray(), target: n.at, fov: camera === persp ? persp.fov : 50 },
+      camera === persp,
+    );
     const label = n.label >= 0 ? callouts[n.label] : undefined;
     // Pins: Show opens the note's card.
     if (label && show.noteMode === 'icon') openNote = label.id;
@@ -1244,12 +1187,11 @@ function start(data: GuestData) {
     setNotes = toggleButton('Notes', notesPanel, false, 'notes');
   }
 
-  /** Shows another layout option: its model, walls to walk into, lamps, notes, labels, numbers and plan. */
+  /** Shows another layout option: its model, lamps, notes, labels, numbers and plan. */
   function setOption(i: number) {
     if (i === cur || !data.options[i]) return;
     cur = i;
     opt = data.options[i];
-    colliders = toColliders(opt);
     lamps = opt.lamps;
     buildLampPool();
     buildCallouts();
@@ -1267,7 +1209,7 @@ function start(data: GuestData) {
   let fillLayers = () => {};
   {
     const view = panel('View', () => setView(false));
-    view.append(el('div', 'ng-label', 'Walls while orbiting'));
+    view.append(el('div', 'ng-label', 'Walls'));
     const extCheck = check('External walls only', show.cutawayExternalOnly, (on) => {
       show.cutawayExternalOnly = on;
       applyVisibility();
@@ -1299,7 +1241,7 @@ function start(data: GuestData) {
       show.ceilingItems = on;
       applyVisibility();
     });
-    ceilingCheck.title = 'Pendants, ceiling lights and fans while orbiting (always shown when walking)';
+    ceilingCheck.title = 'Pendants, ceiling lights and fans';
     ceilingCheck.style.display = optionModels.some((m) => m.ceiling.length) ? '' : 'none';
     view.append(ceilingCheck);
     if (anyOption((o) => o.callouts.length > 0)) {
@@ -1354,19 +1296,6 @@ function start(data: GuestData) {
     setView = toggleButton('View', view, false, 'view');
   }
 
-  let walking = false;
-  let flying = false;
-  let ghosting = false;
-  let yaw = 0;
-  let pitch = 0;
-  const keys = new Set<string>();
-  const move = { x: 0, y: 0 };
-  const look = { dx: 0, dy: 0 };
-  const wheelWalk = { fwd: 0, strafe: 0 };
-  /** Walking and flying speed multipliers, set with the mouse wheel. */
-  let walkSpeed = Math.min(WALK_SPEED_MAX, Math.max(0.25, data.walk?.speed ?? 1));
-  let flySpeed = 1;
-
   const resizeOrtho = () => {
     const aspect = window.innerWidth / window.innerHeight;
     const h = Math.max(b.maxY - b.minY, (b.maxX - b.minX) / aspect) * 0.62 + 1;
@@ -1385,13 +1314,12 @@ function start(data: GuestData) {
     start: number;
     dur: number;
   } | null = null;
-  /** The last view chosen; leaving the walkthrough returns to it, as in the app's Guest view. */
+  /** The last view chosen; leaving the 2D plan marks it again. */
   let lastView: GuestCamera | null = null;
   const viewButtons: HTMLButtonElement[] = [];
   const markView = (btn: HTMLButtonElement | null) =>
     viewButtons.forEach((x) => x.classList.toggle('on', x === btn));
   const applyCamera = (c: GuestCamera, animate = false) => {
-    if (walking) setWalking(false, undefined, false);
     if (planOpen) setPlan(false);
     glide = null;
     lastView = c;
@@ -1447,7 +1375,6 @@ function start(data: GuestData) {
     controls.autoRotate = false;
     tour?.set(on);
     if (on) {
-      if (walking) setWalking(false, undefined, false);
       if (planOpen) setPlan(false);
       tourNext = 0;
     } else glide = null;
@@ -1461,8 +1388,7 @@ function start(data: GuestData) {
   };
   if (tourBtn) {
     tourBtn.onclick = () => setTour(!tourOn);
-    // After Fly and Ghost (shown while walking).
-    toggles.insertBefore(tourBtn, toggles.children[2] ?? null);
+    toggles.append(tourBtn);
   }
 
   data.cameras.forEach((c) => {
@@ -1479,7 +1405,7 @@ function start(data: GuestData) {
   for (const ev of ['pointerdown', 'wheel', 'touchstart'] as const)
     renderer.domElement.addEventListener(ev, () => tourOn && setTour(false), { passive: true });
 
-  // ── 2D plan: the plan drawing (of the shown option), pan and zoom; click a spot to walk there ──
+  // ── 2D plan: the plan drawing (of the shown option), with pan and zoom ──
   let planOpen = false;
   let youAreHere: SVGGElement | null = null;
   const plan = anyOption((o) => !!o.plan) ? el('div', 'ng-plan') : null;
@@ -1511,15 +1437,12 @@ function start(data: GuestData) {
     if (next.some((v, i) => Math.abs(v - home[i]) > 1e-6)) vb = [...next];
     home = next;
     youAreHere = document.createElementNS(SVG, 'g');
-    const cone = document.createElementNS(SVG, 'path');
-    cone.setAttribute('d', 'M0 0 L1.1 -0.55 A1.25 1.25 0 0 1 1.1 0.55 Z');
-    cone.setAttribute('fill', 'rgba(46,139,116,.3)');
     const dot = document.createElementNS(SVG, 'circle');
     dot.setAttribute('r', '0.18');
     dot.setAttribute('fill', '#2e8b74');
     dot.setAttribute('stroke', '#fff');
     dot.setAttribute('stroke-width', '0.06');
-    youAreHere.append(cone, dot);
+    youAreHere.append(dot);
     svg.append(youAreHere);
     planSvg = svg;
     plan.prepend(svg);
@@ -1530,7 +1453,7 @@ function start(data: GuestData) {
     plan.setAttribute('role', 'img');
     plan.setAttribute('aria-label', 'Floor plan');
     plan.append(
-      el('div', 'ng-plan-hint', 'Drag to pan · scroll or pinch to zoom · click a spot to walk there'),
+      el('div', 'ng-plan-hint', 'Drag to pan · scroll or pinch to zoom · double-click to reset'),
     );
     const toPlan = (x: number, y: number) => {
       const m = planSvg?.getScreenCTM();
@@ -1553,11 +1476,9 @@ function start(data: GuestData) {
       { passive: false },
     );
     const ptrs = new Map<number, { x: number; y: number }>();
-    let moved = 0;
     let pinch = 0;
     plan.addEventListener('pointerdown', (e) => {
       ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (ptrs.size === 1) moved = 0;
       if (ptrs.size === 2) {
         const [a, c] = [...ptrs.values()];
         pinch = Math.hypot(a.x - c.x, a.y - c.y);
@@ -1575,28 +1496,21 @@ function start(data: GuestData) {
         const d = Math.hypot(a.x - c.x, a.y - c.y);
         if (pinch > 0 && d > 0) zoomAt((a.x + c.x) / 2, (a.y + c.y) / 2, pinch / d);
         pinch = d;
-        moved = 99;
         return;
       }
       const p0 = toPlan(prev.x, prev.y);
       const p1 = toPlan(now.x, now.y);
-      moved += Math.hypot(now.x - prev.x, now.y - prev.y);
       if (!p0 || !p1) return;
       vb[0] -= p1.x - p0.x;
       vb[1] -= p1.y - p0.y;
       setVb();
     });
-    const up = (e: PointerEvent) => {
-      if (!ptrs.delete(e.pointerId)) return;
-      plan.classList.remove('drag');
-      if (ptrs.size || moved > 5) return;
-      const p = toPlan(e.clientX, e.clientY);
-      const ob = opt.bounds;
-      if (!p || p.x < ob.minX || p.x > ob.maxX || p.y < ob.minY || p.y > ob.maxY) return;
-      setWalking(true, { x: p.x, y: p.y });
+    const endPlanDrag = (e: PointerEvent) => {
+      ptrs.delete(e.pointerId);
+      if (!ptrs.size) plan.classList.remove('drag');
     };
-    plan.addEventListener('pointerup', up);
-    plan.addEventListener('pointercancel', (e) => ptrs.delete(e.pointerId));
+    plan.addEventListener('pointerup', endPlanDrag);
+    plan.addEventListener('pointercancel', endPlanDrag);
     plan.addEventListener('dblclick', () => {
       vb = [...home];
       setVb();
@@ -1608,14 +1522,11 @@ function start(data: GuestData) {
     };
     views.append(planBtn);
   }
-  /** Marks where the walker (or the orbit centre) is on the plan, facing the view direction when walking. */
+  /** Marks where the orbit centre is on the plan. */
   function placeHere() {
     if (!youAreHere) return;
-    const p = walking ? persp.position : controls.target;
-    persp.getWorldDirection(fwd);
-    const dir = walking ? (Math.atan2(fwd.z, fwd.x) * 180) / Math.PI : 0;
-    youAreHere.setAttribute('transform', `translate(${p.x} ${p.z}) rotate(${dir})`);
-    youAreHere.firstElementChild?.setAttribute('visibility', walking ? 'visible' : 'hidden');
+    const p = controls.target;
+    youAreHere.setAttribute('transform', `translate(${p.x} ${p.z})`);
   }
   function setPlan(on: boolean) {
     if (!plan) return;
@@ -1624,68 +1535,13 @@ function start(data: GuestData) {
     document.body.classList.toggle('ng-plan-mode', on);
     planBtn?.classList.toggle('on', on);
     if (on) {
-      if (document.pointerLockElement) document.exitPointerLock();
       markView(planBtn);
       placeHere();
     } else markView(viewButtons[data.cameras.indexOf(lastView!)] ?? null);
   }
   fillPlan();
 
-  // Touch controls.
-  const stick = el('div', 'ng-stick');
-  const knob = el('span', 'ng-knob');
-  stick.append(knob);
-  const lookPad = el('div', 'ng-look');
-  root.append(stick, lookPad);
-  let stickId: number | null = null;
-  stick.addEventListener('pointerdown', (e) => {
-    stickId = e.pointerId;
-    stick.setPointerCapture(e.pointerId);
-  });
-  stick.addEventListener('pointermove', (e) => {
-    if (stickId !== e.pointerId) return;
-    const r = stick.getBoundingClientRect();
-    let x = e.clientX - (r.left + r.width / 2);
-    let y = e.clientY - (r.top + r.height / 2);
-    const l = Math.hypot(x, y);
-    if (l > 44) {
-      x = (x / l) * 44;
-      y = (y / l) * 44;
-    }
-    knob.style.transform = `translate(${x}px, ${y}px)`;
-    move.x = x / 44;
-    move.y = y / 44;
-  });
-  const endStick = () => {
-    stickId = null;
-    knob.style.transform = '';
-    move.x = 0;
-    move.y = 0;
-  };
-  stick.addEventListener('pointerup', endStick);
-  stick.addEventListener('pointercancel', endStick);
-  let lookId: number | null = null;
-  let last = { x: 0, y: 0 };
-  lookPad.addEventListener('pointerdown', (e) => {
-    lookId = e.pointerId;
-    last = { x: e.clientX, y: e.clientY };
-    lookPad.setPointerCapture(e.pointerId);
-  });
-  lookPad.addEventListener('pointermove', (e) => {
-    if (lookId !== e.pointerId) return;
-    look.dx += e.clientX - last.x;
-    look.dy += e.clientY - last.y;
-    last = { x: e.clientX, y: e.clientY };
-  });
-  lookPad.addEventListener('pointerup', () => (lookId = null));
-
   const touch = matchMedia('(pointer: coarse)').matches;
-  const walkHelp = () =>
-    flying
-      ? `Flying: move where you look · Space/E up · Q/C down · wheel: speed ${formatSpeed(flySpeed)} · F to walk · Esc to exit`
-      : ghosting
-        ? `Ghost: walls and furniture let you through · W A S D to move · G to collide again · wheel: speed ${formatSpeed(walkSpeed)} · Esc to exit`
-        : `Click or two-finger swipe to look · W A S D or pinch to move · Shift to run · F to fly · G: ghost · wheel: speed ${formatSpeed(walkSpeed)} · Esc to exit`;
   let helpTimer = 0;
   const setHelp = () => {
     // Touch screens: the hint shows for a few seconds, then gets out of the way.
@@ -1694,89 +1550,12 @@ function start(data: GuestData) {
       window.clearTimeout(helpTimer);
       helpTimer = window.setTimeout(() => help.classList.add('ng-faded'), 4500);
     }
-    help.textContent = walking
-      ? touch
-        ? flying
-          ? 'Flying: left pad moves where you look · drag right side: look'
-          : ghosting
-            ? 'Ghost: walk through walls · left pad: move · drag right side: look'
-            : 'Left pad: move · drag right side: look'
-        : walkHelp()
-      : touch
-        ? 'Drag to orbit · pinch to zoom'
-        : 'Drag or two-finger swipe to orbit · Shift-swipe or right-drag to pan · pinch to zoom';
+    help.textContent = touch
+      ? 'Drag to orbit · pinch to zoom'
+      : 'Drag or two-finger swipe to orbit · Shift-swipe or right-drag to pan · pinch to zoom';
   };
-  const setFlying = (on: boolean) => {
-    const was = flying;
-    flying = on && walking;
-    fly.set(flying);
-    document.body.classList.toggle('ng-flying', flying);
-    // Landing: back to eye height where you are.
-    if (was && !flying && walking) persp.position.y = EYE;
-    setHelp();
-  };
-  fly.btn.onclick = () => setFlying(!flying);
-  /** Ghost walking: no walls or furniture in the way, still at eye height on the floor. Kept until switched off. */
-  const setGhost = (on: boolean) => {
-    ghosting = on;
-    ghost.set(on);
-    setHelp();
-  };
-  ghost.btn.onclick = () => setGhost(!ghosting);
-  // Touch: up and down buttons while flying (keyboards use Space/E and Q/C).
-  const updown = el('div', 'ng-updown');
-  for (const [label, code] of [
-    ['▲', 'Space'],
-    ['▼', 'KeyC'],
-  ] as const) {
-    const b = el('button', 'ng-btn', label);
-    b.setAttribute('aria-label', code === 'Space' ? 'Fly up' : 'Fly down');
-    b.addEventListener('pointerdown', (e) => {
-      keys.add(code);
-      b.setPointerCapture(e.pointerId);
-    });
-    for (const ev of ['pointerup', 'pointercancel'] as const) b.addEventListener(ev, () => keys.delete(code));
-    updown.append(b);
-  }
-  root.append(updown);
-  /**
-   * Starts or stops walking; `at` walks from that plan point, keeping the current heading when already
-   * walking. Stopping returns to the last view unless `restore` is false (a new view is being applied).
-   */
-  function setWalking(on: boolean, at?: { x: number; y: number }, restore = true) {
-    const was = walking;
-    walking = on;
-    if (on) {
-      glide = null;
-      if (tourOn) setTour(false);
-      if (planOpen) setPlan(false);
-    }
-    document.body.classList.toggle('ng-walking', on);
-    setModeBtn(on);
-    fly.btn.style.display = on ? '' : 'none';
-    ghost.btn.style.display = on ? '' : 'none';
-    controls.enabled = !on;
-    if (on) {
-      camera = persp;
-      persp.fov = WALK_FOV;
-      persp.updateProjectionMatrix();
-      if (at) {
-        if (!was) yaw = -opt.spawn.angle - Math.PI / 2;
-        persp.position.set(at.x, EYE, at.y);
-      } else {
-        persp.position.set(opt.spawn.x, EYE, opt.spawn.y);
-        yaw = -opt.spawn.angle - Math.PI / 2;
-      }
-      if (!was || !at) pitch = 0;
-    } else {
-      flying = false;
-      if (document.pointerLockElement) document.exitPointerLock();
-      if (was && restore && lastView) applyCamera(lastView);
-    }
-    setFlying(false);
-    applyVisibility();
-  }
-  modeBtn.onclick = () => setWalking(!walking);
+  setHelp();
+
   // Touch: a tap on the scene (no drag) hides every control for an unobstructed view; another tap brings them back.
   let tap: { id: number; x: number; y: number; t: number } | null = null;
   let pointers = 0;
@@ -1795,101 +1574,11 @@ function start(data: GuestData) {
   };
   window.addEventListener('pointerup', endTap);
   window.addEventListener('pointercancel', endTap);
-  const walkClassifier = createWheelClassifier();
-  let walkDrag: { id: number; x: number; y: number; moved: boolean } | null = null;
-  let suppressLockUntil = -Infinity;
-  renderer.domElement.addEventListener('click', () => {
-    if (
-      walking &&
-      !touch &&
-      performance.now() >= suppressLockUntil &&
-      document.pointerLockElement !== renderer.domElement
-    )
-      renderer.domElement.requestPointerLock();
-  });
-  renderer.domElement.addEventListener('pointerdown', (e) => {
-    if (!walking || e.button !== 0 || document.pointerLockElement === renderer.domElement) return;
-    walkDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
-    renderer.domElement.setPointerCapture?.(e.pointerId);
-  });
-  window.addEventListener('pointermove', (e) => {
-    if (
-      !walking ||
-      !walkDrag ||
-      walkDrag.id !== e.pointerId ||
-      document.pointerLockElement === renderer.domElement
-    )
-      return;
-    const dx = e.clientX - walkDrag.x;
-    const dy = e.clientY - walkDrag.y;
-    if (Math.hypot(dx, dy) > 3) walkDrag.moved = true;
-    walkDrag.x = e.clientX;
-    walkDrag.y = e.clientY;
-    yaw -= dx * 0.0035;
-    pitch = Math.max(-1.3, Math.min(1.3, pitch - dy * 0.0035));
-  });
-  const endWalkDrag = (e: PointerEvent) => {
-    if (!walkDrag || walkDrag.id !== e.pointerId) return;
-    if (walkDrag.moved) suppressLockUntil = performance.now() + 120;
-    walkDrag = null;
-    renderer.domElement.releasePointerCapture?.(e.pointerId);
-  };
-  window.addEventListener('pointerup', endWalkDrag);
-  window.addEventListener('pointercancel', endWalkDrag);
-  renderer.domElement.addEventListener(
-    'wheel',
-    (e) => {
-      if (!walking) return;
-      e.preventDefault();
-      const kind = walkClassifier.classify(e);
-      if (kind === 'ignore') return;
-      const { x: deltaX, y: deltaY } = wheelDelta(e);
-      if (kind === 'pinch' || e.altKey) {
-        wheelWalk.fwd += -deltaY * 0.015;
-      } else if (e.shiftKey || e.metaKey) {
-        wheelWalk.fwd += -deltaY * 0.008;
-        wheelWalk.strafe += deltaX * 0.008;
-      } else if (kind === 'trackpad') {
-        yaw -= deltaX * 0.003;
-        pitch = Math.max(-1.3, Math.min(1.3, pitch - deltaY * 0.003));
-      } else if (deltaY) {
-        // Physical mouse wheel: up = faster, down = slower (walking and flying kept apart).
-        if (flying) flySpeed = stepSpeed(flySpeed, -Math.sign(deltaY), FLY_SPEED_MAX);
-        else walkSpeed = stepSpeed(walkSpeed, -Math.sign(deltaY), WALK_SPEED_MAX);
-        setHelp();
-      }
-    },
-    { passive: false },
-  );
-  attachSafariGesture(renderer.domElement, ({ scaleRatio, rotationDeg }) => {
-    if (!walking) return;
-    if (Math.abs(scaleRatio - 1) > 1e-4) {
-      walkClassifier.markSafariPinch();
-      wheelWalk.fwd += (scaleRatio - 1) * 2.5;
-    }
-    if (Math.abs(rotationDeg) > 0.05) {
-      yaw -= THREE.MathUtils.degToRad(rotationDeg);
-    }
-  });
-  document.addEventListener('mousemove', (e) => {
-    if (!walking || document.pointerLockElement !== renderer.domElement) return;
-    yaw -= e.movementX * 0.0022;
-    pitch = Math.max(-1.3, Math.min(1.3, pitch - e.movementY * 0.0022));
-  });
   window.addEventListener('keydown', (e) => {
     if (lightboxKey(e)) return;
-    keys.add(e.code);
-    if (e.code === 'Space' && walking) e.preventDefault();
-    if (e.code === 'KeyF' && walking && !e.repeat && !e.ctrlKey && !e.metaKey) setFlying(!flying);
-    if (e.code === 'KeyG' && walking && !e.repeat && !e.ctrlKey && !e.metaKey) setGhost(!ghosting);
-    if (e.code === 'Escape') {
-      if (planOpen) setPlan(false);
-      else if (walking && !document.pointerLockElement) setWalking(false);
-    }
+    if (e.code === 'Escape' && planOpen) setPlan(false);
     if (tourOn && e.code !== 'Escape') setTour(false);
   });
-  window.addEventListener('keyup', (e) => keys.delete(e.code));
-  window.addEventListener('blur', () => keys.clear());
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     persp.aspect = window.innerWidth / window.innerHeight;
@@ -1917,11 +1606,10 @@ function start(data: GuestData) {
   }
 
   const begin = () => {
-    if (data.startMode === 'walk') setWalking(true);
-    else if (data.tour?.auto && tourBtn) setTour(true);
+    if (data.tour?.auto && tourBtn) setTour(true);
   };
   applyCamera(data.startView ?? data.cameras[data.start] ?? data.cameras[0]);
-  setWalking(false);
+  applyVisibility();
   // ── Welcome card ──
   if (data.intro != null) {
     const intro = el('div', 'ng-intro');
@@ -1932,7 +1620,7 @@ function start(data: GuestData) {
     const go = el(
       'button',
       'ng-btn ng-primary',
-      data.startMode === 'walk' ? 'Start walking' : data.tour?.auto ? 'Start the tour' : 'Start exploring',
+      data.tour?.auto ? 'Start the tour' : 'Start exploring',
     );
     go.onclick = () => {
       intro.remove();
@@ -1946,7 +1634,6 @@ function start(data: GuestData) {
 
   const clock = new THREE.Clock();
   let barHeight = -1;
-  const look3 = new THREE.Vector3();
   renderer.setAnimationLoop(() => {
     const dt = Math.min(0.05, clock.getDelta());
     const now = performance.now();
@@ -1954,71 +1641,13 @@ function start(data: GuestData) {
       placeHere();
       return; // The plan covers the scene: no need to draw it.
     }
-    if (walking) {
-      yaw -= look.dx * 0.005;
-      pitch = Math.max(-1.3, Math.min(1.3, pitch - look.dy * 0.005));
-      look.dx = 0;
-      look.dy = 0;
-      let f =
-        (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) -
-        (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0) -
-        move.y;
-      let s =
-        (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) -
-        (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0) +
-        move.x;
-      const l = Math.hypot(f, s);
-      if (l > 1) {
-        f /= l;
-        s /= l;
-      }
-      const wf = wheelWalk.fwd;
-      const ws = wheelWalk.strafe;
-      wheelWalk.fwd = 0;
-      wheelWalk.strafe = 0;
-      const run = keys.has('ShiftLeft') || keys.has('ShiftRight');
-      if (flying) {
-        // Free-fly: along the view (pitch included), up/down keys, no collisions.
-        const sp = FLY_SPEED * flySpeed * (run ? 3 : 1) * dt;
-        const cp = Math.cos(pitch);
-        look3.set(-Math.sin(yaw) * cp, Math.sin(pitch), -Math.cos(yaw) * cp);
-        const vert =
-          (keys.has('Space') || keys.has('KeyE') ? 1 : 0) - (keys.has('KeyQ') || keys.has('KeyC') ? 1 : 0);
-        persp.position.addScaledVector(look3, f * sp + wf);
-        persp.position.x += Math.cos(yaw) * (s * sp + ws);
-        persp.position.z += -Math.sin(yaw) * (s * sp + ws);
-        persp.position.y = Math.min(40, Math.max(0.15, persp.position.y + vert * sp));
-      } else {
-        const speed = WALK_SPEED * walkSpeed * (run ? 2 : 1) * dt;
-        const fx = -Math.sin(yaw);
-        const fz = -Math.cos(yaw);
-        const dx = fx * (f * speed + wf) - fz * (s * speed + ws);
-        const dz = fz * (f * speed + wf) + fx * (s * speed + ws);
-        if ((dx || dz) && ghosting) {
-          // Ghost: straight through, kept near the building so the guest cannot wander off.
-          const ob = opt.bounds;
-          persp.position.x = Math.min(ob.maxX + 2, Math.max(ob.minX - 2, persp.position.x + dx));
-          persp.position.z = Math.min(ob.maxY + 2, Math.max(ob.minY - 2, persp.position.z + dz));
-        } else if (dx || dz) {
-          const next = moveWithCollisions(
-            { x: persp.position.x, y: persp.position.z },
-            { x: dx, y: dz },
-            RADIUS,
-            colliders,
-          );
-          persp.position.x = next.x;
-          persp.position.z = next.y;
-        }
-        persp.position.y = EYE;
-      }
-      persp.rotation.set(pitch, yaw, 0, 'YXZ');
-    } else if (!stepGlide()) {
+    if (!stepGlide()) {
       stepTour(now);
       // Between glides the tour drifts slowly around the view.
       if (tourOn && camera === persp) controls.autoRotate = true;
       controls.update();
     }
-    // Hints, sheets and touch controls sit above the bottom bar, whatever its height (it wraps on phones).
+    // Hints and sheets sit above the bottom bar, whatever its height (it wraps on phones).
     if (bar.offsetHeight !== barHeight) {
       barHeight = bar.offsetHeight;
       document.documentElement.style.setProperty('--ng-bar', `${barHeight}px`);
