@@ -8,7 +8,7 @@ import type { Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { planOverview } from '@/domain/geometry/overview';
 import { formatArea, formatLength } from '@/domain/model/units';
-import { guestAutoViews, guestLayers, guestRenderQuality, guestSceneProject, guestSubtitle, guestTitle, guestViews } from '@/domain/walkthrough/guest';
+import { guestAutoViews, guestLayers, guestOptions, guestRenderQuality, guestSceneProject, guestSubtitle, guestTitle, guestViews } from '@/domain/walkthrough/guest';
 import { defaultSpawn } from '@/domain/walkthrough/collision';
 import { loadProject } from '@/features/projects/projectService';
 import { Lighting, SceneContent } from '@/features/scene-3d/SceneContent';
@@ -248,7 +248,8 @@ export default function GuestPage({ projectId }: { projectId: string }) {
   useEffect(() => {
     void loadProject(projectId).then((r) => {
       if (r) {
-        const p = r.project;
+        const opts = guestOptions(r.project);
+        const p = opts.options[opts.start]?.project ?? r.project;
         setSource(p);
         setShow(initialShow(p));
         setPanel({ info: p.guest.info === 'open' && !isMobile, view: false });
@@ -274,6 +275,7 @@ export default function GuestPage({ projectId }: { projectId: string }) {
   }, [source, derived]);
   const initial = useMemo<CameraView | null>(() => {
     if (!source || !derived) return null;
+    if (source.guest.startCameraId === '__top__') return namedView('top', derived.bounds);
     const start = source.cameras.find((c) => c.id === source.guest.startCameraId);
     return start ? presetView(start) : namedView('home', derived.bounds);
   }, [source, derived]);

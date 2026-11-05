@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import type { GuestSettings, Project } from '@/domain/model/schema';
-import { GUEST_TIMES, guestLayers, guestViews } from '@/domain/walkthrough/guest';
+import { GUEST_TIMES, guestLayers, guestOptions } from '@/domain/walkthrough/guest';
 import { useProjectStore } from '@/state/projectStore';
 import {
   Button,
@@ -70,23 +70,24 @@ function TextArea({
  */
 export function GuestExport({ project, busy, run }: PaneProps) {
   const g = project.guest;
-  const offered = guestViews(project);
-  const order = g.viewIds ?? project.cameras.map((c) => c.id);
   const layers = guestLayers({ ...project, guest: { ...g, hiddenItems: true } });
   const hiddenLayers = layers.filter((l) => !l.on).length;
-  const { options, activeId } = listOptions(project);
-  const activeName = options.find((o) => o.id === activeId)?.name ?? 'the current option';
-  const setViews = (ids: string[]) => setGuest('Choose guest views', { viewIds: ids });
-  const moveView = (id: string, by: number) => {
-    const ids = [...order];
-    const i = ids.indexOf(id);
-    const j = i + by;
-    if (i < 0 || j < 0 || j >= ids.length) return;
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-    setViews(ids);
+  const { options } = listOptions(project);
+  const shownOpts = guestOptions(project);
+  const shownIds = new Set(shownOpts.options.map((o) => o.id));
+  const defaultOpt = shownOpts.options[shownOpts.start] ?? shownOpts.options[0];
+  const toggleOption = (id: string, checked: boolean) => {
+    const nextIds = options
+      .filter((o) => (o.id === id ? checked : shownIds.has(o.id)))
+      .map((o) => o.id);
+    if (nextIds.length === 0) return;
+    const patch: Partial<GuestSettings> = {
+      options: 'all',
+      optionIds: nextIds.length === options.length ? null : nextIds,
+    };
+    if (!checked && g.defaultOptionId === id) patch.defaultOptionId = null;
+    setGuest('Choose guest layout options', patch);
   };
-  // Every camera, included ones first in their order, then the rest.
-  const listed = [...offered, ...project.cameras.filter((c) => !offered.includes(c))];
 
   // Estimated size: build the HTML a moment after the settings settle (the model is cached for the download).
   const [size, setSize] = useState<number | null>(null);
@@ -111,7 +112,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
     <div className="export-pane guest-export">
       <h3>Guest walkthrough</h3>
       <p className="field-hint">
-        A 3D walkthrough guests open in any browser, with your layout options, notes and saved views. Share a live link,
+        A 3D walkthrough guests open in any browser, with your layout options, notes and 2D plan. Share a live link,
         or send the single HTML file (it works offline). The in-app Guest view uses these settings too.
       </p>
 
@@ -161,24 +162,45 @@ export function GuestExport({ project, busy, run }: PaneProps) {
           onCommit={(title) => setGuest('Set guest title', { title })}
         />
         {options.length > 1 && (
-          <div className="field">
-            <span className="field-label">Layout options</span>
-            <Segmented<GuestSettings['options']>
-              label="Layout options"
-              size="sm"
-              value={g.options}
-              onChange={(v) => setGuest('Set guest layout options', { options: v })}
-              options={[
-                { value: 'all', label: `All ${options.length}` },
-                { value: 'active', label: 'Current only' },
-              ]}
-            />
+          <>
+            <div className="field">
+              <span className="field-label">Layout options</span>
+              <div className="guest-view-list" role="group" aria-label="Layout options offered to guests">
+                {options.map((o) => {
+                  const on = shownIds.has(o.id);
+                  const last = on && shownOpts.options.length <= 1;
+                  return (
+                    <div key={o.id} className="guest-view-row">
+                      <label title={last ? 'At least one option must be shown' : undefined}>
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          disabled={last}
+                          onChange={(e) => toggleOption(o.id, e.target.checked)}
+                        />
+                        {o.name}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {shownOpts.options.length > 1 && (
+              <Select
+                label="Default option"
+                value={defaultOpt.id}
+                onChange={(defaultOptionId) =>
+                  setGuest('Set default guest option', { defaultOptionId })
+                }
+                options={shownOpts.options.map((o) => ({ value: o.id, label: o.name }))}
+              />
+            )}
             <p className="field-hint">
-              {g.options === 'all'
-                ? `Guests switch between ${options.map((o) => o.name).join(', ')}; the file opens on ${activeName}.`
-                : `Only ${activeName} goes in the file.`}
+              {shownOpts.options.length > 1
+                ? `Guests switch between ${shownOpts.options.map((o) => o.name).join(', ')}; opens on ${defaultOpt.name}.`
+                : `Only ${defaultOpt.name} goes in the file.`}
             </p>
-          </div>
+          </>
         )}
         <div className="field">
           <span className="field-label">Notes</span>
@@ -263,76 +285,21 @@ export function GuestExport({ project, busy, run }: PaneProps) {
       </Section>
 
       <Section title="Views & tour" defaultOpen={false}>
-        {project.cameras.length > 0 ? (
-          <div className="guest-view-list" role="list" aria-label="Saved views offered to guests">
-            {listed.map((c) => {
-              const on = offered.includes(c);
-              const i = order.indexOf(c.id);
-              return (
-                <div key={c.id} className="guest-view-row" role="listitem">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={(e) =>
-                        setViews(
-                          e.target.checked
-                            ? [...order.filter((id) => offered.some((o) => o.id === id)), c.id]
-                            : offered.filter((o) => o.id !== c.id).map((o) => o.id),
-                        )
-                      }
-                    />
-                    {c.name}
-                  </label>
-                  {on && (
-                    <span>
-                      <button
-                        type="button"
-                        className="icon-btn"
-                        aria-label={`Move ${c.name} up`}
-                        disabled={i <= 0}
-                        onClick={() => moveView(c.id, -1)}
-                      >
-                        <ArrowUp size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-btn"
-                        aria-label={`Move ${c.name} down`}
-                        disabled={i >= offered.length - 1}
-                        onClick={() => moveView(c.id, 1)}
-                      >
-                        <ArrowDown size={13} />
-                      </button>
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="field-hint">Save views in the 3D panel to offer them as buttons.</p>
-        )}
-        <Toggle
-          label="Overview and Top views"
-          checked={g.overviewViews}
-          onChange={(overviewViews) => setGuest('Toggle guest overview views', { overviewViews })}
-        />
         <Toggle
           label="2D plan"
-          hint="The floor plan with pan and zoom"
+          hint="Included in the View drop-down, with pan and zoom"
           checked={g.floorPlan}
           onChange={(floorPlan) => setGuest('Toggle guest floor plan', { floorPlan })}
         />
         <Select
           label="Opening view"
-          value={g.startCameraId ?? '__overview__'}
+          value={g.startCameraId === '__top__' ? '__top__' : '__overview__'}
           onChange={(v) =>
-            setGuest('Set guest start view', { startCameraId: v === '__overview__' ? null : v })
+            setGuest('Set guest start view', { startCameraId: v === '__top__' ? '__top__' : null })
           }
           options={[
             { value: '__overview__', label: 'Overview' },
-            ...project.cameras.map((c) => ({ value: c.id, label: c.name })),
+            { value: '__top__', label: 'Top' },
           ]}
         />
         <Toggle

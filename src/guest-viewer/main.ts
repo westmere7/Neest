@@ -135,12 +135,10 @@ export interface GuestData {
   /** The scene as base64 GLB, gzipped when `glbEncoding` says so. */
   glb: string;
   glbEncoding?: 'gzip';
-  /** View buttons, in order. */
+  /** Built-in views, in order (Overview, Top). */
   cameras: GuestCamera[];
-  /** Index of the opening view in `cameras` (-1 when it has no button). */
+  /** Index of the opening view in `cameras`. */
   start: number;
-  /** The opening view (it may have no button). */
-  startView?: GuestCamera;
   /** Every option's plan together (sun shadows, the orthographic views). */
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
   background: string;
@@ -244,6 +242,7 @@ function segmented<T extends string>(
 
 /** Line icons for the bar (24 × 24, drawn with the text colour). */
 const ICONS: Record<string, string> = {
+  cube: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12',
   tour: 'M6 4l14 8-14 8V4Z',
   full: 'M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3',
   notes: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM8 8h8M8 12h5',
@@ -707,15 +706,15 @@ function start(data: GuestData) {
     if (optionSelect) optionSelect.value = String(cur);
   };
   markOption();
-  const views = el('div', 'ng-views');
   const help = el('div', 'ng-help');
-  hud.append(side, views);
+  hud.append(side);
   root.append(hud, help);
-  // Bottom bar: on/off switches, then the buttons that open panels.
+  // Bottom bar: view drop-down (where Walk through sat), on/off switches, then panel buttons.
   const bar = el('div', 'ng-bar');
+  const viewGroup = el('div', 'ng-group ng-view-group');
   const toggles = el('div', 'ng-group ng-toggles');
   const panelsGroup = el('div', 'ng-group ng-panels');
-  bar.append(toggles, panelsGroup);
+  bar.append(viewGroup, toggles, panelsGroup);
   root.append(bar);
 
   const panel = (heading: string, onClose: () => void) => {
@@ -932,7 +931,7 @@ function start(data: GuestData) {
           for (const z of [ob.minY, ob.maxY]) corners.push(toScreen(new THREE.Vector3(x, y, z)));
       obstacle = corners.some((p) => !p) ? null : screenBounds(corners);
     }
-    // Keep clear of the title and view buttons at the top and the bar at the bottom.
+    // Keep clear of the title at the top and the bar at the bottom.
     const placed = placeNoteLabels(
       inputs,
       { w, h },
@@ -943,7 +942,7 @@ function start(data: GuestData) {
         insets: {
           l: side.offsetHeight > 90 && w > 900 ? side.offsetWidth + 24 : 0,
           r: 0,
-          t: Math.max(views.offsetHeight, title.offsetHeight + (optionBox ? optionBox.offsetHeight + 8 : 0)) + 24,
+          t: title.offsetHeight + (optionBox ? optionBox.offsetHeight + 8 : 0) + 24,
           b: bar.offsetHeight + 24,
         },
       },
@@ -1306,7 +1305,7 @@ function start(data: GuestData) {
     ortho.updateProjectionMatrix();
   };
 
-  // ── Views and tour ──
+  // ── Views, 2D plan and tour ──
   /** A camera glide between two perspective views (tour). */
   let glide: {
     from: { p: THREE.Vector3; t: THREE.Vector3; fov: number };
@@ -1314,16 +1313,41 @@ function start(data: GuestData) {
     start: number;
     dur: number;
   } | null = null;
-  /** The last view chosen; leaving the 2D plan marks it again. */
-  let lastView: GuestCamera | null = null;
-  const viewButtons: HTMLButtonElement[] = [];
-  const markView = (btn: HTMLButtonElement | null) =>
-    viewButtons.forEach((x) => x.classList.toggle('on', x === btn));
+  let planOpen = false;
+  const plan = anyOption((o) => !!o.plan) ? el('div', 'ng-plan') : null;
+  /** Index of the last built-in 3D view chosen; leaving the 2D plan returns the drop-down to it. */
+  let lastViewIndex = Math.max(0, Math.min(Math.max(0, data.cameras.length - 1), data.start));
+  const viewWrap = el('label', 'ng-view-pick');
+  const viewSelect = el('select', 'ng-view-select');
+  viewSelect.setAttribute('aria-label', 'View');
+  viewSelect.title = 'Choose view';
+  data.cameras.forEach((c, i) => {
+    const optEl = el('option', '', c.name);
+    optEl.value = String(i);
+    viewSelect.append(optEl);
+  });
+  let planOption: HTMLOptionElement | null = null;
+  if (plan) {
+    planOption = el('option', '', '2D plan');
+    planOption.value = 'plan';
+    viewSelect.append(planOption);
+  }
+  const syncViewSelect = () => {
+    viewSelect.value = planOpen ? 'plan' : String(lastViewIndex);
+  };
+  const viewCaret = el('span', 'ng-view-caret', '▾');
+  viewCaret.setAttribute('aria-hidden', 'true');
+  viewWrap.append(icon('cube'), viewSelect, viewCaret);
+  viewGroup.append(viewWrap);
+  // Arrow keys and letters belong to the select while it has focus.
+  viewSelect.addEventListener('keydown', (e) => e.stopPropagation());
+
   const applyCamera = (c: GuestCamera, animate = false) => {
     if (planOpen) setPlan(false);
     glide = null;
-    lastView = c;
-    markView(viewButtons[data.cameras.indexOf(c)] ?? null);
+    const idx = data.cameras.indexOf(c);
+    if (idx >= 0) lastViewIndex = idx;
+    syncViewSelect();
     if (animate && camera === persp && c.projection === 'perspective') {
       glide = {
         from: { p: persp.position.clone(), t: controls.target.clone(), fov: persp.fov },
@@ -1391,25 +1415,21 @@ function start(data: GuestData) {
     toggles.append(tourBtn);
   }
 
-  data.cameras.forEach((c) => {
-    const btn = el('button', 'ng-btn', c.name);
-    btn.onclick = () => {
-      setTour(false);
-      applyCamera(c);
-    };
-    viewButtons.push(btn);
-    views.append(btn);
-  });
+  viewSelect.onchange = () => {
+    setTour(false);
+    if (viewSelect.value === 'plan') setPlan(true);
+    else {
+      const c = data.cameras[Number(viewSelect.value)];
+      if (c) applyCamera(c);
+    }
+  };
 
   // Any hands-on input ends the tour.
   for (const ev of ['pointerdown', 'wheel', 'touchstart'] as const)
     renderer.domElement.addEventListener(ev, () => tourOn && setTour(false), { passive: true });
 
   // ── 2D plan: the plan drawing (of the shown option), with pan and zoom ──
-  let planOpen = false;
   let youAreHere: SVGGElement | null = null;
-  const plan = anyOption((o) => !!o.plan) ? el('div', 'ng-plan') : null;
-  const planBtn = plan ? el('button', 'ng-btn', '2D plan') : null;
   /** The drawing shown, its home view box and the current one. */
   let planSvg: SVGSVGElement | null = null;
   let home = [0, 0, 10, 10];
@@ -1421,7 +1441,10 @@ function start(data: GuestData) {
     planSvg?.remove();
     planSvg = null;
     youAreHere = null;
-    if (planBtn) planBtn.style.display = opt.plan ? '' : 'none';
+    if (planOption) {
+      planOption.disabled = !opt.plan;
+      planOption.hidden = !opt.plan;
+    }
     if (!opt.plan) {
       if (planOpen) setPlan(false);
       return;
@@ -1449,7 +1472,7 @@ function start(data: GuestData) {
     setVb();
     if (planOpen) placeHere();
   };
-  if (plan && planBtn) {
+  if (plan) {
     plan.setAttribute('role', 'img');
     plan.setAttribute('aria-label', 'Floor plan');
     plan.append(
@@ -1516,11 +1539,6 @@ function start(data: GuestData) {
       setVb();
     });
     root.insertBefore(plan, hud);
-    planBtn.onclick = () => {
-      setTour(false);
-      setPlan(!planOpen);
-    };
-    views.append(planBtn);
   }
   /** Marks where the orbit centre is on the plan. */
   function placeHere() {
@@ -1533,11 +1551,8 @@ function start(data: GuestData) {
     planOpen = on;
     plan.classList.toggle('open', on);
     document.body.classList.toggle('ng-plan-mode', on);
-    planBtn?.classList.toggle('on', on);
-    if (on) {
-      markView(planBtn);
-      placeHere();
-    } else markView(viewButtons[data.cameras.indexOf(lastView!)] ?? null);
+    syncViewSelect();
+    if (on) placeHere();
   }
   fillPlan();
 
@@ -1608,7 +1623,7 @@ function start(data: GuestData) {
   const begin = () => {
     if (data.tour?.auto && tourBtn) setTour(true);
   };
-  applyCamera(data.startView ?? data.cameras[data.start] ?? data.cameras[0]);
+  applyCamera(data.cameras[data.start] ?? data.cameras[0]);
   applyVisibility();
   // ── Welcome card ──
   if (data.intro != null) {

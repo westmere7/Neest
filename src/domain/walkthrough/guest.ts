@@ -49,15 +49,28 @@ export function guestSceneProject(project: Project): Project {
 }
 
 /**
- * The layout options in the guest file, each as the project with that option switched in. Every option
- * in the switcher's order (`guest.options` 'all'), or only the active one. `start` is the active option.
+ * The layout options in the guest file, each as the project with that option switched in, in the
+ * switcher's order. Uses `guest.optionIds` when chosen, falling back to `guest.options` (`'all'` or
+ * `'active'`). `start` is the index of `guest.defaultOptionId` (falling back to the active option, then 0).
  */
 export function guestOptions(project: Project): { options: { id: string; name: string; project: Project }[]; start: number } {
   const { options, activeId } = listOptions(project);
-  const shown = project.guest.options === 'active' ? options.filter((o) => o.id === activeId) : options;
+  const g = project.guest;
+  let shown = options;
+  if (g.optionIds) {
+    const chosen = new Set(g.optionIds);
+    const picked = options.filter((o) => chosen.has(o.id));
+    shown = picked.length > 0 ? picked : options.filter((o) => o.id === activeId);
+  } else if (g.options === 'active') {
+    shown = options.filter((o) => o.id === activeId);
+  }
+  const preferredId = g.defaultOptionId ?? activeId;
+  let start = shown.findIndex((o) => o.id === preferredId);
+  if (start < 0) start = shown.findIndex((o) => o.id === activeId);
+  if (start < 0) start = 0;
   return {
     options: shown.map((o) => ({ id: o.id, name: o.name, project: projectWithOption(project, o.id) })),
-    start: Math.max(0, shown.findIndex((o) => o.id === activeId)),
+    start,
   };
 }
 

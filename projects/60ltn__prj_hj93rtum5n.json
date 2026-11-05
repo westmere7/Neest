@@ -6572,6 +6572,8 @@
     "noteImages": true,
     "noteDisplay": "icon",
     "options": "all",
+    "optionIds": null,
+    "defaultOptionId": null,
     "roomLabels": false,
     "ceilings": true,
     "info": "open",

@@ -2,7 +2,7 @@ import type { Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { planOverview } from '@/domain/geometry/overview';
 import { formatArea, formatLength } from '@/domain/model/units';
-import { guestAutoViews, guestLayerId, guestLayers, guestOptions, guestSceneProject, guestSubtitle, guestTitle, guestViews } from '@/domain/walkthrough/guest';
+import { guestLayerId, guestLayers, guestOptions, guestSceneProject, guestSubtitle, guestTitle } from '@/domain/walkthrough/guest';
 import { isObjectHidden } from '@/domain/commands/itemLayers';
 import { getAsset } from '@/data/assets/registry';
 import { LAMP_BUDGET, resolveObjectLights } from '@/data/assets/lights';
@@ -60,15 +60,18 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-seg button{flex:1;border:1px solid rgba(255,255,255,.14);background:transparent;color:#f2efe9;border-radius:7px;padding:6px;font:inherit;font-size:12px;cursor:pointer}
 .ng-seg button.on{background:#6fb3a0;color:#0f2a26;border-color:transparent;font-weight:600}
 .ng-label{color:#b0ada7;font-size:11px;margin-top:6px}
-.ng-views{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border-radius:12px;background:rgba(29,31,34,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto;max-width:60vw;justify-content:flex-end}
-.ng-views .ng-btn{background:transparent;border-color:transparent}
-.ng-views .ng-btn.on{background:#f2efe9;color:#1d1f22;font-weight:600}
 .ng-btn{border:1px solid rgba(255,255,255,.14);background:rgba(29,31,34,.82);color:#f2efe9;border-radius:9px;padding:8px 12px;font:inherit;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);white-space:nowrap}
 .ng-btn:hover{background:rgba(52,55,60,.9)}
-.ng-views .ng-btn.on:hover{background:#fff}
 .ng-btn:focus-visible{outline:2px solid #a3cfc1;outline-offset:1px}
 .ng-primary{background:#6fb3a0;color:#0f2a26;border-color:transparent;font-weight:600}
 .ng-primary:hover{background:#a3cfc1}
+.ng-view-pick{position:relative;display:inline-flex;align-items:center;color:#0f2a26}
+.ng-view-pick .ng-ico{position:absolute;left:10px;pointer-events:none}
+.ng-view-select{-webkit-appearance:none;appearance:none;border:0;border-radius:9px;background:#6fb3a0;color:#0f2a26;font:inherit;font-weight:600;padding:8px 26px 8px 32px;cursor:pointer;white-space:nowrap}
+.ng-view-select:hover{background:#82c2b0}
+.ng-view-select:focus-visible{outline:2px solid #f2efe9;outline-offset:1px}
+.ng-view-select option{background:#26292d;color:#f2efe9;font-weight:400}
+.ng-view-caret{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none}
 .ng-toggle,.ng-pbtn,.ng-primary{display:inline-flex;align-items:center;gap:7px}
 .ng-ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ng-pbtn.on{background:rgba(111,179,160,.24);border-color:rgba(111,179,160,.65)}
@@ -177,17 +180,20 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-bar .ng-toggle,.ng-bar .ng-pbtn{min-width:40px;justify-content:center;padding:9px}
  .ng-bar .ng-toggle[aria-pressed=true]{background:rgba(111,179,160,.3)}
  .ng-bar .ng-ico{width:18px;height:18px}
+ .ng-bar .ng-view-pick .ng-ico{left:8px;width:16px;height:16px}
+ .ng-view-select{padding:9px 24px 9px 30px}
+ .ng-view-caret{right:8px}
  .ng-title{padding:6px 12px}.ng-title strong{font-size:14px}.ng-title span{display:none}
  .ng-opts-label{display:none}
- .ng-views::-webkit-scrollbar,.ng-bar::-webkit-scrollbar{display:none}
+ .ng-bar::-webkit-scrollbar{display:none}
  .ng-callout{max-width:200px}
  .ng-lightbox{--lb-px:12px;--lb-py:56px}
 }
-/* Phones on their side: one top row (title left, views right), side panels as tall as the screen allows. */
+@supports (-webkit-touch-callout:none){.ng-opts-select,.ng-view-select{font-size:16px}}
+/* Phones on their side: slim top row, side panels as tall as the screen allows. */
 @media (max-height:500px) and (min-width:641px){
  .ng-hud{top:calc(8px + env(safe-area-inset-top))}
  .ng-side{max-width:300px}
- .ng-views{max-width:58vw;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;scrollbar-width:none}
  .ng-panel{max-height:none;padding:8px 12px}
  .ng-help,.ng-plan-hint{font-size:11px;bottom:calc(var(--ng-bar,46px) + 18px + env(safe-area-inset-bottom))}
  .ng-intro-card{max-height:calc(100vh - 24px);padding:16px 20px}
@@ -197,8 +203,7 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-hud{flex-direction:column;flex-wrap:nowrap;gap:6px}
  .ng-side{max-width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
  .ng-side .ng-btn{padding:7px 10px}
- .ng-views{max-width:100%;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;scrollbar-width:none;-webkit-overflow-scrolling:touch}
- .ng-views::-webkit-scrollbar,.ng-bar::-webkit-scrollbar{display:none}
+ .ng-bar::-webkit-scrollbar{display:none}
  .ng-panel{position:fixed;left:8px;right:8px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom));max-height:48vh;z-index:4;box-shadow:0 -6px 24px rgba(0,0,0,.3)}
  .ng-help,.ng-plan-hint{white-space:normal;width:86vw;text-align:center;font-size:11px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom))}
  .ng-callout{max-width:200px}
@@ -276,7 +281,8 @@ const toCamera = (v: { projection: 'perspective' | 'orthographic'; position: [nu
 /** The GLB settings that change the embedded model (everything else is cheap to rebuild). */
 function glbKey(project: Project): unknown[] {
   const g = project.guest;
-  return [project.nodes, project.walls, project.openings, project.rooms, project.objects, project.materials, project.customAssets, project.itemLayers, project.layers, project.settings, project.options, project.activeOptionId, g.options, g.cutawayHeight, g.textureSize, g.surfaceDetail, g.hiddenItems];
+  const shownOptionIds = guestOptions(project).options.map((o) => o.id).join(',');
+  return [project.nodes, project.walls, project.openings, project.rooms, project.objects, project.materials, project.customAssets, project.itemLayers, project.layers, project.settings, project.options, project.activeOptionId, shownOptionIds, g.cutawayHeight, g.textureSize, g.surfaceDetail, g.hiddenItems];
 }
 
 /** Gzips the model (geometry shrinks about 3×); the viewer unpacks it with the browser's DecompressionStream. */
@@ -348,17 +354,7 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
   const project = guestSceneProject(source);
   const g = project.guest;
   const r = project.render;
-  const derived = derivePlan(project);
   const glb = await guestGlb(source);
-  const home = namedView('home', derived.bounds);
-  const included = guestViews(project);
-  const cameras: GuestCamera[] = [
-    ...included.map((c) => toCamera(c, c.name)),
-    ...guestAutoViews(project).map((n) => (n === 'Overview' ? toCamera(home, n) : toCamera(namedView('top', derived.bounds), n))),
-  ];
-  const startPreset = project.cameras.find((c) => c.id === g.startCameraId);
-  const startView = startPreset ? toCamera(startPreset, startPreset.name) : toCamera(home, 'Overview');
-  const start = startPreset ? included.indexOf(startPreset) : cameras.findIndex((c, i) => i >= included.length && c.name === 'Overview');
   const sun = sunFromSettings(r);
   const budget = (q: GuestQuality) => {
     const b = LAMP_BUDGET[q === 'fast' ? 'draft' : q];
@@ -366,11 +362,16 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
   };
   const opts = guestOptions(source);
   const options = opts.options.map((o) => guestOption(o.name, o.project));
-  // The sun's shadow area covers every option's plan.
+  // The sun's shadow area and built-in views cover every included option's plan.
   const bounds = options.reduce(
     (a, o) => ({ minX: Math.min(a.minX, o.bounds.minX), minY: Math.min(a.minY, o.bounds.minY), maxX: Math.max(a.maxX, o.bounds.maxX), maxY: Math.max(a.maxY, o.bounds.maxY) }),
     options[opts.start].bounds,
   );
+  const cameras: GuestCamera[] = [
+    toCamera(namedView('home', bounds), 'Overview'),
+    toCamera(namedView('top', bounds), 'Top'),
+  ];
+  const start = g.startCameraId === '__top__' ? 1 : 0;
   return {
     title: guestTitle(project),
     subtitle: guestSubtitle(project),
@@ -380,7 +381,6 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
     ...(glb.gzip ? { glbEncoding: 'gzip' as const } : {}),
     cameras,
     start,
-    startView,
     bounds,
     background: r.background,
     sun: { dir: [sun.dir.x, sun.dir.y, sun.dir.z], color: `#${sun.color.getHexString()}`, intensity: sun.intensity },

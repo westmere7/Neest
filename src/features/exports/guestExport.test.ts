@@ -8,7 +8,7 @@ import { guestLayers, guestSceneProject, guestViews } from '@/domain/walkthrough
 import { addItemLayer, setObjectsLayer, updateItemLayer } from '@/domain/commands/itemLayers';
 import { deleteCameraPreset } from '@/domain/commands/entities';
 import type { D } from '@/domain/commands/walls';
-import { addOption, projectWithOption, renameOption, switchOption } from '@/domain/commands/options';
+import { addOption, deleteOption, projectWithOption, renameOption, switchOption } from '@/domain/commands/options';
 import { addCallout } from '@/domain/commands/callouts';
 import { isCeilingItem } from '@/data/assets/catalog';
 import { guestSlug } from './guestShare';
@@ -50,6 +50,8 @@ describe('guest settings', () => {
       noteImages: true,
       noteDisplay: 'icon',
       options: 'all',
+      optionIds: null,
+      defaultOptionId: null,
       roomLabels: false,
       ceilings: true,
       info: 'open',
@@ -172,10 +174,11 @@ describe('guest export data', () => {
     expect(data.title).toBe('Our flat');
     expect(data.subtitle).toBe('Draft 2');
     expect(data.intro).toBe('Hello!\nHave a look around.');
-    expect(data.cameras.map((c) => c.name)).toEqual(['Living room']);
-    // The opening view (Overview preset) has no button but still opens the file.
-    expect(data.start).toBe(-1);
-    expect(data.startView?.name).toBe('Overview');
+    // Saved ("custom") views are omitted; only built-in Overview and Top are offered.
+    expect(data.cameras.map((c) => c.name)).toEqual(['Overview', 'Top']);
+    expect(data.start).toBe(0);
+    expect('startView' in data).toBe(false);
+    expect((await buildGuestData(edit(p, (d) => void (d.guest.startCameraId = '__top__')))).start).toBe(1);
     // The HTML viewer is orbit-only: no first-person walk settings or colliders are shipped.
     expect('startMode' in data).toBe(false);
     expect('walk' in data).toBe(false);
@@ -235,8 +238,7 @@ describe('guest export data', () => {
     expect(data.options[0].notes).toEqual([]);
     expect(data.options[0].plan).toBeNull();
     expect(data.options[0].info).toBeNull();
-    // The saved "Overview" view replaces the automatic one (no duplicate buttons).
-    expect(data.cameras.map((c) => c.name)).toEqual(['Overview', 'Living room', 'Top']);
+    expect(data.cameras.map((c) => c.name)).toEqual(['Overview', 'Top']);
     expect(data.start).toBe(0);
   });
 
@@ -278,11 +280,13 @@ describe('guest export data', () => {
     expect(html).toMatch(/@media \(max-width:640px\),\(max-height:500px\)/);
   });
 
-  it('carries every layout option, or only the active one', async () => {
+  it('carries selected layout options and opens on the chosen default option', async () => {
     let a = '';
     let b = '';
+    let c = '';
     const p = edit(buildDemoProject(), (d) => {
       b = addOption(d, 'shell', 'Empty shell');
+      c = addOption(d, 'duplicate', 'Variant C');
       a = d.options![0].id;
       renameOption(d, a, 'Furnished');
       switchOption(d, a);
@@ -290,7 +294,7 @@ describe('guest export data', () => {
     expect(Object.keys(projectWithOption(p, b).objects)).toEqual([]);
     expect(projectWithOption(p, a)).toBe(p);
     const data = await buildGuestData(p);
-    expect(data.options.map((o) => o.name)).toEqual(['Furnished', 'Empty shell']);
+    expect(data.options.map((o) => o.name)).toEqual(['Furnished', 'Empty shell', 'Variant C']);
     expect(data.option).toBe(0);
     const [furnished, shell] = data.options;
     // Same walls, no furniture or notes in the shell.
@@ -298,10 +302,27 @@ describe('guest export data', () => {
     expect(shell.notes).toEqual([]);
     expect(furnished.notes.length).toBeGreaterThan(0);
     expect(shell.lamps).toEqual([]);
-    // One model with both options, in order.
+    // One model with all three options, in order.
     const [projects] = exportGlb.mock.lastCall!;
-    expect(projects.map((q) => Object.keys(q.objects).length)).toEqual([Object.keys(p.objects).length, 0]);
-    // Opening on the other option; or only the active option in the file.
+    expect(projects.map((q) => Object.keys(q.objects).length)).toEqual([Object.keys(p.objects).length, 0, 0]);
+    // Selecting a subset of options and a custom default option (different from the active one).
+    const subset = edit(p, (d) => {
+      d.guest.optionIds = [b, c];
+      d.guest.defaultOptionId = c;
+    });
+    const subsetData = await buildGuestData(subset);
+    expect(subsetData.options.map((o) => o.name)).toEqual(['Empty shell', 'Variant C']);
+    expect(subsetData.option).toBe(1);
+    // Changing only the default option reuses the embedded GLB without rebuilding.
+    const callsBeforeDefaultChange = exportGlb.mock.calls.length;
+    const flippedDefault = await buildGuestData(edit(subset, (d) => void (d.guest.defaultOptionId = b)));
+    expect(flippedDefault.option).toBe(0);
+    expect(exportGlb.mock.calls.length).toBe(callsBeforeDefaultChange);
+    // Deleting a chosen default option cleans up guest.optionIds and guest.defaultOptionId.
+    const afterDelete = edit(subset, (d) => void deleteOption(d, c));
+    expect(afterDelete.guest.optionIds).toEqual([b]);
+    expect(afterDelete.guest.defaultOptionId).toBeNull();
+    // Legacy `options: 'active'` still works when `optionIds` is null.
     const onShell = edit(p, (d) => void switchOption(d, b));
     expect((await buildGuestData(onShell)).option).toBe(1);
     const only = await buildGuestData(edit(onShell, (d) => void (d.guest.options = 'active')));
@@ -381,8 +402,10 @@ describe('guest export data', () => {
     // On/off controls say so (aria-pressed), and full screen is offered where allowed.
     expect(runtime).toMatch(/aria-pressed/);
     expect(runtime).toMatch(/requestFullscreen/);
-    // Layout options, the Notes list with its picture viewer, and ceiling items; no walkthrough mode.
+    // Layout options, view drop-down in the bottom bar, Notes list with its picture viewer, ceiling items; no walkthrough mode or top-right view buttons.
     expect(runtime).toMatch(/neestOption/);
+    expect(runtime).toMatch(/ng-view-select/);
+    expect(runtime).not.toMatch(/ng-views/);
     expect(runtime).toMatch(/neestCeiling/);
     expect(runtime).toMatch(/ng-lightbox/);
     expect(runtime).not.toMatch(/Walk through|Exit walkthrough|Ghost|requestPointerLock/);

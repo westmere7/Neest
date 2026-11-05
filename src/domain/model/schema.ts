@@ -670,6 +670,16 @@ export const GuestSettingsSchema = z
     noteDisplay: z.enum(['full', 'compact', 'icon']).default('icon'),
     /** Layout options in the file: every option (guests switch between them) or only the active one. */
     options: z.enum(['all', 'active']).default('all'),
+    /**
+     * Layout option ids included in the file (kept in the project's option order; at least one).
+     * `null` falls back to `options` (`'active'` = active only, `'all'` = every option).
+     */
+    optionIds: z.array(Id).nullable().default(null),
+    /**
+     * Layout option id shown first when guests open the walkthrough (if among the included options;
+     * otherwise the active option if included, else the first included option). `null` = active option.
+     */
+    defaultOptionId: Id.nullable().default(null),
     /** Room names and areas while orbiting (guests can toggle them). */
     roomLabels: z.boolean().default(false),
     /** Ceilings start shown (guests can toggle them). */

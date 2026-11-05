@@ -72,7 +72,7 @@ const ROOT_FILES: Record<string, string> = {
     '<p style="font:15px system-ui;margin:40px">Shared Neest walkthroughs. Open the link you were given.</p>\n',
 };
 
-export function neestShare(root = process.cwd()): Plugin {
+export function neestShare(root = process.cwd(), remoteOverride?: string): Plugin {
   let repo: { owner: string; name: string } | null = null;
   const cache = path.join(root, 'node_modules', '.cache', 'neest-share');
   /** One git operation at a time. */
@@ -92,7 +92,7 @@ export function neestShare(root = process.cwd()): Plugin {
     if (!m) throw new Error('This checkout has no GitHub origin; set NEEST_SHARE_REPO=owner/name.');
     return (repo = { owner: m[1], name: 'neest-share' });
   };
-  const remoteUrl = (r: { owner: string; name: string }) => `https://github.com/${r.owner}/${r.name}.git`;
+  const remoteUrl = (r: { owner: string; name: string }) => remoteOverride ?? `https://github.com/${r.owner}/${r.name}.git`;
   const baseUrl = (r: { owner: string; name: string }) => `https://${r.owner.toLowerCase()}.github.io/${r.name}/`;
 
   /** The GitHub credential git holds (for the one-time API setup). */
@@ -141,21 +141,27 @@ export function neestShare(root = process.cwd()): Plugin {
       await git(['clone', '--depth', '1', remoteUrl(r), cache], root);
     }
     await git(['fetch', '--depth', '1', 'origin', 'main'], cache);
-    await git(['checkout', '-q', '-B', 'main', 'FETCH_HEAD'], cache);
+    await git(['checkout', '-q', '-f', '-B', 'main', 'FETCH_HEAD'], cache);
     await git(['reset', '-q', '--hard', 'FETCH_HEAD'], cache);
     await git(['clean', '-q', '-fdx'], cache);
+    // Clean up any leftover orphan branch from an interrupted publish in older versions.
+    await git(['branch', '-q', '-D', 'neest-publish'], cache).catch(() => undefined);
   };
 
-  /** Commits the working tree as the repository's only commit and pushes it. */
+  /** Commits the working tree as the repository's only commit (parentless `commit-tree`, no temp branch) and pushes it. */
   const commit = async (message: string) => {
     for (const [f, text] of Object.entries(ROOT_FILES)) if (!fs.existsSync(path.join(cache, f))) fs.writeFileSync(path.join(cache, f), text);
-    await git(['checkout', '-q', '--orphan', 'neest-publish'], cache);
     await git(['add', '-A'], cache);
+    const tree = (await git(['write-tree'], cache)).trim();
     const name = (await git(['config', 'user.name'], cache).catch(() => '')).trim();
-    const id = name ? [] : ['-c', 'user.name=Neest', '-c', 'user.email=neest@users.noreply.github.com'];
-    await git([...id, 'commit', '-q', '-m', message], cache);
-    await git(['push', '-q', '-f', 'origin', 'neest-publish:main'], cache);
-    await git(['branch', '-q', '-M', 'neest-publish', 'main'], cache);
+    const email = (await git(['config', 'user.email'], cache).catch(() => '')).trim();
+    const id = [
+      ...(name ? [] : ['-c', 'user.name=Neest']),
+      ...(email ? [] : ['-c', 'user.email=neest@users.noreply.github.com']),
+    ];
+    const sha = (await git([...id, 'commit-tree', tree, '-m', message], cache)).trim();
+    await git(['reset', '-q', '--hard', sha], cache);
+    await git(['push', '-q', '-f', 'origin', 'HEAD:main'], cache);
   };
 
   const publish = (slug: string, html: Buffer) =>

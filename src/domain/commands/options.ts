@@ -139,6 +139,11 @@ export function deleteOption(d: D, id: string): boolean {
     options.findIndex((o) => o.id === id),
     1,
   );
+  if (d.guest.defaultOptionId === id) d.guest.defaultOptionId = null;
+  if (d.guest.optionIds) {
+    const next = d.guest.optionIds.filter((v) => v !== id);
+    d.guest.optionIds = next.length ? next : null;
+  }
   return true;
 }
 

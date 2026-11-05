@@ -174,7 +174,13 @@ export function repairProject(project: Project): MigrationResult {
   if (unfiled) warnings.push(`${unfiled} item(s) were on a missing layer and are now unassigned.`);
   const camIds = new Set<string>();
   p.cameras = p.cameras.filter((c) => (camIds.has(c.id) ? false : (camIds.add(c.id), true)));
-  if (p.guest.startCameraId && !camIds.has(p.guest.startCameraId)) p.guest.startCameraId = null;
+  if (p.guest.startCameraId && p.guest.startCameraId !== '__top__' && !camIds.has(p.guest.startCameraId)) p.guest.startCameraId = null;
   if (p.guest.viewIds) p.guest.viewIds = p.guest.viewIds.filter((v) => camIds.has(v));
+  const optIds = new Set((p.options ?? []).map((o) => o.id));
+  if (p.guest.defaultOptionId && !optIds.has(p.guest.defaultOptionId)) p.guest.defaultOptionId = null;
+  if (p.guest.optionIds) {
+    const next = p.guest.optionIds.filter((v) => optIds.has(v));
+    p.guest.optionIds = next.length ? next : null;
+  }
   return { project: p, warnings };
 }

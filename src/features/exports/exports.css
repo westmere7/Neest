@@ -182,6 +182,14 @@
   min-height: 26px;
   cursor: pointer;
 }
+.guest-view-row input[type='checkbox'] {
+  accent-color: var(--accent);
+  margin: 0;
+}
+.guest-view-row label:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 .guest-view-row span {
   display: flex;
   gap: 2px;
