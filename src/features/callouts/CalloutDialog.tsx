@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Dialog } from '@/components/Overlays';
-import { Button, Select, Toggle } from '@/components/ui';
+import { Button, Select } from '@/components/ui';
 import { CALLOUT_COLORS, type Callout, type CalloutTarget, type Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { calloutAnchor } from '@/domain/geometry/callouts';
@@ -73,7 +73,7 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
     onClose();
   };
   const save = () => {
-    const { id: _id, ...patch } = { ...draft, title: '' };
+    const { id: _id, ...patch } = { ...draft, title: '', showInfo: false };
     useProjectStore.getState().execute(isNew ? 'Add note' : 'Edit note', (d) => updateCallout(d, id, patch));
     onClose();
   };
@@ -235,13 +235,6 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
             <NoteImagesEditor images={draft.images} onChange={(images) => set({ images })} />
             <span className="field-hint">Shown in the note’s full view (Notes panel, Inspector), not on the plan or in 3D.</span>
           </div>
-          {kind !== 'point' && kind !== 'general' && (
-            <Toggle
-              label={kind === 'object' ? 'Show the item’s name, maker, size and finish' : kind === 'room' ? 'Show the room’s name and area' : 'Show the area’s size'}
-              checked={draft.showInfo}
-              onChange={(v) => set({ showInfo: v })}
-            />
-          )}
           <div className="field callout-color-row">
             <span className="field-label">Colour</span>
             <div className="callout-colors">

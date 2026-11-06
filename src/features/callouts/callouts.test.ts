@@ -19,7 +19,7 @@ import { buildDxf } from '@/features/exports/dxf';
 import { buildSheet, defaultSheetOptions } from '@/features/exports/sheet';
 import { buildPlanImageSvg } from '@/features/exports/planExports';
 import { buildDemoProject } from '@/features/projects/demoProject';
-import { calloutInfo, calloutLines, lineText, noteSummary, parseInline, parseNote, safeHref, wrapRuns } from './content';
+import { calloutLines, lineText, noteSummary, parseInline, parseNote, safeHref, wrapRuns } from './content';
 import { CalloutCard } from './CalloutCard';
 import { notesOn } from './ItemNotes';
 import { calloutExtent, hitCalloutAnchor, layoutCallout, visibleCallouts } from './layout';
@@ -91,22 +91,42 @@ describe('callout notes', () => {
 });
 
 describe('callout targets', () => {
-  it('follows its item and shows its facts', () => {
-    const { p, obj } = base();
+  it('follows its item and shows only the note text without automatic parameters', () => {
+    const { p, obj, roomId } = base();
     let id = '';
+    let spotId = '';
+    let roomNote = '';
+    let areaNote = '';
     const q = edit(p, (d) => {
-      id = addCallout(d, { target: { kind: 'object', objectId: obj } });
+      id = addCallout(d, { target: { kind: 'object', objectId: obj }, note: 'Keep finish', showInfo: true });
+      spotId = addCallout(d, { target: { kind: 'point', x: 1.8, y: 2.1, z: 1.33 }, note: '**Treo quần áo mặc dở**', showInfo: true });
+      roomNote = addCallout(d, { target: { kind: 'room', roomId }, note: 'Warm lighting', showInfo: true });
+      areaNote = addCallout(d, {
+        target: { kind: 'region', points: [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 0, y: 1 }] },
+        note: 'Storage zone',
+        showInfo: true,
+      });
     });
+    const derived = derivePlan(q);
     const c = q.callouts[id];
     expect(c.offset).toEqual({ x: 0.9, y: -0.9 });
-    expect(calloutAnchor(q, derivePlan(q), c.target)).toMatchObject({ x: 1, y: 1, z: 0.55 });
+    expect(calloutAnchor(q, derived, c.target)).toMatchObject({ x: 1, y: 1, z: 0.55 });
     const moved = edit(q, (d) => void (d.objects[obj].x = 2));
     expect(calloutAnchor(moved, null, c.target)?.x).toBe(2);
-    const info = calloutInfo(q, null, c);
-    expect(info[0]).toBeTruthy();
-    expect(info.some((l) => /50/.test(l) && /40/.test(l))).toBe(true);
-    // No title: the item name becomes the title line.
-    expect(calloutLines(q, null, c)[0].role).toBe('title');
+
+    // Every note target renders only its note body text (no Height, dimensions, finish or area lines).
+    expect(calloutLines(q, derived, c).map(lineText)).toEqual(['Keep finish']);
+    expect(calloutLines(q, derived, q.callouts[spotId]).map(lineText)).toEqual(['Treo quần áo mặc dở']);
+    expect(calloutLines(q, derived, q.callouts[roomNote]).map(lineText)).toEqual(['Warm lighting']);
+    expect(calloutLines(q, derived, q.callouts[areaNote]).map(lineText)).toEqual(['Storage zone']);
+
+    for (const cid of [id, spotId, roomNote, areaNote]) {
+      const html = renderToStaticMarkup(createElement(CalloutCard, { project: q, derived, callout: q.callouts[cid] }));
+      expect(html).not.toContain('Height');
+      expect(html).not.toContain('callout-info');
+      expect(html).not.toContain('callout-title');
+      expect(html).not.toMatch(/m²|×/);
+    }
   });
 
   it('points at a room label point and an area centroid', () => {
@@ -123,7 +143,7 @@ describe('callout targets', () => {
     expect(r.x).toBeLessThan(4);
     expect(r.outline?.length).toBeGreaterThanOrEqual(4);
     expect(calloutAnchor(q, derived, q.callouts[area].target)).toMatchObject({ x: 1, y: 0.5, z: 0 });
-    expect(calloutInfo(q, derived, q.callouts[area]).join(' ')).toMatch(/2(\.0+)? m²/);
+    expect(calloutLines(q, derived, q.callouts[area]).map(lineText)).toEqual(['Note']);
   });
 
   it('removes notes with their item and keeps notes of a deleted room as spots', () => {
@@ -298,7 +318,6 @@ describe('callouts on the plan and in exports', () => {
     const dPlan = derivePlan(q);
     expect(calloutAnchor(q, dPlan, q.callouts[genId].target)).toBeNull();
     expect(layoutCallout(q, dPlan, q.callouts[genId], 0.02)).toBeNull();
-    expect(calloutInfo(q, dPlan, q.callouts[genId])).toEqual([]);
     expect(describeCalloutTarget(q, genId)).toBe('General comment');
     const svg = renderToStaticMarkup(createElement(CalloutsSvg, { project: q, derived: dPlan, px: 0.02, fontFamily: 'sans-serif' }));
     expect(svg).not.toContain('Budget cap');
@@ -344,12 +363,16 @@ describe('callouts on the plan and in exports', () => {
     expect(useEditorStore.getState().hoveredNoteId).toBeNull();
     expect(useEditorStore.getState().hover).toBeNull();
 
-    // NotesPanel renders both general and pinned comments.
+    // NotesPanel renders both general and pinned comments, a primary "+ Add comment" button, and a "Show in workspace" toggle without the hint text.
     const panelHtml = renderToStaticMarkup(createElement(NotesPanel));
     expect(panelHtml).toContain('Budget cap');
     expect(panelHtml).toContain('Side table finish');
     expect(panelHtml).toContain('Flooring');
     expect(panelHtml).toContain('General');
+    expect(panelHtml).toMatch(/class="[^"]*btn-primary[^"]*notes-add-btn/);
+    expect(panelHtml).toContain('Show in workspace');
+    expect(panelHtml).toContain('role="switch"');
+    expect(panelHtml).not.toContain('notes-mode-hint');
 
     toggleNotesMode();
     expect(useEditorStore.getState().notesMode).toBe(false);

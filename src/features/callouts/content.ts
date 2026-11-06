@@ -1,12 +1,9 @@
 import type { Callout, Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
-import { calloutRegionArea } from '@/domain/geometry/callouts';
-import { formatArea, formatLength } from '@/domain/model/units';
-import { ROOM_TYPE_LABELS } from '@/domain/model/defaults';
-import { getObjectAsset, resolveMaterial } from '@/data/assets/registry';
+import { getObjectAsset } from '@/data/assets/registry';
 
 /**
- * Callout content: the note's light formatting, the target's facts, and plain-text wrapping that
+ * Callout content: the note's light formatting and plain-text wrapping that
  * the plan (SVG), the 3D labels, captures (canvas) and DXF all share.
  *
  * Note syntax (a small Markdown subset): **bold**, *italic*, [text](https://…) and bare
@@ -96,39 +93,6 @@ export function parseNote(note: string): Block[] {
   return blocks;
 }
 
-/** The target's facts as short lines: item name, maker and model, size, finish; room name, area, ceiling; area size. */
-export function calloutInfo(project: Project, derived: DerivedPlan | null, c: Callout): string[] {
-  const s = project.settings;
-  const len = (m: number) => formatLength(m, s.units, s.precision);
-  const t = c.target;
-  if (t.kind === 'object') {
-    const o = project.objects[t.objectId];
-    if (!o) return [];
-    const asset = getObjectAsset(project, o);
-    const lines = [o.name || asset?.name || 'Item'];
-    if (asset?.brand) lines.push(`${asset.brand.name} ${asset.brand.model}`);
-    lines.push(`${len(o.width)} × ${len(o.depth)} × ${len(o.height)}`);
-    const slot = asset?.slots[0];
-    if (slot) {
-      const m = resolveMaterial(project, o.materials[slot.id] ?? slot.defaultMaterial);
-      if (m?.name) lines.push(`${slot.label}: ${m.name}`);
-    }
-    return lines;
-  }
-  if (t.kind === 'room') {
-    const r = project.rooms[t.roomId];
-    if (!r) return [];
-    const lines = [r.name || ROOM_TYPE_LABELS[r.type]];
-    const face = derived?.roomFaces.get(r.id);
-    if (face) lines.push(formatArea(face.area, s.areaUnit, s.precision));
-    if (r.ceilingHeight) lines.push(`Ceiling ${len(r.ceilingHeight)}`);
-    return lines;
-  }
-  if (t.kind === 'general') return [];
-  if (t.kind === 'region') return [`Area ${formatArea(calloutRegionArea(t), s.areaUnit, s.precision)}`];
-  return t.z > 0.01 ? [`Height ${len(t.z)}`] : [];
-}
-
 /** A rendered line of a callout label. */
 export interface Line {
   runs: Run[];
@@ -200,12 +164,7 @@ export function noteSummary(c: Pick<Callout, 'note'>, max = 40, fallback = 'Note
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
-/** The facts heading a note: an item's or room's name leads in bold; a spot's height or an area's size stays a fact. */
-export function noteHeading(c: Callout, info: string[]): string {
-  return info.length && (c.target.kind === 'object' || c.target.kind === 'room') ? info.shift()! : '';
-}
-
-/** What a note points at, in a few words: General, the item's or room's name, Area (size) or Spot. */
+/** What a note points at, in a few words: General, the item's or room's name, Area or Spot. */
 export function noteTargetLabel(project: Project, c: Callout): string {
   const t = c.target;
   if (t.kind === 'general') return 'General';
@@ -214,17 +173,13 @@ export function noteTargetLabel(project: Project, c: Callout): string {
     return o ? o.name || getObjectAsset(project, o)?.name || 'Item' : 'Item';
   }
   if (t.kind === 'room') return project.rooms[t.roomId]?.name || 'Room';
-  if (t.kind === 'region') return `Area (${formatArea(calloutRegionArea(t), project.settings.areaUnit, project.settings.precision)})`;
+  if (t.kind === 'region') return 'Area';
   return 'Spot';
 }
 
-/** All lines of a callout label: facts (when shown; an item or room name as a heading), then the note, wrapped. */
-export function calloutLines(project: Project, derived: DerivedPlan | null, c: Callout, width = CALLOUT_WRAP): Line[] {
+/** All lines of a callout label: the note's formatted paragraphs and lists, wrapped. */
+export function calloutLines(_project: Project, _derived: DerivedPlan | null, c: Callout, width = CALLOUT_WRAP): Line[] {
   const out: Line[] = [];
-  const info = c.showInfo ? calloutInfo(project, derived, c) : [];
-  const title = noteHeading(c, info);
-  if (title) for (const l of wrapRuns([{ text: title, bold: true }], width, null, 0)) out.push({ runs: l, role: 'title', indent: 0 });
-  for (const f of info) for (const l of wrapRuns([{ text: f }], width, null, 0)) out.push({ runs: l, role: 'info', indent: 0 });
   for (const b of parseNote(c.note)) {
     const prefix = b.kind === 'bullet' ? '• ' : b.kind === 'number' ? `${b.n}. ` : '';
     const indent = prefix.length;

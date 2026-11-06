@@ -10,7 +10,7 @@ import { namedView } from '@/features/scene-3d/cameraViews';
 import { sunFromSettings } from '@/features/scene-3d/SceneContent';
 import type { GuestCallout, GuestCamera, GuestData, GuestLamp, GuestNote, GuestOption, GuestQuality, GuestRun } from '@/guest-viewer/main';
 import { callout3DPoints } from '@/features/callouts/Callouts3D';
-import { calloutInfo, calloutLines, noteHeading, noteTargetLabel, parseNote, type Run } from '@/features/callouts/content';
+import { calloutLines, noteTargetLabel, parseNote, type Run } from '@/features/callouts/content';
 import { NOTE_LINE_WIDTH, NOTE_SIZE_SCALE, endPx, labelColors, leaderDash } from '@/features/callouts/style';
 import { buildPlanImageSvg } from './planExports';
 import { exportOptionsGlb } from './sceneExport';
@@ -59,6 +59,7 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-seg{display:flex;gap:4px;margin:4px 0 6px}
 .ng-seg button{flex:1;border:1px solid rgba(255,255,255,.14);background:transparent;color:#f2efe9;border-radius:7px;padding:6px;font:inherit;font-size:12px;cursor:pointer}
 .ng-seg button.on{background:#6fb3a0;color:#0f2a26;border-color:transparent;font-weight:600}
+.ng-seg button:focus-visible{outline:2px solid #a3cfc1;outline-offset:1px}
 .ng-label{color:#b0ada7;font-size:11px;margin-top:6px}
 .ng-btn{border:1px solid rgba(255,255,255,.14);background:rgba(29,31,34,.82);color:#f2efe9;border-radius:9px;padding:8px 12px;font:inherit;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);white-space:nowrap}
 .ng-btn:hover{background:rgba(52,55,60,.9)}
@@ -78,9 +79,14 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-switch{position:relative;flex:none;width:26px;height:15px;border-radius:8px;background:rgba(255,255,255,.22);transition:background .15s}
 .ng-switch::after{content:"";position:absolute;left:2px;top:2px;width:11px;height:11px;border-radius:50%;background:#f2efe9;transition:transform .15s}
 .ng-toggle[aria-pressed=true]{border-color:rgba(111,179,160,.6)}
-[aria-pressed=true]>.ng-switch{background:#6fb3a0}
-[aria-pressed=true]>.ng-switch::after{transform:translateX(11px)}
-.ng-note-modes{margin:4px 0 10px}
+[aria-pressed=true]>.ng-switch,[aria-checked=true]>.ng-switch{background:#6fb3a0}
+[aria-pressed=true]>.ng-switch::after,[aria-checked=true]>.ng-switch::after{transform:translateX(11px)}
+.ng-switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0}
+.ng-switch-row label{flex:1;padding:4px 0;cursor:pointer}
+.ng-switch-btn{display:inline-flex;align-items:center;min-height:24px;padding:4px 0;border:0;border-radius:8px;background:none;color:inherit;cursor:pointer}
+.ng-switch-btn:focus-visible{outline:2px solid #a3cfc1;outline-offset:2px}
+.ng-note-modes{margin:4px 0 10px;transition:opacity .15s}
+.ng-note-modes.ng-modes-off{opacity:.45}
 .ng-bar{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:5px;border-radius:13px;background:rgba(29,31,34,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100vw - 24px);z-index:3}
 .ng-group{display:flex;gap:6px;align-items:center}
 .ng-group:empty{display:none}
@@ -226,15 +232,10 @@ function guestNotes(project: Project, derived: ReturnType<typeof derivePlan>, im
   // The guest Notes setting decides, not the editor's Notes layer (a working view); notes hidden one by one stay out.
   for (const c of Object.values(project.callouts ?? {}).filter((x) => !x.hidden)) {
     const pts = callout3DPoints(project, derived, c, project.render.notePlacement);
-    const info = c.showInfo ? calloutInfo(project, derived, c) : [];
-    const heading = noteHeading(c, info);
     notes.push({
       label: pts ? callouts.length : -1,
       color: labelColors(c).main,
-      // With the facts shown, the name or size is already in the note: the chip says what kind it is.
-      target: info.length || heading ? (({ object: 'Item', room: 'Room', region: 'Area' }) as Record<string, string>)[c.target.kind] ?? noteTargetLabel(project, c) : noteTargetLabel(project, c),
-      ...(heading ? { heading } : {}),
-      info,
+      target: noteTargetLabel(project, c),
       blocks: parseNote(c.note).map((b) => ({ k: b.kind === 'bullet' ? ('b' as const) : b.kind === 'number' ? ('n' as const) : ('p' as const), ...(b.n !== undefined ? { n: b.n } : {}), runs: toRuns(b.runs) })),
       images: images ? c.images.map((im) => ({ src: im.src, w: im.w, h: im.h })) : [],
       ...(pts ? { at: [r3(pts.anchor.x), r3(pts.anchor.y), r3(pts.anchor.z)] as [number, number, number] } : {}),

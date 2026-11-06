@@ -183,6 +183,8 @@ describe('guest export data', () => {
     expect('startMode' in data).toBe(false);
     expect('walk' in data).toBe(false);
     expect(data.notesHidden).toBe(true);
+    // By default (`guest.notes === 'shown'`), floating notes start shown so the "Show in workspace" toggle is on.
+    expect((await buildGuestData(buildDemoProject())).notesHidden).toBe(false);
     // Notes open as pins unless the export says otherwise, whatever the editor's 3D view shows.
     expect(data.noteDisplay).toBe('icon');
     expect((await buildGuestData(edit(p, (d) => void (d.guest.noteDisplay = 'compact')))).noteDisplay).toBe('compact');
@@ -192,6 +194,15 @@ describe('guest export data', () => {
     const [opt] = data.options;
     expect(opt.callouts.length).toBeGreaterThan(0);
     expect(opt.notes.length).toBeGreaterThanOrEqual(opt.callouts.length);
+    // Floating callouts and Notes list items carry only note text, never automatic Height / size / area lines.
+    for (const c of opt.callouts) {
+      expect(c.lines.every((l) => l.role !== 'info')).toBe(true);
+      expect(c.lines.map((l) => l.runs.map((r) => r.t).join('')).join('\n')).not.toMatch(/^Height /m);
+    }
+    for (const n of opt.notes) {
+      expect('info' in n).toBe(false);
+      expect('heading' in n).toBe(false);
+    }
     expect(data.roomsOn).toBe(true);
     expect(opt.rooms.length).toBeGreaterThan(0);
     expect('colliders' in opt).toBe(false);
@@ -278,6 +289,9 @@ describe('guest export data', () => {
     expect(html).toMatch(/@media \(max-width:640px\)/);
     // Phones on their side get the compact layout too.
     expect(html).toMatch(/@media \(max-width:640px\),\(max-height:500px\)/);
+    // Panel switch styling supports role="switch" (`aria-checked=true`) for the "Show in workspace" toggle.
+    expect(html).toMatch(/\[aria-checked=true\]>\.ng-switch/);
+    expect(html).toMatch(/\.ng-switch-row/);
   });
 
   it('carries selected layout options and opens on the chosen default option', async () => {
@@ -409,10 +423,13 @@ describe('guest export data', () => {
     expect(runtime).toMatch(/neestCeiling/);
     expect(runtime).toMatch(/ng-lightbox/);
     expect(runtime).not.toMatch(/Walk through|Exit walkthrough|Ghost|requestPointerLock/);
-    // Panel buttons are not switches (aria-expanded), notes float on a switch, a tap hides the controls.
+    // Panel buttons are not switches (aria-expanded), notes float on a "Show in workspace" switch above Icons / Compact / Full (no "Off" mode button), a tap hides the controls.
     expect(runtime).toMatch(/ng-pbtn/);
     expect(runtime).toMatch(/aria-expanded/);
     expect(runtime).toMatch(/Notes in the 3D view/);
+    expect(runtime).toMatch(/Show in workspace/);
+    expect(runtime).toMatch(/ng-switch-row/);
+    expect(runtime).not.toMatch(/\[['"]off['"],\s*['"]Off['"]\]/);
     expect(runtime).toMatch(/ng-pin/);
     expect(runtime).toMatch(/ng-immersive/);
   });

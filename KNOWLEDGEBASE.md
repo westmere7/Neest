@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-05 (guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-06 (notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -194,7 +194,7 @@ Principles that must hold:
 | `CameraPreset` | projection, position, target, fov, zoom, optional `wallDisplay` |
 | `RenderSettings` | quality draft/balanced/high, exposure, timeOfDay, sunAzimuth/Intensity, envIntensity, shadows, background, wallDisplay full/cutaway/fade/hidden, cutawayHeight, showCeilings, showRoomLabels, hiddenCategories |
 | `guest` | `startCameraId` (Guest View and guest export only; the editor always opens on a fitted view), `spawn`, `spawnAngle` |
-| `Callout` | `target` = `general` (no location: listed in the Notes panel only) / `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; object, room and region targets take optional `dx/dy/dz` (the pinned spot relative to the item's top centre in its own frame, the room anchor or the area centroid); `offset` (plan metres, label from anchor), `lift` (3D float height), `title` (retired, folded into `note` on load), `note` (Markdown subset), `images` (data URLs, full view only), `showInfo`, `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
+| `Callout` | `target` = `general` (no location: listed in the Notes panel only) / `point {x,y,z}` / `object {objectId}` / `room {roomId}` / `region {points}`; object, room and region targets take optional `dx/dy/dz` (the pinned spot relative to the item's top centre in its own frame, the room anchor or the area centroid); `offset` (plan metres, label from anchor), `lift` (3D float height), `title` (retired, folded into `note` on load), `note` (Markdown subset), `images` (data URLs, full view only), `showInfo` (retired, ignored), `color` (teal/brass/coral/blue/slate), `hidden`. Stored per layout option (`PLAN_KEYS`); `layers.callouts` toggles all |
 | `ServicePoint` | Connections mode (§10 "Services"): `kind` (14 kinds in `domain/model/services.ts`), `x`,`y`, `host` wall/floor/ceiling, `wallId` (wall points follow that wall's face), `height` (wall points), `rotation` (facing), `label`, `note`. Per layout option (`servicePoints`) |
 | `ServiceRun` | `system` power/water/drain, `level` wall/floor/ceiling (drain: floor only), `hot` (water), `points` (plan polyline), `height` (wall runs), `label`. Per layout option (`serviceRuns`) |
 | `PlacedObject.serviceLinks` | per system `{ pin, skip[] }`: the point the user connected by hand, and points they disconnected; absent = automatic |
@@ -536,13 +536,12 @@ point under the pointer). An item's or room's panel header has a note icon (lit 
 pinned to it, and for items spot notes standing on its footprint, `notesOn`): one note opens its editor, several give
 a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens at once (Cancel on a new note removes it).
 
-- **Notes have a body only.** `Callout.title` is retired: nothing edits or draws it, and `repairProject` folds an old
-  title into the note as a bold first line (`foldNoteTitle`, every layout option). Short labels (menus, the status
-  bar) use the note's first line (`content.ts › noteSummary`). With "show the facts" on, an item's or room's name heads
-  the label in bold (`noteHeading`); a spot's height and an area's size stay ordinary fact lines.
+- **Notes show only their body text.** Both `Callout.title` and `Callout.showInfo` (automatic target metrics such as
+  `Height …`, item dimensions/finish, room area/ceiling or area size) are retired: nothing edits or draws them, and
+  `repairProject` folds an old title into the note as a bold first line (`foldNoteTitle`, every layout option). Short
+  labels (menus, the status bar, 3D Compact) use the note's first line (`content.ts › noteSummary`).
 - Editor (`CalloutDialog`): Points to (a dropdown: general / spot / item / room under it / area), the note with a
-  toolbar (bold, italic, lists, link form, Ctrl+B/I/K, Ctrl+Enter saves; it gets the focus), **Images**, show the
-  target's facts (`calloutInfo`), colour.
+  toolbar (bold, italic, lists, link form, Ctrl+B/I/K, Ctrl+Enter saves; it gets the focus), **Images**, colour.
 - **Images** (`Callout.images`, ≤ 8 `NoteImage {id, src, w, h}`, bad entries load as none): embedded data URLs so the
   project file stays self-contained and syncs through `projects/`. `images.ts › readNoteImage` decodes, scales the long
   side to 1600 px and re-encodes as WebP (JPEG fallback), stepping down until it fits 3 M characters (a 2400 × 1600 PNG
@@ -577,7 +576,7 @@ a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens 
   visible. Render captures and the guest viewer use the same layout.
   Click selects, double-click edits. Hidden while the scene loads and in walk mode.
 - **Note display** (`render.noteDisplay`, 3D view panel next to Note placement): **Full** cards, **Compact** (one line:
-  the item's or room's name, else the note's first line; `CalloutCard compact`), or **Icons** (a round pin with a tail
+  the note's first line; `CalloutCard compact`), or **Icons** (a round pin with a tail
   on each spot, `.note-pin`; a click opens that note's full card and selects it, a selected note shows its card).
   The in-app Guest view starts with it; the exported guest walkthrough has its own setting (`guest.noteDisplay`, Export
   → Guest walkthrough → Note style, **Icons** by default), and guests can change either. Render captures keep full cards.
@@ -589,8 +588,9 @@ a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens 
 - **Comments & notes mode** (`editor.notesMode`, `features/callouts/actions.ts › setNotesMode/toggleNotesMode`; K, the
   rail's "Comments & notes" button or the top-bar icon, desktop only): arms the note tool and replaces the library, the
   Inspector, the finish panel and the Layers panel with `NotesPanel` (`.notes-panel`, registered in `layoutInsets`).
-  Entering keeps only note selections, leaves Connections and switches Walk to 3D. The panel lists every note with
-  its target chip, adds **general** comments (no location) inline, edits, recolours, hides, focuses and deletes;
+  Entering keeps only note selections, leaves Connections and switches Walk to 3D. The panel has a primary "+ Add comment"
+  button and a "Show in workspace" toggle (`layers.callouts.visible`) at the top, lists every note with its target chip,
+  adds **general** comments (no location) inline, edits, recolours, hides, focuses and deletes;
   hovering a row highlights the note and its item or room (`hoverNoteInPanel`, `editor.hoveredNoteId`). The note tool
   stays armed after each placement. **Picking another tool or mode leaves it**: any tool but note/select/pan, Connections,
   the Layers panel or Walk (a subscription in `editorStore.ts`), plus the rail's Library and Select buttons and V
@@ -813,7 +813,8 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   by on/off switches (`aria-pressed`: Tour, Full screen) and **panel buttons** (icon + label, `aria-expanded`, lit while
   open: Info, Notes, View; never drawn as switches); `#/guest/:id` keeps saved views at top right plus the Walk through /
   Exit action button and Fly / Ghost switches when walking. The HTML export's Notes list and
-  View panel offer "Notes in the 3D view": Off / Icons / Compact / Full (pins open their card; Show opens it too).
+  View panel offer "Notes in the 3D view": a "Show in workspace" switch (on by default unless `guest.notes === 'hidden'`)
+  above Icons / Compact / Full (pins open their card; Show turns on workspace notes and opens it too).
   **Phones** (`max-width:640px` portrait, `max-height:500px` landscape): a one-row bottom bar (View drop-down + icon-only
   toggles and panel buttons), a slim top (title and Layout options on one row in portrait; one top row in landscape),
   one panel at a time; a tap on the scene hides or shows every control (`ng-immersive`); the help hint fades after 4.5 s.
@@ -2273,3 +2274,19 @@ Known limitations (also in README):
      main FETCH_HEAD` + deletes any leftover `neest-publish` branch in `sync()`, supports `GITHUB_TOKEN` / `GH_TOKEN` from
      `.env.local` (git-ignored) for machines using GitHub Desktop where macOS Keychain has no CLI git sign-in, and surfaces a
      clear auth message when CLI git is unsigned. Test in `tools/neest-share-plugin.test.ts` (done).
+184. "Cái Note này ở trạng thái show note bỏ mấy thông số không cần thiết đi, để text note là được" → retired automatic
+     target parameters (`Height …`, item dimensions/finish, room area/ceiling, area size) across all displayed notes (2D
+     plan, 3D overlay, Notes panel, Inspector, captures, DXF and Guest viewer): removed `calloutInfo`/`noteHeading` from
+     `content.ts`, `CalloutCard.tsx`, `guestExport.ts` and `src/guest-viewer/main.ts`, retired the `showInfo` toggle in
+     `CalloutDialog.tsx` (`CalloutSchema.showInfo` defaults to `false` and is ignored so existing project files still
+     validate cleanly). Tests in `callouts.test.ts` and `guestExport.test.ts` (done).
+185. "Trong comment, bỏ text hướng dẫn và sửa: Add comment đổi màu thành primary button; Hình mắt show/hide comment chuyển
+     xuống dưới phần text hướng dẫn đã bỏ đổi thành toggle button kèm label Show in working hoặc text gì cho dễ hiểu" →
+     `NotesPanel.tsx` & `callouts.css`: removed `.notes-mode-hint`, changed `+ Add comment` to `<Button variant="primary">`,
+     and moved the header eye icon out to a `<Toggle label="Show in workspace">` below `+ Add comment`. Test in
+     `callouts.test.ts` (done).
+186. "ở chế độ view sau khi export. Chỗ note 'off' này cũng để thành toggle show in workspace đặt bên trên chế độ view
+     (icon, compact, full). và default bật toggle để show" → `src/guest-viewer/main.ts` & `src/features/exports/guestExport.ts`:
+     removed `'Off'` from `NOTE_MODES` (leaving `Icons`, `Compact`, `Full`) and placed a `Show in workspace` switch row
+     (`.ng-switch-row`, `role="switch"`, synced across the Notes and View panels and on by default via `guest.notes: 'shown'`)
+     directly above `.ng-note-modes`. Test in `guestExport.test.ts` (done).

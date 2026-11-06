@@ -17,10 +17,8 @@ import {
 import { CALLOUT_COLORS, type Callout, type CalloutColor, type NoteImage, type Project } from '@/domain/model/schema';
 import { addCallout, deleteCallouts, updateCallout } from '@/domain/commands/callouts';
 import { derivePlan, type DerivedPlan } from '@/domain/geometry/derive';
-import { calloutRegionArea } from '@/domain/geometry/callouts';
-import { formatArea } from '@/domain/model/units';
 import { getObjectAsset } from '@/data/assets/registry';
-import { Button, IconButton } from '@/components/ui';
+import { Button, IconButton, Toggle } from '@/components/ui';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { useDialogStore, usePrefsStore } from '@/state/uiStores';
@@ -46,8 +44,7 @@ function targetChip(project: Project, derived: DerivedPlan, c: Callout): { icon:
     return { icon: <Home size={12} />, label: name, kindLabel: `Room: ${name}` };
   }
   if (t.kind === 'region') {
-    const area = formatArea(calloutRegionArea(t), project.settings.areaUnit, project.settings.precision);
-    return { icon: <VectorSquare size={12} />, label: `Area (${area})`, kindLabel: `Area: ${area}` };
+    return { icon: <VectorSquare size={12} />, label: 'Area', kindLabel: 'Area' };
   }
   void derived;
   return { icon: <MapPin size={12} />, label: 'Spot', kindLabel: 'Pinned spot' };
@@ -143,45 +140,40 @@ export function NotesPanel() {
     <aside className="notes-panel floating" aria-label="Comments and notes" data-testid="notes-panel">
       <div className="notes-panel-head">
         <div className="notes-panel-title">
-          <MessageSquareText size={15} />
+          <MessageSquareText size={15} aria-hidden="true" />
           <span>Comments</span>
           <span className="notes-panel-count" data-testid="notes-count">
             {allNotes.length}
           </span>
         </div>
         <div className="notes-panel-head-actions">
-          <IconButton
-            label={layerVisible ? 'Hide pinned notes on plan' : 'Show pinned notes on plan'}
-            onClick={() => execute('Toggle notes layer', (d) => void (d.layers.callouts.visible = !layerVisible))}
-            data-testid="notes-toggle-layer"
-          >
-            {layerVisible ? <Eye size={14} /> : <EyeOff size={14} />}
-          </IconButton>
           <IconButton label="Leave Comments mode" shortcut="K" onClick={() => setNotesMode(false)} data-testid="notes-panel-close">
-            <X size={15} />
+            <X size={15} aria-hidden="true" />
           </IconButton>
         </div>
       </div>
 
-      {/* Add general comment button + hint */}
+      {/* Add general comment button + workspace visibility toggle */}
       <div className="notes-panel-actions">
-        <button
-          type="button"
-          className={`notes-tool-btn notes-add-btn ${addingGeneral ? 'active' : ''}`}
+        <Button
+          variant="primary"
+          className="notes-add-btn"
+          aria-expanded={addingGeneral}
           onClick={() => {
             setAddingGeneral((v) => !v);
             setEditingId(null);
           }}
-          title="Add a general comment"
           data-testid="notes-add-general"
         >
-          <MessageSquarePlus size={14} />
+          <MessageSquarePlus size={14} aria-hidden="true" />
           <span>+ Add comment</span>
-        </button>
-        <div className="notes-mode-hint">
-          Click anywhere to pin a comment to that spot (on furniture too) · Shift-click to attach it to the item · Alt-click
-          for the room · drag for an area.
-        </div>
+        </Button>
+        <Toggle
+          label="Show in workspace"
+          checked={layerVisible}
+          onChange={(v) => execute(v ? 'Show notes' : 'Hide notes', (d) => void (d.layers.callouts.visible = v))}
+          testId="notes-toggle-layer"
+        />
       </div>
 
       {/* Inline composer for adding a general comment */}

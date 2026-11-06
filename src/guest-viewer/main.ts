@@ -63,10 +63,8 @@ export interface GuestNote {
   /** Its floating label in the option's `callouts`, or -1 (a general note, no place in the scene). */
   label: number;
   color: string;
-  /** What it points at: General, an item's or room's name, Area (size), Spot. */
+  /** What it points at: General, an item's or room's name, Area, Spot. */
   target: string;
-  heading?: string;
-  info: string[];
   /** Paragraphs, bullets and numbered items. */
   blocks: { k: 'p' | 'b' | 'n'; n?: number; runs: GuestRun[] }[];
   images: { src: string; w: number; h: number }[];
@@ -122,7 +120,6 @@ export interface GuestItemLayer {
 export type GuestQuality = 'fast' | 'balanced' | 'high';
 /** Notes floating in the view: full cards, one line each, or a pin on each spot that opens its card. */
 export type NoteDisplay = 'full' | 'compact' | 'icon';
-type NoteMode = NoteDisplay | 'off';
 type LampBudget = { point: number; spot: number; shadows: number };
 
 export interface GuestData {
@@ -272,9 +269,38 @@ function choice<T extends string>(options: [T, string][], value: T, onChange: (v
     box.append(btn);
     return btn;
   });
-  const set = (v: T) => buttons.forEach((b) => b.classList.toggle('on', b.dataset.value === v));
+  const set = (v: T) =>
+    buttons.forEach((b) => {
+      const on = b.dataset.value === v;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
   set(value);
   return { box, set };
+}
+
+let switchSeq = 0;
+
+/** A labelled on/off switch row inside a panel (label on the left, pill switch on the right). */
+function switchRow(
+  label: string,
+  on: boolean,
+  onChange: (on: boolean) => void,
+): { row: HTMLDivElement; set: (on: boolean) => void } {
+  const id = `ng-sw-${++switchSeq}`;
+  const row = el('div', 'ng-switch-row');
+  const lbl = el('label', '', label);
+  lbl.htmlFor = id;
+  const btn = el('button', 'ng-switch-btn');
+  btn.id = id;
+  btn.type = 'button';
+  btn.setAttribute('role', 'switch');
+  btn.append(el('span', 'ng-switch'));
+  const set = (next: boolean) => btn.setAttribute('aria-checked', String(next));
+  set(on);
+  btn.onclick = () => onChange(btn.getAttribute('aria-checked') !== 'true');
+  row.append(lbl, btn);
+  return { row, set };
 }
 
 /**
@@ -442,8 +468,8 @@ function start(data: GuestData) {
     /** Pendants, ceiling lights and fans (hidden by default so the view from above stays clear). */
     ceilingItems: false,
     notes: anyOption((o) => o.callouts.length > 0) && !data.notesHidden,
-    /** How notes float (off, pins, one line, full). */
-    noteMode: (data.notesHidden ? 'off' : (data.noteDisplay ?? 'full')) as NoteMode,
+    /** How notes float when shown (pins, one line, full). */
+    noteDisplay: (data.noteDisplay ?? 'icon') as NoteDisplay,
     rooms: !!data.roomsOn,
   };
   const layerOn = new Map(data.options.flatMap((o) => o.layers.map((l) => [l.id, l.on] as const)));
@@ -893,8 +919,8 @@ function start(data: GuestData) {
   };
   const hide = (e: Element | null) => e && ((e as HTMLElement).style.visibility = 'hidden');
   const placeCallouts = () => {
-    const mode = show.noteMode;
-    const on = mode !== 'off';
+    const on = show.notes;
+    const mode = show.noteDisplay;
     calloutGroup.visible = on;
     calloutLayer.style.display = on ? '' : 'none';
     if (!on) return;
@@ -1071,25 +1097,39 @@ function start(data: GuestData) {
   // ── Notes list: every note of the shown option in full, with its pictures; Show turns the view to it ──
   let fillNotes = () => {};
   let setNotes = (_on: boolean) => {};
-  /** How notes float in the view, from the Notes panel or the View panel (kept in step). */
-  const noteSwitches: ((m: NoteMode) => void)[] = [];
-  const setNoteMode = (m: NoteMode) => {
-    show.noteMode = m;
-    show.notes = m !== 'off';
-    openNote = null;
-    noteSwitches.forEach((s) => s(m));
+  /** Whether notes float in the workspace and how they float, kept in step between the Notes and View panels. */
+  const noteVisibilitySetters: ((on: boolean) => void)[] = [];
+  const noteDisplaySetters: ((m: NoteDisplay) => void)[] = [];
+  const setNotesShown = (on: boolean) => {
+    show.notes = on;
+    if (!on) openNote = null;
+    noteVisibilitySetters.forEach((s) => s(on));
   };
-  const NOTE_MODES: [NoteMode, string][] = [
-    ['off', 'Off'],
+  const setNoteDisplay = (m: NoteDisplay) => {
+    show.noteDisplay = m;
+    openNote = null;
+    noteDisplaySetters.forEach((s) => s(m));
+    if (!show.notes) setNotesShown(true);
+  };
+  const NOTE_MODES: [NoteDisplay, string][] = [
     ['icon', 'Icons'],
     ['compact', 'Compact'],
     ['full', 'Full'],
   ];
   const noteModeControl = () => {
-    const c = choice<NoteMode>(NOTE_MODES, show.noteMode, setNoteMode);
+    const wrap = el('div', 'ng-note-ctrl');
+    const sw = switchRow('Show in workspace', show.notes, setNotesShown);
+    const c = choice<NoteDisplay>(NOTE_MODES, show.noteDisplay, setNoteDisplay);
     c.box.classList.add('ng-note-modes');
-    noteSwitches.push(c.set);
-    return c.box;
+    const syncShown = (on: boolean) => {
+      sw.set(on);
+      c.box.classList.toggle('ng-modes-off', !on);
+    };
+    syncShown(show.notes);
+    noteVisibilitySetters.push(syncShown);
+    noteDisplaySetters.push(c.set);
+    wrap.append(sw.row, c.box);
+    return wrap;
   };
   /** Looks at a note's spot: glides the orbit view in to it. */
   const focusNote = (n: GuestNote) => {
@@ -1108,8 +1148,9 @@ function start(data: GuestData) {
       camera === persp,
     );
     const label = n.label >= 0 ? callouts[n.label] : undefined;
+    if (label && !show.notes) setNotesShown(true);
     // Pins: Show opens the note's card.
-    if (label && show.noteMode === 'icon') openNote = label.id;
+    if (label && show.noteDisplay === 'icon') openNote = label.id;
     if (label) {
       label.card.classList.remove('ng-flash');
       void label.card.offsetWidth;
@@ -1129,8 +1170,6 @@ function start(data: GuestData) {
       head.append(go);
     }
     card.append(head);
-    if (n.heading) card.append(el('div', 'ng-note-title', n.heading));
-    for (const line of n.info) card.append(el('div', 'ng-note-info', line));
     let list: HTMLElement | null = null;
     for (const blk of n.blocks) {
       if (blk.k === 'p') {
@@ -1150,7 +1189,7 @@ function start(data: GuestData) {
       appendRuns(li, blk.runs);
       list.append(li);
     }
-    if (!n.heading && !n.info.length && !n.blocks.length && !n.images.length) card.append(el('p', 'ng-note-info', 'Note'));
+    if (!n.blocks.length && !n.images.length) card.append(el('p', 'ng-note-info', 'Note'));
     if (n.images.length) {
       const strip = el('div', 'ng-note-imgs');
       n.images.forEach((im, i) => {

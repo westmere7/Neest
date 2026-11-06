@@ -398,8 +398,8 @@ export const CalloutSchema = z.object({
    * the floating labels in the plan, the 3D view or exports. Bad entries load as none.
    */
   images: z.array(NoteImageSchema).max(NOTE_IMAGE_MAX).catch([]).default([]),
-  /** Also list the target's facts (item name, maker, size; room name and area; area size). */
-  showInfo: z.boolean().default(true),
+  /** Retired: notes show only their body text. Kept so older files load cleanly. */
+  showInfo: z.boolean().default(false),
   color: z.enum(CALLOUT_COLORS).default('teal'),
   hidden: z.boolean().default(false),
   /** Label look and text size. */

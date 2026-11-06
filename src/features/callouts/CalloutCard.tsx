@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Callout, Project } from '@/domain/model/schema';
 import type { DerivedPlan } from '@/domain/geometry/derive';
-import { calloutInfo, noteHeading, noteSummary, parseNote, type Run } from './content';
+import { noteSummary, parseNote, type Run } from './content';
 import { NOTE_SIZE_SCALE, labelColors } from './style';
 import { NoteImages } from './NoteImages';
 import './callouts.css';
@@ -28,26 +28,26 @@ function runs(list: Run[], interactive: boolean): ReactNode[] {
  * pictures (the full view); floating labels leave them out.
  */
 export function CalloutCard({
-  project,
-  derived,
+  project: _project,
+  derived: _derived,
   callout,
   interactive = true,
   selected = false,
   images = false,
   compact = false,
 }: {
-  project: Project;
-  derived: DerivedPlan | null;
+  project?: Project;
+  derived?: DerivedPlan | null;
   callout: Callout;
   interactive?: boolean;
   selected?: boolean;
   images?: boolean;
-  /** One line: the item's or room's name, else the note's first line (3D "Compact"). */
+  /** One line: the note's first line (3D "Compact"). */
   compact?: boolean;
 }) {
+  void _project;
+  void _derived;
   const colors = labelColors(callout);
-  const info = callout.showInfo ? calloutInfo(project, derived, callout) : [];
-  const title = noteHeading(callout, info);
   if (compact) {
     return (
       <div
@@ -64,7 +64,7 @@ export function CalloutCard({
         data-callout={callout.id}
         title={noteSummary(callout, 200)}
       >
-        {title || noteSummary(callout, 60)}
+        {noteSummary(callout, 60)}
       </div>
     );
   }
@@ -106,24 +106,15 @@ export function CalloutCard({
           '--callout-fill': colors.fill ?? 'transparent',
           '--callout-border': colors.stroke ?? 'transparent',
           '--callout-text': colors.text,
-          '--callout-info': colors.info,
           '--callout-link': colors.link,
           '--note-scale': NOTE_SIZE_SCALE[callout.size],
         } as React.CSSProperties
       }
       data-callout={callout.id}
     >
-      {title && <div className="callout-title">{title}</div>}
-      {info.length > 0 && (
-        <div className="callout-info">
-          {info.map((l, i) => (
-            <div key={i}>{l}</div>
-          ))}
-        </div>
-      )}
       {lists.length > 0 && <div className="callout-note">{lists}</div>}
       {images && <NoteImages images={callout.images} />}
-      {!title && !info.length && !lists.length && !(images && callout.images.length) && <div className="callout-empty">Note</div>}
+      {!lists.length && !(images && callout.images.length) && <div className="callout-empty">Note</div>}
     </div>
   );
 }
