@@ -156,6 +156,56 @@ export function wrapRuns(runs: Run[], width: number, firstPrefix: Run | null, in
 /** Characters per line of a label. */
 export const CALLOUT_WRAP = 34;
 
+/** Most lines a floating note label shows; longer notes end in "…" and open in full when clicked or selected. */
+export const NOTE_MAX_LINES = 4;
+
+/** The runs with "…" at the end (trailing spaces and punctuation dropped). */
+function withEllipsis(runs: Run[]): Run[] {
+  const out = runs.map((r) => ({ ...r }));
+  while (out.length && !out[out.length - 1].text.trim()) out.pop();
+  if (!out.length) return [{ text: '…' }];
+  const last = out[out.length - 1];
+  last.text = last.text.trimEnd().replace(/[\s,.;:–-]+$/, '') + '…';
+  return out;
+}
+
+/**
+ * A note's blocks cut to at most `maxLines` wrapped lines (as the labels wrap them), the last kept line
+ * ending in "…". `cut` says whether anything was left out.
+ */
+export function clipNoteBlocks(blocks: Block[], maxLines = NOTE_MAX_LINES, width = CALLOUT_WRAP): { blocks: Block[]; cut: boolean } {
+  const out: Block[] = [];
+  let used = 0;
+  for (const b of blocks) {
+    const prefix = b.kind === 'bullet' ? '• ' : b.kind === 'number' ? `${b.n}. ` : '';
+    const lines = wrapRuns(b.runs, width, prefix ? { text: prefix } : null, prefix.length);
+    const n = Math.max(1, lines.length);
+    if (used + n <= maxLines) {
+      out.push(b);
+      used += n;
+      continue;
+    }
+    const room = maxLines - used;
+    if (room > 0) {
+      const kept = lines.slice(0, room).map((l, k) => {
+        if (k || !prefix || !l[0]?.text.startsWith(prefix)) return l;
+        const rest = l[0].text.slice(prefix.length);
+        return rest ? [{ ...l[0], text: rest }, ...l.slice(1)] : l.slice(1);
+      });
+      // The last kept line leaves room for the "…".
+      const last = kept[kept.length - 1];
+      const len = last.reduce((t, r) => t + r.text.length, 0);
+      if (len > width - 2) {
+        const tail = last[last.length - 1];
+        tail.text = tail.text.slice(0, Math.max(0, tail.text.length - (len - (width - 2)))).replace(/\S+$/, '') || tail.text.slice(0, 1);
+      }
+      out.push({ ...b, runs: withEllipsis(kept.flatMap((l, k) => (k ? [{ text: ' ' }, ...l] : l))) });
+    } else if (out.length) out[out.length - 1] = { ...out[out.length - 1], runs: withEllipsis(out[out.length - 1].runs) };
+    return { blocks: out, cut: true };
+  }
+  return { blocks: out, cut: false };
+}
+
 /** A note's first line as plain text (menus, selection labels), or `fallback` when it has no text. */
 export function noteSummary(c: Pick<Callout, 'note'>, max = 40, fallback = 'Note'): string {
   const first = parseNote(c.note)[0];

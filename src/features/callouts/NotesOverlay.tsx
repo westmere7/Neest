@@ -7,7 +7,7 @@ import { calloutAnchor, setCalloutAnchorPoint } from '@/domain/geometry/callouts
 import { floatingInsets, type Insets } from '@/components/layoutInsets';
 import { useProjectStore } from '@/state/projectStore';
 import { liveScene } from '@/features/scene-3d/sceneRuntime';
-import { CalloutCard } from './CalloutCard';
+import { CalloutCard, NOTE_IMAGE_GLYPH } from './CalloutCard';
 import { visibleCallouts } from './layout';
 import { callout3DPoints } from './Callouts3D';
 import { inView, placeNoteLabels, screenBounds, type LabelInput, type NotePlacement, type PlacedLabel, type ScreenRect } from './placement';
@@ -162,8 +162,9 @@ function NoteMarks({
  * stays in the scene (`Callouts3D`). In the editor a click selects a note, dragging its anchor dot
  * moves the spot it points to, and a double-click edits it.
  *
- * `render.noteDisplay`: full cards, compact one-line cards, or pins on each spot ("Icons"); a pin opens
- * its note's full card (and so does selecting the note), another click closes it.
+ * `render.noteDisplay`: cards, or pins on each spot ("Icons"); a pin opens its note's card (and so does
+ * selecting the note), another click closes it. Long notes are cut after a few lines with "…" unless
+ * opened or selected. Notes with pictures carry a picture badge.
  */
 export function NotesOverlay({
   project,
@@ -382,6 +383,7 @@ export function NotesOverlay({
             }}
           >
             {PIN_GLYPH}
+            {c.images.length > 0 && <span className="callout-img-badge">{NOTE_IMAGE_GLYPH}</span>}
           </button>
         ))}
       {notes.map((c) => (
@@ -405,7 +407,7 @@ export function NotesOverlay({
             onEdit?.(c.id);
           }}
         >
-          <CalloutCard project={project} derived={derived} callout={c} selected={!!selectedIds?.has(c.id)} compact={display === 'compact'} />
+          <CalloutCard project={project} derived={derived} callout={c} selected={!!selectedIds?.has(c.id)} clip={!opened.has(c.id)} />
         </div>
       ))}
     </div>

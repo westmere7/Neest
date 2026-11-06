@@ -25,6 +25,7 @@ import {
   type ScreenRect,
 } from '@/features/callouts/placement';
 import { arrowHead } from '@/features/callouts/style';
+import { NEST_MARK } from '@/components/nestMark';
 
 export interface GuestCamera {
   name: string;
@@ -57,6 +58,8 @@ export interface GuestCallout {
     indent: number;
     runs: GuestRun[];
   }[];
+  /** How many pictures the note has in the file (a picture badge on its label and pin). */
+  images?: number;
 }
 
 /** A run of note text: bold, italic, a link. */
@@ -123,7 +126,11 @@ export interface GuestItemLayer {
 
 export type GuestQuality = 'fast' | 'balanced' | 'high';
 /** Notes floating in the view: full cards, one line each, or a pin on each spot that opens its card. */
-export type NoteDisplay = 'full' | 'compact' | 'icon';
+export type NoteDisplay = 'full' | 'icon';
+
+/** Lines a floating note shows before it is cut with "…" (clicking it shows the rest). */
+const NOTE_MAX_LINES = 4;
+const IMAGE_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4.5-4.5 3 3 2.5-2.5L19 17"/></svg>';
 type LampBudget = { point: number; spot: number; shadows: number };
 
 export interface GuestData {
@@ -159,7 +166,7 @@ export interface GuestData {
   notesHidden?: boolean;
   /** Where note labels float (see placement.ts). */
   notePlacement?: NotePlacement;
-  /** How notes float at first: full cards, one compact line, or pins that open the card (guests can change it). */
+  /** How notes float at first: cards, or pins that open the card (guests can change it). */
   noteDisplay?: NoteDisplay;
   roomsOn?: boolean;
   /** The layout options (at least one) and the one the file opens on. */
@@ -283,30 +290,6 @@ function choice<T extends string>(options: [T, string][], value: T, onChange: (v
   return { box, set };
 }
 
-let switchSeq = 0;
-
-/** A labelled on/off switch row inside a panel (label on the left, pill switch on the right). */
-function switchRow(
-  label: string,
-  on: boolean,
-  onChange: (on: boolean) => void,
-): { row: HTMLDivElement; set: (on: boolean) => void } {
-  const id = `ng-sw-${++switchSeq}`;
-  const row = el('div', 'ng-switch-row');
-  const lbl = el('label', '', label);
-  lbl.htmlFor = id;
-  const btn = el('button', 'ng-switch-btn');
-  btn.id = id;
-  btn.type = 'button';
-  btn.setAttribute('role', 'switch');
-  btn.append(el('span', 'ng-switch'));
-  const set = (next: boolean) => btn.setAttribute('aria-checked', String(next));
-  set(on);
-  btn.onclick = () => onChange(btn.getAttribute('aria-checked') !== 'true');
-  row.append(lbl, btn);
-  return { row, set };
-}
-
 /**
  * An on/off button: an icon, a label and a small switch (aria-pressed), for a state that is on or off
  * (full screen). Buttons that open a panel are `panelBtn`s, never switches.
@@ -358,7 +341,7 @@ function loadingScreen(title: string) {
   if (!box) {
     box = el('div', 'ng-loading');
     box.id = 'ng-loading';
-    box.innerHTML = `<div class="ng-load-card"><strong></strong><span class="ng-load-text"></span><ol class="ng-steps">${LOAD_STEPS.map(() => '<li></li>').join('')}</ol></div>`;
+    box.innerHTML = `<div class="ng-load-card"><svg class="ng-art" viewBox="${NEST_MARK.viewBox}" aria-hidden="true">${NEST_MARK.paths.map((d, k) => `<path class="ng-layer ng-l${k}" d="${d}"/>`).join('')}</svg><strong></strong><span class="ng-load-text"></span><ol class="ng-steps">${LOAD_STEPS.map(() => '<li></li>').join('')}</ol></div>`;
     box.querySelector('strong')!.textContent = title;
     document.body.append(box);
   }
@@ -490,8 +473,8 @@ function start(data: GuestData) {
     /** Pendants, ceiling lights and fans (hidden by default so the view from above stays clear). */
     ceilingItems: false,
     notes: anyOption((o) => o.callouts.length > 0) && !data.notesHidden,
-    /** How notes float when shown (pins, one line, full). */
-    noteDisplay: (data.noteDisplay ?? 'icon') as NoteDisplay,
+    /** How notes float when shown (pins or cards; older files' "compact" shows as cards). */
+    noteDisplay: (data.noteDisplay === 'icon' || !data.noteDisplay ? 'icon' : 'full') as NoteDisplay,
     rooms: !!data.roomsOn,
   };
   const layerOn = new Map(data.options.flatMap((o) => o.layers.map((l) => [l.id, l.on] as const)));
@@ -870,6 +853,8 @@ function start(data: GuestData) {
   let callouts: PlacedNote[] = [];
   /** The note opened from its pin (or Show) while notes float as pins. */
   let openNote: string | null = null;
+  /** The card a guest clicked: shown in full (long notes are cut with "…" otherwise). */
+  let expandedNote: string | null = null;
   /** (Re)builds the shown option's labels, leaders, end marks and floor highlights. */
   const buildCallouts = () => {
     for (const n of callouts) {
@@ -877,6 +862,7 @@ function start(data: GuestData) {
       n.pin.remove();
     }
     openNote = null;
+    expandedNote = null;
     marksSvg.replaceChildren();
     for (const o of [...calloutGroup.children]) {
       calloutGroup.remove(o);
@@ -923,27 +909,43 @@ function start(data: GuestData) {
     const card = el('div', `ng-callout ng-box-${st.box}`);
     for (const [k, v] of Object.entries(c.colors)) card.style.setProperty(`--${k}`, v);
     card.style.fontSize = `${12 * st.scale}px`;
-    for (const ln of c.lines) {
-      const row = el('div', `ng-cl-${ln.role}`);
+    const cut = c.lines.length > NOTE_MAX_LINES;
+    c.lines.forEach((ln, k) => {
+      const row = el('div', `ng-cl-${ln.role}${cut && k === NOTE_MAX_LINES - 1 ? ' ng-cut' : ''}${cut && k >= NOTE_MAX_LINES ? ' ng-more' : ''}`);
       if (ln.indent) row.style.paddingLeft = `${ln.indent * 0.54}em`;
       appendRuns(row, ln.runs);
       card.append(row);
+    });
+    if (c.images) {
+      const badge = el('span', 'ng-img-badge');
+      badge.title = c.images === 1 ? 'Has a picture (in the Notes list)' : `Has ${c.images} pictures (in the Notes list)`;
+      badge.innerHTML = IMAGE_GLYPH;
+      card.append(badge);
     }
     calloutLayer.append(card);
     const id = `n${i}`;
+    const anchor = new THREE.Vector3(...c.anchor);
+    // A click on a note: its spot comes to the middle of the view and the note shows in full.
+    card.onclick = (e) => {
+      if ((e.target as HTMLElement).closest('a')) return;
+      e.stopPropagation();
+      expandedNote = id;
+      centerOn(anchor);
+    };
     const pin = el('button', 'ng-pin');
     pin.type = 'button';
     pin.style.setProperty('--main', c.colors.main);
     pin.setAttribute('aria-label', `Open note: ${c.lines[0]?.runs.map((r) => r.t).join('') ?? 'note'}`);
-    pin.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9h8M8 13h5"/></svg>';
+    pin.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9h8M8 13h5"/></svg>' + (c.images ? `<span class="ng-img-badge">${IMAGE_GLYPH}</span>` : '');
     pin.onclick = (e) => {
       e.stopPropagation();
       openNote = openNote === id ? null : id;
+      if (openNote === id) centerOn(anchor);
     };
     calloutLayer.append(pin);
     return {
       id,
-      anchor: new THREE.Vector3(...c.anchor),
+      anchor,
       label: new THREE.Vector3(...c.label),
       card,
       pin,
@@ -985,7 +987,8 @@ function start(data: GuestData) {
         n.pin.style.transform = `translate(${Math.round(a!.x)}px, ${Math.round(a!.y)}px)`;
         n.pin.classList.toggle('open', openNote === n.id);
       } else n.pin.style.visibility = 'hidden';
-      n.card.classList.toggle('ng-compact', mode === 'compact');
+      // Opened from its pin or clicked: in full.
+      n.card.classList.toggle('ng-open', expandedNote === n.id || (mode === 'icon' && openNote === n.id));
       if (!visible || (mode === 'icon' && openNote !== n.id)) {
         [n.card, n.line, n.mark].forEach(hide);
         continue;
@@ -1153,28 +1156,38 @@ function start(data: GuestData) {
   const setNoteDisplay = (m: NoteDisplay) => {
     show.noteDisplay = m;
     openNote = null;
+    expandedNote = null;
     noteDisplaySetters.forEach((s) => s(m));
     if (!show.notes) setNotesShown(true);
   };
-  const NOTE_MODES: [NoteDisplay, string][] = [
+  /** Notes in the view: Off, Icons (pins) or Full (cards). */
+  const NOTE_MODES: [NoteDisplay | 'off', string][] = [
+    ['off', 'Off'],
     ['icon', 'Icons'],
-    ['compact', 'Compact'],
     ['full', 'Full'],
   ];
   const noteModeControl = () => {
-    const wrap = el('div', 'ng-note-ctrl');
-    const sw = switchRow('Show in workspace', show.notes, setNotesShown);
-    const c = choice<NoteDisplay>(NOTE_MODES, show.noteDisplay, setNoteDisplay);
+    const current = () => (show.notes ? show.noteDisplay : 'off');
+    const c = choice<NoteDisplay | 'off'>(NOTE_MODES, current(), (v) => (v === 'off' ? setNotesShown(false) : setNoteDisplay(v)));
     c.box.classList.add('ng-note-modes');
-    const syncShown = (on: boolean) => {
-      sw.set(on);
-      c.box.classList.toggle('ng-modes-off', !on);
-    };
-    syncShown(show.notes);
-    noteVisibilitySetters.push(syncShown);
-    noteDisplaySetters.push(c.set);
-    wrap.append(sw.row, c.box);
-    return wrap;
+    const sync = () => c.set(current());
+    noteVisibilitySetters.push(sync);
+    noteDisplaySetters.push(sync);
+    return c.box;
+  };
+  /** Brings a point to the middle of the view, keeping the camera's angle and distance. */
+  const centerOn = (p: THREE.Vector3) => {
+    if (planOpen) return;
+    const delta = p.clone().sub(controls.target);
+    if (delta.lengthSq() < 1e-6) return;
+    if (camera === persp) {
+      applyCamera({ name: '', projection: 'perspective', position: persp.position.clone().add(delta).toArray(), target: p.toArray(), fov: persp.fov }, 600);
+      return;
+    }
+    flushControls();
+    camera.position.add(delta);
+    controls.target.copy(p);
+    controls.update();
   };
   /** Looks at a note's spot: glides the orbit view in to it. */
   const focusNote = (n: GuestNote) => {

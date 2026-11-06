@@ -89,13 +89,34 @@
   inset: 0;
   overflow: visible;
 }
-/* 3D "Compact": one line, cut with an ellipsis. */
-.callout-card.callout-compact {
-  max-width: 220px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
+/* A note with pictures (where they are not shown): a small badge on its top right corner. */
+.callout-img-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  background: var(--callout-main);
+  color: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+}
+.callout-img-badge svg {
+  width: 10px;
+  height: 10px;
+}
+.note-pin .callout-img-badge {
+  top: -6px;
+  right: -8px;
+  width: 15px;
+  height: 15px;
+}
+.note-pin .callout-img-badge svg {
+  width: 9px;
+  height: 9px;
 }
 /* 3D "Icons": a pin on the spot; clicking it opens the note's card. */
 .note-pin {

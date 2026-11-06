@@ -187,7 +187,7 @@ describe('guest export data', () => {
     expect((await buildGuestData(buildDemoProject())).notesHidden).toBe(false);
     // Notes open as pins unless the export says otherwise, whatever the editor's 3D view shows.
     expect(data.noteDisplay).toBe('icon');
-    expect((await buildGuestData(edit(p, (d) => void (d.guest.noteDisplay = 'compact')))).noteDisplay).toBe('compact');
+    expect((await buildGuestData(edit(p, (d) => void (d.guest.noteDisplay = 'full')))).noteDisplay).toBe('full');
     // One layout option (the project has none of its own), opened on.
     expect(data.options.map((o) => o.name)).toEqual(['Option A']);
     expect(data.option).toBe(0);
@@ -274,8 +274,10 @@ describe('guest export data', () => {
     );
     expect(links.size).toBeGreaterThan(0);
     expect(externalUrls(html).filter((u) => !links.has(u))).toEqual([]);
+    // The favicon (the nest mark) is a data URL, the only <link>.
+    expect(html).toMatch(/<link rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,/);
     expect(html).not.toMatch(
-      /<link\b|<script[^>]+\bsrc=|<img\b|@import|url\(\s*['"]?(https?:|\/\/)|blob:|localStorage|indexedDB/i,
+      /<link\b(?![^>]*href="data:)|<script[^>]+\bsrc=|<img\b|@import|url\(\s*['"]?(https?:|\/\/)|blob:|localStorage|indexedDB/i,
     );
     // Only system fonts.
     expect(html).not.toMatch(/@font-face|fonts\.googleapis/);
@@ -289,11 +291,10 @@ describe('guest export data', () => {
     expect(html).toMatch(/@media \(max-width:640px\)/);
     // Phones on their side get the compact layout too.
     expect(html).toMatch(/@media \(max-width:640px\),\(max-height:500px\)/);
-    // Panel switch styling supports role="switch" (`aria-checked=true`) for the "Show in workspace" and house Light/Dark toggles, and declares dark color-scheme so browser Auto Dark Mode never alters the page.
+    // Panel switch styling supports role="switch" (`aria-checked=true`) for the house Light/Dark toggle, and declares dark color-scheme so browser Auto Dark Mode never alters the page.
     expect(html).toMatch(/<meta name="color-scheme" content="dark">/);
     expect(html).toMatch(/color-scheme:dark/);
     expect(html).toMatch(/\[aria-checked=true\]>\.ng-switch/);
-    expect(html).toMatch(/\.ng-switch-row/);
     expect(html).toMatch(/\.ng-light-switch/);
     // Compact single-line bold white project title without a card background.
     expect(html).not.toContain('.ng-title,.ng-panel');
@@ -431,13 +432,16 @@ describe('guest export data', () => {
     expect(runtime).toMatch(/neestCeiling/);
     expect(runtime).toMatch(/ng-lightbox/);
     expect(runtime).not.toMatch(/Walk through|Exit walkthrough|Ghost|requestPointerLock/);
-    // Panel buttons are not switches (aria-expanded), notes float on a "Show in workspace" switch above Icons / Compact / Full (no "Off" mode button), a tap hides the controls.
+    // Panel buttons are not switches (aria-expanded), notes are Off / Icons / Full (no Compact, no separate switch), long
+    // notes are cut and open in full on a click, notes with pictures carry a badge, a tap hides the controls.
     expect(runtime).toMatch(/ng-pbtn/);
     expect(runtime).toMatch(/aria-expanded/);
     expect(runtime).toMatch(/Notes in the 3D view/);
-    expect(runtime).toMatch(/Show in workspace/);
-    expect(runtime).toMatch(/ng-switch-row/);
-    expect(runtime).not.toMatch(/\[['"]off['"],\s*['"]Off['"]\]/);
+    expect(runtime).not.toMatch(/Show in workspace|ng-switch-row|ng-compact/);
+    expect(runtime).toMatch(/\[['"]off['"],\s*['"]Off['"]\]/);
+    expect(runtime).toMatch(/ng-cut/);
+    expect(runtime).toMatch(/ng-open/);
+    expect(runtime).toMatch(/ng-img-badge/);
     expect(runtime).toMatch(/ng-pin/);
     expect(runtime).toMatch(/ng-immersive/);
     expect(runtime).toMatch(/ng-light-switch/);

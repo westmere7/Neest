@@ -226,7 +226,6 @@ export function GuestExport({ project, busy, run }: PaneProps) {
               onChange={(noteDisplay) => setGuest('Set guest note style', { noteDisplay })}
               options={[
                 { value: 'icon', label: 'Icons' },
-                { value: 'compact', label: 'Compact' },
                 { value: 'full', label: 'Full' },
               ]}
             />

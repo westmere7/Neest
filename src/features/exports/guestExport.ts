@@ -12,6 +12,7 @@ import type { GuestCallout, GuestCamera, GuestData, GuestLamp, GuestNote, GuestO
 import { callout3DPoints } from '@/features/callouts/Callouts3D';
 import { calloutLines, noteTargetLabel, parseNote, type Run } from '@/features/callouts/content';
 import { NOTE_LINE_WIDTH, NOTE_SIZE_SCALE, endPx, labelColors, leaderDash } from '@/features/callouts/style';
+import { NEST_MARK } from '@/components/nestMark';
 import { buildPlanImageSvg } from './planExports';
 import { exportOptionsGlb } from './sceneExport';
 
@@ -29,7 +30,13 @@ const escHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<':
 const safeScript = (s: string) => s.replace(/<\/(script)/gi, '<\\/$1').replace(/<!--/g, '<\\!--');
 
 /** The app's loading picture: a plan that draws itself and rises into walls (see SceneLoading.tsx). */
-const LOADING_ART = `<svg class="ng-art" viewBox="0 0 120 90" aria-hidden="true"><path class="ng-plan-line" d="M10 50 L60 25 L110 50 L60 75 Z"/><path class="ng-plan-line ng-plan-inner" d="M35 37.5 L85 62.5 M60 25 L60 50 L35 62.5"/><path class="ng-wall" d="M10 50 L60 25 L60 5 L10 30 Z"/><path class="ng-wall ng-w2" d="M60 25 L110 50 L110 30 L60 5 Z"/><path class="ng-wall ng-w3" d="M35 37.5 L60 25 L60 12 L35 24.5 Z"/></svg>`;
+/** The nest mark, its layers lighting up in turn from the centre outward (as the app's 3D loader). */
+const LOADING_ART = `<svg class="ng-art" viewBox="${NEST_MARK.viewBox}" aria-hidden="true">${NEST_MARK.paths.map((d, k) => `<path class="ng-layer ng-l${k}" d="${d}"/>`).join('')}</svg>`;
+
+/** The app's favicon (public/favicon.svg): the nest mark in the theme teal, as a data URL (the file loads nothing). */
+const FAVICON = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><style>.m{fill:#16684a}@media (prefers-color-scheme:dark){.m{fill:#63c39f}}</style><g class="m"><g transform="translate(2.729 2.000) scale(0.157514)">${NEST_MARK.paths.map((d) => `<path d="${d}"/>`).join('')}</g></g></svg>`,
+)}`;
 
 /** System fonts only: the file must not load anything. */
 const FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
@@ -89,12 +96,7 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-light-switch[aria-checked=false] .ng-hl-sun{opacity:.48}
 .ng-plan-mode .ng-light-switch{display:none}
 @media (pointer:coarse){.ng-light-switch{min-block-size:36px;padding:7px 11px}}
-.ng-switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0}
-.ng-switch-row label{flex:1;padding:4px 0;cursor:pointer}
-.ng-switch-btn{display:inline-flex;align-items:center;min-height:24px;padding:4px 0;border:0;border-radius:8px;background:none;color:inherit;cursor:pointer}
-.ng-switch-btn:focus-visible{outline:2px solid #a3cfc1;outline-offset:2px}
-.ng-note-modes{margin:4px 0 10px;transition:opacity .15s}
-.ng-note-modes.ng-modes-off{opacity:.45}
+.ng-note-modes{margin:4px 0 10px}
 .ng-bar{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:5px;border-radius:13px;background:rgba(29,31,34,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:calc(100vw - 24px);z-index:3}
 .ng-group{display:flex;gap:6px;align-items:center}
 .ng-group:empty{display:none}
@@ -110,19 +112,16 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-load-card strong{font-size:16px}
 .ng-load-text{font-size:13px;color:#d9d6cf}
 .ng-error .ng-load-text{color:#f0b3a8}.ng-error .ng-steps,.ng-error svg{display:none}
-.ng-art{width:132px;height:99px;overflow:visible}
-.ng-plan-line{fill:none;stroke:#6fb3a0;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:240;stroke-dashoffset:240;animation:ng-draw 2.4s ease infinite}
-.ng-plan-inner{stroke-width:1.1;opacity:.7;animation-delay:.25s}
-.ng-wall{fill:rgba(111,179,160,.18);stroke:#6fb3a0;stroke-width:1;stroke-linejoin:round;transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);opacity:0;animation:ng-rise 2.4s ease infinite}
-.ng-w2{animation-delay:.12s}.ng-w3{animation-delay:.24s}
+.ng-art{width:64px;height:65px;margin-bottom:6px}
+.ng-layer{fill:#6fb3a0;opacity:.28;animation:ng-ripple 1.8s ease-in-out infinite}
+.ng-l1{animation-delay:.22s}.ng-l0{animation-delay:.44s}.ng-l3{animation-delay:.6s}
 .ng-steps{display:flex;gap:6px;margin:0;padding:0;list-style:none}
 .ng-steps li{position:relative;width:28px;height:4px;overflow:hidden;border-radius:2px;background:rgba(255,255,255,.16)}
 .ng-steps li.done{background:#6fb3a0}
 .ng-steps li.now::after{content:"";position:absolute;inset:0;width:60%;border-radius:2px;background:#6fb3a0;animation:ng-slide 1.1s ease-in-out infinite}
-@keyframes ng-draw{0%{stroke-dashoffset:240}45%,80%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
-@keyframes ng-rise{0%,35%{transform:scaleY(0);opacity:0}60%,80%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
+@keyframes ng-ripple{0%,60%,100%{opacity:.28}25%{opacity:1}}
 @keyframes ng-slide{from{transform:translateX(-100%)}to{transform:translateX(170%)}}
-@media (prefers-reduced-motion:reduce){.ng-plan-line,.ng-wall,.ng-steps li.now::after{animation:none;stroke-dashoffset:0;transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.ng-layer,.ng-steps li.now::after{animation:none}.ng-layer{opacity:1}}
 .ng-callouts,.ng-rooms{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .ng-marks{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .ng-room{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border-radius:7px;background:rgba(29,31,34,.72);white-space:nowrap;will-change:transform}
@@ -131,9 +130,13 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-box-solid,.ng-box-outline{border-left:1px solid var(--border);padding-left:10px}
 .ng-box-text{border:0;box-shadow:none;padding:2px 4px;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
 .ng-cl-title{font-weight:650}.ng-cl-info{color:var(--info);font-size:.92em}.ng-callout a{color:var(--link)}
-.ng-callout.ng-compact{max-width:200px;font-weight:600}
-.ng-callout.ng-compact>*{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ng-callout.ng-compact>*+*{display:none}
+.ng-callout:not(.ng-open)>.ng-more{display:none}
+.ng-callout:not(.ng-open)>.ng-cut::after{content:"…"}
+.ng-callout{cursor:pointer}
+.ng-img-badge{position:absolute;top:-7px;right:-7px;width:17px;height:17px;display:grid;place-items:center;border:1.5px solid #fff;border-radius:50%;background:var(--main);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.ng-img-badge svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.ng-pin .ng-img-badge{top:-6px;right:-8px;width:15px;height:15px}
+.ng-pin .ng-img-badge svg{width:9px;height:9px}
 .ng-callout{z-index:2}
 .ng-pin{z-index:1;position:absolute;left:0;top:0;visibility:hidden;width:26px;height:26px;margin:-34px 0 0 -13px;padding:0;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;background:var(--main);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.28);cursor:pointer;pointer-events:auto}
 .ng-pin::after{content:"";position:absolute;left:50%;top:100%;margin-left:-5px;border:5px solid transparent;border-top:7px solid #fff}
@@ -262,6 +265,8 @@ function guestNotes(project: Project, derived: ReturnType<typeof derivePlan>, im
         })(),
         style: { box: c.box, scale: NOTE_SIZE_SCALE[c.size], line: c.line, lineWidth: NOTE_LINE_WIDTH[c.lineWeight] * 1.15, dash: leaderDash(c), end: c.end, endPx: endPx(c) },
         lines: calloutLines(project, derived, c).map((l) => ({ role: l.role, indent: l.indent, runs: toRuns(l.runs) })),
+        // A picture badge when the file carries the note's pictures.
+        ...(images && c.images.length ? { images: c.images.length } : {}),
       },
     );
   }
@@ -429,6 +434,7 @@ export async function buildGuestHtml(project: Project): Promise<string> {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="generator" content="Neest">
+<link rel="icon" type="image/svg+xml" href="${FAVICON}">
 <title>${escHtml(data.title)} — 3D walkthrough</title>
 <style>${CSS}</style>
 </head>

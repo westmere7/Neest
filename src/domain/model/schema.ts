@@ -576,10 +576,10 @@ export const RenderSettingsSchema = z.object({
   /** Where note labels float in 3D: close to what they point at, further out, or clear of the walls. */
   notePlacement: z.enum(['close', 'further', 'clear']).default('close'),
   /**
-   * How notes float in 3D: the full card, one compact line, or a pin icon that opens the card when
-   * clicked. Also what a guest walkthrough opens with (guests can change it).
+   * How notes float in 3D: the card (long notes cut after a few lines) or a pin icon that opens the
+   * card when clicked. Off is the Notes layer. Older files' "compact" loads as full.
    */
-  noteDisplay: z.enum(['full', 'compact', 'icon']).default('full'),
+  noteDisplay: z.enum(['full', 'icon']).default('full').catch('full'),
 });
 
 export const ProjectSettingsSchema = z.object({
@@ -665,9 +665,9 @@ export const GuestSettingsSchema = z
     noteImages: z.boolean().default(true),
     /**
      * How notes float in the exported walkthrough at start: pins that open the card when clicked (the
-     * default, so the view stays clear), compact one-line cards or full cards (guests can change it).
+     * default, so the view stays clear) or cards (guests can change it). Older "compact" loads as full.
      */
-    noteDisplay: z.enum(['full', 'compact', 'icon']).default('icon'),
+    noteDisplay: z.enum(['full', 'icon']).default('icon').catch('full'),
     /** Layout options in the file: every option (guests switch between them) or only the active one. */
     options: z.enum(['all', 'active']).default('all'),
     /**

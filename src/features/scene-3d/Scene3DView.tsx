@@ -40,7 +40,7 @@ import { formatSpeed } from '@/domain/walkthrough/speed';
 import { WalkControls, toggleWalkFly, useWalkFly, useWalkSpeed } from '@/features/walkthrough/WalkControls';
 import { TouchControls } from '@/features/walkthrough/TouchControls';
 import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
-import { CalloutsToggle } from '@/features/editor/AnnotationToggles';
+import { NotesDisplayControl } from '@/features/editor/AnnotationToggles';
 import { NotesOverlay, NotesViewBridge } from '@/features/callouts/NotesOverlay';
 import { PostEffects } from './PostEffects';
 import { InfiniteGrid } from './InfiniteGrid';
@@ -1287,7 +1287,7 @@ function ViewPanel({
               checked={r.showRoomLabels}
               onChange={(v) => setRender('Toggle 3D labels', { showRoomLabels: v })}
             />
-            <CalloutsToggle />
+            <NotesDisplayControl />
             {project.layers.callouts?.visible && Object.keys(project.callouts ?? {}).length > 0 && (
               <Select<RenderSettings['notePlacement']>
                 label="Note placement"
@@ -1299,22 +1299,6 @@ function ViewPanel({
                   { value: 'clear', label: 'Clear of the walls' },
                 ]}
               />
-            )}
-            {project.layers.callouts?.visible && Object.keys(project.callouts ?? {}).length > 0 && (
-              <div className="field">
-                <span className="field-label">Note display</span>
-                <Segmented<RenderSettings['noteDisplay']>
-                  label="Note display"
-                  size="sm"
-                  value={r.noteDisplay ?? 'full'}
-                  onChange={(v) => setRender('Change note display', { noteDisplay: v })}
-                  options={[
-                    { value: 'full', label: 'Full', title: 'The whole note', testId: 'note-display-full' },
-                    { value: 'compact', label: 'Compact', title: 'One line each', testId: 'note-display-compact' },
-                    { value: 'icon', label: 'Icons', title: 'A pin on each spot; click one to open it', testId: 'note-display-icon' },
-                  ]}
-                />
-              </div>
             )}
             <Toggle label="Wall dimensions" checked={showDims} onChange={setShowDims} />
             <Toggle label="Helpers (grid, selection)" checked={showHelpers} onChange={setShowHelpers} />

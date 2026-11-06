@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-07 (group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-07 (notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -561,7 +561,7 @@ a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens 
 - **Notes show only their body text.** Both `Callout.title` and `Callout.showInfo` (automatic target metrics such as
   `Height …`, item dimensions/finish, room area/ceiling or area size) are retired: nothing edits or draws them, and
   `repairProject` folds an old title into the note as a bold first line (`foldNoteTitle`, every layout option). Short
-  labels (menus, the status bar, 3D Compact) use the note's first line (`content.ts › noteSummary`).
+  labels (menus, the status bar) use the note's first line (`content.ts › noteSummary`).
 - Editor (`CalloutDialog`): Points to (a dropdown: general / spot / item / room under it / area), the note with a
   toolbar (bold, italic, lists, link form, Ctrl+B/I/K, Ctrl+Enter saves; it gets the focus), **Images**, colour.
 - **Images** (`Callout.images`, ≤ 8 `NoteImage {id, src, w, h}`, bad entries load as none): embedded data URLs so the
@@ -597,9 +597,12 @@ a menu, none adds one (`ItemNotes.tsx › NoteButton`). The editor pop-up opens 
   (z-index) and placed clear of them (`placeNoteLabels` `avoid`: the pins' screen boxes, fixed), so every pin stays
   visible. Render captures and the guest viewer use the same layout.
   Click selects, double-click edits. Hidden while the scene loads and in walk mode.
-- **Note display** (`render.noteDisplay`, 3D view panel next to Note placement): **Full** cards, **Compact** (one line:
-  the note's first line; `CalloutCard compact`), or **Icons** (a round pin with a tail
-  on each spot, `.note-pin`; a click opens that note's full card and selects it, a selected note shows its card).
+- **Note display** (3D view panel, `NotesDisplayControl` in AnnotationToggles.tsx): one **Notes** control, **Off** (the
+  Notes layer, `layers.callouts.visible`) / **Full** (`render.noteDisplay` 'full': cards) / **Icons** ('icon': a round
+  pin with a tail on each spot, `.note-pin`; a click opens that note's card and selects it, a selected note shows its
+  card), one undo step. There is no Compact any more: `.catch('full')` loads older files' 'compact' as full.
+  Floating cards stop after `NOTE_MAX_LINES` (4) wrapped lines with "…" (`content.ts › clipNoteBlocks`, `CalloutCard
+  clip`) unless opened or selected; notes with pictures carry a picture badge (`.callout-img-badge`, also on pins).
   The in-app Guest view starts with it; the exported guest walkthrough has its own setting (`guest.noteDisplay`, Export
   → Guest walkthrough → Note style, **Icons** by default), and guests can change either. Render captures keep full cards.
 - Colours (`palette.ts`, import-free so the guest viewer can bundle it): five muted (teal, brass, coral, blue,
@@ -840,8 +843,12 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   or 2D plan view back to its default), followed by on/off switches (`aria-pressed`: Full screen) and **panel buttons**
   (icon + label, `aria-expanded`, lit while open: Info, Notes, View; never drawn as switches); `#/guest/:id` keeps saved views at top right plus the Walk through /
   Exit action button, Tour, and Fly / Ghost switches when walking. The HTML export's Notes list and
-  View panel offer "Notes in the 3D view": a "Show in workspace" switch (on by default unless `guest.notes === 'hidden'`)
-  above Icons / Compact / Full (pins open their card; Show turns on workspace notes and opens it too).
+  View panel offer "Notes in the 3D view": **Off / Icons / Full** (Off at start when `guest.notes === 'hidden'`; Show in
+  the list turns notes on and opens the note). Labels show 4 lines with "…" (`.ng-cut` / `.ng-more`); a click on a
+  label, or opening a pin, glides its spot to the middle of the view (`centerOn`) and shows the note in full
+  (`.ng-open`). Notes whose pictures are in the file carry `.ng-img-badge` (`GuestCallout.images`). The page's
+  loading screen is the nest mark with the Ripple animation (`LOADING_ART`, as `SceneLoading`) and its favicon is the
+  nest mark as a data URL (the file still loads nothing; the test allows only that `<link>`).
   **Phones** (`max-width:640px` portrait, `max-height:500px` landscape): a one-row bottom bar (View drop-down + icon-only
   toggles and panel buttons), a slim top (title and Layout options on one row in portrait; one top row in landscape),
   one panel at a time; a tap on the scene hides or shows every control (`ng-immersive`); the help hint fades after 4.5 s.
@@ -2397,3 +2404,13 @@ Known limitations (also in README):
      members selectable and editable one by one, the rest faded in 2D / X-ray in 3D and out of reach, an
      IsolationBanner with Done, new items join the group, auto-exit when the group goes. Tests in
      editor/isolation.test.ts; checked in the browser (2D and 3D enter, fade / X-ray, member-only picks, Esc) (done).
+199. "Animate the app logo instead of this" (the 3D loader) + "Ripple it is" + "these new branding changes should be in
+     guest page as well" + notes: "only off, full or icons, remove compact", "limit the amount of text shown … leave …",
+     "a small image icon for comments that have images", "when guest clicks on a note, center the spot it points to and
+     expand the note" → eight loader motions offered on an artifact page; `SceneLoading` and the guest page's loader now
+     show the nest mark lighting up layer by layer (Ripple), the guest page gets the nest favicon. Notes (§ Callouts,
+     § Guest): one Off / Full / Icons control in the app's View panel and the guest viewer, Compact removed (old files
+     load as Full), labels cut after 4 lines with "…", picture badges on labels and pins, guest click / pin centres the
+     spot and opens the note in full. Tests in callouts/clip.test.ts and guestExport.test.ts; checked in the browser
+     (app 3D cut, badge, select shows all, Off/Full/Icons; guest export cut, click centres to the pixel, pin opens in
+     full, loader) (done).

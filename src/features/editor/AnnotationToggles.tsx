@@ -1,4 +1,4 @@
-import { Button, Toggle } from '@/components/ui';
+import { Button, Segmented, Toggle } from '@/components/ui';
 import { useProjectStore } from '@/state/projectStore';
 import type { Project } from '@/domain/model/schema';
 
@@ -26,6 +26,37 @@ export function CalloutsToggle() {
       checked={visible}
       onChange={(v) => exec(v ? 'Show notes' : 'Hide notes', (d) => void (d.layers.callouts.visible = v))}
     />
+  );
+}
+
+/**
+ * Notes in the 3D view (View panel): Off (the Notes layer hidden), Full cards or Icons (pins). One step.
+ */
+export function NotesDisplayControl() {
+  const visible = useProjectStore((s) => s.project!.layers.callouts?.visible ?? true);
+  const display = useProjectStore((s) => s.project!.render.noteDisplay ?? 'full');
+  const count = useProjectStore((s) => Object.keys(s.project!.callouts ?? {}).length);
+  const exec = useProjectStore((s) => s.execute);
+  return (
+    <div className="field">
+      <span className="field-label">{count ? `Notes (${count})` : 'Notes'}</span>
+      <Segmented<'off' | 'full' | 'icon'>
+        label="Notes"
+        size="sm"
+        value={visible ? display : 'off'}
+        onChange={(v) =>
+          exec(v === 'off' ? 'Hide notes' : 'Change note display', (d) => {
+            d.layers.callouts.visible = v !== 'off';
+            if (v !== 'off') d.render.noteDisplay = v;
+          })
+        }
+        options={[
+          { value: 'off', label: 'Off', title: 'Hide notes', testId: 'note-display-off' },
+          { value: 'full', label: 'Full', title: 'Each note as a card; long ones are cut with …', testId: 'note-display-full' },
+          { value: 'icon', label: 'Icons', title: 'A pin on each spot; click one to open it', testId: 'note-display-icon' },
+        ]}
+      />
+    </div>
   );
 }
 
