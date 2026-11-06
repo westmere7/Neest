@@ -10,3 +10,6 @@ test-results
 .DS_Store
 *.log
 /_temp
+.env
+.env.*
+!.env.example

@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1793808318837,
+  "updatedAt": 1793896044176,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -6572,8 +6572,12 @@
     "noteImages": true,
     "noteDisplay": "icon",
     "options": "all",
-    "optionIds": null,
-    "defaultOptionId": null,
+    "optionIds": [
+      "opt_116vjas6ef",
+      "opt_ww5s0oluu0",
+      "opt_tq9phl60x8"
+    ],
+    "defaultOptionId": "opt_ww5s0oluu0",
     "roomLabels": false,
     "ceilings": true,
     "info": "open",
@@ -6593,7 +6597,7 @@
     "share": {
       "slug": "60ltn-tum5n",
       "url": "https://westmere7.github.io/neest-share/60ltn-tum5n/",
-      "at": 1793783333053
+      "at": 1793896044174
     }
   },
   "collections": [

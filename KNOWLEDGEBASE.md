@@ -2267,7 +2267,9 @@ Known limitations (also in README):
      `[Overview, Top]` only, and `src/guest-viewer/main.ts` replaces top-right `.ng-views` with a bottom-bar View `<select>`
      pill (`Overview`, `Top`, `2D plan`) in the former Walk through slot. Tests in `guestExport.test.ts` (done).
 183. "i can't publish the guest page anymore — Could not publish: git checkout failed: fatal: a branch named 'neest-publish'
-     already exists" → `tools/neest-share-plugin.ts` now builds the single root commit via `git write-tree` + parentless
-     `git commit-tree` + `reset --hard` + `push -f origin HEAD:main` (never creating a named `neest-publish` branch), forces
-     `checkout -f -B main FETCH_HEAD` + deletes any leftover `neest-publish` branch in `sync()`, and cleaned the stranded
-     branch in `node_modules/.cache/neest-share`. Test in `tools/neest-share-plugin.test.ts` (done).
+     already exists" + "git push failed: fatal: could not read Username for 'https://github.com': terminal prompts disabled"
+     → `tools/neest-share-plugin.ts` now builds the single root commit via `git write-tree` + parentless `git commit-tree`
+     + `reset --hard` + `push -f origin HEAD:main` (never creating a named `neest-publish` branch), forces `checkout -f -B
+     main FETCH_HEAD` + deletes any leftover `neest-publish` branch in `sync()`, supports `GITHUB_TOKEN` / `GH_TOKEN` from
+     `.env.local` (git-ignored) for machines using GitHub Desktop where macOS Keychain has no CLI git sign-in, and surfaces a
+     clear auth message when CLI git is unsigned. Test in `tools/neest-share-plugin.test.ts` (done).

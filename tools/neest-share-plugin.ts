@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { Plugin, PreviewServer, ViteDevServer } from 'vite';
+import { loadEnv, type Plugin, type PreviewServer, type ViteDevServer } from 'vite';
 
 /**
  * Live guest links on GitHub Pages (dev & preview servers only).
@@ -29,10 +29,22 @@ const MAX_HTML = 120 * 1024 * 1024;
 const GIT_ENV = { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'Never' };
 
 function git(args: string[], cwd: string, input?: string): Promise<string> {
+  const sub = args.find((a, i) => a !== '-c' && args[i - 1] !== '-c') ?? args[0];
   return new Promise((resolve, reject) => {
     const child = execFile('git', args, { cwd, env: GIT_ENV, maxBuffer: 16 * 1024 * 1024 }, (err, stdout, stderr) => {
-      if (err) reject(Object.assign(new Error(`git ${args[0]} failed: ${String(stderr || err.message).trim().split('\n').slice(-2).join(' ')}`), { stderr }));
-      else resolve(String(stdout));
+      if (err) {
+        const detail = String(stderr || `exit ${(err as { code?: unknown }).code ?? 1}`).trim();
+        if (/could not read Username|Authentication failed|terminal prompts disabled/i.test(detail)) {
+          reject(
+            new Error(
+              'Command-line git is not signed in to GitHub on this machine (GitHub Desktop keeps its sign-in separate). ' +
+                'Run "gh auth login" or push once from Terminal to save it in Keychain, or add GITHUB_TOKEN to .env.local.',
+            ),
+          );
+          return;
+        }
+        reject(Object.assign(new Error(`git ${sub} failed: ${detail.split('\n').slice(-2).join(' ')}`), { stderr }));
+      } else resolve(String(stdout));
     });
     if (input !== undefined) child.stdin?.end(input);
   });
@@ -95,8 +107,17 @@ export function neestShare(root = process.cwd(), remoteOverride?: string): Plugi
   const remoteUrl = (r: { owner: string; name: string }) => remoteOverride ?? `https://github.com/${r.owner}/${r.name}.git`;
   const baseUrl = (r: { owner: string; name: string }) => `https://${r.owner.toLowerCase()}.github.io/${r.name}/`;
 
-  /** The GitHub credential git holds (for the one-time API setup). */
+  /** Optional token from process.env or .env.local (for machines where CLI git has no stored credential). */
+  const envToken = (): string | null => {
+    const env = loadEnv('development', root, '');
+    const t = (process.env.GITHUB_TOKEN || process.env.GH_TOKEN || env.GITHUB_TOKEN || env.GH_TOKEN || '').trim();
+    return t || null;
+  };
+
+  /** The GitHub credential git holds, or GITHUB_TOKEN / GH_TOKEN (for the one-time API setup). */
   const token = async (): Promise<string> => {
+    const fromEnv = envToken();
+    if (fromEnv) return fromEnv;
     const out = await git(['credential', 'fill'], root, 'protocol=https\nhost=github.com\n\n');
     const t = out.match(/^password=(.+)$/m)?.[1];
     if (!t) throw new Error('No GitHub sign-in is stored for git on this machine.');
@@ -161,7 +182,11 @@ export function neestShare(root = process.cwd(), remoteOverride?: string): Plugi
     ];
     const sha = (await git([...id, 'commit-tree', tree, '-m', message], cache)).trim();
     await git(['reset', '-q', '--hard', sha], cache);
-    await git(['push', '-q', '-f', 'origin', 'HEAD:main'], cache);
+    const t = !remoteOverride ? envToken() : null;
+    const auth = t
+      ? ['-c', `http.https://github.com/.extraheader=AUTHORIZATION: basic ${Buffer.from(`x-access-token:${t}`).toString('base64')}`]
+      : [];
+    await git([...auth, 'push', '-q', '-f', 'origin', 'HEAD:main'], cache);
   };
 
   const publish = (slug: string, html: Buffer) =>
