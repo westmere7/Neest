@@ -4,6 +4,29 @@
   gap: 18px;
   min-height: 480px;
 }
+/*
+ * Desktop: the format list stays put while the options scroll. The dialog body does not scroll; the
+ * layout fills it and each column scrolls on its own. (One column on narrow screens: the body scrolls.)
+ */
+@media (min-width: 901px) {
+  [data-testid='export-dialog'] .modal-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  [data-testid='export-dialog'] .export-layout {
+    flex: 1;
+    min-height: min(480px, 60vh);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  [data-testid='export-dialog'] .export-formats,
+  [data-testid='export-dialog'] .export-options {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
 .export-formats {
   display: flex;
   flex-direction: column;

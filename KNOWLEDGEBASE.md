@@ -2283,6 +2283,9 @@ Known limitations (also in README):
      main FETCH_HEAD` + deletes any leftover `neest-publish` branch in `sync()`, supports `GITHUB_TOKEN` / `GH_TOKEN` from
      `.env.local` (git-ignored) for machines using GitHub Desktop where macOS Keychain has no CLI git sign-in, and surfaces a
      clear auth message when CLI git is unsigned. Test in `tools/neest-share-plugin.test.ts` (done).
+184. "Fix the bug where scrolling the panel also scrolls the left column" (Export dialog) → on desktop (> 900 px) the
+     dialog body no longer scrolls; the format list and the options each scroll on their own (`overscroll-behavior:
+     contain`, exports.css). One column below 900 px: the body scrolls as before. Checked in the browser (done).
 184. "Cái Note này ở trạng thái show note bỏ mấy thông số không cần thiết đi, để text note là được" → retired automatic
      target parameters (`Height …`, item dimensions/finish, room area/ceiling, area size) across all displayed notes (2D
      plan, 3D overlay, Notes panel, Inspector, captures, DXF and Guest viewer): removed `calloutInfo`/`noteHeading` from
