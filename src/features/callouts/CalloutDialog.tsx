@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Dialog } from '@/components/Overlays';
 import { Button, Select } from '@/components/ui';
 import { CALLOUT_COLORS, type Callout, type CalloutTarget, type Project } from '@/domain/model/schema';
@@ -11,9 +11,9 @@ import { updateCallout } from '@/domain/commands/callouts';
 import { getObjectAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
-import { CALLOUT_PALETTE, safeHref } from './content';
+import { CALLOUT_PALETTE } from './content';
 import { NoteImagesEditor, addNoteImages } from './NoteImages';
-import { imageFilesOf } from './images';
+import { RichNoteEditor } from './RichNoteEditor';
 
 type TargetKind = CalloutTarget['kind'];
 
@@ -57,8 +57,6 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
   const project = useProjectStore((s) => s.project);
   const callout = project?.callouts?.[id];
   const [draft, setDraft] = useState<Callout | null>(() => (callout ? structuredClone(callout) : null));
-  const [link, setLink] = useState<{ text: string; url: string } | null>(null);
-  const noteRef = useRef<HTMLTextAreaElement>(null);
   const choices = useMemo(() => (project && callout ? targetChoices(project, callout) : []), [project, callout]);
   if (!project || !callout || !draft) return null;
   // Functional update: images arrive asynchronously, after more typing may have happened.
@@ -81,52 +79,6 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
     useProjectStore.getState().execute('Delete note', (d) => deleteEntities(d, [id]));
     useEditorStore.getState().clearSelection();
     onClose();
-  };
-
-  /** Wraps the note selection (or inserts a placeholder) with markers. */
-  const wrap = (before: string, after: string, placeholder: string) => {
-    const el = noteRef.current;
-    const v = draft.note;
-    const a = el?.selectionStart ?? v.length;
-    const b = el?.selectionEnd ?? v.length;
-    const inner = v.slice(a, b) || placeholder;
-    const next = v.slice(0, a) + before + inner + after + v.slice(b);
-    set({ note: next.slice(0, 4000) });
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(a + before.length, a + before.length + inner.length);
-    });
-  };
-  /** Prefixes the selected lines with a list marker. */
-  const listify = (numbered: boolean) => {
-    const el = noteRef.current;
-    const v = draft.note;
-    const a = el?.selectionStart ?? v.length;
-    const b = el?.selectionEnd ?? v.length;
-    const start = v.lastIndexOf('\n', a - 1) + 1;
-    const endNl = v.indexOf('\n', b);
-    const end = endNl < 0 ? v.length : endNl;
-    const lines = v.slice(start, end).split('\n');
-    const body = lines.map((l, i) => (numbered ? `${i + 1}. ` : '- ') + l.replace(/^([-*•]|\d+[.)])\s+/, '')).join('\n');
-    set({ note: (v.slice(0, start) + body + v.slice(end)).slice(0, 4000) });
-    requestAnimationFrame(() => el?.focus());
-  };
-  const insertLink = () => {
-    if (!link) return;
-    const href = safeHref(link.url);
-    if (!href) return;
-    const el = noteRef.current;
-    const v = draft.note;
-    const a = el?.selectionStart ?? v.length;
-    const b = el?.selectionEnd ?? v.length;
-    const text = link.text.trim() || href;
-    set({ note: (v.slice(0, a) + `[${text}](${href})` + v.slice(b)).slice(0, 4000) });
-    setLink(null);
-  };
-  const openLink = () => {
-    const el = noteRef.current;
-    const sel = el ? draft.note.slice(el.selectionStart, el.selectionEnd) : '';
-    setLink({ text: sel, url: 'https://' });
   };
 
   const kind = draft.target.kind;
@@ -168,66 +120,15 @@ export function CalloutDialog({ id, isNew, onClose }: { id: string; isNew?: bool
           )}
           <div className="field">
             <span className="field-label">Note</span>
-            <div className="callout-toolbar" role="toolbar" aria-label="Formatting">
-              <button type="button" title="Bold (Ctrl+B)" onClick={() => wrap('**', '**', 'bold')}>
-                <b>B</b>
-              </button>
-              <button type="button" title="Italic (Ctrl+I)" onClick={() => wrap('*', '*', 'italic')}>
-                <i>I</i>
-              </button>
-              <button type="button" title="Bulleted list" onClick={() => listify(false)}>
-                • List
-              </button>
-              <button type="button" title="Numbered list" onClick={() => listify(true)}>
-                1. List
-              </button>
-              <button type="button" title="Link (Ctrl+K)" onClick={openLink} data-testid="callout-link">
-                Link
-              </button>
-            </div>
-            {link && (
-              <div className="callout-link-form">
-                <input className="input" placeholder="Text" value={link.text} onChange={(e) => setLink({ ...link, text: e.target.value })} />
-                <input
-                  className="input"
-                  placeholder="https://…"
-                  value={link.url}
-                  autoFocus
-                  onChange={(e) => setLink({ ...link, url: e.target.value })}
-                  onKeyDown={(e) => e.key === 'Enter' && insertLink()}
-                />
-                <Button size="sm" onClick={insertLink} disabled={!safeHref(link.url)}>
-                  Add
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setLink(null)}>
-                  ✕
-                </Button>
-              </div>
-            )}
-            <textarea
-              ref={noteRef}
-              className="input"
+            <RichNoteEditor
               value={draft.note}
-              maxLength={4000}
-              rows={6}
-              data-autofocus
+              onChange={(note) => set({ note })}
               placeholder="Write a note… (paste or drop images to attach them)"
-              onChange={(e) => set({ note: e.target.value })}
-              onPaste={(e) => {
-                const files = imageFilesOf(e.clipboardData);
-                if (!files.length) return;
-                e.preventDefault();
-                void addNoteImages(draft.images, files).then((images) => set({ images }));
-              }}
-              onKeyDown={(e) => {
-                if (!(e.ctrlKey || e.metaKey)) return;
-                const key = e.key.toLowerCase();
-                const run = key === 'b' ? () => wrap('**', '**', 'bold') : key === 'i' ? () => wrap('*', '*', 'italic') : key === 'k' ? openLink : key === 'enter' ? save : null;
-                if (!run) return;
-                e.preventDefault();
-                run();
-              }}
-              data-testid="callout-note"
+              onSubmit={save}
+              onPasteFiles={(files) => void addNoteImages(draft.images, files).then((images) => set({ images }))}
+              minHeight={130}
+              autoFocus
+              testId="callout-note"
             />
           </div>
           <div className="field">

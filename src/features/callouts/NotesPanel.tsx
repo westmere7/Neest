@@ -26,7 +26,7 @@ import { CALLOUT_PALETTE } from './content';
 import { CalloutCard } from './CalloutCard';
 import { hoverNoteInPanel, setNotesMode } from './actions';
 import { NoteImagesEditor, addNoteImages } from './NoteImages';
-import { imageFilesOf } from './images';
+import { RichNoteEditor } from './RichNoteEditor';
 
 function targetChip(project: Project, derived: DerivedPlan, c: Callout): { icon: React.ReactNode; label: string; kindLabel: string } {
   const t = c.target;
@@ -120,13 +120,6 @@ export function NotesPanel() {
   };
 
   /** Images pasted into a comment field are attached to it. */
-  const pasteImages = (e: React.ClipboardEvent, current: NoteImage[], apply: (next: NoteImage[]) => void) => {
-    const files = imageFilesOf(e.clipboardData);
-    if (!files.length) return;
-    e.preventDefault();
-    void addNoteImages(current, files).then(apply);
-  };
-
   const handleDelete = (id: string) => {
     if (hoveredNoteId === id) hoverNoteInPanel(null);
     if (editingId === id) setEditingId(null);
@@ -194,22 +187,14 @@ export function NotesPanel() {
               ))}
             </div>
           </div>
-          <textarea
-            className="input"
-            placeholder="Write a comment…"
-            rows={3}
+          <RichNoteEditor
             value={newNote}
-            maxLength={4000}
+            onChange={setNewNote}
+            placeholder="Write a comment…"
             autoFocus
-            onChange={(e) => setNewNote(e.target.value)}
-            onPaste={(e) => pasteImages(e, newImages, setNewImages)}
-            onKeyDown={(e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                handleCreateGeneral();
-              }
-            }}
-            data-testid="notes-general-body"
+            onSubmit={handleCreateGeneral}
+            onPasteFiles={(files) => void addNoteImages(newImages, files).then(setNewImages)}
+            testId="notes-general-body"
           />
           <NoteImagesEditor images={newImages} onChange={setNewImages} />
           <div className="notes-composer-foot">
@@ -302,22 +287,14 @@ export function NotesPanel() {
 
                 {isEditing ? (
                   <div className="notes-inline-edit" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                    <textarea
-                      className="input"
-                      placeholder="Write a comment…"
-                      rows={3}
+                    <RichNoteEditor
                       value={editNote}
-                      maxLength={4000}
+                      onChange={setEditNote}
+                      placeholder="Write a comment…"
                       autoFocus
-                      onChange={(e) => setEditNote(e.target.value)}
-                      onPaste={(e) => pasteImages(e, editImages, setEditImages)}
-                      onKeyDown={(e) => {
-                        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                          e.preventDefault();
-                          saveInlineEdit(c.id);
-                        }
-                      }}
-                      data-testid={`note-edit-body-${c.id}`}
+                      onSubmit={() => saveInlineEdit(c.id)}
+                      onPasteFiles={(files) => void addNoteImages(editImages, files).then(setEditImages)}
+                      testId={`note-edit-body-${c.id}`}
                     />
                     <NoteImagesEditor images={editImages} onChange={setEditImages} />
                     <div className="notes-inline-foot">
