@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-06 (note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-06 (new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -2283,22 +2283,6 @@ Known limitations (also in README):
      main FETCH_HEAD` + deletes any leftover `neest-publish` branch in `sync()`, supports `GITHUB_TOKEN` / `GH_TOKEN` from
      `.env.local` (git-ignored) for machines using GitHub Desktop where macOS Keychain has no CLI git sign-in, and surfaces a
      clear auth message when CLI git is unsigned. Test in `tools/neest-share-plugin.test.ts` (done).
-184. "Fix the bug where scrolling the panel also scrolls the left column" (Export dialog) → on desktop (> 900 px) the
-     dialog body no longer scrolls; the format list and the options each scroll on their own (`overscroll-behavior:
-     contain`, exports.css). One column below 900 px: the body scrolls as before. Checked in the browser (done).
-185. "In note mode, user must be able to edit existing note by clicking on them regardless of the Show in workspace
-     toggle" → Notes mode draws every note even with the Notes layer hidden, but the tools hit-tested the stored project,
-     so a click fell through and started a new note. The plan and 3D tool envs now return `withNotesShown(project)` in
-     Notes mode (callouts/layout.ts, cached per project; also used for drawing), and a click on a note (label or spot,
-     no drag) opens it in the note editor in Notes mode, in 2D and 3D. Test in plan-2d/tools/calloutTool.test.ts;
-     checked in the browser (done).
-186. "The edit should show formatting live" → notes are typed in `RichNoteEditor` (callouts/RichNoteEditor.tsx), a
-     contentEditable box with the same toolbar (B, I, • List, 1. List, Link) and keys (Ctrl+B / I / K, Ctrl+Enter):
-     bold, italic, lists and links show as they will look. The stored note keeps its text syntax (content.ts):
-     `richNote.ts` converts note → HTML (`noteToHtml`, from `parseNote`) and HTML → note (`htmlToNote`: divs and
-     <br> = paragraphs, b/strong/font-weight bold, i/em, safe links only, lists numbered from their start, nested lists
-     flattened, bold+italic as `**_x_**`). Pasted text comes in plain; pasted images still attach. Used in the Edit note
-     dialog and the Notes panel composer and inline edit. Tests in richNote.test.ts; checked in the browser (done).
 184. "Cái Note này ở trạng thái show note bỏ mấy thông số không cần thiết đi, để text note là được" → retired automatic
      target parameters (`Height …`, item dimensions/finish, room area/ceiling, area size) across all displayed notes (2D
      plan, 3D overlay, Notes panel, Inspector, captures, DXF and Guest viewer): removed `calloutInfo`/`noteHeading` from
@@ -2351,3 +2335,27 @@ Known limitations (also in README):
      `defaultElevation: 1.45` m to clear an open top-load washer lid, `1.20 × 0.35 × 0.62 m`, woven rattan laundry basket with
      folded cream linen + tall liquid detergent jug in `Filled` model alongside an `Empty shelf` model, wood finish variants, and
      Shape Editor 3D handles for `tallWidth` and `lowerHeight`). Tested in `src/packs/packs.test.ts` (done).
+193. "Fix the bug where scrolling the panel also scrolls the left column" (Export dialog) → on desktop (> 900 px) the
+     dialog body no longer scrolls; the format list and the options each scroll on their own (`overscroll-behavior:
+     contain`, exports.css). One column below 900 px: the body scrolls as before. Checked in the browser (done).
+194. "In note mode, user must be able to edit existing note by clicking on them regardless of the Show in workspace
+     toggle" → Notes mode draws every note even with the Notes layer hidden, but the tools hit-tested the stored project,
+     so a click fell through and started a new note. The plan and 3D tool envs now return `withNotesShown(project)` in
+     Notes mode (callouts/layout.ts, cached per project; also used for drawing), and a click on a note (label or spot,
+     no drag) opens it in the note editor in Notes mode, in 2D and 3D. Test in plan-2d/tools/calloutTool.test.ts;
+     checked in the browser (done).
+195. "The edit should show formatting live" → notes are typed in `RichNoteEditor` (callouts/RichNoteEditor.tsx), a
+     contentEditable box with the same toolbar (B, I, • List, 1. List, Link) and keys (Ctrl+B / I / K, Ctrl+Enter):
+     bold, italic, lists and links show as they will look. The stored note keeps its text syntax (content.ts):
+     `richNote.ts` converts note → HTML (`noteToHtml`, from `parseNote`) and HTML → note (`htmlToNote`: divs and
+     <br> = paragraphs, b/strong/font-weight bold, i/em, safe links only, lists numbered from their start, nested lists
+     flattened, bold+italic as `**_x_**`). Pasted text comes in plain; pasted images still attach. Used in the Edit note
+     dialog and the Notes panel composer and inline edit. Tests in richNote.test.ts; checked in the browser (done).
+196. "Use the nest logo svg from public/logo, adapted to the app theme, dark and light" + "use the logo itself, not its
+     boxed version; the white is just my sketch, it should follow app colors" → the nest mark (public/logo/Nest_logo.svg,
+     source shape only) is the app logo: `Logo.tsx` draws it bare in `--accent` (deep teal light, mint dark;
+     `.logo-mark` in components.css) in the top bar and home page; `public/favicon.svg` is the bare mark switching with
+     the browser's light / dark setting (linked before the PNG in index.html) + "favicon as well": the PNG favicon
+     (favicon.png 192, also the PWA "any" icon) is the bare teal mark on transparent; only the home-screen icon (logo.png
+     512, apple-touch, maskable) puts it on the app's light background, as iOS fills transparency with black. All built
+     by `node tools/build-icons.mjs` (also writes src/components/nestMark.ts) (done).

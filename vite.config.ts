@@ -22,7 +22,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.png', 'logo.png'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'logo.png'],
       manifest: {
         name: 'Neest — Apartment Planner',
         short_name: 'Neest',
