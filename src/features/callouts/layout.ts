@@ -71,6 +71,23 @@ export function layoutCallout(project: Project, derived: DerivedPlan | null, c: 
   return { callout: c, anchor, attach, box, lines, font, lineH, pad, colors: labelColors(c) };
 }
 
+const shownCache = new WeakMap<Project, Project>();
+
+/**
+ * The project as Notes mode shows it: every note drawn and clickable even when the Notes layer is
+ * hidden ("Show in workspace" off only hides them outside Notes mode). Same object for the same
+ * project, so caches keyed by it keep working.
+ */
+export function withNotesShown(project: Project): Project {
+  if (project.layers.callouts?.visible) return project;
+  let p = shownCache.get(project);
+  if (!p) {
+    p = { ...project, layers: { ...project.layers, callouts: { ...project.layers.callouts, visible: true } } };
+    shownCache.set(project, p);
+  }
+  return p;
+}
+
 /** Callouts to draw: the layer and each callout's own visibility. */
 export function visibleCallouts(project: Project): Callout[] {
   if (!project.layers.callouts?.visible) return [];

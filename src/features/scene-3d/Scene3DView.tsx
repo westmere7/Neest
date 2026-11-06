@@ -61,6 +61,7 @@ import { movedElevation } from '@/features/plan-2d/tools/surfaces';
 import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 import { servicesMenuItems } from '@/features/services/actions';
 import { notesMenuItems } from '@/features/callouts/actions';
+import { withNotesShown } from '@/features/callouts/layout';
 
 type Projection = 'perspective' | 'orthographic';
 
@@ -566,13 +567,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     }
     return ids;
   }, [selection, hoveredNoteId, notesMode, hover, project.callouts]);
-  const sceneProject = useMemo(
-    () =>
-      notesMode && !project.layers.callouts?.visible
-        ? { ...project, layers: { ...project.layers, callouts: { ...project.layers.callouts, visible: true } } }
-        : project,
-    [project, notesMode],
-  );
+  const sceneProject = useMemo(() => (notesMode ? withNotesShown(project) : project), [project, notesMode]);
   const notesCamera = useRef<THREE.Camera | null>(null);
   // Right-click: the same menu as in the plan, for the item under the pointer (not after a right-drag orbit/pan).
   const rightDown = useRef<{ x: number; y: number } | null>(null);
@@ -609,6 +604,8 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     const ed = useEditorStore.getState();
     if (additive) ed.toggleSelection({ kind: 'callout', id });
     else ed.setSelection([{ kind: 'callout', id }]);
+    // In Notes mode a click on a note opens it for editing.
+    if (!additive && ed.notesMode) useDialogStore.getState().open('callout', { id });
   }, []);
   const onCalloutEdit = useCallback((id: string) => {
     useEditorStore.getState().setSelection([{ kind: 'callout', id }]);

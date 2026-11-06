@@ -2286,6 +2286,12 @@ Known limitations (also in README):
 184. "Fix the bug where scrolling the panel also scrolls the left column" (Export dialog) → on desktop (> 900 px) the
      dialog body no longer scrolls; the format list and the options each scroll on their own (`overscroll-behavior:
      contain`, exports.css). One column below 900 px: the body scrolls as before. Checked in the browser (done).
+185. "In note mode, user must be able to edit existing note by clicking on them regardless of the Show in workspace
+     toggle" → Notes mode draws every note even with the Notes layer hidden, but the tools hit-tested the stored project,
+     so a click fell through and started a new note. The plan and 3D tool envs now return `withNotesShown(project)` in
+     Notes mode (callouts/layout.ts, cached per project; also used for drawing), and a click on a note (label or spot,
+     no drag) opens it in the note editor in Notes mode, in 2D and 3D. Test in plan-2d/tools/calloutTool.test.ts;
+     checked in the browser (done).
 184. "Cái Note này ở trạng thái show note bỏ mấy thông số không cần thiết đi, để text note là được" → retired automatic
      target parameters (`Height …`, item dimensions/finish, room area/ceiling, area size) across all displayed notes (2D
      plan, 3D overlay, Notes panel, Inspector, captures, DXF and Guest viewer): removed `calloutInfo`/`noteHeading` from

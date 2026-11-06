@@ -32,6 +32,7 @@ import { buildObject, partGeometry } from './builders';
 import { sharedRegistry } from './sceneRuntime';
 import { canScale, scalePct, scaledSize } from '@/features/editor/objectScale';
 import { isObjectLocked } from '@/domain/commands/itemLayers';
+import { withNotesShown } from '@/features/callouts/layout';
 
 /** Tools available directly in the 3D view (selection uses mesh picking instead). */
 export const TOOLS_3D: ToolId[] = ['select', 'pan', 'wall', 'curve', 'room', 'opening', 'split', 'extend', 'measure', 'place', 'callout', 'service', 'run'];
@@ -82,7 +83,11 @@ export function ToolBridge3D({ enabled }: { enabled: boolean }) {
 
   const env = useMemo<ToolEnv>(
     () => ({
-      project: () => useProjectStore.getState().project!,
+      // In Notes mode the tools see the notes as drawn, even with the Notes layer hidden.
+      project: () => {
+        const p = useProjectStore.getState().project!;
+        return useEditorStore.getState().notesMode ? withNotesShown(p) : p;
+      },
       derived: () => derivePlan(useProjectStore.getState().project!),
       editor: () => useEditorStore.getState(),
       px: () => pxRef.current,

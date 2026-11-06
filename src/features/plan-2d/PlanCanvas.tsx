@@ -12,7 +12,7 @@ import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type ToolId } from '@/state/editorStore';
 import { usePrefsStore } from '@/state/uiStores';
 import { PlanDrawing, polyPath, f, Dimension, type PlanDrawOptions } from './PlanDrawing';
-import { calloutExtent, unionBounds } from '@/features/callouts/layout';
+import { calloutExtent, unionBounds, withNotesShown } from '@/features/callouts/layout';
 import { planPalette } from './palette';
 import { hitTest, selectionHandles } from './hitTest';
 import { createSelectTool } from './tools/selectTool';
@@ -185,7 +185,11 @@ export function PlanCanvas() {
 
   const env = useMemo<ToolEnv>(
     () => ({
-      project: () => useProjectStore.getState().project!,
+      // In Notes mode the tools see the notes as drawn, even with the Notes layer hidden.
+      project: () => {
+        const p = useProjectStore.getState().project!;
+        return useEditorStore.getState().notesMode ? withNotesShown(p) : p;
+      },
       derived: () => derivePlan(useProjectStore.getState().project!),
       editor: () => useEditorStore.getState(),
       px: () => 1 / useEditorStore.getState().planCamera.zoom,
@@ -461,13 +465,7 @@ export function PlanCanvas() {
     if (hoveredNoteId) s.add(hoveredNoteId);
     return s;
   }, [selection, hoveredNoteId]);
-  const drawProject = useMemo(
-    () =>
-      notesMode && !project.layers.callouts?.visible
-        ? { ...project, layers: { ...project.layers, callouts: { ...project.layers.callouts, visible: true } } }
-        : project,
-    [project, notesMode],
-  );
+  const drawProject = useMemo(() => (notesMode ? withNotesShown(project) : project), [project, notesMode]);
   const selectedIds = useMemo(() => new Set(selection.map((x) => x.id)), [selection]);
   const drawOpts = useMemo<PlanDrawOptions>(
     () => ({

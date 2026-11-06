@@ -90,6 +90,8 @@ export function createCalloutAt(target: CalloutTarget, px: number): string | und
 export function createCalloutTool(): Tool {
   let start: { world: Vec2; screen: Vec2 } | null = null;
   let dragging = false;
+  /** A note pressed in this gesture (label or spot), and where: a release without a drag opens it in Notes mode. */
+  let clicked: { id: string; at: Vec2 } | null = null;
   let moveCallout: { id: string; mode: 'label' | 'anchor'; start: Vec2; base: Vec2; moved: boolean } | null = null;
   return {
     id: 'callout',
@@ -98,10 +100,12 @@ export function createCalloutTool(): Tool {
     busy: () => start !== null || moveCallout !== null,
     onPointerDown(e, env) {
       if (e.button !== 0) return;
+      clicked = null;
       const in3d = e.pickedObjectId !== undefined;
       if (!in3d) {
         const anchorHit = hitCalloutAnchor(env.project(), env.derived(), e.world, env.px(), env.tol());
         if (anchorHit) {
+          clicked = { id: anchorHit.id, at: e.screen };
           useEditorStore.getState().setSelection([{ kind: 'callout', id: anchorHit.id }]);
           if (!env.project().layers.callouts?.locked) {
             const a = calloutAnchor(env.project(), env.derived(), anchorHit.target);
@@ -112,6 +116,7 @@ export function createCalloutTool(): Tool {
         const existing = hitTest(env.project(), env.derived(), e.world, env.tol(), { callouts: true, px: env.px() });
         if (existing?.kind === 'callout') {
           const c = env.project().callouts?.[existing.id];
+          clicked = { id: existing.id, at: e.screen };
           useEditorStore.getState().setSelection([existing]);
           if (c && !env.project().layers.callouts?.locked) {
             moveCallout = { id: c.id, mode: 'label', start: e.world, base: { ...c.offset }, moved: false };
@@ -166,9 +171,16 @@ export function createCalloutTool(): Tool {
       if (dragging) env.setOverlay({ marquee: { a: start.world, b: e.world } });
     },
     onPointerUp(e, env) {
+      const hit = clicked;
+      clicked = null;
+      const wasMoved = moveCallout?.moved ?? false;
       if (moveCallout) {
         if (moveCallout.moved) useProjectStore.getState().commit();
         moveCallout = null;
+      }
+      // In Notes mode a click on a note (no drag) opens it for editing.
+      if (hit) {
+        if (!wasMoved && useEditorStore.getState().notesMode && dist(hit.at, e.screen) < DRAG_PX) useDialogStore.getState().open('callout', { id: hit.id });
         return;
       }
       const s = start;
