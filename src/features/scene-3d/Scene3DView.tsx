@@ -62,6 +62,7 @@ import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
 import { servicesMenuItems } from '@/features/services/actions';
 import { notesMenuItems } from '@/features/callouts/actions';
 import { withNotesShown } from '@/features/callouts/layout';
+import { enterIsolation, exitIsolation, groupExists, groupMembers } from '@/features/editor/isolation';
 
 type Projection = 'perspective' | 'orthographic';
 
@@ -383,8 +384,9 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
       const hit = new THREE.Vector3();
       if (!e.ray.intersectPlane(plane, hit)) return;
       const offset = { x: obj.x - hit.x, y: obj.y - hit.z };
-      // Grouped items move together (no wall hugging for a group).
-      const mates = withGroupMates(latest.current.project, [obj.id]).filter(
+      // Grouped items move together (no wall hugging for a group); inside an isolated group, the selection does.
+      const isolated = useEditorStore.getState().isolatedGroupId;
+      const mates = (isolated ? sel.filter((s) => s.kind === 'object').map((s) => s.id) : withGroupMates(latest.current.project, [obj.id])).filter(
         (id) => !!latest.current.project.objects[id] && !isObjectLocked(latest.current.project, latest.current.project.objects[id]),
       );
       const starts = Object.fromEntries(
@@ -497,6 +499,9 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const houseLighting = useEditorStore((s) => s.houseLighting);
   const shapeObject = shapeEditId && mode !== 'walk' ? project.objects[shapeEditId] : undefined;
   const shaping = !!shapeObject;
+  // Group isolation: the group's items stay solid and pickable, the rest is X-ray (see editor/isolation.ts).
+  const isolatedGroupId = useEditorStore((s) => s.isolatedGroupId);
+  const isolateIds = useMemo(() => (isolatedGroupId ? groupMembers(project, isolatedGroupId) : undefined), [isolatedGroupId, project]);
   const hover = useEditorStore((s) => s.hover);
   const isMobile = useIsMobile();
   useCanvasMeasureFix();
@@ -594,6 +599,14 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
       return;
     }
     if (ed.notesMode) return;
+    const proj = useProjectStore.getState().project;
+    if (ed.isolatedGroupId && (kind !== 'object' || proj?.objects[id]?.groupId !== ed.isolatedGroupId)) return;
+    // Double-click a grouped item: edit inside its group (isolation).
+    const gid = kind === 'object' ? proj?.objects[id]?.groupId : undefined;
+    if (!ed.isolatedGroupId && !e.shiftKey && e.nativeEvent.detail >= 2 && gid && proj && groupExists(proj, gid)) {
+      enterIsolation(gid, id);
+      return;
+    }
     if (e.shiftKey) ed.toggleSelection(item);
     else ed.setSelection([item]);
     // Double-click an item: close in on it and orbit around it.
@@ -631,6 +644,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
     showCallouts: !walk && !xray && !shaping,
     services: xray ? { shown: servicesShown } : undefined,
     ...(shaping ? { shapeEditId: shapeObject.id, selectedIds: undefined } : {}),
+    ...(isolateIds && !walk && !shaping && !xray ? { isolateIds } : {}),
   };
 
   const dpr: [number, number] =
@@ -742,7 +756,10 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
             if (e.button === 0) setShapeEditState({ section: null });
             return;
           }
-          if (!walk && !drawing && e.button === 0) useEditorStore.getState().clearSelection();
+          if (!walk && !drawing && e.button === 0) {
+            if (useEditorStore.getState().isolatedGroupId && e.detail >= 2) exitIsolation();
+            else useEditorStore.getState().clearSelection();
+          }
         }}
       >
         <color attach="background" args={[xray ? '#0b1522' : r.background]} />

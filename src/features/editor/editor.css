@@ -206,6 +206,26 @@
   background: var(--border);
 }
 
+/* Group isolation banner (IsolationBanner.tsx), centred under the top bar. */
+.isolation-banner {
+  top: calc(10px + var(--topbar-h) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 6px 5px 14px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  max-width: calc(100vw - 40px);
+  z-index: 12;
+}
+.isolation-banner strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .canvas-controls {
   right: 10px;
   bottom: calc(10px + var(--status-h) + 8px);

@@ -9,6 +9,7 @@ import { placementMaterials, placementModel } from '@/features/library/variantCh
 import { placementFor } from '@/features/plan-2d/tools/placeTools';
 import { surfaceUnder } from '@/features/plan-2d/tools/surfaces';
 import { placeSavedGroup, savedGroupFromDragId } from '@/features/editor/groups';
+import { isolationGroupFor } from '@/features/editor/isolation';
 
 /** Places an asset dropped from the library onto the plan (with wall snapping). */
 export function useDropAsset() {
@@ -27,8 +28,8 @@ export function useDropAsset() {
         editor: () => useEditorStore.getState(),
       };
       const pl = placementFor(asset, { x, y }, 0, env, false);
-      const id = useProjectStore.getState().execute(`Place ${asset.name.toLowerCase()}`, (d) =>
-        placeObject(d, {
+      const id = useProjectStore.getState().execute(`Place ${asset.name.toLowerCase()}`, (d) => {
+        const nid = placeObject(d, {
           assetId: asset.id,
           x: pl.x,
           y: pl.y,
@@ -39,8 +40,12 @@ export function useDropAsset() {
           elevation: surfaceUnder(d, asset, asset.defaultSize, pl.x, pl.y) ?? asset.defaultElevation,
           materials: placementMaterials(d, asset),
           model: placementModel(asset),
-        }),
-      );
+        });
+        // Dropped inside an isolated group: it joins the group.
+        const iso = isolationGroupFor(d);
+        if (iso) d.objects[nid].groupId = iso;
+        return nid;
+      });
       usePrefsStore.getState().pushRecentAsset(asset.id);
       if (id) useEditorStore.getState().set({ tool: 'select', selection: [{ kind: 'object', id }] });
     };

@@ -55,6 +55,8 @@ export interface SceneOptions {
   services?: Omit<ServicesViewOptions, 'onPick' | 'selectedIds'>;
   /** Shape editor: this item is left out (the editor draws it) and everything else turns to X-ray, not pickable. */
   shapeEditId?: string;
+  /** Group isolation: the isolated group's items (everything else is X-ray and cannot be picked). */
+  isolateIds?: ReadonlySet<string>;
 }
 
 /** Sun direction from time of day (hours) and azimuth (degrees, 0 = north/-y, clockwise). */
@@ -738,7 +740,9 @@ export function SceneContent({
   const services = options.services;
   // In Services mode walls, doors and floors are not pickable (only points, runs and service items).
   const shapeEditId = options.shapeEditId;
-  const structurePick = services || shapeEditId ? undefined : options.onPick;
+  // Group isolation: everything but the group's items is X-ray and out of reach.
+  const isolate = options.isolateIds;
+  const structurePick = services || shapeEditId || isolate ? undefined : options.onPick;
   const planRef = useRef<THREE.Group>(null);
   const objects = Object.values(project.objects).filter((o) => {
     if (o.id === shapeEditId || isObjectHidden(project, o) || !project.layers.furniture.visible) return false;
@@ -749,7 +753,7 @@ export function SceneContent({
   return (
     <group name="neest-plan" ref={planRef}>
       <ClippedMaterialSync />
-      {(services || shapeEditId) && <XRayGhost root={planRef} objects={!!shapeEditId} />}
+      {(services || shapeEditId || isolate) && <XRayGhost root={planRef} objects={!!shapeEditId || !!isolate} keep={isolate} />}
       {services && (
         <Services3D project={project} derived={derived} options={{ ...services, selectedIds: options.selectedIds, onPick: options.onPick }} />
       )}

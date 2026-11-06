@@ -22,6 +22,7 @@ import { isObjectLocked, itemLayerOf } from '@/domain/commands/itemLayers';
 import { moveSelectionToLayer, newLayerFromSelection } from '@/features/editor/itemLayerActions';
 import { canEditItem, enterShapeEdit } from '@/features/shape-edit/actions';
 import { copySelection, pasteFromClipboard } from '@/features/editor/clipboard';
+import { enterIsolation, exitIsolation, groupExists } from '@/features/editor/isolation';
 
 /** Opens the library on an item's shelf and flashes its card (leaves Connections, which shares the panel's place). */
 export function showInLibrary(assetId: string): void {
@@ -40,8 +41,12 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
   const ed = useEditorStore.getState();
   // A new note's label opens a fixed distance away on screen.
   const px = 1 / Math.max(1, ed.planCamera.zoom);
+  // Inside an isolated group: leave it from the menu too.
+  const isolated = ed.isolatedGroupId;
+  const leaveGroup: MenuItem[] = isolated ? [{ label: 'Leave group', shortcut: 'Esc', run: () => exitIsolation() }, { separator: true, label: '' }] : [];
   if (!hit) {
     return [
+      ...leaveGroup,
       { label: 'Add note here', shortcut: 'K', run: () => void createCalloutAt({ kind: 'point', x: world.x, y: world.y, z: 0 }, px) },
       { separator: true, label: '' },
       { label: 'Paste here', shortcut: 'Ctrl+V', run: () => void pasteFromClipboard({ x: world.x, y: world.y }) },
@@ -60,6 +65,10 @@ export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem
     items.push(
       ...(g.canGroup ? [{ label: `Group ${g.count} items`, shortcut: 'Ctrl+G', run: groupSelection }] : []),
       ...(g.canUngroup ? [{ label: g.groupName ? `Ungroup “${g.groupName}”` : 'Ungroup', shortcut: 'Ctrl+Shift+G', run: ungroupSelection }] : []),
+      ...leaveGroup,
+      ...(gid && !isolated && groupExists(project, gid)
+        ? [{ label: 'Edit inside group', shortcut: 'Double-click', run: () => enterIsolation(gid, hit.id) }]
+        : []),
       ...(gid
         ? [
             {

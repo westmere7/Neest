@@ -34,6 +34,7 @@ import { usePackVersion } from '@/packs/events';
 import { planContextMenuItems } from './contextMenu';
 import './plan.css';
 import { isObjectLocked } from '@/domain/commands/itemLayers';
+import { groupMembers, isolatedView } from '@/features/editor/isolation';
 
 /** Constant on-screen pointer tolerance in pixels. */
 const HIT_PX = 8;
@@ -63,6 +64,13 @@ export function PlanCanvas() {
   const servicesShown = useEditorStore((s) => s.servicesShown);
   const notesMode = useEditorStore((s) => s.notesMode);
   const hoveredNoteId = useEditorStore((s) => s.hoveredNoteId);
+  // Group isolation: everything but the group's items is faded (CSS below; picking is limited in the select tool).
+  const isolatedGroupId = useEditorStore((s) => s.isolatedGroupId);
+  const isolateCss = useMemo(() => {
+    if (!isolatedGroupId) return '';
+    const keep = [...groupMembers(project, isolatedGroupId)].map((id) => `.plan-canvas.isolating .plan-drawing .plan-furniture [data-object="${CSS.escape(id)}"]`);
+    return keep.length ? `${keep.join(',')}{opacity:1}` : '';
+  }, [isolatedGroupId, project]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -434,7 +442,11 @@ export function PlanCanvas() {
       if (items.length) openContextMenu(e.clientX, e.clientY, items);
       return;
     }
-    const hit = hitTest(project, derived, pi.world, HIT_PX / camera.zoom);
+    // Inside an isolated group only its items have a menu; anything else gets the empty-space menu.
+    const iso = useEditorStore.getState().isolatedGroupId;
+    const hit = iso
+      ? hitTest(isolatedView(project, iso), derived, pi.world, HIT_PX / camera.zoom, { rooms: false, walls: false, objects: true, openings: false })
+      : hitTest(project, derived, pi.world, HIT_PX / camera.zoom);
     if (hit && !selection.some((s) => s.id === hit.id)) useEditorStore.getState().setSelection([hit]);
     const items = planContextMenuItems(hit, pi.world);
     if (items.length) openContextMenu(e.clientX, e.clientY, items);
@@ -503,12 +515,13 @@ export function PlanCanvas() {
   return (
     <div
       ref={containerRef}
-      className={`plan-canvas mode-${planMode}${chromeHidden ? ' chrome-hidden' : ''}${servicesMode ? ' services-mode' : ''}`}
+      className={`plan-canvas mode-${planMode}${chromeHidden ? ' chrome-hidden' : ''}${servicesMode ? ' services-mode' : ''}${isolatedGroupId ? ' isolating' : ''}`}
       style={{ background: pal.paper }}
       onDragOver={onDragOver}
       onDrop={onDrop}
       data-testid="plan-canvas"
     >
+      {isolateCss && <style>{isolateCss}</style>}
       <svg
         ref={svgRef}
         className="plan-svg"

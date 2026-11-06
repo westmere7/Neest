@@ -17,6 +17,7 @@ import { usePrefsStore } from '@/state/uiStores';
 import { placementMaterials, placementModel } from '@/features/library/variantChoice';
 import type { PointerInfo, Tool, ToolEnv } from './types';
 import { surfaceUnder } from './surfaces';
+import { isolationGroupFor } from '@/features/editor/isolation';
 
 /**
  * Range for floor items with wallSnap while they are moved: the gap between their back and the
@@ -310,6 +311,9 @@ export function createPlaceTool(): Tool {
         });
         if (t?.mirrored) d.objects[nid].mirrored = true;
         if (t?.edits) d.objects[nid].edits = structuredClone(t.edits);
+        // Placed inside an isolated group: it joins the group.
+        const iso = isolationGroupFor(d);
+        if (iso) d.objects[nid].groupId = iso;
         return nid;
       });
       usePrefsStore.getState().pushRecentAsset(asset.id);

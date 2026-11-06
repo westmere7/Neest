@@ -183,6 +183,12 @@ export interface EditorState {
    * mode or view can start: those requests are dropped (see `set` and `setTool`).
    */
   shapeEdit: ShapeEditState | null;
+  /**
+   * Group isolation (double-click a group, like Illustrator): the group's own items are selected and
+   * edited one by one while everything else is X-ray, faded and out of reach. Null = off. See
+   * features/editor/isolation.ts.
+   */
+  isolatedGroupId: string | null;
   /** Light or dark illumination of the 3D house (independent of the software's UI theme). */
   houseLighting: 'light' | 'dark';
 
@@ -252,6 +258,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   notesMode: false,
   hoveredNoteId: null,
   shapeEdit: null,
+  isolatedGroupId: null,
   houseLighting: 'light',
 
   // Picking another tool in Comments & notes mode leaves the mode (see the subscription below).

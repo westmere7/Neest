@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import type { Vec2 } from '@/domain/model/schema';
 import { clipboardText, copyPayload, parseClipboard, pasteObjects, payloadCentre, type ClipboardPayload } from '@/domain/commands/clipboard';
-import { deleteEntities } from '@/domain/commands/entities';
+import { deleteEntities, pruneGroups } from '@/domain/commands/entities';
 import { isObjectLocked } from '@/domain/commands/itemLayers';
 import { getAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { toast } from '@/state/uiStores';
+import { isolationGroupFor } from './isolation';
 
 /**
  * Copy, cut and paste of placed items (and groups), through the system clipboard, so they paste into
@@ -105,7 +106,16 @@ export function pastePayload(payload: ClipboardPayload, at?: Vec2, inPlace = fal
     offset = { x: step, y: step };
   }
   const result = ps().execute(`Paste ${payload.objects.length} item${payload.objects.length === 1 ? '' : 's'}`, (d) =>
-    pasteObjects(d, payload, offset, (id) => !!getAsset(p, id)),
+    {
+      const r = pasteObjects(d, payload, offset, (id) => !!getAsset(p, id));
+      // Pasted inside an isolated group: the items join it (and form no group of their own).
+      const iso = isolationGroupFor(d);
+      if (iso) {
+        for (const id of r.ids) d.objects[id].groupId = iso;
+        pruneGroups(d);
+      }
+      return r;
+    },
   );
   if (!result) return [];
   if (result.skipped) toast.warning(`${result.skipped} item${result.skipped === 1 ? '' : 's'} not pasted`, 'Their content pack is not installed here.');

@@ -134,3 +134,12 @@
   font-variant-numeric: tabular-nums;
   min-width: 30px;
 }
+
+/* Group isolation: everything but the isolated group's items fades back (PlanCanvas adds the group's
+   items back at full strength). */
+.plan-canvas.isolating .plan-drawing > g:not(.plan-furniture) {
+  opacity: 0.32;
+}
+.plan-canvas.isolating .plan-drawing [data-object] {
+  opacity: 0.18;
+}

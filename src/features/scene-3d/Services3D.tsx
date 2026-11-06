@@ -32,7 +32,7 @@ const GHOSTED = new Set(['walls', 'openings', 'rooms']);
  * too (the shape editor: everything but the item being edited, which is drawn outside `neest-plan`).
  * Meshes rebuilt meanwhile are caught on the next frame; everything is put back on unmount.
  */
-export function XRayGhost({ root, objects = false }: { root: React.RefObject<THREE.Group | null>; objects?: boolean }) {
+export function XRayGhost({ root, objects = false, keep }: { root: React.RefObject<THREE.Group | null>; objects?: boolean; keep?: ReadonlySet<string> }) {
   const touched = useRef(new Set<THREE.Mesh>());
   useFrame(() => {
     const g = root.current;
@@ -41,6 +41,8 @@ export function XRayGhost({ root, objects = false }: { root: React.RefObject<THR
       if (!GHOSTED.has(child.name) && !(objects && child.name === 'objects')) continue;
       const edges = child.name !== 'openings' && child.name !== 'objects';
       child.traverse((o) => {
+        // Group isolation: the group's own items stay solid and pickable.
+        if (keep && child.name === 'objects' && insideKept(o, child, keep)) return;
         const m = o as THREE.Mesh;
         if (!m.isMesh || m.userData.xrayEdge) return;
         const ghost = m.userData.kind === 'room' ? GHOST_FLOOR : GHOST_WALL;
@@ -87,6 +89,12 @@ export function XRayGhost({ root, objects = false }: { root: React.RefObject<THR
     };
   }, []);
   return null;
+}
+
+/** Whether a mesh belongs to one of the kept items (an item node directly under the objects group). */
+function insideKept(o: THREE.Object3D, objects: THREE.Object3D, keep: ReadonlySet<string>): boolean {
+  for (let p: THREE.Object3D | null = o; p && p !== objects; p = p.parent) if (p.parent === objects && p.userData.kind === 'object') return keep.has(p.userData.id);
+  return false;
 }
 
 // ───────────────────────── Sprites ─────────────────────────

@@ -17,6 +17,7 @@ import { movedElevation } from './surfaces';
 import { axisGuide, axisLockLabel, createAxisLock, onAxis, snapOnAxis, type AxisLockState } from '@/domain/geometry/axisLock';
 import type { CalloutTarget } from '@/domain/model/schema';
 import { useDialogStore } from '@/state/uiStores';
+import { enterIsolation, exitIsolation, groupExists, isolatedView } from '@/features/editor/isolation';
 import { isObjectLocked } from '@/domain/commands/itemLayers';
 import { insertRunVertex, moveServicePoints, moveServiceRuns, setRunVertex } from '@/domain/commands/services';
 import { pointNear, servicePointAt, wallCentreAt } from '@/domain/geometry/services';
@@ -91,6 +92,8 @@ export function createSelectTool(): Tool {
       const anchor = hitCalloutAnchor(env.project(), env.derived(), p, env.px(), env.tol());
       return anchor ? { kind: 'callout', id: anchor.id } : null;
     }
+    // Inside an isolated group only its items can be picked.
+    if (ed.isolatedGroupId) return hitTest(isolatedView(env.project(), ed.isolatedGroupId), env.derived(), p, env.tol(), { rooms: false, walls: false, objects: true, openings: false });
     return ed.servicesMode ? hitServices(env.project(), env.derived(), p, env.px(), ed.servicesShown) : hitTest(env.project(), env.derived(), p, env.tol());
   };
 
@@ -197,7 +200,7 @@ export function createSelectTool(): Tool {
       editor().setHover(null);
       return;
     }
-    const anchorHit = hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
+    const anchorHit = editor().isolatedGroupId ? null : hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
     if (anchorHit) {
       env.setCursor('move');
       editor().setHover({ kind: 'callout', id: anchorHit.id });
@@ -263,7 +266,7 @@ export function createSelectTool(): Tool {
         }
         return;
       }
-      const anchorHit = hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
+      const anchorHit = editor().isolatedGroupId ? null : hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
       if (anchorHit && !project.layers.callouts?.locked) {
         const a = calloutAnchor(project, derived, anchorHit.target);
         if (a) {
@@ -678,7 +681,15 @@ export function createSelectTool(): Tool {
         }
         return;
       }
-      // A callout: open its editor. An item: select it and close in on it. A room: select it and edit its name.
+      // Group isolation: a double-click inside picks an item, outside the group leaves it.
+      if (editor().isolatedGroupId) {
+        const hit = pick(env, e.world);
+        if (hit) editor().setSelection([hit]);
+        else exitIsolation();
+        return;
+      }
+      // A callout: open its editor. An item: select it and close in on it (a grouped item: edit inside its group).
+      // A room: select it and edit its name.
       const call = hitTest(env.project(), env.derived(), e.world, env.tol(), { callouts: true, px: env.px() });
       if (call) {
         editor().setSelection([call]);
@@ -687,6 +698,11 @@ export function createSelectTool(): Tool {
       }
       if (editor().notesMode) return;
       const item = hitTest(env.project(), env.derived(), e.world, env.tol(), { rooms: false, walls: false, objects: true, openings: true });
+      const gid = item?.kind === 'object' ? env.project().objects[item.id]?.groupId : undefined;
+      if (item && gid && groupExists(env.project(), gid)) {
+        enterIsolation(gid, item.id);
+        return;
+      }
       if (item) {
         editor().setSelection([item]);
         editor().requestFocus();

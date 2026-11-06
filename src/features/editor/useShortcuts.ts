@@ -10,6 +10,7 @@ import { groupSelection, ungroupSelection } from './groups';
 import { setServicesMode, toggleServicesMode } from '@/features/services/actions';
 import { setNotesMode, toggleNotesMode } from '@/features/callouts/actions';
 import { exitShapeEdit, setShapeEditState } from '@/features/shape-edit/actions';
+import { exitIsolation } from './isolation';
 
 export const TOOL_SHORTCUTS: Record<string, ToolId> = {
   v: 'select',
@@ -107,6 +108,8 @@ export function useEditorShortcuts(isMobile: boolean) {
         }
         if (ed.tool !== 'select') return ed.setTool('select');
         if (ed.selection.length) return ed.clearSelection();
+        // Then out of an isolated group.
+        if (ed.isolatedGroupId) return exitIsolation();
         if (ed.chromeHidden) return ed.set({ chromeHidden: false });
         if (ed.workspace === 'walk') return ed.set({ workspace: '3d' });
         return;

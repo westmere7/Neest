@@ -48,6 +48,7 @@ import { setNotesMode, toggleNotesMode } from '@/features/callouts/actions';
 import { useProjectStore } from '@/state/projectStore';
 import { ViewButtons } from '@/features/scene-3d/ViewsRail';
 import { useEditorStore, type PlanMode, type ToolId, type Workspace } from '@/state/editorStore';
+import { IsolationBanner } from './IsolationBanner';
 import { useDialogStore } from '@/state/uiStores';
 import { derivePlan } from '@/domain/geometry/derive';
 import { formatLength } from '@/domain/model/units';
@@ -165,6 +166,7 @@ export function EditorShell() {
           )}
           {/* Bottom right: zoom, grid and snapping in the plan; views and snapping in the 3D view (desktop). */}
           {!shaping && (showPlan || (workspace === '3d' && !isMobile)) && <CanvasControls in3d={workspace === '3d'} />}
+          {!shaping && <IsolationBanner />}
           {!isMobile && <StatusBar />}
           {isMobile && <MobileBar />}
         </>

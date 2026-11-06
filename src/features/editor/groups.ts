@@ -10,14 +10,20 @@ import { toast, usePrefsStore, type SavedGroup } from '@/state/uiStores';
 import { readyGroupById } from '@/data/groups/readyGroups';
 import { transientGroups } from '@/features/library/savedGroupAssets';
 import { isObjectHidden, isObjectLocked } from '@/domain/commands/itemLayers';
+import { installIsolationWatchers, isolationGroupFor } from './isolation';
 
 /**
  * Groups of placed items: selecting one member selects the whole group (installed into the editor
  * store below), Ctrl+G / Ctrl+Shift+G group and ungroup, and a group can be saved to the library's
  * "Saved groups" shelf (prefs, every project) and placed again as a new group.
  */
+installIsolationWatchers();
+
 setSelectionExpander((sel: SelItem[]): SelItem[] => {
   const p = useProjectStore.getState().project;
+  // Inside an isolated group: its items one by one, nothing else.
+  const iso = useEditorStore.getState().isolatedGroupId;
+  if (p && iso) return sel.filter((s) => s.kind === 'object' && p.objects[s.id]?.groupId === iso);
   if (!p || !sel.some((s) => s.kind === 'object' && p.objects[s.id]?.groupId)) return sel;
   const ids = withGroupMates(
     p,
@@ -205,7 +211,10 @@ export function placeSavedGroup(group: SavedGroup, at: Vec2, rotation = 0): void
       if (it.edits && it.assetId === saved.assetId) d.objects[id].edits = structuredClone(it.edits);
       out.push(id);
     }
-    if (out.length >= 2 && !group.ungrouped) groupObjects(d, out, group.name, group.description);
+    // Inside an isolated group the items join it; otherwise they form a new group.
+    const iso = isolationGroupFor(d);
+    if (iso) for (const id of out) d.objects[id].groupId = iso;
+    else if (out.length >= 2 && !group.ungrouped) groupObjects(d, out, group.name, group.description);
     return out;
   });
   if (missing) toast.warning(`${missing} item${missing > 1 ? 's' : ''} skipped`, 'Their content pack is not installed.');

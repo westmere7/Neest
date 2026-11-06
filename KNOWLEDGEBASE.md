@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-06 (new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-07 (group isolation: double-click a group to edit inside it; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -372,6 +372,13 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   - Moving: the 2D drag moves the whole selection, and the 3D body-drag moves group mates too (no wall hug for a
     group).
   - Shortcuts: Ctrl+G groups, Ctrl+Shift+G ungroups.
+  - **Isolation** (`features/editor/isolation.ts`, like Illustrator): double-click a grouped item (2D or 3D) or
+    right-click "Edit inside group" sets `editor.isolatedGroupId`. The expander then keeps only that group's items
+    (one by one), 2D hit-tests run on `isolatedView` (members only), the plan fades everything else
+    (`.plan-canvas.isolating`), 3D X-rays the rest (`XRayGhost keep`) and the 3D drag moves the selection only.
+    Items placed, dropped, pasted or added from a saved group join it (`isolationGroupFor`). Leave with Esc (after
+    the selection is cleared), double-click outside, the banner's Done or "Leave group"; watchers leave by themselves
+    when the group goes (ungroup, delete, undo), another project loads, or Notes / Connections mode starts.
 - **Copy, cut and paste of items** (Ctrl+C / Ctrl+X / Ctrl+V; Ctrl+Shift+V in place; right-click Copy, Cut, and
   "Paste here" on empty space): `domain/commands/clipboard.ts` (`copyPayload`, `parseClipboard`, `pasteObjects`) and
   `features/editor/clipboard.ts` (`useItemClipboard` in EditorShell). The clipboard holds plain text: a self-contained
@@ -2359,3 +2366,8 @@ Known limitations (also in README):
      (favicon.png 192, also the PWA "any" icon) is the bare teal mark on transparent; only the home-screen icon (logo.png
      512, apple-touch, maskable) puts it on the app's light background, as iOS fills transparency with black. All built
      by `node tools/build-icons.mjs` (also writes src/components/nestMark.ts) (done).
+198. "Double clicking a group will enter isolation mode (like Illustrator), this will turn other objects xray and allow
+     editing inside the group" → `isolatedGroupId` in the editor store, features/editor/isolation.ts (§ Groups):
+     members selectable and editable one by one, the rest faded in 2D / X-ray in 3D and out of reach, an
+     IsolationBanner with Done, new items join the group, auto-exit when the group goes. Tests in
+     editor/isolation.test.ts; checked in the browser (2D and 3D enter, fade / X-ray, member-only picks, Esc) (done).
