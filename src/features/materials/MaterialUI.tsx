@@ -115,21 +115,16 @@ export function availableMaterials(project: Project): MaterialDefinition[] {
 
 // ───────────── Live (transactional) material edits ─────────────
 
-let liveTx = false;
+// The open gesture is the store's own transaction (not a flag here): if anything else ends it first
+// (another edit, undo), the next preview starts a new one and the commit still lands.
+const LIVE_LABEL = 'Edit material';
 function livePreview(id: string, patch: Partial<MaterialDefinition>) {
-  const store = useProjectStore.getState();
-  if (!liveTx) {
-    store.begin('Edit material');
-    liveTx = true;
-  }
-  store.preview((d) => updateMaterial(d, id, patch));
+  useProjectStore.getState().livePreview(LIVE_LABEL, (d) => updateMaterial(d, id, patch));
 }
 function liveCommit(id: string, patch: Partial<MaterialDefinition>) {
   const store = useProjectStore.getState();
-  if (liveTx) {
-    liveTx = false;
-    store.commit((d) => updateMaterial(d, id, patch));
-  } else store.execute('Edit material', (d) => updateMaterial(d, id, patch));
+  if (store.tx?.label === LIVE_LABEL) store.commit((d) => updateMaterial(d, id, patch));
+  else store.execute(LIVE_LABEL, (d) => updateMaterial(d, id, patch));
 }
 
 // ───────────── Slot row + picker ─────────────

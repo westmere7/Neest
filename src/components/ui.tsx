@@ -536,6 +536,9 @@ export function Select<T extends string>({
   );
 }
 
+/** Keys a range input handles itself. */
+const SLIDER_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
+
 export function Slider({
   label,
   value,
@@ -579,18 +582,30 @@ export function Slider({
         step={step}
         value={local}
         style={{ '--slider-pct': `${pct}%` } as CSSProperties}
-        onPointerDown={() => (dragging.current = true)}
+        onPointerDown={(e) => {
+          dragging.current = true;
+          const input = e.currentTarget;
+          // The drag ends wherever the pointer is released (or the gesture is cancelled): one commit.
+          const end = () => {
+            window.removeEventListener('pointerup', end);
+            window.removeEventListener('pointercancel', end);
+            if (!dragging.current) return;
+            dragging.current = false;
+            onCommit(parseFloat(input.value));
+          };
+          window.addEventListener('pointerup', end);
+          window.addEventListener('pointercancel', end);
+        }}
         onChange={(e) => {
           const v = parseFloat(e.target.value);
           setLocal(v);
           onChange?.(v);
           if (!dragging.current) onCommit(v);
         }}
-        onPointerUp={(e) => {
-          dragging.current = false;
-          onCommit(parseFloat((e.target as HTMLInputElement).value));
+        onKeyDown={(e) => {
+          // Keys the slider moves with stay here; others (Ctrl+Z, Esc) reach the editor.
+          if (SLIDER_KEYS.has(e.key)) e.stopPropagation();
         }}
-        onKeyDown={(e) => e.stopPropagation()}
       />
     </div>
   );
@@ -673,6 +688,59 @@ export function parseColor(input: string): string | null {
   return null;
 }
 
+/**
+ * A colour picker well. Moving through the picker calls `onPreview` (live, not an undo step); the
+ * picked colour is committed once, on the native `change` event (when the picker closes or the
+ * choice is confirmed). React's `onChange` fires on every movement, so it is not used.
+ */
+export function ColorWell({
+  label,
+  value,
+  onPreview,
+  onCommit,
+  className,
+}: {
+  label: string;
+  value: string;
+  onPreview?: (hex: string) => void;
+  onCommit: (hex: string) => void;
+  className?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const commit = useRef(onCommit);
+  commit.current = onCommit;
+  /** A pick is under way (input events seen, no change yet): the well shows the picker's colour. */
+  const picking = useRef(false);
+  // Uncontrolled (React would put a controlled value back while the picker is open); otherwise it
+  // always shows the current value, after undo and redo too.
+  useLayoutEffect(() => {
+    if (ref.current && !picking.current && ref.current.value !== value) ref.current.value = value;
+  });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onChange = () => {
+      picking.current = false;
+      commit.current(el.value);
+    };
+    el.addEventListener('change', onChange);
+    return () => el.removeEventListener('change', onChange);
+  }, []);
+  return (
+    <input
+      ref={ref}
+      type="color"
+      className={className}
+      aria-label={label}
+      defaultValue={value}
+      onInput={(e) => {
+        picking.current = true;
+        onPreview?.((e.target as HTMLInputElement).value);
+      }}
+    />
+  );
+}
+
 export function ColorField({ label, value, onCommit, onPreview }: { label: string; value: string; onCommit: (hex: string) => void; onPreview?: (hex: string) => void }) {
   const [text, setText] = useState(value);
   const [error, setError] = useState(false);
@@ -684,13 +752,7 @@ export function ColorField({ label, value, onCommit, onPreview }: { label: strin
         {label}
       </label>
       <div className="color-field">
-        <input
-          type="color"
-          aria-label={`${label} picker`}
-          value={value}
-          onInput={(e) => onPreview?.((e.target as HTMLInputElement).value)}
-          onChange={(e) => onCommit(e.target.value)}
-        />
+        <ColorWell label={`${label} picker`} value={value} onPreview={onPreview} onCommit={onCommit} />
         <input
           id={id}
           className="input mono"

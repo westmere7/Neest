@@ -625,6 +625,7 @@ function OpeningGizmo({ openingId, controlsRef }: { openingId: string; controlsR
     const done = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', done);
+      window.removeEventListener('pointercancel', done);
       useProjectStore.getState().commit();
       setHot(null);
       setReadout(null);
@@ -632,6 +633,7 @@ function OpeningGizmo({ openingId, controlsRef }: { openingId: string; controlsR
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', done);
+    window.addEventListener('pointercancel', done);
   };
 
   scaled.current = [];
@@ -773,6 +775,7 @@ function ServicePointGizmo({ pointId, controlsRef }: { pointId: string; controls
     const done = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', done);
+      window.removeEventListener('pointercancel', done);
       useProjectStore.getState().commit();
       setHot(null);
       setReadout(null);
@@ -780,6 +783,7 @@ function ServicePointGizmo({ pointId, controlsRef }: { pointId: string; controls
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', done);
+    window.addEventListener('pointercancel', done);
   };
 
   // Orients ArrowShape (built along +Y) to a direction.
@@ -897,6 +901,7 @@ function CalloutAnchorGizmo({ calloutId, controlsRef }: { calloutId: string; con
     const done = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', done);
+      window.removeEventListener('pointercancel', done);
       useProjectStore.getState().commit();
       setHot(null);
       setReadout(null);
@@ -904,6 +909,7 @@ function CalloutAnchorGizmo({ calloutId, controlsRef }: { calloutId: string; con
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', done);
+    window.addEventListener('pointercancel', done);
   };
 
   const quat = (dir: THREE.Vector3) => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
@@ -1263,6 +1269,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
       useProjectStore.getState().commit();
       lockFx?.clear();
       setHot(null);
@@ -1271,6 +1278,7 @@ export function TransformGizmo({ controlsRef }: { controlsRef: React.MutableRefO
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   };
 
   const tipText = (id: string): string => {

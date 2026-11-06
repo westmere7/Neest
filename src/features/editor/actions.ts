@@ -238,7 +238,8 @@ export function nudgeSelection(dx: number, dy: number): void {
       const o = d.openings[id];
       if (o) updateOpening(d, id, { offset: o.offset + (Math.abs(dx) > Math.abs(dy) ? dx : dy) });
     }
-  });
+    // A run of nudges of the same selection (a held arrow key) is one undo step.
+  }, { coalesce: `nudge:${sel.map((s) => s.id).sort().join(',')}` });
 }
 
 export function flipOpening(id: string, what: 'side' | 'hinge'): void {

@@ -31,7 +31,7 @@ import { ASSET_CATEGORY_LABELS, ASSET_CATEGORY_ORDER, CEILING_CATEGORY } from '@
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { toast, useDialogStore, usePrefsStore } from '@/state/uiStores';
-import { Button, IconButton, Segmented, Select, Slider, Toggle } from '@/components/ui';
+import { Button, ColorWell, IconButton, Segmented, Select, Slider, Toggle } from '@/components/ui';
 import { useIsMobile } from '@/components/hooks';
 import { WALL_HUG_MOVE, hugWall } from '@/features/plan-2d/tools/placeTools';
 import { FloorReflections } from './floorReflections';
@@ -460,12 +460,14 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
       const up = () => {
         window.removeEventListener('pointermove', move);
         window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
         lockFx.clear();
         if (started) useProjectStore.getState().commit();
         if (controlsRef.current) controlsRef.current.enabled = true;
       };
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
     },
     [enabled],
   );
@@ -1395,12 +1397,17 @@ function ViewPanel({
             />
             <div className="field">
               <span className="field-label">Background</span>
-              <input
-                type="color"
+              {/* Live while picking, one undo step when the colour is chosen. */}
+              <ColorWell
                 className="bg-color"
+                label="Background colour"
                 value={r.background}
-                aria-label="Background colour"
-                onChange={(e) => setRender('Change background', { background: e.target.value })}
+                onPreview={(c) => useProjectStore.getState().livePreview('Change background', (d) => void (d.render.background = c))}
+                onCommit={(c) => {
+                  const store = useProjectStore.getState();
+                  if (store.tx?.label === 'Change background') store.commit((d) => void (d.render.background = c));
+                  else setRender('Change background', { background: c });
+                }}
               />
             </div>
           </section>

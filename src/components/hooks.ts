@@ -24,4 +24,4 @@ export function useIsMobile(): boolean {
   return useSyncExternalStore(mobileStore.subscribe, mobileStore.get, () => false);
 }
 
-export { isEditableTarget } from './editableTarget';
+export { isEditableTarget, isTextEntry } from './editableTarget';

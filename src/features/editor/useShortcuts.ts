@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type ToolId } from '@/state/editorStore';
 import { useDialogStore, toast } from '@/state/uiStores';
-import { isEditableTarget } from '@/components/hooks';
+import { isEditableTarget, isTextEntry } from '@/components/hooks';
 import { planKeyRouter } from '@/features/plan-2d/PlanCanvas';
 import { flushSave } from '../projects/projectService';
 import { deleteSelection, duplicateSelection, nudgeSelection, rotateSelection, selectAll, toggleLockSelection } from './actions';
@@ -69,7 +69,13 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
 export function useEditorShortcuts(isMobile: boolean) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || isEditableTarget(e.target)) return;
+      if (e.defaultPrevented) return;
+      if (isEditableTarget(e.target)) {
+        // Text fields keep their own text undo. A focused slider, checkbox, colour well or select has
+        // none, so Ctrl+Z / Ctrl+Y still undo and redo the project there (after dragging a slider, say).
+        const undoKey = (e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y');
+        if (!undoKey || isTextEntry(e.target)) return;
+      }
       if (useDialogStore.getState().openDialog || useDialogStore.getState().confirm) return;
       const ed = useEditorStore.getState();
       const ps = useProjectStore.getState();

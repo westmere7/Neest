@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-07 (group isolation: double-click a group to edit inside it; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-07 (group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -272,7 +272,22 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 
 - `projectStore`: `execute(label, recipe)` = one undo step. Gestures: `begin(label)` → many `preview(recipe)` (not
   recorded, not autosaved) → `commit(finalRecipe?)` (one step) or `cancel()`. Undo/redo restore snapshots;
-  redo is cleared on new edits; history capped at 200 entries (structural sharing keeps it small).
+  redo is cleared on new edits; history capped at 200 entries (structural sharing keeps it small, also on redo).
+  Undo or redo during an open gesture only cancels the gesture (the step before stays).
+- **Live edits** (a colour picker or slider being dragged): `livePreview(label, recipe)` opens the gesture `label`
+  unless it is the open one, then previews; `commit(recipe)` records one step (check `tx?.label` first and fall back
+  to `execute`, as anything else that changes the project ends the gesture). Used by the material editor and the 3D
+  background colour; never keep the "gesture open" state in a flag of your own.
+- **Coalescing**: `execute(label, recipe, { coalesce: key })` merges into the previous step when it has the same key
+  and was made less than `COALESCE_MS` (1 s) ago, so a run is one undo (a held arrow key nudging items:
+  `nudge:<selected ids>`). After an undo a new run starts afresh.
+- **Controls**: `ColorWell` (ui.tsx, also inside `ColorField`) previews on `input` and commits once on the native
+  `change` event (React's `onChange` fires on every movement, which used to record a step per move); it is
+  uncontrolled and re-syncs to the value after every render unless a pick is under way. `Slider` commits once when
+  the pointer is released anywhere (window `pointerup` / `pointercancel`) and only stops the keys it moves with.
+  Every drag that ends on `pointerup` also ends on `pointercancel` (the 2D plan via `onPointerCancel`).
+- **Keys**: text fields, text areas and contentEditable keep the browser's own text undo (`isTextEntry`); with a
+  slider, checkbox, colour well or select focused, Ctrl+Z / Ctrl+Y still undo / redo the project (useShortcuts).
 - `applyExternal(project, label)` replaces the open project with one that changed on disk (repo folder) as a
   single undoable step **without** bumping `revision`, so autosave does not echo it straight back.
 - `revision` increments on committed changes only → autosave (`projectService.startAutosave`) debounces 700 ms,
@@ -2366,6 +2381,17 @@ Known limitations (also in README):
      (favicon.png 192, also the PWA "any" icon) is the bare teal mark on transparent; only the home-screen icon (logo.png
      512, apple-touch, maskable) puts it on the app's light background, as iOS fills transparency with black. All built
      by `node tools/build-icons.mjs` (also writes src/components/nestMark.ts) (done).
+197. "Make sure the undo system works perfectly with all changes that make sense for an undo system" → audit of
+     every path into history (§ state): colour pickers recorded a step per movement (React `onChange`) → `ColorWell`
+     commits once on the native change; the 3D background colour now previews live and commits once; a slider released
+     outside itself could lose its commit → window `pointerup` / `pointercancel`; the material editor's live edit kept
+     its gesture in a module flag that could get stuck and drop the edit → `livePreview` on the store's transaction;
+     undo during a drag cancelled the drag **and** undid the step before → it only cancels; redo ignored the 200-step
+     cap; 3D drags (openings, services points, note spots, the gizmo, item drag, note pins) ignored `pointercancel`;
+     Ctrl+Z did nothing while a slider or checkbox had focus; a held arrow key made one step per repeat →
+     `execute(…, { coalesce })`. Already right: selection pruned after undo/redo, the shape editor leaving when its
+     item goes, dialogs blocking undo, fields committing on blur / Enter. Tests in state/projectStore.test.ts; checked
+     in the browser (picker, slider released outside, Ctrl+Z on a focused control, held-arrow nudge) (done).
 198. "Double clicking a group will enter isolation mode (like Illustrator), this will turn other objects xray and allow
      editing inside the group" → `isolatedGroupId` in the editor store, features/editor/isolation.ts (§ Groups):
      members selectable and editable one by one, the rest faded in 2D / X-ray in 3D and out of reach, an
