@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1793941853608,
+  "updatedAt": 1793964059427,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -1617,8 +1617,8 @@
       "id": "obj_lik3y3ywtd",
       "assetId": "branded-appliances-vn:electrolux-ewf9024p5wb",
       "name": null,
-      "x": 4.124615242138274,
-      "y": 0.33682334546033454,
+      "x": 4.127,
+      "y": 0.33863842320825766,
       "elevation": 0,
       "rotation": 1.5707963267948966,
       "width": 0.6,
@@ -1627,25 +1627,7 @@
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false,
-      "groupId": "grp_dwpzg2iteh"
-    },
-    "obj_cqzeinr4zm": {
-      "id": "obj_cqzeinr4zm",
-      "assetId": "baskets-wicker",
-      "name": null,
-      "x": 4.097615242138274,
-      "y": 0.6031849222520769,
-      "elevation": 0.85,
-      "rotation": 1.8325957145940457,
-      "width": 0.8,
-      "depth": 0.4,
-      "height": 0.45,
-      "mirrored": false,
-      "materials": {},
-      "locked": false,
-      "hidden": false,
-      "groupId": "grp_dwpzg2iteh"
+      "hidden": false
     },
     "obj_i2599i81po": {
       "id": "obj_i2599i81po",
@@ -1684,8 +1666,8 @@
       "id": "obj_fqu9dw2vl6",
       "assetId": "branded-washers:aqua-aqh-v700fw",
       "name": null,
-      "x": 4.1138288226781725,
-      "y": 0.9499905256947686,
+      "x": 4.116213580539898,
+      "y": 0.9518056034426917,
       "elevation": 0,
       "rotation": 1.5707963267948966,
       "width": 0.6,
@@ -1694,8 +1676,7 @@
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false,
-      "groupId": "grp_dwpzg2iteh"
+      "hidden": false
     },
     "obj_jmwxmqckkv": {
       "id": "obj_jmwxmqckkv",
@@ -2283,8 +2264,8 @@
       "id": "obj_3mq9rhfm11",
       "assetId": "laundry-basket",
       "name": null,
-      "x": 3.5476152421382743,
-      "y": 0.2531849222520769,
+      "x": 3.55,
+      "y": 0.255,
       "elevation": 0,
       "rotation": 3.141592653589793,
       "width": 0.45,
@@ -2293,8 +2274,7 @@
       "mirrored": false,
       "materials": {},
       "locked": false,
-      "hidden": false,
-      "groupId": "grp_dwpzg2iteh"
+      "hidden": false
     },
     "obj_shvhrmiq4r": {
       "id": "obj_shvhrmiq4r",
@@ -2333,13 +2313,13 @@
       "id": "obj_862gkb0e24",
       "assetId": "rug-rect",
       "name": null,
-      "x": 0.8,
-      "y": 8.5,
+      "x": 0.9,
+      "y": 8.61,
       "elevation": 0,
       "rotation": 3.141592653589793,
-      "width": 1.2,
-      "depth": 0.6,
-      "height": 0.008,
+      "width": 0.8,
+      "depth": 0.4,
+      "height": 0.0053,
       "mirrored": false,
       "materials": {},
       "locked": false,
@@ -2654,7 +2634,9 @@
       "depth": 0.1,
       "height": 2.7,
       "mirrored": true,
-      "materials": {},
+      "materials": {
+        "shelf": "ceramic-sage"
+      },
       "locked": false,
       "hidden": false
     },
@@ -3096,6 +3078,22 @@
       },
       "locked": false,
       "hidden": false
+    },
+    "obj_10r3fch0ua": {
+      "id": "obj_10r3fch0ua",
+      "assetId": "laundry-storage:over-washer-wood-shelf-right",
+      "name": null,
+      "x": 4.252,
+      "y": 0.6349999999999999,
+      "elevation": 1.45,
+      "rotation": 1.5707963267948966,
+      "width": 1.03,
+      "depth": 0.35,
+      "height": 0.62,
+      "mirrored": false,
+      "materials": {},
+      "locked": false,
+      "hidden": false
     }
   },
   "groups": {
@@ -3115,10 +3113,6 @@
     "grp_cuk80qqr1s": {
       "id": "grp_cuk80qqr1s",
       "name": "Kitchen wall cabinet + 2 more"
-    },
-    "grp_dwpzg2iteh": {
-      "id": "grp_dwpzg2iteh",
-      "name": "Electrolux EWF9024P5WB front loader & aqua aqh-v700fw vented"
     }
   },
   "callouts": {
@@ -3217,9 +3211,9 @@
       },
       "lift": 0.7,
       "title": "",
-      "note": "**Treo quần áo mặc dở**",
+      "note": "Chỗ treo quần áo mặc dở không cần mở cửa, Rất là cần luôn ấy",
       "images": [],
-      "showInfo": true,
+      "showInfo": false,
       "color": "teal",
       "hidden": false,
       "box": "card",
@@ -3298,9 +3292,9 @@
       },
       "lift": 0.7,
       "title": "",
-      "note": "Bàn có ngắn kéo nếu được vì để đồ siêu gọn",
+      "note": "Bàn trang điểm nến có ngắn kéo vì siêu tiện siêu gọn",
       "images": [],
-      "showInfo": true,
+      "showInfo": false,
       "color": "teal",
       "hidden": false,
       "box": "card",
@@ -3328,6 +3322,60 @@
       "note": "Bàn làm việc tuỳ từng nhà tự sắm\nBàn có ngắn kéo nếu được vì để đồ siêu gọn",
       "images": [],
       "showInfo": true,
+      "color": "teal",
+      "hidden": false,
+      "box": "card",
+      "size": "m",
+      "line": "solid",
+      "lineWeight": "regular",
+      "end": "dot",
+      "endSize": "m",
+      "highlight": true
+    },
+    "call_9l4swcdfvk": {
+      "id": "call_9l4swcdfvk",
+      "target": {
+        "kind": "point",
+        "x": 4.182779869665598,
+        "y": 3.228721906049403,
+        "z": 1.93
+      },
+      "offset": {
+        "x": 0.35,
+        "y": -0.3
+      },
+      "lift": 0.7,
+      "title": "",
+      "note": "- Tủ bếp trên không cần làm quá cao, khó với ít xài",
+      "images": [],
+      "showInfo": false,
+      "color": "teal",
+      "hidden": false,
+      "box": "card",
+      "size": "m",
+      "line": "solid",
+      "lineWeight": "regular",
+      "end": "dot",
+      "endSize": "m",
+      "highlight": true
+    },
+    "call_ck280vlbll": {
+      "id": "call_ck280vlbll",
+      "target": {
+        "kind": "point",
+        "x": 3.9267798575062507,
+        "y": 1.8718518323083262,
+        "z": 0.57
+      },
+      "offset": {
+        "x": 0.35,
+        "y": -0.3
+      },
+      "lift": 0.7,
+      "title": "",
+      "note": "- Tủ bếp dưới cân nhắc có thêm hệ ngăn kéo thay vì tủ mở vì tiện cất đồ",
+      "images": [],
+      "showInfo": false,
       "color": "teal",
       "hidden": false,
       "box": "card",
@@ -6911,7 +6959,7 @@
     "share": {
       "slug": "60ltn-tum5n",
       "url": "https://westmere7.github.io/neest-share/60ltn-tum5n/",
-      "at": 1793935369288
+      "at": 1793964059426
     }
   },
   "collections": [

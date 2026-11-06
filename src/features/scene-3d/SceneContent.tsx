@@ -4,7 +4,7 @@ import { isAssetHidden } from '@/data/assets/catalog';
 import { useAssetModelsVersion } from './assetModels';
 import * as THREE from 'three';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { buildStudioEnvironment, resolveHouseLighting, type HouseLightingMode } from './houseLighting';
 import type { PlacedObject, Project, RenderSettings, WallDisplay } from '@/domain/model/schema';
 import { externalWallIds, isHubExternal, type DerivedPlan } from '@/domain/geometry/derive';
 import type { JunctionHub, WallGeometry } from '@/domain/geometry/walls';
@@ -88,40 +88,44 @@ export function Lighting({
   derived,
   shadows,
   quality,
+  mode = 'light',
 }: {
   project: Project;
   derived: DerivedPlan;
   shadows: boolean;
   quality: RenderSettings['quality'];
+  mode?: HouseLightingMode;
 }) {
   const { gl, scene } = useThree();
   const r = project.render;
   const lightRef = useRef<THREE.DirectionalLight>(null);
+  const [envOk, setEnvOk] = useState(true);
   useEffect(() => {
-    const pmrem = new THREE.PMREMGenerator(gl);
-    const room = new RoomEnvironment();
-    const env = pmrem.fromScene(room, 0.04).texture;
-    scene.environment = env;
+    const env = buildStudioEnvironment(gl);
+    scene.environment = env.texture;
+    setEnvOk(env.ok);
     return () => {
       scene.environment = null;
       env.dispose();
-      pmrem.dispose();
-      room.traverse((o) => {
-        const m = o as THREE.Mesh;
-        if (m.isMesh) m.geometry.dispose();
-      });
     };
   }, [gl, scene]);
+  const sun = sunFromSettings(r);
+  const lit = resolveHouseLighting({
+    mode,
+    envOk,
+    envIntensity: r.envIntensity,
+    sunColor: `#${sun.color.getHexString()}`,
+    sunIntensity: sun.intensity,
+  });
   useEffect(() => {
-    scene.environmentIntensity = r.envIntensity;
+    scene.environmentIntensity = lit.environmentIntensity;
     gl.toneMapping = THREE.ACESFilmicToneMapping;
     gl.toneMappingExposure = r.exposure;
     gl.localClippingEnabled = true; // used by cutaway openings
-  }, [scene, gl, r.envIntensity, r.exposure]);
+  }, [scene, gl, lit.environmentIntensity, r.exposure]);
   const b = derived.bounds ?? { minX: -5, minY: -5, maxX: 5, maxY: 5 };
   const cx = (b.minX + b.maxX) / 2;
   const cz = (b.minY + b.maxY) / 2;
-  const sun = sunFromSettings(r);
   // The shadow area covers the plan plus how far a wall-height shadow reaches at this sun
   // elevation (long morning/evening shadows were cut off at the plan's edge).
   const reach = Math.min(
@@ -156,15 +160,15 @@ export function Lighting({
   }, [cx, cz, radius, mapSize, quality]);
   return (
     <>
-      <hemisphereLight args={['#f7f9fb', '#888c90', 0.35 * r.envIntensity]} />
+      <hemisphereLight args={[lit.hemiSky, lit.hemiGround, lit.hemiIntensity]} />
       <directionalLight
         ref={lightRef}
         position={pos}
-        color={sun.color}
-        intensity={sun.intensity}
+        color={lit.sunColor}
+        intensity={lit.sunIntensity}
         castShadow={shadows}
       />
-      <LampLights project={project} quality={quality} />
+      <LampLights project={project} quality={quality} gain={lit.lampGain} forcePool={mode === 'dark'} />
     </>
   );
 }

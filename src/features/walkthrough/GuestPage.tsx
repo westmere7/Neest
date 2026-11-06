@@ -8,10 +8,12 @@ import type { Project } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
 import { planOverview } from '@/domain/geometry/overview';
 import { formatArea, formatLength } from '@/domain/model/units';
-import { guestAutoViews, guestLayers, guestOptions, guestRenderQuality, guestSceneProject, guestSubtitle, guestTitle, guestViews } from '@/domain/walkthrough/guest';
+import { guestAutoViews, guestLayers, guestOptions, guestRenderQuality, guestSceneProject, guestTitle, guestViews } from '@/domain/walkthrough/guest';
 import { defaultSpawn } from '@/domain/walkthrough/collision';
 import { loadProject } from '@/features/projects/projectService';
 import { Lighting, SceneContent } from '@/features/scene-3d/SceneContent';
+import type { HouseLightingMode } from '@/features/scene-3d/houseLighting';
+import { HouseLightToggle } from '@/components/HouseLightToggle';
 import { sharedRegistry } from '@/features/scene-3d/sceneRuntime';
 import { namedView, presetView, type CameraView } from '@/features/scene-3d/cameraViews';
 import { Button } from '@/components/ui';
@@ -280,6 +282,7 @@ export default function GuestPage({ projectId }: { projectId: string }) {
     return start ? presetView(start) : namedView('home', derived.bounds);
   }, [source, derived]);
   const [view, setView] = useState<{ v: CameraView; n: number } | null>(null);
+  const [houseLighting, setHouseLighting] = useState<HouseLightingMode>('light');
   const viewRef = useRef(view);
   viewRef.current = view;
   const notesCamera = useRef<THREE.Camera | null>(null);
@@ -374,7 +377,7 @@ export default function GuestPage({ projectId }: { projectId: string }) {
             fov={r.walkFov}
           />
         )}
-        <Lighting project={project} derived={derived} shadows={shadows} quality={quality} />
+        <Lighting project={project} derived={derived} shadows={shadows} quality={quality} mode={houseLighting} />
         <SceneContent
           project={project}
           derived={derived}
@@ -398,12 +401,9 @@ export default function GuestPage({ projectId }: { projectId: string }) {
       <NotesOverlay project={project} derived={derived} camera={notesCamera} visible={notesOn} />
       {plan && <GuestPlan project={project} onWalk={startWalk} here={walk ? null : { x: view.v.target[0], y: view.v.target[2] }} />}
       <div className="guest-side">
-        <header className="guest-head floating">
-          <div>
-            <strong>{guestTitle(source)}</strong>
-            <span>{guestSubtitle(source)}</span>
-          </div>
-          <Button size="sm" variant="ghost" onClick={() => navigate(`/p/${source.id}`)}>
+        <header className={`guest-head${plan ? ' on-plan' : ''}`}>
+          <strong className="guest-title">{guestTitle(source)}</strong>
+          <Button size="sm" variant="ghost" className="guest-back" onClick={() => navigate(`/p/${source.id}`)}>
             <ArrowLeft size={14} /> Editor
           </Button>
         </header>
@@ -508,25 +508,32 @@ export default function GuestPage({ projectId }: { projectId: string }) {
           </section>
         )}
       </div>
-      <nav className="guest-views floating" aria-label="Views">
-        {views.map((c, i) => (
-          <Button key={i} size="sm" variant="ghost" onClick={() => {
-              setTour(false);
-              go(c.v);
-            }}>
-            {c.name}
-          </Button>
-        ))}
-        {g.floorPlan && (
-          <Button size="sm" variant="ghost" className={plan ? 'on' : ''} onClick={() => {
-              setTour(false);
-              setWalk(false);
-              setPlan(!plan);
-            }} data-testid="guest-plan-button">
-            2D plan
-          </Button>
+      <div className="guest-top-right">
+        <nav className="guest-views floating" aria-label="Views">
+          {views.map((c, i) => (
+            <Button key={i} size="sm" variant="ghost" onClick={() => {
+                setTour(false);
+                go(c.v);
+              }}>
+              {c.name}
+            </Button>
+          ))}
+          {g.floorPlan && (
+            <Button size="sm" variant="ghost" className={plan ? 'on' : ''} onClick={() => {
+                setTour(false);
+                setWalk(false);
+                setPlan(!plan);
+              }} data-testid="guest-plan-button">
+              2D plan
+            </Button>
+          )}
+        </nav>
+        {!plan && (
+          <div className="guest-light floating">
+            <HouseLightToggle mode={houseLighting} onChange={setHouseLighting} variant="dark" />
+          </div>
         )}
-      </nav>
+      </div>
       <div className="guest-bar floating">
         <Button size="sm" variant="primary" onClick={() => (walk ? setWalk(false) : startWalk())} data-testid="guest-walk">
           {walk ? <Orbit size={14} /> : <Footprints size={14} />} {walk ? 'Orbit' : 'Walk through'}

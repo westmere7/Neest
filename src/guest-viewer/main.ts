@@ -9,8 +9,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { attachTrackpadOrbit } from '@/features/scene-3d/trackpadOrbit';
+import {
+  buildStudioEnvironment,
+  resolveHouseLighting,
+  type HouseLightingMode,
+} from '@/features/scene-3d/houseLighting';
 import { wheelDelta } from '@/components/trackpad';
 import {
   inView,
@@ -161,8 +165,6 @@ export interface GuestData {
   /** The layout options (at least one) and the one the file opens on. */
   options: GuestOption[];
   option?: number;
-  /** Tour through the views: seconds per view and whether it starts by itself. */
-  tour?: { seconds: number; auto: boolean };
 }
 
 declare global {
@@ -240,11 +242,13 @@ function segmented<T extends string>(
 /** Line icons for the bar (24 × 24, drawn with the text colour). */
 const ICONS: Record<string, string> = {
   cube: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.27 6.96 12 12.01l8.73-5.05M12 22.08V12',
-  tour: 'M6 4l14 8-14 8V4Z',
+  reset: 'M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5',
   full: 'M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3',
   notes: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM8 8h8M8 12h5',
   info: 'M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zM12 16v-4M12 8h.01',
   view: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
+  sun: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41',
+  moon: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z',
 };
 
 function icon(name: string): SVGSVGElement {
@@ -305,7 +309,7 @@ function switchRow(
 
 /**
  * An on/off button: an icon, a label and a small switch (aria-pressed), for a state that is on or off
- * (tour, full screen). Buttons that open a panel are `panelBtn`s, never switches.
+ * (full screen). Buttons that open a panel are `panelBtn`s, never switches.
  */
 function toggleEl(label: string, title?: string, ico?: string): { btn: HTMLButtonElement; set: (on: boolean) => void } {
   const btn = el('button', 'ng-btn ng-toggle');
@@ -417,10 +421,11 @@ function start(data: GuestData) {
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(data.background);
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = data.envIntensity;
-  scene.add(new THREE.HemisphereLight('#f7f9fb', '#888c90', 0.35 * data.envIntensity));
+  let houseLighting: HouseLightingMode = 'light';
+  let envOk = true;
+  let lampGain = 1;
+  const hemi = new THREE.HemisphereLight('#f7f9fb', '#888c90', 0.35 * data.envIntensity);
+  scene.add(hemi);
   const b = data.bounds;
   const cx = (b.minX + b.maxX) / 2;
   const cz = (b.minY + b.maxY) / 2;
@@ -446,13 +451,30 @@ function start(data: GuestData) {
   sun.shadow.normalBias = 0.025;
   scene.add(sun, sun.target);
 
+  const applyHouseLighting = () => {
+    const lit = resolveHouseLighting({
+      mode: houseLighting,
+      envOk,
+      envIntensity: data.envIntensity,
+      sunColor: data.sun.color,
+      sunIntensity: data.sun.intensity,
+    });
+    scene.environmentIntensity = lit.environmentIntensity;
+    hemi.color.set(lit.hemiSky);
+    hemi.groundColor.set(lit.hemiGround);
+    hemi.intensity = lit.hemiIntensity;
+    sun.color.set(lit.sunColor);
+    sun.intensity = lit.sunIntensity;
+    lampGain = lit.lampGain;
+  };
+  applyHouseLighting();
+
   const persp = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 600);
   const ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, -200, 600);
   let camera: THREE.Camera = persp;
   const controls = new OrbitControls(persp, renderer.domElement);
   controls.enableDamping = true;
   controls.maxPolarAngle = Math.PI / 2 - 0.02;
-  controls.autoRotateSpeed = 0.6;
   attachTrackpadOrbit(renderer.domElement, () => (controls.enabled ? controls : null));
 
   // ── Layout option shown (the option switcher changes it) ──
@@ -504,6 +526,10 @@ function start(data: GuestData) {
   void (async () => {
     loading.step(1);
     await yieldToPaint();
+    const studioEnv = buildStudioEnvironment(renderer);
+    scene.environment = studioEnv.texture;
+    envOk = studioEnv.ok;
+    applyHouseLighting();
     const bytes = await glbBytes();
     loading.step(2);
     await yieldToPaint();
@@ -617,7 +643,11 @@ function start(data: GuestData) {
     for (const s of points) scene.remove(s.light);
     for (const s of spots) scene.remove(s.light, s.light.target);
     [...points, ...spots].forEach((s) => s.light.dispose());
-    const budget = data.lampBudgets?.[quality] ?? { point: 0, spot: 0, shadows: 0 };
+    const rawBudget = data.lampBudgets?.[quality] ?? { point: 0, spot: 0, shadows: 0 };
+    const budget =
+      houseLighting === 'dark' && rawBudget.point === 0 && rawBudget.spot === 0
+        ? (data.lampBudgets?.balanced ?? { point: 4, spot: 3, shadows: 0 })
+        : rawBudget;
     points = Array.from(
       { length: Math.min(budget.point, lamps.filter((l) => l.kind === 'point').length) },
       () => ({ light: new THREE.PointLight('#ffffff', 0, 1, 2), lamp: null }),
@@ -687,7 +717,7 @@ function start(data: GuestData) {
       assignLamps(spots, 'spot');
     }
     for (const s of [...points, ...spots]) {
-      const target = s.lamp ? s.lamp.intensity : 0;
+      const target = s.lamp ? s.lamp.intensity * lampGain : 0;
       s.light.intensity += (target - s.light.intensity) * Math.min(1, dt * 5);
     }
   };
@@ -696,11 +726,7 @@ function start(data: GuestData) {
   // ── HUD: title, overview and view panels on the left, views on the right, controls at the bottom ──
   const hud = el('div', 'ng-hud');
   const side = el('div', 'ng-side');
-  const title = el('div', 'ng-title');
-  title.append(
-    el('strong', '', data.title),
-    el('span', '', `${data.subtitle || 'View-only 3D walkthrough'} · made with Neest`),
-  );
+  const title = el('strong', 'ng-title', data.title);
   side.append(title);
   // Layout options: a drop-down (the file opens on the option that was active). A native select, so
   // phones get their own picker and long option names never crowd the panel.
@@ -732,10 +758,29 @@ function start(data: GuestData) {
     if (optionSelect) optionSelect.value = String(cur);
   };
   markOption();
+  const lightBtn = el('button', 'ng-btn ng-light-switch');
+  lightBtn.type = 'button';
+  lightBtn.setAttribute('role', 'switch');
+  lightBtn.setAttribute('aria-checked', 'true');
+  lightBtn.setAttribute('aria-label', 'House light mode');
+  lightBtn.title = 'House lighting: Light / Dark';
+  const moonIco = icon('moon');
+  moonIco.classList.add('ng-hl-moon');
+  const sunIco = icon('sun');
+  sunIco.classList.add('ng-hl-sun');
+  const lightTrack = el('span', 'ng-switch');
+  lightTrack.setAttribute('aria-hidden', 'true');
+  lightBtn.append(moonIco, lightTrack, sunIco);
+  lightBtn.onclick = () => {
+    houseLighting = houseLighting === 'light' ? 'dark' : 'light';
+    lightBtn.setAttribute('aria-checked', String(houseLighting === 'light'));
+    applyHouseLighting();
+    if (quality === 'fast') buildLampPool();
+  };
   const help = el('div', 'ng-help');
-  hud.append(side);
+  hud.append(side, lightBtn);
   root.append(hud, help);
-  // Bottom bar: view drop-down (where Walk through sat), on/off switches, then panel buttons.
+  // Bottom bar: view drop-down + reset button, on/off switches, then panel buttons.
   const bar = el('div', 'ng-bar');
   const viewGroup = el('div', 'ng-group ng-view-group');
   const toggles = el('div', 'ng-group ng-toggles');
@@ -1135,7 +1180,6 @@ function start(data: GuestData) {
   const focusNote = (n: GuestNote) => {
     if (!n.at) return;
     const at = new THREE.Vector3(...n.at);
-    setTour(false);
     if (narrow()) setNotes(false);
     // Keep the side it is seen from, from above the walls, close enough to read the room around it.
     const dir = camera === persp ? persp.position.clone().sub(controls.target) : new THREE.Vector3(0.6, 1, 0.8);
@@ -1145,7 +1189,7 @@ function start(data: GuestData) {
     const pos = at.clone().addScaledVector(dir, dist);
     applyCamera(
       { name: '', projection: 'perspective', position: pos.toArray(), target: n.at, fov: camera === persp ? persp.fov : 50 },
-      camera === persp,
+      camera === persp ? 900 : 0,
     );
     const label = n.label >= 0 ? callouts[n.label] : undefined;
     if (label && !show.notes) setNotesShown(true);
@@ -1344,8 +1388,8 @@ function start(data: GuestData) {
     ortho.updateProjectionMatrix();
   };
 
-  // ── Views, 2D plan and tour ──
-  /** A camera glide between two perspective views (tour). */
+  // ── Views, 2D plan and reset ──
+  /** A camera glide between two perspective views (Show note, Reset). */
   let glide: {
     from: { p: THREE.Vector3; t: THREE.Vector3; fov: number };
     to: GuestCamera;
@@ -1381,23 +1425,32 @@ function start(data: GuestData) {
   // Arrow keys and letters belong to the select while it has focus.
   viewSelect.addEventListener('keydown', (e) => e.stopPropagation());
 
-  const applyCamera = (c: GuestCamera, animate = false) => {
+  /** Drains leftover OrbitControls damping deltas before setting a new camera target/position. */
+  const flushControls = () => {
+    controls.enableDamping = false;
+    controls.update();
+    controls.enableDamping = true;
+  };
+
+  const applyCamera = (c: GuestCamera, glideMs = 0) => {
     if (planOpen) setPlan(false);
     glide = null;
     const idx = data.cameras.indexOf(c);
     if (idx >= 0) lastViewIndex = idx;
     syncViewSelect();
-    if (animate && camera === persp && c.projection === 'perspective') {
+    if (glideMs > 0 && camera === persp && c.projection === 'perspective') {
+      flushControls();
       glide = {
         from: { p: persp.position.clone(), t: controls.target.clone(), fov: persp.fov },
         to: c,
         start: performance.now(),
-        dur: 2200,
+        dur: glideMs,
       };
       return;
     }
     if (c.projection === 'orthographic') {
       camera = ortho;
+      ortho.zoom = 1;
       resizeOrtho();
     } else {
       camera = persp;
@@ -1405,6 +1458,7 @@ function start(data: GuestData) {
       persp.updateProjectionMatrix();
     }
     controls.object = camera;
+    flushControls();
     camera.position.set(...c.position);
     controls.target.set(...c.target);
     controls.update();
@@ -1427,35 +1481,23 @@ function start(data: GuestData) {
     return true;
   };
 
-  let tourOn = false;
-  let tourIdx = -1;
-  let tourNext = 0;
-  const tourSecs = Math.max(3, data.tour?.seconds ?? 7);
-  const tour = data.cameras.length >= 2 ? toggleEl('Tour', 'Play the views one after another', 'tour') : null;
-  const tourBtn = tour?.btn ?? null;
-  const setTour = (on: boolean) => {
-    tourOn = on;
-    controls.autoRotate = false;
-    tour?.set(on);
-    if (on) {
-      if (planOpen) setPlan(false);
-      tourNext = 0;
-    } else glide = null;
+  const resetBtn = el('button', 'ng-btn ng-act');
+  resetBtn.type = 'button';
+  resetBtn.setAttribute('aria-label', 'Reset view');
+  resetBtn.title = 'Reset view to center';
+  resetBtn.append(icon('reset'), el('span', 'ng-lbl', 'Reset'));
+  resetBtn.onclick = () => {
+    if (planOpen) {
+      vb = [...home];
+      setVb();
+      return;
+    }
+    const c = data.cameras[lastViewIndex] ?? data.cameras[0];
+    if (c) applyCamera(c, 650);
   };
-  const stepTour = (now: number) => {
-    if (!tourOn || glide || now < tourNext) return;
-    tourIdx = (tourIdx + 1) % data.cameras.length;
-    controls.autoRotate = false;
-    applyCamera(data.cameras[tourIdx], true);
-    tourNext = now + tourSecs * 1000;
-  };
-  if (tourBtn) {
-    tourBtn.onclick = () => setTour(!tourOn);
-    toggles.append(tourBtn);
-  }
+  viewGroup.append(resetBtn);
 
   viewSelect.onchange = () => {
-    setTour(false);
     if (viewSelect.value === 'plan') setPlan(true);
     else {
       const c = data.cameras[Number(viewSelect.value)];
@@ -1463,9 +1505,18 @@ function start(data: GuestData) {
     }
   };
 
-  // Any hands-on input ends the tour.
+  // Any hands-on input takes over immediately from an in-flight camera glide.
   for (const ev of ['pointerdown', 'wheel', 'touchstart'] as const)
-    renderer.domElement.addEventListener(ev, () => tourOn && setTour(false), { passive: true });
+    renderer.domElement.addEventListener(
+      ev,
+      () => {
+        if (glide) {
+          glide = null;
+          flushControls();
+        }
+      },
+      { passive: true },
+    );
 
   // ── 2D plan: the plan drawing (of the shown option), with pan and zoom ──
   let youAreHere: SVGGElement | null = null;
@@ -1631,7 +1682,6 @@ function start(data: GuestData) {
   window.addEventListener('keydown', (e) => {
     if (lightboxKey(e)) return;
     if (e.code === 'Escape' && planOpen) setPlan(false);
-    if (tourOn && e.code !== 'Escape') setTour(false);
   });
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1659,9 +1709,6 @@ function start(data: GuestData) {
     toggles.append(full.btn);
   }
 
-  const begin = () => {
-    if (data.tour?.auto && tourBtn) setTour(true);
-  };
   applyCamera(data.cameras[data.start] ?? data.cameras[0]);
   applyVisibility();
   // ── Welcome card ──
@@ -1671,34 +1718,23 @@ function start(data: GuestData) {
     card.append(el('h1', '', data.title));
     if (data.subtitle) card.append(el('p', 'ng-intro-sub', data.subtitle));
     if (data.intro) card.append(el('p', 'ng-intro-text', data.intro));
-    const go = el(
-      'button',
-      'ng-btn ng-primary',
-      data.tour?.auto ? 'Start the tour' : 'Start exploring',
-    );
-    go.onclick = () => {
-      intro.remove();
-      begin();
-    };
+    const go = el('button', 'ng-btn ng-primary', 'Start exploring');
+    go.onclick = () => intro.remove();
     card.append(go);
     intro.append(card);
     root.append(intro);
     go.focus();
-  } else begin();
+  }
 
   const clock = new THREE.Clock();
   let barHeight = -1;
   renderer.setAnimationLoop(() => {
     const dt = Math.min(0.05, clock.getDelta());
-    const now = performance.now();
     if (planOpen) {
       placeHere();
       return; // The plan covers the scene: no need to draw it.
     }
     if (!stepGlide()) {
-      stepTour(now);
-      // Between glides the tour drifts slowly around the view.
-      if (tourOn && camera === persp) controls.autoRotate = true;
       controls.update();
     }
     // Hints and sheets sit above the bottom bar, whatever its height (it wraps on phones).

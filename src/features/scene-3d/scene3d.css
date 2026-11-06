@@ -189,36 +189,65 @@
   border-color: rgba(255, 255, 255, 0.08);
 }
 .guest-head {
-  top: 12px;
-  left: 12px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 8px 8px 8px 14px;
+  gap: 10px;
+  min-width: 0;
+}
+.guest-title {
+  padding: 2px 4px;
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+.guest-head.on-plan .guest-title {
+  color: #1d1f22;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+}
+.guest-head .guest-back {
+  flex: none;
   background: rgba(29, 31, 34, 0.82);
+  border-color: rgba(255, 255, 255, 0.12);
   color: #f2efe9;
-  border-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-.guest-head div {
-  display: flex;
-  flex-direction: column;
+.guest-head .guest-back:hover {
+  background: rgba(52, 55, 60, 0.9);
 }
-.guest-head span {
-  font-size: 11.5px;
-  color: #b0ada7;
-}
-.guest-head .btn {
-  color: #f2efe9;
-}
-.guest-views {
+.guest-top-right {
+  position: fixed;
+  z-index: 10;
   top: 12px;
   right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.guest-top-right > * {
+  position: static;
+  pointer-events: auto;
+}
+.guest-views {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 4px;
   padding: 5px;
   max-width: 60vw;
+  background: rgba(29, 31, 34, 0.82);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.guest-light {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
   background: rgba(29, 31, 34, 0.82);
   border-color: rgba(255, 255, 255, 0.1);
 }
@@ -261,7 +290,8 @@
   touch-action: none;
 }
 @media (max-width: 640px) {
-  .guest-views {
+  .guest-top-right > .guest-views {
+    position: fixed;
     top: auto;
     bottom: 64px;
     left: 12px;
@@ -573,9 +603,6 @@
   .guest-side {
     right: 12px;
     max-width: none;
-  }
-  .guest-side .guest-head {
-    padding: 6px 6px 6px 12px;
   }
   /* Panels become sheets over the bottom of the view, one at a time. */
   .guest-panel {

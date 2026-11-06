@@ -18,6 +18,7 @@ import './exports.css';
 type Format = 'pdf' | 'svg' | 'png-sheet' | 'png-plan' | 'dxf' | 'glb' | 'render' | 'guest' | 'neest' | 'json';
 
 const FORMATS: { id: Format; label: string; sub: string; icon: React.ReactNode; desktop: boolean }[] = [
+  { id: 'guest', label: 'Guest walkthrough — HTML', sub: 'Single file, opens offline', icon: <Footprints size={16} />, desktop: false },
   { id: 'pdf', label: 'Plan sheet — PDF', sub: 'Vector, to scale, print-ready', icon: <FileText size={16} />, desktop: true },
   { id: 'svg', label: 'Plan sheet — SVG', sub: 'Vector with selectable text', icon: <PenTool size={16} />, desktop: true },
   { id: 'png-sheet', label: 'Plan sheet — PNG', sub: 'Raster at chosen DPI', icon: <FileImage size={16} />, desktop: true },
@@ -25,7 +26,6 @@ const FORMATS: { id: Format; label: string; sub: string; icon: React.ReactNode; 
   { id: 'dxf', label: 'CAD — DXF', sub: 'R12 linework, layers, labels', icon: <FileCode2 size={16} />, desktop: true },
   { id: 'glb', label: '3D model — GLB', sub: 'Geometry, transforms, materials', icon: <Box size={16} />, desktop: false },
   { id: 'render', label: '3D image — PNG', sub: 'Current camera view', icon: <ImageIcon size={16} />, desktop: false },
-  { id: 'guest', label: 'Guest walkthrough — HTML', sub: 'Single file, opens offline', icon: <Footprints size={16} />, desktop: false },
   { id: 'neest', label: 'Project file — .neest', sub: 'Backup, move or share', icon: <PackageOpen size={16} />, desktop: false },
   { id: 'json', label: 'Summary — JSON', sub: 'Rooms, inventory, materials', icon: <FileJson size={16} />, desktop: false },
 ];
@@ -34,7 +34,7 @@ const FORMATS: { id: Format; label: string; sub: string; icon: React.ReactNode; 
 export function ExportPanel({ onClose }: { onClose: () => void }) {
   const project = useProjectStore((s) => s.project!);
   const isMobile = useIsMobile();
-  const [format, setFormat] = useState<Format>(isMobile ? 'render' : 'pdf');
+  const [format, setFormat] = useState<Format>('guest');
   const [busy, setBusy] = useState(false);
   const formats = FORMATS.filter((f) => !isMobile || !f.desktop);
   const run = async (fn: () => Promise<void>) => {

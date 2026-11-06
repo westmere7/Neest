@@ -2997,6 +2997,22 @@
    "file": "laundry-basket.webp",
    "fp": "ba35d9b94b017aeb"
   },
+  "laundry-storage:over-washer-wood-shelf": {
+   "file": "laundry-storage_over-washer-wood-shelf.webp",
+   "fp": "1d7ec8fae3b21dea"
+  },
+  "laundry-storage:over-washer-wood-shelf-right": {
+   "file": "laundry-storage_over-washer-wood-shelf-right.webp",
+   "fp": "65c9269578b31a82"
+  },
+  "laundry-storage:over-washer-wood-shelf-right@model:empty": {
+   "file": "laundry-storage_over-washer-wood-shelf-right_model_empty.webp",
+   "fp": "345578c42972aaa5"
+  },
+  "laundry-storage:over-washer-wood-shelf@model:empty": {
+   "file": "laundry-storage_over-washer-wood-shelf_model_empty.webp",
+   "fp": "cf6944e63517fe6d"
+  },
   "lava-lamp": {
    "file": "lava-lamp.webp",
    "fp": "07631f3c561f447a"

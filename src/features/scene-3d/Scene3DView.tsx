@@ -493,6 +493,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const notesMode = useEditorStore((s) => s.notesMode);
   const hoveredNoteId = useEditorStore((s) => s.hoveredNoteId);
   const shapeEditId = useEditorStore((s) => s.shapeEdit?.objectId ?? null);
+  const houseLighting = useEditorStore((s) => s.houseLighting);
   const shapeObject = shapeEditId && mode !== 'walk' ? project.objects[shapeEditId] : undefined;
   const shaping = !!shapeObject;
   const hover = useEditorStore((s) => s.hover);
@@ -758,7 +759,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
           />
         )}
         <PostEffects quality={r.quality} selectedIds={options.selectedIds} notedIds={walk || !showHelpers ? undefined : notedIds} paused={!compiled} />
-        <GlobalIllumination enabled={r.quality === 'ultra' && ready} project={project} derived={derived} />
+        <GlobalIllumination enabled={r.quality === 'ultra' && ready} project={project} derived={derived} mode={houseLighting} />
         <FloorReflections enabled={r.quality === 'ultra'} />
         {walk || projection === 'perspective' ? (
           <PerspectiveCamera
@@ -808,6 +809,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
           derived={derived}
           shadows={r.shadows && r.quality !== 'draft'}
           quality={r.quality}
+          mode={houseLighting}
         />
         {/* Callout labels are HTML: keep them off the loading screen. The services X-ray swaps materials, so it
             waits until the first load (and its async shader compile) is done. */}

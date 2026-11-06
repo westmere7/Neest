@@ -284,7 +284,7 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         </p>
       </Section>
 
-      <Section title="Views & tour" defaultOpen={false}>
+      <Section title="Views" defaultOpen={false}>
         <Toggle
           label="2D plan"
           hint="Included in the View drop-down, with pan and zoom"
@@ -302,23 +302,6 @@ export function GuestExport({ project, busy, run }: PaneProps) {
             { value: '__top__', label: 'Top' },
           ]}
         />
-        <Toggle
-          label="Play the tour on open"
-          hint="Cycles the views until the guest takes over"
-          checked={g.tour}
-          onChange={(tour) => setGuest('Toggle guest tour', { tour })}
-        />
-        {g.tour && (
-          <NumberField
-            label="Seconds per view"
-            value={g.tourSeconds}
-            min={3}
-            max={30}
-            step={1}
-            decimals={0}
-            onCommit={(tourSeconds) => setGuest('Set guest tour pace', { tourSeconds })}
-          />
-        )}
       </Section>
 
       <Section title="What guests see" defaultOpen={false}>

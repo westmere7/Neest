@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { loadAssetModel } from './assetModels';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { buildStudioEnvironment, IBL_HEMI_EQUIVALENT } from './houseLighting';
 import type { PlacedObject, Project } from '@/domain/model/schema';
 import { getAsset } from '@/data/assets/registry';
 import type { AssetDefinition } from '@/data/assets/types';
@@ -66,13 +66,16 @@ function setup(): boolean {
     gl.toneMappingExposure = 1.05;
     gl.setClearColor(0x000000, 0);
     scene = new THREE.Scene();
-    const pmrem = new THREE.PMREMGenerator(gl);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    pmrem.dispose();
-    scene.environmentIntensity = 0.9;
+    const env = buildStudioEnvironment(gl);
+    scene.environment = env.texture;
+    scene.environmentIntensity = env.ok ? 0.9 : 0;
     const key = new THREE.DirectionalLight('#ffffff', 1.6);
     key.position.set(3, 5, 4);
-    scene.add(key, new THREE.HemisphereLight('#ffffff', '#b8b2a6', 0.5), pivot);
+    scene.add(
+      key,
+      new THREE.HemisphereLight('#ffffff', '#b8b2a6', env.ok ? 0.5 : 0.5 + IBL_HEMI_EQUIVALENT * 0.9),
+      pivot,
+    );
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
       failed = true;

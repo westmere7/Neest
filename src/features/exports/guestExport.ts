@@ -35,15 +35,15 @@ const LOADING_ART = `<svg class="ng-art" viewBox="0 0 120 90" aria-hidden="true"
 const FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 
 const CSS = `
-html,body{margin:0;height:100%;overflow:hidden;background:#1d1f22;font:13px/1.4 ${FONT};color:#f2efe9;-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;overflow:hidden;color-scheme:dark;background:#1d1f22;font:13px/1.4 ${FONT};color:#f2efe9;-webkit-text-size-adjust:100%}
 #neest-guest{position:fixed;inset:0}
 canvas{display:block;touch-action:none}
 button{-webkit-tap-highlight-color:transparent}
 .ng-hud{position:fixed;top:calc(12px + env(safe-area-inset-top));left:calc(12px + env(safe-area-inset-left));right:calc(12px + env(safe-area-inset-right));display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;pointer-events:none;z-index:3}
 .ng-side{display:flex;flex-direction:column;gap:8px;max-width:min(320px,calc(100vw - 24px));pointer-events:none}
-.ng-title,.ng-panel{padding:10px 14px;border-radius:12px;background:rgba(29,31,34,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto}
-.ng-title{display:flex;flex-direction:column;gap:2px}
-.ng-title strong{font-size:15px}.ng-title span{color:#b0ada7;font-size:12px}
+.ng-panel{padding:10px 14px;border-radius:12px;background:rgba(29,31,34,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto}
+.ng-title{display:block;padding:2px 4px;color:#fff;font-size:.8125rem;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-shadow:0 1px 3px rgba(0,0,0,.65)}
+.ng-plan-mode .ng-title{color:#1d1f22;text-shadow:0 1px 2px rgba(255,255,255,.85)}
 .ng-panel{max-height:calc(100vh - 170px);overflow:auto;-webkit-overflow-scrolling:touch}
 .ng-panel h2{margin:0 0 8px;font-size:12px;font-weight:600;color:#b0ada7;text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center}
 .ng-x{border:0;background:none;color:#b0ada7;font:inherit;font-size:18px;line-height:1;cursor:pointer;padding:0 4px}
@@ -73,7 +73,7 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-view-select:focus-visible{outline:2px solid #f2efe9;outline-offset:1px}
 .ng-view-select option{background:#26292d;color:#f2efe9;font-weight:400}
 .ng-view-caret{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none}
-.ng-toggle,.ng-pbtn,.ng-primary{display:inline-flex;align-items:center;gap:7px}
+.ng-act,.ng-toggle,.ng-pbtn,.ng-primary{display:inline-flex;align-items:center;gap:7px}
 .ng-ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ng-pbtn.on{background:rgba(111,179,160,.24);border-color:rgba(111,179,160,.65)}
 .ng-switch{position:relative;flex:none;width:26px;height:15px;border-radius:8px;background:rgba(255,255,255,.22);transition:background .15s}
@@ -81,6 +81,14 @@ button{-webkit-tap-highlight-color:transparent}
 .ng-toggle[aria-pressed=true]{border-color:rgba(111,179,160,.6)}
 [aria-pressed=true]>.ng-switch,[aria-checked=true]>.ng-switch{background:#6fb3a0}
 [aria-pressed=true]>.ng-switch::after,[aria-checked=true]>.ng-switch::after{transform:translateX(11px)}
+.ng-light-switch{display:inline-flex;align-items:center;gap:6px;min-block-size:32px;padding:6px 10px;border-radius:12px;background:rgba(29,31,34,.86);pointer-events:auto;flex:none}
+.ng-light-switch .ng-ico{width:14px;height:14px;transition:opacity .15s,color .15s}
+.ng-light-switch[aria-checked=true] .ng-hl-sun{color:#a3cfc1;opacity:1}
+.ng-light-switch[aria-checked=true] .ng-hl-moon{opacity:.48}
+.ng-light-switch[aria-checked=false] .ng-hl-moon{color:#a3cfc1;opacity:1}
+.ng-light-switch[aria-checked=false] .ng-hl-sun{opacity:.48}
+.ng-plan-mode .ng-light-switch{display:none}
+@media (pointer:coarse){.ng-light-switch{min-block-size:36px;padding:7px 11px}}
 .ng-switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0}
 .ng-switch-row label{flex:1;padding:4px 0;cursor:pointer}
 .ng-switch-btn{display:inline-flex;align-items:center;min-height:24px;padding:4px 0;border:0;border-radius:8px;background:none;color:inherit;cursor:pointer}
@@ -183,13 +191,12 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-group:not(:empty)~.ng-group:not(:empty){padding-left:4px}
  .ng-btn{padding:9px 10px}
  .ng-bar .ng-lbl,.ng-bar .ng-switch{display:none}
- .ng-bar .ng-toggle,.ng-bar .ng-pbtn{min-width:40px;justify-content:center;padding:9px}
+ .ng-bar .ng-act,.ng-bar .ng-toggle,.ng-bar .ng-pbtn{min-width:40px;justify-content:center;padding:9px}
  .ng-bar .ng-toggle[aria-pressed=true]{background:rgba(111,179,160,.3)}
  .ng-bar .ng-ico{width:18px;height:18px}
  .ng-bar .ng-view-pick .ng-ico{left:8px;width:16px;height:16px}
  .ng-view-select{padding:9px 24px 9px 30px}
  .ng-view-caret{right:8px}
- .ng-title{padding:6px 12px}.ng-title strong{font-size:14px}.ng-title span{display:none}
  .ng-opts-label{display:none}
  .ng-bar::-webkit-scrollbar{display:none}
  .ng-callout{max-width:200px}
@@ -206,8 +213,10 @@ button{-webkit-tap-highlight-color:transparent}
  .ng-intro-card h1{font-size:18px}
 }
 @media (max-width:640px){
- .ng-hud{flex-direction:column;flex-wrap:nowrap;gap:6px}
- .ng-side{max-width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
+ .ng-hud{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px}
+ .ng-side{flex:1;min-width:0;max-width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
+ .ng-title{max-width:min(48vw,200px)}
+ .ng-opts{min-width:0;max-width:100%}
  .ng-side .ng-btn{padding:7px 10px}
  .ng-bar::-webkit-scrollbar{display:none}
  .ng-panel{position:fixed;left:8px;right:8px;bottom:calc(var(--ng-bar,56px) + 16px + env(safe-area-inset-bottom));max-height:48vh;z-index:4;box-shadow:0 -6px 24px rgba(0,0,0,.3)}
@@ -400,7 +409,6 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
     roomsOn: g.roomLabels,
     options,
     option: opts.start,
-    tour: { seconds: g.tourSeconds, auto: g.tour },
   };
 }
 
@@ -419,6 +427,7 @@ export async function buildGuestHtml(project: Project): Promise<string> {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
 <meta name="generator" content="Neest">
 <title>${escHtml(data.title)} — 3D walkthrough</title>
 <style>${CSS}</style>

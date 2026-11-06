@@ -265,7 +265,17 @@ async function bake(gl: THREE.WebGLRenderer, scene: THREE.Scene, derived: Derive
  * Bakes the room probes in Ultra quality once the view is ready, and again (debounced) whenever
  * the project or its lighting changes; switches GI off otherwise.
  */
-export function GlobalIllumination({ enabled, project, derived }: { enabled: boolean; project: Project; derived: DerivedPlan }) {
+export function GlobalIllumination({
+  enabled,
+  project,
+  derived,
+  mode = 'light',
+}: {
+  enabled: boolean;
+  project: Project;
+  derived: DerivedPlan;
+  mode?: 'light' | 'dark';
+}) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const invalidate = useThree((s) => s.invalidate);
@@ -286,7 +296,7 @@ export function GlobalIllumination({ enabled, project, derived }: { enabled: boo
       cancelled = true;
       window.clearTimeout(t);
     };
-  }, [enabled, project, derived, gl, scene, invalidate]);
+  }, [enabled, project, derived, mode, gl, scene, invalidate]);
   useEffect(() => () => clearGI(), []);
   return null;
 }

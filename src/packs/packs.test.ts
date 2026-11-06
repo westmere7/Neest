@@ -293,6 +293,31 @@ describe('pack models', () => {
     }
     expect(assetModels(ASSETS_BY_ID.bookcase).map((m) => m.id)).toEqual(['original', 'empty']);
   });
+
+  it('builds the over-washer open wood shelf in both left and right tall-bay layouts with top-load clearance and empty model', () => {
+    const left = ASSETS_BY_ID['laundry-storage:over-washer-wood-shelf'];
+    const right = ASSETS_BY_ID['laundry-storage:over-washer-wood-shelf-right'];
+    expect(left.mount).toBe('wall');
+    expect(left.defaultElevation).toBeGreaterThanOrEqual(1.42);
+    expect(right.variantOf).toBe(left.id);
+    expect(assetModels(left).map((m) => m.id)).toEqual(['filled', 'empty']);
+
+    const leftParts = left.build(left.defaultSize);
+    const rightParts = right.build(right.defaultSize);
+    const avgX = (ps: typeof leftParts, slot: string) => {
+      const hit = ps.filter((p) => p.slot === slot);
+      return hit.reduce((s, p) => s + p.position[0], 0) / hit.length;
+    };
+    // Left item keeps basket + detergent bottle on the -x side; mirrored right item places them on +x.
+    expect(avgX(leftParts, 'basket')).toBeLessThan(-0.05);
+    expect(avgX(leftParts, 'bottle')).toBeLessThan(0.02);
+    expect(avgX(rightParts, 'basket')).toBeGreaterThan(0.02);
+    expect(avgX(rightParts, 'bottle')).toBeGreaterThan(0.1);
+
+    const empty = withModel(left, 'empty').build(left.defaultSize);
+    expect(empty.every((p) => p.slot === 'wood')).toBe(true);
+    expect(empty.length).toBe(9);
+  });
 });
 
 describeAssetChecks(packItems);

@@ -183,6 +183,8 @@ export interface EditorState {
    * mode or view can start: those requests are dropped (see `set` and `setTool`).
    */
   shapeEdit: ShapeEditState | null;
+  /** Light or dark illumination of the 3D house (independent of the software's UI theme). */
+  houseLighting: 'light' | 'dark';
 
   setTool(tool: ToolId): void;
   setSelection(sel: SelItem[]): void;
@@ -250,6 +252,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   notesMode: false,
   hoveredNoteId: null,
   shapeEdit: null,
+  houseLighting: 'light',
 
   // Picking another tool in Comments & notes mode leaves the mode (see the subscription below).
   // The shape editor allows no other tool.

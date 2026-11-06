@@ -176,7 +176,7 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
             Guests see what was published; press Update after changes.
           </p>
           <div className="btn-row">
-            <Button size="sm" disabled={busy} onClick={() => void publish()} data-testid="live-link-update">
+            <Button size="sm" variant="info" disabled={busy} onClick={() => void publish()} data-testid="live-link-update">
               <RefreshCw size={13} /> {busy ? 'Publishing…' : 'Update'}
             </Button>
             <Button size="sm" onClick={() => window.open(share.url, '_blank', 'noopener')}>

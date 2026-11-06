@@ -743,10 +743,14 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   any, otherwise non-partition room walls with outside on one face) and the hubs touching them (`isHubExternal`);
   interior walls stay full height. The GLB marks walls, hubs, wall details and openings with `userData.neestExt`, and
   the guest viewer clips them with two planes (`clip` for external, `clipInt` for interior).
-- `Scene3DView`: R3F `Canvas`, perspective/orthographic camera switch, OrbitControls, lighting (RoomEnvironment
-  PMREM + hemisphere + time-of-day sun with shadows; lamp lights from `LampLights`), view panel (saved views,
-  walls, quality & light, categories). On desktop the panel can be stashed (header button or `P`) and brought
-  back with the **View** button the tool rail shows in 3D; mobile only collapses it (there is no rail there).
+- `Scene3DView`: R3F `Canvas`, perspective/orthographic camera switch, OrbitControls, lighting (`houseLighting.ts ›
+  buildStudioEnvironment` + `resolveHouseLighting`: `RoomEnvironment` rendered via `CubeCamera` + `pmrem.fromCubemap`
+  with a 1×1 `UnsignedByteType` pixel-probe fallback + hemisphere + time-of-day sun with shadows; lamp lights from
+  `LampLights`), top-right **House Light / Dark** switch (`HouseLightToggle`, `editor.houseLighting`, mirrored in
+  `GuestPage.tsx` and `.ng-light-switch` in `src/guest-viewer/main.ts` — switches only the 3D house between daytime
+  `light` and lamp-lit `dark`, never the app UI theme or canvas background), view panel (saved views, walls, quality &
+  light, categories). On desktop the panel can be stashed (header button or `P`) and brought back with the **View**
+  button the tool rail shows in 3D; mobile only collapses it (there is no rail there).
   **Views in the canvas controls** (bottom right, desktop 3D view, not in the shape editor; `ViewButtons` in
   `scene-3d/ViewsRail.tsx`, rendered by `EditorShell › CanvasControls in3d`): **Top**, then every saved view in the
   panel's order, then Snapping (the plan's zoom, fit and grid buttons are left out in 3D). A click goes through
@@ -805,14 +809,15 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
   and flashes its label; general notes have no Show) and **ceiling items hidden by default** (pendants, ceiling lights,
   fans, hanging plants, projectors: `isCeilingItem` = ceiling-mounted and not structure, so beams, soffits, arches and
   portals stay; View panel → "Ceiling lights & fans"; their lamps keep shining). Both follow `project.guest` (see §14
-  "Guest walkthrough") and offer a 2D plan (pan/zoom), a tour, an Overview panel (`domain/geometry/overview.ts › planOverview`,
+  "Guest walkthrough") and offer a 2D plan (pan/zoom), an Overview panel (`domain/geometry/overview.ts › planOverview`,
   shared with the Inspector) and a View panel (walls full/cutaway, ceilings, notes, room names, item layers, quality,
   shadows), full screen, the app's loading screen (`FirstFrames.tsx` + `SceneLoading`), and a phone layout. In the HTML
-  export, saved ("custom") camera views are omitted: bottom-bar controls start on the left with a **View** drop-down
-  (native `select` pill in `.ng-bar` where Walk through used to sit: Overview, Top, and 2D plan when enabled), followed
-  by on/off switches (`aria-pressed`: Tour, Full screen) and **panel buttons** (icon + label, `aria-expanded`, lit while
-  open: Info, Notes, View; never drawn as switches); `#/guest/:id` keeps saved views at top right plus the Walk through /
-  Exit action button and Fly / Ghost switches when walking. The HTML export's Notes list and
+  export, saved ("custom") camera views and Tour are omitted: bottom-bar controls start on the left with a **View**
+  drop-down (native `select` pill in `.ng-bar` where Walk through used to sit: Overview, Top, and 2D plan when enabled)
+  paired with a **Reset** button (`Reset view` with reset icon, re-centering/zooming the currently selected Overview, Top,
+  or 2D plan view back to its default), followed by on/off switches (`aria-pressed`: Full screen) and **panel buttons**
+  (icon + label, `aria-expanded`, lit while open: Info, Notes, View; never drawn as switches); `#/guest/:id` keeps saved views at top right plus the Walk through /
+  Exit action button, Tour, and Fly / Ghost switches when walking. The HTML export's Notes list and
   View panel offer "Notes in the 3D view": a "Show in workspace" switch (on by default unless `guest.notes === 'hidden'`)
   above Icons / Compact / Full (pins open their card; Show turns on workspace notes and opens it too).
   **Phones** (`max-width:640px` portrait, `max-height:500px` landscape): a one-row bottom bar (View drop-down + icon-only
@@ -1423,7 +1428,11 @@ construction documents.
    module from the console with a different URL creates a second instance (e.g. a second `liveScene`).
    Do a full reload when debugging singletons; find dep URLs via `performance.getEntriesByType('resource')`.
 10. **Lights/env maps and multiple renderers**: PMREM env textures belong to one renderer. Capture uses the live
-    renderer; thumbnails/import previews create their own PMREM.
+    renderer; thumbnails/import previews create their own PMREM. Avoid calling `PMREMGenerator.fromScene(new
+    RoomEnvironment(), …)` directly in browser WebGL: `fromScene` sets `renderer.autoClear = false` on a
+    `depthBuffer: true` `cubeUVRenderTarget` without clearing depth, which on iOS Safari / Metal TBDR can discard all
+    geometry and produce a black environment map; always go through `scene-3d/houseLighting.ts › buildStudioEnvironment`
+    (`CubeCamera` with explicit per-face clears + `pmrem.fromCubemap` + 1×1 pixel readback fallback).
 11. **three-gpu-pathtracer**: latest versions need three ≥ 0.185; this repo pins `0.0.23` (three 0.178). Its
     `setSceneAsync` throws "setBVHWorker must be called" without a worker. A failing init used to be hidden by a
     later "reading 'dispose'" error in cleanup, so cleanup is wrapped (`safely`) and the original error is logged.
@@ -2290,3 +2299,39 @@ Known limitations (also in README):
      removed `'Off'` from `NOTE_MODES` (leaving `Icons`, `Compact`, `Full`) and placed a `Show in workspace` switch row
      (`.ng-switch-row`, `role="switch"`, synced across the Notes and View panels and on by default via `guest.notes: 'shown'`)
      directly above `.ng-note-modes`. Test in `guestExport.test.ts` (done).
+187. "bỏ tour trong chế độ cho khách xem đi, thay bằng tính năng khác với icon reset, khi bấm thì nó auto reset lại layout ở
+     vị trí center (theo mặc định default view chế độ khách đã chọn)" → removed Tour from `src/guest-viewer/main.ts`,
+     `src/features/exports/guestExport.ts` and `src/features/exports/GuestExportPane.tsx`, and added a `Reset` action button
+     (`icon('reset')`, `.ng-act`) next to the View drop-down in `.ng-bar` that smoothly re-centers and resets zoom for the
+     currently selected view (`Overview` perspective glide, `Top` orthographic `ortho.zoom = 1` + center, or `2D plan` home
+     `viewBox`). Test in `guestExport.test.ts` (done).
+188. "Sửa lại đồng nhất sáng trên mọi trình duyệt. thêm 1 tính năng bật chế độ light/dark góc bên trêb bên phải dạng toggle.
+     chế độ light mode này chỉ thay đổi nhà không phải thay đổi theme của phần mềm. Hiện cả ở workspace làm việc và chế độ view
+     của khách." → `src/features/scene-3d/houseLighting.ts` (`buildStudioEnvironment` renders `RoomEnvironment` via `CubeCamera`
+     + `pmrem.fromCubemap` with clean GL state and a 1×1 `UnsignedByteType` pixel readback + calibrated `HemisphereLight`
+     fallback so iOS Safari / Metal TBDR matches Chrome/desktop brightness; `resolveHouseLighting` drives `light` vs night/lamp
+     `dark` illumination on the 3D house without changing the software UI theme or canvas background), `<meta name="color-scheme"
+     content="dark">` + `color-scheme:dark` in `guestExport.ts`, and a top-right `role="switch"` Light/Dark toggle in the
+     workspace (`EditorShell.tsx` › `HouseLightToggle`, `editor.houseLighting`), in-app guest view (`GuestPage.tsx`), and
+     exported guest HTML viewer (`src/guest-viewer/main.ts` `.ng-light-switch`). Tests in `houseLighting.test.tsx` and
+     `guestExport.test.ts` (done).
+189. "đổi cái nút update trong mục export html thành màu blue dùm , cho dễ nhìn nhưng khác với primary xanh lá button" → added
+     semantic blue `--info` / `--info-strong` / `--info-ring` / `--on-info` tokens in `src/styles/tokens.css`, `variant="info"`
+     (`.btn-info`) on `Button` in `src/components/ui.tsx` + `src/components/components.css`, and applied `variant="info"` to the
+     live-link `Update` button (`data-testid="live-link-update"`) in `src/features/exports/GuestLiveLink.tsx` (done).
+190. "Ở chế độ view cho khách phần title text này chiêms diện tích quá, desktop chỉ để như 1 dòng text nhỏ, bold tên project. ở
+     mobile cũng vậy , text nhỏ trắng không cần background" → replaced the multi-line dark card header with a single compact bold
+     white project title (`<strong>`, `0.8125rem`, `font-weight: 700`, subtle text shadow, no background box, dark ink when 2D
+     plan paper is open) on both desktop and mobile in the exported guest HTML viewer (`src/guest-viewer/main.ts`,
+     `src/features/exports/guestExport.ts`) and in-app guest view (`src/features/walkthrough/GuestPage.tsx`,
+     `src/features/scene-3d/scene3d.css`) (done).
+191. "Đẩy cái export walkthought này lên đầu tiên vì tôi xài nó nhiều nhất" → moved `Guest walkthrough — HTML` (`id: 'guest'`) to
+     the top of `FORMATS` and made `'guest'` the initial active tab in `ExportPanel` (`src/features/exports/ExportDialog.tsx`),
+     tested in `GuestLiveLink.test.tsx` (done).
+192. "Tạo cho tôi 1 kệ gỗ 3D không cửa để treo trên máy giặt sấy, chiều cao phải đủ để mở máy giặt cửa trên. bên phải chia 2 ô,
+     bên trái chia 1 ô cao để 1 giỏ quần áo và 1 chai nước giặt cao" → added `packs/laundry-storage.pack.ts`
+     (`laundry-storage:over-washer-wood-shelf` with tall bay on the left and two stacked open cubbies on the right, plus mirrored
+     `laundry-storage:over-washer-wood-shelf-right` via `variantOf` matching the sketch's right-hand tall bay; `mount: 'wall'`,
+     `defaultElevation: 1.45` m to clear an open top-load washer lid, `1.20 × 0.35 × 0.62 m`, woven rattan laundry basket with
+     folded cream linen + tall liquid detergent jug in `Filled` model alongside an `Empty shelf` model, wood finish variants, and
+     Shape Editor 3D handles for `tallWidth` and `lowerHeight`). Tested in `src/packs/packs.test.ts` (done).

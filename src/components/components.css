@@ -22,7 +22,7 @@
 .restore-ui,
 .guest-side,
 .guest-bar,
-.guest-views,
+.guest-top-right,
 .guest-intro,
 .modal-backdrop,
 .note-lightbox,
@@ -77,6 +77,23 @@
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-strong);
+}
+.btn-info {
+  background: var(--info);
+  border-color: transparent;
+  color: var(--on-info);
+}
+.btn-info:hover:not(:disabled) {
+  background: var(--info-strong);
+  border-color: transparent;
+}
+.btn-info:focus-visible {
+  outline-color: var(--info-ring);
+}
+@media (forced-colors: active) {
+  .btn-info {
+    border-color: ButtonText;
+  }
 }
 .btn-ghost,
 .btn-subtle {
@@ -725,4 +742,99 @@ kbd {
 .stepper button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* ───────── House Light / Dark toggle ───────── */
+.house-light-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 28px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+.house-light-toggle:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.house-light-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.house-light-toggle .hl-ico {
+  flex: none;
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.house-light-toggle[aria-checked='true'] .hl-sun {
+  color: var(--accent-strong);
+  opacity: 1;
+}
+.house-light-toggle[aria-checked='true'] .hl-moon {
+  opacity: 0.48;
+}
+.house-light-toggle[aria-checked='false'] .hl-moon {
+  color: var(--accent-strong);
+  opacity: 1;
+}
+.house-light-toggle[aria-checked='false'] .hl-sun {
+  opacity: 0.48;
+}
+.house-light-toggle .hl-track {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background var(--dur-fast) var(--ease);
+}
+.house-light-toggle[aria-checked='true'] .hl-track {
+  background: var(--accent);
+}
+.house-light-toggle .hl-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.house-light-toggle[aria-checked='true'] .hl-thumb {
+  transform: translateX(12px);
+}
+.house-light-toggle.on-dark {
+  color: #f2efe9;
+  border-radius: 9px;
+}
+.house-light-toggle.on-dark:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.house-light-toggle.on-dark:focus-visible {
+  outline-color: #a3cfc1;
+}
+.house-light-toggle.on-dark[aria-checked='true'] .hl-sun,
+.house-light-toggle.on-dark[aria-checked='false'] .hl-moon {
+  color: #a3cfc1;
+}
+.house-light-toggle.on-dark .hl-track {
+  background: rgba(255, 255, 255, 0.24);
+}
+.house-light-toggle.on-dark[aria-checked='true'] .hl-track {
+  background: #6fb3a0;
+}
+@media (pointer: coarse) {
+  .house-light-toggle {
+    min-block-size: 36px;
+    padding: 6px 10px;
+  }
 }

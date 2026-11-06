@@ -27,8 +27,18 @@ type Slot<L extends THREE.Light> = { light: L; key: string | null; target: numbe
  * popping. In high quality the first spot slots cast shadows (ultra: more spots and some points,
  * with no range cut-off); shadow maps are redrawn only when the scene or the slot's fixture changes.
  */
-export function LampLights({ project, quality }: { project: Project; quality: RenderSettings['quality'] }) {
-  const full = LAMP_BUDGET[quality];
+export function LampLights({
+  project,
+  quality,
+  gain = 1,
+  forcePool = false,
+}: {
+  project: Project;
+  quality: RenderSettings['quality'];
+  gain?: number;
+  forcePool?: boolean;
+}) {
+  const full = LAMP_BUDGET[quality === 'draft' && forcePool ? 'balanced' : quality];
   const camera = useThree((s) => s.camera);
   const scene = useThree((s) => s.scene);
   const controls = useThree((s) => s.controls) as unknown as { target?: THREE.Vector3 } | null;
@@ -148,7 +158,7 @@ export function LampLights({ project, quality }: { project: Project; quality: Re
           if (s.light.userData.key !== s.light.userData.lit) s.light.intensity = 0;
           s.light.userData.lit = l.key;
         }
-        s.target = l ? l.intensity : 0;
+        s.target = l ? l.intensity * gain : 0;
         const d = s.target - s.light.intensity;
         if (Math.abs(d) > 0.01) {
           s.light.intensity += d * Math.min(1, delta * FADE_RATE);

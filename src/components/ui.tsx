@@ -19,7 +19,7 @@ import './components.css';
 // ───────────── Buttons ─────────────
 
 type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'default' | 'primary' | 'ghost' | 'danger' | 'subtle';
+  variant?: 'default' | 'primary' | 'info' | 'ghost' | 'danger' | 'subtle';
   size?: 'sm' | 'md';
 };
 

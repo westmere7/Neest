@@ -213,7 +213,7 @@ describe('guest export data', () => {
     expect(data.quality).toBe('high');
     expect(data.shadows).toBe(false);
     expect(data.lampBudgets?.fast).toEqual({ point: 0, spot: 0, shadows: 0 });
-    expect(data.tour).toEqual({ seconds: 5, auto: true });
+    expect('tour' in data).toBe(false);
     expect(opt.info?.open).toBe(false);
     expect(opt.info?.stats.map(([k]) => k)).toEqual([
       'Rooms',
@@ -289,9 +289,15 @@ describe('guest export data', () => {
     expect(html).toMatch(/@media \(max-width:640px\)/);
     // Phones on their side get the compact layout too.
     expect(html).toMatch(/@media \(max-width:640px\),\(max-height:500px\)/);
-    // Panel switch styling supports role="switch" (`aria-checked=true`) for the "Show in workspace" toggle.
+    // Panel switch styling supports role="switch" (`aria-checked=true`) for the "Show in workspace" and house Light/Dark toggles, and declares dark color-scheme so browser Auto Dark Mode never alters the page.
+    expect(html).toMatch(/<meta name="color-scheme" content="dark">/);
+    expect(html).toMatch(/color-scheme:dark/);
     expect(html).toMatch(/\[aria-checked=true\]>\.ng-switch/);
     expect(html).toMatch(/\.ng-switch-row/);
+    expect(html).toMatch(/\.ng-light-switch/);
+    // Compact single-line bold white project title without a card background.
+    expect(html).not.toContain('.ng-title,.ng-panel');
+    expect(html).toMatch(/\.ng-title\{[^}]*color:#fff[^}]*font-weight:700/);
   });
 
   it('carries selected layout options and opens on the chosen default option', async () => {
@@ -416,10 +422,12 @@ describe('guest export data', () => {
     // On/off controls say so (aria-pressed), and full screen is offered where allowed.
     expect(runtime).toMatch(/aria-pressed/);
     expect(runtime).toMatch(/requestFullscreen/);
-    // Layout options, view drop-down in the bottom bar, Notes list with its picture viewer, ceiling items; no walkthrough mode or top-right view buttons.
+    // Layout options, view drop-down + Reset view button in the bottom bar, Notes list with its picture viewer, ceiling items; no walkthrough mode, Tour switch or top-right view buttons.
     expect(runtime).toMatch(/neestOption/);
     expect(runtime).toMatch(/ng-view-select/);
+    expect(runtime).toMatch(/Reset view/);
     expect(runtime).not.toMatch(/ng-views/);
+    expect(runtime).not.toMatch(/Play the views one after another|Start the tour/);
     expect(runtime).toMatch(/neestCeiling/);
     expect(runtime).toMatch(/ng-lightbox/);
     expect(runtime).not.toMatch(/Walk through|Exit walkthrough|Ghost|requestPointerLock/);
@@ -432,5 +440,8 @@ describe('guest export data', () => {
     expect(runtime).not.toMatch(/\[['"]off['"],\s*['"]Off['"]\]/);
     expect(runtime).toMatch(/ng-pin/);
     expect(runtime).toMatch(/ng-immersive/);
+    expect(runtime).toMatch(/ng-light-switch/);
+    expect(runtime).toMatch(/House light mode/);
+    expect(runtime).not.toMatch(/made with Neest/);
   });
 });

@@ -52,6 +52,7 @@ import { useDialogStore } from '@/state/uiStores';
 import { derivePlan } from '@/domain/geometry/derive';
 import { formatLength } from '@/domain/model/units';
 import { Button, IconButton, Segmented, Toggle } from '@/components/ui';
+import { HouseLightToggle } from '@/components/HouseLightToggle';
 import { useIsMobile } from '@/components/hooks';
 import { Logo } from '@/components/Logo';
 import { navigate } from '@/app/App';
@@ -296,6 +297,8 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
   const layersOpen = useEditorStore((s) => s.layersPanelOpen);
   const notesMode = useEditorStore((s) => s.notesMode);
   const shaping = useEditorStore((s) => !!s.shapeEdit);
+  const houseLighting = useEditorStore((s) => s.houseLighting);
+  const show3d = workspace === '3d' || workspace === 'split' || workspace === 'walk';
   const open = useDialogStore((s) => s.open);
   const current = workspace === 'plan' ? `plan:${planMode}` : workspace;
   const setView = (v: string) => {
@@ -435,6 +438,14 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
             </IconButton>
           )}
         </div>
+        )}
+        {show3d && (
+          <div className="topbar-island floating">
+            <HouseLightToggle
+              mode={houseLighting}
+              onChange={(next) => useEditorStore.getState().set({ houseLighting: next })}
+            />
+          </div>
         )}
       </div>
     </header>
