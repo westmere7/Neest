@@ -125,7 +125,7 @@ export function isSelfIntersecting(poly: Polygon): boolean {
   return false;
 }
 
-/** Removes consecutive duplicate and collinear vertices. */
+/** Removes consecutive duplicate and collinear vertices, including the tips of zero-width spikes. */
 export function cleanPolygon(poly: Polygon, eps = 1e-6): Polygon {
   const out: Polygon = [];
   for (const p of poly) {
@@ -143,12 +143,12 @@ export function cleanPolygon(poly: Polygon, eps = 1e-6): Polygon {
       const ab = sub(b, a);
       const bc = sub(c, b);
       if (Math.abs(cross(ab, bc)) < eps * Math.max(1, Math.hypot(ab.x, ab.y) + Math.hypot(bc.x, bc.y))) {
-        // Only drop when b lies between a and c (not a spike back).
-        if (ab.x * bc.x + ab.y * bc.y > 0) {
-          out.splice(i, 1);
-          changed = true;
-          break;
-        }
+        // On one line: b is either between a and c or the tip of a zero-width spike (an inset edge shorter
+        // than its neighbours' offsets folds back, e.g. at a T-junction inside another wall's thickness).
+        // Neither adds area; a spike would only inflate the perimeter.
+        out.splice(i, 1);
+        changed = true;
+        break;
       }
     }
   }

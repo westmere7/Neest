@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-07 (guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-07 (60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -223,7 +223,9 @@ dangling references (with user-visible warnings) instead of crashing. Repo-folde
   tracing (next = previous edge in angle order at the far vertex; bounded faces have positive signed area) →
   other components' outer loops become **holes** of the smallest containing face → each face edge is inset by its
   wall's half thickness to get the **clear floor polygon** (`inner`); invalid insets fall back and raise a
-  diagnostic. Area/perimeter are measured on `inner` (minus holes).
+  diagnostic. Area/perimeter are measured on `inner` (minus holes). `cleanPolygon` drops collinear vertices,
+  including the tips of zero-width spikes: an inset edge shorter than its neighbours' offsets folds back (a
+  T-junction inside another wall's thickness) and used to add its length twice to the perimeter.
 - **Room identity** (`matchFacesToRooms`): score = anchor-inside (1) + Jaccard(boundary wall ids); greedy ≥ 0.34.
 - **Snapping** (`snapping.ts`) priority: node → wall midpoint → wall line/face → angle constraint from anchor
   (45° steps; Shift forces) with grid-rounded length and alignment guides → x/y alignment guides → grid.
@@ -2422,3 +2424,16 @@ Known limitations (also in README):
 201. "For guest page, the middle mouse should also behave like app page" → the guest viewer kept three's default
      (middle-drag dollied); it now pans like the app's 3D view (`controls.mouseButtons`), and the help line says so. The
      2D plan on the guest page already panned with any button (done).
+202. "The external wall seems weirdly thick. Check Vietnam standard household external wall thickness and adjust it
+     for all options in 60LTN, only external thickness, so the layout, inner wall, room area don't change" + "make sure
+     the area doesn't change" → common practice is a 220 mm exterior wall (brick two-wide, "tường 220"; 110 mm inside;
+     no binding TCVN figure found). Every exterior wall in all four options went from 0.24 / 0.30 / 0.38 to 0.22 with
+     its inner face fixed: each centreline moved toward the room by (old − 0.22) / 2, openings' offsets shifted by how
+     far their wall's start moved. The balcony side walls (0.38) and the living walls (0.30 / 0.24) met end to end with
+     inner faces 4 / 7 cm apart, so their new centrelines differ: each junction got a second node and a short link
+     inside the wall bodies (with the 8 cm balcony wall: that wall's thickness on its own line; without it: 2 cm, 1 cm
+     below the line so its inset puts the step exactly at y 1.36, plus a 1 cm piece of the living wall where the
+     partial wall meets it). Checked per option: identical room areas (to 1e-4 m²) and inner outlines, rooms still
+     matched, no diagnostics. The inner-outline check exposed fold-back spikes from such links → `cleanPolygon` drops
+     them (geometry.test.ts). Overall size is now 4.91 × 11.58 m (outer faces moved in); columns keep their place and
+     stand a little proud of the façade (done).

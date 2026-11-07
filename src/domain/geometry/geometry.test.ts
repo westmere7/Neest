@@ -110,6 +110,24 @@ describe('polygons', () => {
     expect(cleanPolygon(poly)).toHaveLength(4);
   });
 
+  it('drops zero-width spikes along an edge (an inset edge that folds back)', () => {
+    // Bottom edge walks 0 → -0.07 → 4.58 → 4.5: two fold-backs on one line, no area.
+    const poly = [
+      { x: 0, y: 0 },
+      { x: -0.07, y: 0 },
+      { x: 4.58, y: 0 },
+      { x: 4.5, y: 0 },
+      { x: 4.5, y: 2 },
+      { x: 0, y: 2 },
+    ];
+    expect(cleanPolygon(poly)).toEqual([
+      { x: 0, y: 0 },
+      { x: 4.5, y: 0 },
+      { x: 4.5, y: 2 },
+      { x: 0, y: 2 },
+    ]);
+  });
+
   it('computes convex hulls', () => {
     const hull = convexHull([
       { x: 0, y: 0 },
