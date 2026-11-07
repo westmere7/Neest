@@ -6,8 +6,9 @@ Read [KNOWLEDGEBASE.md](KNOWLEDGEBASE.md) first (architecture, conventions, pitf
 Commands: `npm run dev` · `npm test` · `npm run typecheck` · `npm run lint` · `npm run build` · `npm run test:e2e`.
 On Windows, `start-neest.bat` installs dependencies if needed and starts the dev server.
 
-Projects opened in the dev server are mirrored to `projects/` (see projects/README.md). Editing a file there
-updates open browsers live; don't leave test projects behind in that folder.
+Work in the dev server is kept in browser storage as you go; a project's file in `projects/` is written only when
+the user saves (Ctrl+S or the top-bar Save button). Editing a file there updates open browsers live; don't leave
+test projects behind in that folder.
 
 Dev debug hooks (dev builds only): `window.__NEEST__` (`project`, `editor` stores) and
 `window.__NEEST_LIVE__.current` (live three.js renderer/scene/camera).

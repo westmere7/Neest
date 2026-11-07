@@ -6,7 +6,7 @@ import { toast } from '@/state/uiStores';
 import { ProjectImportError } from '@/storage/migrations';
 import { Button } from '@/components/ui';
 import { navigate } from '@/app/App';
-import { loadProject, saveProject, startAutosave } from '../projects/projectService';
+import { loadProject, saveProject, startAutosave, markFileVersion } from '../projects/projectService';
 import { migrateProject } from '@/storage/migrations';
 import { loadFromWorkspace, onWorkspaceChange, pullWorkspaceAssets, workspaceFolder } from '@/storage/workspace';
 import { EditorShell } from './EditorShell';
@@ -71,7 +71,8 @@ export default function EditorPage({ projectId }: { projectId: string }) {
         if (!current || incoming.updatedAt <= current.updatedAt) return;
         await pullWorkspaceAssets(incoming);
         useProjectStore.getState().applyExternal(incoming, 'External change (repo folder)');
-        await saveProject(incoming, true, false);
+        await saveProject(incoming, true);
+        markFileVersion(incoming);
         toast.info('Project updated from disk', `Changes in ${e.file} were loaded. Undo (Ctrl+Z) restores your previous version.`);
       } catch (err) {
         toast.warning('Could not load the changed project file', err instanceof Error ? err.message : undefined);

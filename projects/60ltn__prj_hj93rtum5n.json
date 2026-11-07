@@ -4,7 +4,7 @@
   "id": "prj_hj93rtum5n",
   "name": "60LTN",
   "createdAt": 1792313965430,
-  "updatedAt": 1794054636858,
+  "updatedAt": 1794056910466,
   "settings": {
     "units": "m",
     "precision": 2,
@@ -7067,7 +7067,7 @@
     "share": {
       "slug": "60ltn-tum5n",
       "url": "https://westmere7.github.io/neest-share/60ltn-tum5n/",
-      "at": 1794053876675
+      "at": 1794056910464
     }
   },
   "collections": [

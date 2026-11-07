@@ -33,8 +33,6 @@ import {
   type WorkspaceEntry,
 } from '@/storage/workspace';
 import { generateThumbnail, thumbnailSrc } from './thumbnails';
-import { usePrefsStore } from '@/state/uiStores';
-import { Toggle } from '@/components/ui';
 import './launcher.css';
 
 function relativeTime(ts: number): string {
@@ -106,7 +104,6 @@ export function Launcher() {
   const [renaming, setRenaming] = useState<ProjectSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [repo, setRepo] = useState<{ available: boolean; entries: WorkspaceEntry[] }>({ available: false, entries: [] });
-  const repoSync = usePrefsStore((s) => s.repoSync);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
@@ -228,12 +225,6 @@ export function Launcher() {
           <Button variant="ghost" onClick={() => fileRef.current?.click()} disabled={busy}>
             <Upload size={15} /> Import
           </Button>
-          {repo.available && (
-            <div className="repo-toggle" title={`Mirror projects into ${workspaceFolder()}/ in the repository so teammates can open them after git pull`}>
-              <FolderGit2 size={15} aria-hidden />
-              <Toggle label="Sync to repo" checked={repoSync} onChange={(v) => usePrefsStore.getState().setRepoSync(v)} />
-            </div>
-          )}
           <ThemeSwitch />
         </div>
         <input

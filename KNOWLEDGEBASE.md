@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-07 (60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-07 (project file written only on Save (Ctrl+S / Save button), browser autosave as you go; 60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -18,8 +18,8 @@ a single-file guest walkthrough, `.neest` project files, JSON summaries).
 - Scope: **one apartment level** per project. No storeys, roofs, terrain or structural engineering.
 - No backend, accounts or network services. Everything runs in the browser and persists to IndexedDB. A storage
   seam (`src/storage/repository.ts`) exists for a future Cloudflare backend; do **not** add server code or fake
-  endpoints. The only server code is the **dev/preview-server plugin** that mirrors projects into the repo's
-  `projects/` folder (§13); production static builds don't have it.
+  endpoints. The only server code is the **dev/preview-server plugin** that reads and writes project files in the
+  repo's `projects/` folder (§13), written only when the user saves; production static builds don't have it.
 - The product brief lives in `_Prompt/prompt.md` (generated from `_Prompt/InitialPrompt.txt`). Its acceptance
   criteria (§24) are the bar for "done".
 
@@ -1371,8 +1371,14 @@ button, panel, Inspector section, menus); code and saved data keep the name *ser
 - Client: `storage/workspace.ts` (`workspaceAvailable`, `listWorkspace`, `loadFromWorkspace`, `saveToWorkspace`
   (uploads model blobs first), `removeFromWorkspace`, `pullWorkspaceAssets`, `onWorkspaceChange` via
   `import.meta.hot.on`).
-- `saveProject` and the autosave flush **mirror** to the repo when the `repoSync` pref is on (default). Status is
-  shown in the save indicator (`useSaveStore.repo`: off/pending/synced/error).
+- **Saving**: work is kept in browser storage as you go (`startAutosave` → `projectRepository`, 700 ms debounce;
+  `saveProject` never touches the repo). The project file is written **only on Save**: Ctrl+S (handled before the
+  text-field guard, blurs a field first so it commits) or the top-bar Save button (`features/editor/save.ts` →
+  `saveNow`). `useSaveStore.repo` is off / unsaved / saving / saved / error: saved while the open project's
+  `updatedAt` equals the file's (read from the listing on open, set by Save or by loading a newer file from disk),
+  so undo back to the saved version reads as saved. The Save button shows an accent dot while unsaved. New,
+  duplicated, imported and sample projects stay in the browser until saved. (The old always-on mirror and its
+  "Sync to repo" toggle / `repoSync` pref are gone.)
 - `loadProject(id)` prefers the repo copy when it is newer than the browser's (pulls its models, saves it
   locally) and reports `source: 'repo'` and `firstOpen`. The editor toasts "Opened from the repo folder" or
   "Loaded the newer copy from the repo".
@@ -1503,9 +1509,10 @@ construction documents.
 - **Something re-renders on every drag move**: the editor shell re-renders on each project change (pointer moves are
   store previews). Panels must subscribe to the slices they show and be memoised (`LibraryPanel` is `memo`; its cards
   must not read the whole project). Profile with a CDP CPU profile in headless Playwright with the UI showing.
-- **A browser with an older copy of a project overwrites `projects/` when it opens it** (repo sync on). Before scripting
-  edits to a project file, make sure no open tab holds a stale copy, or apply the change through the running app
-  (`window.__NEEST__.project.getState().execute`) so it merges with the live state.
+- **Scripted edits to a project file**: the file is written only on Save now, but an open tab still holds its own
+  copy; a later Save from a tab with an older copy overwrites the file. Apply changes through the running app
+  (`window.__NEEST__.project.getState().execute`, then `saveNow()` from projectService) so they merge with the live
+  state, or edit the file while no tab has unsaved changes (the tab loads the newer file).
 - **Hidden Browser pane pauses rendering**: rAF stops, so 3D loading never finishes there; measure in a headless
   Playwright page instead (repo sync off first).
 - **Guest viewer bundle size**: everything `src/guest-viewer/main.ts` imports ships in every exported file. Importing
@@ -1584,7 +1591,7 @@ Done and verified in the browser:
 - **3D editing**: drafting tools in 3D, ghost placement, transform gizmo.
 - Exports: sheets, DXF, PNG, GLB, guest HTML, .neest and JSON, plus **path-traced renders**. The Export dialog
   opens instantly.
-- Autosave, plus **repo `projects/` sync** with live on-disk updates.
+- Autosave in the browser; **Save (Ctrl+S / top-bar button) writes `projects/`**, with live on-disk updates.
 - `start-neest.bat` (Windows), `start-neest.command` (macOS Finder) and `start-neest.sh` (macOS/Linux).
 - **CC0 photo textures** with procedural fallback, photo/procedural switch in the material editor, richer
   procedural patterns, self-contained GLB/guest exports with embedded photo maps.
@@ -2437,3 +2444,10 @@ Known limitations (also in README):
      matched, no diagnostics. The inner-outline check exposed fold-back spikes from such links → `cleanPolygon` drops
      them (geometry.test.ts). Overall size is now 4.91 × 11.58 m (outer faces moved in); columns keep their place and
      stand a little proud of the façade (done).
+203. "Save the app progress in real time in browser (like now), but only write to the actual project file with save
+     option (Ctrl+S on Windows). Add a save button as well on the top rail. When saving temporary, don't store in git
+     repo" → autosave goes to browser storage only; `saveNow` (Ctrl+S anywhere, also in fields and dialogs, and a
+     Save button left of Undo with an accent dot while unsaved) writes the project file; the indicator says "saved to
+     file" / "not saved to file". New / duplicated / imported projects no longer appear in projects/ until saved; the
+     "Sync to repo" toggle is removed. Tests in projects/projectService.test.ts; checked in the browser with a
+     throw-away project (no file after create or edit; Ctrl+S and the button write it; deleted after) (done).

@@ -124,6 +124,21 @@
 .save-indicator.state-saved {
   color: var(--text-3);
 }
+/* Save button: a dot in the accent while the project file is behind what is open. */
+.save-btn {
+  position: relative;
+}
+.save-btn.unsaved::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface-solid);
+}
 .spin {
   animation: spin 0.9s linear infinite;
 }

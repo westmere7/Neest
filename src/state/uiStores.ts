@@ -77,8 +77,6 @@ interface PrefsState {
   favouriteMaterials: string[];
   recentMaterials: string[];
   onboardingDismissed: boolean;
-  /** Mirror projects into the repository projects/ folder when served by the dev server. */
-  repoSync: boolean;
   /** 3D view: the orbit pivot eases to the selected objects (off by default). */
   focusSelection: boolean;
   /** What scrolling comes from (Settings → Scrolling): told apart automatically, or always a mouse wheel / trackpad. */
@@ -102,7 +100,6 @@ interface PrefsState {
   toggleFavouriteMaterial(id: string): void;
   pushRecentMaterial(id: string): void;
   dismissOnboarding(): void;
-  setRepoSync(on: boolean): void;
   setFocusSelection(on: boolean): void;
   setScrollDevice(d: ScrollDevice): void;
   saveAssetVariant(assetId: string, variant: UserVariant): void;
@@ -131,7 +128,6 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   favouriteMaterials: [],
   recentMaterials: [],
   onboardingDismissed: false,
-  repoSync: true,
   focusSelection: false,
   scrollDevice: 'auto',
   assetVariants: {},
@@ -183,10 +179,6 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   dismissOnboarding() {
     set({ onboardingDismissed: true });
     persist('onboardingDismissed', true);
-  },
-  setRepoSync(on) {
-    set({ repoSync: on });
-    persist('repoSync', on);
   },
   setFocusSelection(on) {
     set({ focusSelection: on });
@@ -259,13 +251,12 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
   },
   async hydrate() {
     try {
-      const [fa, ra, fm, rm, ob, rs, av, ld, sg, fs, ns, rc, mv, sd] = await Promise.all([
+      const [fa, ra, fm, rm, ob, av, ld, sg, fs, ns, rc, mv, sd] = await Promise.all([
         preferenceRepository.get<string[]>('favouriteAssets'),
         preferenceRepository.get<string[]>('recentAssets'),
         preferenceRepository.get<string[]>('favouriteMaterials'),
         preferenceRepository.get<string[]>('recentMaterials'),
         preferenceRepository.get<boolean>('onboardingDismissed'),
-        preferenceRepository.get<boolean>('repoSync'),
         preferenceRepository.get<Record<string, UserVariant[]>>('assetVariants'),
         preferenceRepository.get<LibraryDensity>('libraryDensity'),
         preferenceRepository.get<SavedGroup[]>('savedGroups'),
@@ -283,7 +274,6 @@ export const usePrefsStore = create<PrefsState>((set, get) => ({
         favouriteMaterials: fm ?? [],
         recentMaterials: rm ?? [],
         onboardingDismissed: ob ?? false,
-        repoSync: rs ?? true,
         focusSelection: fs ?? false,
         assetVariants: av && typeof av === 'object' ? av : {},
         libraryDensity: ld && LIBRARY_DENSITIES.includes(ld) ? ld : 'normal',

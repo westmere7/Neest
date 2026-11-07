@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore, type ToolId } from '@/state/editorStore';
-import { useDialogStore, toast } from '@/state/uiStores';
+import { useDialogStore } from '@/state/uiStores';
 import { isEditableTarget, isTextEntry } from '@/components/hooks';
 import { planKeyRouter } from '@/features/plan-2d/PlanCanvas';
-import { flushSave } from '../projects/projectService';
+import { saveWithFeedback } from './save';
 import { deleteSelection, duplicateSelection, nudgeSelection, rotateSelection, selectAll, toggleLockSelection } from './actions';
 import { groupSelection, ungroupSelection } from './groups';
 import { setServicesMode, toggleServicesMode } from '@/features/services/actions';
@@ -46,6 +46,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'Digits + Enter', action: 'Exact length while drawing' },
   { keys: 'A (curved wall)', action: 'Switch 3-point arc / free bend' },
   { keys: 'F (measuring on a wall face)', action: 'Clear distance to the opposite face' },
+  { keys: 'Ctrl+S', action: 'Save to the project file (work is kept in this browser as you go)' },
   { keys: 'Ctrl+Z / Ctrl+Shift+Z', action: 'Undo / redo' },
   { keys: 'Delete', action: 'Delete selection' },
   { keys: 'Ctrl+D', action: 'Duplicate' },
@@ -70,6 +71,12 @@ export function useEditorShortcuts(isMobile: boolean) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
+      // Save works everywhere, also while typing in a field or with a dialog open (never the browser's "Save page").
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (!e.repeat) void saveWithFeedback();
+        return;
+      }
       if (isEditableTarget(e.target)) {
         // Text fields keep their own text undo. A focused slider, checkbox, colour well or select has
         // none, so Ctrl+Z / Ctrl+Y still undo and redo the project there (after dragging a slider, say).
@@ -94,9 +101,6 @@ export function useEditorShortcuts(isMobile: boolean) {
           e.preventDefault();
           if (key === 'y' || e.shiftKey) ps.redo();
           else ps.undo();
-        } else if (mod && key === 's') {
-          e.preventDefault();
-          void flushSave().then(() => toast.success('Saved locally'));
         }
         return;
       }
@@ -129,11 +133,6 @@ export function useEditorShortcuts(isMobile: boolean) {
       if (mod && key === 'y') {
         e.preventDefault();
         ps.redo();
-        return;
-      }
-      if (mod && key === 's') {
-        e.preventDefault();
-        void flushSave().then(() => toast.success('Saved locally'));
         return;
       }
       if (mod && key === 'e') {

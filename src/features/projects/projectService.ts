@@ -11,37 +11,83 @@ import { useProjectStore } from '@/state/projectStore';
 import { PlanDrawing } from '@/features/plan-2d/PlanDrawing';
 import { printPalette } from '@/features/plan-2d/palette';
 import { SAMPLES } from './demoProject';
-import { loadFromWorkspace, pullWorkspaceAssets, saveToWorkspace, workspaceAvailable } from '@/storage/workspace';
-import { usePrefsStore } from '@/state/uiStores';
+import { listWorkspace, loadFromWorkspace, pullWorkspaceAssets, saveToWorkspace, workspaceAvailable } from '@/storage/workspace';
 
 // ───────────── Save status ─────────────
 
 export type SaveState = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
 
-export type RepoState = 'off' | 'pending' | 'synced' | 'error';
+/** The project file in the repository projects/ folder (dev server only): written only by Save (Ctrl+S). */
+export type RepoState = 'off' | 'unsaved' | 'saving' | 'saved' | 'error';
 
 interface SaveStatus {
   state: SaveState;
   lastSavedAt: number | null;
   error: string | null;
-  /** Mirror state of the repository projects/ folder (dev server only). */
+  /** Whether the project file in projects/ holds the current version ('off' without a repo folder). */
   repo: RepoState;
 }
 
 export const useSaveStore = create<SaveStatus>(() => ({ state: 'idle', lastSavedAt: null, error: null, repo: 'off' }));
 
-/** Mirrors a project into the repo folder when available and enabled. */
-export async function mirrorToRepo(project: Project): Promise<void> {
-  if (!usePrefsStore.getState().repoSync || !(await workspaceAvailable())) {
+// ───────────── Project file (Save) ─────────────
+//
+// Work is kept in this browser as you go (autosave below). The project file in the repository's projects/
+// folder is written only when the user saves (Ctrl+S or the Save button), so half-finished edits never land
+// in git. `fileVersion` is the open project's `updatedAt` as last written to (or read from) its file.
+
+let fileVersion: number | null = null;
+let fileProjectId: string | null = null;
+
+/** Updates the indicator: does the file hold what is open? (undo back to the saved state counts as saved). */
+function updateFileState(project: Project | null = useProjectStore.getState().project): void {
+  const { repo } = useSaveStore.getState();
+  if (repo === 'off' || repo === 'saving' || !project) return;
+  const next: RepoState = project.id === fileProjectId && project.updatedAt === fileVersion ? 'saved' : 'unsaved';
+  if (next !== repo) useSaveStore.setState({ repo: next });
+}
+
+/** Records that the file now holds this version (after a save, or when a newer file was loaded from disk). */
+export function markFileVersion(project: Project): void {
+  fileProjectId = project.id;
+  fileVersion = project.updatedAt;
+  updateFileState(); // against what is open now: edits made while the file was being written stay unsaved
+}
+
+/** Reads which version the open project's file holds (on open). */
+async function readFileState(project: Project): Promise<void> {
+  fileProjectId = project.id;
+  fileVersion = null;
+  if (!(await workspaceAvailable())) {
     useSaveStore.setState({ repo: 'off' });
     return;
   }
-  useSaveStore.setState({ repo: 'pending' });
+  const entry = (await listWorkspace().catch(() => [])).find((e) => e.id === project.id);
+  fileVersion = entry?.updatedAt ?? null;
+  useSaveStore.setState({ repo: 'unsaved' });
+  updateFileState();
+}
+
+/**
+ * Save (Ctrl+S / the Save button): stores the open project in this browser and writes its file in the
+ * repository projects/ folder. Without a repo folder (static build) it only stores it in the browser.
+ * Returns where it went, or null when nothing was saved.
+ */
+export async function saveNow(): Promise<'file' | 'browser' | null> {
+  const { project, tx } = useProjectStore.getState();
+  if (!project || tx) return null;
+  await flush();
+  if (useSaveStore.getState().state === 'error') return null;
+  if (!(await workspaceAvailable())) return 'browser';
+  useSaveStore.setState({ repo: 'saving' });
   try {
     await saveToWorkspace(project);
-    useSaveStore.setState({ repo: 'synced' });
-  } catch {
-    useSaveStore.setState({ repo: 'error' });
+    useSaveStore.setState({ repo: 'unsaved' });
+    markFileVersion(project);
+    return 'file';
+  } catch (err) {
+    useSaveStore.setState({ repo: 'error', error: err instanceof Error ? err.message : String(err) });
+    return null;
   }
 }
 
@@ -99,12 +145,12 @@ export function projectStats(project: Project) {
 
 // ───────────── Lifecycle ─────────────
 
-export async function saveProject(project: Project, withThumbnail = true, mirror = true): Promise<void> {
+/** Stores a project in this browser (never in the repo folder: that is `saveNow`, on the user's Save). */
+export async function saveProject(project: Project, withThumbnail = true): Promise<void> {
   await projectRepository.save(project, {
     ...projectStats(project),
     ...(withThumbnail ? { thumbnail: renderThumbnail(project) } : {}),
   });
-  if (mirror) void mirrorToRepo(project);
 }
 
 export async function createProject(opts: NewProjectOptions = {}): Promise<string> {
@@ -148,7 +194,7 @@ export async function loadProject(id: string): Promise<LoadResultWithSource | nu
   }
   if (repo && (!local || repo.project.updatedAt > local.project.updatedAt + 1)) {
     const missing = await pullWorkspaceAssets(repo.project);
-    await saveProject(repo.project, true, false);
+    await saveProject(repo.project, true);
     return {
       ...repo,
       warnings: [...repo.warnings, ...missing.map((m) => `Model "${m}" is missing from the repo folder.`)],
@@ -205,7 +251,6 @@ async function flush(): Promise<void> {
     .save(project, projectStats(project))
     .then(() => {
       useSaveStore.setState({ state: 'saved', lastSavedAt: Date.now(), error: null });
-      void mirrorToRepo(project);
     })
     .catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
@@ -228,18 +273,19 @@ async function flush(): Promise<void> {
 }
 
 /**
- * Starts debounced autosave for the open project. Saves only after committed
- * edits (never on raw pointer moves, which are transient previews), and
- * flushes when the tab is hidden or closed. Returns a stop function.
+ * Starts debounced autosave for the open project into this browser's storage (not the repo folder). Saves
+ * only after committed edits (never on raw pointer moves, which are transient previews), and flushes when the
+ * tab is hidden or closed. Returns a stop function.
  */
 export function startAutosave(): () => void {
   useSaveStore.setState({ state: 'saved', lastSavedAt: Date.now(), error: null });
   const opened = useProjectStore.getState().project;
-  if (opened) void mirrorToRepo(opened);
+  if (opened) void readFileState(opened);
   let lastRevision = useProjectStore.getState().revision;
   const unsub = useProjectStore.subscribe((s) => {
     if (s.revision === lastRevision) return;
     lastRevision = s.revision;
+    updateFileState(s.project);
     useSaveStore.setState({ state: 'pending' });
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => void flush(), AUTOSAVE_DELAY);

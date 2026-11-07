@@ -28,6 +28,7 @@ import {
   Plus,
   Redo2,
   Ruler,
+  Save,
   Scissors,
   Settings2,
   SlidersHorizontal,
@@ -67,6 +68,7 @@ import { OptionSwitcher } from './OptionSwitcher';
 import { useEditorShortcuts } from './useShortcuts';
 import { useItemClipboard } from './clipboard';
 import { useSaveStore } from '../projects/projectService';
+import { saveWithFeedback } from './save';
 import { preloadExport } from './EditorDialogs';
 import { describeSelection } from './actions';
 import { useDropAsset } from '@/features/library/useDropAsset';
@@ -204,13 +206,15 @@ function SaveIndicator() {
           ? `Saved locally ${time}`
           : 'Saved locally';
   const repoLabel =
-    repo === 'synced'
-      ? ' · in repo'
-      : repo === 'pending'
-        ? ' · syncing repo'
-        : repo === 'error'
-          ? ' · repo sync failed'
-          : '';
+    repo === 'saved'
+      ? ' · saved to file'
+      : repo === 'unsaved'
+        ? ' · not saved to file'
+        : repo === 'saving'
+          ? ' · saving file'
+          : repo === 'error'
+            ? ' · file save failed'
+            : '';
   return (
     <span
       className={`save-indicator state-${state}`}
@@ -221,7 +225,9 @@ function SaveIndicator() {
           ? `Changes could not be saved: ${error}. Export a .neest file to keep a copy.`
           : repo === 'off'
             ? 'Projects are stored in this browser'
-            : 'Stored in this browser and mirrored to the repository projects/ folder'
+            : repo === 'saved'
+              ? 'Kept in this browser as you work; the project file in the repo folder holds this version'
+              : 'Kept in this browser as you work; press Save (Ctrl+S) to write the project file in the repo folder'
       }
       data-testid="save-indicator"
     >
@@ -237,6 +243,24 @@ function SaveIndicator() {
         {repoLabel}
       </span>
     </span>
+  );
+}
+
+/** Save: writes the project file (work is kept in this browser as you go). A dot marks unsaved changes. */
+function SaveButton() {
+  const repo = useSaveStore((s) => s.repo);
+  const unsaved = repo === 'unsaved' || repo === 'error';
+  return (
+    <IconButton
+      label={repo === 'off' ? 'Save in this browser' : unsaved ? 'Save to the project file' : 'Saved to the project file'}
+      shortcut="Ctrl+S"
+      className={`save-btn${unsaved ? ' unsaved' : ''}`}
+      disabled={repo === 'saving'}
+      onClick={() => void saveWithFeedback()}
+      data-testid="save"
+    >
+      <Save size={17} />
+    </IconButton>
   );
 }
 
@@ -348,6 +372,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
       </div>
       <div className="topbar-right">
         <div className="topbar-island floating">
+          <SaveButton />
           <IconButton
             label={undoLabel ? `Undo ${undoLabel.toLowerCase()}` : 'Undo'}
             shortcut="Ctrl+Z"

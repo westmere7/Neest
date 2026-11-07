@@ -268,20 +268,6 @@
   }
 }
 
-.repo-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-2);
-}
-.repo-toggle .toggle-row {
-  min-height: 0;
-  gap: 8px;
-}
 .repo-badge {
   display: flex;
   align-items: center;
