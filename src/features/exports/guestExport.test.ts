@@ -425,6 +425,8 @@ describe('guest export data', () => {
     // On/off controls say so (aria-pressed), and full screen is offered where allowed.
     expect(runtime).toMatch(/aria-pressed/);
     expect(runtime).toMatch(/requestFullscreen/);
+    // The mouse works as in the app: middle- or right-drag pans (and the help line says so).
+    expect(runtime).toContain('right- / middle-drag to pan');
     // Layout options, view drop-down + Reset view button in the bottom bar, Notes list with its picture viewer, ceiling items; no walkthrough mode, Tour switch or top-right view buttons.
     expect(runtime).toMatch(/neestOption/);
     expect(runtime).toMatch(/ng-view-select/);

@@ -458,6 +458,8 @@ function start(data: GuestData) {
   const controls = new OrbitControls(persp, renderer.domElement);
   controls.enableDamping = true;
   controls.maxPolarAngle = Math.PI / 2 - 0.02;
+  // As in the app's 3D view: left-drag orbits, middle- or right-drag pans (three's default middle is dolly; the wheel zooms).
+  controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
   attachTrackpadOrbit(renderer.domElement, () => (controls.enabled ? controls : null));
 
   // ── Layout option shown (the option switcher changes it) ──
@@ -1674,7 +1676,7 @@ function start(data: GuestData) {
     }
     help.textContent = touch
       ? 'Drag to orbit · pinch to zoom'
-      : 'Drag or two-finger swipe to orbit · Shift-swipe or right-drag to pan · pinch to zoom';
+      : 'Drag or two-finger swipe to orbit · Shift-swipe or right- / middle-drag to pan · pinch to zoom';
   };
   setHelp();
 
