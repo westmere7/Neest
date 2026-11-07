@@ -709,7 +709,11 @@ function start(data: GuestData) {
   // ── HUD: title, overview and view panels on the left, views on the right, controls at the bottom ──
   const hud = el('div', 'ng-hud');
   const side = el('div', 'ng-side');
-  const title = el('strong', 'ng-title', data.title);
+  // The nest mark in front of the project name, so the page reads as Neest's once the loader is gone.
+  const title = el('strong', 'ng-title');
+  title.innerHTML = `<svg class="ng-mark" viewBox="${NEST_MARK.viewBox}" aria-hidden="true">${NEST_MARK.paths.map((d) => `<path d="${d}"/>`).join('')}</svg>`;
+  title.append(el('span', 'ng-title-text', data.title));
+  title.title = data.title;
   side.append(title);
   // Layout options: a drop-down (the file opens on the option that was active). A native select, so
   // phones get their own picker and long option names never crowd the panel.

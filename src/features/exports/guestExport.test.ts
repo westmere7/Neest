@@ -299,6 +299,8 @@ describe('guest export data', () => {
     // Compact single-line bold white project title without a card background.
     expect(html).not.toContain('.ng-title,.ng-panel');
     expect(html).toMatch(/\.ng-title\{[^}]*color:#fff[^}]*font-weight:700/);
+    // The nest mark sits in front of the title, in the accent teal (the viewer draws it).
+    expect(html).toMatch(/\.ng-mark\{[^}]*fill:#6fb3a0/);
   });
 
   it('carries selected layout options and opens on the chosen default option', async () => {
