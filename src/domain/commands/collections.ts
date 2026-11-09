@@ -1,4 +1,4 @@
-import type { Collection, GroupSnapshot } from '../model/schema';
+import type { Collection, GroupSnapshot, Project } from '../model/schema';
 import { newId } from '../model/ids';
 import type { D } from './walls';
 
@@ -71,6 +71,18 @@ export function removeFromCollection(d: D, id: string, items: string[]): void {
     const gid = groupIdOf(item);
     if (gid) delete c.groups[gid];
   }
+}
+
+/**
+ * Library ids of every item placed in the project, in any layout option, each once (in the order first placed in
+ * the list). Collections hold library ids, so these are the items as they come from the library: a placed copy's
+ * shape edits, model and finishes are not part of them.
+ */
+export function usedItemIds(p: Pick<Project, 'objects' | 'options'>): string[] {
+  const seen = new Set<string>();
+  const plans = [p.objects, ...(p.options ?? []).map((o) => o.plan?.objects ?? {})];
+  for (const objects of plans) for (const o of Object.values(objects)) seen.add(o.assetId);
+  return [...seen];
 }
 
 /** Moves a collection to a new position in the list (for reordering). */

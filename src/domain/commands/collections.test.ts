@@ -4,7 +4,7 @@ import { createEmptyProject } from '../model/defaults';
 import { ProjectSchema, type GroupSnapshot, type Project } from '../model/schema';
 import { migrateProject } from '@/storage/migrations';
 import type { D } from './walls';
-import { addToCollection, createCollection, deleteCollection, moveCollection, removeFromCollection, updateCollection } from './collections';
+import { addToCollection, createCollection, deleteCollection, moveCollection, removeFromCollection, updateCollection, usedItemIds } from './collections';
 import { addOption, deleteOption, switchOption } from './options';
 
 const edit = (p: Project, fn: (d: D) => void): Project => produce(p, fn);
@@ -19,6 +19,27 @@ const group: GroupSnapshot & { shelf?: string } = {
 };
 
 describe('library collections', () => {
+  it('lists every item used in the project, in every layout option, once', () => {
+    const place = (d: D, id: string, assetId: string) =>
+      void (d.objects[id] = { id, assetId, name: null, x: 0, y: 0, elevation: 0, rotation: 0, width: 1, depth: 1, height: 1, mirrored: false, materials: {}, locked: false, hidden: false, edits: { params: { head: 0.5 } } } as never);
+    let p = edit(createEmptyProject(), (d) => {
+      place(d, 'o1', 'sofa-3');
+      place(d, 'o2', 'rug-rect');
+      place(d, 'o3', 'sofa-3');
+      addOption(d, 'blank');
+      place(d, 'o4', 'floor-lamp-tripod');
+      place(d, 'o5', 'rug-rect');
+    });
+    expect(usedItemIds(p).sort()).toEqual(['floor-lamp-tripod', 'rug-rect', 'sofa-3']);
+    // Added as library ids: nothing of the placed copies (shape edits) comes along.
+    let id = '';
+    p = edit(p, (d) => {
+      id = createCollection(d, '60LTN', undefined, ['rug-rect']);
+      addToCollection(d, id, usedItemIds(d as unknown as Project));
+    });
+    expect([...p.collections[0].items].sort()).toEqual(['floor-lamp-tripod', 'rug-rect', 'sofa-3']);
+  });
+
   it('creates, edits, fills and deletes collections', () => {
     let id = '';
     let p = edit(createEmptyProject(), (d) => {

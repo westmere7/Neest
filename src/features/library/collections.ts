@@ -1,5 +1,6 @@
 import type { GroupSnapshot } from '@/domain/model/schema';
-import { addToCollection, createCollection, deleteCollection, removeFromCollection, updateCollection } from '@/domain/commands/collections';
+import { addToCollection, createCollection, deleteCollection, removeFromCollection, updateCollection, usedItemIds } from '@/domain/commands/collections';
+import { getAsset } from '@/data/assets/registry';
 import type { MenuItem } from '@/components/ContextMenu';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
@@ -58,6 +59,28 @@ export function removeItemFromCollection(id: string, itemId: string, itemName: s
   const c = collections().find((x) => x.id === id);
   if (!c) return;
   useProjectStore.getState().execute(`Remove ${itemName} from ${c.name}`, (d) => removeFromCollection(d, id, [itemId]));
+}
+
+/**
+ * Adds every library item placed in this project (any layout option) to a collection, as it comes from the library
+ * (without the placed copies' shape edits). Items no longer in the library are left out.
+ */
+export function addUsedItemsToCollection(id: string): void {
+  const project = useProjectStore.getState().project;
+  const c = collections().find((x) => x.id === id);
+  if (!project || !c) return;
+  const ids = usedItemIds(project).filter((a) => !!getAsset(project, a));
+  const fresh = ids.filter((a) => !c.items.includes(a));
+  if (!fresh.length) {
+    toast.info(`“${c.name}” already has every item used here`, `${ids.length} items`);
+    return;
+  }
+  const room = 500 - c.items.length;
+  useProjectStore.getState().execute(`Add the items used here to “${c.name}”`, (d) => addToCollection(d, id, fresh));
+  toast.success(
+    `Added ${Math.min(room, fresh.length)} item${fresh.length === 1 ? '' : 's'} to “${c.name}”`,
+    fresh.length > room ? `A collection holds 500 items: ${fresh.length - room} did not fit.` : 'As they come from the library, without shape edits.',
+  );
 }
 
 export async function removeCollection(id: string): Promise<boolean> {

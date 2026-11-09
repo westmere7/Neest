@@ -4,7 +4,7 @@ import { copyReadyGroup, editSavedGroupDetails, removeSavedGroup } from './Saved
 import { renameGenericSavedGroups } from '@/features/editor/groups';
 import { READY_GROUP_SHELVES, readyGroupById, readyGroups } from '@/data/groups/readyGroups';
 import { SAVED_GROUP_PREFIX, savedGroupAssets } from './savedGroupAssets';
-import { collectionMenuItems, editCollection, newCollection, removeCollection } from './collections';
+import { addUsedItemsToCollection, collectionMenuItems, editCollection, newCollection, removeCollection } from './collections';
 import {
   Archive,
   Armchair,
@@ -27,6 +27,7 @@ import {
   Lamp,
   LayoutGrid,
   List,
+  ListPlus,
   Monitor,
   PawPrint,
   Pencil,
@@ -723,6 +724,13 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
                 <span className="shelf-count">{collection.items.length}</span>
                 {collection.description && <p className="field-hint">{collection.description}</p>}
               </div>
+              <IconButton
+                label="Add every item used in this project"
+                onClick={() => addUsedItemsToCollection(collection.id)}
+                data-testid="collection-add-used"
+              >
+                <ListPlus size={14} />
+              </IconButton>
               <IconButton label="Edit collection" onClick={() => editCollection(collection.id)} data-testid="collection-edit">
                 <Pencil size={14} />
               </IconButton>
