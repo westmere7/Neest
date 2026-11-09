@@ -2802,3 +2802,10 @@ Known limitations (also in README):
 240. "The cabinet doesn't show the shoes, only the new longer sides" → the shoes were only in a ready group; they are now part
      of the arch-groove shoe cabinet itself (up to three pairs of sneakers in the open bay, uppers in the cabinet finish, soles
      in the knob black), setting "Shoes in the bay" (on by default). The group `ready-arch-shoe-cabinet-shoes` is removed. (done)
+241. (phone screenshot: Sending 2 % of 23 MB · 31 KB/s) "What the hell went wrong? Why is it so painfully slow?" → not the
+     network: from the same Wi-Fi, Cloudflare (SIN) takes uploads at ~7 MB/s and the team server's edge at ~10 MB/s. The
+     slow hop was inside the server: the worker streamed each request body into the guest Durable Object over RPC, chunk
+     by chunk, each waiting a round trip to the object (60-400 ms from SIN). Now the worker reads the piece (≤ 1.2 MB) or
+     page (≤ 30 MB, `BUFFER_LIMIT`) whole at the edge and hands the bytes over in one call; larger pages still stream.
+     Checked against a local server (throwaway secret/account): pieces, page, read-back, missing list, 413 on oversize.
+     Needs `npm run cloud:deploy` from Danh's PC to go live. (done)

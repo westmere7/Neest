@@ -11,6 +11,17 @@ export const PIECE_NAME = /^[0-9a-f]{32}$/;
 /** A gzipped piece is at most this big (pieces are under 1 MB before compression). */
 export const MAX_PIECE_BYTES = 1_200_000;
 
+/**
+ * Uploads are read whole at the edge (`request.arrayBuffer()`) and handed over as bytes: a request body streamed
+ * into the Durable Object crosses to it chunk by chunk, each waiting a round trip to wherever the object lives, which
+ * made phone uploads crawl at 30–50 KB/s. Bytes go over in one message (RPC messages are limited to 32 MiB).
+ */
+export const BUFFER_LIMIT = 30_000_000;
+
+type Body = Uint8Array | ArrayBuffer | ReadableStream<Uint8Array>;
+const bytesOf = async (b: Body): Promise<Uint8Array> =>
+  b instanceof Uint8Array ? b : b instanceof ArrayBuffer ? new Uint8Array(b) : new Uint8Array(await new Response(b).arrayBuffer());
+
 /** Gzip streams start with these two bytes. */
 export const isGzip = (bytes: Uint8Array) => bytes.length > 18 && bytes[0] === 0x1f && bytes[1] === 0x8b;
 
@@ -39,8 +50,8 @@ export class GuestPage extends DurableObject {
   }
 
   /** Stores one gzipped model piece; false when it is not gzip or too large. */
-  async putPiece(name: string, gz: ReadableStream<Uint8Array>): Promise<boolean> {
-    const bytes = new Uint8Array(await new Response(gz).arrayBuffer());
+  async putPiece(name: string, gz: Body): Promise<boolean> {
+    const bytes = await bytesOf(gz);
     if (!isGzip(bytes) || bytes.length > MAX_PIECE_BYTES) return false;
     this.ctx.storage.sql.exec('INSERT OR REPLACE INTO pieces (name, data) VALUES (?, ?)', name, bytes);
     return true;
@@ -55,8 +66,8 @@ export class GuestPage extends DurableObject {
    * the page uses, which must all be stored already (else nothing changes and they are returned as `missing`);
    * pieces it no longer uses are dropped. Null if the page isn't gzip.
    */
-  async put(gz: ReadableStream<Uint8Array>, by: string, pieces: string[] = []): Promise<{ at: number } | { missing: string[] } | null> {
-    const bytes = new Uint8Array(await new Response(gz).arrayBuffer());
+  async put(gz: Body, by: string, pieces: string[] = []): Promise<{ at: number } | { missing: string[] } | null> {
+    const bytes = await bytesOf(gz);
     if (!isGzip(bytes)) return null;
     const missing = await this.missing(pieces);
     if (missing.length) return { missing };

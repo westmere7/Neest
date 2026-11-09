@@ -1,6 +1,6 @@
 import { ProjectRoom, sha256, type Env } from './room';
 import { Directory } from './directory';
-import { GUEST_SLUG, GuestPage, MAX_PIECE_BYTES, PIECE_NAME } from './guest';
+import { BUFFER_LIMIT, GUEST_SLUG, GuestPage, MAX_PIECE_BYTES, PIECE_NAME } from './guest';
 import { MIN_PASSWORD, hashPassword, parseAccounts, readToken, sessionUser, signToken, verifyPassword, type SessionUser } from './auth';
 
 export { ProjectRoom, Directory, GuestPage };
@@ -181,7 +181,10 @@ export default {
     if (parts.length === 4 && parts[0] === 'guest' && GUEST_SLUG.test(parts[1]) && parts[2] === 'p' && PIECE_NAME.test(parts[3]) && request.method === 'PUT') {
       if (Number(request.headers.get('Content-Length') ?? 0) > MAX_PIECE_BYTES) return json({ error: 'Piece too large' }, 413);
       if (!request.body) return json({ error: 'Missing piece' }, 400);
-      const ok = await env.GUESTS.get(env.GUESTS.idFromName(parts[1])).putPiece(parts[3], request.body);
+      // Read here at the edge, then handed over whole (see BUFFER_LIMIT).
+      const bytes = new Uint8Array(await request.arrayBuffer());
+      if (bytes.length > MAX_PIECE_BYTES) return json({ error: 'Piece too large' }, 413);
+      const ok = await env.GUESTS.get(env.GUESTS.idFromName(parts[1])).putPiece(parts[3], bytes);
       return ok ? json({ ok: true }) : json({ error: 'Expected a gzipped piece under 1.2 MB' }, 400);
     }
 
@@ -197,7 +200,8 @@ export default {
         if (size > MAX_GUEST_BYTES) return json({ error: 'The walkthrough is too large to publish (over 95 MB compressed).' }, 413);
         if (!request.body) return json({ error: 'Missing page' }, 400);
         const pieces = (request.headers.get('X-Neest-Pieces') ?? '').split(',').filter((n) => PIECE_NAME.test(n));
-        const done = await page.put(request.body, user.id, pieces);
+        const body = size > 0 && size <= BUFFER_LIMIT ? new Uint8Array(await request.arrayBuffer()) : request.body;
+        const done = await page.put(body, user.id, pieces);
         if (!done) return json({ error: 'Expected a gzipped page' }, 400);
         if ('missing' in done) return json({ error: 'Some model pieces have not been sent', missing: done.missing }, 409);
         return json({ url: `${url.origin}/g/${parts[1]}/`, at: done.at });
