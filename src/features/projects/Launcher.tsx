@@ -1,3 +1,4 @@
+import { SharedProjects } from '@/sync/LiveUI';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Copy, Download, FolderGit2, FolderOpen, HardDrive, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
 import type { LengthUnit } from '@/domain/model/schema';
@@ -275,6 +276,8 @@ export function Launcher() {
           </section>
         )}
 
+        <SharedProjects />
+
         <section aria-labelledby="projects-title">
           <div className="section-title-row">
             <h2 id="projects-title">Your projects</h2>
@@ -419,7 +422,7 @@ export function Launcher() {
         <footer className="launcher-foot">
           Projects are stored in this browser (IndexedDB) and work offline.{' '}
           {repo.available
-            ? `When running from the dev server they are also mirrored to the repository ${workspaceFolder()}/ folder, so teammates get them with git pull.`
+            ? `When running from the dev server, Save (Ctrl+S) writes them to the repository ${workspaceFolder()}/ folder, so teammates get them with git pull.`
             : ''}{' '}
           Export <code>.neest</code> files to back up or move them between devices. Neest drawings are planning drawings, not certified construction documents.
         </footer>

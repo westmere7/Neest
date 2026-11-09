@@ -3,14 +3,23 @@ import { ContextMenuHost } from '@/components/ContextMenu';
 import { ConfirmHost, ToastHost } from '@/components/Overlays';
 import { usePrefsStore } from '@/state/uiStores';
 import { Launcher } from '@/features/projects/Launcher';
+import { loadSession } from '@/sync/auth';
+import { SignInGate } from '@/sync/LiveUI';
 import './app.css';
 
 const EditorPage = lazy(() => import('@/features/editor/EditorPage'));
 const GuestPage = lazy(() => import('@/features/walkthrough/GuestPage'));
+const LiveJoinPage = lazy(() => import('@/sync/LiveUI').then((m) => ({ default: m.LiveJoinPage })));
 
-export type Route = { name: 'home' } | { name: 'editor'; id: string } | { name: 'guest'; id: string };
+export type Route =
+  | { name: 'home' }
+  | { name: 'editor'; id: string }
+  | { name: 'guest'; id: string }
+  | { name: 'live'; room: string; key: string };
 
 export function parseRoute(hash: string): Route {
+  const live = hash.match(/^#\/live\/([a-z0-9]{8,32})\/([a-z0-9]{8,64})/);
+  if (live) return { name: 'live', room: live[1], key: live[2] };
   const m = hash.match(/^#\/(p|guest)\/([\w-]+)/);
   if (m) return m[1] === 'p' ? { name: 'editor', id: m[2] } : { name: 'guest', id: m[2] };
   return { name: 'home' };
@@ -33,6 +42,7 @@ export function App() {
 
   useEffect(() => {
     void hydrate();
+    void loadSession();
     const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
     mq?.addEventListener?.('change', syncSystemTheme);
     return () => mq?.removeEventListener?.('change', syncSystemTheme);
@@ -61,11 +71,14 @@ export function App() {
 
   return (
     <>
+      <SignInGate>
       <Suspense fallback={<div className="app-loading">Loading Neest…</div>}>
         {route.name === 'home' && <Launcher />}
         {route.name === 'editor' && <EditorPage key={route.id} projectId={route.id} />}
         {route.name === 'guest' && <GuestPage key={route.id} projectId={route.id} />}
+        {route.name === 'live' && <LiveJoinPage key={route.room} room={{ room: route.room, key: route.key }} />}
       </Suspense>
+      </SignInGate>
       <ContextMenuHost />
       <ConfirmHost />
       <ToastHost />

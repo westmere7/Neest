@@ -10,7 +10,9 @@ Ground rules:
 - 2D, 3D and exports must all derive from `Project` + `derivePlan` — never a parallel geometry copy.
 - Run `npm test` and `npm run typecheck` before finishing; add tests for geometry/command changes.
 - Update KNOWLEDGEBASE.md (status, pitfalls, conventions) when you change behaviour.
-- No backend, auth or network dependencies for core features.
+- No backend, auth or network dependencies for core features. The one exception (decided by the owner) is optional
+  live editing: `cloud/` (Cloudflare Worker + Durable Objects) and `src/sync/`. Everything else must keep working
+  with no server; live editing appears only when a sync server is configured (cloud/README.md).
 - `projects/` is shared with the team through git: remove projects you created only for testing.
 - New floating panels must be registered in `src/components/layoutInsets.ts` so views frame around them, and new
   top-level panels, bars, dialogs and popups added to the interface-scale list in `components.css` (popups placed at a

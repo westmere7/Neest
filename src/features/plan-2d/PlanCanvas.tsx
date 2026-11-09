@@ -1,3 +1,4 @@
+import { PeerLayer } from '@/sync/LiveUI';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Vec2 } from '@/domain/model/schema';
 import { derivePlan } from '@/domain/geometry/derive';
@@ -564,6 +565,7 @@ export function PlanCanvas() {
         {!chromeHidden && (
           <SelectionLayer px={px} hoverId={hover?.id ?? null} />
         )}
+        {!chromeHidden && <PeerLayer px={px} />}
         {measurements.map((m) => (
           <Dimension
             key={m.id}

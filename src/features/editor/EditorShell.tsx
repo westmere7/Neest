@@ -69,6 +69,7 @@ import { useEditorShortcuts } from './useShortcuts';
 import { useItemClipboard } from './clipboard';
 import { useSaveStore } from '../projects/projectService';
 import { saveWithFeedback } from './save';
+import { LiveButton } from '@/sync/LiveUI';
 import { preloadExport } from './EditorDialogs';
 import { describeSelection } from './actions';
 import { useDropAsset } from '@/features/library/useDropAsset';
@@ -372,6 +373,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
       </div>
       <div className="topbar-right">
         <div className="topbar-island floating">
+          <LiveButton />
           <SaveButton />
           <IconButton
             label={undoLabel ? `Undo ${undoLabel.toLowerCase()}` : 'Undo'}

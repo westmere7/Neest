@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-07 (project file written only on Save (Ctrl+S / Save button), browser autosave as you go; 60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-09 (account settings: change password, sign out other devices; live editing deployed with team accounts Danh / Ngân / Linh and live drag previews; live editing phase 1: Cloudflare room, Live button, cursors and selections, tested locally and not deployed; multi-user phase 0: history of document ops with own-change undo, per-person option view, sync hooks; project file written only on Save (Ctrl+S / Save button), browser autosave as you go; 60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -18,7 +18,7 @@ a single-file guest walkthrough, `.neest` project files, JSON summaries).
 - Scope: **one apartment level** per project. No storeys, roofs, terrain or structural engineering.
 - No backend, accounts or network services. Everything runs in the browser and persists to IndexedDB. A storage
   seam (`src/storage/repository.ts`) exists for a future Cloudflare backend; do **not** add server code or fake
-  endpoints. The only server code is the **dev/preview-server plugin** that reads and writes project files in the
+  endpoints — except optional **live editing** (`cloud/`, `src/sync/`, §9 "Live editing"), which the owner asked for. The only server code is the **dev/preview-server plugin** that reads and writes project files in the
   repo's `projects/` folder (§13), written only when the user saves; production static builds don't have it.
 - The product brief lives in `_Prompt/prompt.md` (generated from `_Prompt/InitialPrompt.txt`). Its acceptance
   criteria (§24) are the bar for "done".
@@ -273,9 +273,50 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 ## 9. State, history, autosave
 
 - `projectStore`: `execute(label, recipe)` = one undo step. Gestures: `begin(label)` → many `preview(recipe)` (not
-  recorded, not autosaved) → `commit(finalRecipe?)` (one step) or `cancel()`. Undo/redo restore snapshots;
-  redo is cleared on new edits; history capped at 200 entries (structural sharing keeps it small, also on redo).
-  Undo or redo during an open gesture only cancels the gesture (the step before stays).
+  recorded, not autosaved) → `commit(finalRecipe?)` (one step) or `cancel()`. Redo is cleared on new edits;
+  history capped at 200 entries. Undo or redo during an open gesture only cancels the gesture (the step before stays).
+- **History is made of document changes, not snapshots** (multi-user groundwork, `domain/sync/`). A step stores the
+  property-level ops it made (`Op { path, value, old }`, from `diffProjects(before, after)`) plus the option shown
+  before / after. Undo applies the inverted ops to the **current** project in `'checked'` mode: a property changed
+  since by someone else (another person, a reloaded file) keeps their value, a record deleted since is skipped. Undo /
+  redo of a plan change shows the option it was made in again. Tests compare content after undo (`toEqual`), not
+  identity. `createProjectStore()` makes extra stores (tests play several people); `useProjectStore` is the app's.
+- **Document vs view** (`domain/sync/doc.ts`): the shared document is `plans.<optionId>.<walls|…>` ("default"
+  without options), `optionMeta`, `optionOrder` and every other project field. Which option is shown
+  (`activeOptionId`) is per person: switching options changes only the view — no undo step, no `updatedAt` (the
+  file stays "saved"), just a local autosave. `toDoc` / `fromDoc(doc, show, prev)` convert (cheap: records stay shared;
+  field order and unchanged `options` come from `prev`). Adding / deleting / renaming / reordering options are edits.
+- **Sync hooks**: `onLocalOps(listener)` reports every change this person makes (edits, undo, redo, reloaded files)
+  — the future outbox; `applyRemote(ops)` applies someone else's (server order wins, not an undo step; also applied to
+  an open drag's base). A server must also send each client its own ops back in the global order (or clients must
+  ignore remote values for properties with unacknowledged local changes) so last-writer-wins converges; the random
+  three-person test in `domain/sync/sync.test.ts` relays that way.
+- **Live editing** (optional; `cloud/README.md`) for the team's **accounts** Danh / Ngân / Linh (`danh`, `ngan`,
+  `linh`): `cloud/src/auth.ts` (PBKDF2 10k rounds — fits the Workers Free CPU budget — and HMAC session tokens, 30
+  days), accounts and the signing key are Worker secrets made by `npm run cloud:accounts` (plain passwords only in the
+  git-ignored `cloud/accounts.local.json`), `Directory` Durable Object = the team's shared-project list + 10 wrong
+  passwords → 15-minute lock + passwords changed in the app (`passwords`: hash and the secret hash it replaced, so an
+  admin reset — a different secret hash — wins) + a session number per account (`sessions`; tokens carry `v`,
+  `signedIn` refuses older ones: "sign out on other devices"). `AccountDialog` (launcher gear, Live panel link):
+  change password (`POST /auth/password`, current required, min 4), sign out others (`/auth/signout-others`), sign
+  out. `cloud:accounts` keeps unchanged people's hashes (re-hashing would reset their app passwords). The UI never
+  names the accounts. App: `src/sync/auth.ts` (session in prefs `liveSession`, `loadSession` at start-up),
+  `SignInGate` (production builds with a sync server ask to sign in first; dev opens straight away), `SharedProjects`
+  on the launcher (open / remove-your-own), the Live button (people icon) shares the open project with the team. The
+  room uses the account's name and colour (Worker header `X-Neest-User`; the hello cannot override it). Joining:
+  shared list or link `#/live/<room>/<key>` (after signing in); the project is stored in the browser with its room
+  (`liveRooms` pref); a shared project opened while signed out stays local ("sign in to edit with the team").
+  `EditorPage` → `startLive`: loads the room's version (10 s timeout), then the WebSocket carries ops and presence
+  (pointer, selection, shown option; 50 ms) and **previews**: during a gesture (`tx`) the sender sends
+  `diffProjects(tx.base, project)` every 40 ms; receivers keep only the newest per person and show it once per frame
+  (rAF, 50 ms timer fallback for covered windows) through `projectStore.previewRemote` (no undo step, no revision);
+  `applyRemote(ops, from)` first takes that person's preview back (checked), so a drag ending where it started leaves
+  nothing; a cancel sends an empty preview. Client rules (`src/sync/live.ts`): own batches wait for the echo (batch
+  id); others' ops on properties covered by an unconfirmed own op are skipped; own echoes are re-applied unless a
+  later own op covers them; reconnect resends (the room drops known batch ids); `reset` reloads. Deployed: rooms
+  `https://neest-sync.nguyentuandanh-7.workers.dev` (`npm run cloud:deploy`, uploads `cloud/.secrets.json`), app
+  `https://neest.nguyentuandanh-7.workers.dev` (`npm run deploy:app`: static-files Worker `cloud/app.wrangler.jsonc`;
+  Pages is folded into Workers now). Tests: `src/sync/live.test.ts`, `cloud/src/auth.test.ts`.
 - **Live edits** (a colour picker or slider being dragged): `livePreview(label, recipe)` opens the gesture `label`
   unless it is the open one, then previews; `commit(recipe)` records one step (check `tx?.label` first and fall back
   to `execute`, as anything else that changes the project ends the gesture). Used by the material editor and the 3D
@@ -302,9 +343,10 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **Layout options** (phương án, `domain/commands/options.ts`, `OptionSwitcher` next to the project name): several
   versions of the plan in one project. `project.options[]` + `activeOptionId`; the active option's plan is the
   project's own `nodes/walls/openings/rooms/objects/groups` (its `plan` is null), the others store theirs in
-  `options[i].plan`. Settings, materials, imported models, cameras, render, layers and guest are shared. Switching,
-  duplicating (also "same walls, no furniture" and blank), renaming, reordering and deleting are ordinary undoable
-  commands; the selection is cleared on a switch (ids belong to one option). No `options` = one implicit "Option A".
+  `options[i].plan`. Settings, materials, imported models, cameras, render, layers and guest are shared. Switching
+  is per person (only the view changes: no undo step, file stays saved, see "Document vs view"); duplicating (also
+  "same walls, no furniture" and blank), renaming, reordering and deleting are ordinary undoable commands; the
+  selection is cleared on a switch (ids belong to one option). No `options` = one implicit "Option A".
   Anything that must reach every option (e.g. `deleteMaterial` reassigning a material) uses `inEveryOption`.
   Exports, the in-app Guest view and stats show the active option; the guest HTML export carries every option (or only
   the active one, `guest.options`) and guests switch between them (§14). `projectWithOption(p, id)` gives the project
@@ -2491,55 +2533,42 @@ Known limitations (also in README):
      dry-goods jars of oats/grains & coffee beans with bamboo lids, kraft dry-food pouch & ceramic tea caddy in the
      middle bay, rattan basket + cookbooks + bud vase on the top bay, tea tray in the bottom bay, and ceramic fruit bowl
      on the tabletop; `empty`: bare joinery only). Thumbnails and unit tests in `src/packs/packs.test.ts` (done).
-208. "Màu xanh mint này khi apply vào nó cứ bị ám vàng, làm nó màu mint sang hơn lạnh hơn" → updated
-     `sage-shaker-kitchen:mint-stack-tile` in `packs/sage-shaker-kitchen.pack.ts` from warm chartreuse `#d2e6c2` (Hue 93°,
-     `R > B`) to cool architectural celadon/sea-glass mint `#b6ded5` (Hue 166.5°, `B - R = +31`, `roughness: 0.14`) and
-     raised `stack-bond` tile face luminance (`226..240`) so warm 3D scene lighting + ACES Filmic tone mapping keep it a
-     clean, cool pale mint next to `#f1ece2` cream cabinets. Also upgraded unedited `#d2e6c2` project copies in
-     `repairProject` (`src/storage/migrations/index.ts`) and on live pack reload (`src/packs/loader.ts`), cleared pack
-     swatch caches on reload (`textureCache.ts`, `swatchFiles.ts`), re-rendered `public/thumbs` + `public/swatches`, and
-     added unit tests in `src/packs/packs.test.ts` (done).
-209. "Tủ bếp bỏ dãy kệ bên trên vì quá cao với không tới" → removed the high ceiling transom/bridge cabinet row above the
-     main upper cabinets on both `sage-shaker-kitchen:l-kitchen` and `sage-shaker-kitchen:l-kitchen-right` in
-     `packs/sage-shaker-kitchen.pack.ts` (`buildLKitchenShell` & `buildLKitchenFixtures`), keeping a single ergonomic
-     reachable upper cabinet tier (`defaultSize.h = 2.22`, `minSize.h = 1.95`, `maxSize.h = 2.6`, upper cabinets spanning
-     `1.45..2.22 m` = `77 cm` tall with solid left/right Shaker doors and 2 stacked horizontal reeded-glass doors over the
-     sink). Unedited `height === 2.6` placed instances upgrade automatically to `2.22 m` in `repairProject`
-     (`src/storage/migrations/index.ts`) and on live pack reload (`src/packs/loader.ts`). Re-rendered thumbnails and added
-     unit tests in `src/packs/packs.test.ts` (done).
-210. "Sửa cái góc này Corner portal with half wall and dining ledge: Chiều dài hạ được MIn 2m; sửa được chiều dài của 2
-     mảng Tường 2 bên này" → lowered `minSize` on `portal-frames:corner-portal-half-wall` (`packs/portal-frames.pack.ts`)
-     from `{ w: 2.8, d: 1.9, h: 2.3 }` to `{ w: 1.4, d: 1.4, h: 2.3 }` so both `Width` and `Depth` shrink cleanly to
-     `2.0 m` or `1.4 m`; added `PortalSpec.minOpen` (`0.3 m` on `RUN_A_SPEC`, `RUN_B_SPEC`, `RUN_A_OPEN`) and expanded
-     `legA` ("Side wall A (Width arm)") and `legB` ("Side wall B (Depth arm)") to `0.04–4.0 m` (clamped to `armLen - 0.3 m`
-     with safe narrow-opening bounds on the half wall and dining ledge); and surfaced `asset.params` directly inside a
-     `Shape` section right below `Size` in `ObjectInspector` (`src/features/editor/Inspector.tsx`, backed by
-     `setObjectParam` / `resetObjectParams` in `src/features/shape-edit/actions.ts`) in addition to 3D orange handles in
-     `Edit shape`. Unit tests in `src/packs/packs.test.ts` and `src/features/shape-edit/shapeEdit.test.ts` (done).
-211. "Ở cả 2 version bếp từ chỗ bếp nấu đến cạnh ngoài rộng 20cm. Lắp kính trống văng dầu ở 1 mặt" → updated both
-     `sage-shaker-kitchen:l-kitchen` and `sage-shaker-kitchen:l-kitchen-right` across both hob placement options (`main` and
-     `return` in `packs/sage-shaker-kitchen.pack.ts`) so the induction hob sits `20 cm` (`HOB_OUTER_MARGIN = 0.2`) inside the
-     open outer counter edge (with a narrow `18 cm` outer spice/oil cabinet + centred 3-drawer pan bank on the return arm, and
-     a centred 3-drawer hob bay at the outer end of the main arm), and added a 1-sided `8 mm` tempered clear glass oil-splatter
-     shield (`slot: 'shield'`, `sage-shaker-kitchen:tempered-glass`, `45 cm` tall in brushed-steel bottom & splashback
-     U-channels, plus 2D plan line) along that exposed outer counter edge. Re-rendered thumbnails and added unit tests in
-     `src/packs/packs.test.ts` (done).
-212. "Tạo 1 cái kệ ngăn dưới dài hơn đủ chỗ cho máy hút bụi cầm tay hoặc robot hút bụi, ngăn trên 1 ô để 1 giỏ trắng" → added
-     `laundry-storage:vacuum-niche-basket-shelf` (`Tall vacuum niche shelf with white basket`) and material
-     `laundry-storage:white-basket-weave` in `packs/laundry-storage.pack.ts`: a floor-standing open-bottom utility shelf tower
-     (`defaultSize` `0.48 × 0.50 × 1.65 m`, resizable `0.34–0.95 × 0.28–0.70 × 0.95–2.45 m`, with parametric `upperHeight`
-     slider & 3D handle) whose unobstructed lower bay (`~1.29 m` clear at default height, `~1.00 m` at `1.36 m`) fits cordless
-     handheld/stick vacuums (`≤ 1.26 m`) as well as robot vacuum + Omni/Ultra stations (`≤ 0.43 m` wide) rolling directly onto
-     the floor, topped by a single open cubby holding 1 woven white storage basket with a stitched tan-leather pull tab (`models`
-     `with-basket` / `empty` and 7 carcass colour variants including `Warm cream lacquer`, `Oak & cream back`, and `Walnut`).
-     Re-rendered thumbnails/swatches and added unit tests in `src/packs/packs.test.ts` (done).
-213. "Tạo 1 bức tường có khoảng trống cong như vậy, sửa được các chiều 2 bên và bên trên. đăt tên sao cho cùng loại với mấy cái đã
-     tạo" → added `portal-frames:arched-wall-portal` (`Arched wall portal with oak lining`, `category: 'construction'`,
-     `type: 'structure'`, `group: 'Portals & arches'`, also indexed in `Bedroom`) in `packs/portal-frames.pack.ts`: a single
-     straight full-height wall (`defaultSize` `3.0 × 0.12 × 2.7 m`, resizable `1.0–7.0 × 0.08–0.45 × 1.8–3.6 m`) matching the
-     curved-corner oak-lined front wall of `Arched corner bedroom enclosure`, with independent Shape sliders & 3D handles for
-     `leftWall` ("Left wall width", `0.04–4.0 m`), `rightWall` ("Right wall width", `0.04–4.0 m`), `head` ("Top wall drop",
-     `0.08–2.0 m`), `rL` and `rR` (`0–1.8 m`), 4 models (`stepped`, `flush`, `plain-flush`, `sidelight`) and 8 finish presets
-     (including `Sage lining` and `Walnut lining`). Extended two-leg `minOpen` clamping, `insetGeo` and stepped-face reveal bounds
-     in `portalGeo` / `buildPortal` so both side walls can widen independently past 30 % without shifting the opposite wall while
-     keeping a safe minimum opening. Re-rendered thumbnails and added unit tests in `src/packs/packs.test.ts` (done).
+208. "Plan a multi-user collab system like Figma" → plan (Cloudflare: a Durable Object room per project, D1, R2;
+     server-ordered last-writer-wins per property; presence; per-person undo; per-person option view) + "Do it" →
+     phase 0, local groundwork with no server: `domain/sync/ops.ts` (diff / apply / invert property-level ops,
+     'checked' apply for undo), `domain/sync/doc.ts` (shared document vs per-person view of layout options), history
+     in `projectStore` stores ops (undo reverses only your own changes and keeps others'), option switching is no
+     longer an edit or undo step, `applyRemote` / `onLocalOps` for the sync layer, `createProjectStore` for tests.
+     Tests in domain/sync/sync.test.ts (round trip of every sample and 60LTN, two-person merge, undo skipping others'
+     values, per-person option view, random three-person convergence); stress tests compare content after undo.
+     60LTN in the browser: ~2 ms per edit, ~0.8 ms per undo; switching options leaves no undo step and the file saved
+     (done). Next: phase 1 (Cloudflare room + sign-in + presence).
+209. "Can you work yourself through all from here?" + "do not push this deployment automatically" + "You can just
+     override those rules for this" → multi-user phase 1: `cloud/` Worker + `ProjectRoom` Durable Object (SQLite
+     snapshot in parts + change log, key hash, batch-id de-duplication, compaction every 500 changes), `src/sync/`
+     live session and UI (Live button with avatars, Live dialog with link / people / stop, join page, peer pointers and
+     selections on the 2D plan), `npm run cloud:dev` / `cloud:deploy`, Vite `/sync` proxy, AGENTS.md exception.
+     Checked: protocol smoke test in Node (order, echo, presence, bad op rejected, wrong key 403, backlog on
+     reconnect, leave); two real browsers (in-app pane as Alice, Chrome as Bob) on localhost — edits both ways,
+     per-person undo, cursor + selection outline shown to the other, per-person option view, offline edit sent after
+     the server restarted, identical documents at the end; unit tests above. Account checked: Workers Free includes
+     SQLite Durable Objects. **Not deployed** (owner's call: `npm run cloud:deploy`) (done).
+210. "I'm only on remote phone control, so do it on your own" + "Go" + "Add 3 accounts with simple log in details.
+     Named Danh, Ngan and Linh" + "Test with them carefully" + "Make sure all changes reflects in real-time" → Wrangler
+     signed in (OAuth in Chrome), a project permission rule for the two deploy commands, both Workers deployed
+     (rooms + app; Pages now deploys as a Worker), accounts (§9 "Live editing"), shared-project list, sign-in gate on
+     the deployed site, live previews of gestures. Checked: 16 API checks on the local and the deployed server (sign-in
+     per account, wrong password / unknown account / forged token / no session refused, team list, owner-only removal,
+     account names on connections); lockout (local); browsers on localhost — wrong password message, Danh in the
+     in-app browser, Ngân in Chrome, Linh as a script: share, open from the list, edits all ways, Linh's pointer and
+     selection on the others' plans, per-person undo, sign-out (project stays local), sign-in from the Live dialog
+     reconnects; real-time: finished edits arrive in ~6–22 ms locally, drags show while they happen (bounded ~60–150 ms
+     behind in a covered window; newest preview per frame, older ones dropped) (done).
+211. "Use <a simple shared password> for all 3 now, then add password changing feature (or account setting panel)"
+     + "Also don't hint danh, ngan Linh etc" → the three passwords reset to the owner's choice (in the git-ignored
+     cloud/accounts.local.json, never in the repo) and deployed; account settings (§9 "Live editing"); no account names in the
+     UI (sign-in placeholder, sharing texts). Checked on the local server: 11 API checks (wrong current 403, too short
+     400, change keeps this device, signs others out, old password refused, new accepted, others unaffected, change
+     without signing out keeps other sessions, sign out other devices); admin reset of one person leaves another's
+     app-set password; in the browser — mismatch warning, change, toast, old refused / new accepted, Live panel link.
+     Deployed both Workers; live endpoints answer 401 without a session (done).
