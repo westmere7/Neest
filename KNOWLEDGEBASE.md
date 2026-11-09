@@ -2770,3 +2770,9 @@ Known limitations (also in README):
      ... Add another item without the racks. Allow me to shape edit it including radius, length (even touching floor)" →
      `curved-builtins:painted-half-moon` (structure / Portals & arches so the shape editor opens; floor-to-ceiling box,
      settings radius, length below the curve and top height, each with a handle; length can run it to the floor). (done)
+234. (photo of an entry shoe cabinet) "This as well, make sure it's fully shape editable" → new pack
+     packs/arch-shoe-cabinet.pack.ts, item `arch-shoe-cabinet:arch-groove-shoe-cabinet` (storage / Hallway storage): cream
+     doors with routed grooves (pill above, arch-top below; the groove is a recess in the door's own finish: back slab, frame
+     pieces and inner panel), black knobs, an oak-lined niche with an LED strip and a vertical fin, an open shoe gap below.
+     Shape settings: open shoe gap, niche height from floor, niche opening height, groove inset (each with a handle), doors
+     per row (1-4), oak fin and sides down to the floor (toggles). Its point light sits at the default niche height. (done)
