@@ -963,10 +963,11 @@ function buildWaterfallHutchTable(size: Size3, params?: ParamValues): Part[] {
   }
 
   return [
-    // 1. Curved-waterfall bar table (wood grain runs lengthwise along Z and down the front leg).
+    // 1. Curved-waterfall bar table (curved front waterfall leg + straight square-cornered wall-end support leg under the hutch).
     span('oak', [x0, x1], [tableH - topT, tableH], [z0, z1 - R + 0.01], { bevel: 0.004 }),
     { ...sidePlate('oak', bend, x0, w), plan: undefined },
     sp('oak', [x0, x1], [0, tableH - R + 0.01], [z1 - topT, z1], 0.004),
+    sp('oak', [x0, x1], [0, tableH - topT + 0.004], [z0, z0 + topT], 0.004),
 
     // 2. Three-compartment open shelf hutch standing on the wall end (-z) of the bar table.
     sp('oak', [x0, x0 + t], [tableH, h], [z0, zf], 0.002),
@@ -1192,7 +1193,7 @@ const waterfallBarHutchTable = defineItem({
   type: 'surfaces',
   group: 'Dining tables',
   description:
-    'A standalone 35 mm oak curved-waterfall breakfast bar and dining peninsula table with an integrated 3-compartment open shelf hutch on the wall end, available empty or styled with airtight dry-goods jars, tea canisters and tabletop ceramics.',
+    'A standalone 35 mm oak curved-waterfall breakfast bar and dining peninsula table with a straight wall-end support leg under an integrated 3-compartment open shelf hutch, available empty or styled with airtight dry-goods jars, tea canisters and tabletop ceramics.',
   tags: [
     'bar table',
     'breakfast bar',
