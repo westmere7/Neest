@@ -17,8 +17,9 @@ export default defineConfig({
     // Hot-loads content packs added to or removed from /packs (one .pack.ts file each).
     neestPacks(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // A new version waits until the app reloads it (src/app/appUpdates.ts: checks, offers Reload).
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['favicon.svg', 'favicon.png', 'logo.png'],
       manifest: {
         name: 'Neest — Apartment Planner',

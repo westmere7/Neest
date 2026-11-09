@@ -37,16 +37,52 @@ async function gzip(html: string): Promise<Blob> {
   return new Response(stream).blob();
 }
 
-/** Publishes (or updates) the walkthrough at its link; returns the address. */
-export async function publishGuestLink(slug: string, html: string): Promise<string> {
-  const res = await fetch(`${httpBase()}/guest/${slug}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/gzip', ...authHeaders() },
-    body: await gzip(html),
-  }).catch(() => null);
-  if (!res) throw new Error('The team server cannot be reached. Check the connection and try again.');
-  if (!res.ok) throw await failure(res);
-  return ((await res.json()) as { url: string }).url;
+/** An upload that stalls this long (nothing sent or answered) is given up, with a message instead of waiting forever. */
+const STALL_MS = 60_000;
+
+/**
+ * Publishes (or updates) the walkthrough at its link; returns the address. `onStage` hears what is happening
+ * ("Compressing…", "Uploading 40 % of 23 MB…"), since a large walkthrough takes a while on a slow connection.
+ */
+export async function publishGuestLink(slug: string, html: string, onStage?: (stage: string) => void): Promise<string> {
+  onStage?.('Compressing…');
+  const body = await gzip(html);
+  const mb = (body.size / 1e6).toFixed(body.size < 1e7 ? 1 : 0);
+  onStage?.(`Uploading ${mb} MB…`);
+  // XMLHttpRequest rather than fetch: it reports upload progress.
+  const res = await new Promise<{ status: number; text: string }>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let stall: ReturnType<typeof setTimeout> | null = null;
+    const alive = () => {
+      if (stall) clearTimeout(stall);
+      stall = setTimeout(() => xhr.abort(), STALL_MS);
+    };
+    xhr.open('PUT', `${httpBase()}/guest/${slug}`);
+    xhr.setRequestHeader('Content-Type', 'application/gzip');
+    for (const [k, v] of Object.entries(authHeaders())) xhr.setRequestHeader(k, v);
+    xhr.upload.onprogress = (e) => {
+      alive();
+      if (e.lengthComputable) onStage?.(`Uploading ${Math.floor((100 * e.loaded) / e.total)} % of ${mb} MB…`);
+    };
+    xhr.upload.onload = () => {
+      alive();
+      onStage?.('Saving on the server…');
+    };
+    const done = () => stall && clearTimeout(stall);
+    xhr.onload = () => {
+      done();
+      resolve({ status: xhr.status, text: xhr.responseText });
+    };
+    xhr.onerror = () => {
+      done();
+      reject(new Error('The team server cannot be reached. Check the connection and try again.'));
+    };
+    xhr.onabort = () => reject(new Error('The upload stopped moving for a minute. Check the connection and try again.'));
+    alive();
+    xhr.send(body);
+  });
+  if (res.status < 200 || res.status >= 300) throw await failure(new Response(res.text, { status: res.status }));
+  return (JSON.parse(res.text) as { url: string }).url;
 }
 
 /** Takes the walkthrough off its link. */

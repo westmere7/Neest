@@ -41,6 +41,8 @@ async function downloadQr(url: string, name: string): Promise<void> {
  */
 export function GuestLiveLink({ project, busy, run }: { project: Project; busy: boolean; run: (fn: () => Promise<void>) => Promise<void> }) {
   const signedIn = useAuthStore((s) => !!s.user);
+  /** What publishing is doing right now (building, compressing, uploading n %), shown on the button. */
+  const [stage, setStage] = useState<string | null>(null);
   const share = project.guest.share;
   const qr = useQr(share?.url ?? null);
 
@@ -60,14 +62,17 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
   const publish = () =>
     run(async () => {
       const slug = share?.slug ?? guestSlug(project);
-      const { buildGuestHtml } = await import('./guestExport');
-      const html = await buildGuestHtml(project);
+      setStage('Building the walkthrough…');
       try {
-        const url = await publishGuestLink(slug, html);
+        const { buildGuestHtml } = await import('./guestExport');
+        const html = await buildGuestHtml(project);
+        const url = await publishGuestLink(slug, html, setStage);
         setShare({ slug, url, at: Date.now() });
         toast.success(share?.url === url ? 'Updated: guests see it the next time they open the link.' : 'Published. The link works now.');
       } catch (e) {
         toast.error(`Could not publish: ${e instanceof Error ? e.message : String(e)}`);
+      } finally {
+        setStage(null);
       }
     });
   const takeDown = async () => {
@@ -144,7 +149,7 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
           </p>
           <div className="btn-row">
             <Button size="sm" variant="info" disabled={busy} onClick={() => void publish()} data-testid="live-link-update">
-              <RefreshCw size={13} /> {busy ? 'Publishing…' : 'Update'}
+              <RefreshCw size={13} /> {stage ?? (busy ? 'Publishing…' : 'Update')}
             </Button>
             <Button size="sm" onClick={() => window.open(share.url, '_blank', 'noopener')}>
               <ExternalLink size={13} /> Open
@@ -161,7 +166,7 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
             link can view it; it is kept out of search engines.
           </p>
           <Button variant="primary" disabled={busy} onClick={() => void publish()} data-testid="live-link-publish">
-            <Globe size={14} /> {busy ? 'Publishing…' : 'Publish live link'}
+            <Globe size={14} /> {stage ?? (busy ? 'Publishing…' : 'Publish live link')}
           </Button>
         </>
       )}

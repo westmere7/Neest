@@ -171,15 +171,55 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 10px 12px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
   background: none;
   border: 0;
   color: var(--text);
   text-align: left;
   cursor: pointer;
+}
+.live-room-thumb {
+  position: relative;
+  flex: none;
+  width: 108px;
+  height: 72px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.live-room-thumb .thumb {
+  height: 100%;
+  border-bottom: 0;
+}
+.live-room-thumb .thumb img {
+  padding: 4px;
+}
+.live-room-here {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  display: inline-flex;
+  align-items: center;
+}
+.live-room-here .live-avatar {
+  box-shadow: 0 0 0 1.5px #fff;
+}
+.live-room-here .live-avatar + .live-avatar {
+  margin-left: -5px;
+}
+.live-room-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cloud-mark {
+  flex: none;
+  color: var(--accent);
+  margin-right: 5px;
+  vertical-align: -2px;
 }
 .live-room strong {
   font-size: 13.5px;
@@ -188,7 +228,7 @@
   white-space: nowrap;
   max-width: 100%;
 }
-.live-room span {
+.live-room-text > span {
   font-size: 12px;
   color: var(--text-3);
 }

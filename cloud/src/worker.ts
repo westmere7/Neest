@@ -12,7 +12,7 @@ export { ProjectRoom, Directory, GuestPage };
  *   GET    /auth/me                                   → { user }
  *   POST   /auth/password  { current, next, signOutOthers } → { token }
  *   POST   /auth/signout-others                       → { token }   ends the account's other sessions
- *   GET    /rooms                                     → { rooms }   projects shared with the team
+ *   GET    /rooms                                     → { rooms }   projects shared with the team, with who is in each
  *   POST   /rooms                 { doc, name }       → { room, key }
  *   DELETE /rooms/:room                               (only whoever shared it)
  *   GET    /rooms/:room/doc?key=                      → { seq, doc }
@@ -133,7 +133,15 @@ export default {
     if (parts.length === 1 && parts[0] === 'rooms') {
       if (request.method === 'GET') {
         const accounts = parseAccounts(env.USERS);
-        const rooms = (await directory.listRooms()).map((r) => ({ ...r, ownerName: accounts[r.owner]?.name ?? r.owner }));
+        const rooms = await Promise.all(
+          (await directory.listRooms()).map(async (r) => ({
+            ...r,
+            ownerName: accounts[r.owner]?.name ?? r.owner,
+            here: await env.ROOMS.get(env.ROOMS.idFromName(r.room))
+              .here()
+              .catch(() => []),
+          })),
+        );
         return json({ rooms });
       }
       if (request.method === 'POST') {

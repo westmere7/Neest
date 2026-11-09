@@ -7,8 +7,10 @@ import { useProjectStore } from './state/projectStore';
 import { useEditorStore } from './state/editorStore';
 import './styles/base.css';
 import { applyUiScale } from './components/uiScale';
+import { startAppUpdates } from './app/appUpdates';
 
 applyUiScale();
+startAppUpdates();
 
 // Development-only hook for debugging and end-to-end tests (not included in production builds).
 if (import.meta.env.DEV) {

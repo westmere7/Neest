@@ -101,6 +101,16 @@ export class ProjectRoom extends DurableObject<Env> {
     this.writeSnapshot();
   }
 
+  /** Who has the project open right now (one entry per person, however many devices). */
+  async here(): Promise<{ name: string; color: string }[]> {
+    const seen = new Map<string, { name: string; color: string }>();
+    for (const ws of this.ctx.getWebSockets()) {
+      const att = ws.deserializeAttachment() as Attachment | null;
+      if (att?.ready && !att.gone) seen.set(`${att.name}\u0000${att.color}`, { name: att.name, color: att.color });
+    }
+    return [...seen.values()];
+  }
+
   /** The current document and its change number, for a person with the room's key. */
   async getDoc(keyHash: string): Promise<{ seq: number; doc: unknown } | null> {
     if (!this.keyHash || keyHash !== this.keyHash) return null;

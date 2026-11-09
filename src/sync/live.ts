@@ -44,6 +44,10 @@ export const useLiveStore = create<LiveState>(() => ({ status: 'off', room: null
 async function rooms(): Promise<Record<string, LiveRoom>> {
   return (await preferenceRepository.get<Record<string, LiveRoom>>('liveRooms')) ?? {};
 }
+/** Ids of the projects this browser has as shared with the team. */
+export async function sharedProjectIds(): Promise<Set<string>> {
+  return new Set(Object.keys(await rooms()));
+}
 export async function roomFor(projectId: string): Promise<LiveRoom | null> {
   return (await rooms())[projectId] ?? null;
 }
@@ -97,6 +101,8 @@ export interface SharedRoom extends LiveRoom {
   owner: string;
   ownerName?: string;
   createdAt: number;
+  /** Who has it open right now (one entry per person). */
+  here?: { name: string; color: string }[];
 }
 
 export async function listRooms(): Promise<SharedRoom[]> {

@@ -1,6 +1,7 @@
 import { SharedProjects } from '@/sync/LiveUI';
+import { sharedProjectIds } from '@/sync/live';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Copy, Download, FolderGit2, FolderOpen, HardDrive, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
+import { Cloud, Copy, Download, FolderGit2, FolderOpen, HardDrive, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
 import type { LengthUnit } from '@/domain/model/schema';
 import { formatArea, parseLength } from '@/domain/model/units';
 import { projectRepository } from '@/storage/indexeddb/db';
@@ -33,7 +34,7 @@ import {
   workspaceFolder,
   type WorkspaceEntry,
 } from '@/storage/workspace';
-import { generateThumbnail, thumbnailSrc } from './thumbnails';
+import { ProjectThumb, type ThumbSource } from './ProjectThumb';
 import './launcher.css';
 
 function relativeTime(ts: number): string {
@@ -48,13 +49,6 @@ function relativeTime(ts: number): string {
   return new Date(ts).toLocaleDateString();
 }
 
-interface ThumbSource {
-  key: string;
-  load: () => Promise<unknown | null>;
-  /** Called with a freshly rendered thumbnail so it can be stored. */
-  persist?: (svg: string) => void;
-}
-
 /** Where a local card's preview comes from when the stored one is missing or stale. */
 function thumbSource(p: ProjectSummary, r: WorkspaceEntry | undefined): ThumbSource | null {
   // A teammate's newer copy in the repo opens instead of the local one, so preview that.
@@ -67,37 +61,6 @@ function thumbSource(p: ProjectSummary, r: WorkspaceEntry | undefined): ThumbSou
   };
 }
 
-/** Plan preview of a project card; renders one on demand when none is stored. */
-function ProjectThumb({ stored, source, empty }: { stored: string | null; source: ThumbSource | null; empty: React.ReactNode }) {
-  const [rendered, setRendered] = useState<{ key: string; svg: string | null } | null>(null);
-  const key = source?.key ?? null;
-  const latest = useRef(source);
-  latest.current = source;
-  useEffect(() => {
-    const src = latest.current;
-    if (!key || !src) return;
-    let alive = true;
-    void generateThumbnail(key, src.load).then((svg) => {
-      if (!alive) return;
-      setRendered({ key, svg });
-      if (svg) src.persist?.(svg);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [key]);
-  const done = key !== null && rendered?.key === key;
-  const svg = done ? (rendered.svg ?? stored) : stored;
-  if (svg)
-    return (
-      <div className="thumb">
-        <img src={thumbnailSrc(svg)} alt="" draggable={false} />
-      </div>
-    );
-  if (key && !done) return <div className="thumb loading" aria-busy="true" />;
-  return <div className="thumb empty">{empty}</div>;
-}
-
 export function Launcher() {
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,12 +68,15 @@ export function Launcher() {
   const [renaming, setRenaming] = useState<ProjectSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [repo, setRepo] = useState<{ available: boolean; entries: WorkspaceEntry[] }>({ available: false, entries: [] });
+  /** Projects in this browser that are shared with the team (they open live). */
+  const [shared, setShared] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
     try {
       setProjects(await projectRepository.list());
       setError(null);
+      setShared(await sharedProjectIds().catch(() => new Set<string>()));
       const available = await workspaceAvailable();
       setRepo({ available, entries: available ? await listWorkspace() : [] });
     } catch (e) {
@@ -331,7 +297,10 @@ export function Launcher() {
                     }
                   />
                   <div className="card-meta">
-                    <h3 title={p.name}>{p.name}</h3>
+                    <h3 title={p.name}>
+                      {shared.has(p.id) && <Cloud size={14} className="cloud-mark" aria-label="Shared with the team" />}
+                      {p.name}
+                    </h3>
                     <p className="num">
                       {p.roomCount} room{p.roomCount === 1 ? '' : 's'} · {formatArea(p.area, 'm2', 1)} · {p.objectCount} items
                       {(p.optionCount ?? 0) > 1 && <> · {p.optionCount} options</>}

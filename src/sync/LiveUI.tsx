@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Copy, Link2, LogOut, RefreshCw, Settings, Trash2, Users, WifiOff } from 'lucide-react';
+import { Cloud, Copy, Link2, LogOut, RefreshCw, Settings, Trash2, Users, WifiOff } from 'lucide-react';
 import { Dialog } from '@/components/Overlays';
 import { Button, IconButton } from '@/components/ui';
 import { Logo } from '@/components/Logo';
@@ -14,10 +14,13 @@ import type { Project } from '@/domain/model/schema';
 import type { Peer } from '@/domain/sync/protocol';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
 import { saveProject } from '@/features/projects/projectService';
+import { ProjectThumb, type ThumbSource } from '@/features/projects/ProjectThumb';
+import { preferenceRepository } from '@/storage/indexeddb/db';
 import { MIN_PASSWORD, changePassword, signIn, signOut, signOutOthers, useAuthStore } from './auth';
 import {
   SYNC_URL,
   createRoom,
+  fetchRoom,
   joinFromLink,
   leaveRoom,
   listRooms,
@@ -468,16 +471,39 @@ export function LiveJoinPage({ room }: { room: LiveRoom }) {
 }
 
 /** Launcher: who is signed in, and the projects shared with the team. */
+/** Plan previews of shared projects, kept in this browser so the list shows them at once (refreshed after). */
+const THUMBS_PREF = 'sharedThumbs';
+
 export function SharedProjects() {
   const user = useAuthStore((s) => s.user);
   const [rooms, setRooms] = useState<SharedRoom[] | null>(null);
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
+  /** A new list load renders the previews again from the team's current versions. */
+  const [loadedAt, setLoadedAt] = useState(0);
+  useEffect(() => {
+    void preferenceRepository
+      .get<Record<string, string>>(THUMBS_PREF)
+      .then((t) => t && setThumbs(t))
+      .catch(() => undefined);
+  }, []);
+  const thumbSource = (r: SharedRoom): ThumbSource => ({
+    key: `room:${r.room}:${loadedAt}`,
+    load: async () => (await fetchRoom(r)).project,
+    persist: (svg) =>
+      void preferenceRepository
+        .get<Record<string, string>>(THUMBS_PREF)
+        .then((t) => preferenceRepository.set(THUMBS_PREF, { ...(t ?? {}), [r.room]: svg }))
+        .catch(() => undefined),
+  });
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
   const [account, setAccount] = useState(false);
-  const refresh = useCallback(async () => {
+  /** Loads the list; `previews` also renders the plan previews again (on opening and on Refresh, not when polling). */
+  const refresh = useCallback(async (previews = true) => {
     if (!user) return;
     try {
       setRooms(await listRooms());
+      if (previews) setLoadedAt(Date.now());
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load the shared projects.');
@@ -485,6 +511,9 @@ export function SharedProjects() {
   }, [user]);
   useEffect(() => {
     void refresh();
+    // Who is working on what: the list is asked again every half minute while it is on screen.
+    const poll = setInterval(() => document.visibilityState === 'visible' && void refresh(false), 30_000);
+    return () => clearInterval(poll);
   }, [refresh]);
   if (!SYNC_URL) return null;
   if (!user)
@@ -530,10 +559,31 @@ export function SharedProjects() {
                 });
               }}
             >
-              <strong>{r.name}</strong>
-              <span>
-                Shared by {r.owner === user.id ? 'you' : (r.ownerName ?? r.owner)} · {new Date(r.createdAt).toLocaleDateString()}
-                {opening === r.room ? ' · opening…' : ''}
+              <span className="live-room-thumb">
+                <ProjectThumb stored={thumbs[r.room] ?? null} source={loadedAt ? thumbSource(r) : null} empty={<Cloud size={20} />} />
+                {!!r.here?.length && (
+                  <span
+                    className="live-room-here"
+                    data-testid="room-here"
+                    aria-label={`Working on it now: ${r.here.map((p) => peerName(p, user)).join(', ')}`}
+                    title={`Working on it now: ${r.here.map((p) => peerName(p, user)).join(', ')}`}
+                  >
+                    {r.here.slice(0, 3).map((p) => (
+                      <Avatar key={p.name + p.color} name={p.name} color={p.color} small title={peerName(p, user)} />
+                    ))}
+                    {r.here.length > 3 && <span className="live-more">+{r.here.length - 3}</span>}
+                  </span>
+                )}
+              </span>
+              <span className="live-room-text">
+                <strong>
+                  <Cloud size={14} className="cloud-mark" aria-label="On the team server" />
+                  {r.name}
+                </strong>
+                <span>
+                  Shared by {r.owner === user.id ? 'you' : (r.ownerName ?? r.owner)} · {new Date(r.createdAt).toLocaleDateString()}
+                  {opening === r.room ? ' · opening…' : ''}
+                </span>
               </span>
             </button>
             {r.owner === user.id && (
