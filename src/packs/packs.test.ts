@@ -702,6 +702,31 @@ describe('pack models', () => {
       expect(built.length).toBeGreaterThan(0);
     }
   });
+
+  it('builds sage-study:drawer-unit-desk with a 6-drawer unit on the right and two tubular legs on the left', () => {
+    const desk = ASSETS_BY_ID['sage-study:drawer-unit-desk'];
+    expect(desk).toBeDefined();
+    const sz = desk.defaultSize;
+    const parts = desk.build(sz);
+
+    // All drawer pulls sit on the right half (+x); none on the left half (-x).
+    const drawerPulls = parts.filter((p) => p.slot === 'pull' && p.shape === 'box');
+    expect(drawerPulls).toHaveLength(6);
+    for (const pull of drawerPulls) {
+      expect(worldBounds(pull).min[0]).toBeGreaterThan(0);
+    }
+
+    // Left half (-x) has two cylindrical legs reaching down to the levelling feet at y = 0.
+    const leftLegShafts = parts.filter(
+      (p) => p.slot === 'body' && p.shape === 'cylinder' && p.position[0] < 0 && p.height > 0.5,
+    );
+    const leftFeet = parts.filter((p) => p.slot === 'pull' && p.shape === 'cylinder' && p.position[0] < 0);
+    expect(leftLegShafts).toHaveLength(2);
+    expect(leftFeet).toHaveLength(2);
+    for (const foot of leftFeet) {
+      expect(worldBounds(foot).min[1]).toBeCloseTo(0, 4);
+    }
+  });
 });
 
 describeAssetChecks(packItems);

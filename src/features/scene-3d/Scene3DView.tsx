@@ -12,11 +12,11 @@ import {
   Footprints,
   Home,
   ImageDown,
-  PanelLeftClose,
   Pencil,
   RefreshCw,
   Save,
   Trash2,
+  X,
 } from 'lucide-react';
 import type { PlacedObject, Project, RenderSettings, WallDisplay } from '@/domain/model/schema';
 import { derivePlan, type DerivedPlan } from '@/domain/geometry/derive';
@@ -1116,12 +1116,12 @@ function ViewPanel({
           </IconButton>
         ) : (
           <IconButton
-            label="Hide panel"
+            label="Close 3D view"
             shortcut="P"
             onClick={() => useEditorStore.getState().set({ viewPanelOpen: false })}
             data-testid="stash-view-panel"
           >
-            <PanelLeftClose size={15} />
+            <X size={16} />
           </IconButton>
         )}
       </header>

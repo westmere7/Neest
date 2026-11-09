@@ -1170,7 +1170,7 @@ READY_GROUP_SPECS.push(
     shelf: OFFICE,
     room: 'office',
     description:
-      'A white desk on drawer units under a lit white pegboard with its top shelf (plants, a bubble candle, a digital clock, pen cups, headphones), a sage gingham mat with a tablet and a round-key keyboard, an architect lamp, white tulips, a tumbler, an instant camera, books and a glowing egg lamp, and a white bookcase alongside. No chair. Needs about 2 × 0.6 m of wall.',
+      'A white desk with a right-hand drawer unit and left legs under a lit white pegboard with its top shelf (plants, a bubble candle, a digital clock, pen cups, headphones), a sage gingham mat with a tablet and a round-key keyboard, an architect lamp, white tulips, a tumbler, an instant camera, books and a glowing egg lamp, and a white bookcase alongside. No chair. Needs about 2 × 0.6 m of wall.',
     items: [
       { a: 'sage-study:drawer-unit-desk', x: 0, y: 0.3 },
       { a: 'sage-study:lit-pegboard-shelf', x: 0, y: 0.11, e: 0.95 },
