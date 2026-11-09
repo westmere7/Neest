@@ -4,7 +4,8 @@ import type { Project } from '@/domain/model/schema';
 import { useProjectStore } from '@/state/projectStore';
 import { confirmAction, toast } from '@/state/uiStores';
 import { Button } from '@/components/ui';
-import { guestSlug, isLinkLive, publishGuestLink, shareStatus, unpublishGuestLink, type ShareTarget } from './guestShare';
+import { useAuthStore } from '@/sync/auth';
+import { canPublishLinks, guestSlug, publishGuestLink, unpublishGuestLink } from './guestShare';
 
 /** The link as a QR code (SVG markup), for phones: scan to open. */
 function useQr(url: string | null): string | null {
@@ -34,51 +35,21 @@ async function downloadQr(url: string, name: string): Promise<void> {
 }
 
 /**
- * Live link of the guest walkthrough: published to GitHub Pages by the local server with this machine's
- * git sign-in (no account set-up in Neest). The link stays the same; Update republishes the current
- * project, Take down removes it. The project keeps the link (`guest.share`).
+ * Live link of the guest walkthrough: published on the team's server with the signed-in account; anyone with the
+ * link can open it. The link stays the same; Update republishes the current project, Take down removes it. The
+ * project keeps the link (`guest.share`); a link from before the move (GitHub Pages) moves on the next Update.
  */
 export function GuestLiveLink({ project, busy, run }: { project: Project; busy: boolean; run: (fn: () => Promise<void>) => Promise<void> }) {
-  const [target, setTarget] = useState<ShareTarget | null | undefined>(undefined);
-  const [waiting, setWaiting] = useState<string | null>(null);
+  const signedIn = useAuthStore((s) => !!s.user);
   const share = project.guest.share;
   const qr = useQr(share?.url ?? null);
-  useEffect(() => {
-    let live = true;
-    void shareStatus().then((t) => live && setTarget(t));
-    return () => {
-      live = false;
-    };
-  }, []);
-  // After a first publish: GitHub Pages builds the site (about a minute); check until it answers.
-  useEffect(() => {
-    if (!waiting) return;
-    let stop = false;
-    const started = Date.now();
-    const tick = async () => {
-      if (stop) return;
-      if (await isLinkLive(waiting)) {
-        if (!stop) {
-          setWaiting(null);
-          toast.success('The live link is up.');
-        }
-        return;
-      }
-      if (Date.now() - started > 5 * 60 * 1000) return setWaiting(null);
-      setTimeout(() => void tick(), 5000);
-    };
-    void tick();
-    return () => {
-      stop = true;
-    };
-  }, [waiting]);
 
-  if (target === undefined) return null;
-  if (!target)
+  if (!canPublishLinks() || !signedIn)
     return (
       <p className="field-hint" data-testid="live-link-off">
-        Live links need Neest running from its folder (<code>npm run dev</code> or start-neest.bat): it publishes with this
-        computer's GitHub sign-in.
+        {canPublishLinks()
+          ? 'Sign in (Shared with the team, on the start page) to publish live links.'
+          : 'Live links need the team server, which this copy of Neest is not set up for.'}
       </p>
     );
 
@@ -94,11 +65,7 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
       try {
         const url = await publishGuestLink(slug, html);
         setShare({ slug, url, at: Date.now() });
-        if (share) toast.success('Updated. GitHub Pages refreshes the link within a minute.');
-        else {
-          toast.success('Published. The link goes live in about a minute.');
-          setWaiting(slug);
-        }
+        toast.success(share?.url === url ? 'Updated: guests see it the next time they open the link.' : 'Published. The link works now.');
       } catch (e) {
         toast.error(`Could not publish: ${e instanceof Error ? e.message : String(e)}`);
       }
@@ -172,7 +139,7 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
             </div>
           </div>
           <p className="field-hint">
-            {waiting ? 'Going live… GitHub Pages is building it (about a minute).' : `Published ${new Date(share.at).toLocaleString()}.`}{' '}
+            {`Published ${new Date(share.at).toLocaleString()}.`}{' '}
             Guests see what was published; press Update after changes.
           </p>
           <div className="btn-row">
@@ -190,8 +157,8 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
       ) : (
         <>
           <p className="field-hint">
-            Publish the walkthrough to GitHub Pages ({target.repo}) and send guests a link instead of a file. Anyone with
-            the link can view it; it is kept out of search engines.
+            Publish the walkthrough on the team's server and send guests a link instead of a file. Anyone with the
+            link can view it; it is kept out of search engines.
           </p>
           <Button variant="primary" disabled={busy} onClick={() => void publish()} data-testid="live-link-publish">
             <Globe size={14} /> {busy ? 'Publishing…' : 'Publish live link'}

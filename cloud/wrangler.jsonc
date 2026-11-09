@@ -8,13 +8,15 @@
   "durable_objects": {
     "bindings": [
       { "name": "ROOMS", "class_name": "ProjectRoom" },
-      { "name": "DIRECTORY", "class_name": "Directory" }
+      { "name": "DIRECTORY", "class_name": "Directory" },
+      { "name": "GUESTS", "class_name": "GuestPage" }
     ]
   },
   // SQLite-backed Durable Objects are included in the Workers Free plan.
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["ProjectRoom"] },
-    { "tag": "v2", "new_sqlite_classes": ["Directory"] }
+    { "tag": "v2", "new_sqlite_classes": ["Directory"] },
+    { "tag": "v3", "new_sqlite_classes": ["GuestPage"] }
   ],
   // Secrets (not in git): USERS and SESSION_SECRET, from tools/make-accounts.mjs via cloud/.secrets.json.
   "observability": { "enabled": true }

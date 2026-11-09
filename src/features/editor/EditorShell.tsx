@@ -68,8 +68,9 @@ import { OptionSwitcher } from './OptionSwitcher';
 import { useEditorShortcuts } from './useShortcuts';
 import { useItemClipboard } from './clipboard';
 import { useSaveStore } from '../projects/projectService';
-import { saveWithFeedback } from './save';
+import { saveWithFeedback, teamSaveState } from './save';
 import { LiveButton } from '@/sync/LiveUI';
+import { useLiveStore } from '@/sync/live';
 import { preloadExport } from './EditorDialogs';
 import { describeSelection } from './actions';
 import { useDropAsset } from '@/features/library/useDropAsset';
@@ -189,6 +190,24 @@ export function EditorShell() {
 }
 
 function SaveIndicator() {
+  const shared = useLiveStore((s) => !!s.room);
+  return shared ? <TeamSaveIndicator /> : <FileSaveIndicator />;
+}
+
+/** A shared project: saved on the team server as it is edited. */
+function TeamSaveIndicator() {
+  const status = useLiveStore((s) => s.status);
+  const pending = useLiveStore((s) => s.pending);
+  const team = teamSaveState({ status, pending });
+  return (
+    <span className={`save-indicator state-${team.ok ? 'saved' : 'error'}`} role="status" aria-live="polite" title={team.detail} data-testid="save-indicator">
+      {pending > 0 && status === 'live' ? <Loader2 size={13} className="spin" /> : team.ok ? <Check size={13} /> : <AlertTriangle size={13} />}
+      <span className="save-label">{team.label}</span>
+    </span>
+  );
+}
+
+function FileSaveIndicator() {
   const { state, lastSavedAt, error, repo } = useSaveStore();
   const [, tick] = useState(0);
   useEffect(() => {
@@ -250,10 +269,19 @@ function SaveIndicator() {
 /** Save: writes the project file (work is kept in this browser as you go). A dot marks unsaved changes. */
 function SaveButton() {
   const repo = useSaveStore((s) => s.repo);
-  const unsaved = repo === 'unsaved' || repo === 'error';
+  const shared = useLiveStore((s) => !!s.room);
+  const unsaved = !shared && (repo === 'unsaved' || repo === 'error');
   return (
     <IconButton
-      label={repo === 'off' ? 'Save in this browser' : unsaved ? 'Save to the project file' : 'Saved to the project file'}
+      label={
+        shared
+          ? 'Shared with the team: saved as you edit'
+          : repo === 'off'
+            ? 'Save in this browser'
+            : unsaved
+              ? 'Save to the project file'
+              : 'Saved to the project file'
+      }
       shortcut="Ctrl+S"
       className={`save-btn${unsaved ? ' unsaved' : ''}`}
       disabled={repo === 'saving'}

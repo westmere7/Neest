@@ -5,7 +5,6 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 import { neestWorkspace } from './tools/neest-workspace-plugin';
 import { neestPacks } from './tools/neest-packs-plugin';
-import { neestShare } from './tools/neest-share-plugin';
 
 // Main application build. The guest viewer runtime is built first by
 // vite.guest.config.ts into src/generated/ and inlined into guest exports.
@@ -17,8 +16,6 @@ export default defineConfig({
     ...(process.env.NEEST_WORKSPACE === 'off' ? [] : [neestWorkspace({ dir: 'projects' })]),
     // Hot-loads content packs added to or removed from /packs (one .pack.ts file each).
     neestPacks(),
-    // Live guest links: publishes guest walkthroughs to GitHub Pages with this machine's git sign-in (dev/preview only).
-    neestShare(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',

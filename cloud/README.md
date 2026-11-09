@@ -57,6 +57,13 @@ with the server's signing key from `cloud/.secrets.json`, so nobody signs in on 
 
 After an app deploy, an open copy shows the previous version once (offline cache) and the new one on the next load.
 
+## Guest links
+
+Export → Guest walkthrough → Publish live link sends the walkthrough (gzipped in the browser) to `PUT /guest/<slug>`
+with the signed-in session; the `GuestPage` Durable Object keeps it and serves it to anyone at `/g/<slug>/`. Update
+replaces it, Take down deletes it. Check the whole path from Danh's PC:
+`npx vite-node --config tools/vite.tools.config.ts tools/check-guest-links.ts -- <guest html file> [server]`.
+
 ## How it works
 
 - `POST /auth/login` → token; every other route needs `Authorization: Bearer <token>` (the WebSocket: `?token=`).

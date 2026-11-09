@@ -31,6 +31,9 @@ pitfalls, history) and **AGENTS.md** (ground rules) first.
 `npm run dev` uses the team's server (`.env.development`): sign in with your own account under "Shared with the
 team" and you see and edit the team's projects, as on the website. Your own projects stay in this browser.
 
+A shared project is saved on the team server as you edit (the top bar says "Saved to the team"); Save (Ctrl+S) writes
+no file for it. A copy of it in `projects/` is an old snapshot: don't commit changes to it.
+
 To work on the live-editing server itself, run a local copy with local test accounts (the team's real passwords
 and the server's signing key live only on Danh's PC; git ignores them):
 

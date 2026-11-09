@@ -1,8 +1,9 @@
 import { ProjectRoom, sha256, type Env } from './room';
 import { Directory } from './directory';
+import { GUEST_SLUG, GuestPage } from './guest';
 import { MIN_PASSWORD, hashPassword, parseAccounts, readToken, sessionUser, signToken, verifyPassword, type SessionUser } from './auth';
 
-export { ProjectRoom, Directory };
+export { ProjectRoom, Directory, GuestPage };
 
 /**
  * Neest live editing on Cloudflare Workers + Durable Objects, for the team's accounts.
@@ -16,19 +17,25 @@ export { ProjectRoom, Directory };
  *   DELETE /rooms/:room                               (only whoever shared it)
  *   GET    /rooms/:room/doc?key=                      → { seq, doc }
  *   GET    /rooms/:room/ws?key=&token=  (WebSocket)   live changes and presence
+ *   PUT    /guest/:slug   body = gzipped guest HTML  → { url, at }   publishes or updates a guest link
+ *   GET    /guest/:slug                       → { page }    who published it and when (null if none)
+ *   DELETE /guest/:slug                       → { ok }      takes the link down
+ *   GET    /g/:slug/                          the guest walkthrough itself, public (anyone with the link)
  *   GET    /health
  *
- * Every route but login and health needs a session (Authorization: Bearer <token>, or ?token= for the
+ * Every route but login, health and /g/ needs a session (Authorization: Bearer <token>, or ?token= for the
  * WebSocket, which browsers cannot give headers). The room key stays as a second check on links.
  */
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Max-Age': '86400',
 };
 const MAX_DOC_BYTES = 20 * 1024 * 1024;
+/** Largest gzipped guest page accepted (Workers on the Free plan take request bodies up to 100 MB). */
+const MAX_GUEST_BYTES = 95 * 1024 * 1024;
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
 
@@ -63,6 +70,12 @@ export default {
     const directory = env.DIRECTORY.get(env.DIRECTORY.idFromName('team'));
 
     if (parts.length === 1 && parts[0] === 'health') return json({ ok: true });
+
+    // Guest walkthroughs: public, no session.
+    if (parts[0] === 'g' && parts.length === 2 && GUEST_SLUG.test(parts[1]) && (request.method === 'GET' || request.method === 'HEAD')) {
+      if (!url.pathname.endsWith('/')) return Response.redirect(`${url.origin}${url.pathname}/`, 301);
+      return env.GUESTS.get(env.GUESTS.idFromName(parts[1])).fetch(request);
+    }
 
     if (parts.join('/') === 'auth/login' && request.method === 'POST') {
       let body: { user?: unknown; password?: unknown };
@@ -138,6 +151,23 @@ export default {
         await env.ROOMS.get(env.ROOMS.idFromName(room)).init(body.doc, await sha256(key));
         await directory.addRoom({ room, key, name: String(body.name ?? 'Untitled'), owner: user.id, createdAt: Date.now() });
         return json({ room, key });
+      }
+    }
+
+    if (parts.length === 2 && parts[0] === 'guest' && GUEST_SLUG.test(parts[1])) {
+      const page = env.GUESTS.get(env.GUESTS.idFromName(parts[1]));
+      if (request.method === 'GET') return json({ page: await page.info() });
+      if (request.method === 'DELETE') {
+        await page.remove();
+        return json({ ok: true });
+      }
+      if (request.method === 'PUT') {
+        const size = Number(request.headers.get('Content-Length') ?? 0);
+        if (size > MAX_GUEST_BYTES) return json({ error: 'The walkthrough is too large to publish (over 95 MB compressed).' }, 413);
+        if (!request.body) return json({ error: 'Missing page' }, 400);
+        const done = await page.put(request.body, user.id);
+        if (!done) return json({ error: 'Expected a gzipped page' }, 400);
+        return json({ url: `${url.origin}/g/${parts[1]}/`, at: done.at });
       }
     }
 

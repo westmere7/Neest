@@ -3,13 +3,11 @@ import { render, screen, within } from '@testing-library/react';
 import { produce } from 'immer';
 import { buildDemoProject } from '@/features/projects/demoProject';
 import { useProjectStore } from '@/state/projectStore';
+import { useAuthStore } from '@/sync/auth';
 
 vi.mock('./guestShare', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./guestShare')>();
-  return {
-    ...actual,
-    shareStatus: vi.fn(async () => ({ repo: 'user/neest-share', baseUrl: 'https://user.github.io/neest-share' })),
-  };
+  return { ...actual, canPublishLinks: vi.fn(() => true) };
 });
 
 import { GuestLiveLink } from './GuestLiveLink';
@@ -26,7 +24,14 @@ describe('GuestLiveLink', () => {
     expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
   });
 
+  it('asks to sign in before publishing', () => {
+    useAuthStore.setState({ ready: true, user: null, token: null });
+    render(<GuestLiveLink project={buildDemoProject()} busy={false} run={async (fn) => fn()} />);
+    expect(screen.getByTestId('live-link-off').textContent).toMatch(/Sign in/);
+  });
+
   it('renders the Update button with the blue info variant distinct from the green primary button', async () => {
+    useAuthStore.setState({ ready: true, user: { id: 'danh', name: 'Danh', color: '#e8590c' }, token: 't' });
     const project = produce(buildDemoProject(), (d) => {
       d.guest.share = {
         slug: 'demo-house',

@@ -5,6 +5,7 @@ import { isWireOps, type ClientMessage, type Peer, type ServerMessage, type Wire
 export interface Env {
   ROOMS: DurableObjectNamespace<ProjectRoom>;
   DIRECTORY: DurableObjectNamespace<import('./directory').Directory>;
+  GUESTS: DurableObjectNamespace<import('./guest').GuestPage>;
   /** Team accounts (JSON, see auth.ts) and the key that signs sessions: Worker secrets. */
   USERS?: string;
   SESSION_SECRET?: string;
