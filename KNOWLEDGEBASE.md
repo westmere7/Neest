@@ -2776,3 +2776,9 @@ Known limitations (also in README):
      pieces and inner panel), black knobs, an oak-lined niche with an LED strip and a vertical fin, an open shoe gap below.
      Shape settings: open shoe gap, niche height from floor, niche opening height, groove inset (each with a handle), doors
      per row (1-4), oak fin and sides down to the floor (toggles). Its point light sits at the default niche height. (done)
+235. (photo of a stacked laundry corner) "Add this as a group as well, use existing appliances" → new pack
+     packs/laundry-corner.pack.ts: bamboo washer-dryer stacking frame (settings: dryer shelf height with a handle, shelf on
+     top), bamboo shelf on black metal posts (shelf count), wicker basket of rolled towels (model "With bottles"), detergent
+     bottles, washer wall tap. Ready group `ready-stacked-laundry-corner` on a new "Laundry setups" shelf: the LG
+     FWY996WCTN4 below and the AQUA AQH-V700FW dryer on the frame (no standalone LG dryer in the catalogue), plant and a
+     basket of bottles on top, tap on the wall, side shelf with a white laundry basket, towels, a plant and bottles. (done)

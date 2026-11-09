@@ -54,6 +54,7 @@ const DINING = 'Dining sets';
 const BATH = 'Bathrooms';
 const OFFICE = 'Home office';
 const BALCONY = 'Balcony setups';
+const LAUNDRY = 'Laundry setups';
 const ENTRY = 'Entry & hallway';
 
 export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
@@ -1186,6 +1187,27 @@ READY_GROUP_SPECS.push(
     ],
   },
   {
+    id: 'ready-stacked-laundry-corner',
+    name: 'Stacked laundry corner with bamboo shelves',
+    shelf: LAUNDRY,
+    room: 'laundry',
+    description:
+      'An LG front-load washer with a dryer stacked over it on a bamboo frame (plant and a basket of bottles on top, the tap on the wall), and a bamboo shelf beside it with a white laundry basket, rolled towels, a plant and detergent bottles. Needs about 1.2 × 0.7 m.',
+    items: [
+      { a: 'laundry-corner:washer-dryer-stack-frame', x: 0, y: 0.33 },
+      { a: 'branded-washers:lg-fwy996wctn4', x: 0, y: 0.34 },
+      { a: 'branded-washers:aqua-aqh-v700fw', x: 0, y: 0.31, e: 0.9 },
+      { a: 'laundry-corner:washer-wall-tap', x: 0.2, y: 0.06, e: 1.76 },
+      { a: 'plant-potted', x: -0.17, y: 0.32, w: 0.22, d: 0.22, h: 0.36, e: 2.0 },
+      { a: 'laundry-corner:wicker-towel-basket', md: 'bottles', x: 0.13, y: 0.32, w: 0.3, d: 0.22, h: 0.22, e: 2.0 },
+      { a: 'laundry-corner:bamboo-metal-shelf', x: 0.62, y: 0.175 },
+      { a: 'laundry-basket', x: 0.62, y: 0.18, w: 0.42, d: 0.3, h: 0.42, e: 0.12, m: { basket: 'plastic-white' } },
+      { a: 'laundry-corner:wicker-towel-basket', x: 0.6, y: 0.175, e: 0.6825 },
+      { a: 'plant-potted', x: 0.49, y: 0.17, w: 0.2, d: 0.2, h: 0.32, e: 1.245 },
+      { a: 'laundry-corner:detergent-bottles', x: 0.735, y: 0.17, w: 0.24, e: 1.245 },
+    ],
+  },
+  {
     id: 'ready-l-desk-workstation',
     name: 'L-desk workstation with mesh chair',
     shelf: OFFICE,
@@ -1553,6 +1575,7 @@ export const READY_GROUP_SHELVES = [
   L_KITCHENS,
   DINING,
   BATH,
+  LAUNDRY,
   KIDS,
   OFFICE,
   PETS,

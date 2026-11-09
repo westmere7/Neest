@@ -103,7 +103,7 @@
   },
   "arch-shoe-cabinet:arch-groove-shoe-cabinet": {
    "file": "arch-shoe-cabinet_arch-groove-shoe-cabinet.webp",
-   "fp": "5ea0dfcd861b7f84"
+   "fp": "cdc65b981960f8e8"
   },
   "armchair": {
    "file": "armchair.webp",
@@ -3004,6 +3004,26 @@
   "laundry-basket": {
    "file": "laundry-basket.webp",
    "fp": "ba35d9b94b017aeb"
+  },
+  "laundry-corner:bamboo-metal-shelf": {
+   "file": "laundry-corner_bamboo-metal-shelf.webp",
+   "fp": "05f6df3907b7a084"
+  },
+  "laundry-corner:detergent-bottles": {
+   "file": "laundry-corner_detergent-bottles.webp",
+   "fp": "3506fb64aa09ae1a"
+  },
+  "laundry-corner:washer-dryer-stack-frame": {
+   "file": "laundry-corner_washer-dryer-stack-frame.webp",
+   "fp": "7c52b346a5686860"
+  },
+  "laundry-corner:washer-wall-tap": {
+   "file": "laundry-corner_washer-wall-tap.webp",
+   "fp": "349ec0b34346bd55"
+  },
+  "laundry-corner:wicker-towel-basket": {
+   "file": "laundry-corner_wicker-towel-basket.webp",
+   "fp": "36d4bd2d6229aa89"
   },
   "laundry-storage:over-washer-wood-shelf": {
    "file": "laundry-storage_over-washer-wood-shelf.webp",
