@@ -2809,3 +2809,8 @@ Known limitations (also in README):
      page (≤ 30 MB, `BUFFER_LIMIT`) whole at the edge and hands the bytes over in one call; larger pages still stream.
      Checked against a local server (throwaway secret/account): pieces, page, read-back, missing list, 413 on oversize.
      Needs `npm run cloud:deploy` from Danh's PC to go live. (done)
+242. "For the moon piece we just made, allow editing all 4 corner radius" → curved-builtins:painted-half-moon has settings
+     rTL, rTR, rBL, rBR (top corners default to half the width = the half-moon, bottom ones square), each with a handle on
+     its curve at 45° that drags along the diagonal; two corners on one side never overlap (bottom radii are capped by the
+     height left under the top curve). Items placed before keep their single top `radius` for both top corners. The team
+     server fix of 241 is deployed (`npm run cloud:deploy`, version a979a871). (done)
