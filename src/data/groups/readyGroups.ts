@@ -1164,6 +1164,28 @@ READY_GROUP_SPECS.push(...L_KITCHEN_SPECS);
 
 READY_GROUP_SPECS.push(
   {
+    id: 'ready-sage-study-desk',
+    name: 'Sage study desk with lit pegboard',
+    shelf: OFFICE,
+    room: 'office',
+    description:
+      'A white desk on drawer units under a lit white pegboard with its top shelf (plants, a bubble candle, a digital clock, pen cups, headphones), a sage gingham mat with a tablet and a round-key keyboard, an architect lamp, white tulips, a tumbler, an instant camera, books and a glowing egg lamp, and a white bookcase alongside. No chair. Needs about 2 × 0.6 m of wall.',
+    items: [
+      { a: 'sage-study:drawer-unit-desk', x: 0, y: 0.3 },
+      { a: 'sage-study:lit-pegboard-shelf', x: 0, y: 0.11, e: 0.95 },
+      { a: 'sage-study:digital-desk-clock', x: -0.04, y: 0.11, e: 1.585 },
+      { a: 'bookcase', x: 1.02, y: 0.16, w: 0.6, m: { frame: 'paint-pure-white' } },
+      { a: 'lighting-designer:architect-desk-lamp', x: -0.6, y: 0.27, e: 0.75, m: { body: 'metal-white-powder' } },
+      { a: 'sage-study:glass-cup-straw', x: -0.5, y: 0.5, e: 0.75 },
+      { a: 'sage-study:gingham-desk-set', x: -0.08, y: 0.33, e: 0.75 },
+      { a: 'sage-study:instant-camera', x: 0.07, y: 0.09, e: 0.753 },
+      { a: 'decorative-plants:flowers-tulips', x: 0.26, y: 0.1, w: 0.15, d: 0.15, h: 0.36, e: 0.75, m: { vase: 'ceramic-sage', petal: 'decorative-plants:petal-white' } },
+      { a: 'sage-study:sage-tumbler', x: 0.385, y: 0.1, e: 0.75 },
+      { a: 'sage-study:desk-organiser-books', x: 0.57, y: 0.13, w: 0.26, e: 0.75 },
+      { a: 'sage-study:egg-glow-lamp', x: 0.55, y: 0.36, e: 0.75 },
+    ],
+  },
+  {
     id: 'ready-l-desk-workstation',
     name: 'L-desk workstation with mesh chair',
     shelf: OFFICE,

@@ -2749,3 +2749,12 @@ Known limitations (also in README):
      windows (across the wall along their span) and rooms (clear floor, faint fill in their colour), and names the
      selection when their pointer is not on the plan. Tests: peerSelections.test.tsx; checked with two copies in a local
      room in 2D, 3D and the top view (done).
+232. (photo of a sage study desk) "Add this set as a group, without chair, remove the wall decoration but keep the pegboard and
+     its items" → new pack packs/sage-study.pack.ts (drawer-unit desk; lit slotted pegboard with a top shelf, LED edge strips,
+     a small pen shelf and plants/pencil case/bubble candle, model "Empty" without them; digital clock; gingham desk set with
+     tablet, round-key keyboard, mouse and notebook; glass cup, sage tumbler, instant camera, organiser with books, egg glow
+     lamp) and the ready group `ready-sage-study-desk` (with the white bookcase, architect lamp and tulips; no chair, no wall
+     art). Round small pieces size from `Math.min(w, d)` so they stay in their box. (photo) "Painted half-moon wall feature
+     ... Add another item without the racks. Allow me to shape edit it including radius, length (even touching floor)" →
+     `curved-builtins:painted-half-moon` (structure / Portals & arches so the shape editor opens; floor-to-ceiling box,
+     settings radius, length below the curve and top height, each with a handle; length can run it to the floor). (done)

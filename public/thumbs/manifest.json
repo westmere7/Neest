@@ -2049,6 +2049,10 @@
    "file": "curved-builtins_led-step-platform.webp",
    "fp": "992834e704d15577"
   },
+  "curved-builtins:painted-half-moon": {
+   "file": "curved-builtins_painted-half-moon.webp",
+   "fp": "ba1dfc068a77f598"
+  },
   "curved-builtins:scalloped-banquette": {
    "file": "curved-builtins_scalloped-banquette.webp",
    "fp": "41836db5f7be220e"
@@ -4336,6 +4340,42 @@
   "sage-shaker-kitchen:wall-cabinet": {
    "file": "sage-shaker-kitchen_wall-cabinet.webp",
    "fp": "9d1750aaed9eb91d"
+  },
+  "sage-study:desk-organiser-books": {
+   "file": "sage-study_desk-organiser-books.webp",
+   "fp": "07c3e670565b41b5"
+  },
+  "sage-study:digital-desk-clock": {
+   "file": "sage-study_digital-desk-clock.webp",
+   "fp": "8ab0217c5cc97752"
+  },
+  "sage-study:drawer-unit-desk": {
+   "file": "sage-study_drawer-unit-desk.webp",
+   "fp": "bae3ca037a8343d3"
+  },
+  "sage-study:egg-glow-lamp": {
+   "file": "sage-study_egg-glow-lamp.webp",
+   "fp": "1cb2350de9d807a7"
+  },
+  "sage-study:gingham-desk-set": {
+   "file": "sage-study_gingham-desk-set.webp",
+   "fp": "df5b2afc5eb8c3ab"
+  },
+  "sage-study:glass-cup-straw": {
+   "file": "sage-study_glass-cup-straw.webp",
+   "fp": "fc6ebb489bbede3b"
+  },
+  "sage-study:instant-camera": {
+   "file": "sage-study_instant-camera.webp",
+   "fp": "2f39b688415dd269"
+  },
+  "sage-study:lit-pegboard-shelf": {
+   "file": "sage-study_lit-pegboard-shelf.webp",
+   "fp": "3b71a9958d503c23"
+  },
+  "sage-study:sage-tumbler": {
+   "file": "sage-study_sage-tumbler.webp",
+   "fp": "600904572f1980e4"
   },
   "screen-folding": {
    "file": "screen-folding.webp",

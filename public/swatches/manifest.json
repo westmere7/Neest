@@ -2553,6 +2553,10 @@
    "file": "b28186e1e7a88df4.webp",
    "tile": true
   },
+  "b2b440ebd311a3c5": {
+   "file": "b2b440ebd311a3c5.webp",
+   "tile": true
+  },
   "b30f5ce4abc81b1b": {
    "file": "b30f5ce4abc81b1b.webp",
    "tile": true
@@ -3432,6 +3436,10 @@
   "eab627374baebfb0": {
    "file": "eab627374baebfb0.webp",
    "tile": false
+  },
+  "eb1288b6125744b9": {
+   "file": "eb1288b6125744b9.webp",
+   "tile": true
   },
   "eb22eb015d5da097": {
    "file": "eb22eb015d5da097.webp",
@@ -4418,6 +4426,8 @@
   "sage-shaker-kitchen:mint-stack-tile": "c30609954ab57538",
   "sage-shaker-kitchen:reeded-glass": "8668977a8f62e692",
   "sage-shaker-kitchen:terrazzo-white": "1f0c184e55138f48",
+  "sage-study:gingham-sage": "eb1288b6125744b9",
+  "sage-study:pegboard-white": "b2b440ebd311a3c5",
   "shelving:binder-navy": "f12e974fea347e4e",
   "shelving:birch-pegboard": "22cf7fe002ad67a9",
   "shelving:black-iron-pipe": "05b1a7d663c31e82",

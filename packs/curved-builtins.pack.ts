@@ -31,6 +31,8 @@ import {
   span,
   sphere,
   vcyl,
+  type AssetParam,
+  type ParamValues,
   type Part,
   type Size3,
 } from '@/packs/kit';
@@ -562,6 +564,61 @@ const halfMoonShelves = defineItem({
   },
 });
 
+// ───────────── 8b. Painted half-moon (paint only, shape-editable) ─────────────
+
+/**
+ * The painted shape of the half-moon feature without shelves, inside its floor-to-ceiling box: the item's full width,
+ * its top corners rounded by `radius` (half the width = a half-moon; less = an arch with straight shoulders), straight
+ * sides running `length` below the curve, its top at `top` above the floor. The settings are clamped to the box, so
+ * the length can run the shape down to the floor and the top up to the ceiling.
+ */
+function paintedMoon({ w, h }: Size3, p?: ParamValues) {
+  const num = (k: string, v: number) => (typeof p?.[k] === 'number' ? (p[k] as number) : v);
+  const r = clamp(num('radius', w / 2), 0.02, Math.min(w / 2, h));
+  const yt = clamp(num('top', 1.9), r, h);
+  const length = clamp(num('length', 0), 0, yt - r);
+  const ys = yt - r; // where the curve meets the straight sides
+  const yb = ys - length;
+  const pts: V2[] = [[-w / 2, yb], [-w / 2, ys], ...arc(-w / 2 + r, ys, r, r, Math.PI, Math.PI / 2, 24), ...arc(w / 2 - r, ys, r, r, Math.PI / 2, 0, 24), [w / 2, yb]];
+  return { pts: dedupe(pts), r, yt, ys, yb, w };
+}
+
+/** Shape settings of the painted half-moon, each with a handle in the shape editor's 3D view. */
+function paintedMoonParams(): AssetParam[] {
+  const at = (pick: (g: ReturnType<typeof paintedMoon>) => { at: [number, number, number]; dir: [number, number, number] }): AssetParam['handle'] => (size, p) => pick(paintedMoon(size, p));
+  return [
+    { id: 'radius', label: 'Radius', kind: 'length', default: 0.7, min: 0.02, max: 1.5, step: 0.01, hint: 'Half the width makes a half-moon', handle: at((g) => ({ at: [g.w / 2 - g.r, g.yt, 0.012], dir: [-1, 0, 0] })) },
+    { id: 'length', label: 'Length below the curve', kind: 'length', default: 0, min: 0, max: 3, step: 0.01, hint: 'Down to the floor at most', handle: at((g) => ({ at: [0, g.yb, 0.012], dir: [0, -1, 0] })) },
+    { id: 'top', label: 'Top height', kind: 'length', default: 1.9, min: 0.1, max: 3.6, step: 0.01, hint: 'From the floor', handle: at((g) => ({ at: [0, g.yt, 0.012], dir: [0, 1, 0] })) },
+  ];
+}
+
+const paintedHalfMoon = defineItem({
+  id: 'painted-half-moon',
+  name: 'Painted half-moon wall feature',
+  category: 'construction',
+  type: 'structure',
+  group: 'Portals & arches',
+  tags: ['half moon', 'painted arch', 'painted circle', 'limewash', 'feature wall', 'colour block', 'sơn trang trí', 'vòm sơn'],
+  description:
+    'A painted half-moon a few millimetres proud of the wall, without shelves. In the shape editor, set its radius (less than half the width gives an arch with straight shoulders), how far its straight sides run below the curve (down to the floor) and its top height. The item spans floor to ceiling so the paint can reach either.',
+  defaultSize: { w: 1.4, d: 0.012, h: 2.6 },
+  minSize: { w: 0.3, d: 0.006, h: 0.5 },
+  maxSize: { w: 3.6, d: 0.03, h: 3.6 },
+  mount: 'wall',
+  defaultElevation: 0,
+  wallSnap: true,
+  slots: [matSlot('paint', 'Paint', 'limewash-terracotta')],
+  variants: [
+    { id: 'sage', name: 'Sage limewash', materials: { paint: 'limewash-sage' } },
+    { id: 'sand', name: 'Sand tadelakt', materials: { paint: 'tadelakt-sand' } },
+    { id: 'warm', name: 'Warm limewash', materials: { paint: 'limewash-warm' } },
+  ],
+  params: paintedMoonParams(),
+  build: (size, p) => [panelXY('paint', paintedMoon(size, p).pts, -size.d / 2, Math.min(0.006, size.d), true)],
+  planDetail: ({ w, d }) => [line([-w / 2, d / 2], [w / 2, d / 2])],
+});
+
 // ───────────── 9. Bead-column shelf tower ─────────────
 
 const beadTower = defineItem({
@@ -965,6 +1022,7 @@ export default definePack({
     archedScreen,
     archedHeadboard,
     halfMoonShelves,
+    paintedHalfMoon,
     beadTower,
     curvedBayWall,
     cubbyBookcase,
