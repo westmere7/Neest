@@ -91,7 +91,7 @@ function geo({ w, d, h }: Size3, p?: ParamValues) {
   const inset = clamp(num(p, 'groove', 0.07), 0.02, Math.max(0.02, shortest / 2 - GW - 0.02));
   const doorX = range(n).map((i) => [xi0 + GAP + i * (dw + GAP), xi0 + GAP + i * (dw + GAP) + dw] as V2);
   const finX = xi1 - LINE - (xi1 - xi0) * 0.2;
-  return { w, d, h, zb, zf, y0, nb, nt, nh, n, xi0, xi1, dw, lower, upper, inset, doorX, finX, fin: flag(p, 'fin', true), sides: flag(p, 'sides', false) };
+  return { w, d, h, zb, zf, y0, nb, nt, nh, n, xi0, xi1, dw, lower, upper, inset, doorX, finX, fin: flag(p, 'fin', false), sides: flag(p, 'sides', true) };
 }
 
 /**
@@ -145,8 +145,6 @@ function buildShoeCabinet(size: Size3, p?: ParamValues): Part[] {
     span('light', [xi0 + LINE + 0.01, xi1 - LINE - 0.01], [nt - 0.01, nt - 0.001], [zf - 0.06, zf - 0.04], { plan: false }),
   ];
   if (g.fin) parts.push(span('wood', [g.finX - 0.012, g.finX + 0.012], [nb, nt], [zb + BACK + LINE, zf - 0.004], { plan: false }));
-  // With the sides on the floor, a plinth-free shoe bay: a bottom rail at the back keeps it a cabinet.
-  if (g.sides && y0 > 0.06) parts.push(span('body', [xi0, xi1], [0, Math.min(0.05, y0 - 0.01)], [zb, zb + T], { plan: false }));
   // Doors: pill grooves above the niche, arch grooves below it; knobs by the meeting edges.
   g.doorX.forEach(([x0, x1], i) => {
     const right = g.n === 1 || i < g.n / 2 || (g.n % 2 === 1 && i === (g.n - 1) / 2);
@@ -176,8 +174,8 @@ const shoeParams: AssetParam[] = [
   { id: 'nicheHeight', label: 'Niche opening height', kind: 'length', default: 0.4, min: 0.15, max: 0.9, step: 0.01, handle: at((g) => ({ at: [g.w / 4, g.nt, g.zf + 0.01], dir: [0, 1, 0] })) },
   { id: 'doors', label: 'Doors per row', kind: 'count', default: 2, min: 1, max: 4, step: 1 },
   { id: 'groove', label: 'Groove inset', kind: 'length', default: 0.07, min: 0.02, max: 0.25, step: 0.005, hint: 'How far the routed groove sits in from the door edges', handle: at((g) => ({ at: [g.doorX[0][0] + g.inset, (g.upper[0] + g.upper[1]) / 2, g.zf + 0.005], dir: [1, 0, 0] })) },
-  { id: 'fin', label: 'Oak fin in the niche', kind: 'toggle', default: true },
-  { id: 'sides', label: 'Sides down to the floor', kind: 'toggle', default: false, hint: 'Off: the cabinet floats over the shoe gap' },
+  { id: 'fin', label: 'Oak fin in the niche', kind: 'toggle', default: false },
+  { id: 'sides', label: 'Sides down to the floor', kind: 'toggle', default: true, hint: 'Off: the cabinet floats over the shoe gap' },
 ];
 
 const archShoeCabinet = defineItem({
@@ -188,7 +186,7 @@ const archShoeCabinet = defineItem({
   group: 'Hallway storage',
   tags: ['shoe cabinet', 'entry cabinet', 'hallway', 'arch', 'groove', 'routed', 'niche', 'led', 'oak', 'tủ giày', 'tủ giày cửa vòm'],
   description:
-    'Tall entry shoe cabinet: cream doors with routed grooves (pill-shaped above, arch-topped below) and black knobs, an open oak niche with an LED strip and a vertical fin, and an open gap underneath for everyday shoes. In the shape editor, set the shoe gap, the niche height and position, doors per row, the groove inset, the fin and whether the sides reach the floor.',
+    'Tall entry shoe cabinet: cream doors with routed grooves (pill-shaped above, arch-topped below) and black knobs, an open oak niche with an LED strip, and an open shoe bay between its sides at the bottom. In the shape editor, set the shoe bay height, the niche height and position, doors per row, the groove inset, an oak fin in the niche and whether the sides reach the floor.',
   defaultSize: { w: 1.0, d: 0.38, h: 2.4 },
   minSize: { w: 0.45, d: 0.28, h: 1.2 },
   maxSize: { w: 2.4, d: 0.6, h: 2.8 },

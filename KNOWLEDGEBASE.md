@@ -2782,3 +2782,8 @@ Known limitations (also in README):
      bottles, washer wall tap. Ready group `ready-stacked-laundry-corner` on a new "Laundry setups" shelf: the LG
      FWY996WCTN4 below and the AQUA AQH-V700FW dryer on the frame (no standalone LG dryer in the catalogue), plant and a
      basket of bottles on top, tap on the wall, side shelf with a white laundry basket, towels, a plant and bottles. (done)
+236. "The shoe cabinet is missing its lower compartment, just extend its 2 sides to the floor, place 3 pairs of shoes under
+     there as well" + "Don't change it's dimensions, just extend the sides. Also remove the separator in the middle compartment"
+     → arch-groove shoe cabinet defaults: sides down to the floor (same size, no back rail), no oak fin (still a setting).
+     Ready group `ready-arch-shoe-cabinet-shoes` (Entry & hallway): the cabinet with two pairs of sneakers and house slippers
+     in the open bay. (done)

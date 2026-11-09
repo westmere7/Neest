@@ -767,6 +767,20 @@ export const READY_GROUP_SPECS: ReadyGroupSpec[] = [
   },
   // ───────── Entry ─────────
   {
+    id: 'ready-arch-shoe-cabinet-shoes',
+    name: 'Arch-groove shoe cabinet with shoes',
+    shelf: ENTRY,
+    room: 'storage',
+    description:
+      'The tall arch-groove shoe cabinet (cream doors, oak niche with an LED strip) with two pairs of sneakers and a pair of house slippers in the open bay under it.',
+    items: [
+      { a: 'arch-shoe-cabinet:arch-groove-shoe-cabinet', x: 0, y: 0.19 },
+      { a: 'lived-in:sneakers-pair', x: -0.31, y: 0.2 },
+      { a: 'lived-in:house-slippers', x: 0, y: 0.21 },
+      { a: 'lived-in:sneakers-pair', x: 0.31, y: 0.2, m: { upper: 'felt-grey' } },
+    ],
+  },
+  {
     id: 'ready-entry-getabako',
     name: 'Entry with shoe cabinet & mirror',
     shelf: ENTRY,
