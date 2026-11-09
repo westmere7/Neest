@@ -8,4 +8,5 @@ Commands: `npm run dev` · `npm test` · `npm run typecheck` · `npm run lint` �
 
 Always `git pull` and merge `main` into your branch before starting. Add KNOWLEDGEBASE history entries at the end of the
 numbered list. Never run `npm run cloud:deploy` (it uploads this machine's account secrets); `npm run deploy:app` is
-fine with Cloudflare access.
+fine with Cloudflare access. Pushing to `main` publishes the app automatically, so merge only finished, checked work
+into `main`.

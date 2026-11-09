@@ -38,10 +38,16 @@ editing locally:
 
 ## Deploying (Cloudflare)
 
-Needs access to the Cloudflare account (ask Danh for an invite under Manage account → Members), then
+**The app deploys itself**: every push to `main` on GitHub makes Cloudflare build it (`npm run build`) and publish it
+at https://neest.nguyentuandanh-7.workers.dev, about two minutes later. Pushes to `Danh` / `Ngan` don't deploy, so
+only merge into `main` what should go live. A failed build leaves the previous version up; see it under the `neest`
+Worker → Deployments / Builds in the Cloudflare dashboard. An open copy of the site shows the new version on its
+second load (offline cache).
+
+The rest needs access to the Cloudflare account (ask Danh for an invite under Manage account → Members), then
 `npx wrangler login` once.
 
-- `npm run deploy:app` — the app at https://neest.nguyentuandanh-7.workers.dev. Safe from any machine.
+- `npm run deploy:app` — deploys the app by hand from your machine (not needed after a push to `main`).
 - `npm run cloud:deploy` — the room server, **with the account secrets of the machine it runs on**. Run it only from
   Danh's PC: from anywhere else it would replace everyone's passwords and sign everyone out.
 - `npm run cloud:share -- <project file>` — puts a project from `projects/` on the team's shared list (Danh's PC:

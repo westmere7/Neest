@@ -40,10 +40,16 @@ the Vite proxy at `/sync`. Open a second browser (or profile) to be a second per
 
 ## Deploy
 
+The app deploys itself: the `neest` Worker is connected to the GitHub repo (Workers Builds, production branch `main`,
+no preview builds). On each push to `main` Cloudflare runs `npm run build` then
+`npx wrangler deploy --config cloud/app.wrangler.jsonc` with its own API token ("Neest app builds"). Settings: dashboard
+→ Workers & Pages → neest → Settings → Builds.
+
 Wrangler on the dev machine is signed in to the account (`npx wrangler whoami`).
 
-1. `npm run cloud:deploy` — the room server, with the account secrets.
-2. `npm run deploy:app` — builds the app (`.env.production` points it at the room server) and uploads `dist/`.
+1. `npm run cloud:deploy` — the room server, with the account secrets. Always by hand, from Danh's PC.
+2. `npm run deploy:app` — builds the app (`.env.production` points it at the room server) and uploads `dist/`; only
+   needed to publish something that isn't on `main`.
 
 Share a project file with the team from this machine: `npm run cloud:share -- projects/<file>.json` (as Danh;
 `--owner ngan` for someone else; `--again` to share a second copy of a name already on the list). It mints a session
