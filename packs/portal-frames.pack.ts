@@ -103,6 +103,11 @@ interface PortalSpec {
   liningIn?: number;
   /** Minimum clear opening width (m); when set, legs may grow past the 30 % / 40 % default cap up to w - minOpen. */
   minOpen?: number;
+  /**
+   * A short wall across the bottom of the opening, from jamb to jamb, this high (m) to the top of its timber sill;
+   * the opening (and its lining) starts on the sill. Kept at least 0.3 m under the arch's springing.
+   */
+  shortWall?: number;
 }
 
 interface Geo {
@@ -163,6 +168,16 @@ function portalGeo({ w, d, h }: Size3, s: PortalSpec): Geo {
     return [c, c];
   };
   return { w, d, h, legL, xl, xr, yi, yb, cl: corner(rl), cr: corner(rr) };
+}
+
+/** Thickness of the timber sill capping a short wall. */
+const SHORT_WALL_SILL = 0.03;
+
+/** The short wall's height at this size (null when the spec has none): under the arch's springing by 0.3 m at most. */
+function shortWallHeight(g: Geo, s: PortalSpec): number | null {
+  if (s.shortWall === undefined) return null;
+  const spring = g.yi - Math.max(g.cl[1], g.cr[1]);
+  return clamp(s.shortWall, 0.1, Math.max(0.1, Math.min(spring, g.yi - 0.3)));
 }
 
 /** One layer of the frame (z0..z1): the soffit and corner curves as one outline, the straight legs as boxes. */
@@ -305,7 +320,20 @@ function buildPortal(size: Size3, s: PortalSpec): Part[] {
     // The band sits 1 mm inside the faces so the two finishes never share a face plane.
     parts.push(...frameLayer(g, [-d / 2, d / 2], t, h, s), liningBand(g, t, [-d / 2 + 0.001, d / 2 - 0.001]));
   } else parts.push(...frameLayer(g, [-d / 2, d / 2], 0, h, s));
-  if (s.liningIn) parts.push(liningInside(g, s.liningIn, d));
+  // A short wall across the opening: plaster from jamb to jamb (through the stepped faces too), an oak sill on top,
+  // and the lining round the opening from the sill up instead of from the floor.
+  const sh = shortWallHeight(g, s);
+  if (sh !== null) {
+    const st = s.step ? Math.min(s.step, s.leg * 0.4, (g.legL ? Math.min(g.xl + w / 2, w / 2 - g.xr) : w / 2 - g.xr) * 0.4, (h - g.yi) * 0.4) : 0;
+    const x0 = g.legL ? g.xl - st : -w / 2;
+    const x1 = g.xr + st;
+    const sill = Math.min(SHORT_WALL_SILL, sh / 2);
+    parts.push(
+      span('frame', [x0, x1], [0, sh - sill], [-d / 2, d / 2]),
+      span(s.liningIn ? 'lining' : 'frame', [x0, x1], [sh - sill, sh], [-d / 2 - 0.004, d / 2 + 0.004], { bevel: 0.003 }),
+    );
+  }
+  if (s.liningIn) parts.push(liningInside(sh !== null ? { ...g, yb: sh } : g, s.liningIn, d));
 
   // Niche legs (on the core layer's place).
   const ysR = g.yi - g.cr[1];
@@ -1002,6 +1030,16 @@ function archedWallPortalSpec(p?: ParamValues): PortalSpec {
   };
 }
 
+/** Default height of the arched wall portal's short wall: a knee wall you can sit a plant or books on. */
+const SHORT_WALL_DEFAULT = 0.9;
+const shortWallOf = (p?: ParamValues): number => (typeof p?.shortWall === 'number' ? p.shortWall : SHORT_WALL_DEFAULT);
+
+/** Plan of the short-wall model: the soffit outline over the opening, and the short wall drawn as wall across it. */
+function shortWallPlan(size: Size3, s: PortalSpec): PlanStroke[] {
+  const g = portalGeo(size, s);
+  return [...portalPlan(size, s), line([g.xl, -g.d / 2], [g.xl, g.d / 2]), line([g.xr, -g.d / 2], [g.xr, g.d / 2])];
+}
+
 function archedWallPortalParams(): AssetParam[] {
   const handle = (at: string): AssetParam['handle'] => (size, p) => PORTAL_HANDLES[at](portalGeo(size, archedWallPortalSpec(p)));
   return [
@@ -1035,7 +1073,7 @@ const archedWallPortal = defineItem({
     'phòng ngủ',
   ],
   description:
-    'A single straight full-height wall with a wide curved-corner arched opening lined in warm oak, matching the front face of the arched corner bedroom enclosure. Independently resize the left side wall width, right side wall width, top header drop and left/right arch radii, or switch between a stepped bulkhead wall, flush wall, painted opening or glass side-light.',
+    'A single straight full-height wall with a wide curved-corner arched opening lined in warm oak, matching the front face of the arched corner bedroom enclosure. Independently resize the left side wall width, right side wall width, top header drop and left/right arch radii, or switch between a stepped bulkhead wall, flush wall, painted opening, glass side-light or a short wall with an oak sill across the bottom of the opening (its height is a shape setting).',
   defaultSize: { w: 3.0, d: WALL_T, h: CEILING },
   minSize: { w: 1.0, d: 0.08, h: 1.8 },
   maxSize: { w: 7.0, d: 0.45, h: 3.6 },
@@ -1068,6 +1106,20 @@ const archedWallPortal = defineItem({
       name: 'Glass side-light',
       slots: SIDELIGHT_SLOTS,
       props: (size, p) => sidelight(size, archedWallPortalSpec(p)),
+    },
+    {
+      id: 'short-wall',
+      name: 'Short wall, oak lining',
+      params: [
+        lengthParam('shortWall', 'Short wall height', SHORT_WALL_DEFAULT, 0.1, 2.4, (size, p) => {
+          const s = { ...archedWallPortalSpec(p), shortWall: shortWallOf(p) };
+          const g = portalGeo(size, s);
+          const sh = shortWallHeight(g, s) ?? SHORT_WALL_DEFAULT;
+          return { at: [(g.xl + g.xr) / 2, sh, g.d / 2 + 0.01], dir: [0, 1, 0] };
+        }),
+      ],
+      build: (size, p) => buildPortal(size, { ...archedWallPortalSpec(p), shortWall: shortWallOf(p) }),
+      planDetail: (size, p) => shortWallPlan(size, { ...archedWallPortalSpec(p), shortWall: shortWallOf(p) }),
     },
   ],
 });

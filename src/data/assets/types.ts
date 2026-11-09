@@ -260,6 +260,11 @@ export interface AssetModelVariant {
   build?: (size: Size3, params?: ParamValues) => Part[];
   /** Custom 2D plan strokes when this model rearranges built-in fixtures (e.g. moving a hob to another arm). */
   planDetail?: (size: Size3, params?: ParamValues) => PlanStroke[];
+  /**
+   * Shape settings only this model has (the height of a portal's short wall), after the item's own in the shape
+   * editor. Its `build`, `props` and `planDetail` receive them with the item's settings.
+   */
+  params?: AssetParam[];
 }
 
 /** A hand-made colour variant of an asset (see `AssetDefinition.variants`). */
