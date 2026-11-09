@@ -423,12 +423,17 @@ describe('pack models', () => {
         const checkBothEndShields = (ps: ReturnType<typeof clean.build>, planStrokes: ReturnType<typeof assetPlan>['strokes']) => {
           const shieldParts = ps.filter((p) => p.slot === 'shield');
           const shieldBounds = shieldParts.map(worldBounds);
+          const tileTop = Math.max(...ps.filter((p) => p.slot === 'tile').map((p) => worldBounds(p).max[1]));
           const baseBounds = ps.filter((p) => p.slot === 'shieldBase').map(worldBounds);
           expect(shieldParts).toHaveLength(2);
           expect(baseBounds).toHaveLength(2);
           for (const sp of shieldParts) {
             expect(sp.shape).toBe('prism');
             if (sp.shape === 'prism') expect(sp.outline).toHaveLength(5);
+          }
+          // Both shields reach the full height of the splashback tiles / underside of the upper cabinets (~1.449 m at default).
+          for (const sb of shieldBounds) {
+            expect(sb.max[1]).toBeCloseTo(tileTop, 3);
           }
           // One shield sits at the open end of the return arm (+d/2), and the other at the open end of the main arm (±w/2).
           expect(shieldBounds.some((b) => testSize.d / 2 - b.max[2] < 0.02)).toBe(true);
