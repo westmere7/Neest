@@ -530,6 +530,18 @@ describe('pack models', () => {
     // Empty has only the structural oak & back-panel joinery (zero decor slots).
     expect(emptyParts.every((p) => p.slot === 'oak' || p.slot === 'back')).toBe(true);
 
+    // Full-width oak slab legs touch the floor at BOTH ends: curved waterfall at +d/2 and straight square-cornered leg flush with -d/2 under the hutch.
+    const floorLegs = emptyParts
+      .filter((p) => p.slot === 'oak' && worldBounds(p).min[1] <= 0.005)
+      .map(worldBounds);
+    expect(floorLegs).toHaveLength(2);
+    expect(floorLegs.some((b) => Math.abs(b.max[2] - sz.d / 2) < 0.005 && b.max[0] - b.min[0] > sz.w - 0.01)).toBe(true);
+    expect(floorLegs.some((b) => Math.abs(b.min[2] - -sz.d / 2) < 0.005 && b.max[0] - b.min[0] > sz.w - 0.01)).toBe(true);
+    // Only the front (+z) end uses a curved waterfall prism; the wall (-z) corner under the hutch stays square.
+    const bends = emptyParts.filter((p) => p.shape === 'prism').map(worldBounds);
+    expect(bends).toHaveLength(1);
+    expect(bends[0].min[2]).toBeGreaterThan(0);
+
     // Two intermediate horizontal shelf boards between the tabletop (0.81 m) and top cap (1.75 m) create 3 compartments.
     const innerShelves = emptyParts.filter((p) => {
       const b = worldBounds(p);
