@@ -1142,7 +1142,6 @@ function buildLKitchenFixtures(
     d,
     cd,
     yw,
-    uDrop,
     yUpper0,
     yUpperTop,
     zEnd,
@@ -1357,15 +1356,17 @@ function buildLKitchenFixtures(
     );
   }
 
-  // 5. Top-chamfered frosted glass splatter shields in white base shoes at BOTH open ends of the L-counter.
-  const shieldH = Math.min(0.45, uDrop - 0.055);
+  // 5. Top-chamfered frosted glass splatter shields in white base shoes at BOTH open ends of the L-counter,
+  // rising flush to the top of the splashback tiles / underside of the upper cabinets (yUpper0 - 1 mm).
   const yGlass0 = yw + 0.007;
-  const yShieldTop = yw + shieldH;
+  const yShieldTop = yUpper0 - 0.001;
+  const shieldH = yShieldTop - yw;
   const rxFront = w / 2 - cd + 0.014;
   const rxWall = w / 2 - 0.014;
   const rzWall = -d / 2 + 0.014;
   const rzFront = -d / 2 + cd - 0.014;
-  const chamfer = clamp(Math.min(rxWall - rxFront, shieldH) * 0.34, 0.09, 0.155);
+  const glassW = rxWall - rxFront;
+  const chamfer = clamp(Math.min(glassW - Math.max(0, g.upperD - 0.014), glassW * 0.28, shieldH * 0.3), 0.09, 0.165);
 
   out.push(
     // Main-arm open end (+d/2): white base shoe on the worktop + 8 mm frosted glass chamfered on the top-front corner.
