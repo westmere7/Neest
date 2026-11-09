@@ -19,13 +19,14 @@ project and gives a link. Open the link in another browser (or another profile) 
 
 ## Deploy (only when you decide to)
 
-1. Sign in once: `npx wrangler login` (opens Cloudflare in the browser; click Allow).
-2. Deploy the room server: `npm run cloud:deploy`. It prints the address, e.g.
-   `https://neest-sync.<your-subdomain>.workers.dev`.
-3. Build the app pointing at it: set `VITE_NEEST_SYNC_URL=https://neest-sync.<your-subdomain>.workers.dev` (in a
-   `.env.local` file or the hosting provider's build settings) and run `npm run build`.
+Wrangler on the dev machine is signed in to the Cloudflare account (`npx wrangler whoami`). Two commands:
 
-Without step 3 a production build hides live editing.
+1. `npm run cloud:deploy` — the room server, at `https://neest-sync.nguyentuandanh-7.workers.dev`.
+2. `npm run deploy:app` — builds the app (`.env.production` points it at that server) and uploads `dist/` to
+   Cloudflare Pages as project `neest` (first run creates it; the site is `https://neest.pages.dev`).
+
+Both are free-plan only. Another account: change `.env.production` to its `neest-sync.<subdomain>.workers.dev`.
+Without `VITE_NEEST_SYNC_URL` a production build hides live editing.
 
 ## How it works
 

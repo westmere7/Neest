@@ -304,7 +304,8 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   changes behind) reloads the room's version. Others' pointers and selections draw in `PeerLayer` (PlanCanvas) for
   people on the same option; avatars sit by the Live button. SYNC_URL: `VITE_NEEST_SYNC_URL`, or `/sync` in dev
   (Vite proxies it to `npm run cloud:dev`, port 8787); without one the button is hidden. Deploying is a manual step
-  (`npm run cloud:deploy` after `npx wrangler login`). Tests: `src/sync/live.test.ts` (two app instances via
+  (`npm run cloud:deploy`, then `npm run deploy:app` for the app on Cloudflare Pages; `.env.production` holds the
+  server address `https://neest-sync.nguyentuandanh-7.workers.dev`, committed on purpose: not a secret). Tests: `src/sync/live.test.ts` (two app instances via
   `vi.resetModules` against an in-memory room: same-property race, edit vs delete, replace vs field edit,
   disconnect/resend, random convergence over 5 seeds). Not yet: accounts, a server-side project list, offline edits
   surviving a reload, version history, imported 3D models for joiners (their blobs stay in the sharer's browser).

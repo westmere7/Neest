@@ -18,6 +18,7 @@
     "test:e2e": "playwright test",
     "cloud:dev": "wrangler dev --config cloud/wrangler.jsonc --port 8787 --local",
     "cloud:deploy": "wrangler deploy --config cloud/wrangler.jsonc",
+    "deploy:app": "npm run build && wrangler pages deploy dist --project-name neest --branch main",
     "textures": "node tools/fetch-textures.mjs",
     "thumbs": "node tools/generate-thumbs.mjs",
     "people": "node tools/bake-people.mjs",
