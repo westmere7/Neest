@@ -25,6 +25,37 @@ export class Directory extends DurableObject {
       'CREATE TABLE IF NOT EXISTS rooms (room TEXT PRIMARY KEY, key TEXT, name TEXT, owner TEXT, createdAt INTEGER)',
     );
     ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS failures (user TEXT, at INTEGER)');
+    // A password someone set in the app, and the account's original hash it replaced (so a reset from the
+    // accounts secret — a different original — wins again).
+    ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS passwords (user TEXT PRIMARY KEY, hash TEXT, base TEXT)');
+    ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS sessions (user TEXT PRIMARY KEY, version INTEGER)');
+  }
+
+  /** The password hash in force for an account: one set in the app, unless the secret has been reset since. */
+  async passwordHash(user: string, secretHash: string): Promise<string> {
+    const row = this.ctx.storage.sql.exec<{ hash: string; base: string }>('SELECT hash, base FROM passwords WHERE user = ?', user).toArray()[0];
+    if (!row) return secretHash;
+    if (row.base !== secretHash) {
+      this.ctx.storage.sql.exec('DELETE FROM passwords WHERE user = ?', user);
+      return secretHash;
+    }
+    return row.hash;
+  }
+
+  async setPasswordHash(user: string, hash: string, secretHash: string): Promise<void> {
+    this.ctx.storage.sql.exec('INSERT OR REPLACE INTO passwords (user, hash, base) VALUES (?, ?, ?)', user, hash, secretHash);
+  }
+
+  /** The account's session number: tokens with an older one no longer work. */
+  async sessionVersion(user: string): Promise<number> {
+    return this.ctx.storage.sql.exec<{ version: number }>('SELECT version FROM sessions WHERE user = ?', user).toArray()[0]?.version ?? 0;
+  }
+
+  /** Ends every session of the account (other devices); returns the new number for a fresh token. */
+  async endSessions(user: string): Promise<number> {
+    const next = (await this.sessionVersion(user)) + 1;
+    this.ctx.storage.sql.exec('INSERT OR REPLACE INTO sessions (user, version) VALUES (?, ?)', user, next);
+    return next;
   }
 
   async addRoom(r: SharedRoom): Promise<void> {

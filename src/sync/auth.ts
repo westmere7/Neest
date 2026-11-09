@@ -24,6 +24,9 @@ export const useAuthStore = create<AuthState>(() => ({ ready: false, user: null,
 
 const PREF = 'liveSession';
 
+/** Shortest password the server accepts when someone changes theirs (cloud/src/auth.ts). */
+export const MIN_PASSWORD = 4;
+
 /** Where the sync server is, or null when this build has none. */
 export const SYNC_URL: string | null =
   (import.meta.env.VITE_NEEST_SYNC_URL as string | undefined) || (import.meta.env.DEV ? '/sync' : null);
@@ -77,4 +80,31 @@ export async function signIn(name: string, password: string): Promise<SessionUse
 export async function signOut(): Promise<void> {
   useAuthStore.setState({ user: null, token: null });
   await preferenceRepository.set(PREF, null);
+}
+
+/** Changes the signed-in person's password; with signOutOthers, their other devices are signed out. */
+export async function changePassword(current: string, next: string, signOutOthers: boolean): Promise<void> {
+  const res = await fetch(`${httpBase()}/auth/password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ current, next, signOutOthers }),
+  }).catch(() => null);
+  if (!res) throw new Error('The server cannot be reached. Check the connection and try again.');
+  const body = (await res.json().catch(() => ({}))) as { token?: string; error?: string };
+  if (!res.ok || !body.token) throw new Error(res.status === 401 ? 'Please sign in again.' : (body.error ?? `The server answered ${res.status}.`));
+  await keepToken(body.token);
+}
+
+/** Signs this account out on every other device (this one stays signed in). */
+export async function signOutOthers(): Promise<void> {
+  const res = await fetch(`${httpBase()}/auth/signout-others`, { method: 'POST', headers: authHeaders() }).catch(() => null);
+  const body = res ? ((await res.json().catch(() => ({}))) as { token?: string; error?: string }) : {};
+  if (!res?.ok || !body.token) throw new Error(body.error ?? 'Could not sign out the other devices.');
+  await keepToken(body.token);
+}
+
+async function keepToken(token: string): Promise<void> {
+  const user = useAuthStore.getState().user;
+  useAuthStore.setState({ token });
+  if (user) await preferenceRepository.set(PREF, { token, user });
 }

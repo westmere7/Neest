@@ -59,22 +59,31 @@ async function hmac(secret: string, data: string): Promise<Uint8Array> {
   return new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(data)));
 }
 
-export async function signToken(user: string, secret: string, now = Date.now()): Promise<string> {
-  const payload = b64url(enc.encode(JSON.stringify({ u: user, exp: now + SESSION_MS })));
+/** Shortest password accepted when someone changes theirs. */
+export const MIN_PASSWORD = 4;
+
+/** `version`: the account's session number (signing out other devices raises it, which ends older tokens). */
+export async function signToken(user: string, secret: string, now = Date.now(), version = 0): Promise<string> {
+  const payload = b64url(enc.encode(JSON.stringify({ u: user, exp: now + SESSION_MS, v: version })));
   return `${payload}.${b64url(await hmac(secret, payload))}`;
 }
 
-/** The login id a token was issued to, or null when it is forged, malformed or expired. */
-export async function verifyToken(token: string, secret: string, now = Date.now()): Promise<string | null> {
+/** The login id and session number a token was issued with, or null when it is forged, malformed or expired. */
+export async function readToken(token: string, secret: string, now = Date.now()): Promise<{ user: string; version: number } | null> {
   const [payload, sig] = token.split('.');
   if (!payload || !sig) return null;
   try {
     if (!sameBytes(unb64url(sig), await hmac(secret, payload))) return null;
-    const { u, exp } = JSON.parse(new TextDecoder().decode(unb64url(payload))) as { u?: unknown; exp?: unknown };
-    return typeof u === 'string' && typeof exp === 'number' && exp > now ? u : null;
+    const { u, exp, v } = JSON.parse(new TextDecoder().decode(unb64url(payload))) as { u?: unknown; exp?: unknown; v?: unknown };
+    return typeof u === 'string' && typeof exp === 'number' && exp > now ? { user: u, version: typeof v === 'number' ? v : 0 } : null;
   } catch {
     return null;
   }
+}
+
+/** The login id a token was issued to (whatever its session number), or null. */
+export async function verifyToken(token: string, secret: string, now = Date.now()): Promise<string | null> {
+  return (await readToken(token, secret, now))?.user ?? null;
 }
 
 export function parseAccounts(json: string | undefined): Accounts {

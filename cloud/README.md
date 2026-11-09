@@ -21,7 +21,12 @@ All three files stay on the machine (git ignores them). To give someone a new pa
 `PEOPLE` in tools/make-accounts.mjs and do the same.
 
 Sign-in: name (any case) + password → a session token for 30 days, kept in the browser. Ten wrong passwords for an
-account lock it for 15 minutes. The deployed site asks to sign in before anything else; local development opens
+account lock it for 15 minutes. **Account settings** (the gear by your name on the home page, or "Account settings"
+in the Live panel): change your password (needs the current one; at least 4 characters; optionally signs out your
+other devices), sign out on other devices, sign out. A password changed in the app lives in the `Directory`; a
+reset from this machine (new password in `accounts.local.json` → `npm run cloud:accounts` → `npm run cloud:deploy`)
+wins over it — `cloud:accounts` keeps the hashes of everyone whose password in the file is unchanged, so only the
+people you changed are reset. The deployed site asks to sign in before anything else; local development opens
 straight away and asks only when live editing is used.
 
 ## Run locally

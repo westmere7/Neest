@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hashPassword, parseAccounts, SESSION_MS, signToken, verifyPassword, verifyToken } from './auth';
+import { hashPassword, parseAccounts, readToken, SESSION_MS, signToken, verifyPassword, verifyToken } from './auth';
 
 describe('team accounts', () => {
   it('a password matches its hash and nothing else', async () => {
@@ -28,6 +28,11 @@ describe('team accounts', () => {
     expect(await verifyToken(`${forged}.${sig}`, 'secret', 2_000)).toBeNull();
     expect(await verifyToken(`${payload}.`, 'secret', 2_000)).toBeNull();
     expect(await verifyToken('nonsense', 'secret', 2_000)).toBeNull();
+  });
+
+  it('tokens carry the session number (older tokens without one count as 0)', async () => {
+    expect(await readToken(await signToken('linh', 's', 1_000, 3), 's', 2_000)).toEqual({ user: 'linh', version: 3 });
+    expect((await readToken(await signToken('linh', 's', 1_000), 's', 2_000))?.version).toBe(0);
   });
 
   it('reads the accounts secret, and survives a missing or broken one', () => {

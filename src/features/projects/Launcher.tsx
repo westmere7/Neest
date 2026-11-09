@@ -422,7 +422,7 @@ export function Launcher() {
         <footer className="launcher-foot">
           Projects are stored in this browser (IndexedDB) and work offline.{' '}
           {repo.available
-            ? `When running from the dev server they are also mirrored to the repository ${workspaceFolder()}/ folder, so teammates get them with git pull.`
+            ? `When running from the dev server, Save (Ctrl+S) writes them to the repository ${workspaceFolder()}/ folder, so teammates get them with git pull.`
             : ''}{' '}
           Export <code>.neest</code> files to back up or move them between devices. Neest drawings are planning drawings, not certified construction documents.
         </footer>

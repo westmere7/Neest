@@ -1,6 +1,6 @@
 import { ProjectRoom, sha256, type Env } from './room';
 import { Directory } from './directory';
-import { parseAccounts, sessionUser, signToken, verifyPassword, verifyToken, type SessionUser } from './auth';
+import { MIN_PASSWORD, hashPassword, parseAccounts, readToken, sessionUser, signToken, verifyPassword, type SessionUser } from './auth';
 
 export { ProjectRoom, Directory };
 
@@ -9,6 +9,8 @@ export { ProjectRoom, Directory };
  *
  *   POST   /auth/login            { user, password }  → { token, user }
  *   GET    /auth/me                                   → { user }
+ *   POST   /auth/password  { current, next, signOutOthers } → { token }
+ *   POST   /auth/signout-others                       → { token }   ends the account's other sessions
  *   GET    /rooms                                     → { rooms }   projects shared with the team
  *   POST   /rooms                 { doc, name }       → { room, key }
  *   DELETE /rooms/:room                               (only whoever shared it)
@@ -39,14 +41,17 @@ function randomId(length: number): string {
 
 const ROOM_ID = /^[a-z0-9]{8,32}$/;
 
-async function signedIn(request: Request, env: Env): Promise<SessionUser | null> {
+async function signedIn(request: Request, env: Env, directory: DurableObjectStub<Directory>): Promise<SessionUser | null> {
   const url = new URL(request.url);
   const header = request.headers.get('Authorization') ?? '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : (url.searchParams.get('token') ?? '');
   if (!token || !env.SESSION_SECRET) return null;
-  const id = await verifyToken(token, env.SESSION_SECRET);
-  const account = id ? parseAccounts(env.USERS)[id] : undefined;
-  return id && account ? sessionUser(id, account) : null;
+  const t = await readToken(token, env.SESSION_SECRET);
+  const account = t ? parseAccounts(env.USERS)[t.user] : undefined;
+  if (!t || !account) return null;
+  // Signed out on other devices (or the password changed with that option) since this token was made.
+  if (t.version !== (await directory.sessionVersion(t.user))) return null;
+  return sessionUser(t.user, account);
 }
 
 export default {
@@ -70,18 +75,47 @@ export default {
       const account = parseAccounts(env.USERS)[id];
       if (!account || !env.SESSION_SECRET) return json({ error: 'Wrong name or password.' }, 401);
       if (!(await directory.mayTry(id))) return json({ error: 'Too many wrong passwords. Try again in 15 minutes.' }, 429);
-      if (!(await verifyPassword(String(body.password ?? ''), account.hash))) {
+      if (!(await verifyPassword(String(body.password ?? ''), await directory.passwordHash(id, account.hash)))) {
         await directory.recordFailure(id);
         return json({ error: 'Wrong name or password.' }, 401);
       }
       await directory.clearFailures(id);
-      return json({ token: await signToken(id, env.SESSION_SECRET), user: sessionUser(id, account) });
+      const version = await directory.sessionVersion(id);
+      return json({ token: await signToken(id, env.SESSION_SECRET, Date.now(), version), user: sessionUser(id, account) });
     }
 
-    const user = await signedIn(request, env);
+    const user = await signedIn(request, env, directory);
     if (!user) return json({ error: 'Please sign in.' }, 401);
 
     if (parts.join('/') === 'auth/me') return json({ user });
+
+    if (parts.join('/') === 'auth/password' && request.method === 'POST') {
+      let body: { current?: unknown; next?: unknown; signOutOthers?: unknown };
+      try {
+        body = (await request.json()) as typeof body;
+      } catch {
+        return json({ error: 'Expected JSON' }, 400);
+      }
+      const account = parseAccounts(env.USERS)[user.id];
+      const next = String(body.next ?? '');
+      if (!account || !env.SESSION_SECRET) return json({ error: 'Please sign in.' }, 401);
+      if (next.length < MIN_PASSWORD || next.length > 128) return json({ error: `The new password needs at least ${MIN_PASSWORD} characters.` }, 400);
+      if (!(await directory.mayTry(user.id))) return json({ error: 'Too many wrong passwords. Try again in 15 minutes.' }, 429);
+      if (!(await verifyPassword(String(body.current ?? ''), await directory.passwordHash(user.id, account.hash)))) {
+        await directory.recordFailure(user.id);
+        return json({ error: 'The current password is not right.' }, 403);
+      }
+      await directory.clearFailures(user.id);
+      await directory.setPasswordHash(user.id, await hashPassword(next), account.hash);
+      const version = body.signOutOthers === true ? await directory.endSessions(user.id) : await directory.sessionVersion(user.id);
+      return json({ token: await signToken(user.id, env.SESSION_SECRET, Date.now(), version) });
+    }
+
+    if (parts.join('/') === 'auth/signout-others' && request.method === 'POST') {
+      if (!env.SESSION_SECRET) return json({ error: 'Please sign in.' }, 401);
+      const version = await directory.endSessions(user.id);
+      return json({ token: await signToken(user.id, env.SESSION_SECRET, Date.now(), version) });
+    }
 
     if (parts.length === 1 && parts[0] === 'rooms') {
       if (request.method === 'GET') {

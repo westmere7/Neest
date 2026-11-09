@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Copy, Link2, LogOut, RefreshCw, Trash2, Users, WifiOff } from 'lucide-react';
+import { Copy, Link2, LogOut, RefreshCw, Settings, Trash2, Users, WifiOff } from 'lucide-react';
 import { Dialog } from '@/components/Overlays';
 import { Button, IconButton } from '@/components/ui';
 import { Logo } from '@/components/Logo';
@@ -11,7 +11,7 @@ import { rectPolygon } from '@/domain/geometry/polygon';
 import { viewedOption } from '@/domain/sync/doc';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
 import { saveProject } from '@/features/projects/projectService';
-import { signIn, signOut, useAuthStore } from './auth';
+import { MIN_PASSWORD, changePassword, signIn, signOut, signOutOthers, useAuthStore } from './auth';
 import {
   SYNC_URL,
   createRoom,
@@ -70,7 +70,7 @@ export function SignInForm({ onDone, compact }: { onDone?: () => void; compact?:
     >
       <label className="field">
         <span className="field-label">Name</span>
-        <input className="input" autoComplete="username" autoFocus value={name} placeholder="danh, ngan or linh" onChange={(e) => setName(e.target.value)} />
+        <input className="input" autoComplete="username" autoFocus value={name} onChange={(e) => setName(e.target.value)} />
       </label>
       <label className="field">
         <span className="field-label">Password</span>
@@ -152,7 +152,7 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
     try {
       await createRoom(project);
       await startLive(project.id);
-      toast.success('Shared with the team', 'Danh, Ngân and Linh find it under Shared projects, or open the link.');
+      toast.success('Shared with the team', 'Your team finds it under Shared projects, or opens the link.');
     } catch (e) {
       toast.error('Could not share the project', e instanceof Error ? e.message : undefined);
     } finally {
@@ -212,7 +212,7 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
       <div className="live-dialog">
         {!room && (
           <p className="live-note">
-            Puts this project on the team's shared list. Danh, Ngân and Linh can open it and edit it at the same time,
+            Puts this project on the team's shared list. Everyone on the team can open it and edit it at the same time,
             seeing each other's pointers and selections. Undo only undoes your own changes.
           </p>
         )}
@@ -245,6 +245,9 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
             {error && <p className="live-error">{error}</p>}
           </>
         )}
+        <button className="live-link-button" onClick={() => useDialogStore.getState().open('account')}>
+          Account settings (password, sign out)…
+        </button>
       </div>
     </Dialog>
   );
@@ -286,6 +289,103 @@ export function PeerLayer({ px }: { px: number }) {
     <g className="peer-layer" pointerEvents="none">
       {items}
     </g>
+  );
+}
+
+/** Account settings: change the password, sign out on other devices, sign out. */
+export function AccountDialog({ onClose }: { onClose: () => void }) {
+  const user = useAuthStore((s) => s.user);
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [repeat, setRepeat] = useState('');
+  const [others, setOthers] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!user) return null;
+  const mismatch = repeat.length > 0 && next !== repeat;
+  const tooShort = next.length > 0 && next.length < MIN_PASSWORD;
+  const save = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await changePassword(current, next, others);
+      toast.success('Password changed', others ? 'Your other devices are signed out.' : undefined);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not change the password.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog title="Account" onClose={onClose} testId="account-dialog">
+      <div className="live-dialog">
+        <div className="live-person">
+          <Avatar name={user.name} color={user.color} />
+          <strong>{user.name}</strong>
+        </div>
+        <form
+          className="live-signin compact"
+          data-testid="password-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!busy && current && next && next === repeat && !tooShort) void save();
+          }}
+        >
+          <strong className="live-subhead">Change password</strong>
+          <label className="field">
+            <span className="field-label">Current password</span>
+            <input className="input" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} data-autofocus />
+          </label>
+          <label className="field">
+            <span className="field-label">New password</span>
+            <input className="input" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+          </label>
+          <label className="field">
+            <span className="field-label">New password again</span>
+            <input className="input" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+          </label>
+          <label className="live-check">
+            <input type="checkbox" checked={others} onChange={(e) => setOthers(e.target.checked)} /> Sign out on my other devices
+          </label>
+          {tooShort && <p className="live-error">At least {MIN_PASSWORD} characters.</p>}
+          {mismatch && <p className="live-error">The two new passwords are not the same.</p>}
+          {error && (
+            <p className="live-error" role="alert">
+              {error}
+            </p>
+          )}
+          <Button variant="primary" type="submit" disabled={busy || !current || !next || next !== repeat || tooShort} data-testid="password-save">
+            {busy ? 'Saving…' : 'Change password'}
+          </Button>
+        </form>
+        <div className="live-account-actions">
+          <Button
+            variant="ghost"
+            onClick={async () => {
+              try {
+                await signOutOthers();
+                toast.success('Signed out on your other devices');
+              } catch (e) {
+                toast.error('Could not sign out the other devices', e instanceof Error ? e.message : undefined);
+              }
+            }}
+          >
+            Sign out on other devices
+          </Button>
+          <Button
+            variant="ghost"
+            data-testid="account-signout"
+            onClick={async () => {
+              await signOut();
+              onClose();
+            }}
+          >
+            <LogOut size={14} /> Sign out
+          </Button>
+        </div>
+      </div>
+    </Dialog>
   );
 }
 
@@ -333,6 +433,7 @@ export function SharedProjects() {
   const [rooms, setRooms] = useState<SharedRoom[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
+  const [account, setAccount] = useState(false);
   const refresh = useCallback(async () => {
     if (!user) return;
     try {
@@ -350,7 +451,7 @@ export function SharedProjects() {
     return (
       <section className="live-shared" data-testid="shared-projects">
         <h2>Shared with the team</h2>
-        <p className="live-note">Sign in to see and edit the projects Danh, Ngân and Linh share.</p>
+        <p className="live-note">Sign in to see and edit the projects your team shares.</p>
         <SignInForm compact />
       </section>
     );
@@ -364,11 +465,15 @@ export function SharedProjects() {
           <IconButton label="Refresh the list" onClick={() => void refresh()}>
             <RefreshCw size={15} />
           </IconButton>
+          <IconButton label="Account settings" onClick={() => setAccount(true)} data-testid="account">
+            <Settings size={15} />
+          </IconButton>
           <IconButton label="Sign out" onClick={() => void signOut()} data-testid="signout">
             <LogOut size={15} />
           </IconButton>
         </span>
       </div>
+      {account && <AccountDialog onClose={() => setAccount(false)} />}
       {error && <p className="live-error">{error}</p>}
       {rooms && !rooms.length && <p className="live-note">Nothing shared yet. Open a project and use the people button at the top to share it.</p>}
       <ul className="live-room-list">

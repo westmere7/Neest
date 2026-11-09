@@ -1,4 +1,4 @@
-import { LiveDialog } from '@/sync/LiveUI';
+import { AccountDialog, LiveDialog } from '@/sync/LiveUI';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { AreaUnit, LengthUnit } from '@/domain/model/schema';
 import { useProjectStore } from '@/state/projectStore';
@@ -46,6 +46,7 @@ export function EditorDialogs() {
       {open === 'settings' && <SettingsDialog onClose={close} />}
       {open === 'shortcuts' && <ShortcutsDialog onClose={close} />}
       {open === 'live' && <LiveDialog onClose={close} />}
+      {open === 'account' && <AccountDialog onClose={close} />}
       {open === 'import-model' && (
         <Suspense
           fallback={

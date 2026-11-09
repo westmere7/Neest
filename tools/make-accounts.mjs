@@ -21,15 +21,31 @@ const pick = () => WORDS[randomInt(WORDS.length)];
 for (const p of PEOPLE) plain[p.id] ??= `${pick()}-${pick()}-${randomInt(10, 100)}`;
 writeFileSync(plainFile, JSON.stringify(plain, null, 2) + '\n');
 
+const secretsFile = new URL('.secrets.json', dir);
+const prev = existsSync(secretsFile) ? JSON.parse(readFileSync(secretsFile, 'utf8')) : {};
+const prevUsers = prev.USERS ? JSON.parse(prev.USERS) : {};
+
+/** True when `stored` is the hash of `password` (same format as cloud/src/auth.ts). */
+const matches = (password, stored) => {
+  const [kind, iter, salt, hash] = String(stored ?? '').split('$');
+  if (kind !== 'pbkdf2' || !hash) return false;
+  return pbkdf2Sync(password, Buffer.from(salt, 'base64'), Number(iter), 32, 'sha256').toString('base64') === hash;
+};
+
 const users = {};
 for (const p of PEOPLE) {
+  // An unchanged password keeps its hash: a new hash would count as a reset on the server and undo a password
+  // the person has since changed in the app. Only people whose password here changed are reset.
+  const kept = prevUsers[p.id]?.hash;
+  if (kept && matches(plain[p.id], kept)) {
+    users[p.id] = { name: p.name, color: p.color, hash: kept };
+    continue;
+  }
   const salt = randomBytes(16);
   const hash = pbkdf2Sync(plain[p.id], salt, ITERATIONS, 32, 'sha256');
   users[p.id] = { name: p.name, color: p.color, hash: `pbkdf2$${ITERATIONS}$${salt.toString('base64')}$${hash.toString('base64')}` };
+  if (kept) console.log(`${p.name}: new password (resets any password ${p.name} set in the app).`);
 }
-
-const secretsFile = new URL('.secrets.json', dir);
-const prev = existsSync(secretsFile) ? JSON.parse(readFileSync(secretsFile, 'utf8')) : {};
 const secrets = { USERS: JSON.stringify(users), SESSION_SECRET: prev.SESSION_SECRET ?? randomBytes(32).toString('hex') };
 writeFileSync(secretsFile, JSON.stringify(secrets, null, 2) + '\n');
 writeFileSync(new URL('.dev.vars', dir), `USERS='${secrets.USERS}'\nSESSION_SECRET=${secrets.SESSION_SECRET}\n`);
