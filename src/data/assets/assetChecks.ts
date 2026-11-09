@@ -321,6 +321,14 @@ export function describeAssetChecks(assets: AssetDefinition[]): void {
             expect(b.min[1], `${where} y-min`).toBeGreaterThanOrEqual(-TOL);
             expect(b.max[1], `${where} y-max`).toBeLessThanOrEqual(h + PROPS_ABOVE);
           }
+          for (const [i, s] of (look.planDetail?.(size) ?? []).entries()) {
+            const where = `model ${modelId} plan stroke #${i} (${s.kind}) at ${w}×${d}×${h}`;
+            expect(collectNumbers(s).every(Number.isFinite), where).toBe(true);
+            for (const [x, z] of strokePoints(s)) {
+              expect(Math.abs(x), where).toBeLessThanOrEqual(w / 2 + TOL);
+              expect(Math.abs(z), where).toBeLessThanOrEqual(d / 2 + TOL);
+            }
+          }
         },
       );
     }

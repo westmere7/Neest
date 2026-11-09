@@ -258,6 +258,8 @@ export interface AssetModelVariant {
    * item's own (`hide` still applies to them) and give the plan outline. Same size box as the item.
    */
   build?: (size: Size3, params?: ParamValues) => Part[];
+  /** Custom 2D plan strokes when this model rearranges built-in fixtures (e.g. moving a hob to another arm). */
+  planDetail?: (size: Size3, params?: ParamValues) => PlanStroke[];
 }
 
 /** A hand-made colour variant of an asset (see `AssetDefinition.variants`). */

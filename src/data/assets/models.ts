@@ -74,7 +74,7 @@ export function storedModelId(asset: AssetDefinition | null | undefined, id?: st
   return m && m !== list[0] ? m.id : undefined;
 }
 
-const changesNothing = (m: AssetModelVariant) => !m.hide?.length && !m.props && !m.slots?.length && !m.build;
+const changesNothing = (m: AssetModelVariant) => !m.hide?.length && !m.props && !m.slots?.length && !m.build && !m.planDetail;
 
 /** Material slots of an asset across all its models (for slot defaults of any placed model). */
 export function allModelSlots(asset: AssetDefinition): MaterialSlot[] {
@@ -126,6 +126,7 @@ export function withModel(asset: AssetDefinition | null, id?: string | null): As
     id: `${asset.id}@model:${m.id}`,
     slots,
     models: undefined,
+    planDetail: m.planDetail ?? asset.planDetail,
     // Shape settings reach the model's form and props too (a corner portal's half wall follows its pier width).
     build: (size, params) => {
       // A model with its own form replaces the item's parts.

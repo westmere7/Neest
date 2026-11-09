@@ -7,7 +7,31 @@
  * The ready-made group "Sage shaker L kitchen with oak bar" (src/data/groups/readyGroups.ts) puts it
  * together with the oak waterfall bar and white bentwood chairs from the library.
  */
-import { box, clamp, cyl, defineItem, definePack, knob, lathe, matSlot, range, rod, shakerFront, span, sphere, torus, type Part, type V2, type V3 } from '@/packs/kit';
+import {
+  box,
+  clamp,
+  cyl,
+  defineItem,
+  definePack,
+  knob,
+  lathe,
+  matSlot,
+  range,
+  rod,
+  shakerFront,
+  span,
+  sphere,
+  torus,
+  type AssetModelVariant,
+  type AssetParam,
+  type AssetPresetVariant,
+  type ParamValues,
+  type Part,
+  type PlanStroke,
+  type Size3,
+  type V2,
+  type V3,
+} from '@/packs/kit';
 
 const PLINTH = 0.1;
 const TOP_T = 0.03;
@@ -532,6 +556,1045 @@ const budVase = defineItem({
   },
 });
 
+// ---------------------------------------------------------------------------
+// Parametric L-shaped Sage & Cream Shaker Kitchen (independent X & Z arm lengths,
+// no dining bar/table and no fridge)
+// ---------------------------------------------------------------------------
+
+const L_BASE = matSlot('base', 'Base cabinets', 'sage-lacquer');
+const L_UPPER = matSlot('upper', 'Upper cabinets', 'cream-lacquer');
+const L_WORKTOP = matSlot('worktop', 'Worktop & waterfall end', 'terrazzo-white');
+const L_TILE = matSlot('tile', 'Splashback tiles', 'mint-stack-tile');
+
+const L_BASE_FIXTURE_SLOTS = [
+  matSlot('pull', 'Leather tab pulls', 'leather-tab'),
+  matSlot('appliance', 'Sink & slim hood', 'metal-black-matte'),
+  matSlot('hob', 'Induction hob glass', 'screen-black'),
+  matSlot('steel', 'Spring tap & trim', 'metal-brushed-steel'),
+  matSlot('brass', 'Knobs & rivets', 'metal-brass'),
+];
+
+const L_UPPER_CLEAN_SLOTS = [
+  ...L_BASE_FIXTURE_SLOTS,
+  matSlot('glass', 'Reeded glass', 'reeded-glass'),
+  matSlot('glow', 'Under-cabinet & hood LED', 'shelf-led'),
+];
+
+const L_VARIANTS: AssetPresetVariant[] = [
+  {
+    id: 'warm-cream',
+    name: 'All warm cream & subway tile',
+    materials: { base: 'cream-lacquer', upper: 'cream-lacquer', worktop: 'terrazzo-white', tile: 'tile-subway-white' },
+  },
+  {
+    id: 'forest-marble',
+    name: 'Forest green & Carrara marble',
+    materials: { base: 'paint-forest', upper: 'cream-lacquer', worktop: 'stone-marble-carrara', tile: 'tile-subway-white' },
+  },
+  {
+    id: 'dusty-blue',
+    name: 'Dusty blue & cream',
+    materials: { base: 'paint-dusty-blue', upper: 'cream-lacquer', worktop: 'terrazzo-white', tile: 'tile-white-square' },
+  },
+  {
+    id: 'oak-cream',
+    name: 'Warm oak & cream',
+    materials: { base: 'bar-oak', upper: 'cream-lacquer', worktop: 'terrazzo-white', tile: 'mint-stack-tile' },
+  },
+];
+
+type HobPlacement = 'main' | 'return';
+
+interface LKitchenGeo {
+  w: number;
+  d: number;
+  h: number;
+  cd: number;
+  yw: number;
+  uDrop: number;
+  endW: number;
+  upperD: number;
+  yUpper0: number;
+  yTransom: number;
+  yCeilingTop: number;
+  zCorner: number;
+  zEnd: number;
+  prep: V2 | null;
+  sink: V2;
+  hob: V2;
+  tail: V2 | null;
+  returnOuter: V2 | null;
+  returnHob: V2;
+  returnInner: V2 | null;
+  holeX: V2;
+  holeZ: V2;
+}
+
+const numParam = (v: unknown, fallback: number): number =>
+  typeof v === 'number' && Number.isFinite(v) ? v : fallback;
+
+function lKitchenGeo({ w, d, h }: Size3, params?: ParamValues): LKitchenGeo {
+  const cd = clamp(numParam(params?.counterDepth, 0.6), 0.5, Math.min(0.72, w - 0.48, d - 0.95));
+  const yw = clamp(numParam(params?.worktopHeight, 0.89), 0.8, Math.min(0.96, h - 1.0));
+  const uDrop = clamp(numParam(params?.upperDrop, 0.56), 0.45, Math.min(0.72, h - yw - 0.55));
+  const endPier = params?.endPier === true;
+  const endW = endPier ? Math.min(0.36, Math.max(0.18, (d - cd) * 0.2)) : 0.035;
+  const upperD = Math.min(0.35, cd - 0.12);
+
+  const yUpper0 = yw + uDrop;
+  const yCeilingTop = h - 0.02;
+  const transomH = clamp((yCeilingTop - yUpper0) * 0.28, 0.18, 0.4);
+  const yTransom = yCeilingTop - transomH;
+
+  const zCorner = -d / 2 + cd;
+  const zEnd = d / 2 - endW;
+  const sideLen = Math.max(0.7, zEnd - zCorner);
+
+  let prep: V2 | null = null;
+  let sink: V2;
+  let hob: V2;
+  let tail: V2 | null = null;
+
+  if (sideLen < 1.55) {
+    const zMid = zCorner + sideLen * 0.53;
+    sink = [zCorner, zMid];
+    hob = [zMid, zEnd];
+  } else if (sideLen < 2.65) {
+    const prepW = clamp(sideLen * 0.2, 0.36, 0.5);
+    const rem = sideLen - prepW;
+    const z1 = zCorner + prepW;
+    const z2 = z1 + rem * 0.52;
+    prep = [zCorner, z1];
+    sink = [z1, z2];
+    hob = [z2, zEnd];
+  } else {
+    const prepW = 0.48;
+    const sinkW = 0.94;
+    const hobW = 0.88;
+    const z1 = zCorner + prepW;
+    const z2 = z1 + sinkW;
+    const z3 = z2 + hobW;
+    prep = [zCorner, z1];
+    sink = [z1, z2];
+    hob = [z2, z3];
+    tail = [z3, zEnd];
+  }
+
+  // Return-arm bays along rx ∈ [-w/2, w/2 - cd] (outer front tip at -w/2, inner L-corner at w/2 - cd).
+  const xStart = -w / 2;
+  const xBackEnd = w / 2 - cd;
+  const backClear = Math.max(0.35, xBackEnd - xStart);
+  let returnOuter: V2 | null = null;
+  let returnHob: V2;
+  let returnInner: V2 | null = null;
+  if (backClear < 1.08) {
+    returnHob = [xStart, xBackEnd];
+  } else if (backClear < 1.65) {
+    const hobW = clamp(backClear * 0.68, 0.72, 0.86);
+    returnHob = [xStart, xStart + hobW];
+    returnInner = [xStart + hobW, xBackEnd];
+  } else {
+    const hobW = 0.86;
+    const rem = backClear - hobW;
+    const x1 = xStart + rem * 0.45;
+    const x2 = x1 + hobW;
+    returnOuter = [xStart, x1];
+    returnHob = [x1, x2];
+    returnInner = [x2, xBackEnd];
+  }
+
+  const sinkSpan = sink[1] - sink[0];
+  const sinkHoleW = clamp(sinkSpan - 0.14, 0.44, 0.78);
+  const sinkCenter = (sink[0] + sink[1]) / 2;
+  const holeZ: V2 = [sinkCenter - sinkHoleW / 2, sinkCenter + sinkHoleW / 2];
+  const holeX: V2 = [w / 2 - cd + 0.075, w / 2 - 0.125];
+
+  return {
+    w,
+    d,
+    h,
+    cd,
+    yw,
+    uDrop,
+    endW,
+    upperD,
+    yUpper0,
+    yTransom,
+    yCeilingTop,
+    zCorner,
+    zEnd,
+    prep,
+    sink,
+    hob,
+    tail,
+    returnOuter,
+    returnHob,
+    returnInner,
+    holeX,
+    holeZ,
+  };
+}
+
+function lKitchenParams(hand: 'left' | 'right'): AssetParam[] {
+  const sgn = hand === 'left' ? 1 : -1;
+  return [
+    {
+      id: 'counterDepth',
+      label: 'Counter depth',
+      kind: 'length',
+      default: 0.6,
+      min: 0.5,
+      max: 0.72,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lKitchenGeo({ w: size.d, d: size.w, h: size.h }, p);
+        const rxBackMid = (-g.w / 2 + (g.w / 2 - g.cd)) / 2;
+        return { at: [sgn * (-g.d / 2 + g.cd + 0.01), g.yw - TOP_T / 2, -rxBackMid], dir: [sgn, 0, 0] };
+      },
+    },
+    {
+      id: 'worktopHeight',
+      label: 'Worktop height',
+      kind: 'length',
+      default: 0.89,
+      min: 0.8,
+      max: 0.96,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lKitchenGeo({ w: size.d, d: size.w, h: size.h }, p);
+        return { at: [sgn * ((g.zCorner + g.zEnd) / 2), g.yw, -size.d / 2 + g.cd + 0.01], dir: [0, 1, 0] };
+      },
+    },
+    {
+      id: 'upperDrop',
+      label: 'Splashback height',
+      kind: 'length',
+      default: 0.56,
+      min: 0.45,
+      max: 0.72,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lKitchenGeo({ w: size.d, d: size.w, h: size.h }, p);
+        return { at: [sgn * ((g.sink[0] + g.sink[1]) / 2), g.yUpper0, -size.d / 2 + g.upperD + 0.01], dir: [0, 1, 0] };
+      },
+    },
+    {
+      id: 'endPier',
+      label: 'Thick terrazzo end pier',
+      kind: 'toggle',
+      default: false,
+    },
+  ];
+}
+
+/** Equal door intervals across [a, b] with a 3 mm reveal between doors. */
+function splitDoors(a: number, b: number, count: number): V2[] {
+  const n = Math.max(1, count);
+  const step = (b - a) / n;
+  const gap = 0.002;
+  return range(n).map((i) => [a + i * step + gap, a + (i + 1) * step - gap] as V2);
+}
+
+/** Three stacked horizontal drawer intervals [bottom, middle, top]: a shallow cutlery drawer over two deep pan drawers. */
+function drawerRows([y0, y1]: V2): V2[] {
+  const gap = 0.006;
+  const total = y1 - y0;
+  const topH = clamp(total * 0.22, 0.135, 0.175);
+  const deepH = (total - topH - 2 * gap) / 2;
+  return [
+    [y0, y0 + deepH],
+    [y0 + deepH + gap, y1 - topH - gap],
+    [y1 - topH, y1],
+  ];
+}
+
+/** Shaker door frames facing +z (front rail face at `zFace`, recessed backing sheet behind). */
+function shakerRunZ(slot: string, xRange: V2, yRange: V2, zFace: number, count: number): Part[] {
+  const doors = splitDoors(xRange[0], xRange[1], count);
+  const out: Part[] = [
+    span(slot, [xRange[0] + 0.002, xRange[1] - 0.002], [yRange[0] + 0.002, yRange[1] - 0.002], [zFace - FRONT_T, zFace - 0.006], o),
+  ];
+  for (const [x0, x1] of doors) {
+    const r = clamp(Math.min(x1 - x0, yRange[1] - yRange[0]) * 0.15, 0.036, 0.06);
+    out.push(
+      span(slot, [x0, x1], [yRange[1] - r, yRange[1]], [zFace - 0.006, zFace], o),
+      span(slot, [x0, x1], [yRange[0], yRange[0] + r], [zFace - 0.006, zFace], o),
+      span(slot, [x0, x0 + r], [yRange[0] + r, yRange[1] - r], [zFace - 0.006, zFace], o),
+      span(slot, [x1 - r, x1], [yRange[0] + r, yRange[1] - r], [zFace - 0.006, zFace], o),
+    );
+  }
+  return out;
+}
+
+/** Three stacked horizontal Shaker drawer fronts facing +z (front rail face at `zFace`, full-depth horizontal shadow reveals). */
+function shakerDrawersZ(slot: string, xRange: V2, yRange: V2, zFace: number): Part[] {
+  const x0 = xRange[0] + 0.002;
+  const x1 = xRange[1] - 0.002;
+  const out: Part[] = [];
+  for (const [ry0, ry1] of drawerRows(yRange)) {
+    const r = clamp(Math.min(x1 - x0, ry1 - ry0) * 0.24, 0.032, 0.052);
+    out.push(
+      span(slot, [x0 + r, x1 - r], [ry0 + r, ry1 - r], [zFace - FRONT_T, zFace - 0.006], o),
+      span(slot, [x0, x1], [ry1 - r, ry1], [zFace - FRONT_T, zFace], o),
+      span(slot, [x0, x1], [ry0, ry0 + r], [zFace - FRONT_T, zFace], o),
+      span(slot, [x0, x0 + r], [ry0 + r, ry1 - r], [zFace - FRONT_T, zFace], o),
+      span(slot, [x1 - r, x1], [ry0 + r, ry1 - r], [zFace - FRONT_T, zFace], o),
+    );
+  }
+  return out;
+}
+
+/** Shaker door frames facing -x (front rail face at `xFace`, recessed backing sheet behind). */
+function shakerFramesOnlyX(slot: string, doors: V2[], yRange: V2, xFace: number): Part[] {
+  const out: Part[] = [];
+  for (const [z0, z1] of doors) {
+    const r = clamp(Math.min(z1 - z0, yRange[1] - yRange[0]) * 0.15, 0.036, 0.06);
+    out.push(
+      span(slot, [xFace, xFace + 0.006], [yRange[1] - r, yRange[1]], [z0, z1], o),
+      span(slot, [xFace, xFace + 0.006], [yRange[0], yRange[0] + r], [z0, z1], o),
+      span(slot, [xFace, xFace + 0.006], [yRange[0] + r, yRange[1] - r], [z0, z0 + r], o),
+      span(slot, [xFace, xFace + 0.006], [yRange[0] + r, yRange[1] - r], [z1 - r, z1], o),
+    );
+  }
+  return out;
+}
+
+/** Three stacked horizontal Shaker drawer fronts facing -x (front rail face at `xFace`, full-depth horizontal shadow reveals). */
+function shakerDrawersX(slot: string, zRange: V2, yRange: V2, xFace: number): Part[] {
+  const z0 = zRange[0] + 0.002;
+  const z1 = zRange[1] - 0.002;
+  const out: Part[] = [];
+  for (const [ry0, ry1] of drawerRows(yRange)) {
+    const r = clamp(Math.min(z1 - z0, ry1 - ry0) * 0.24, 0.032, 0.052);
+    out.push(
+      span(slot, [xFace + 0.006, xFace + FRONT_T], [ry0 + r, ry1 - r], [z0 + r, z1 - r], o),
+      span(slot, [xFace, xFace + FRONT_T], [ry1 - r, ry1], [z0, z1], o),
+      span(slot, [xFace, xFace + FRONT_T], [ry0, ry0 + r], [z0, z1], o),
+      span(slot, [xFace, xFace + FRONT_T], [ry0 + r, ry1 - r], [z0, z0 + r], o),
+      span(slot, [xFace, xFace + FRONT_T], [ry0 + r, ry1 - r], [z1 - r, z1], o),
+    );
+  }
+  return out;
+}
+
+/** Leather tab pull on a door facing -x (front face at `xFace`). */
+function leatherTabX(xFace: number, yTop: number, z: number, len = 0.072): Part[] {
+  const t = 0.005;
+  return [
+    span('pull', [xFace - 0.0005 - t, xFace - 0.0005], [yTop - len, yTop], [z - 0.012, z + 0.012], { ...o, bevel: 0.002 }),
+    sphere('brass', [xFace - 0.0005 - t - 0.0025, yTop - 0.012, z], 0.0035, o),
+  ];
+}
+
+/** Leather tab pull on a door facing +z (front face at `zFace`). */
+function leatherTabZ(x: number, yTop: number, zFace: number, len = 0.072): Part[] {
+  const t = 0.005;
+  return [
+    span('pull', [x - 0.012, x + 0.012], [yTop - len, yTop], [zFace + 0.0005, zFace + 0.0005 + t], { ...o, bevel: 0.002 }),
+    sphere('brass', [x, yTop - 0.012, zFace + 0.0005 + t + 0.0025], 0.0035, o),
+  ];
+}
+
+/** Horizontal leather strap pull centred on a drawer facing -x (front face at `xFace`). */
+function drawerPullX(xFace: number, yTop: number, zCenter: number, halfLen = 0.042): Part[] {
+  const t = 0.005;
+  const yc = yTop - 0.026;
+  return [
+    span('pull', [xFace - 0.0005 - t, xFace - 0.0005], [yc - 0.01, yc + 0.01], [zCenter - halfLen, zCenter + halfLen], {
+      ...o,
+      bevel: 0.002,
+    }),
+    sphere('brass', [xFace - 0.0005 - t - 0.0025, yc, zCenter - halfLen + 0.011], 0.0035, o),
+    sphere('brass', [xFace - 0.0005 - t - 0.0025, yc, zCenter + halfLen - 0.011], 0.0035, o),
+  ];
+}
+
+/** Horizontal leather strap pull centred on a drawer facing +z (front face at `zFace`). */
+function drawerPullZ(xCenter: number, yTop: number, zFace: number, halfLen = 0.042): Part[] {
+  const t = 0.005;
+  const yc = yTop - 0.026;
+  return [
+    span('pull', [xCenter - halfLen, xCenter + halfLen], [yc - 0.01, yc + 0.01], [zFace + 0.0005, zFace + 0.0005 + t], {
+      ...o,
+      bevel: 0.002,
+    }),
+    sphere('brass', [xCenter - halfLen + 0.011, yc, zFace + 0.0005 + t + 0.0025], 0.0035, o),
+    sphere('brass', [xCenter + halfLen - 0.011, yc, zFace + 0.0005 + t + 0.0025], 0.0035, o),
+  ];
+}
+
+/** Small brass round knob on an upper door facing -x (front face at `xFace`). */
+const brassKnobX = (xFace: number, y: number, z: number): Part => sphere('brass', [xFace - 0.011, y, z], 0.01, o);
+
+/** Core architectural L-cabinetry, worktop (with sink cut-out) and vertical stack-tile splashback. */
+function buildLKitchenShell(size: Size3, params?: ParamValues, hobPlacement: HobPlacement = 'main'): Part[] {
+  const g = lKitchenGeo(size, params);
+  const {
+    w,
+    d,
+    h,
+    cd,
+    yw,
+    yUpper0,
+    yTransom,
+    yCeilingTop,
+    zCorner,
+    zEnd,
+    prep,
+    sink,
+    hob,
+    tail,
+    returnOuter,
+    returnHob,
+    returnInner,
+    holeX,
+    holeZ,
+  } = g;
+  const parts: Part[] = [];
+
+  const yBaseTop = yw - TOP_T;
+  const yFrontRange: V2 = [PLINTH + 0.004, yBaseTop - 0.004];
+  const zBackFace = -d / 2 + cd - TAB_ROOM;
+  const xSideFace = w / 2 - cd + TAB_ROOM;
+  const xUFace = w / 2 - g.upperD + KNOB_ROOM;
+
+  // 1. Return-arm base carcass, recessed plinth, and Shaker doors (or 3-tier horizontal hob drawers when hobPlacement === 'return').
+  const xBackEnd = w / 2 - cd;
+  const backClear = Math.max(0.35, xBackEnd - -w / 2);
+  parts.push(
+    span('base', [-w / 2, xBackEnd], [PLINTH, yBaseTop], [-d / 2, zBackFace - FRONT_T]),
+    span('base', [-w / 2 + 0.004, xBackEnd], [0, PLINTH], [-d / 2, zBackFace - FRONT_T - 0.045], o),
+  );
+  if (hobPlacement === 'main') {
+    const backDoorCount = clamp(Math.round(backClear / 0.55), 1, 5);
+    parts.push(...shakerRunZ('base', [-w / 2 + 0.002, xBackEnd - 0.002], yFrontRange, zBackFace, backDoorCount));
+  } else {
+    if (returnOuter && returnOuter[1] - returnOuter[0] > 0.12) {
+      const n = clamp(Math.round((returnOuter[1] - returnOuter[0]) / 0.52), 1, 2);
+      parts.push(...shakerRunZ('base', [returnOuter[0] + 0.002, returnOuter[1] - 0.002], yFrontRange, zBackFace, n));
+    }
+    parts.push(...shakerDrawersZ('base', returnHob, yFrontRange, zBackFace));
+    if (returnInner && returnInner[1] - returnInner[0] > 0.12) {
+      const n = clamp(Math.round((returnInner[1] - returnInner[0]) / 0.52), 1, 2);
+      parts.push(...shakerRunZ('base', [returnInner[0] + 0.002, returnInner[1] - 0.002], yFrontRange, zBackFace, n));
+    }
+  }
+
+  // 2. Corner + main-arm base carcasses (stopping below sink bowls in the sink bay), plinth & Shaker fronts.
+  const underSink = yw - 0.22;
+  parts.push(
+    span('base', [xSideFace + FRONT_T, w / 2], [PLINTH, yBaseTop], [-d / 2, sink[0]]),
+    span('base', [xSideFace + FRONT_T, w / 2], [PLINTH, underSink], [sink[0], sink[1]], o),
+    span('base', [xSideFace + FRONT_T, w / 2], [PLINTH, yBaseTop], [sink[1], zEnd]),
+    span('base', [xSideFace + FRONT_T + 0.045, w / 2 - 0.004], [0, PLINTH], [zCorner - 0.02, zEnd - 0.004], o),
+  );
+
+  if (hobPlacement === 'main') {
+    const preHobDoors: V2[] = [];
+    if (prep) preHobDoors.push(...splitDoors(prep[0], prep[1], prep[1] - prep[0] >= 0.62 ? 2 : 1));
+    preHobDoors.push(...splitDoors(sink[0], sink[1], sink[1] - sink[0] >= 0.56 ? 2 : 1));
+    parts.push(
+      span('base', [xSideFace + 0.006, xSideFace + FRONT_T], [PLINTH + 0.006, yBaseTop - 0.006], [zCorner + 0.004, hob[0] - 0.003], o),
+      ...shakerFramesOnlyX('base', preHobDoors, yFrontRange, xSideFace),
+      ...shakerDrawersX('base', hob, yFrontRange, xSideFace),
+    );
+    if (tail && tail[1] - tail[0] > 0.12) {
+      const tailDoors = splitDoors(tail[0], tail[1], clamp(Math.round((tail[1] - tail[0]) / 0.52), 1, 2));
+      parts.push(
+        span('base', [xSideFace + 0.006, xSideFace + FRONT_T], [PLINTH + 0.006, yBaseTop - 0.006], [tail[0] + 0.003, zEnd - 0.004], o),
+        ...shakerFramesOnlyX('base', tailDoors, yFrontRange, xSideFace),
+      );
+    }
+  } else {
+    const sideBaseDoors: V2[] = [];
+    if (prep) sideBaseDoors.push(...splitDoors(prep[0], prep[1], prep[1] - prep[0] >= 0.62 ? 2 : 1));
+    sideBaseDoors.push(...splitDoors(sink[0], sink[1], sink[1] - sink[0] >= 0.56 ? 2 : 1));
+    sideBaseDoors.push(...splitDoors(hob[0], hob[1], hob[1] - hob[0] >= 0.56 ? 2 : 1));
+    if (tail && tail[1] - tail[0] > 0.12) {
+      sideBaseDoors.push(...splitDoors(tail[0], tail[1], clamp(Math.round((tail[1] - tail[0]) / 0.52), 1, 2)));
+    }
+    parts.push(
+      span('base', [xSideFace + 0.006, xSideFace + FRONT_T], [PLINTH + 0.006, yBaseTop - 0.006], [zCorner + 0.004, zEnd - 0.004], o),
+      ...shakerFramesOnlyX('base', sideBaseDoors, yFrontRange, xSideFace),
+    );
+  }
+
+  // 3. White terrazzo L-shaped worktop (with sink cut-out) and waterfall end / pier.
+  parts.push(
+    span('worktop', [-w / 2, xBackEnd], [yBaseTop, yw], [-d / 2, zCorner], { bevel: 0.002 }),
+    span('worktop', [xBackEnd, w / 2], [yBaseTop, yw], [-d / 2, holeZ[0]], { bevel: 0.002 }),
+    span('worktop', [xBackEnd, w / 2], [yBaseTop, yw], [holeZ[1], d / 2], { bevel: 0.002 }),
+    span('worktop', [xBackEnd, holeX[0]], [yBaseTop, yw], holeZ, { bevel: 0.002 }),
+    span('worktop', [holeX[1], w / 2], [yBaseTop, yw], holeZ, { bevel: 0.002 }),
+    span('worktop', [xBackEnd, w / 2], [0, yBaseTop], [zEnd, d / 2], { bevel: 0.002, plan: false }),
+  );
+
+  // 4. Pale mint vertical stack-bond splashbacks on both walls.
+  parts.push(
+    span('tile', [-w / 2, w / 2 - 0.012], [yw + 0.001, yUpper0 - 0.001], [-d / 2, -d / 2 + 0.012], o),
+    span('tile', [w / 2 - 0.012, w / 2], [yw + 0.001, yUpper0 - 0.001], [-d / 2, zEnd], o),
+  );
+
+  // 5. Ceiling-height warm cream shaker upper cabinets along the main wall.
+  const cornerUpperCount = clamp(Math.round((sink[0] - -d / 2) / 0.52), 1, 2);
+  const sinkUpperCount = sink[1] - sink[0] >= 0.56 ? 2 : 1;
+  const hobUpperCount = hob[1] - hob[0] >= 0.56 ? 2 : 1;
+  const tailUpperCount = tail && tail[1] - tail[0] > 0.12 ? clamp(Math.round((tail[1] - tail[0]) / 0.52), 1, 2) : 0;
+
+  // Ceiling shadow rail + transom carcass + transom shaker doors.
+  const transomDoors: V2[] = [
+    ...splitDoors(-d / 2, sink[0], cornerUpperCount),
+    ...splitDoors(sink[0], sink[1], sinkUpperCount),
+    ...splitDoors(hob[0], hob[1], hobUpperCount),
+    ...(tail && tailUpperCount ? splitDoors(tail[0], tail[1], tailUpperCount) : []),
+  ];
+  parts.push(
+    span('upper', [xUFace + 0.015, w / 2], [yCeilingTop, h], [-d / 2, zEnd], o),
+    span('upper', [xUFace + FRONT_T, w / 2], [yTransom, yCeilingTop], [-d / 2, zEnd], o),
+    span('upper', [xUFace + 0.006, xUFace + FRONT_T], [yTransom + 0.005, yCeilingTop - 0.005], [-d / 2 + 0.004, zEnd - 0.004], o),
+    ...shakerFramesOnlyX('upper', transomDoors, [yTransom + 0.003, yCeilingTop - 0.003], xUFace),
+  );
+
+  // Main upper tier: corner+prep solid bay.
+  const cornerMainDoors = splitDoors(-d / 2, sink[0], cornerUpperCount);
+  parts.push(
+    span('upper', [xUFace + FRONT_T, w / 2], [yUpper0, yTransom], [-d / 2, sink[0]], o),
+    span('upper', [xUFace + 0.006, xUFace + FRONT_T], [yUpper0 + 0.005, yTransom - 0.005], [-d / 2 + 0.004, sink[0] - 0.004], o),
+    ...shakerFramesOnlyX('upper', cornerMainDoors, [yUpper0 + 0.004, yTransom - 0.004], xUFace),
+  );
+
+  // Main upper tier: open cabinet over the sink with TWO stacked horizontal frames for reeded glass.
+  const tBox = 0.018;
+  const yGlassMid = (yUpper0 + yTransom) / 2;
+  const gRail = clamp((yTransom - yUpper0) * 0.075, 0.036, 0.052);
+  const sz0 = sink[0] + 0.002;
+  const sz1 = sink[1] - 0.002;
+  parts.push(
+    span('upper', [xUFace + FRONT_T, w / 2], [yUpper0, yUpper0 + tBox], [sink[0], sink[1]], o),
+    span('upper', [xUFace + FRONT_T, w / 2], [yTransom - tBox, yTransom], [sink[0], sink[1]], o),
+    span('upper', [xUFace + FRONT_T, w / 2], [yGlassMid - tBox / 2, yGlassMid + tBox / 2], [sink[0] + tBox, sink[1] - tBox], o),
+    span('upper', [xUFace + FRONT_T, w / 2], [yUpper0 + tBox, yTransom - tBox], [sink[0], sink[0] + tBox], o),
+    span('upper', [xUFace + FRONT_T, w / 2], [yUpper0 + tBox, yTransom - tBox], [sink[1] - tBox, sink[1]], o),
+    span('upper', [w / 2 - 0.01, w / 2], [yUpper0 + tBox, yTransom - tBox], [sink[0] + tBox, sink[1] - tBox], o),
+  );
+  for (const [gy0, gy1] of [
+    [yUpper0 + 0.004, yGlassMid - 0.002],
+    [yGlassMid + 0.002, yTransom - 0.004],
+  ] as V2[]) {
+    parts.push(
+      span('upper', [xUFace, xUFace + FRONT_T], [gy1 - gRail, gy1], [sz0, sz1], o),
+      span('upper', [xUFace, xUFace + FRONT_T], [gy0, gy0 + gRail], [sz0, sz1], o),
+      span('upper', [xUFace, xUFace + FRONT_T], [gy0 + gRail, gy1 - gRail], [sz0, sz0 + gRail], o),
+      span('upper', [xUFace, xUFace + FRONT_T], [gy0 + gRail, gy1 - gRail], [sz1 - gRail, sz1], o),
+    );
+  }
+
+  // Main upper tier: hob bay (raised 48 mm for the slim black hood when hob is on the main arm, full height otherwise) + optional tail bay.
+  const yHobUpper0 = hobPlacement === 'main' ? yUpper0 + 0.048 : yUpper0;
+  const hobMainDoors = splitDoors(hob[0], hob[1], hobUpperCount);
+  parts.push(
+    span('upper', [xUFace + FRONT_T, w / 2], [yHobUpper0, yTransom], [hob[0], hob[1]], o),
+    span('upper', [xUFace + 0.006, xUFace + FRONT_T], [yHobUpper0 + 0.005, yTransom - 0.005], [hob[0] + 0.004, hob[1] - 0.004], o),
+    ...shakerFramesOnlyX('upper', hobMainDoors, [yHobUpper0 + 0.004, yTransom - 0.004], xUFace),
+  );
+
+  if (tail && tailUpperCount) {
+    const tailMainDoors = splitDoors(tail[0], tail[1], tailUpperCount);
+    parts.push(
+      span('upper', [xUFace + FRONT_T, w / 2], [yUpper0, yTransom], [tail[0], tail[1]], o),
+      span('upper', [xUFace + 0.006, xUFace + FRONT_T], [yUpper0 + 0.005, yTransom - 0.005], [tail[0] + 0.004, tail[1] - 0.004], o),
+      ...shakerFramesOnlyX('upper', tailMainDoors, [yUpper0 + 0.004, yTransom - 0.004], xUFace),
+    );
+  }
+
+  return parts;
+}
+
+/** Clean built-in kitchen fixtures & hardware (pulls, sink, tap, hob, plus optional upper fixtures & slim hood). */
+function buildLKitchenFixtures(
+  size: Size3,
+  params: ParamValues | undefined,
+  opts: { withUppers: boolean; hobPlacement?: HobPlacement },
+): Part[] {
+  const hobPlacement: HobPlacement = opts.hobPlacement ?? 'main';
+  const g = lKitchenGeo(size, params);
+  const { w, d, cd, yw, yUpper0, yTransom, zEnd, prep, sink, hob, tail, returnOuter, returnHob, returnInner, holeX, holeZ } = g;
+  const out: Part[] = [];
+
+  const yBaseTop = yw - TOP_T;
+  const yFrontRange: V2 = [PLINTH + 0.004, yBaseTop - 0.004];
+  const zBackFace = -d / 2 + cd - TAB_ROOM;
+  const xSideFace = w / 2 - cd + TAB_ROOM;
+  const xUFace = w / 2 - g.upperD + KNOB_ROOM;
+  const xBackEnd = w / 2 - cd;
+
+  // 1. Leather tab pulls on hinged doors and centred horizontal leather strap pulls on the 3-drawer hob unit.
+  const tabY = yBaseTop - 0.036;
+  const addBackTabs = (rangeX: V2, count: number) => {
+    const ds = splitDoors(rangeX[0], rangeX[1], count);
+    ds.forEach(([x0, x1], i) => {
+      const tx = ds.length > 1 && i % 2 === 0 && i + 1 < ds.length ? x1 - 0.035 : x0 + 0.035;
+      out.push(...leatherTabZ(tx, tabY, zBackFace));
+    });
+  };
+  if (hobPlacement === 'main') {
+    const backClear = Math.max(0.35, xBackEnd - -w / 2);
+    const backDoorCount = clamp(Math.round(backClear / 0.55), 1, 5);
+    addBackTabs([-w / 2 + 0.002, xBackEnd - 0.002], backDoorCount);
+  } else {
+    if (returnOuter && returnOuter[1] - returnOuter[0] > 0.12) {
+      addBackTabs([returnOuter[0] + 0.002, returnOuter[1] - 0.002], clamp(Math.round((returnOuter[1] - returnOuter[0]) / 0.52), 1, 2));
+    }
+    const hobCenterX = (returnHob[0] + returnHob[1]) / 2;
+    for (const [, ry1] of drawerRows(yFrontRange)) {
+      out.push(...drawerPullZ(hobCenterX, ry1, zBackFace));
+    }
+    if (returnInner && returnInner[1] - returnInner[0] > 0.12) {
+      addBackTabs([returnInner[0] + 0.002, returnInner[1] - 0.002], clamp(Math.round((returnInner[1] - returnInner[0]) / 0.52), 1, 2));
+    }
+  }
+
+  const addSideTabs = (rangeZ: V2, count: number) => {
+    const ds = splitDoors(rangeZ[0], rangeZ[1], count);
+    ds.forEach(([z0, z1], i) => {
+      const tz = ds.length > 1 && i % 2 === 0 && i + 1 < ds.length ? z1 - 0.035 : z0 + 0.035;
+      out.push(...leatherTabX(xSideFace, tabY, tz));
+    });
+  };
+  if (prep) addSideTabs(prep, prep[1] - prep[0] >= 0.62 ? 2 : 1);
+  addSideTabs(sink, sink[1] - sink[0] >= 0.56 ? 2 : 1);
+  if (hobPlacement === 'main') {
+    const hobCenterZ = (hob[0] + hob[1]) / 2;
+    for (const [, ry1] of drawerRows(yFrontRange)) {
+      out.push(...drawerPullX(xSideFace, ry1, hobCenterZ));
+    }
+  } else {
+    addSideTabs(hob, hob[1] - hob[0] >= 0.56 ? 2 : 1);
+  }
+  if (tail && tail[1] - tail[0] > 0.12) addSideTabs(tail, clamp(Math.round((tail[1] - tail[0]) / 0.52), 1, 2));
+
+  // 2. Upper cabinet knobs, reeded glass panes & under-cabinet LED (only when upper cabinets are present).
+  if (opts.withUppers) {
+    const cornerUpperCount = clamp(Math.round((sink[0] - -d / 2) / 0.52), 1, 2);
+    const sinkUpperCount = sink[1] - sink[0] >= 0.56 ? 2 : 1;
+    const hobUpperCount = hob[1] - hob[0] >= 0.56 ? 2 : 1;
+    const tailUpperCount = tail && tail[1] - tail[0] > 0.12 ? clamp(Math.round((tail[1] - tail[0]) / 0.52), 1, 2) : 0;
+
+    const addKnobsX = (rangeZ: V2, count: number, ky: number) => {
+      const ds = splitDoors(rangeZ[0], rangeZ[1], count);
+      ds.forEach(([z0, z1], i) => {
+        const kz = ds.length > 1 && i % 2 === 0 && i + 1 < ds.length ? z1 - 0.035 : z0 + 0.035;
+        out.push(brassKnobX(xUFace, ky, kz));
+      });
+    };
+    addKnobsX([-d / 2, sink[0]], cornerUpperCount, yUpper0 + 0.065);
+    addKnobsX(hob, hobUpperCount, hobPlacement === 'main' ? yUpper0 + 0.11 : yUpper0 + 0.065);
+    if (tail && tailUpperCount) addKnobsX(tail, tailUpperCount, yUpper0 + 0.065);
+
+    const kyTransom = yTransom + 0.055;
+    addKnobsX([-d / 2, sink[0]], cornerUpperCount, kyTransom);
+    addKnobsX(sink, sinkUpperCount, kyTransom);
+    addKnobsX(hob, hobUpperCount, kyTransom);
+    if (tail && tailUpperCount) addKnobsX(tail, tailUpperCount, kyTransom);
+
+    const yGlassMid = (yUpper0 + yTransom) / 2;
+    const gRail = clamp((yTransom - yUpper0) * 0.075, 0.036, 0.052);
+    for (const [gy0, gy1] of [
+      [yUpper0 + 0.004, yGlassMid - 0.002],
+      [yGlassMid + 0.002, yTransom - 0.004],
+    ] as V2[]) {
+      out.push(
+        span(
+          'glass',
+          [xUFace + 0.007, xUFace + 0.013],
+          [gy0 + gRail - 0.003, gy1 - gRail + 0.003],
+          [sink[0] + gRail - 0.002, sink[1] - gRail + 0.002],
+          o,
+        ),
+        brassKnobX(xUFace, gy0 + gRail * 0.5, (sink[0] + sink[1]) / 2),
+      );
+    }
+
+    const ledZEnd = hobPlacement === 'main' ? hob[0] - 0.02 : zEnd - 0.04;
+    out.push(
+      span('glow', [w / 2 - g.upperD + 0.05, w / 2 - g.upperD + 0.07], [yUpper0 - 0.005, yUpper0 - 0.001], [-d / 2 + 0.04, ledZEnd], o),
+    );
+  }
+
+  // 3. Undermount matte-black double sink + brushed-steel pull-down spring faucet.
+  const zBowlMid = (holeZ[0] + holeZ[1]) / 2;
+  const sinkFloor = yw - 0.195;
+  const sinkTop = yBaseTop - 0.001;
+  out.push(
+    span('appliance', [holeX[0] - 0.004, holeX[1] + 0.004], [sinkFloor, sinkTop], [zBowlMid - 0.014, zBowlMid + 0.014], o),
+  );
+  for (const [bz0, bz1] of [
+    [holeZ[0], zBowlMid - 0.014],
+    [zBowlMid + 0.014, holeZ[1]],
+  ] as V2[]) {
+    out.push(
+      span('appliance', [holeX[0] - 0.004, holeX[1] + 0.004], [sinkFloor, sinkFloor + 0.006], [bz0 - 0.004, bz1 + 0.004], o),
+      span('appliance', [holeX[0] - 0.005, holeX[0] + 0.001], [sinkFloor, sinkTop], [bz0, bz1], o),
+      span('appliance', [holeX[1] - 0.001, holeX[1] + 0.005], [sinkFloor, sinkTop], [bz0, bz1], o),
+      span('appliance', holeX, [sinkFloor, sinkTop], [bz0 - 0.005, bz0 + 0.001], o),
+      span('appliance', holeX, [sinkFloor, sinkTop], [bz1 - 0.001, bz1 + 0.005], o),
+      cyl('steel', [(holeX[0] + holeX[1]) / 2, sinkFloor + 0.009, (bz0 + bz1) / 2], 0.032, 0.004, o),
+    );
+  }
+
+  const tapX = (holeX[1] + w / 2) / 2;
+  const tapZ = zBowlMid - 0.03;
+  const tapY0 = yw + 0.001;
+  const tapTop = Math.min(yw + 0.4, yUpper0 - 0.075);
+  const reach = Math.min(0.19, tapX - (holeX[0] + holeX[1]) / 2);
+  out.push(
+    cyl('steel', [tapX, tapY0 + 0.014, tapZ], 0.026, 0.028, o),
+    rod('steel', [tapX, tapY0 + 0.024, tapZ], [tapX, tapY0 + 0.1, tapZ], 0.015, o),
+    rod('steel', [tapX, tapY0 + 0.08, tapZ + 0.01], [tapX, tapY0 + 0.11, tapZ + 0.06], 0.005, o),
+    rod('steel', [tapX, tapY0 + 0.1, tapZ], [tapX, tapTop, tapZ], 0.0065, o),
+  );
+  const springCount = 9;
+  const springStep = Math.max(0.012, (tapTop - (tapY0 + 0.13)) / (springCount + 1));
+  for (const i of range(springCount)) {
+    out.push(torus('steel', [tapX, tapY0 + 0.13 + i * springStep, tapZ], 0.015, 0.0028, { ...o, rotation: [Math.PI / 2, 0, 0] }));
+  }
+  const tapArc: V3[] = range(6).map((i) => {
+    const a = (i / 5) * Math.PI;
+    return [tapX - (1 - Math.cos(a)) * (reach / 2), tapTop + Math.sin(a) * 0.045, tapZ];
+  });
+  for (let i = 0; i < tapArc.length - 1; i++) out.push(rod('steel', tapArc[i], tapArc[i + 1], 0.0065, o));
+  const spoutEnd = tapArc[tapArc.length - 1];
+  out.push(
+    rod('steel', spoutEnd, [spoutEnd[0], spoutEnd[1] - 0.11, spoutEnd[2]], 0.01, o),
+    cyl('steel', [spoutEnd[0], spoutEnd[1] - 0.125, spoutEnd[2]], 0.016, 0.028, o),
+  );
+
+  // 4. Black glass induction hob (+ slim matte-black under-cabinet extractor hood when hob is on the main arm with uppers).
+  if (hobPlacement === 'main') {
+    const hobSpan = hob[1] - hob[0];
+    const hobLenZ = clamp(hobSpan - 0.14, 0.4, 0.72);
+    const hobMidZ = (hob[0] + hob[1]) / 2;
+    const hx0 = w / 2 - cd + 0.07;
+    const hx1 = w / 2 - 0.07;
+    const hxc = (hx0 + hx1) / 2;
+    out.push(
+      span('hob', [hx0, hx1], [yw + 0.001, yw + 0.006], [hobMidZ - hobLenZ / 2, hobMidZ + hobLenZ / 2], o),
+      torus('steel', [hxc - 0.02, yw + 0.0072, hobMidZ - hobLenZ * 0.24], 0.085, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
+      torus('steel', [hxc + 0.02, yw + 0.0072, hobMidZ + hobLenZ * 0.24], 0.095, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
+      span('steel', [hx0 + 0.03, hx0 + 0.036], [yw + 0.0065, yw + 0.0078], [hobMidZ - 0.07, hobMidZ + 0.07], o),
+    );
+
+    if (opts.withUppers) {
+      const hoodX0 = w / 2 - Math.min(0.49, cd - 0.05);
+      const hoodX1 = w / 2 - 0.002;
+      const hoodY0 = yUpper0 - 0.052;
+      const hoodY1 = yUpper0 + 0.045;
+      const hoodZ: V2 = [hob[0] + 0.003, hob[1] - 0.003];
+      const visorRun = 0.085;
+      const visorLip = hoodY0 + 0.034;
+      const visorSlope = Math.atan2(visorRun, hoodY1 - visorLip);
+      const visorLen = Math.hypot(visorRun, hoodY1 - visorLip);
+      out.push(
+        span('appliance', [hoodX0 + visorRun, hoodX1], [visorLip, hoodY1], hoodZ, o),
+        span('appliance', [hoodX0, hoodX0 + 0.095], [hoodY0, visorLip], hoodZ, o),
+        box('appliance', [hoodX0 + visorRun / 2, (visorLip + hoodY1) / 2, hobMidZ], [0.012, visorLen, hoodZ[1] - hoodZ[0]], {
+          ...o,
+          rotation: [0, 0, -visorSlope],
+        }),
+        span('steel', [hoodX0 + 0.12, hoodX1 - 0.03], [visorLip - 0.004, visorLip - 0.001], [hoodZ[0] + 0.05, hoodZ[1] - 0.05], o),
+        span('glow', [hoodX0 + 0.095, hoodX0 + 0.115], [visorLip - 0.005, visorLip - 0.0015], [hoodZ[0] + 0.09, hoodZ[1] - 0.09], o),
+      );
+    }
+  } else {
+    const hobSpanX = returnHob[1] - returnHob[0];
+    const hobLenX = clamp(hobSpanX - 0.14, 0.36, 0.7);
+    const hobMidX = (returnHob[0] + returnHob[1]) / 2;
+    const hz0 = -d / 2 + 0.07;
+    const hz1 = -d / 2 + cd - 0.07;
+    const hzc = (hz0 + hz1) / 2;
+    const rSmall = Math.min(0.085, hobLenX * 0.19, (hz1 - hz0) * 0.26);
+    const rLarge = Math.min(0.095, hobLenX * 0.21, (hz1 - hz0) * 0.28);
+    const ctrlHalf = Math.min(0.07, hobLenX * 0.25);
+    out.push(
+      span('hob', [hobMidX - hobLenX / 2, hobMidX + hobLenX / 2], [yw + 0.001, yw + 0.006], [hz0, hz1], o),
+      torus('steel', [hobMidX - hobLenX * 0.24, yw + 0.0072, hzc - 0.015], rSmall, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
+      torus('steel', [hobMidX + hobLenX * 0.24, yw + 0.0072, hzc + 0.015], rLarge, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
+      span('steel', [hobMidX - ctrlHalf, hobMidX + ctrlHalf], [yw + 0.0065, yw + 0.0078], [hz1 - 0.036, hz1 - 0.03], o),
+    );
+  }
+
+  return out;
+}
+
+function eulerRotate([x0, y0, z0]: V3, [ax, ay, az]: V3): V3 {
+  let x = x0;
+  let y = y0;
+  let z = z0;
+  [x, y] = [x * Math.cos(az) - y * Math.sin(az), x * Math.sin(az) + y * Math.cos(az)];
+  [x, z] = [x * Math.cos(ay) + z * Math.sin(ay), -x * Math.sin(ay) + z * Math.cos(ay)];
+  [y, z] = [y * Math.cos(ax) - z * Math.sin(ax), y * Math.sin(ax) + z * Math.cos(ax)];
+  return [x, y, z];
+}
+
+function composeRyPos90(rot: V3): V3 {
+  const ccw = ([x, y, z]: V3): V3 => [z, y, -x];
+  const c0 = ccw(eulerRotate([1, 0, 0], rot));
+  const c1 = ccw(eulerRotate([0, 1, 0], rot));
+  const c2 = ccw(eulerRotate([0, 0, 1], rot));
+  const m02 = clamp(c2[0], -1, 1);
+  const ay = Math.asin(m02);
+  if (Math.abs(m02) < 0.9999999) {
+    return [Math.atan2(-c2[1], c2[2]), ay, Math.atan2(-c1[0], c0[0])];
+  }
+  return [Math.atan2(c1[2], c1[1]), ay, 0];
+}
+
+/**
+ * Pure +90° rigid rotation around +Y (`(rx, ry, rz) ↦ (rz, ry, -rx)`), placing the corner at back-left `(-w/2, -d/2)`
+ * so the main cooking/sink/upper-cabinet arm runs along `-z` (`Width = w`) facing `+z` and the return arm
+ * runs down `-x` (`Depth = d`) facing `+x` — preserving exact reference chirality while facing the 3D camera openly.
+ */
+function rotatePartsCCW90(parts: Part[]): Part[] {
+  return parts.map((p): Part => {
+    const pos: V3 = [p.position[2], p.position[1], -p.position[0]];
+    if (p.shape === 'box' && !p.rotation && !p.scale) {
+      return { ...p, position: pos, size: [p.size[2], p.size[1], p.size[0]] };
+    }
+    const q: Part = { ...p, position: pos };
+    if (p.rotation) {
+      q.rotation = composeRyPos90(p.rotation);
+    } else if (p.shape === 'box' || p.shape === 'torus') {
+      q.rotation = [0, Math.PI / 2, 0];
+    }
+    if (q.shape === 'prism') {
+      q.outline = q.outline.map(([x, z]) => [z, -x] as V2);
+      delete q.rotation;
+    }
+    return q;
+  });
+}
+
+function mirrorPartsX(parts: Part[]): Part[] {
+  return parts.map((p) => {
+    const q: Part = { ...p, position: [-p.position[0], p.position[1], p.position[2]] };
+    if (p.rotation) q.rotation = [p.rotation[0], -p.rotation[1], -p.rotation[2]];
+    if (q.shape === 'prism') q.outline = q.outline.map(([x, z]) => [-x, z] as V2).reverse();
+    return q;
+  });
+}
+
+function orientLParts(parts: Part[], hand: 'left' | 'right'): Part[] {
+  const ccw = rotatePartsCCW90(parts);
+  return hand === 'left' ? ccw : mirrorPartsX(ccw);
+}
+
+function lKitchenPlanDetail(
+  size: Size3,
+  params: ParamValues | undefined,
+  hand: 'left' | 'right',
+  hobPlacement: HobPlacement = 'main',
+): PlanStroke[] {
+  const g = lKitchenGeo({ w: size.d, d: size.w, h: size.h }, params);
+  const { w, d, cd, holeX, holeZ, hob, returnHob } = g;
+  const zBowlMid = (holeZ[0] + holeZ[1]) / 2;
+
+  const rawStrokes: PlanStroke[] = [
+    // Double sink bowls & drains.
+    {
+      kind: 'poly',
+      closed: true,
+      points: [
+        [holeX[0], holeZ[0]],
+        [holeX[1], holeZ[0]],
+        [holeX[1], zBowlMid - 0.014],
+        [holeX[0], zBowlMid - 0.014],
+      ],
+    },
+    {
+      kind: 'poly',
+      closed: true,
+      points: [
+        [holeX[0], zBowlMid + 0.014],
+        [holeX[1], zBowlMid + 0.014],
+        [holeX[1], holeZ[1]],
+        [holeX[0], holeZ[1]],
+      ],
+    },
+    { kind: 'circle', c: [(holeX[0] + holeX[1]) / 2, (holeZ[0] + zBowlMid - 0.014) / 2], r: 0.028 },
+    { kind: 'circle', c: [(holeX[0] + holeX[1]) / 2, (zBowlMid + 0.014 + holeZ[1]) / 2], r: 0.028 },
+  ];
+
+  if (hobPlacement === 'main') {
+    const hobSpan = hob[1] - hob[0];
+    const hobLenZ = clamp(hobSpan - 0.14, 0.4, 0.72);
+    const hobMidZ = (hob[0] + hob[1]) / 2;
+    const hxc = w / 2 - cd / 2;
+    rawStrokes.push(
+      {
+        kind: 'poly',
+        closed: true,
+        points: [
+          [w / 2 - cd + 0.07, hobMidZ - hobLenZ / 2],
+          [w / 2 - 0.07, hobMidZ - hobLenZ / 2],
+          [w / 2 - 0.07, hobMidZ + hobLenZ / 2],
+          [w / 2 - cd + 0.07, hobMidZ + hobLenZ / 2],
+        ],
+      },
+      { kind: 'circle', c: [hxc - 0.02, hobMidZ - hobLenZ * 0.24], r: 0.08 },
+      { kind: 'circle', c: [hxc + 0.02, hobMidZ + hobLenZ * 0.24], r: 0.09 },
+    );
+  } else {
+    const hobSpanX = returnHob[1] - returnHob[0];
+    const hobLenX = clamp(hobSpanX - 0.14, 0.36, 0.7);
+    const hobMidX = (returnHob[0] + returnHob[1]) / 2;
+    const hz0 = -d / 2 + 0.07;
+    const hz1 = -d / 2 + cd - 0.07;
+    const hzc = (hz0 + hz1) / 2;
+    const rSmall = Math.min(0.08, hobLenX * 0.18, (hz1 - hz0) * 0.24);
+    const rLarge = Math.min(0.09, hobLenX * 0.2, (hz1 - hz0) * 0.26);
+    rawStrokes.push(
+      {
+        kind: 'poly',
+        closed: true,
+        points: [
+          [hobMidX - hobLenX / 2, hz0],
+          [hobMidX + hobLenX / 2, hz0],
+          [hobMidX + hobLenX / 2, hz1],
+          [hobMidX - hobLenX / 2, hz1],
+        ],
+      },
+      { kind: 'circle', c: [hobMidX - hobLenX * 0.24, hzc - 0.015], r: rSmall },
+      { kind: 'circle', c: [hobMidX + hobLenX * 0.24, hzc + 0.015], r: rLarge },
+    );
+  }
+
+  const sgn = hand === 'left' ? 1 : -1;
+  const mapPt = ([rx, rz]: V2): V2 => [sgn * rz, -rx];
+  return rawStrokes.map((s): PlanStroke => {
+    if (s.kind === 'line') return { kind: 'line', a: mapPt(s.a), b: mapPt(s.b) };
+    if (s.kind === 'circle') return { kind: 'circle', c: mapPt(s.c), r: s.r };
+    return { kind: 'poly', closed: s.closed, points: s.points.map(mapPt) };
+  });
+}
+
+function lKitchenModels(hand: 'left' | 'right'): AssetModelVariant[] {
+  const buildReturnShell = (size: Size3, params?: ParamValues) =>
+    orientLParts(buildLKitchenShell({ w: size.d, d: size.w, h: size.h }, params, 'return'), hand);
+  const returnPlan = (size: Size3, params?: ParamValues) => lKitchenPlanDetail(size, params, hand, 'return');
+
+  return [
+    {
+      id: 'clean',
+      name: 'With upper cabinets',
+      slots: L_UPPER_CLEAN_SLOTS,
+      props: (size, params) =>
+        orientLParts(
+          buildLKitchenFixtures({ w: size.d, d: size.w, h: size.h }, params, { withUppers: true, hobPlacement: 'main' }),
+          hand,
+        ),
+    },
+    {
+      id: 'side-hob',
+      name: 'Hob on side arm, with uppers',
+      slots: L_UPPER_CLEAN_SLOTS,
+      build: buildReturnShell,
+      planDetail: returnPlan,
+      props: (size, params) =>
+        orientLParts(
+          buildLKitchenFixtures({ w: size.d, d: size.w, h: size.h }, params, { withUppers: true, hobPlacement: 'return' }),
+          hand,
+        ),
+    },
+    {
+      id: 'no-uppers',
+      name: 'No upper cabinets',
+      hide: ['upper'],
+      slots: L_BASE_FIXTURE_SLOTS,
+      props: (size, params) =>
+        orientLParts(
+          buildLKitchenFixtures({ w: size.d, d: size.w, h: size.h }, params, { withUppers: false, hobPlacement: 'main' }),
+          hand,
+        ),
+    },
+    {
+      id: 'side-hob-no-uppers',
+      name: 'Hob on side arm, no uppers',
+      hide: ['upper'],
+      slots: L_BASE_FIXTURE_SLOTS,
+      build: buildReturnShell,
+      planDetail: returnPlan,
+      props: (size, params) =>
+        orientLParts(
+          buildLKitchenFixtures({ w: size.d, d: size.w, h: size.h }, params, { withUppers: false, hobPlacement: 'return' }),
+          hand,
+        ),
+    },
+  ];
+}
+
+const lKitchen = defineItem({
+  id: 'l-kitchen',
+  name: 'Sage & cream shaker L-shaped kitchen',
+  category: 'kitchen',
+  type: 'surfaces',
+  group: 'Counters & cabinets',
+  tags: [
+    'l kitchen',
+    'l-shaped kitchen',
+    'corner kitchen',
+    'bếp chữ l',
+    'tủ bếp chữ l',
+    'reeded glass',
+    ...TAGS,
+  ],
+  description:
+    'Parametric L-shaped sage & warm-cream shaker kitchen without fridge, dining bar or wall shelves, with a three-drawer horizontal shaker base under the induction hob: resize Width and Depth independently, or switch Model to move the hob onto the side arm or omit the upper cabinet row.',
+  defaultSize: { w: 2.85, d: 1.75, h: 2.6 },
+  minSize: { w: 1.85, d: 1.2, h: 2.15 },
+  maxSize: { w: 4.2, d: 3.6, h: 2.95 },
+  wallSnap: true,
+  price: { vnd: 48_000_000, estimate: true },
+  services: { water: 'hot', drain: 'waste', power: 'dedicated' },
+  slots: [L_BASE, L_UPPER, L_WORKTOP, L_TILE],
+  variants: L_VARIANTS,
+  models: lKitchenModels('left'),
+  params: lKitchenParams('left'),
+  build: (size, params) => orientLParts(buildLKitchenShell({ w: size.d, d: size.w, h: size.h }, params, 'main'), 'left'),
+  planDetail: (size, params) => lKitchenPlanDetail(size, params, 'left', 'main'),
+});
+
+const lKitchenRightReturn = defineItem({
+  id: 'l-kitchen-right',
+  name: 'Sage & cream shaker L-shaped kitchen (right return)',
+  variantOf: 'l-kitchen',
+  category: 'kitchen',
+  type: 'surfaces',
+  group: 'Counters & cabinets',
+  tags: [
+    'l kitchen',
+    'l-shaped kitchen',
+    'corner kitchen',
+    'bếp chữ l',
+    'tủ bếp chữ l',
+    'reeded glass',
+    ...TAGS,
+  ],
+  description:
+    'Mirrored parametric L-shaped sage & warm-cream shaker kitchen without fridge, dining bar or wall shelves, with a three-drawer horizontal shaker base under the induction hob: resize Width and Depth independently, or switch Model to move the hob onto the right return arm or omit the upper cabinet row.',
+  defaultSize: { w: 2.85, d: 1.75, h: 2.6 },
+  minSize: { w: 1.85, d: 1.2, h: 2.15 },
+  maxSize: { w: 4.2, d: 3.6, h: 2.95 },
+  wallSnap: true,
+  price: { vnd: 48_000_000, estimate: true },
+  services: { water: 'hot', drain: 'waste', power: 'dedicated' },
+  slots: [L_BASE, L_UPPER, L_WORKTOP, L_TILE],
+  variants: L_VARIANTS,
+  models: lKitchenModels('right'),
+  params: lKitchenParams('right'),
+  build: (size, params) => orientLParts(buildLKitchenShell({ w: size.d, d: size.w, h: size.h }, params, 'main'), 'right'),
+  planDetail: (size, params) => lKitchenPlanDetail(size, params, 'right', 'main'),
+});
+
 export default definePack({
   name: 'Sage shaker kitchen',
   version: '1.0.0',
@@ -593,14 +1656,37 @@ export default definePack({
       },
     },
   ],
-  items: [baseDoorUnit, blindCorner, sinkUnit, hobUnit, terrazzoPier, wallCabinet, reededCabinet, slimHood, splashback, oakShelf, boards, copperPot, budVase],
+  items: [
+    lKitchen,
+    lKitchenRightReturn,
+    baseDoorUnit,
+    blindCorner,
+    sinkUnit,
+    hobUnit,
+    terrazzoPier,
+    wallCabinet,
+    reededCabinet,
+    slimHood,
+    splashback,
+    oakShelf,
+    boards,
+    copperPot,
+    budVase,
+  ],
   materials: [
     // Colours sampled from the reference, white-balanced against its white walls, then set so they render
     // as in the photo next to the cream uppers (the 3D view lights fronts about 1.4x brighter).
     { id: 'sage-lacquer', name: 'Sage green shaker lacquer', category: 'paint', color: '#5f6d55', roughness: 0.6 },
     { id: 'cream-lacquer', name: 'Warm cream shaker lacquer', category: 'paint', color: '#f1ece2', roughness: 0.6 },
     { id: 'terrazzo-white', name: 'White terrazzo', category: 'stone', color: '#efece6', roughness: 0.3, pattern: { id: 'fine-terrazzo', scale: 0.3 } },
-    { id: 'mint-stack-tile', name: 'Pale mint stack tile', category: 'tile', color: '#d2e6c2', roughness: 0.16, pattern: { id: 'stack-bond', scale: 0.3 } },
+    {
+      id: 'mint-stack-tile',
+      name: 'Pale mint green tile (gạch thẻ xanh nhạt)',
+      category: 'tile',
+      color: '#d2e6c2',
+      roughness: 0.16,
+      pattern: { id: 'stack-bond', scale: 0.3 },
+    },
     { id: 'bar-oak', name: 'Warm oak veneer', category: 'wood', color: '#b8925f', roughness: 0.55, pattern: { id: 'wood-grain', scale: 0.6 }, photo: { set: 'oak-veneer' } },
     { id: 'leather-tab', name: 'Tan leather', category: 'fabric', color: '#553a26', roughness: 0.6, photo: { set: 'leather', scale: 0.4 } },
     { id: 'reeded-glass', name: 'Reeded glass', category: 'glass', color: '#e8ece6', roughness: 0.12, opacity: 0.5, pattern: { id: 'fluted', scale: 0.08, rotation: 90 } },

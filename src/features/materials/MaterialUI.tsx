@@ -40,7 +40,8 @@ import {
 import { MATERIAL_CATALOG, MATERIAL_CATALOG_BY_ID, MATERIAL_CATEGORY_LABELS } from '@/data/materials/catalog';
 import { allPatternIds, patternInfo } from '@/data/materials/patterns';
 import { PHOTO_SETS, PHOTO_SETS_BY_ID, PHOTO_SOURCE_NAMES, photoSetUrl } from '@/data/materials/photoSets';
-import { assetSlotDefault, getObjectAsset, resolveMaterial } from '@/data/assets/registry';
+import { assetSlotDefault, getAsset, getObjectAsset, resolveMaterial } from '@/data/assets/registry';
+import { usePackVersion } from '@/packs/events';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { confirmAction, toast, usePrefsStore, useDialogStore } from '@/state/uiStores';
@@ -111,6 +112,67 @@ export function availableMaterials(project: Project): MaterialDefinition[] {
   }
   for (const m of MATERIAL_CATALOG) if (!seen.has(m.id)) out.push(m);
   return out;
+}
+
+const foldSearch = (s: string): string =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/gi, 'd')
+    .toLowerCase();
+
+/** Accent-insensitive multi-word match against a material's name, category, id and pattern id. */
+export function matchesMaterialQuery(m: MaterialDefinition, query: string): boolean {
+  const q = foldSearch(query).trim();
+  if (!q) return true;
+  const hay = foldSearch(`${m.name} ${m.category} ${MATERIAL_CATEGORY_LABELS[m.category]} ${m.id} ${m.texture?.patternId ?? ''}`);
+  return q.split(/\s+/).every((tok) => hay.includes(tok));
+}
+
+/**
+ * Material ids present in the project (across all layout options): explicit `project.materials`
+ * entries, wall/room/opening assignments, and placed items' active and default slot finishes so
+ * pack and catalogue defaults on placed furniture appear under "In this project" automatically.
+ */
+export function projectUsedMaterialIds(project: Project, target?: MaterialTarget, currentId?: string): Set<string> {
+  const ids = new Set<string>(Object.keys(project.materials));
+  if (currentId) ids.add(currentId);
+  const plans = [project, ...(project.options ?? []).map((o) => o.plan).filter((p): p is NonNullable<typeof p> => !!p)];
+  for (const plan of plans) {
+    for (const w of Object.values(plan.walls)) {
+      ids.add(w.materials.left);
+      ids.add(w.materials.right);
+      ids.add(w.materials.top);
+      if (w.styleMaterialId) ids.add(w.styleMaterialId);
+      for (const side of ['left', 'right'] as const) {
+        const fin = w.finishes?.[side];
+        if (!fin) continue;
+        if (fin.skirting) ids.add(fin.skirting.materialId);
+        if (fin.cornice) ids.add(fin.cornice.materialId);
+        if (fin.rail) ids.add(fin.rail.materialId);
+        if (fin.band) ids.add(fin.band.materialId);
+      }
+    }
+    for (const r of Object.values(plan.rooms)) {
+      ids.add(r.floorMaterialId);
+      ids.add(r.ceilingMaterialId);
+    }
+    for (const o of Object.values(plan.openings)) {
+      ids.add(o.frameMaterialId);
+      ids.add(o.panelMaterialId);
+    }
+    for (const o of Object.values(plan.objects)) {
+      for (const m of Object.values(o.materials)) if (m) ids.add(m);
+      for (const s of getAsset(project, o.assetId)?.slots ?? []) ids.add(s.defaultMaterial);
+      for (const s of getObjectAsset(project, o)?.slots ?? []) ids.add(s.defaultMaterial);
+    }
+  }
+  if (target?.kind === 'object-slot') {
+    const o = project.objects[target.objectId];
+    const def = o ? assetSlotDefault(o.assetId, target.slot) : undefined;
+    if (def) ids.add(def);
+  }
+  return ids;
 }
 
 // ───────────── Live (transactional) material edits ─────────────
@@ -247,6 +309,7 @@ export function FinishPicker({
   onEdit?: (materialId: string) => void;
 }) {
   const project = useProjectStore((s) => s.project!);
+  const packs = usePackVersion();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<MaterialCategory | 'all' | 'project'>('project');
   const [scope, setScope] = useState<MaterialScope>('this');
@@ -264,14 +327,29 @@ export function FinishPicker({
     // Rectangles are screen pixels, scrollTop the grid's own (scaled) pixels.
     if (r.top < g.top || r.bottom > g.bottom) grid.scrollTop += toUi(r.top - g.top - (fromUi(grid.clientHeight) - r.height) / 2);
   }, [panel]);
-  const all = useMemo(() => availableMaterials(project), [project]);
-  const usedIds = useMemo(() => new Set(Object.keys(project.materials)), [project.materials]);
-  const list = all.filter((m) => {
-    if (query && !`${m.name} ${m.category}`.toLowerCase().includes(query.toLowerCase())) return false;
-    if (category === 'project') return usedIds.has(m.id) || favourites.includes(m.id) || recents.includes(m.id);
-    if (category === 'all') return true;
-    return m.category === category;
-  });
+  const all = useMemo(() => {
+    void packs;
+    return availableMaterials(project);
+  }, [project, packs]);
+  const usedIds = useMemo(() => {
+    void packs;
+    return projectUsedMaterialIds(project, target, currentId);
+  }, [project, target, currentId, packs]);
+  const q = query.trim();
+  const list = useMemo(() => {
+    const inProject = (m: MaterialDefinition) => usedIds.has(m.id) || favourites.includes(m.id) || recents.includes(m.id);
+    // Searching while on "In this project & favourites" searches the whole catalogue (project matches first).
+    if (q && category === 'project') {
+      const matched = all.filter((m) => matchesMaterialQuery(m, q));
+      return [...matched.filter(inProject), ...matched.filter((m) => !inProject(m))];
+    }
+    return all.filter((m) => {
+      if (q && !matchesMaterialQuery(m, q)) return false;
+      if (category === 'project') return inProject(m);
+      if (category === 'all') return true;
+      return m.category === category;
+    });
+  }, [all, q, category, usedIds, favourites, recents]);
   const targets = expandScope(project, target, scope, assetSlotDefault);
   const current = resolveMaterial(project, currentId);
   const usage = useMemo(() => materialUsage(project, current.id).length, [project, current.id]);
@@ -425,19 +503,26 @@ const MATERIAL_ICONS: Record<MaterialCategory, LucideIcon> = {
  */
 export function MaterialLibrary() {
   const project = useProjectStore((s) => s.project!);
+  const packs = usePackVersion();
   const activeId = useEditorStore((s) => s.activeMaterialId);
   const favourites = usePrefsStore((s) => s.favouriteMaterials);
   const view = usePrefsStore((s) => s.materialView);
   const railCollapsed = useRailCollapsed();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<MaterialFilter>('project');
-  const all = useMemo(() => [...availableMaterials(project), ...Object.values(project.materials).filter((m) => m.overrideOf)], [project]);
-  const usedIds = useMemo(() => new Set(Object.keys(project.materials)), [project.materials]);
-  const q = query.trim().toLowerCase();
-  const found = q ? all.filter((m) => `${m.name} ${m.category} ${MATERIAL_CATEGORY_LABELS[m.category]}`.toLowerCase().includes(q)) : all;
+  const all = useMemo(() => {
+    void packs;
+    return [...availableMaterials(project), ...Object.values(project.materials).filter((m) => m.overrideOf)];
+  }, [project, packs]);
+  const usedIds = useMemo(() => {
+    void packs;
+    return projectUsedMaterialIds(project);
+  }, [project, packs]);
+  const q = query.trim();
+  const found = q ? all.filter((m) => matchesMaterialQuery(m, q)) : all;
   const inFilter = (m: MaterialDefinition, f: MaterialFilter) =>
     f === 'project' ? usedIds.has(m.id) : f === 'favourites' ? favourites.includes(m.id) : f === 'all' ? true : m.category === f;
-  const list = found.filter((m) => inFilter(m, category));
+  const list = q && category === 'project' ? [...found.filter((m) => usedIds.has(m.id)), ...found.filter((m) => !usedIds.has(m.id))] : found.filter((m) => inFilter(m, category));
   const count = (f: MaterialFilter) => found.filter((m) => inFilter(m, f)).length;
   const active = activeId ? project.materials[activeId] ?? MATERIAL_CATALOG_BY_ID[activeId] : null;
   const pick = (id: string) => useEditorStore.getState().set({ activeMaterialId: id });

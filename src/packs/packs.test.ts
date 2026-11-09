@@ -318,6 +318,168 @@ describe('pack models', () => {
     expect(empty.every((p) => p.slot === 'wood')).toBe(true);
     expect(empty.length).toBe(9);
   });
+
+  it('resizes both arms of sage-shaker-kitchen:l-kitchen independently, uses 3 horizontal drawers under the hob in both options, and keeps only the 4 clean model variants on both versions', () => {
+    const leftReturn = ASSETS_BY_ID['sage-shaker-kitchen:l-kitchen'];
+    const rightReturn = ASSETS_BY_ID['sage-shaker-kitchen:l-kitchen-right'];
+    expect(leftReturn).toBeDefined();
+    expect(rightReturn).toBeDefined();
+    expect(rightReturn.variantOf).toBe(leftReturn.id);
+    expect(leftReturn.wallSnap).toBe(true);
+    const expectedModels = ['clean', 'side-hob', 'no-uppers', 'side-hob-no-uppers'];
+    expect(assetModels(leftReturn).map((m) => m.id)).toEqual(expectedModels);
+    expect(assetModels(rightReturn).map((m) => m.id)).toEqual(expectedModels);
+
+    const decorSlots = new Set(['copper', 'oak', 'ceramic', 'plant', 'kraft']);
+
+    for (const [item, hand] of [
+      [leftReturn, 'left'],
+      [rightReturn, 'right'],
+    ] as const) {
+      const clean = withModel(item, 'clean');
+      const sideHob = withModel(item, 'side-hob');
+      const noUppers = withModel(item, 'no-uppers');
+      const sideHobNoUppers = withModel(item, 'side-hob-no-uppers');
+
+      const sz = item.defaultSize;
+      const defClean = clean.build(sz);
+      const defSideHob = sideHob.build(sz);
+      const defNoUppers = noUppers.build(sz);
+      const defSideHobNoUppers = sideHobNoUppers.build(sz);
+
+      // Every model is strictly clean: no styling props (copper pot, oak boards/shelves, ceramic crock/dishes, plant, kraft bags).
+      for (const ps of [defClean, defSideHob, defNoUppers, defSideHobNoUppers]) {
+        expect(ps.some((p) => decorSlots.has(p.slot))).toBe(false);
+        expect(ps.some((p) => p.slot === 'hob')).toBe(true);
+      }
+
+      // Upper-cabinet models include uppers, reeded glass & LED; no-uppers models omit uppers, glass & hood.
+      expect(defClean.some((p) => p.slot === 'upper')).toBe(true);
+      expect(defClean.some((p) => p.slot === 'glass' && p.shape === 'box')).toBe(true);
+      expect(defSideHob.some((p) => p.slot === 'upper')).toBe(true);
+      expect(defSideHob.some((p) => p.slot === 'glass' && p.shape === 'box')).toBe(true);
+      expect(defNoUppers.some((p) => p.slot === 'upper' || p.slot === 'glass' || p.slot === 'glow')).toBe(false);
+      expect(Math.max(...defNoUppers.map((p) => worldBounds(p).max[1]))).toBeLessThan(1.55);
+      expect(defSideHobNoUppers.some((p) => p.slot === 'upper' || p.slot === 'glass' || p.slot === 'glow')).toBe(false);
+      expect(Math.max(...defSideHobNoUppers.map((p) => worldBounds(p).max[1]))).toBeLessThan(1.55);
+
+      // Option 1 (default main-arm hob): hob sits on the main back arm (z < -d/2 + 0.60) with 3 stacked horizontal drawer pulls directly below it.
+      const mainHobBox = worldBounds(defClean.find((p) => p.slot === 'hob')!);
+      expect(mainHobBox.max[2]).toBeLessThan(-sz.d / 2 + 0.6);
+      const mainHobCenterX = (mainHobBox.min[0] + mainHobBox.max[0]) / 2;
+      const mainDrawerPullYs = defClean
+        .filter((p) => p.slot === 'pull' && Math.abs(p.position[0] - mainHobCenterX) < 0.08)
+        .map((p) => Math.round(p.position[1] * 100));
+      expect(new Set(mainDrawerPullYs).size).toBe(3);
+
+      // Option 2 (side-arm hob): hob moves onto the L-return arm (z > -d/2 + 0.60, x on the return side) with 3 stacked horizontal drawer pulls below it.
+      const sideHobBox = worldBounds(defSideHob.find((p) => p.slot === 'hob')!);
+      expect(sideHobBox.min[2]).toBeGreaterThan(-sz.d / 2 + 0.6);
+      if (hand === 'left') expect(sideHobBox.max[0]).toBeLessThan(-sz.w / 2 + 0.6);
+      else expect(sideHobBox.min[0]).toBeGreaterThan(sz.w / 2 - 0.6);
+      const sideHobCenterZ = (sideHobBox.min[2] + sideHobBox.max[2]) / 2;
+      const sideDrawerPullYs = defSideHob
+        .filter((p) => p.slot === 'pull' && Math.abs(p.position[2] - sideHobCenterZ) < 0.08)
+        .map((p) => Math.round(p.position[1] * 100));
+      expect(new Set(sideDrawerPullYs).size).toBe(3);
+
+      // 2D plan strokes move the burner circles from the main arm onto the L-return arm too.
+      const mainCircles = assetPlan(clean, sz).strokes.filter((s) => s.kind === 'circle' && s.r > 0.05);
+      const sideCircles = assetPlan(sideHob, sz).strokes.filter((s) => s.kind === 'circle' && s.r > 0.05);
+      expect(mainCircles).toHaveLength(2);
+      expect(sideCircles).toHaveLength(2);
+      for (const c of mainCircles) if (c.kind === 'circle') expect(c.c[1]).toBeLessThan(-sz.d / 2 + 0.6);
+      for (const c of sideCircles) if (c.kind === 'circle') expect(c.c[1]).toBeGreaterThan(-sz.d / 2 + 0.6);
+    }
+
+    // Open interior floor space has no dining table/bar or standalone fridge.
+    const clean = withModel(leftReturn, 'clean');
+    const openCornerParts = clean.build(leftReturn.defaultSize).filter((p) => {
+      const b = worldBounds(p);
+      return b.min[0] > -leftReturn.defaultSize.w / 2 + 0.62 && b.min[2] > -leftReturn.defaultSize.d / 2 + 0.62;
+    });
+    expect(openCornerParts).toEqual([]);
+
+    // Measure return-arm worktop Z span + X depth and main-arm upper cabinet X span + Z depth.
+    const armMetrics = (w: number, d: number) => {
+      const ps = clean.build({ w, d, h: 2.6 });
+      const returnTop = ps.find(
+        (p) => p.slot === 'worktop' && p.shape === 'box' && worldBounds(p).max[2] > -d / 2 + 0.65,
+      )!;
+      const rtb = worldBounds(returnTop);
+      const uppers = ps.filter((p) => p.slot === 'upper');
+      const upperXSpan =
+        Math.max(...uppers.map((p) => worldBounds(p).max[0])) -
+        Math.min(...uppers.map((p) => worldBounds(p).min[0]));
+      const upperZDepth =
+        Math.max(...uppers.map((p) => worldBounds(p).max[2])) -
+        Math.min(...uppers.map((p) => worldBounds(p).min[2]));
+      return {
+        returnZSpan: rtb.max[2] - rtb.min[2],
+        returnXDepth: rtb.max[0] - rtb.min[0],
+        upperXSpan,
+        upperZDepth,
+        upperCount: uppers.length,
+      };
+    };
+
+    // Editing Width (w: 2.1 -> 3.9) lengthens the main cooking/upper arm while keeping the return arm unchanged.
+    const wShort = armMetrics(2.1, 1.75);
+    const wLong = armMetrics(3.9, 1.75);
+    expect(wLong.upperXSpan - wShort.upperXSpan).toBeCloseTo(1.8, 2);
+    expect(wLong.upperCount).toBeGreaterThan(wShort.upperCount);
+    expect(wLong.upperZDepth).toBeCloseTo(wShort.upperZDepth, 4);
+    expect(wLong.returnZSpan).toBeCloseTo(wShort.returnZSpan, 4);
+    expect(wLong.returnXDepth).toBeCloseTo(wShort.returnXDepth, 4);
+
+    // Editing Depth (d: 1.35 -> 3.2) lengthens the left return arm while keeping the main upper arm unchanged.
+    const dShort = armMetrics(2.85, 1.35);
+    const dLong = armMetrics(2.85, 3.2);
+    expect(dLong.returnZSpan - dShort.returnZSpan).toBeCloseTo(1.85, 2);
+    expect(dLong.returnXDepth).toBeCloseTo(dShort.returnXDepth, 4);
+    expect(dLong.upperXSpan).toBeCloseTo(dShort.upperXSpan, 4);
+    expect(dLong.upperZDepth).toBeCloseTo(dShort.upperZDepth, 4);
+  });
+
+  it('builds wardrobe-study:waterfall-bar-shelf-table as a standalone curved-waterfall bar table with a 3-tier shelf hutch and styled/empty models', () => {
+    const item = ASSETS_BY_ID['wardrobe-study:waterfall-bar-shelf-table'];
+    expect(item).toBeDefined();
+    expect(item.variantOf).toBeUndefined();
+    expect(item.wallSnap).toBe(true);
+    expect(assetModels(item).map((m) => m.id)).toEqual(['styled', 'empty']);
+
+    const sz = item.defaultSize;
+    const styledParts = withModel(item, 'styled').build(sz);
+    const emptyParts = withModel(item, 'empty').build(sz);
+
+    // Empty has only the structural oak & back-panel joinery (zero decor slots).
+    expect(emptyParts.every((p) => p.slot === 'oak' || p.slot === 'back')).toBe(true);
+
+    // Two intermediate horizontal shelf boards between the tabletop (0.81 m) and top cap (1.75 m) create 3 compartments.
+    const innerShelves = emptyParts.filter((p) => {
+      const b = worldBounds(p);
+      return p.slot === 'oak' && b.max[1] - b.min[1] < 0.03 && b.min[1] > 0.85 && b.max[1] < sz.h - 0.05;
+    });
+    expect(innerShelves).toHaveLength(2);
+    const [shelf1, shelf2] = innerShelves.map(worldBounds).sort((a, b) => a.min[1] - b.min[1]);
+
+    // Styled stocks dry-goods glass jars + grain/bean fills in the middle compartment (between shelf1 and shelf2).
+    const midGlassJars = styledParts.filter((p) => {
+      const b = worldBounds(p);
+      return p.slot === 'glass' && b.min[1] > shelf1.max[1] && b.max[1] < shelf2.min[1];
+    });
+    expect(midGlassJars).toHaveLength(3);
+    expect(
+      styledParts.some((p) => {
+        const b = worldBounds(p);
+        return (p.slot === 'grain' || p.slot === 'bean') && b.min[1] > shelf1.max[1] && b.max[1] < shelf2.min[1];
+      }),
+    ).toBe(true);
+
+    // Styled also includes top-bay rattan basket & tabletop centerpiece fruit.
+    expect(styledParts.some((p) => p.slot === 'wicker' && worldBounds(p).min[1] > shelf2.max[1])).toBe(true);
+    expect(styledParts.some((p) => p.slot === 'accent')).toBe(true);
+  });
 });
 
 describeAssetChecks(packItems);

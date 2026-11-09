@@ -4233,13 +4233,53 @@
    "file": "sage-shaker-kitchen_hob-drawer-unit.webp",
    "fp": "77713c3ac5004840"
   },
+  "sage-shaker-kitchen:l-kitchen": {
+   "file": "sage-shaker-kitchen_l-kitchen.webp",
+   "fp": "2a2853ad653f11ab"
+  },
+  "sage-shaker-kitchen:l-kitchen-right": {
+   "file": "sage-shaker-kitchen_l-kitchen-right.webp",
+   "fp": "a03167cf132b4679"
+  },
+  "sage-shaker-kitchen:l-kitchen-right@model:clean": {
+   "file": "sage-shaker-kitchen_l-kitchen-right_model_clean.webp",
+   "fp": "713a4f5cd960058f"
+  },
+  "sage-shaker-kitchen:l-kitchen-right@model:no-uppers": {
+   "file": "sage-shaker-kitchen_l-kitchen-right_model_no-uppers.webp",
+   "fp": "7a110e7cf986a0cc"
+  },
+  "sage-shaker-kitchen:l-kitchen-right@model:side-hob": {
+   "file": "sage-shaker-kitchen_l-kitchen-right_model_side-hob.webp",
+   "fp": "c77c8b353072c217"
+  },
+  "sage-shaker-kitchen:l-kitchen-right@model:side-hob-no-uppers": {
+   "file": "sage-shaker-kitchen_l-kitchen-right_model_side-hob-no-uppers.webp",
+   "fp": "ab7ec7675bf15f10"
+  },
+  "sage-shaker-kitchen:l-kitchen@model:clean": {
+   "file": "sage-shaker-kitchen_l-kitchen_model_clean.webp",
+   "fp": "08818988feea0aa9"
+  },
+  "sage-shaker-kitchen:l-kitchen@model:no-uppers": {
+   "file": "sage-shaker-kitchen_l-kitchen_model_no-uppers.webp",
+   "fp": "6c434d36071e93f8"
+  },
+  "sage-shaker-kitchen:l-kitchen@model:side-hob": {
+   "file": "sage-shaker-kitchen_l-kitchen_model_side-hob.webp",
+   "fp": "31fbcba9e4013160"
+  },
+  "sage-shaker-kitchen:l-kitchen@model:side-hob-no-uppers": {
+   "file": "sage-shaker-kitchen_l-kitchen_model_side-hob-no-uppers.webp",
+   "fp": "6417c269c34b663d"
+  },
   "sage-shaker-kitchen:leaning-boards-utensils": {
    "file": "sage-shaker-kitchen_leaning-boards-utensils.webp",
    "fp": "e1847a3760361456"
   },
   "sage-shaker-kitchen:mint-stack-tile-splashback": {
    "file": "sage-shaker-kitchen_mint-stack-tile-splashback.webp",
-   "fp": "0089bc473d2c0e53"
+   "fp": "acfb02479a222fde"
   },
   "sage-shaker-kitchen:oak-led-shelf": {
    "file": "sage-shaker-kitchen_oak-led-shelf.webp",
@@ -5524,6 +5564,14 @@
   "wardrobe-study:wardrobe-study-wall@model:hanging-niche": {
    "file": "wardrobe-study_wardrobe-study-wall_model_hanging-niche.webp",
    "fp": "536a915941415eaa"
+  },
+  "wardrobe-study:waterfall-bar-shelf-table": {
+   "file": "wardrobe-study_waterfall-bar-shelf-table.webp",
+   "fp": "04b0469a06d8b92d"
+  },
+  "wardrobe-study:waterfall-bar-shelf-table@model:styled": {
+   "file": "wardrobe-study_waterfall-bar-shelf-table_model_styled.webp",
+   "fp": "ca2cf001248b261d"
   },
   "wardrobes-fullheight:acrylic-gloss-wardrobe-open-shelves-vn": {
    "file": "wardrobes-fullheight_acrylic-gloss-wardrobe-open-shelves-vn.webp",

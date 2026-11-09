@@ -2451,3 +2451,43 @@ Known limitations (also in README):
      file" / "not saved to file". New / duplicated / imported projects no longer appear in projects/ until saved; the
      "Sync to repo" toggle is removed. Tests in projects/projectService.test.ts; checked in the browser with a
      throw-away project (no file after create or edit; Ctrl+S and the button write it; deleted after) (done).
+204. "Tạo bếp hình chữ L có thể sửa chiều dài 2 cạnh chữ L độc lập. Không cần bàn và tủ lạnh" + "BỎ GIÁ màu vàng này,
+     tạo 1 variant không có dãy tủ trắng bên trên. Sửa trên cả 2 phiên bản" → added parametric L-shaped kitchen
+     `sage-shaker-kitchen:l-kitchen` and mirrored `sage-shaker-kitchen:l-kitchen-right` (`variantOf: 'l-kitchen'`) in
+     `packs/sage-shaker-kitchen.pack.ts` (Kitchen → Counters & cabinets, no dining bar, fridge, or floating oak wall
+     shelves). `Width` (`1.85–4.20 m`, default `2.85 m`) independently resizes the main cooking/sink/ceiling-height
+     cream-shaker & reeded-glass upper arm by dynamically adding/sizing bays while keeping counter (`0.60 m`) and upper
+     (`0.35 m`) depths fixed; `Depth` (`1.20–3.60 m`, default `1.75 m`) independently resizes the sage-shaker base +
+     splashback return arm. Both versions offer 5 models (`styled`, `no-uppers`, `clean`, `no-uppers-clean`, `bare`) so
+     users can toggle the entire white/cream upper cabinet row + hood off in 1 click, 4 colour presets, Shape Editor
+     handles (`counterDepth`, `worktopHeight`, `upperDrop`, `endPier`), thumbnails and unit tests in
+     `src/packs/packs.test.ts` (done).
+205. "Thêm cái chất liệu tường bếp xanh nhạt này vào lựa chọn surface" → made placed-item default finishes (including
+     pack finishes such as `sage-shaker-kitchen:mint-stack-tile` across all layout options and model variants) appear
+     automatically in `FinishPicker` ("In this project & favourites") and `MaterialLibrary` ("This project") via
+     `projectUsedMaterialIds` in `src/features/materials/MaterialUI.tsx`, even before any slot is overridden or after a
+     slot is changed to another finish; made `Search finishes` search the full material library (project matches first)
+     with accent-insensitive multi-word English/Vietnamese matching (`matchesMaterialQuery`); subscribed `FinishPicker`
+     and `MaterialLibrary` to `usePackVersion`; and gave `sage-shaker-kitchen:mint-stack-tile` the bilingual name
+     `Pale mint green tile (gạch thẻ xanh nhạt)`. Unit tests in `src/features/materials/MaterialUI.test.tsx` (done).
+206. "Thêm 1 variant chuyển bếp sang bên phải, tủ dưới bếp nấu ăn để hệ tủ ngang. Cả 2 option khu vực dưới bếp nấu để hệ
+     tủ ngang" + "Phần variant chỉ giữ bếp các option clean, còn style bỏ hết" → updated both
+     `sage-shaker-kitchen:l-kitchen` and `sage-shaker-kitchen:l-kitchen-right` in `packs/sage-shaker-kitchen.pack.ts` so
+     the base bay directly underneath the induction hob uses a 3-tier horizontal shaker drawer bank (`shakerDrawersX` /
+     `shakerDrawersZ`: shallow top cutlery drawer over two deep pan drawers with full-depth horizontal shadow reveals and
+     centred horizontal leather strap pulls) in BOTH hob placement options, and trimmed `models` to the 4 clean-only
+     kitchen options (`clean`: "With upper cabinets", `side-hob`: "Hob on side arm, with uppers", `no-uppers`: "No upper
+     cabinets", `side-hob-no-uppers`: "Hob on side arm, no uppers") with all styling/decor props (`copper`, `oak`,
+     `ceramic`) removed. Added optional `AssetModelVariant.planDetail` (`src/data/assets/types.ts`,
+     `src/data/assets/models.ts`, `src/packs/runtime.ts`, `src/data/assets/assetChecks.ts`) so 2D plan strokes move the
+     hob outline & burner rings with the chosen model. Unit tests in `src/packs/packs.test.ts` (done).
+207. "Tạo 1 cái bàn này mới không phải varient , có kèm kệ 3 ngăn bên trên. ngăn giữa đựng vài đồ khô, ... 1 varient
+     trống và 1 variant có đồ trang trí" → added standalone asset `wardrobe-study:waterfall-bar-shelf-table` ("Curved-
+     waterfall bar table with 3-tier shelf hutch", `category: 'kitchen'`, `type: 'surfaces'`, `group: 'Dining tables'`,
+     no `variantOf`, `wallSnap: true`) in `packs/wardrobe-study.pack.ts`. Combines the 35 mm lengthwise-grain oak curved-
+     waterfall bar table (`defaultSize` `0.55 × 1.35 × 1.75 m`, table top at `0.81 m` with open legroom underneath) with
+     an integrated 3-compartment open shelf hutch on the wall end (`-z`), Shape Editor `params` + 3D handles
+     (`tableHeight`, `shelfDepth`, `bottomBayHeight`, `midBayHeight`), 8 finish presets, and 2 models (`styled`: glass
+     dry-goods jars of oats/grains & coffee beans with bamboo lids, kraft dry-food pouch & ceramic tea caddy in the
+     middle bay, rattan basket + cookbooks + bud vase on the top bay, tea tray in the bottom bay, and ceramic fruit bowl
+     on the tabletop; `empty`: bare joinery only). Thumbnails and unit tests in `src/packs/packs.test.ts` (done).

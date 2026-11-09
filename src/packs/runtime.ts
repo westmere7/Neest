@@ -71,7 +71,19 @@ function checkModels(list: AssetModelVariant[], where: string, report: (msg: str
       report(`${where}: model "${m.id}" props must be a function of the size.`);
       continue;
     }
-    out.push({ ...m, slots: m.slots?.map((s) => ({ ...s, defaultMaterial: matId(s.defaultMaterial) })) });
+    out.push({
+      ...m,
+      slots: m.slots?.map((s) => ({ ...s, defaultMaterial: matId(s.defaultMaterial) })),
+      planDetail: m.planDetail
+        ? (size, params) => {
+            try {
+              return m.planDetail!(size, params);
+            } catch {
+              return [];
+            }
+          }
+        : undefined,
+    });
   }
   return out;
 }

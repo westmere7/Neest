@@ -25,7 +25,11 @@ import {
   rod,
   shakerFront,
   span,
+  sphere,
+  vcyl,
   type AssetModelVariant,
+  type AssetParam,
+  type ParamValues,
   type Part,
   type PlanStroke,
   type Size3,
@@ -858,6 +862,393 @@ const modularDesk = defineItem({
   ],
 });
 
+// ── Standalone curved-waterfall bar table with 3-tier upper shelf hutch ──────────
+
+function hutchTableGeo({ w, d, h }: Size3, params?: ParamValues) {
+  const t = 0.018;
+  const backT = 0.012;
+  const rawTableH = typeof params?.tableHeight === 'number' ? params.tableHeight : 0.81;
+  const tableH = clamp(rawTableH, 0.68, h - 0.48);
+  const topT = clamp(tableH * 0.044, 0.028, 0.035);
+  const R = clamp(Math.min(d * 0.12, tableH * 0.16), topT + 0.015, 0.08);
+  const rawSd = typeof params?.shelfDepth === 'number' ? params.shelfDepth : 0.28;
+  const sd = clamp(rawSd, 0.18, d - 0.32);
+
+  const clearTotal = Math.max(0.3, h - tableH - 3 * t);
+  const rawBay1 = typeof params?.bottomBayHeight === 'number' ? params.bottomBayHeight : 0.31;
+  const bay1 = clamp(rawBay1, 0.1, clearTotal - 0.2);
+  const rawBay2 = typeof params?.midBayHeight === 'number' ? params.midBayHeight : 0.29;
+  const bay2 = clamp(rawBay2, 0.1, clearTotal - bay1 - 0.07);
+
+  const yShelf1 = tableH + bay1;
+  const yShelf2 = yShelf1 + t + bay2;
+  const bay3 = Math.max(0.05, h - t - (yShelf2 + t));
+  return { w, d, h, t, backT, tableH, topT, R, sd, bay1, bay2, bay3, yShelf1, yShelf2 };
+}
+
+const HUTCH_TABLE_PARAMS: AssetParam[] = [
+  {
+    id: 'tableHeight',
+    label: 'Table height',
+    kind: 'length',
+    default: 0.81,
+    min: 0.72,
+    max: 1.02,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = hutchTableGeo(s, p);
+      return { at: [0, g.tableH, s.d / 2 - 0.24], dir: [0, 1, 0] };
+    },
+  },
+  {
+    id: 'shelfDepth',
+    label: 'Shelf depth',
+    kind: 'length',
+    default: 0.28,
+    min: 0.2,
+    max: 0.46,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = hutchTableGeo(s, p);
+      return { at: [0, g.yShelf1 + g.t / 2, -s.d / 2 + g.sd], dir: [0, 0, 1] };
+    },
+  },
+  {
+    id: 'bottomBayHeight',
+    label: 'Bottom bay height',
+    kind: 'length',
+    default: 0.31,
+    min: 0.2,
+    max: 0.46,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = hutchTableGeo(s, p);
+      return { at: [-s.w * 0.16, g.yShelf1, -s.d / 2 + g.sd], dir: [0, 1, 0] };
+    },
+  },
+  {
+    id: 'midBayHeight',
+    label: 'Middle bay height',
+    kind: 'length',
+    default: 0.29,
+    min: 0.18,
+    max: 0.44,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = hutchTableGeo(s, p);
+      return { at: [s.w * 0.16, g.yShelf2, -s.d / 2 + g.sd], dir: [0, 1, 0] };
+    },
+  },
+];
+
+function buildWaterfallHutchTable(size: Size3, params?: ParamValues): Part[] {
+  const g = hutchTableGeo(size, params);
+  const { w, d, h, t, backT, tableH, topT, R, sd, yShelf1, yShelf2 } = g;
+  const x0 = -w / 2;
+  const x1 = w / 2;
+  const z0 = -d / 2;
+  const z1 = d / 2;
+  const zf = z0 + sd;
+
+  // Quarter-circle curved waterfall bend at the front (+z) end of the bar table.
+  const seg = 24;
+  const bend: V2[] = [];
+  for (const i of range(seg + 1)) {
+    const a = Math.PI / 2 - (i / seg) * (Math.PI / 2);
+    bend.push([z1 - R + Math.cos(a) * R, tableH - R + Math.sin(a) * R]);
+  }
+  for (const i of range(seg + 1)) {
+    const a = (i / seg) * (Math.PI / 2);
+    bend.push([z1 - R + Math.cos(a) * (R - topT), tableH - R + Math.sin(a) * (R - topT)]);
+  }
+
+  return [
+    // 1. Curved-waterfall bar table (wood grain runs lengthwise along Z and down the front leg).
+    span('oak', [x0, x1], [tableH - topT, tableH], [z0, z1 - R + 0.01], { bevel: 0.004 }),
+    { ...sidePlate('oak', bend, x0, w), plan: undefined },
+    sp('oak', [x0, x1], [0, tableH - R + 0.01], [z1 - topT, z1], 0.004),
+
+    // 2. Three-compartment open shelf hutch standing on the wall end (-z) of the bar table.
+    sp('oak', [x0, x0 + t], [tableH, h], [z0, zf], 0.002),
+    sp('oak', [x1 - t, x1], [tableH, h], [z0, zf], 0.002),
+    sp('oak', [x0 + t, x1 - t], [h - t, h], [z0, zf], 0.002),
+    sp('oak', [x0 + t, x1 - t], [yShelf1, yShelf1 + t], [z0 + 0.017, zf - 0.003], 0.002),
+    sp('oak', [x0 + t, x1 - t], [yShelf2, yShelf2 + t], [z0 + 0.017, zf - 0.003], 0.002),
+    sp('back', [x0 + t + 0.001, x1 - t - 0.001], [tableH + 0.002, h - t - 0.001], [z0 + 0.003, z0 + 0.003 + backT]),
+  ];
+}
+
+function waterfallHutchPlan(size: Size3, params?: ParamValues): PlanStroke[] {
+  const { w, d, t, topT, sd } = hutchTableGeo(size, params);
+  const z0 = -d / 2;
+  const zf = z0 + sd;
+  return [
+    line([-w / 2, zf], [w / 2, zf]),
+    line([-w / 2 + t, z0], [-w / 2 + t, zf]),
+    line([w / 2 - t, z0], [w / 2 - t, zf]),
+    line([-w / 2, d / 2 - topT], [w / 2, d / 2 - topT]),
+  ];
+}
+
+const HUTCH_DECOR_SLOTS = [
+  matSlot('glass', 'Dry-goods glass jars', 'glass-clear'),
+  matSlot('lid', 'Acacia lids & tray', 'wood-acacia'),
+  matSlot('grain', 'Oats & dry grains', 'fabric-boucle-oat'),
+  matSlot('kraft', 'Kraft dry-food bag', 'leather-cognac'),
+  matSlot('bean', 'Coffee beans & stems', 'leather-chocolate'),
+  matSlot('ceramic', 'Cream ceramics & books', 'ceramic-cream'),
+  matSlot('sage', 'Sage tea tin & vase', 'ceramic-sage'),
+  matSlot('wicker', 'Woven pantry basket', 'wicker-fine'),
+  matSlot('accent', 'Tabletop fruit', 'terracotta-pot'),
+];
+
+function dryGoodsJar(
+  cx: number,
+  cz: number,
+  y0: number,
+  r: number,
+  jarH: number,
+  fillSlot: 'grain' | 'bean' | 'kraft',
+  fillFrac: number,
+): Part[] {
+  const lidH = clamp(jarH * 0.09, 0.01, 0.016);
+  const fillTop = Math.max(y0 + 0.008, y0 + jarH * fillFrac);
+  return [
+    vcyl('glass', cx, cz, y0, y0 + jarH, r, { segments: 20, plan: false }),
+    vcyl(fillSlot, cx, cz, y0 + 0.004, fillTop, Math.max(0.008, r - 0.004), { segments: 18, plan: false }),
+    vcyl('lid', cx, cz, y0 + jarH + 0.001, y0 + jarH + 0.001 + lidH, r + 0.002, { segments: 20, plan: false }),
+    vcyl('lid', cx, cz, y0 + jarH + 0.001 + lidH, y0 + jarH + 0.001 + lidH + 0.007, r * 0.28, { segments: 14, plan: false }),
+  ];
+}
+
+function buildWaterfallHutchProps(size: Size3, params?: ParamValues): Part[] {
+  const g = hutchTableGeo(size, params);
+  const { w, d, t, tableH, R, sd, bay1, bay2, bay3, yShelf1, yShelf2 } = g;
+  const innerW = Math.max(0.2, w - 2 * t);
+  const zIn0 = -d / 2 + 0.022;
+  const zIn1 = -d / 2 + sd - 0.01;
+  const innerD = Math.max(0.12, zIn1 - zIn0);
+  const zMid = (zIn0 + zIn1) / 2;
+  const parts: Part[] = [];
+
+  // ── 1. Middle compartment (ngăn giữa): glass dry-goods jars, kraft pouch & sage tea tin ──
+  const yMid0 = yShelf1 + t + 0.0015;
+  const rJar = clamp(innerW * 0.076, 0.021, 0.041);
+  const zJarBack = zIn0 + rJar + 0.012;
+  const zJarFront = Math.min(zIn1 - rJar - 0.006, zJarBack + innerD * 0.16);
+
+  parts.push(
+    ...dryGoodsJar(-innerW * 0.34, zJarBack, yMid0, rJar, clamp(bay2 * 0.68, 0.06, 0.195), 'grain', 0.76),
+    ...dryGoodsJar(-innerW * 0.13, zJarFront, yMid0, rJar * 0.94, clamp(bay2 * 0.54, 0.052, 0.155), 'bean', 0.7),
+    ...dryGoodsJar(innerW * 0.07, zJarBack + 0.006, yMid0, rJar * 1.03, clamp(bay2 * 0.42, 0.045, 0.12), 'kraft', 0.64),
+  );
+
+  // Stand-up kraft dry-goods pouch + round sage ceramic tea caddy on the right side of the middle shelf.
+  const pouchW = clamp(innerW * 0.18, 0.054, 0.1);
+  const pouchD = clamp(innerD * 0.28, 0.032, 0.054);
+  const pouchH = clamp(bay2 * 0.62, 0.055, 0.175);
+  const px = innerW * 0.3;
+  const pz0 = zIn0 + 0.008;
+  const pz1 = pz0 + pouchD;
+  parts.push(
+    sp('kraft', [px - pouchW / 2, px + pouchW / 2], [yMid0, yMid0 + pouchH * 0.88], [pz0, pz1], 0.006),
+    sp('kraft', [px - pouchW * 0.48, px + pouchW * 0.48], [yMid0 + pouchH * 0.86, yMid0 + pouchH], [pz0 + pouchD * 0.32, pz1 - pouchD * 0.32], 0.002),
+    sp(
+      'ceramic',
+      [px - pouchW * 0.32, px + pouchW * 0.32],
+      [yMid0 + pouchH * 0.24, yMid0 + pouchH * 0.62],
+      [pz1 + 0.001, pz1 + 0.0028],
+    ),
+  );
+
+  const rTin = clamp(innerW * 0.058, 0.018, 0.032);
+  const tinH = clamp(bay2 * 0.36, 0.04, 0.098);
+  const tx = innerW * 0.33;
+  const tz = Math.min(zIn1 - rTin - 0.006, pz1 + rTin + 0.018);
+  if (tz - rTin > pz1 + 0.004) {
+    parts.push(
+      vcyl('sage', tx, tz, yMid0, yMid0 + tinH, rTin, { segments: 18, plan: false }),
+      vcyl('lid', tx, tz, yMid0 + tinH + 0.001, yMid0 + tinH + 0.011, rTin + 0.0015, { segments: 18, plan: false }),
+    );
+  }
+
+  // ── 2. Top compartment (ngăn trên): woven rattan basket, stacked cookbooks & sage bud vase ──
+  const yTop0 = yShelf2 + t + 0.0015;
+  const bskW = clamp(innerW * 0.37, 0.11, 0.21);
+  const bskD = clamp(innerD * 0.68, 0.085, 0.185);
+  const bskH = clamp(bay3 * 0.52, 0.028, 0.13);
+  const bx = -innerW * 0.23;
+  parts.push(
+    sp('wicker', [bx - bskW / 2, bx + bskW / 2], [yTop0, yTop0 + bskH * 0.86], [zMid - bskD / 2, zMid + bskD / 2], 0.012),
+    sp('wicker', [bx - bskW / 2 - 0.002, bx + bskW / 2 + 0.002], [yTop0 + bskH * 0.82, yTop0 + bskH], [zMid - bskD / 2 - 0.002, zMid + bskD / 2 + 0.002], 0.006),
+  );
+
+  const bkW = clamp(innerW * 0.32, 0.095, 0.175);
+  const bkD = clamp(innerD * 0.62, 0.08, 0.165);
+  const bkH = clamp(bay3 * 0.085, 0.006, 0.02);
+  const rx = innerW * 0.23;
+  const yBk1Top = yTop0 + bkH;
+  const yBk2Bot = yBk1Top + 0.001;
+  const yBk2Top = yBk2Bot + bkH * 0.92;
+  const vaseY0 = yBk2Top + 0.0012;
+  const vaseH = clamp(bay3 * 0.45, 0.022, 0.115);
+  const vr = clamp(innerW * 0.058, 0.017, 0.032);
+  parts.push(
+    sp('ceramic', [rx - bkW / 2, rx + bkW / 2], [yTop0, yBk1Top], [zMid - bkD / 2, zMid + bkD / 2], 0.003),
+    sp('kraft', [rx - bkW * 0.45, rx + bkW * 0.45], [yBk2Bot, yBk2Top], [zMid - bkD * 0.46, zMid + bkD * 0.46], 0.003),
+    lathe(
+      'sage',
+      [rx, vaseY0, zMid],
+      [
+        [0, 0],
+        [vr * 0.68, 0],
+        [vr, vaseH * 0.32],
+        [vr * 0.88, vaseH * 0.62],
+        [vr * 0.42, vaseH * 0.84],
+        [vr * 0.52, vaseH],
+        [Math.max(0.004, vr * 0.38), vaseH],
+      ],
+      { segments: 20, plan: false },
+    ),
+  );
+
+  // ── 3. Bottom compartment (ngăn dưới): compact bamboo tea tray with ceramic teapot & 2 cups ──
+  const yBot0 = tableH + 0.0015;
+  const trW = clamp(innerW * 0.42, 0.125, 0.23);
+  const trD = clamp(innerD * 0.68, 0.085, 0.18);
+  const trH = 0.012;
+  const trx = innerW * 0.21;
+  const yOnTray = yBot0 + trH + 0.0012;
+  const potR = clamp(trW * 0.19, 0.022, 0.04);
+  const potH = clamp(bay1 * 0.34, 0.042, 0.098);
+  const cupR = clamp(trW * 0.11, 0.014, 0.024);
+  const cupH = clamp(bay1 * 0.18, 0.026, 0.052);
+  parts.push(
+    sp('lid', [trx - trW / 2, trx + trW / 2], [yBot0, yBot0 + trH], [zMid - trD / 2, zMid + trD / 2], 0.003),
+    lathe(
+      'ceramic',
+      [trx - trW * 0.18, yOnTray, zMid],
+      [
+        [0, 0],
+        [potR * 0.72, 0],
+        [potR, potH * 0.45],
+        [potR * 0.76, potH * 0.88],
+        [potR * 0.56, potH],
+        [0, potH],
+      ],
+      { segments: 20, plan: false },
+    ),
+    vcyl('lid', trx - trW * 0.18, zMid, yOnTray + potH + 0.001, yOnTray + potH + 0.01, potR * 0.58, { segments: 16, plan: false }),
+    vcyl('ceramic', trx + trW * 0.22, zMid - trD * 0.18, yOnTray, yOnTray + cupH, cupR, { rTop: cupR * 1.08, segments: 16, plan: false }),
+    vcyl('ceramic', trx + trW * 0.22, zMid + trD * 0.2, yOnTray, yOnTray + cupH, cupR, { rTop: cupR * 1.08, segments: 16, plan: false }),
+  );
+
+  // ── 4. Open waterfall tabletop: shallow ceramic centerpiece bowl with 3 mandarins/persimmons ──
+  const openZ0 = -d / 2 + sd + 0.08;
+  const openZ1 = d / 2 - R - 0.06;
+  if (openZ1 - openZ0 >= 0.22) {
+    const bowlZ = openZ0 + (openZ1 - openZ0) * 0.48;
+    const br = clamp(Math.min(w * 0.21, (openZ1 - openZ0) * 0.22), 0.055, 0.105);
+    const bh = 0.032;
+    const yb0 = tableH + 0.0015;
+    const fr = clamp(br * 0.28, 0.016, 0.028);
+    const fy = yb0 + 0.011 + fr * 0.78;
+    parts.push(
+      lathe(
+        'ceramic',
+        [0, yb0, bowlZ],
+        [
+          [0, 0],
+          [br * 0.45, 0],
+          [br * 0.52, bh * 0.22],
+          [br * 0.88, bh * 0.62],
+          [br, bh],
+          [br * 0.91, bh],
+          [br * 0.72, bh * 0.42],
+          [0, bh * 0.3],
+        ],
+        { segments: 24, plan: false },
+      ),
+    );
+    for (const [fx, fz] of [
+      [-fr * 0.92, bowlZ - fr * 0.55],
+      [fr * 0.96, bowlZ - fr * 0.42],
+      [0.004, bowlZ + fr * 0.82],
+    ] as V2[]) {
+      parts.push(
+        sphere('accent', [fx, fy, fz], fr, { scale: [1, 0.78, 1], plan: false }),
+        vcyl('bean', fx, fz, fy + fr * 0.76, fy + fr * 0.76 + 0.005, 0.0022, { segments: 8, plan: false }),
+      );
+    }
+  }
+
+  return parts;
+}
+
+const waterfallBarHutchTable = defineItem({
+  id: 'waterfall-bar-shelf-table',
+  name: 'Curved-waterfall bar table with 3-tier shelf hutch',
+  category: 'kitchen',
+  type: 'surfaces',
+  group: 'Dining tables',
+  description:
+    'A standalone 35 mm oak curved-waterfall breakfast bar and dining peninsula table with an integrated 3-compartment open shelf hutch on the wall end, available empty or styled with airtight dry-goods jars, tea canisters and tabletop ceramics.',
+  tags: [
+    'bar table',
+    'breakfast bar',
+    'peninsula table',
+    'waterfall table',
+    'dining table',
+    'shelf hutch',
+    '3-tier shelf',
+    'pantry shelf',
+    'dry goods',
+    'oak',
+    'bàn bar',
+    'bàn đảo',
+    'bàn ăn',
+    'bàn kèm kệ',
+    'kệ 3 ngăn',
+    'bàn gỗ thác nước',
+    'đồ khô',
+  ],
+  defaultSize: { w: 0.55, d: 1.35, h: 1.75 },
+  minSize: { w: 0.38, d: 0.8, h: 1.35 },
+  maxSize: { w: 1.0, d: 2.4, h: 2.65 },
+  resizable: { w: true, d: true, h: true },
+  wallSnap: true,
+  price: { vnd: 6_500_000, estimate: true },
+  slots: [
+    matSlot('oak', 'Table & 3-tier shelf', 'laminate-oak'),
+    matSlot('back', 'Shelf back panel', 'laminate-oak'),
+  ],
+  params: HUTCH_TABLE_PARAMS,
+  build: buildWaterfallHutchTable,
+  planDetail: waterfallHutchPlan,
+  models: [
+    {
+      id: 'styled',
+      name: 'With dry goods & decor',
+      slots: HUTCH_DECOR_SLOTS,
+      props: buildWaterfallHutchProps,
+    },
+    {
+      id: 'empty',
+      name: 'Empty',
+    },
+  ],
+  variants: [
+    { id: 'light-oak', name: 'Light oak', materials: { oak: 'wood-oak-light', back: 'wood-oak-light' } },
+    { id: 'oak-cream-back', name: 'Oak & cream back', materials: { back: 'shaker-cream' } },
+    { id: 'oak-sage-back', name: 'Oak & sage back', materials: { back: 'laminate-sage' } },
+    { id: 'white-oak', name: 'White oak', materials: { oak: 'wood-white-oak', back: 'wood-white-oak' } },
+    { id: 'walnut', name: 'Walnut', materials: { oak: 'wood-walnut', back: 'wood-walnut' } },
+    { id: 'smoked-oak', name: 'Smoked oak', materials: { oak: 'wood-smoked-oak', back: 'wood-smoked-oak' } },
+    { id: 'shaker-cream', name: 'Cream lacquer', materials: { oak: 'shaker-cream', back: 'shaker-cream' } },
+    { id: 'warm-white', name: 'Warm white', materials: { oak: 'laminate-white-matte', back: 'laminate-white-matte' } },
+  ],
+});
+
 const TAU = Math.PI * 2;
 
 function paint(ctx: CanvasRenderingContext2D, size: number, value: (u: number, v: number, x: number, y: number) => number): void {
@@ -875,11 +1266,12 @@ function paint(ctx: CanvasRenderingContext2D, size: number, value: (u: number, v
 
 export default definePack({
   name: 'Wardrobe & study wall',
-  version: '1.2.0',
+  version: '1.3.0',
   author: 'Neest team',
-  description: 'Built-in bedroom wall: oak shelf tower and study desk, white shaker wardrobe, rounded corner niche and standalone modular waterfall add-on desk.',
+  description:
+    'Built-in bedroom wall: oak shelf tower and study desk, white shaker wardrobe, rounded corner niche, standalone modular waterfall add-on desk and curved-waterfall bar table with 3-tier shelf hutch.',
   license: 'CC0 (made for Neest)',
-  items: [studyWall, towerWall, modularDesk],
+  items: [studyWall, towerWall, modularDesk, waterfallBarHutchTable],
   patterns: [
     {
       id: 'satin-lacquer',
