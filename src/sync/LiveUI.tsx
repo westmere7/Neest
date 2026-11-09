@@ -13,6 +13,10 @@ import { listOptions } from '@/domain/commands/options';
 import type { Project } from '@/domain/model/schema';
 import type { Peer } from '@/domain/sync/protocol';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
+import { pointAt } from '@/domain/geometry/wallPath';
+import { add, leftNormal, scale } from '@/domain/geometry/vec';
+import type { Vec2 } from '@/domain/model/schema';
+import { usePeerSelections } from './peerSelections';
 import { saveProject } from '@/features/projects/projectService';
 import { ProjectThumb, type ThumbSource } from '@/features/projects/ProjectThumb';
 import { preferenceRepository } from '@/storage/indexeddb/db';
@@ -296,37 +300,86 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Other people's pointers and selections on the 2D plan (only those looking at the same option). */
+/** The outline of a selected thing on the plan: a wall, a door or window, an item or a room (null for the rest). */
+function selectionOutline(project: Project, derived: ReturnType<typeof derivePlan>, id: string): { pts: Vec2[]; room: boolean } | null {
+  const wall = derived.network.walls.get(id);
+  if (wall) return { pts: wall.footprint, room: false };
+  const obj = project.objects[id];
+  if (obj) return { pts: rectPolygon(obj.x, obj.y, obj.width, obj.depth, obj.rotation), room: false };
+  if (project.openings[id]) {
+    // Across the wall's thickness (a little past both faces), along the opening's span; three points follow a curve.
+    for (const wg of derived.network.walls.values()) {
+      const sp = wg.spans.find((x) => x.id === id);
+      if (!sp) continue;
+      const e = wg.h + 0.04;
+      const at = [sp.s0, (sp.s0 + sp.s1) / 2, sp.s1].map((t) => pointAt(wg.path, t));
+      const left = at.map(({ p, tangent }) => add(p, scale(leftNormal(tangent), e)));
+      const right = at.map(({ p, tangent }) => add(p, scale(leftNormal(tangent), -e))).reverse();
+      return { pts: [...left, ...right], room: false };
+    }
+    return null;
+  }
+  const face = derived.roomFaces.get(id);
+  return face ? { pts: face.inner, room: true } : null;
+}
+
+/** A person's name on the plan, in their colour, its top-left corner at (x, y) in plan metres. */
+function NameTag({ x, y, name, color, px }: { x: number; y: number; name: string; color: string; px: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${px})`}>
+      <rect x={0} y={-11} width={name.length * 6.6 + 10} height={16} rx={4} fill={color} />
+      <text x={5} y={1} fontSize={11} fill="#fff" fontFamily="system-ui, sans-serif">
+        {name}
+      </text>
+    </g>
+  );
+}
+
+/**
+ * Other people's pointers and selections on the 2D plan (only those looking at the same option): what they selected
+ * is outlined in their colour (walls, doors and windows, items, rooms), with their name at it when their pointer is
+ * not on the plan (they are working in 3D, or away from the canvas).
+ */
 export function PeerLayer({ px }: { px: number }) {
   const peers = useLiveStore((s) => s.peers);
+  const selections = usePeerSelections();
   const project = useProjectStore((s) => s.project);
   const derived = useMemo(() => (project ? derivePlan(project) : null), [project]);
   if (!project || !derived) return null;
   const view = viewedOption(project);
   const items: ReactNode[] = [];
+  for (const sel of selections) {
+    let tagAt: Vec2 | null = null;
+    for (const id of sel.ids) {
+      const o = selectionOutline(project, derived, id);
+      if (!o || o.pts.length < 2) continue;
+      items.push(
+        <path
+          key={`${sel.id}-${id}`}
+          d={polyPath(o.pts)}
+          fill={o.room ? sel.color : 'none'}
+          fillOpacity={o.room ? 0.08 : undefined}
+          stroke={sel.color}
+          strokeWidth={2 * px}
+          strokeDasharray={`${5 * px} ${3 * px}`}
+        />,
+      );
+      if (!tagAt) tagAt = { x: Math.min(...o.pts.map((p) => p.x)), y: Math.min(...o.pts.map((p) => p.y)) - 6 * px };
+    }
+    if (tagAt && !peers[sel.id]?.p?.cursor) items.push(<NameTag key={`${sel.id}-tag`} x={tagAt.x} y={tagAt.y} name={sel.name} color={sel.color} px={px} />);
+  }
   for (const peer of Object.values(peers)) {
     if (!peer.p || (peer.p.view && peer.p.view !== view)) continue;
-    for (const id of peer.p.sel ?? []) {
-      const wall = derived.network.walls.get(id);
-      const obj = project.objects[id];
-      const d = wall ? polyPath(wall.footprint) : obj ? polyPath(rectPolygon(obj.x, obj.y, obj.width, obj.depth, obj.rotation)) : null;
-      if (d) items.push(<path key={`${peer.id}-${id}`} d={d} fill="none" stroke={peer.color} strokeWidth={2 * px} strokeDasharray={`${5 * px} ${3 * px}`} />);
-    }
     const c = peer.p.cursor;
-    if (c) {
-      const s = px;
-      items.push(
-        <g key={`${peer.id}-cursor`} transform={`translate(${c.x} ${c.y}) scale(${s})`}>
+    if (!c) continue;
+    items.push(
+      <g key={`${peer.id}-cursor`}>
+        <g transform={`translate(${c.x} ${c.y}) scale(${px})`}>
           <path d="M0 0 L0 15 L4 11.5 L7 18 L9.5 17 L6.6 10.6 L11.5 10.6 Z" fill={peer.color} stroke="#fff" strokeWidth={1.2} />
-          <g transform="translate(12 20)">
-            <rect x={0} y={-11} width={peer.name.length * 6.6 + 10} height={16} rx={4} fill={peer.color} />
-            <text x={5} y={1} fontSize={11} fill="#fff" fontFamily="system-ui, sans-serif">
-              {peer.name}
-            </text>
-          </g>
-        </g>,
-      );
-    }
+        </g>
+        <NameTag x={c.x + 12 * px} y={c.y + 20 * px} name={peer.name} color={peer.color} px={px} />
+      </g>,
+    );
   }
   return (
     <g className="peer-layer" pointerEvents="none">

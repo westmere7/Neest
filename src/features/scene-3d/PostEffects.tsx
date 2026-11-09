@@ -8,6 +8,7 @@ import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass.js';
 import type { RenderSettings } from '@/domain/model/schema';
+import { usePeerSelections } from '@/sync/peerSelections';
 
 const SELECT = new THREE.Color('#14b89a');
 const SELECT_HIDDEN = new THREE.Color('#5fe0c8');
@@ -15,6 +16,9 @@ const SELECT_HIDDEN = new THREE.Color('#5fe0c8');
 const NOTED = new THREE.Color('#ff8a00');
 const NOTED_HIDDEN = new THREE.Color('#ffa024');
 const OUTLINED = new Set(['object', 'opening', 'wall']);
+const WHITE = new THREE.Color('#ffffff');
+/** Other people's selections are outlined in their colours, at most this many people at once. */
+const PEER_OUTLINES = 4;
 /** Scene overlays drawn after ambient occlusion, on top of everything (the transform gizmo). */
 const OVERLAY_NAMES = new Set(['neest-gizmo']);
 
@@ -53,6 +57,8 @@ class OverlayPass extends Pass {
  *   wall, a chair behind a sofa), so the selection is always visible.
  * - Note target outline: the items a selected note points at get a second, amber pulsing outline
  *   (also seen through walls), different from the selection's.
+ * - Shared projects: what each other person has selected is outlined in their colour (also through
+ *   walls; at most `PEER_OUTLINES` people), under your own selection's outline.
  *
  * Rendering goes through a half-float, 4× multisampled target (with a depth texture for the AO),
  * so antialiasing and the HDR range are kept; OutputPass applies the renderer's tone mapping,
@@ -63,20 +69,25 @@ export function PostEffects({
   selectedIds,
   notedIds,
   paused,
+  peers: showPeers = true,
 }: {
   quality: RenderSettings['quality'];
   selectedIds?: Set<string>;
   /** Items a selected note points at. */
   notedIds?: Set<string>;
   paused?: boolean;
+  /** Outline what other people in a shared project have selected (off with helpers hidden). */
+  peers?: boolean;
 }) {
+  const peerSel = usePeerSelections();
+  const peerList = showPeers ? peerSel.slice(0, PEER_OUTLINES) : [];
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
   const ao = quality === 'ultra';
 
-  const { composer, outline, noted, gtao, overlay } = useMemo(() => {
+  const { composer, outline, noted, gtao, overlay, peerPasses } = useMemo(() => {
     const target = new THREE.WebGLRenderTarget(1, 1, {
       type: THREE.HalfFloatType,
       samples: quality === 'draft' ? 0 : 4,
@@ -103,6 +114,16 @@ export function PostEffects({
     noted.pulsePeriod = 1.6;
     noted.enabled = false;
     composer.addPass(noted);
+    // One outline per other person (their colour is set each frame), under your own selection's.
+    const peerPasses = Array.from({ length: PEER_OUTLINES }, () => {
+      const p = new OutlinePass(new THREE.Vector2(1, 1), scene, camera);
+      p.edgeStrength = 6;
+      p.edgeThickness = 1.5;
+      p.edgeGlow = 0.2;
+      p.enabled = false;
+      composer.addPass(p);
+      return p;
+    });
     const outline = new OutlinePass(new THREE.Vector2(1, 1), scene, camera);
     outline.visibleEdgeColor.copy(SELECT);
     outline.hiddenEdgeColor.copy(SELECT_HIDDEN);
@@ -114,7 +135,7 @@ export function PostEffects({
     const overlay = new OverlayPass(camera);
     composer.addPass(overlay);
     composer.addPass(new OutputPass());
-    return { composer, outline, noted, gtao, overlay };
+    return { composer, outline, noted, gtao, overlay, peerPasses };
   }, [gl, scene, camera, quality, ao]);
 
   useEffect(() => {
@@ -126,9 +147,10 @@ export function PostEffects({
       gtao?.dispose();
       outline.dispose();
       noted.dispose();
+      for (const p of peerPasses) p.dispose();
       composer.dispose();
     },
-    [composer, outline, noted, gtao],
+    [composer, outline, noted, gtao, peerPasses],
   );
 
   useFrame(() => {
@@ -142,12 +164,28 @@ export function PostEffects({
     const notedPicked: THREE.Object3D[] = [];
     const sel = selectedIds?.size ? selectedIds : null;
     const nt = notedIds?.size ? notedIds : null;
+    // Whose selection each id is in (another person's).
+    const peerOf = new Map<string, number[]>();
+    peerList.forEach((p, k) => {
+      for (const id of p.ids) peerOf.set(id, [...(peerOf.get(id) ?? []), k]);
+    });
+    const peerPicked: THREE.Object3D[][] = peerPasses.map(() => []);
+    const any = sel || nt || peerOf.size;
     scene.traverse((o) => {
       if (OVERLAY_NAMES.has(o.name) && o.visible) overlays.push(o);
-      const id = sel || nt ? (o.userData?.id as string | undefined) : undefined;
+      const id = any ? (o.userData?.id as string | undefined) : undefined;
       if (!id || !OUTLINED.has(o.userData.kind)) return;
       if (sel?.has(id)) picked.push(o);
       if (nt?.has(id)) notedPicked.push(o);
+      for (const k of peerOf.get(id) ?? []) peerPicked[k].push(o);
+    });
+    peerPasses.forEach((pass, k) => {
+      const p = peerList[k];
+      pass.enabled = !!p && peerPicked[k].length > 0;
+      if (!pass.enabled) return;
+      pass.selectedObjects = peerPicked[k];
+      pass.visibleEdgeColor.set(p.color);
+      pass.hiddenEdgeColor.set(p.color).lerp(WHITE, 0.35);
     });
     outline.selectedObjects = picked;
     outline.enabled = picked.length > 0;

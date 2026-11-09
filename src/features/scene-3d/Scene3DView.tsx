@@ -43,6 +43,7 @@ import { SceneContent, Lighting, type SceneOptions } from './SceneContent';
 import { NotesDisplayControl } from '@/features/editor/AnnotationToggles';
 import { NotesOverlay, NotesViewBridge } from '@/features/callouts/NotesOverlay';
 import { PostEffects } from './PostEffects';
+import { PeerTags3D } from './PeerTags3D';
 import { InfiniteGrid } from './InfiniteGrid';
 import { GlobalIllumination } from './globalIllumination';
 import { namedView, presetView, type CameraView, type NamedView } from './cameraViews';
@@ -774,7 +775,8 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
             onProgress={setProgress}
           />
         )}
-        <PostEffects quality={r.quality} selectedIds={options.selectedIds} notedIds={walk || !showHelpers ? undefined : notedIds} paused={!compiled} />
+        <PostEffects quality={r.quality} selectedIds={options.selectedIds} notedIds={walk || !showHelpers ? undefined : notedIds} paused={!compiled} peers={!walk && showHelpers} />
+        {!walk && showHelpers && <PeerTags3D />}
         <GlobalIllumination enabled={r.quality === 'ultra' && ready} project={project} derived={derived} mode={houseLighting} />
         <FloorReflections enabled={r.quality === 'ultra'} />
         {walk || projection === 'perspective' ? (
