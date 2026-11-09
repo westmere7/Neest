@@ -40,7 +40,9 @@ import { ObjectVariants } from './ObjectVariants';
 import { ObjectModels } from './ObjectModels';
 import { scalePct, scaledSize } from './objectScale';
 import { withModel } from '@/data/assets/models';
-import { canEditItem, enterShapeEdit } from '@/features/shape-edit/actions';
+import { canEditShape } from '@/data/assets/itemEdits';
+import type { AssetParam } from '@/data/assets/types';
+import { canEditItem, enterShapeEdit, resetObjectParams, setObjectParam } from '@/features/shape-edit/actions';
 
 const exec = (label: string, fn: Parameters<ReturnType<typeof useProjectStore.getState>['execute']>[1]) =>
   useProjectStore.getState().execute(label, fn);
@@ -650,6 +652,83 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
           </div>
         )}
       </Section>
+      {shown && canEditShape(shown) && !!shown.params?.length && (
+        <Section title="Shape">
+          {shown.params.map((p: AssetParam) => {
+            const v = o.edits?.params?.[p.id] ?? p.default;
+            if (p.kind === 'toggle')
+              return (
+                <Toggle
+                  key={p.id}
+                  label={p.label}
+                  hint={p.hint}
+                  checked={v === true}
+                  onChange={(on) => !locked && setObjectParam(objectId, p.id, p.label, on)}
+                />
+              );
+            if (p.kind === 'choice')
+              return (
+                <Select
+                  key={p.id}
+                  label={p.label}
+                  value={String(v)}
+                  options={p.options ?? []}
+                  disabled={locked}
+                  onChange={(x) => setObjectParam(objectId, p.id, p.label, x)}
+                />
+              );
+            if (p.kind === 'count')
+              return (
+                <NumberField
+                  key={p.id}
+                  label={p.label}
+                  value={Number(v)}
+                  min={p.min ?? 0}
+                  max={p.max ?? 99}
+                  step={1}
+                  decimals={0}
+                  disabled={locked}
+                  onCommit={(x) => setObjectParam(objectId, p.id, p.label, Math.round(x))}
+                />
+              );
+            if (p.max !== undefined && p.max <= 1 && p.hint?.startsWith('Share'))
+              return (
+                <NumberField
+                  key={p.id}
+                  label={p.label}
+                  value={Math.round(Number(v) * 100)}
+                  min={Math.round((p.min ?? 0) * 100)}
+                  max={100}
+                  step={5}
+                  decimals={0}
+                  suffix="%"
+                  disabled={locked}
+                  onCommit={(x) => setObjectParam(objectId, p.id, p.label, x / 100)}
+                />
+              );
+            return (
+              <LengthField
+                key={p.id}
+                label={p.label}
+                hint={p.hint}
+                value={Number(v)}
+                unit={u.units}
+                precision={u.precision}
+                min={p.min ?? 0}
+                max={p.max ?? 30}
+                disabled={locked}
+                testId={`inspector-param-${p.id}`}
+                onCommit={(x) => setObjectParam(objectId, p.id, p.label, x)}
+              />
+            );
+          })}
+          {o.edits?.params && (
+            <Button size="sm" variant="subtle" disabled={locked} onClick={() => resetObjectParams(objectId)}>
+              Reset shape settings
+            </Button>
+          )}
+        </Section>
+      )}
       <Section title="Position">
         <div className="grid-2">
           <LengthField label="X" value={o.x} unit={u.units} precision={u.precision} min={-1000} max={1000} disabled={locked} onCommit={(v) => upd('Move object', { x: v })} />

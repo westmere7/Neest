@@ -137,8 +137,22 @@ export function repairProject(project: Project): MigrationResult {
   for (const o of Object.values(p.objects)) if (upgradeRetiredItem(o)) upgraded++;
   for (const opt of p.options ?? []) for (const o of Object.values(opt.plan?.objects ?? {})) if (upgradeRetiredItem(o)) upgraded++;
   if (upgraded) warnings.push(`${upgraded} retired item(s) replaced: empty or styled versions now use the original item with a model variant, look-alike items the one kept, generic appliances and electronics the branded product.`);
+  const lowerKitchenHeight = (o: { assetId: string; height: number }) => {
+    if ((o.assetId === 'sage-shaker-kitchen:l-kitchen' || o.assetId === 'sage-shaker-kitchen:l-kitchen-right') && Math.abs(o.height - 2.6) < 1e-4) {
+      o.height = 2.22;
+    }
+  };
+  for (const o of Object.values(p.objects)) lowerKitchenHeight(o);
+  for (const opt of p.options ?? []) for (const o of Object.values(opt.plan?.objects ?? {})) lowerKitchenHeight(o);
   for (const [key, r] of Object.entries(p.rooms)) if (r.id !== key) r.id = key;
-  for (const [key, m] of Object.entries(p.materials)) if (m.id !== key) m.id = key;
+  const catMint = MATERIAL_CATALOG_BY_ID['sage-shaker-kitchen:mint-stack-tile'];
+  for (const [key, m] of Object.entries(p.materials)) {
+    if (m.id !== key) m.id = key;
+    if ((m.id === 'sage-shaker-kitchen:mint-stack-tile' || m.catalogId === 'sage-shaker-kitchen:mint-stack-tile') && m.color.toLowerCase() === '#d2e6c2') {
+      m.color = catMint?.color ?? '#b6ded5';
+      if (m.roughness === 0.16) m.roughness = catMint?.roughness ?? 0.14;
+    }
+  }
   // Callouts pinned to items or rooms that no longer exist have nothing to point at.
   let droppedCallouts = 0;
   for (const [key, c] of Object.entries(p.callouts ?? {})) {

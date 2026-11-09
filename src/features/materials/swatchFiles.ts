@@ -1,6 +1,7 @@
 import type { MaterialDefinition } from '@/domain/model/schema';
 import { patternInfo } from '@/data/materials/patterns';
 import { fingerprintHash } from '@/features/library/thumbFingerprint';
+import { dropPackKeys, subscribePacks } from '@/packs/events';
 import { getPhotoManifest, loadPhotoManifest, notifyPhotos, photoEntry, photoSwatchUrl, preloadPhotoSets, wantsPhoto } from './photoTextures';
 
 /**
@@ -61,6 +62,10 @@ function patternHash(id: string): string {
 }
 
 const fpCache = new Map<string, string | null>();
+subscribePacks(() => {
+  dropPackKeys(drawHash);
+  fpCache.clear();
+});
 
 /**
  * Fingerprint of the swatch a material shows when everything has loaded, or null when it has no

@@ -2491,3 +2491,55 @@ Known limitations (also in README):
      dry-goods jars of oats/grains & coffee beans with bamboo lids, kraft dry-food pouch & ceramic tea caddy in the
      middle bay, rattan basket + cookbooks + bud vase on the top bay, tea tray in the bottom bay, and ceramic fruit bowl
      on the tabletop; `empty`: bare joinery only). Thumbnails and unit tests in `src/packs/packs.test.ts` (done).
+208. "Màu xanh mint này khi apply vào nó cứ bị ám vàng, làm nó màu mint sang hơn lạnh hơn" → updated
+     `sage-shaker-kitchen:mint-stack-tile` in `packs/sage-shaker-kitchen.pack.ts` from warm chartreuse `#d2e6c2` (Hue 93°,
+     `R > B`) to cool architectural celadon/sea-glass mint `#b6ded5` (Hue 166.5°, `B - R = +31`, `roughness: 0.14`) and
+     raised `stack-bond` tile face luminance (`226..240`) so warm 3D scene lighting + ACES Filmic tone mapping keep it a
+     clean, cool pale mint next to `#f1ece2` cream cabinets. Also upgraded unedited `#d2e6c2` project copies in
+     `repairProject` (`src/storage/migrations/index.ts`) and on live pack reload (`src/packs/loader.ts`), cleared pack
+     swatch caches on reload (`textureCache.ts`, `swatchFiles.ts`), re-rendered `public/thumbs` + `public/swatches`, and
+     added unit tests in `src/packs/packs.test.ts` (done).
+209. "Tủ bếp bỏ dãy kệ bên trên vì quá cao với không tới" → removed the high ceiling transom/bridge cabinet row above the
+     main upper cabinets on both `sage-shaker-kitchen:l-kitchen` and `sage-shaker-kitchen:l-kitchen-right` in
+     `packs/sage-shaker-kitchen.pack.ts` (`buildLKitchenShell` & `buildLKitchenFixtures`), keeping a single ergonomic
+     reachable upper cabinet tier (`defaultSize.h = 2.22`, `minSize.h = 1.95`, `maxSize.h = 2.6`, upper cabinets spanning
+     `1.45..2.22 m` = `77 cm` tall with solid left/right Shaker doors and 2 stacked horizontal reeded-glass doors over the
+     sink). Unedited `height === 2.6` placed instances upgrade automatically to `2.22 m` in `repairProject`
+     (`src/storage/migrations/index.ts`) and on live pack reload (`src/packs/loader.ts`). Re-rendered thumbnails and added
+     unit tests in `src/packs/packs.test.ts` (done).
+210. "Sửa cái góc này Corner portal with half wall and dining ledge: Chiều dài hạ được MIn 2m; sửa được chiều dài của 2
+     mảng Tường 2 bên này" → lowered `minSize` on `portal-frames:corner-portal-half-wall` (`packs/portal-frames.pack.ts`)
+     from `{ w: 2.8, d: 1.9, h: 2.3 }` to `{ w: 1.4, d: 1.4, h: 2.3 }` so both `Width` and `Depth` shrink cleanly to
+     `2.0 m` or `1.4 m`; added `PortalSpec.minOpen` (`0.3 m` on `RUN_A_SPEC`, `RUN_B_SPEC`, `RUN_A_OPEN`) and expanded
+     `legA` ("Side wall A (Width arm)") and `legB` ("Side wall B (Depth arm)") to `0.04–4.0 m` (clamped to `armLen - 0.3 m`
+     with safe narrow-opening bounds on the half wall and dining ledge); and surfaced `asset.params` directly inside a
+     `Shape` section right below `Size` in `ObjectInspector` (`src/features/editor/Inspector.tsx`, backed by
+     `setObjectParam` / `resetObjectParams` in `src/features/shape-edit/actions.ts`) in addition to 3D orange handles in
+     `Edit shape`. Unit tests in `src/packs/packs.test.ts` and `src/features/shape-edit/shapeEdit.test.ts` (done).
+211. "Ở cả 2 version bếp từ chỗ bếp nấu đến cạnh ngoài rộng 20cm. Lắp kính trống văng dầu ở 1 mặt" → updated both
+     `sage-shaker-kitchen:l-kitchen` and `sage-shaker-kitchen:l-kitchen-right` across both hob placement options (`main` and
+     `return` in `packs/sage-shaker-kitchen.pack.ts`) so the induction hob sits `20 cm` (`HOB_OUTER_MARGIN = 0.2`) inside the
+     open outer counter edge (with a narrow `18 cm` outer spice/oil cabinet + centred 3-drawer pan bank on the return arm, and
+     a centred 3-drawer hob bay at the outer end of the main arm), and added a 1-sided `8 mm` tempered clear glass oil-splatter
+     shield (`slot: 'shield'`, `sage-shaker-kitchen:tempered-glass`, `45 cm` tall in brushed-steel bottom & splashback
+     U-channels, plus 2D plan line) along that exposed outer counter edge. Re-rendered thumbnails and added unit tests in
+     `src/packs/packs.test.ts` (done).
+212. "Tạo 1 cái kệ ngăn dưới dài hơn đủ chỗ cho máy hút bụi cầm tay hoặc robot hút bụi, ngăn trên 1 ô để 1 giỏ trắng" → added
+     `laundry-storage:vacuum-niche-basket-shelf` (`Tall vacuum niche shelf with white basket`) and material
+     `laundry-storage:white-basket-weave` in `packs/laundry-storage.pack.ts`: a floor-standing open-bottom utility shelf tower
+     (`defaultSize` `0.48 × 0.50 × 1.65 m`, resizable `0.34–0.95 × 0.28–0.70 × 0.95–2.45 m`, with parametric `upperHeight`
+     slider & 3D handle) whose unobstructed lower bay (`~1.29 m` clear at default height, `~1.00 m` at `1.36 m`) fits cordless
+     handheld/stick vacuums (`≤ 1.26 m`) as well as robot vacuum + Omni/Ultra stations (`≤ 0.43 m` wide) rolling directly onto
+     the floor, topped by a single open cubby holding 1 woven white storage basket with a stitched tan-leather pull tab (`models`
+     `with-basket` / `empty` and 7 carcass colour variants including `Warm cream lacquer`, `Oak & cream back`, and `Walnut`).
+     Re-rendered thumbnails/swatches and added unit tests in `src/packs/packs.test.ts` (done).
+213. "Tạo 1 bức tường có khoảng trống cong như vậy, sửa được các chiều 2 bên và bên trên. đăt tên sao cho cùng loại với mấy cái đã
+     tạo" → added `portal-frames:arched-wall-portal` (`Arched wall portal with oak lining`, `category: 'construction'`,
+     `type: 'structure'`, `group: 'Portals & arches'`, also indexed in `Bedroom`) in `packs/portal-frames.pack.ts`: a single
+     straight full-height wall (`defaultSize` `3.0 × 0.12 × 2.7 m`, resizable `1.0–7.0 × 0.08–0.45 × 1.8–3.6 m`) matching the
+     curved-corner oak-lined front wall of `Arched corner bedroom enclosure`, with independent Shape sliders & 3D handles for
+     `leftWall` ("Left wall width", `0.04–4.0 m`), `rightWall` ("Right wall width", `0.04–4.0 m`), `head` ("Top wall drop",
+     `0.08–2.0 m`), `rL` and `rR` (`0–1.8 m`), 4 models (`stepped`, `flush`, `plain-flush`, `sidelight`) and 8 finish presets
+     (including `Sage lining` and `Walnut lining`). Extended two-leg `minOpen` clamping, `insetGeo` and stepped-face reveal bounds
+     in `portalGeo` / `buildPortal` so both side walls can widen independently past 30 % without shifting the opposite wall while
+     keeping a safe minimum opening. Re-rendered thumbnails and added unit tests in `src/packs/packs.test.ts` (done).

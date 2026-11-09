@@ -10,6 +10,8 @@ import { definePack, span, matSlot } from './kit';
 import { packVersion } from './events';
 import { RETIRED_MODEL_ITEMS, assetModels, withModel } from '@/data/assets/models';
 import { assetPlan } from '@/data/assets/registry';
+import { createEmptyProject } from '@/domain/model/defaults';
+import { repairProject } from '@/storage/migrations';
 
 const packItems = ASSET_CATALOG.filter((a) => a.pack);
 
@@ -184,6 +186,28 @@ describe('pack models', () => {
     expect(shelfMaxY('half-wall')).toBeCloseTo(1.0, 3);
   });
 
+  it('lets corner-portal-half-wall shrink below 2 m and resize both outer side walls freely', () => {
+    const portal = ASSETS_BY_ID['portal-frames:corner-portal-half-wall'];
+    expect(portal.minSize!.w).toBeLessThanOrEqual(1.5);
+    expect(portal.minSize!.d).toBeLessThanOrEqual(1.5);
+
+    const open = withModel(portal, 'open');
+    const size = { w: 2.0, d: 1.9, h: 2.7 };
+    const wallWidths = (legA: number, legB: number) => {
+      const parts = open.build(size, { legA, legB });
+      // Floor-standing vertical leg boxes (plan !== false, touching y = 0).
+      const legs = parts.filter((p) => p.slot === 'frame' && p.plan !== false).map(worldBounds).filter((b) => b.min[1] < 0.01);
+      // Run A leg sits at +w/2 (+1.0), Run B leg sits at +d/2 (+0.95).
+      const wallA = legs.find((b) => Math.abs(b.max[0] - size.w / 2) < 1e-4)!;
+      const wallB = legs.find((b) => Math.abs(b.max[2] - size.d / 2) < 1e-4)!;
+      return { a: wallA.max[0] - wallA.min[0], b: wallB.max[2] - wallB.min[2] };
+    };
+
+    expect(wallWidths(0.06, 0.06)).toEqual({ a: expect.closeTo(0.06, 4), b: expect.closeTo(0.06, 4) });
+    // Exceeds both the former 40 % run cap (~0.65 m / ~0.61 m) and the former 0.8 m parameter ceiling.
+    expect(wallWidths(1.2, 1.1)).toEqual({ a: expect.closeTo(1.2, 4), b: expect.closeTo(1.1, 4) });
+  });
+
   it('gives modular-waterfall-cabinet-desk white drawers with 2 knobs and a width-invariant legged stool', () => {
     const desk = ASSETS_BY_ID['wardrobe-study:modular-waterfall-cabinet-desk'];
     expect(assetModels(desk).map((m) => m.id)).toEqual([
@@ -353,11 +377,14 @@ describe('pack models', () => {
         expect(ps.some((p) => p.slot === 'hob')).toBe(true);
       }
 
-      // Upper-cabinet models include uppers, reeded glass & LED; no-uppers models omit uppers, glass & hood.
+      // Upper-cabinet models include a single reachable upper cabinet row (h = 2.22 m, all upper knobs below 1.95 m, no high ceiling bridge tier), reeded glass & LED; no-uppers models omit uppers, glass & hood.
+      expect(sz.h).toBe(2.22);
       expect(defClean.some((p) => p.slot === 'upper')).toBe(true);
       expect(defClean.some((p) => p.slot === 'glass' && p.shape === 'box')).toBe(true);
+      expect(Math.max(...defClean.filter((p) => p.slot === 'brass').map((p) => worldBounds(p).max[1]))).toBeLessThan(1.95);
       expect(defSideHob.some((p) => p.slot === 'upper')).toBe(true);
       expect(defSideHob.some((p) => p.slot === 'glass' && p.shape === 'box')).toBe(true);
+      expect(Math.max(...defSideHob.filter((p) => p.slot === 'brass').map((p) => worldBounds(p).max[1]))).toBeLessThan(1.95);
       expect(defNoUppers.some((p) => p.slot === 'upper' || p.slot === 'glass' || p.slot === 'glow')).toBe(false);
       expect(Math.max(...defNoUppers.map((p) => worldBounds(p).max[1]))).toBeLessThan(1.55);
       expect(defSideHobNoUppers.some((p) => p.slot === 'upper' || p.slot === 'glass' || p.slot === 'glow')).toBe(false);
@@ -390,6 +417,31 @@ describe('pack models', () => {
       expect(sideCircles).toHaveLength(2);
       for (const c of mainCircles) if (c.kind === 'circle') expect(c.c[1]).toBeLessThan(-sz.d / 2 + 0.6);
       for (const c of sideCircles) if (c.kind === 'circle') expect(c.c[1]).toBeGreaterThan(-sz.d / 2 + 0.6);
+
+      // Both hob versions maintain a 20 cm margin from the hob to the outer counter edge and mount a 1-sided tempered glass splatter shield there.
+      for (const testSize of [sz, { w: 2.4, d: 1.2, h: 2.22 }]) {
+        for (const m of [clean, noUppers]) {
+          const ps = m.build(testSize);
+          const hb = worldBounds(ps.find((p) => p.slot === 'hob')!);
+          const shields = ps.filter((p) => p.slot === 'shield').map(worldBounds);
+          expect(shields).toHaveLength(1);
+          if (hand === 'left') {
+            expect(testSize.w / 2 - hb.max[0]).toBeCloseTo(0.2, 4);
+            expect(testSize.w / 2 - shields[0].max[0]).toBeLessThan(0.02);
+          } else {
+            expect(hb.min[0] - -testSize.w / 2).toBeCloseTo(0.2, 4);
+            expect(shields[0].min[0] - -testSize.w / 2).toBeLessThan(0.02);
+          }
+        }
+        for (const m of [sideHob, sideHobNoUppers]) {
+          const ps = m.build(testSize);
+          const hb = worldBounds(ps.find((p) => p.slot === 'hob')!);
+          const shields = ps.filter((p) => p.slot === 'shield').map(worldBounds);
+          expect(shields).toHaveLength(1);
+          expect(testSize.d / 2 - hb.max[2]).toBeCloseTo(0.2, 4);
+          expect(testSize.d / 2 - shields[0].max[2]).toBeLessThan(0.02);
+        }
+      }
     }
 
     // Open interior floor space has no dining table/bar or standalone fridge.
@@ -402,7 +454,7 @@ describe('pack models', () => {
 
     // Measure return-arm worktop Z span + X depth and main-arm upper cabinet X span + Z depth.
     const armMetrics = (w: number, d: number) => {
-      const ps = clean.build({ w, d, h: 2.6 });
+      const ps = clean.build({ w, d, h: 2.22 });
       const returnTop = ps.find(
         (p) => p.slot === 'worktop' && p.shape === 'box' && worldBounds(p).max[2] > -d / 2 + 0.65,
       )!;
@@ -479,6 +531,129 @@ describe('pack models', () => {
     // Styled also includes top-bay rattan basket & tabletop centerpiece fruit.
     expect(styledParts.some((p) => p.slot === 'wicker' && worldBounds(p).min[1] > shelf2.max[1])).toBe(true);
     expect(styledParts.some((p) => p.slot === 'accent')).toBe(true);
+  });
+
+  it('gives mint-stack-tile a cool blue-undertone mint glaze and upgrades stale #d2e6c2 project copies', () => {
+    const mint = MATERIAL_CATALOG_BY_ID['sage-shaker-kitchen:mint-stack-tile'];
+    expect(mint).toBeDefined();
+    const r = Number.parseInt(mint.color.slice(1, 3), 16);
+    const g = Number.parseInt(mint.color.slice(3, 5), 16);
+    const b = Number.parseInt(mint.color.slice(5, 7), 16);
+    // Cool architectural mint: green is dominant and blue is substantially stronger than red (no yellowish cast).
+    expect(g).toBeGreaterThan(b);
+    expect(b - r).toBeGreaterThanOrEqual(24);
+
+    const p = createEmptyProject();
+    p.materials[mint.id] = { ...mint, color: '#d2e6c2', roughness: 0.16 };
+    p.materials.mat_custom = { ...mint, id: 'mat_custom', catalogId: mint.id, color: '#a8d8cd', roughness: 0.2 };
+    p.objects.obj_k1 = {
+      id: 'obj_k1',
+      assetId: 'sage-shaker-kitchen:l-kitchen',
+      name: null,
+      x: 0,
+      y: 0,
+      rotation: 0,
+      width: 2.4,
+      depth: 1.2,
+      height: 2.6,
+      elevation: 0,
+      mirrored: false,
+      locked: false,
+      hidden: false,
+      materials: {},
+    };
+    p.objects.obj_k2 = { ...p.objects.obj_k1, id: 'obj_k2', height: 2.4 };
+    const repaired = repairProject(p).project;
+    expect(repaired.materials[mint.id].color).toBe(mint.color);
+    expect(repaired.materials[mint.id].roughness).toBe(mint.roughness);
+    // User-customised colours and heights are preserved; unedited 2.6 m ceiling-tier kitchens drop to 2.22 m.
+    expect(repaired.materials.mat_custom.color).toBe('#a8d8cd');
+    expect(repaired.objects.obj_k1.height).toBe(2.22);
+    expect(repaired.objects.obj_k2.height).toBe(2.4);
+  });
+
+  it('builds the tall vacuum niche shelf with a floorless vacuum bay and 1 upper white-basket cubby', () => {
+    const shelf = ASSETS_BY_ID['laundry-storage:vacuum-niche-basket-shelf'];
+    expect(shelf).toBeDefined();
+    expect(shelf.slots.find((s) => s.id === 'basket')?.defaultMaterial).toBe('laundry-storage:white-basket-weave');
+
+    const withBasket = withModel(shelf, 'with-basket');
+    const empty = withModel(shelf, 'empty');
+    const parts = withBasket.build(shelf.defaultSize);
+
+    // Divider shelf sits >= 1.28 m above the floor at default height so both cordless stick vacuums (<= 1.26 m)
+    // and robot vacuum stations (<= 0.43 m wide x 0.57 m tall) fit inside the open-bottom bay.
+    const divider = parts[3];
+    const divBounds = worldBounds(divider);
+    expect(divBounds.min[1]).toBeGreaterThan(1.28);
+    expect(shelf.defaultSize.w - 0.036).toBeGreaterThan(0.43);
+
+    // No bottom floor board or front plinth obstructs the robot vacuum bay between the two side panels.
+    const lowMiddleParts = parts.filter((p) => {
+      const b = worldBounds(p);
+      return b.min[1] < 0.5 && b.max[0] > -shelf.defaultSize.w / 2 + 0.025 && b.min[0] < shelf.defaultSize.w / 2 - 0.025;
+    });
+    expect(lowMiddleParts).toEqual([]);
+
+    // Upper cubby contains 1 centred white basket in 'with-basket' and none in 'empty'.
+    const basketParts = parts.filter((p) => p.slot === 'basket' || p.slot === 'trim');
+    expect(basketParts.length).toBeGreaterThan(8);
+    for (const bp of basketParts) {
+      const b = worldBounds(bp);
+      expect(b.min[1]).toBeGreaterThan(divBounds.max[1]);
+      expect(b.max[1]).toBeLessThan(shelf.defaultSize.h - 0.018);
+    }
+    expect(empty.build(shelf.defaultSize).some((p) => p.slot === 'basket' || p.slot === 'trim')).toBe(false);
+
+    // Resizing down to 1.36 m keeps the 32 cm upper basket cubby and leaves > 1.0 m clearance for robot docks.
+    const compactParts = withBasket.build({ w: 0.45, d: 0.48, h: 1.36 });
+    expect(worldBounds(compactParts[3]).min[1]).toBeGreaterThan(1.0);
+  });
+
+  it('independently resizes the left wall, right wall and top drop on arched-wall-portal without moving the opposite side', () => {
+    const wall = ASSETS_BY_ID['portal-frames:arched-wall-portal'];
+    expect(wall).toBeDefined();
+    expect(wall.group).toBe('Portals & arches');
+    expect(wall.params?.map((p) => p.id)).toEqual(['leftWall', 'rightWall', 'head', 'rL', 'rR']);
+
+    const size = wall.defaultSize; // 3.0 x 0.12 x 2.7
+    // Plan detail traces the clear opening from xl to xr across the front/back soffit edges.
+    const openingSpan = (p?: Record<string, number>) => {
+      const s = wall.planDetail!(size, p)[0];
+      expect(s.kind).toBe('line');
+      if (s.kind !== 'line') throw new Error('expected line');
+      return [s.a[0], s.b[0]] as const;
+    };
+
+    const [xl0, xr0] = openingSpan();
+    expect(xl0).toBeCloseTo(-1.5 + 0.22, 5);
+    expect(xr0).toBeCloseTo(1.5 - 0.55, 5);
+
+    // Widening the left wall past 30 % (to 1.4 m) moves xl right while keeping xr untouched.
+    const [xlWideL, xrWideL] = openingSpan({ leftWall: 1.4 });
+    expect(xlWideL).toBeCloseTo(-1.5 + 1.4, 5);
+    expect(xrWideL).toBeCloseTo(xr0, 5);
+
+    // Widening the right wall past 30 % (to 1.6 m) moves xr left while keeping xl untouched.
+    const [xlWideR, xrWideR] = openingSpan({ rightWall: 1.6 });
+    expect(xlWideR).toBeCloseTo(xl0, 5);
+    expect(xrWideR).toBeCloseTo(1.5 - 1.6, 5);
+
+    // Pushing both side walls to 4.0 m still preserves >= 0.28 m clear opening width.
+    const [xlMax, xrMax] = openingSpan({ leftWall: 4.0, rightWall: 4.0 });
+    expect(xrMax - xlMax).toBeCloseTo(0.28, 5);
+
+    // Lowering the top wall drop (e.g. head = 1.4 m) pulls the arch crown down well below the 0.85 m default cap.
+    const lowTopParts = wall.build(size, { head: 1.4, rL: 0, rR: 0 });
+    const coreLeg = lowTopParts.find((p) => p.shape === 'box' && p.slot === 'frame' && Math.abs(p.position[2]) < 1e-4)!;
+    expect(worldBounds(coreLeg).max[1]).toBeCloseTo(2.7 - 1.4, 5);
+
+    // Flush and plain-flush models rebuild cleanly with edited side walls and top drop.
+    for (const modelId of ['stepped', 'flush', 'plain-flush', 'sidelight']) {
+      const m = withModel(wall, modelId);
+      const built = m.build({ w: 1.6, d: 0.12, h: 2.5 }, { leftWall: 0.35, rightWall: 0.45, head: 0.7 });
+      expect(built.length).toBeGreaterThan(0);
+    }
   });
 });
 

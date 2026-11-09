@@ -1,10 +1,8 @@
 /**
- * Over-washer laundry storage — doorless solid-wood wall shelves sized to hang high above a
- * side-by-side washer and dryer pair (default mounting height 1.45 m, clearing an open top-load
- * washing machine lid). One full-height compartment holds a woven rattan laundry basket with folded
- * linen and a tall family-size liquid detergent jug; the other half is split by a fixed shelf into
- * two open cubbies. Offered with the tall compartment on the left or mirrored to the right, and in
- * Filled (with basket & detergent) or Empty models.
+ * Laundry & cleaning utility storage — doorless solid-wood over-washer wall shelves (default
+ * mounting height 1.45 m, clearing an open top-load washing machine lid) and a tall floor-standing
+ * open-bottom vacuum niche tower sized for a cordless stick vacuum or robot vacuum dock with a
+ * single upper cubby holding a white woven storage basket.
  */
 import {
   box,
@@ -402,12 +400,276 @@ const overWasherShelfRight = defineItem({
   planDetail: (size, params) => shelfPlanDetail(size, 'right', params),
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Tall floor-standing vacuum niche shelf with 1 upper cubby & 1 white basket
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DEFAULT_VAC_UPPER_H = 0.32;
+
+interface VacuumShelfGeo {
+  w: number;
+  d: number;
+  h: number;
+  t: number;
+  tIn: number;
+  zCleat: number;
+  tBack: number;
+  zIn0: number;
+  z1: number;
+  upperH: number;
+  yShelf: number;
+}
+
+function vacuumShelfGeo({ w, d, h }: Size3, params?: ParamValues): VacuumShelfGeo {
+  const t = 0.018;
+  const tIn = 0.018;
+  const zCleat = 0.008;
+  const tBack = 0.012;
+  const zIn0 = -d / 2 + zCleat + tBack;
+  const z1 = d / 2;
+
+  const availH = Math.max(0.45, h - t - tIn);
+  const rawUpperH = typeof params?.upperHeight === 'number' && Number.isFinite(params.upperHeight) ? params.upperHeight : DEFAULT_VAC_UPPER_H;
+  const minUpper = Math.min(0.2, availH * 0.25);
+  const maxUpper = Math.max(minUpper + 0.04, Math.min(0.65, availH - 0.52));
+  const upperH = clamp(rawUpperH, minUpper, maxUpper);
+  const yShelf = h - t - upperH - tIn / 2;
+
+  return { w, d, h, t, tIn, zCleat, tBack, zIn0, z1, upperH, yShelf };
+}
+
+const VACUUM_SHELF_PARAMS: AssetParam[] = [
+  {
+    id: 'upperHeight',
+    label: 'Upper cubby height',
+    kind: 'length',
+    default: DEFAULT_VAC_UPPER_H,
+    min: 0.2,
+    max: 0.65,
+    step: 0.01,
+    handle: (size, p) => {
+      const g = vacuumShelfGeo(size, p);
+      return {
+        at: [0, g.yShelf, g.d / 2 + 0.01],
+        dir: [0, -1, 0],
+      };
+    },
+  },
+];
+
+/** Woven matte-white storage basket with folded white cloths inside and a stitched front leather pull tab. */
+function buildWhiteCubbyBasket(bx: number, y0: number, bz: number, bw: number, bd: number, bh: number, cubbyH: number): Part[] {
+  const parts: Part[] = [];
+  const wallT = clamp(Math.min(bw, bd) * 0.072, 0.012, 0.017);
+  const rimH = clamp(bh * 0.16, 0.028, 0.042);
+  const bodyH = bh - rimH;
+
+  // Base + 3 gently flared horizontal braided weave courses.
+  parts.push(
+    span('basket', [bx - bw * 0.45, bx + bw * 0.45], [y0, y0 + 0.014], [bz - bd * 0.45, bz + bd * 0.45], {
+      bevel: 0.005,
+      plan: false,
+    }),
+  );
+  const tiers = 3;
+  const tierStep = (bodyH - 0.014) / tiers;
+  for (const i of range(tiers)) {
+    const k = 0.92 + (i / tiers) * 0.065;
+    const ty0 = y0 + 0.014 + i * tierStep + 0.0014;
+    const ty1 = y0 + 0.014 + (i + 1) * tierStep - 0.0014;
+    parts.push(
+      span('basket', [bx - (bw / 2) * k, bx + (bw / 2) * k], [ty0, ty1], [bz - (bd / 2) * k, bz + (bd / 2) * k], {
+        bevel: 0.013,
+        plan: false,
+      }),
+    );
+  }
+
+  // Hollow braided upper rim (4 rails) revealing the interior cavity.
+  const ry0 = y0 + bodyH;
+  const ry1 = y0 + bh;
+  const hx = bw / 2;
+  const hz = bd / 2;
+  parts.push(
+    span('basket', [bx - hx, bx + hx], [ry0, ry1], [bz + hz - wallT, bz + hz], { bevel: 0.006, plan: false }),
+    span('basket', [bx - hx, bx + hx], [ry0, ry1], [bz - hz, bz - hz + wallT], { bevel: 0.006, plan: false }),
+    span('basket', [bx - hx, bx - hx + wallT], [ry0, ry1], [bz - hz + wallT, bz + hz - wallT], { bevel: 0.005, plan: false }),
+    span('basket', [bx + hx - wallT, bx + hx], [ry0, ry1], [bz - hz + wallT, bz + hz - wallT], { bevel: 0.005, plan: false }),
+  );
+
+  // Braided side carry handles on the left and right ends of the rim.
+  const rHandle = clamp(Math.min(bd * 0.14, (cubbyH - bh) * 0.45), 0.016, 0.028);
+  const tube = 0.0055;
+  for (const sgn of [-1, 1] as const) {
+    parts.push(
+      torus('basket', [bx + sgn * (hx - wallT * 0.45), ry1 - 0.004, bz], rHandle, tube, {
+        arc: Math.PI,
+        rotation: [0, Math.PI / 2, 0],
+        plan: false,
+      }),
+    );
+  }
+
+  // Softly angled folded white cotton cloths tucked neatly inside the basket.
+  const lw = Math.max(0.06, bw - wallT * 2.8);
+  const ld = Math.max(0.06, bd - wallT * 2.8);
+  const clothH1 = clamp(rimH * 0.72, 0.02, 0.032);
+  const clothH2 = clamp(rimH * 0.62, 0.018, 0.028);
+  parts.push(
+    box('basket', [bx - lw * 0.03, ry0 + clothH1 * 0.42, bz - ld * 0.02], [lw * 0.92, clothH1, ld * 0.88], {
+      bevel: 0.008,
+      rotation: [0, 0.06, 0],
+      plan: false,
+    }),
+    box('basket', [bx + lw * 0.04, ry0 + clothH1 * 0.78 + clothH2 * 0.4, bz + ld * 0.02], [lw * 0.78, clothH2, ld * 0.74], {
+      bevel: 0.008,
+      rotation: [0.03, -0.08, 0],
+      plan: false,
+    }),
+  );
+
+  // Stitched tan-leather front pull tab wrapping cleanly over the front rim (kept > 1 mm proud of 'basket').
+  const strapW = clamp(bw * 0.11, 0.028, 0.042);
+  const strapDrop = clamp(bh * 0.28, 0.036, 0.056);
+  const zRimFront = bz + hz;
+  const zRimInner = bz + hz - wallT;
+  parts.push(
+    span('trim', [bx - strapW / 2, bx + strapW / 2], [ry1 - strapDrop, ry1 + 0.0025], [zRimFront + 0.0012, zRimFront + 0.005], {
+      bevel: 0.0015,
+      plan: false,
+    }),
+    span('trim', [bx - strapW / 2, bx + strapW / 2], [ry1 + 0.0012, ry1 + 0.0042], [zRimInner - 0.002, zRimFront + 0.005], {
+      bevel: 0.0012,
+      plan: false,
+    }),
+    span('trim', [bx - strapW / 2, bx + strapW / 2], [ry1 - 0.018, ry1 + 0.0042], [zRimInner - 0.0042, zRimInner - 0.0012], {
+      bevel: 0.001,
+      plan: false,
+    }),
+  );
+
+  return parts;
+}
+
+function buildVacuumNicheShelf(size: Size3, params?: ParamValues): Part[] {
+  const g = vacuumShelfGeo(size, params);
+  const { w, d, h, t, tIn, zCleat, zIn0, z1, upperH, yShelf } = g;
+  const x0 = -w / 2;
+  const x1 = w / 2;
+  const z0 = -d / 2;
+
+  // 1. Open-bottom utility tower carcass (6 parts, stable order):
+  //    - Full-footprint top cap board (`plan: true` so the 2D plan hull covers the full w × d rectangle).
+  //    - Left & right floor-standing side panels leaving the floor completely open for robot/stick vacuums.
+  //    - Fixed divider shelf separating the tall lower vacuum bay from the single upper cubby.
+  //    - Recessed upper cubby back panel + discreet rear wall-anchoring rail just below the divider shelf.
+  const carcass: Part[] = [
+    span('wood', [x0, x1], [h - t, h], [z0, z1], { bevel: 0.002 }),
+    span('wood', [x0, x0 + t], [0, h - t], [z0, z1], { bevel: 0.002, plan: false }),
+    span('wood', [x1 - t, x1], [0, h - t], [z0, z1], { bevel: 0.002, plan: false }),
+    span('wood', [x0 + t, x1 - t], [yShelf - tIn / 2, yShelf + tIn / 2], [zIn0 + 0.001, z1 - 0.002], {
+      bevel: 0.0015,
+      plan: false,
+    }),
+    span('back', [x0 + t + 0.001, x1 - t - 0.001], [yShelf + tIn / 2 + 0.001, h - t - 0.001], [z0 + zCleat, zIn0], {
+      plan: false,
+    }),
+    span('wood', [x0 + t, x1 - t], [yShelf - tIn / 2 - 0.055, yShelf - tIn / 2], [z0 + 0.002, zIn0], { plan: false }),
+  ];
+
+  // 2. Single upper cubby contents: 1 centered white woven storage basket.
+  const cubbyW = Math.max(0.2, w - 2 * t);
+  const cubbyD = Math.max(0.18, z1 - zIn0);
+  const bw = clamp(cubbyW * 0.76, 0.16, Math.min(0.48, Math.max(0.16, cubbyW - 0.05)));
+  const bd = clamp(cubbyD * 0.76, 0.15, Math.min(0.42, Math.max(0.15, cubbyD - 0.045)));
+  const bh = clamp(upperH * 0.62, 0.11, Math.min(0.22, Math.max(0.11, upperH - 0.055)));
+  const yBasket0 = yShelf + tIn / 2 + 0.002;
+  const bz = (zIn0 + z1) / 2 + 0.004;
+
+  return [...carcass, ...buildWhiteCubbyBasket(0, yBasket0, bz, bw, bd, bh, upperH)];
+}
+
+function vacuumShelfPlanDetail(size: Size3, params?: ParamValues): PlanStroke[] {
+  const g = vacuumShelfGeo(size, params);
+  const xIn0 = -g.w / 2 + g.t;
+  const xIn1 = g.w / 2 - g.t;
+  return [
+    line([xIn0, -g.d / 2], [xIn0, g.z1]),
+    line([xIn1, -g.d / 2], [xIn1, g.z1]),
+    line([xIn0, g.zIn0], [xIn1, g.zIn0]),
+  ];
+}
+
+const vacuumNicheBasketShelf = defineItem({
+  id: 'vacuum-niche-basket-shelf',
+  name: 'Tall vacuum niche shelf with white basket',
+  category: 'laundry',
+  type: 'storage',
+  group: 'Bathroom & laundry storage',
+  wallSnap: true,
+  resizable: { w: true, d: true, h: true },
+  tags: [
+    'vacuum shelf',
+    'robot vacuum cabinet',
+    'stick vacuum storage',
+    'cordless vacuum niche',
+    'handheld vacuum shelf',
+    'utility tower',
+    'white basket cubby',
+    'cleaning storage',
+    'kệ máy hút bụi',
+    'kệ robot hút bụi',
+    'máy hút bụi cầm tay',
+    'kệ giỏ trắng',
+    'tủ máy hút bụi',
+    'kệ đa năng',
+  ],
+  description:
+    'Floor-standing open utility shelf tower with a tall bottomless bay sized for a cordless handheld/stick vacuum or robot vacuum dock, topped by a single open cubby holding a woven white storage basket with a tan leather pull tab.',
+  defaultSize: { w: 0.48, d: 0.5, h: 1.65 },
+  minSize: { w: 0.34, d: 0.28, h: 0.95 },
+  maxSize: { w: 0.95, d: 0.7, h: 2.45 },
+  price: { vnd: 2_800_000, estimate: true },
+  slots: [
+    matSlot('wood', 'Shelf carcass', 'laminate-oak'),
+    matSlot('back', 'Upper back panel', 'laminate-oak'),
+    matSlot('basket', 'White storage basket', 'white-basket-weave'),
+    matSlot('trim', 'Basket pull tab', 'leather-tan'),
+  ],
+  variants: [
+    { id: 'cream-lacquer', name: 'Warm cream lacquer', materials: { wood: 'laminate-cream', back: 'laminate-cream' } },
+    { id: 'satin-white', name: 'Satin white', materials: { wood: 'laminate-white-matte', back: 'laminate-white-matte' } },
+    { id: 'light-oak', name: 'Light oak', materials: { wood: 'wood-oak-light', back: 'wood-oak-light' } },
+    { id: 'oak-cream-back', name: 'Oak & cream back', materials: { wood: 'laminate-oak', back: 'laminate-cream' } },
+    { id: 'walnut', name: 'Walnut', materials: { wood: 'wood-walnut', back: 'wood-walnut' } },
+    { id: 'sage-green', name: 'Sage green', materials: { wood: 'laminate-sage', back: 'laminate-sage' } },
+    { id: 'white-ash', name: 'White ash', materials: { wood: 'wood-ash-white', back: 'wood-ash-white' } },
+  ],
+  models: [
+    { id: 'with-basket', name: 'With white basket' },
+    { id: 'empty', name: 'Empty shelf', hide: ['basket', 'trim'] },
+  ],
+  params: VACUUM_SHELF_PARAMS,
+  build: buildVacuumNicheShelf,
+  planDetail: vacuumShelfPlanDetail,
+});
+
 export default definePack({
-  name: 'Over-Washer Laundry Storage',
-  version: '1.0.0',
+  name: 'Over-Washer & Utility Storage',
+  version: '1.1.0',
   author: 'Neest',
   license: 'CC0-1.0',
   description:
-    'Doorless solid-wood wall shelves sized to hang high above top-load or front-load washers and dryers, combining a full-height basket-and-detergent bay with two stacked open cubbies.',
-  items: [overWasherShelfLeft, overWasherShelfRight],
+    'Doorless solid-wood over-washer wall shelves and a tall open-bottom vacuum niche tower with an upper white-basket cubby for cordless stick vacuums and robot vacuum stations.',
+  items: [overWasherShelfLeft, overWasherShelfRight, vacuumNicheBasketShelf],
+  materials: [
+    {
+      id: 'white-basket-weave',
+      name: 'White woven basket',
+      category: 'fabric',
+      color: '#f5f4f0',
+      roughness: 0.88,
+      pattern: { id: 'jute', scale: 0.08, contrast: 0.48 },
+    },
+  ],
 });

@@ -41,6 +41,10 @@
    "file": "03d93c21cb89461a.webp",
    "tile": true
   },
+  "041352865fae9dfd": {
+   "file": "041352865fae9dfd.webp",
+   "tile": true
+  },
   "045de3e0a407384e": {
    "file": "045de3e0a407384e.webp",
    "tile": true
@@ -671,10 +675,6 @@
   },
   "308af43dac401cac": {
    "file": "308af43dac401cac.webp",
-   "tile": true
-  },
-  "321fd705b5dfd6e8": {
-   "file": "321fd705b5dfd6e8.webp",
    "tile": true
   },
   "322a4c4ce6522bed": {
@@ -2805,6 +2805,10 @@
    "file": "c2e3e3dc2796f95f.webp",
    "tile": true
   },
+  "c30609954ab57538": {
+   "file": "c30609954ab57538.webp",
+   "tile": true
+  },
   "c316dfa043866eb8": {
    "file": "c316dfa043866eb8.webp",
    "tile": true
@@ -4178,6 +4182,7 @@
   "laminate-oak-planks": "822d476828a924d6",
   "laminate-terrazzo": "819a0a0e3ab4e39c",
   "laminate-walnut": "e1e178bf9c4659cb",
+  "laundry-storage:white-basket-weave": "041352865fae9dfd",
   "leather-black": "6947bc010ba59423",
   "leather-burgundy": "b44741dd14885785",
   "leather-chocolate": "1e149d0f07c39655",
@@ -4410,7 +4415,7 @@
   "rug-wool-cream": "01fcdae284132ca8",
   "sage-shaker-kitchen:bar-oak": "f48c05e9565c2c3c",
   "sage-shaker-kitchen:leather-tab": "c49497542869fa78",
-  "sage-shaker-kitchen:mint-stack-tile": "321fd705b5dfd6e8",
+  "sage-shaker-kitchen:mint-stack-tile": "c30609954ab57538",
   "sage-shaker-kitchen:reeded-glass": "8668977a8f62e692",
   "sage-shaker-kitchen:terrazzo-white": "1f0c184e55138f48",
   "shelving:binder-navy": "f12e974fea347e4e",

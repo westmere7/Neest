@@ -3013,6 +3013,14 @@
    "file": "laundry-storage_over-washer-wood-shelf_model_empty.webp",
    "fp": "cf6944e63517fe6d"
   },
+  "laundry-storage:vacuum-niche-basket-shelf": {
+   "file": "laundry-storage_vacuum-niche-basket-shelf.webp",
+   "fp": "cb2d4f3925b8ca65"
+  },
+  "laundry-storage:vacuum-niche-basket-shelf@model:empty": {
+   "file": "laundry-storage_vacuum-niche-basket-shelf_model_empty.webp",
+   "fp": "7dd6878b5100c83c"
+  },
   "lava-lamp": {
    "file": "lava-lamp.webp",
    "fp": "07631f3c561f447a"
@@ -4053,6 +4061,22 @@
    "file": "portal-frames_arched-partition-wall_model_sidelight.webp",
    "fp": "f33d8a902c32c05d"
   },
+  "portal-frames:arched-wall-portal": {
+   "file": "portal-frames_arched-wall-portal.webp",
+   "fp": "05e6837597fa767c"
+  },
+  "portal-frames:arched-wall-portal@model:flush": {
+   "file": "portal-frames_arched-wall-portal_model_flush.webp",
+   "fp": "9416e3079a2c30f0"
+  },
+  "portal-frames:arched-wall-portal@model:plain-flush": {
+   "file": "portal-frames_arched-wall-portal_model_plain-flush.webp",
+   "fp": "26f267da2ca33a66"
+  },
+  "portal-frames:arched-wall-portal@model:sidelight": {
+   "file": "portal-frames_arched-wall-portal_model_sidelight.webp",
+   "fp": "dd17120a296437b7"
+  },
   "portal-frames:asymmetric-portal": {
    "file": "portal-frames_asymmetric-portal.webp",
    "fp": "bb5a495b11130204"
@@ -4235,43 +4259,43 @@
   },
   "sage-shaker-kitchen:l-kitchen": {
    "file": "sage-shaker-kitchen_l-kitchen.webp",
-   "fp": "2a2853ad653f11ab"
+   "fp": "35f0835aab4bb706"
   },
   "sage-shaker-kitchen:l-kitchen-right": {
    "file": "sage-shaker-kitchen_l-kitchen-right.webp",
-   "fp": "a03167cf132b4679"
+   "fp": "bf81e55383979fbc"
   },
   "sage-shaker-kitchen:l-kitchen-right@model:clean": {
    "file": "sage-shaker-kitchen_l-kitchen-right_model_clean.webp",
-   "fp": "713a4f5cd960058f"
+   "fp": "6aeea31fda3aded9"
   },
   "sage-shaker-kitchen:l-kitchen-right@model:no-uppers": {
    "file": "sage-shaker-kitchen_l-kitchen-right_model_no-uppers.webp",
-   "fp": "7a110e7cf986a0cc"
+   "fp": "f9d1b076408e6b2f"
   },
   "sage-shaker-kitchen:l-kitchen-right@model:side-hob": {
    "file": "sage-shaker-kitchen_l-kitchen-right_model_side-hob.webp",
-   "fp": "c77c8b353072c217"
+   "fp": "521e5d2e8d2e586e"
   },
   "sage-shaker-kitchen:l-kitchen-right@model:side-hob-no-uppers": {
    "file": "sage-shaker-kitchen_l-kitchen-right_model_side-hob-no-uppers.webp",
-   "fp": "ab7ec7675bf15f10"
+   "fp": "87951c1b5bcc8e45"
   },
   "sage-shaker-kitchen:l-kitchen@model:clean": {
    "file": "sage-shaker-kitchen_l-kitchen_model_clean.webp",
-   "fp": "08818988feea0aa9"
+   "fp": "6ea5d8d635bb504f"
   },
   "sage-shaker-kitchen:l-kitchen@model:no-uppers": {
    "file": "sage-shaker-kitchen_l-kitchen_model_no-uppers.webp",
-   "fp": "6c434d36071e93f8"
+   "fp": "01f3c735e3a6f602"
   },
   "sage-shaker-kitchen:l-kitchen@model:side-hob": {
    "file": "sage-shaker-kitchen_l-kitchen_model_side-hob.webp",
-   "fp": "31fbcba9e4013160"
+   "fp": "0f218c80c162b80e"
   },
   "sage-shaker-kitchen:l-kitchen@model:side-hob-no-uppers": {
    "file": "sage-shaker-kitchen_l-kitchen_model_side-hob-no-uppers.webp",
-   "fp": "6417c269c34b663d"
+   "fp": "caede163ccdd5a2c"
   },
   "sage-shaker-kitchen:leaning-boards-utensils": {
    "file": "sage-shaker-kitchen_leaning-boards-utensils.webp",
@@ -4279,7 +4303,7 @@
   },
   "sage-shaker-kitchen:mint-stack-tile-splashback": {
    "file": "sage-shaker-kitchen_mint-stack-tile-splashback.webp",
-   "fp": "acfb02479a222fde"
+   "fp": "7ff2634b63e6cf9a"
   },
   "sage-shaker-kitchen:oak-led-shelf": {
    "file": "sage-shaker-kitchen_oak-led-shelf.webp",

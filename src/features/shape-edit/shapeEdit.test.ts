@@ -7,7 +7,7 @@ import { ASSET_CATALOG } from '@/data/assets/catalog';
 import { sectionInfo } from '@/data/assets/itemEdits';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
-import { canEditItem, clearPartEdits, enterShapeEdit, exitShapeEdit, resetShape, setParam, setSectionEdges, setSectionSize } from './actions';
+import { canEditItem, clearPartEdits, enterShapeEdit, exitShapeEdit, resetObjectParams, resetShape, setObjectParam, setParam, setSectionEdges, setSectionSize } from './actions';
 
 const WARDROBE = 'wardrobe-study:wardrobe-study-wall';
 
@@ -100,6 +100,16 @@ describe('shape editor', () => {
     setParam('rL', 'Left corner radius', 0.9);
     expect(obj(id).edits?.params).toEqual({ rL: 0.9 });
     setParam('rL', 'Left corner radius', 0.35);
+    expect(obj(id).edits).toBeUndefined();
+  });
+
+  it('updates and resets object shape params directly from the Inspector without entering 3D shape edit', () => {
+    const id = setup('portal-frames:corner-portal-half-wall');
+    useEditorStore.setState({ workspace: 'plan', shapeEdit: null });
+    setObjectParam(id, 'legA', 'Side wall A (Width arm)', 1.15);
+    setObjectParam(id, 'legB', 'Side wall B (Depth arm)', 0.95);
+    expect(obj(id).edits?.params).toEqual({ legA: 1.15, legB: 0.95 });
+    resetObjectParams(id);
     expect(obj(id).edits).toBeUndefined();
   });
 

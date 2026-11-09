@@ -101,6 +101,8 @@ interface PortalSpec {
    * proud of both faces (works with the stepped frame; the opening narrows by it).
    */
   liningIn?: number;
+  /** Minimum clear opening width (m); when set, legs may grow past the 30 % / 40 % default cap up to w - minOpen. */
+  minOpen?: number;
 }
 
 interface Geo {
@@ -118,9 +120,28 @@ interface Geo {
 
 function portalGeo({ w, d, h }: Size3, s: PortalSpec): Geo {
   const legL = s.legs === 'both';
-  const cap = w * (legL ? 0.3 : 0.4);
-  const xl = legL ? -w / 2 + Math.min(s.legL ?? s.leg, cap) : -w / 2;
-  const xr = w / 2 - Math.min(s.legR ?? s.leg, cap);
+  let xl: number;
+  let xr: number;
+  if (s.minOpen !== undefined && legL) {
+    const maxTotal = Math.max(0.08, w - s.minOpen);
+    let lL = Math.max(0.04, s.legL ?? s.leg);
+    let lR = Math.max(0.04, s.legR ?? s.leg);
+    if (lL + lR > maxTotal) {
+      const half = maxTotal / 2;
+      if (lL <= half) lR = maxTotal - lL;
+      else if (lR <= half) lL = maxTotal - lR;
+      else {
+        lL = half;
+        lR = half;
+      }
+    }
+    xl = -w / 2 + lL;
+    xr = w / 2 - lR;
+  } else {
+    const cap = s.minOpen !== undefined ? Math.max(0.04, w - s.minOpen) : w * (legL ? 0.3 : 0.4);
+    xl = legL ? -w / 2 + Math.min(s.legL ?? s.leg, cap) : -w / 2;
+    xr = w / 2 - Math.min(s.legR ?? s.leg, cap);
+  }
   const yb = s.base ?? 0;
   const head = clamp(h - yb - (s.clear ?? 1.85), 0.08, s.head);
   const yi = h - head;
@@ -199,8 +220,21 @@ function liningBand(g: Geo, t: number, z: V2): Part {
 /** The opening's geometry shrunk by a lining `t` thick (the clear opening inside it). */
 function insetGeo(g: Geo, t: number): Geo {
   if (t <= 0) return g;
-  const shrink = (c: V2): V2 => (c[0] > 0 ? [Math.max(0.01, c[0] - t), Math.max(0.01, c[1] - t)] : c);
-  return { ...g, xl: g.legL ? g.xl + t : g.xl, xr: g.xr - t, yi: g.yi - t, cl: shrink(g.cl), cr: shrink(g.cr) };
+  const xl = g.legL ? g.xl + t : g.xl;
+  const xr = g.xr - t;
+  const yi = g.yi - t;
+  const ow = Math.max(0.02, xr - xl);
+  const room = Math.max(0.01, yi - g.yb - 0.02);
+  const shrink = (c: V2): V2 => (c[0] > 0 ? [Math.max(0.01, c[0] - t), Math.min(room, Math.max(0.01, c[1] - t))] : c);
+  let cl = shrink(g.cl);
+  let cr = shrink(g.cr);
+  const sum = cl[0] + cr[0];
+  if (sum > ow) {
+    const k = ow / sum;
+    cl = [cl[0] * k, cl[1] * k];
+    cr = [cr[0] * k, cr[1] * k];
+  }
+  return { ...g, xl, xr, yi, cl, cr };
 }
 
 /** Lining inside the opening: a band from the clear opening out to the plaster, 4 mm proud of each face. */
@@ -258,7 +292,8 @@ function buildPortal(size: Size3, s: PortalSpec): Part[] {
     );
   } else if (s.step) {
     const ds = Math.min(d * 0.3, 0.08);
-    const st = Math.min(s.step, s.leg * 0.4);
+    const minLeg = g.legL ? Math.min(g.xl + w / 2, w / 2 - g.xr) : w / 2 - g.xr;
+    const st = Math.min(s.step, s.leg * 0.4, minLeg * 0.4, (h - g.yi) * 0.4);
     parts.push(
       ...frameLayer(g, [d / 2 - ds, d / 2], st, h, s),
       ...frameLayer(g, [-d / 2 + ds, d / 2 - ds], 0, h, s),
@@ -299,7 +334,8 @@ function buildPortal(size: Size3, s: PortalSpec): Part[] {
   // Half wall under the right leg with a timber cap and a rounded end.
   if (s.halfWall !== undefined) {
     const H = s.halfWall - 0.04;
-    const L = clamp((g.xr - g.xl) * 0.55, 0.5, 1.6);
+    const openW = Math.max(0.12, g.xr - g.xl);
+    const L = Math.min(openW * 0.85, clamp(openW * 0.55, 0.5, 1.6));
     const x0 = g.xr - L;
     const r = Math.min(d / 2 - 0.01, 0.3);
     parts.push(
@@ -624,7 +660,8 @@ function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1, opts: LedgeOpt
   const g = portalGeo(size, spec);
   const { w, d } = size;
   const H = HALF_WALL - 0.04;
-  const x0 = g.xr - clamp((g.xr - g.xl) * 0.55, 0.5, 1.6);
+  const openW = Math.max(0.12, g.xr - g.xl);
+  const x0 = g.xr - Math.min(openW * 0.85, clamp(openW * 0.55, 0.5, 1.6));
   const rf = 0.22;
   const rEnd = opts.raisedRim ? Math.min(d * 0.7, (d + LEDGE) / 2 - 0.02, 0.18) : Math.min(d / 2 - 0.01, 0.3);
   const z0 = -d / 2;
@@ -652,8 +689,9 @@ function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1, opts: LedgeOpt
     }
   }
   // Brackets about every 80 cm along the half wall, 25 cm in from each end.
-  const a = x0 + 0.25;
-  const b = w / 2 - 0.35;
+  const spanW = w / 2 - x0;
+  const a = x0 + Math.min(0.25, spanW * 0.35);
+  const b = Math.max(a, w / 2 - Math.min(0.35, spanW * 0.35));
   const n = b - a > 0.1 ? Math.max(2, Math.round((b - a) / 0.8) + 1) : 1;
   const face = (d / 2 - 0.02) * side;
   const t = 0.012;
@@ -933,7 +971,104 @@ const archedWall = portal({
   max: { w: 6.0, d: 0.3, h: 3.6 },
   models: [
     { id: 'open', name: 'Open' },
-    { id: 'sidelight', name: 'Glass side-light', slots: SIDELIGHT_SLOTS, props: (size) => sidelight(size, ARCH) },
+    { id: 'sidelight', name: 'Glass side-light', slots: SIDELIGHT_SLOTS, props: (size, p) => sidelight(size, specWith(ARCH, p)) },
+  ],
+});
+
+const ARCHED_WALL_PORTAL_SPEC: PortalSpec = {
+  legs: 'both',
+  leg: 0.2,
+  legL: 0.22,
+  legR: 0.55,
+  head: 0.38,
+  rL: ARCH_R,
+  rR: ARCH_R,
+  step: 0.08,
+  liningIn: ARCH_LINING,
+  clear: 0.45,
+  minOpen: 0.28,
+};
+
+function archedWallPortalSpec(p?: ParamValues): PortalSpec {
+  if (!p) return ARCHED_WALL_PORTAL_SPEC;
+  const num = (k: string, v: number) => (typeof p[k] === 'number' ? (p[k] as number) : v);
+  return {
+    ...ARCHED_WALL_PORTAL_SPEC,
+    legL: num('leftWall', ARCHED_WALL_PORTAL_SPEC.legL!),
+    legR: num('rightWall', ARCHED_WALL_PORTAL_SPEC.legR!),
+    head: num('head', ARCHED_WALL_PORTAL_SPEC.head),
+    rL: num('rL', ARCHED_WALL_PORTAL_SPEC.rL!),
+    rR: num('rR', ARCHED_WALL_PORTAL_SPEC.rR!),
+  };
+}
+
+function archedWallPortalParams(): AssetParam[] {
+  const handle = (at: string): AssetParam['handle'] => (size, p) => PORTAL_HANDLES[at](portalGeo(size, archedWallPortalSpec(p)));
+  return [
+    lengthParam('leftWall', 'Left wall width', ARCHED_WALL_PORTAL_SPEC.legL!, 0.04, 4.0, handle('legLeft')),
+    lengthParam('rightWall', 'Right wall width', ARCHED_WALL_PORTAL_SPEC.legR!, 0.04, 4.0, handle('legR')),
+    lengthParam('head', 'Top wall drop', ARCHED_WALL_PORTAL_SPEC.head, 0.08, 2.0, handle('head')),
+    lengthParam('rL', 'Left corner radius', ARCHED_WALL_PORTAL_SPEC.rL!, 0, 1.8, handle('rL')),
+    lengthParam('rR', 'Right corner radius', ARCHED_WALL_PORTAL_SPEC.rR!, 0, 1.8, handle('rR')),
+  ];
+}
+
+const archedWallPortal = defineItem({
+  id: 'arched-wall-portal',
+  name: 'Arched wall portal with oak lining',
+  category: 'construction',
+  type: 'structure',
+  group: 'Portals & arches',
+  tags: [
+    ...TAGS,
+    'arched wall',
+    'curved opening',
+    'partition wall',
+    'oak lining',
+    'bedroom',
+    'sleeping nook',
+    'room divider',
+    'tường vòm',
+    'tường khoét cong',
+    'vách ngăn cong',
+    'vách vòm phòng ngủ',
+    'phòng ngủ',
+  ],
+  description:
+    'A single straight full-height wall with a wide curved-corner arched opening lined in warm oak, matching the front face of the arched corner bedroom enclosure. Independently resize the left side wall width, right side wall width, top header drop and left/right arch radii, or switch between a stepped bulkhead wall, flush wall, painted opening or glass side-light.',
+  defaultSize: { w: 3.0, d: WALL_T, h: CEILING },
+  minSize: { w: 1.0, d: 0.08, h: 1.8 },
+  maxSize: { w: 7.0, d: 0.45, h: 3.6 },
+  resizable: { w: true, d: true, h: true },
+  slots: [FRAME, LINING],
+  variants: [
+    ...ARCH_VARIANTS,
+    { id: 'sage-lining', name: 'Sage lining', materials: { lining: 'paint-sage' } },
+  ],
+  params: archedWallPortalParams(),
+  build: (size, p) => buildPortal(size, archedWallPortalSpec(p)),
+  planDetail: (size, p) => portalPlan(size, archedWallPortalSpec(p)),
+  models: [
+    { id: 'stepped', name: 'Stepped wall, oak lining' },
+    {
+      id: 'flush',
+      name: 'Flush wall, oak lining',
+      build: (size, p) => buildPortal(size, { ...archedWallPortalSpec(p), step: undefined }),
+      planDetail: (size, p) => portalPlan(size, archedWallPortalSpec(p)),
+    },
+    {
+      id: 'plain-flush',
+      name: 'Flush wall, no lining',
+      hide: ['lining'],
+      build: (size, p) => buildPortal(size, { ...archedWallPortalSpec(p), step: undefined, liningIn: undefined }),
+      planDetail: (size, p) => portalPlan(size, archedWallPortalSpec(p)),
+    },
+    {
+      id: 'sidelight',
+      name: 'Glass side-light',
+      slots: SIDELIGHT_SLOTS,
+      props: (size, p) => sidelight(size, archedWallPortalSpec(p)),
+    },
   ],
 });
 
@@ -989,10 +1124,10 @@ const CORNER_T = 0.2;
 /** Radius of the corner in plan, on the soffit's centre line (as a rounded 10 cm wall corner, 0.28 m). */
 const CORNER_R = 0.28;
 const CORNER_LINE = 0.04;
-const RUN_A_SPEC: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: HALF_WALL, clear: 1.2 };
-const RUN_B_SPEC: PortalSpec = { legs: 'right', leg: 0.22, head: 0.42, rR: 0.5, clear: 1.2, liningIn: CORNER_LINE };
+const RUN_A_SPEC: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: HALF_WALL, clear: 1.2, minOpen: 0.3 };
+const RUN_B_SPEC: PortalSpec = { legs: 'right', leg: 0.22, head: 0.42, rR: 0.5, clear: 1.2, liningIn: CORNER_LINE, minOpen: 0.3 };
 /** Run A as an open portal: no half wall, its leg down to the floor, lined all the way down. */
-const RUN_A_OPEN: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, clear: 1.2, liningIn: CORNER_LINE };
+const RUN_A_OPEN: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, clear: 1.2, liningIn: CORNER_LINE, minOpen: 0.3 };
 
 /** The two runs' specs with the corner portal's shape settings (absent = the item as designed). */
 function cornerSpecs(p?: ParamValues): { a: PortalSpec; b: PortalSpec; open: PortalSpec } {
@@ -1100,11 +1235,11 @@ function cornerPortalParams(): AssetParam[] {
   };
   const pier: HandleAt = (g) => ({ at: [g.xr, (HALF_WALL + g.yi - g.cr[1]) / 2, g.d / 2 + 0.01], dir: [-1, 0, 0] });
   return [
+    lengthParam('legA', 'Side wall A (Width arm)', RUN_A_SPEC.leg, 0.04, 4.0, (s, p) => runA(s, p, pier)),
+    lengthParam('legB', 'Side wall B (Depth arm)', RUN_B_SPEC.leg, 0.04, 4.0, (s, p) => runB(s, p, PORTAL_HANDLES.leg)),
     lengthParam('head', 'Soffit drop', RUN_A_SPEC.head, 0.08, 1.2, (s, p) => runA(s, p, PORTAL_HANDLES.head)),
-    lengthParam('legA', 'Half-wall pier width', RUN_A_SPEC.leg, 0.1, 0.8, (s, p) => runA(s, p, pier)),
-    lengthParam('rA', 'Corner radius (half-wall side)', RUN_A_SPEC.rR!, 0, 1.5, (s, p) => runA(s, p, PORTAL_HANDLES.rR)),
-    lengthParam('legB', 'Leg width (slim side)', RUN_B_SPEC.leg, 0.08, 0.8, (s, p) => runB(s, p, PORTAL_HANDLES.leg)),
-    lengthParam('rB', 'Corner radius (slim side)', RUN_B_SPEC.rR!, 0, 1.5, (s, p) => runB(s, p, PORTAL_HANDLES.rR)),
+    lengthParam('rA', 'Corner radius (Width arm)', RUN_A_SPEC.rR!, 0, 1.5, (s, p) => runA(s, p, PORTAL_HANDLES.rR)),
+    lengthParam('rB', 'Corner radius (Depth arm)', RUN_B_SPEC.rR!, 0, 1.5, (s, p) => runB(s, p, PORTAL_HANDLES.rR)),
   ];
 }
 
@@ -1131,7 +1266,7 @@ const cornerPortal = defineItem({
   description:
     'Two portals joined round a soft curved corner: a soffit wrapping an open kitchen corner, one leg on a half wall carrying a bar-height dining ledge with a raised curved timber rim along its outer edge and free end to keep dishes from sliding off (on the inside of the L, or outside, or a plain cap), the other a slim leg, the whole opening lined in timber.',
   defaultSize: { w: 4.2, d: 2.9, h: CEILING },
-  minSize: { w: 2.8, d: 1.9, h: 2.3 },
+  minSize: { w: 1.4, d: 1.4, h: 2.3 },
   maxSize: { w: 8.0, d: 6.0, h: 3.6 },
   resizable: { w: true, d: true, h: true },
   slots: [FRAME, SHELF, LEDGE_LEG, HALF_WALL_LINING],
@@ -1153,10 +1288,10 @@ const cornerPortal = defineItem({
 
 export default definePack({
   name: 'Portal frames',
-  version: '1.3.0',
+  version: '1.4.0',
   author: 'Neest team',
   description:
-    'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal, rounded ceiling headers, an arched partition wall and an arched corner bedroom enclosure. All resize freely; the curves are rebuilt for every size.',
+    'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal, rounded ceiling headers, arched partition walls with editable side walls and top drop, and an arched corner bedroom enclosure. All resize freely; the curves are rebuilt for every size.',
   license: 'CC0 (made for Neest)',
-  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, header, headerCove, archedWall, cornerRoom, cornerPortal],
+  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, header, headerCove, archedWall, archedWallPortal, cornerRoom, cornerPortal],
 });

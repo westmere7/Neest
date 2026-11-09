@@ -1,9 +1,11 @@
 import type { MaterialDefinition } from '@/domain/model/schema';
 import { renderPattern } from '@/data/materials/patterns';
+import { dropPackKeys, subscribePacks } from '@/packs/events';
 import { photoSwatchUrl } from './photoTextures';
 import { shippedSwatch } from './swatchFiles';
 
 const urlCache = new Map<string, string | null>();
+subscribePacks(() => dropPackKeys(urlCache));
 
 /**
  * PNG data URL of a material's texture tile multiplied by its base colour —

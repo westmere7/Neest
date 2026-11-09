@@ -74,22 +74,33 @@ export function setShapeEditState(patch: Partial<Pick<NonNullable<ReturnType<typ
   ed.set({ shapeEdit: next });
 }
 
-/** Changes the edited item's edits (one undo step); cleaned, and dropped when nothing is left. */
-export function updateEdits(label: string, fn: (e: ItemEdits, o: PlacedObject, asset: AssetDefinition) => ItemEdits): void {
-  const id = useEditorStore.getState().shapeEdit?.objectId;
+/** Changes an item's edits by object id (one undo step); cleaned, and dropped when nothing is left. */
+export function updateObjectEdits(objectId: string, label: string, fn: (e: ItemEdits, o: PlacedObject, asset: AssetDefinition) => ItemEdits): void {
   const project = useProjectStore.getState().project;
-  if (!id || !project) return;
-  const o = project.objects[id];
+  if (!project) return;
+  const o = project.objects[objectId];
   const asset = o && editBase(project, o);
   if (!asset) return;
   useProjectStore.getState().execute(label, (d) => {
-    const obj = d.objects[id];
+    const obj = d.objects[objectId];
     // From the committed item (a draft cannot be cloned).
     const next = cleanEdits(asset, fn(structuredClone(o.edits ?? {}), o, asset));
     if (next) obj.edits = next;
     else delete obj.edits;
   });
 }
+
+/** Changes the edited item's edits (one undo step); cleaned, and dropped when nothing is left. */
+export function updateEdits(label: string, fn: (e: ItemEdits, o: PlacedObject, asset: AssetDefinition) => ItemEdits): void {
+  const id = useEditorStore.getState().shapeEdit?.objectId;
+  if (id) updateObjectEdits(id, label, fn);
+}
+
+export const setObjectParam = (objectId: string, id: string, label: string, value: number | boolean | string) =>
+  updateObjectEdits(objectId, `Set ${label.toLowerCase()}`, (e) => ({ ...e, params: { ...e.params, [id]: value } }));
+
+export const resetObjectParams = (objectId: string) =>
+  updateObjectEdits(objectId, 'Reset shape settings', (e) => ({ ...e, params: undefined }));
 
 export const setParam = (id: string, label: string, value: number | boolean | string) =>
   updateEdits(`Set ${label.toLowerCase()}`, (e) => ({ ...e, params: { ...e.params, [id]: value } }));
