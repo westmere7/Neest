@@ -570,7 +570,8 @@ const L_BASE_FIXTURE_SLOTS = [
   matSlot('pull', 'Leather tab pulls', 'leather-tab'),
   matSlot('appliance', 'Sink & slim hood', 'metal-black-matte'),
   matSlot('hob', 'Induction hob glass', 'screen-black'),
-  matSlot('shield', 'Splatter guard glass', 'tempered-glass'),
+  matSlot('shield', 'Splatter guard frosted glass', 'tempered-glass'),
+  matSlot('shieldBase', 'Splatter guard white mount', 'shield-base-white'),
   matSlot('steel', 'Spring tap & trim', 'metal-brushed-steel'),
   matSlot('brass', 'Knobs & rivets', 'metal-brass'),
 ];
@@ -926,6 +927,40 @@ function drawerPullZ(xCenter: number, yTop: number, zFace: number, halfLen = 0.0
 /** Small brass round knob on an upper door facing -x (front face at `xFace`). */
 const brassKnobX = (xFace: number, y: number, z: number): Part => sphere('brass', [xFace - 0.011, y, z], 0.01, o);
 
+/** Vertical flat panel in the X/Y plane from [x, y] points, extruded from z0 to z0 + t. */
+function panelXY(slot: string, pts: V2[], z0: number, t: number): Part {
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return {
+    shape: 'prism',
+    outline: pts.map(([x, y]) => [x - cx, -(y - cy)] as V2),
+    height: t,
+    position: [cx, cy, z0],
+    rotation: [Math.PI / 2, 0, 0],
+    slot,
+    plan: false,
+  };
+}
+
+/** Vertical flat panel in the Z/Y plane from [z, y] points, `t` thick, centred on x = xc. */
+function panelZY(slot: string, pts: V2[], xc: number, t: number): Part {
+  const zs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const cz = (Math.min(...zs) + Math.max(...zs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return {
+    shape: 'prism',
+    outline: pts.map(([z, y]) => [z - cz, -(y - cy)] as V2),
+    height: t,
+    position: [xc + t / 2, cy, cz],
+    rotation: [Math.PI / 2, 0, Math.PI / 2],
+    slot,
+    plan: false,
+  };
+}
+
 /** Core architectural L-cabinetry, worktop (with sink cut-out) and vertical stack-tile splashback. */
 function buildLKitchenShell(size: Size3, params?: ParamValues, hobPlacement: HobPlacement = 'main'): Part[] {
   const g = lKitchenGeo(size, params);
@@ -1266,9 +1301,7 @@ function buildLKitchenFixtures(
     cyl('steel', [spoutEnd[0], spoutEnd[1] - 0.125, spoutEnd[2]], 0.016, 0.028, o),
   );
 
-  // 4. Black glass induction hob (20 cm from the open counter edge) + 1-sided tempered glass oil-splatter shield (+ slim hood when hob is on main arm with uppers).
-  const shieldH = Math.min(0.45, uDrop - 0.055);
-  const yShieldTop = yw + shieldH;
+  // 4. Black glass induction hob (20 cm from the open counter edge) + slim hood when hob is on main arm with uppers.
   if (hobPlacement === 'main') {
     const hobLenZ = mainHobGlass[1] - mainHobGlass[0];
     const hobMidZ = (mainHobGlass[0] + mainHobGlass[1]) / 2;
@@ -1283,13 +1316,6 @@ function buildLKitchenFixtures(
       torus('steel', [hxc - 0.02, yw + 0.0072, hobMidZ - hobLenZ * 0.24], rSmall, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
       torus('steel', [hxc + 0.02, yw + 0.0072, hobMidZ + hobLenZ * 0.24], rLarge, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
       span('steel', [hx0 + 0.03, hx0 + 0.036], [yw + 0.0065, yw + 0.0078], [hobMidZ - ctrlHalf, hobMidZ + ctrlHalf], o),
-      // 1-sided tempered glass oil-splatter shield on the open outer end (+d/2) in brushed-steel U-channels.
-      span('steel', [w / 2 - cd + 0.02, w / 2 - 0.013], [yw + 0.001, yw + 0.013], [d / 2 - 0.018, d / 2 - 0.004], o),
-      span('steel', [w / 2 - 0.025, w / 2 - 0.013], [yw + 0.013, yShieldTop - 0.006], [d / 2 - 0.018, d / 2 - 0.004], o),
-      span('shield', [w / 2 - cd + 0.016, w / 2 - 0.019], [yw + 0.006, yShieldTop], [d / 2 - 0.015, d / 2 - 0.007], {
-        ...o,
-        bevel: 0.0015,
-      }),
     );
 
     if (opts.withUppers) {
@@ -1328,15 +1354,55 @@ function buildLKitchenFixtures(
       torus('steel', [hobMidX - hobLenX * 0.24, yw + 0.0072, hzc - 0.015], rSmall, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
       torus('steel', [hobMidX + hobLenX * 0.24, yw + 0.0072, hzc + 0.015], rLarge, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
       span('steel', [hobMidX - ctrlHalf, hobMidX + ctrlHalf], [yw + 0.0065, yw + 0.0078], [hz1 - 0.036, hz1 - 0.03], o),
-      // 1-sided tempered glass oil-splatter shield on the open outer end (-w/2) in brushed-steel U-channels.
-      span('steel', [-w / 2 + 0.004, -w / 2 + 0.018], [yw + 0.001, yw + 0.013], [-d / 2 + 0.013, -d / 2 + cd - 0.02], o),
-      span('steel', [-w / 2 + 0.004, -w / 2 + 0.018], [yw + 0.013, yShieldTop - 0.006], [-d / 2 + 0.013, -d / 2 + 0.025], o),
-      span('shield', [-w / 2 + 0.007, -w / 2 + 0.015], [yw + 0.006, yShieldTop], [-d / 2 + 0.019, -d / 2 + cd - 0.016], {
-        ...o,
-        bevel: 0.0015,
-      }),
     );
   }
+
+  // 5. Top-chamfered frosted glass splatter shields in white base shoes at BOTH open ends of the L-counter.
+  const shieldH = Math.min(0.45, uDrop - 0.055);
+  const yGlass0 = yw + 0.007;
+  const yShieldTop = yw + shieldH;
+  const rxFront = w / 2 - cd + 0.014;
+  const rxWall = w / 2 - 0.014;
+  const rzWall = -d / 2 + 0.014;
+  const rzFront = -d / 2 + cd - 0.014;
+  const chamfer = clamp(Math.min(rxWall - rxFront, shieldH) * 0.34, 0.09, 0.155);
+
+  out.push(
+    // Main-arm open end (+d/2): white base shoe on the worktop + 8 mm frosted glass chamfered on the top-front corner.
+    span('shieldBase', [rxFront - 0.003, rxWall + 0.001], [yw + 0.001, yw + 0.015], [d / 2 - 0.018, d / 2 - 0.004], {
+      ...o,
+      bevel: 0.002,
+    }),
+    panelXY(
+      'shield',
+      [
+        [rxFront, yGlass0],
+        [rxWall, yGlass0],
+        [rxWall, yShieldTop],
+        [rxFront + chamfer, yShieldTop],
+        [rxFront, yShieldTop - chamfer],
+      ],
+      d / 2 - 0.015,
+      0.008,
+    ),
+    // Return-arm open end (-w/2): matching white base shoe + 8 mm frosted glass chamfered on the top-front corner.
+    span('shieldBase', [-w / 2 + 0.004, -w / 2 + 0.018], [yw + 0.001, yw + 0.015], [rzWall - 0.001, rzFront + 0.003], {
+      ...o,
+      bevel: 0.002,
+    }),
+    panelZY(
+      'shield',
+      [
+        [rzWall, yGlass0],
+        [rzFront, yGlass0],
+        [rzFront, yShieldTop - chamfer],
+        [rzFront - chamfer, yShieldTop],
+        [rzWall, yShieldTop],
+      ],
+      -w / 2 + 0.011,
+      0.008,
+    ),
+  );
 
   return out;
 }
@@ -1381,9 +1447,8 @@ function rotatePartsCCW90(parts: Part[]): Part[] {
     } else if (p.shape === 'box' || p.shape === 'torus') {
       q.rotation = [0, Math.PI / 2, 0];
     }
-    if (q.shape === 'prism') {
+    if (q.shape === 'prism' && !p.rotation) {
       q.outline = q.outline.map(([x, z]) => [z, -x] as V2);
-      delete q.rotation;
     }
     return q;
   });
@@ -1437,6 +1502,9 @@ function lKitchenPlanDetail(
     },
     { kind: 'circle', c: [(holeX[0] + holeX[1]) / 2, (holeZ[0] + zBowlMid - 0.014) / 2], r: 0.028 },
     { kind: 'circle', c: [(holeX[0] + holeX[1]) / 2, (zBowlMid + 0.014 + holeZ[1]) / 2], r: 0.028 },
+    // Frosted glass splatter shields on BOTH open ends of the L-counter in plan.
+    { kind: 'line', a: [w / 2 - cd + 0.014, d / 2 - 0.011], b: [w / 2 - 0.014, d / 2 - 0.011] },
+    { kind: 'line', a: [-w / 2 + 0.011, -d / 2 + 0.014], b: [-w / 2 + 0.011, -d / 2 + cd - 0.014] },
   ];
 
   if (hobPlacement === 'main') {
@@ -1460,8 +1528,6 @@ function lKitchenPlanDetail(
       },
       { kind: 'circle', c: [hxc - 0.02, hobMidZ - hobLenZ * 0.24], r: rSmall },
       { kind: 'circle', c: [hxc + 0.02, hobMidZ + hobLenZ * 0.24], r: rLarge },
-      // 1-sided outer glass splatter shield in plan.
-      { kind: 'line', a: [w / 2 - cd + 0.016, d / 2 - 0.011], b: [w / 2 - 0.013, d / 2 - 0.011] },
     );
   } else {
     const hobLenX = returnHobGlass[1] - returnHobGlass[0];
@@ -1484,8 +1550,6 @@ function lKitchenPlanDetail(
       },
       { kind: 'circle', c: [hobMidX - hobLenX * 0.24, hzc - 0.015], r: rSmall },
       { kind: 'circle', c: [hobMidX + hobLenX * 0.24, hzc + 0.015], r: rLarge },
-      // 1-sided outer glass splatter shield in plan.
-      { kind: 'line', a: [-w / 2 + 0.011, -d / 2 + 0.013], b: [-w / 2 + 0.011, -d / 2 + cd - 0.016] },
     );
   }
 
@@ -1569,7 +1633,7 @@ const lKitchen = defineItem({
     ...TAGS,
   ],
   description:
-    'Parametric L-shaped sage & warm-cream shaker kitchen without fridge, dining bar or wall shelves, with a three-drawer horizontal shaker base under the induction hob: resize Width and Depth independently, or switch Model to move the hob onto the side arm or omit the upper cabinet row.',
+    'Parametric L-shaped sage & warm-cream shaker kitchen without fridge, dining bar or wall shelves, with a three-drawer horizontal shaker base under the induction hob and top-chamfered frosted glass splatter shields in white base shoes on both open counter ends: resize Width and Depth independently, or switch Model to move the hob onto the side arm or omit the upper cabinet row.',
   defaultSize: { w: 2.85, d: 1.75, h: 2.22 },
   minSize: { w: 1.85, d: 1.2, h: 1.95 },
   maxSize: { w: 4.2, d: 3.6, h: 2.6 },
@@ -1601,7 +1665,7 @@ const lKitchenRightReturn = defineItem({
     ...TAGS,
   ],
   description:
-    'Mirrored parametric L-shaped sage & warm-cream shaker kitchen without fridge, dining bar or wall shelves, with a three-drawer horizontal shaker base under the induction hob: resize Width and Depth independently, or switch Model to move the hob onto the right return arm or omit the upper cabinet row.',
+    'Mirrored parametric L-shaped sage & warm-cream shaker kitchen without fridge, dining bar or wall shelves, with a three-drawer horizontal shaker base under the induction hob and top-chamfered frosted glass splatter shields in white base shoes on both open counter ends: resize Width and Depth independently, or switch Model to move the hob onto the right return arm or omit the upper cabinet row.',
   defaultSize: { w: 2.85, d: 1.75, h: 2.22 },
   minSize: { w: 1.85, d: 1.2, h: 1.95 },
   maxSize: { w: 4.2, d: 3.6, h: 2.6 },
@@ -1711,7 +1775,8 @@ export default definePack({
     { id: 'bar-oak', name: 'Warm oak veneer', category: 'wood', color: '#b8925f', roughness: 0.55, pattern: { id: 'wood-grain', scale: 0.6 }, photo: { set: 'oak-veneer' } },
     { id: 'leather-tab', name: 'Tan leather', category: 'fabric', color: '#553a26', roughness: 0.6, photo: { set: 'leather', scale: 0.4 } },
     { id: 'reeded-glass', name: 'Reeded glass', category: 'glass', color: '#e8ece6', roughness: 0.12, opacity: 0.5, pattern: { id: 'fluted', scale: 0.08, rotation: 90 } },
-    { id: 'tempered-glass', name: 'Tempered clear glass (kính chắn dầu)', category: 'glass', color: '#cfe4e2', roughness: 0.05, opacity: 0.36 },
+    { id: 'tempered-glass', name: 'Frosted tempered glass (kính mờ chắn bếp)', category: 'glass', color: '#eef3f4', roughness: 0.42, opacity: 0.76 },
+    { id: 'shield-base-white', name: 'White powder-coated mount (chân đế trắng)', category: 'metal', color: '#f7f7f4', roughness: 0.3, metalness: 0.04 },
     { id: 'smoked-glass', name: 'Smoked glass', category: 'glass', color: '#8a8378', roughness: 0.08, opacity: 0.55 },
     { id: 'dried-grass', name: 'Dried feather grass', category: 'solid', color: '#d9c7a4', roughness: 0.95 },
     { id: 'mandarin', name: 'Mandarin peel', category: 'solid', color: '#e7781f', roughness: 0.55 },
