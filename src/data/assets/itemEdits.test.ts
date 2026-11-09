@@ -320,6 +320,57 @@ describe('shape settings (portal frames)', () => {
   });
 });
 
+describe('model settings (arched wall portal, short wall)', () => {
+  const ID = 'portal-frames:arched-wall-portal';
+  const shortWall = () => withModel(byId(ID), 'short-wall');
+  const lowest = (parts: Part[]) => Math.min(...parts.map((p) => partBounds(p).min[1]));
+
+  it("only the short-wall model offers its height, after the item's own settings", () => {
+    const base = byId(ID);
+    expect(base.params!.some((p) => p.id === 'shortWall')).toBe(false);
+    expect(withModel(base, 'flush').params!.some((p) => p.id === 'shortWall')).toBe(false);
+    const ids = shortWall().params!.map((p) => p.id);
+    expect(ids.at(-1)).toBe('shortWall');
+    expect(ids.slice(0, -1)).toEqual(base.params!.map((p) => p.id));
+  });
+
+  it('fills the opening up to its height with an oak sill, and the lining starts on the sill', () => {
+    const a = shortWall();
+    const size = a.defaultSize;
+    for (const h of [0.6, 0.9, 1.2]) {
+      const parts = editedParts(a, size, { params: { shortWall: h } }).map((x) => x.part);
+      const sill = parts.filter((p) => p.slot === 'lining' && Math.abs(partBounds(p).max[1] - h) < 1e-6);
+      expect(sill.length, `sill at ${h}`).toBe(1);
+      // Across the opening: the sill reaches both jambs.
+      const b = partBounds(sill[0]);
+      expect(b.max[0] - b.min[0]).toBeGreaterThan(1.5);
+      // The lining round the opening (every lining part but the sill) starts on the sill, not the floor.
+      expect(lowest(parts.filter((p) => p.slot === 'lining' && p !== sill[0]))).toBeCloseTo(h, 3);
+      expect(inside(parts, size)).toBe(true);
+    }
+  });
+
+  it('stays under the arch however high it is set, at small and large sizes', () => {
+    const a = shortWall();
+    for (const size of [a.defaultSize, { w: 1.2, d: 0.1, h: 1.9 }, { w: 6, d: 0.3, h: 3.4 }]) {
+      const parts = editedParts(a, size, { params: { shortWall: 2.4 } }).map((x) => x.part);
+      expect(finite(parts)).toBe(true);
+      expect(inside(parts, size)).toBe(true);
+      const sill = parts.filter((p) => p.slot === 'lining').map((p) => partBounds(p)).filter((b) => b.max[0] - b.min[0] > 0.3 && b.max[1] - b.min[1] < 0.05);
+      expect(sill.length).toBe(1);
+      expect(sill[0].max[1]).toBeLessThanOrEqual(size.h - 0.3 + 1e-6);
+    }
+  });
+
+  it('has a handle on top of the wall that drags it up', () => {
+    const a = shortWall();
+    const h = paramHandles(a, a.defaultSize, { shortWall: 1.1 }).find((x) => x.param.id === 'shortWall')!;
+    expect(h.handle.at[1]).toBeCloseTo(1.1, 6);
+    expect(h.handle.dir).toEqual([0, 1, 0]);
+    expect(h.value).toBe(1.1);
+  });
+});
+
 describe('connected edits', () => {
   const STUDY = 'wardrobe-study:wardrobe-study-wall';
   const box = (p: Part) => partBounds(p);

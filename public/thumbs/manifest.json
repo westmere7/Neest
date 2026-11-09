@@ -4073,6 +4073,10 @@
    "file": "portal-frames_arched-wall-portal_model_plain-flush.webp",
    "fp": "26f267da2ca33a66"
   },
+  "portal-frames:arched-wall-portal@model:short-wall": {
+   "file": "portal-frames_arched-wall-portal_model_short-wall.webp",
+   "fp": "086f62575465ad9d"
+  },
   "portal-frames:arched-wall-portal@model:sidelight": {
    "file": "portal-frames_arched-wall-portal_model_sidelight.webp",
    "fp": "dd17120a296437b7"
