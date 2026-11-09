@@ -54,8 +54,11 @@ class FakeSocket {
   readyState = 0;
   id = `c${++nextId}`;
   ready = false;
-  /** Server → client messages not yet handed to the client. */
-  inbox: ServerMessage[] = [];
+  /** Server → client messages not yet handed to the client ("pong" answers a ping, as the room's runtime does). */
+  inbox: (ServerMessage | 'pong')[] = [];
+  /** Pings received; answered while the connection works. */
+  pings = 0;
+  answersPings = true;
   /** Client → server messages not yet handed to the room. */
   outbox: ClientMessage[] = [];
   onopen: (() => void) | null = null;
@@ -72,6 +75,11 @@ class FakeSocket {
   /** Whose socket this is (from its hello). */
   owner = '';
   send(text: string) {
+    if (text === 'ping') {
+      this.pings++;
+      if (this.answersPings) this.inbox.push('pong');
+      return;
+    }
     const msg = JSON.parse(text) as ClientMessage;
     if (msg.t === 'hello') this.owner = msg.name;
     this.outbox.push(msg);
@@ -88,7 +96,10 @@ class FakeSocket {
   /** Moves this socket's messages: client → room, then room → client. */
   pump() {
     while (this.outbox.length && this.readyState === 1) room.receive(this, this.outbox.shift()!);
-    while (this.inbox.length && this.readyState === 1) this.onmessage?.({ data: JSON.stringify(this.inbox.shift()) });
+    while (this.inbox.length && this.readyState === 1) {
+      const m = this.inbox.shift()!;
+      this.onmessage?.({ data: typeof m === 'string' ? m : JSON.stringify(m) });
+    }
   }
 }
 let sockets: FakeSocket[] = [];
@@ -292,5 +303,37 @@ describe('live sessions: two people through a room', () => {
     const server = structuredClone(room.doc) as Record<string, unknown>;
     delete server.updatedAt;
     expect(deepEqual(a.doc(), server)).toBe(true);
+  });
+
+  it('pings the room, and reconnects when the connection goes silent (sleep, network change)', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    const a = await person('Alice', 'prj_live');
+    for (let i = 0; i < 3; i++) {
+      a.pump();
+      await vi.advanceTimersByTimeAsync(10);
+    }
+    expect(a.live.useLiveStore.getState().status).toBe('live');
+    const first = a.socket()!;
+    // Answered pings keep it live.
+    for (let i = 0; i < 4; i++) {
+      await vi.advanceTimersByTimeAsync(20_000);
+      a.pump();
+    }
+    expect(first.pings).toBeGreaterThanOrEqual(4);
+    expect(a.live.useLiveStore.getState().status).toBe('live');
+    // The link dies without closing: nothing comes back any more.
+    first.answersPings = false;
+    await vi.advanceTimersByTimeAsync(70_000);
+    expect(first.readyState).toBe(3);
+    expect(a.live.useLiveStore.getState().status).toBe('offline');
+    // It connects again on its own.
+    await vi.advanceTimersByTimeAsync(1_000);
+    for (let i = 0; i < 3; i++) {
+      a.socket()?.pump();
+      await vi.advanceTimersByTimeAsync(10);
+    }
+    expect(a.socket()).not.toBe(first);
+    expect(a.live.useLiveStore.getState().status).toBe('live');
+    a.live.stopLive();
   });
 });

@@ -116,6 +116,11 @@ export async function removeRoom(room: string): Promise<void> {
 /** True when `a` is `b` or contains it. */
 const covers = (a: string[], b: string[]) => a.length <= b.length && a.every((k, i) => k === b[i]);
 
+/** The room answers a ping with "pong" (cloud/src/room.ts); it drops connections silent for a minute. */
+const PING_MS = 20_000;
+/** Nothing heard for this long (two pings unanswered): the connection is dead even if the browser has not noticed. */
+const DEAD_MS = 45_000;
+
 interface Batch {
   id: string;
   ops: WireOp[];
@@ -129,6 +134,9 @@ class LiveSession {
   private stopped = false;
   private retry = 0;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private pingTimer: ReturnType<typeof setTimeout> | null = null;
+  /** When the room was last heard from on the current connection. */
+  private lastHeard = 0;
   private presenceTimer: ReturnType<typeof setTimeout> | null = null;
   private unsubs: (() => void)[] = [];
   private lastPresence = '';
@@ -172,6 +180,21 @@ class LiveSession {
         else if (!s.tx && prev.tx) queueMicrotask(() => this.endPreview());
       }),
     );
+    // Back online, or back to this tab after the computer slept: reconnect now instead of at the next retry.
+    const wake = () => {
+      if (this.stopped) return;
+      if (this.ws && Date.now() - this.lastHeard > DEAD_MS) this.lost(this.ws);
+      else if (!this.ws) {
+        if (this.retryTimer) clearTimeout(this.retryTimer);
+        this.retry = 0;
+        this.connect();
+      }
+    };
+    const onVisible = () => document.visibilityState === 'visible' && wake();
+    window.addEventListener('online', wake);
+    document.addEventListener('visibilitychange', onVisible);
+    this.unsubs.push(() => window.removeEventListener('online', wake));
+    this.unsubs.push(() => document.removeEventListener('visibilitychange', onVisible));
     this.connect();
   }
 
@@ -179,6 +202,7 @@ class LiveSession {
     this.stopped = true;
     for (const u of this.unsubs) u();
     if (this.retryTimer) clearTimeout(this.retryTimer);
+    if (this.pingTimer) clearTimeout(this.pingTimer);
     if (this.presenceTimer) clearTimeout(this.presenceTimer);
     if (this.previewTimer) clearTimeout(this.previewTimer);
     this.ws?.close(1000, 'closed');
@@ -196,23 +220,52 @@ class LiveSession {
     this.ws = ws;
     ws.onopen = () => {
       this.retry = 0;
+      this.lastHeard = Date.now();
       this.send({ t: 'hello', since: this.seq, name: this.identity.name, color: this.identity.color });
+      this.schedulePing(ws);
     };
     ws.onmessage = (e) => {
+      if (this.ws !== ws) return;
+      this.lastHeard = Date.now();
+      if (e.data === 'pong') return;
       try {
         this.receive(JSON.parse(String(e.data)) as ServerMessage);
       } catch {
         /* ignore a malformed message */
       }
     };
-    ws.onclose = () => {
+    ws.onclose = () => this.lost(ws);
+  }
+
+  /** Keeps the connection known to be alive: pings the room, and gives up on it when nothing comes back. */
+  private schedulePing(ws: WebSocket): void {
+    if (this.pingTimer) clearTimeout(this.pingTimer);
+    this.pingTimer = setTimeout(() => {
       if (this.ws !== ws || this.stopped) return;
-      this.ws = null;
-      for (const b of this.batches) b.sent = false; // resent after reconnecting (the room drops ones it already has)
-      useLiveStore.setState({ status: 'offline', peers: {} });
-      const delay = Math.min(15000, 500 * 2 ** this.retry++);
-      this.retryTimer = setTimeout(() => this.connect(), delay);
-    };
+      if (Date.now() - this.lastHeard > DEAD_MS) return this.lost(ws);
+      try {
+        ws.send('ping');
+      } catch {
+        /* closing */
+      }
+      this.schedulePing(ws);
+    }, PING_MS);
+  }
+
+  /** The connection is gone (closed, or silent too long): show offline and reconnect with growing pauses. */
+  private lost(ws: WebSocket): void {
+    if (this.ws !== ws || this.stopped) return;
+    this.ws = null;
+    if (this.pingTimer) clearTimeout(this.pingTimer);
+    try {
+      ws.close(4001, 'No answer');
+    } catch {
+      /* already closed */
+    }
+    for (const b of this.batches) b.sent = false; // resent after reconnecting (the room drops ones it already has)
+    useLiveStore.setState({ status: 'offline', peers: {} });
+    const delay = Math.min(15000, 500 * 2 ** this.retry++);
+    this.retryTimer = setTimeout(() => this.connect(), delay);
   }
 
   private send(msg: ClientMessage): boolean {
@@ -408,6 +461,13 @@ export async function startLive(projectId: string): Promise<() => void> {
 export function stopLive(): void {
   session?.stop();
   session = null;
+}
+
+// Dev server: when this file changes, the old session must not stay connected beside the new one (it would show
+// as another person in the room), so it is stopped and the page reloads.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => stopLive());
+  import.meta.hot.accept(() => window.location.reload());
 }
 
 /** Stops sharing in this browser: the project stays here as an ordinary local project. */

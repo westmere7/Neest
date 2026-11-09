@@ -20,12 +20,23 @@ interface Attachment {
   ready: boolean;
   /** Name and colour come from the account. */
   fixed?: boolean;
+  /** When this connection last sent something (pings are answered without waking: see the alarm). */
+  seen?: number;
+  /** Closed by the room for not answering; on its way out. */
+  gone?: boolean;
 }
 
 /** Snapshot rows hold at most this many characters (SQLite values in a Durable Object are limited to 2 MB). */
 const SNAPSHOT_PART = 1_000_000;
 /** Changes kept after the last snapshot before a new snapshot is written (people reconnecting replay them). */
 const COMPACT_EVERY = 500;
+/**
+ * Connections that drop without closing (a laptop sleeping, a network change, a phone locking) are only noticed by
+ * their silence: apps ping every 20 s (answered "pong" by the runtime, without waking the room), and a check every
+ * SWEEP_MS drops connections silent for longer than STALE_MS, so they stop showing as here.
+ */
+const SWEEP_MS = 30_000;
+const STALE_MS = 60_000;
 
 export async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -46,6 +57,7 @@ export class ProjectRoom extends DurableObject<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     ctx.blockConcurrencyWhile(async () => {
       const sql = ctx.storage.sql;
       sql.exec('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)');
@@ -109,7 +121,16 @@ export class ProjectRoom extends DurableObject<Env> {
     } catch {
       /* none */
     }
-    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: account.name ?? '', color: account.color ?? '', p: null, ready: false, fixed: !!account.name } satisfies Attachment);
+    server.serializeAttachment({
+      id: crypto.randomUUID().slice(0, 8),
+      name: account.name ?? '',
+      color: account.color ?? '',
+      p: null,
+      ready: false,
+      fixed: !!account.name,
+      seen: Date.now(),
+    } satisfies Attachment);
+    if ((await this.ctx.storage.getAlarm()) === null) await this.ctx.storage.setAlarm(Date.now() + SWEEP_MS);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -141,6 +162,9 @@ export class ProjectRoom extends DurableObject<Env> {
       return this.send(ws, { t: 'error', message: 'Not JSON' });
     }
     const att = ws.deserializeAttachment() as Attachment;
+    if (att.gone) return;
+    att.seen = Date.now();
+    ws.serializeAttachment(att);
     if (msg.t === 'hello') {
       if (!att.fixed) {
         att.name = String(msg.name ?? '').slice(0, 40) || 'Guest';
@@ -152,7 +176,7 @@ export class ProjectRoom extends DurableObject<Env> {
         .getWebSockets()
         .filter((o) => o !== ws)
         .map((o) => o.deserializeAttachment() as Attachment)
-        .filter((a) => a?.ready)
+        .filter((a) => a?.ready && !a.gone)
         .map(({ id, name, color, p }) => ({ id, name, color, p }));
       this.send(ws, { t: 'welcome', you: att.id, seq: this.seq, peers });
       const since = Number(msg.since) || 0;
@@ -191,6 +215,31 @@ export class ProjectRoom extends DurableObject<Env> {
       ws.serializeAttachment(att);
       this.broadcast({ t: 'presence', id: att.id, name: att.name, color: att.color, p: att.p }, ws);
     }
+  }
+
+  /** Drops connections that have gone silent (see STALE_MS); runs while anyone is connected. */
+  async alarm(): Promise<void> {
+    const now = Date.now();
+    let open = 0;
+    for (const ws of this.ctx.getWebSockets()) {
+      const att = ws.deserializeAttachment() as Attachment | null;
+      if (!att || att.gone) continue;
+      const pong = this.ctx.getWebSocketAutoResponseTimestamp(ws)?.getTime() ?? 0;
+      if (now - Math.max(att.seen ?? 0, pong) <= STALE_MS) {
+        open++;
+        continue;
+      }
+      if (att.ready) this.broadcast({ t: 'leave', id: att.id }, ws);
+      att.ready = false;
+      att.gone = true;
+      ws.serializeAttachment(att);
+      try {
+        ws.close(4000, 'No answer');
+      } catch {
+        /* already closed */
+      }
+    }
+    if (open) await this.ctx.storage.setAlarm(now + SWEEP_MS);
   }
 
   async webSocketClose(ws: WebSocket, code: number): Promise<void> {
