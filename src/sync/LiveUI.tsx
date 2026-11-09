@@ -9,6 +9,9 @@ import { useDialogStore, confirmAction, toast } from '@/state/uiStores';
 import { derivePlan } from '@/domain/geometry/derive';
 import { rectPolygon } from '@/domain/geometry/polygon';
 import { viewedOption } from '@/domain/sync/doc';
+import { listOptions } from '@/domain/commands/options';
+import type { Project } from '@/domain/model/schema';
+import type { Peer } from '@/domain/sync/protocol';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
 import { saveProject } from '@/features/projects/projectService';
 import { MIN_PASSWORD, changePassword, signIn, signOut, signOutOthers, useAuthStore } from './auth';
@@ -35,12 +38,34 @@ const initials = (name: string) =>
     .map((w) => w[0]!.toUpperCase())
     .join('') || '?';
 
-export function Avatar({ name, color, title }: { name: string; color: string; title?: string }) {
+export function Avatar({ name, color, title, dim, small }: { name: string; color: string; title?: string; dim?: boolean; small?: boolean }) {
   return (
-    <span className="live-avatar" style={{ background: color }} title={title ?? name} aria-label={title ?? name}>
+    <span
+      className={`live-avatar${dim ? ' dim' : ''}${small ? ' small' : ''}`}
+      style={{ background: color }}
+      title={title ?? name}
+      aria-label={title ?? name}
+    >
       {initials(name)}
     </span>
   );
+}
+
+/** A person in the room by name; the signed-in account on another device (same name and colour) says so. */
+export function peerName(peer: Pick<Peer, 'name' | 'color'>, me: { name: string; color: string } | null): string {
+  return me && peer.name === me.name && peer.color === me.color ? `${peer.name} (another device)` : peer.name;
+}
+
+/**
+ * Which layout option someone is looking at: its id and name, whether it is the one shown here, or null when the
+ * project has a single layout or they have not said yet.
+ */
+export function peerOption(project: Project, peer: Pick<Peer, 'p'>): { id: string; name: string; same: boolean } | null {
+  const { options, activeId } = listOptions(project);
+  const view = peer.p?.view;
+  if (options.length < 2 || !view) return null;
+  const o = options.find((x) => x.id === view);
+  return o ? { id: o.id, name: o.name, same: o.id === activeId } : null;
 }
 
 /** Name + password, for the team's accounts. */
@@ -111,6 +136,8 @@ export function SignInGate({ children }: { children: ReactNode }) {
 export function LiveButton() {
   const status = useLiveStore((s) => s.status);
   const peers = useLiveStore((s) => s.peers);
+  const project = useProjectStore((s) => s.project);
+  const me = useAuthStore((s) => s.user);
   if (!SYNC_URL) return null;
   const list = Object.values(peers);
   const label =
@@ -127,9 +154,19 @@ export function LiveButton() {
               : 'Share with the team for live editing';
   return (
     <div className="live-button">
-      {list.slice(0, 4).map((p) => (
-        <Avatar key={p.id} name={p.name} color={p.color} />
-      ))}
+      {list.slice(0, 4).map((p) => {
+        const where = project ? peerOption(project, p) : null;
+        const who = peerName(p, me);
+        return (
+          <Avatar
+            key={p.id}
+            name={p.name}
+            color={p.color}
+            dim={where ? !where.same : false}
+            title={where ? `${who} · on ${where.name}${where.same ? ' (same as you)' : ''}` : who}
+          />
+        );
+      })}
       {list.length > 4 && <span className="live-more">+{list.length - 4}</span>}
       <IconButton label={label} className={`live-icon state-${status}`} onClick={() => useDialogStore.getState().open('live')} data-testid="live">
         {status === 'offline' || status === 'error' ? <WifiOff size={17} /> : <Users size={17} />}
@@ -234,13 +271,16 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
                   {status === 'live' ? (pending ? `sending ${pending}…` : 'connected') : status === 'offline' ? 'offline, reconnecting' : status}
                 </span>
               </div>
-              {Object.values(peers).map((p) => (
-                <div className="live-person" key={p.id}>
-                  <Avatar name={p.name} color={p.color} />
-                  <span>{p.name}</span>
-                  <span className="live-state">{p.p?.view && p.p.view !== viewedOption(project) ? 'on another option' : ''}</span>
-                </div>
-              ))}
+              {Object.values(peers).map((p) => {
+                const where = peerOption(project, p);
+                return (
+                  <div className="live-person" key={p.id}>
+                    <Avatar name={p.name} color={p.color} />
+                    <span>{peerName(p, user)}</span>
+                    <span className="live-state">{where ? `on ${where.name}${where.same ? ' (same as you)' : ''}` : ''}</span>
+                  </div>
+                );
+              })}
             </div>
             {error && <p className="live-error">{error}</p>}
           </>

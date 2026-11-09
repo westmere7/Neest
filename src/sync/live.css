@@ -16,6 +16,14 @@
   box-shadow: 0 0 0 2px var(--surface-solid);
   flex: none;
 }
+.live-avatar.dim {
+  opacity: 0.45;
+}
+.live-avatar.small {
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+}
 .live-button .live-avatar + .live-avatar {
   margin-left: -6px;
 }

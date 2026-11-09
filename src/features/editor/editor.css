@@ -973,6 +973,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.option-people {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  margin-left: auto;
+}
+.option-switch .option-people {
+  margin-left: 2px;
+}
+.option-people .live-avatar + .live-avatar {
+  margin-left: -5px;
+}
+.option-people .live-avatar {
+  box-shadow: 0 0 0 1.5px var(--surface-solid);
+}
 .option-icon {
   display: inline-grid;
   place-items: center;

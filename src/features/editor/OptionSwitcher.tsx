@@ -15,6 +15,9 @@ import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
 import { confirmAction } from '@/state/uiStores';
 import { openContextMenu } from '@/components/ContextMenu';
+import { useLiveStore } from '@/sync/live';
+import { useAuthStore } from '@/sync/auth';
+import { Avatar, peerName } from '@/sync/LiveUI';
 import {
   addOption,
   deleteOption,
@@ -28,7 +31,8 @@ import {
 /**
  * Layout options (phương án) next to the project name: several versions of the plan in one project.
  * The button shows the active option; its popover switches, adds (duplicate, same walls without
- * furniture, blank), renames, reorders and deletes options. See domain/commands/options.ts.
+ * furniture, blank), renames, reorders and deletes options. See domain/commands/options.ts. In a shared project, each option shows who
+ * is looking at it, and the button shows who is on the same one.
  */
 export function OptionSwitcher() {
   const project = useProjectStore((s) => s.project!);
@@ -36,6 +40,28 @@ export function OptionSwitcher() {
   const active = options.find((o) => o.id === activeId) ?? options[0];
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const peers = useLiveStore((s) => s.peers);
+  const me = useAuthStore((s) => s.user);
+  /** People in the room by the option they are looking at. */
+  const byOption = new Map<string, { id: string; name: string; label: string; color: string }[]>();
+  if (options.length > 1)
+    for (const p of Object.values(peers)) {
+      const view = p.p?.view;
+      if (!view) continue;
+      byOption.set(view, [...(byOption.get(view) ?? []), { id: p.id, name: p.name, label: peerName(p, me), color: p.color }]);
+    }
+  const people = (id: string, max: number) => {
+    const list = byOption.get(id) ?? [];
+    if (!list.length) return null;
+    return (
+      <span className="option-people" aria-label={`Here: ${list.map((p) => p.label).join(', ')}`} data-testid="option-people">
+        {list.slice(0, max).map((p) => (
+          <Avatar key={p.id} name={p.name} color={p.color} small title={`${p.label} is on this option`} />
+        ))}
+        {list.length > max && <span className="live-more">+{list.length - max}</span>}
+      </span>
+    );
+  };
   const ref = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   // The popover lives in a portal on <body> so it floats above every panel; it follows the button.
@@ -141,6 +167,7 @@ export function OptionSwitcher() {
       >
         <LayoutTemplate size={13} aria-hidden />
         <span className="option-switch-name">{active.name}</span>
+        {people(active.id, 3)}
         {options.length > 1 && <span className="option-count">{options.length}</span>}
         <ChevronDown size={13} aria-hidden />
       </button>
@@ -181,6 +208,7 @@ export function OptionSwitcher() {
                     >
                       <span className="option-check">{o.id === activeId ? <Check size={14} /> : null}</span>
                       <span className="option-name">{o.name}</span>
+                      {people(o.id, 4)}
                     </button>
                   )}
                   {editing !== o.id && (
