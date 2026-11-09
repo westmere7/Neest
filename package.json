@@ -17,12 +17,13 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "cloud:dev": "wrangler dev --config cloud/wrangler.jsonc --port 8787 --local",
-    "cloud:deploy": "wrangler deploy --config cloud/wrangler.jsonc",
-    "deploy:app": "npm run build && wrangler pages deploy dist --project-name neest --branch main",
+    "cloud:deploy": "wrangler deploy --config cloud/wrangler.jsonc --secrets-file cloud/.secrets.json",
+    "deploy:app": "node tools/deploy-app.mjs",
     "textures": "node tools/fetch-textures.mjs",
     "thumbs": "node tools/generate-thumbs.mjs",
     "people": "node tools/bake-people.mjs",
-    "paintings": "node tools/fetch-paintings.mjs"
+    "paintings": "node tools/fetch-paintings.mjs",
+    "cloud:accounts": "node tools/make-accounts.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.5.0",

@@ -1,28 +1,29 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Copy, Link2, Users, WifiOff } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Copy, Link2, LogOut, RefreshCw, Trash2, Users, WifiOff } from 'lucide-react';
 import { Dialog } from '@/components/Overlays';
 import { Button, IconButton } from '@/components/ui';
+import { Logo } from '@/components/Logo';
 import { navigate } from '@/app/App';
 import { useProjectStore } from '@/state/projectStore';
-import { useDialogStore, toast } from '@/state/uiStores';
+import { useDialogStore, confirmAction, toast } from '@/state/uiStores';
 import { derivePlan } from '@/domain/geometry/derive';
 import { rectPolygon } from '@/domain/geometry/polygon';
 import { viewedOption } from '@/domain/sync/doc';
 import { polyPath } from '@/features/plan-2d/PlanDrawing';
 import { saveProject } from '@/features/projects/projectService';
+import { signIn, signOut, useAuthStore } from './auth';
 import {
   SYNC_URL,
   createRoom,
   joinFromLink,
   leaveRoom,
-  liveIdentity,
+  listRooms,
   liveLink,
-  renameLive,
-  setLiveIdentity,
+  removeRoom,
   startLive,
   useLiveStore,
-  type LiveIdentity,
   type LiveRoom,
+  type SharedRoom,
 } from './live';
 import './live.css';
 
@@ -34,11 +35,75 @@ const initials = (name: string) =>
     .map((w) => w[0]!.toUpperCase())
     .join('') || '?';
 
-function Avatar({ name, color, title }: { name: string; color: string; title?: string }) {
+export function Avatar({ name, color, title }: { name: string; color: string; title?: string }) {
   return (
     <span className="live-avatar" style={{ background: color }} title={title ?? name} aria-label={title ?? name}>
       {initials(name)}
     </span>
+  );
+}
+
+/** Name + password, for the team's accounts. */
+export function SignInForm({ onDone, compact }: { onDone?: () => void; compact?: boolean }) {
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <form
+      className={`live-signin${compact ? ' compact' : ''}`}
+      data-testid="signin-form"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!name.trim() || !password) return;
+        setBusy(true);
+        setError(null);
+        try {
+          await signIn(name, password);
+          onDone?.();
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Could not sign in.');
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <label className="field">
+        <span className="field-label">Name</span>
+        <input className="input" autoComplete="username" autoFocus value={name} placeholder="danh, ngan or linh" onChange={(e) => setName(e.target.value)} />
+      </label>
+      <label className="field">
+        <span className="field-label">Password</span>
+        <input className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </label>
+      {error && (
+        <p className="live-error" role="alert">
+          {error}
+        </p>
+      )}
+      <Button variant="primary" type="submit" disabled={busy || !name.trim() || !password} data-testid="signin-submit">
+        {busy ? 'Signing in…' : 'Sign in'}
+      </Button>
+    </form>
+  );
+}
+
+/**
+ * The deployed site (a production build with a sync server) asks for an account before anything else; local
+ * and development builds open straight away.
+ */
+export function SignInGate({ children }: { children: ReactNode }) {
+  const { ready, user } = useAuthStore();
+  if (!import.meta.env.PROD || !SYNC_URL || user) return <>{children}</>;
+  if (!ready) return <div className="app-loading">Loading Neest…</div>;
+  return (
+    <div className="app-loading">
+      <div className="live-gate">
+        <Logo size={44} />
+        <strong>Sign in to Neest</strong>
+        <SignInForm />
+      </div>
+    </div>
   );
 }
 
@@ -55,9 +120,11 @@ export function LiveButton() {
         ? 'Live: connecting…'
         : status === 'offline'
           ? 'Live: offline, reconnecting (your changes are kept and sent when back)'
-          : status === 'error'
-            ? 'Live: could not connect'
-            : 'Share for live editing';
+          : status === 'signin'
+            ? 'Live: sign in to edit with the team'
+            : status === 'error'
+              ? 'Live: could not connect'
+              : 'Share with the team for live editing';
   return (
     <div className="live-button">
       {list.slice(0, 4).map((p) => (
@@ -71,51 +138,49 @@ export function LiveButton() {
   );
 }
 
-/** The Live dialog: share the open project, copy its link, see who is here, stop. */
+/** The Live dialog: sign in, share the open project, copy its link, see who is here, stop. */
 export function LiveDialog({ onClose }: { onClose: () => void }) {
   const project = useProjectStore((s) => s.project);
+  const user = useAuthStore((s) => s.user);
   const { status, room, peers, error, pending } = useLiveStore();
-  const [identity, setIdentity] = useState<LiveIdentity | null>(null);
-  const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    void liveIdentity().then((id) => {
-      setIdentity(id);
-      setName(id?.name ?? '');
-    });
-  }, []);
   if (!project) return null;
   const link = room ? liveLink(room) : null;
 
   const share = async () => {
     setBusy(true);
     try {
-      setIdentity(await setLiveIdentity(name));
       await createRoom(project);
       await startLive(project.id);
-      toast.success('Live editing is on', 'Copy the link and send it to the people you want to edit with.');
+      toast.success('Shared with the team', 'Danh, Ngân and Linh find it under Shared projects, or open the link.');
     } catch (e) {
-      toast.error('Could not start live editing', e instanceof Error ? e.message : undefined);
+      toast.error('Could not share the project', e instanceof Error ? e.message : undefined);
     } finally {
       setBusy(false);
     }
   };
-  const rename = async () => {
-    if (!name.trim() || name.trim() === identity?.name) return;
-    const id = await setLiveIdentity(name);
-    setIdentity(id);
-    if (room) renameLive(id);
-  };
   const copy = async () => {
     if (!link) return;
     await navigator.clipboard.writeText(link);
-    toast.success('Link copied', 'Anyone with this link can open and edit the project.');
+    toast.success('Link copied', 'Team members open it after signing in.');
   };
   const stop = async () => {
     await leaveRoom(project.id);
-    toast.info('Live editing stopped here', 'The project stays in this browser. Others with the link can keep editing the shared copy.');
+    toast.info('Live editing stopped here', 'The project stays in this browser. The shared copy stays on the team list.');
     onClose();
   };
+
+  if (!user)
+    return (
+      <Dialog title="Live editing" onClose={onClose} testId="live-dialog">
+        <div className="live-dialog">
+          <p className="live-note">
+            {status === 'signin' ? 'This project is shared with the team. Sign in to edit it together.' : 'Sign in with your team account to share projects and edit them together.'}
+          </p>
+          <SignInForm compact onDone={() => void (status === 'signin' ? startLive(project.id) : undefined)} />
+        </div>
+      </Dialog>
+    );
 
   return (
     <Dialog
@@ -137,31 +202,18 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
             <Button variant="ghost" onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="primary" disabled={busy || !name.trim()} onClick={() => void share()} data-testid="live-start">
-              {busy ? 'Starting…' : 'Start live editing'}
+            <Button variant="primary" disabled={busy} onClick={() => void share()} data-testid="live-start">
+              {busy ? 'Sharing…' : 'Share with the team'}
             </Button>
           </>
         )
       }
     >
       <div className="live-dialog">
-        <label className="field">
-          <span className="field-label">Your name (shown to the others)</span>
-          <input
-            className="input"
-            value={name}
-            maxLength={40}
-            placeholder="e.g. Danh"
-            data-autofocus
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => void rename()}
-            onKeyDown={(e) => e.key === 'Enter' && (room ? void rename() : name.trim() && void share())}
-          />
-        </label>
         {!room && (
           <p className="live-note">
-            Puts a copy of this project on the sync server and gives you a link. Everyone with the link edits the same
-            project at the same time and sees each other's pointers and selections. Undo only undoes your own changes.
+            Puts this project on the team's shared list. Danh, Ngân and Linh can open it and edit it at the same time,
+            seeing each other's pointers and selections. Undo only undoes your own changes.
           </p>
         )}
         {room && link && (
@@ -173,11 +225,11 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
                 <Copy size={14} /> Copy
               </Button>
             </div>
-            <p className="live-note">Anyone with this link can open and edit the project. Send it only to people you work with.</p>
+            <p className="live-note">The team finds it under Shared projects; the link opens it directly (after signing in).</p>
             <div className="live-people">
               <div className="live-person">
-                <Avatar name={identity?.name ?? name} color={identity?.color ?? '#888'} />
-                <span>{identity?.name ?? name} (you)</span>
+                <Avatar name={user.name} color={user.color} />
+                <span>{user.name} (you)</span>
                 <span className="live-state">
                   {status === 'live' ? (pending ? `sending ${pending}…` : 'connected') : status === 'offline' ? 'offline, reconnecting' : status}
                 </span>
@@ -237,59 +289,133 @@ export function PeerLayer({ px }: { px: number }) {
   );
 }
 
-/** Opening a live link (#/live/<room>/<key>): brings the shared project into this browser and opens it. */
+/** Opens a shared project: brings the team's copy into this browser and opens it. */
+async function openShared(room: LiveRoom): Promise<void> {
+  const project = await joinFromLink(room);
+  await saveProject(project);
+  navigate(`/p/${project.id}`);
+}
+
+/** Opening a live link (#/live/<room>/<key>): sign in if needed, then open the shared project. */
 export function LiveJoinPage({ room }: { room: LiveRoom }) {
-  const [error, setError] = useState<string | null>(null);
-  const [needsName, setNeedsName] = useState(false);
-  const [name, setName] = useState('');
-  const join = async () => {
-    try {
-      const project = await joinFromLink(room);
-      await saveProject(project);
-      navigate(`/p/${project.id}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'The live project could not be opened.');
-    }
-  };
+  const user = useAuthStore((s) => s.user);
+  const ready = useAuthStore((s) => s.ready);
+  const [error, setError] = useState<string | null>(SYNC_URL ? null : 'This copy of Neest has no sync server, so it cannot open live links.');
   useEffect(() => {
-    if (!SYNC_URL) {
-      setError('This copy of Neest has no sync server, so it cannot open live links.');
-      return;
-    }
-    void liveIdentity().then((id) => (id ? void join() : setNeedsName(true)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!SYNC_URL || !ready || !user) return;
+    openShared(room).catch((e) => setError(e instanceof Error ? e.message : 'The shared project could not be opened.'));
+  }, [room, ready, user]);
   return (
     <div className="app-loading">
       <div className="live-join">
         {error ? (
           <>
-            <strong>Could not open the live project</strong>
+            <strong>Could not open the shared project</strong>
             <span>{error}</span>
             <Button onClick={() => navigate('/')}>All projects</Button>
           </>
-        ) : needsName ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!name.trim()) return;
-              setNeedsName(false);
-              void setLiveIdentity(name).then(() => join());
-            }}
-          >
-            <strong>Join live editing</strong>
-            <label className="field">
-              <span className="field-label">Your name (shown to the others)</span>
-              <input className="input" autoFocus value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
-            </label>
-            <Button variant="primary" type="submit" disabled={!name.trim()}>
-              Join
-            </Button>
-          </form>
+        ) : ready && !user ? (
+          <>
+            <strong>Sign in to open the shared project</strong>
+            <SignInForm />
+          </>
         ) : (
-          <span>Opening the live project…</span>
+          <span>Opening the shared project…</span>
         )}
       </div>
     </div>
+  );
+}
+
+/** Launcher: who is signed in, and the projects shared with the team. */
+export function SharedProjects() {
+  const user = useAuthStore((s) => s.user);
+  const [rooms, setRooms] = useState<SharedRoom[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [opening, setOpening] = useState<string | null>(null);
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    try {
+      setRooms(await listRooms());
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load the shared projects.');
+    }
+  }, [user]);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+  if (!SYNC_URL) return null;
+  if (!user)
+    return (
+      <section className="live-shared" data-testid="shared-projects">
+        <h2>Shared with the team</h2>
+        <p className="live-note">Sign in to see and edit the projects Danh, Ngân and Linh share.</p>
+        <SignInForm compact />
+      </section>
+    );
+  return (
+    <section className="live-shared" data-testid="shared-projects">
+      <div className="live-shared-head">
+        <h2>Shared with the team</h2>
+        <span className="live-account">
+          <Avatar name={user.name} color={user.color} />
+          {user.name}
+          <IconButton label="Refresh the list" onClick={() => void refresh()}>
+            <RefreshCw size={15} />
+          </IconButton>
+          <IconButton label="Sign out" onClick={() => void signOut()} data-testid="signout">
+            <LogOut size={15} />
+          </IconButton>
+        </span>
+      </div>
+      {error && <p className="live-error">{error}</p>}
+      {rooms && !rooms.length && <p className="live-note">Nothing shared yet. Open a project and use the people button at the top to share it.</p>}
+      <ul className="live-room-list">
+        {rooms?.map((r) => (
+          <li key={r.room}>
+            <button
+              className="live-room"
+              disabled={!!opening}
+              onClick={() => {
+                setOpening(r.room);
+                openShared(r).catch((e) => {
+                  toast.error('Could not open the shared project', e instanceof Error ? e.message : undefined);
+                  setOpening(null);
+                });
+              }}
+            >
+              <strong>{r.name}</strong>
+              <span>
+                Shared by {r.owner === user.id ? 'you' : (r.ownerName ?? r.owner)} · {new Date(r.createdAt).toLocaleDateString()}
+                {opening === r.room ? ' · opening…' : ''}
+              </span>
+            </button>
+            {r.owner === user.id && (
+              <IconButton
+                label="Remove from the shared list"
+                onClick={async () => {
+                  const ok = await confirmAction({
+                    title: `Stop sharing “${r.name}”?`,
+                    message: 'It leaves the team list. Copies already in people’s browsers stay there.',
+                    confirmLabel: 'Remove',
+                    danger: true,
+                  });
+                  if (!ok) return;
+                  try {
+                    await removeRoom(r.room);
+                    await refresh();
+                  } catch (e) {
+                    toast.error('Could not remove it', e instanceof Error ? e.message : undefined);
+                  }
+                }}
+              >
+                <Trash2 size={15} />
+              </IconButton>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

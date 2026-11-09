@@ -1,3 +1,4 @@
+import { SharedProjects } from '@/sync/LiveUI';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Copy, Download, FolderGit2, FolderOpen, HardDrive, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
 import type { LengthUnit } from '@/domain/model/schema';
@@ -274,6 +275,8 @@ export function Launcher() {
             </div>
           </section>
         )}
+
+        <SharedProjects />
 
         <section aria-labelledby="projects-title">
           <div className="section-title-row">

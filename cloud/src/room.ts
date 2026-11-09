@@ -4,6 +4,10 @@ import { isWireOps, type ClientMessage, type Peer, type ServerMessage, type Wire
 
 export interface Env {
   ROOMS: DurableObjectNamespace<ProjectRoom>;
+  DIRECTORY: DurableObjectNamespace<import('./directory').Directory>;
+  /** Team accounts (JSON, see auth.ts) and the key that signs sessions: Worker secrets. */
+  USERS?: string;
+  SESSION_SECRET?: string;
 }
 
 /** Per-connection state, kept on the socket so it survives hibernation. */
@@ -13,6 +17,8 @@ interface Attachment {
   color: string;
   p: Peer['p'];
   ready: boolean;
+  /** Name and colour come from the account. */
+  fixed?: boolean;
 }
 
 /** Snapshot rows hold at most this many characters (SQLite values in a Durable Object are limited to 2 MB). */
@@ -95,7 +101,14 @@ export class ProjectRoom extends DurableObject<Env> {
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: '', color: '', p: null, ready: false } satisfies Attachment);
+    // The Worker vouches for who this is (signed-in account); the hello may not override it.
+    let account: { name?: string; color?: string } = {};
+    try {
+      account = JSON.parse(request.headers.get('X-Neest-User') ?? '{}') as typeof account;
+    } catch {
+      /* none */
+    }
+    server.serializeAttachment({ id: crypto.randomUUID().slice(0, 8), name: account.name ?? '', color: account.color ?? '', p: null, ready: false, fixed: !!account.name } satisfies Attachment);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -128,8 +141,10 @@ export class ProjectRoom extends DurableObject<Env> {
     }
     const att = ws.deserializeAttachment() as Attachment;
     if (msg.t === 'hello') {
-      att.name = String(msg.name ?? '').slice(0, 40) || 'Guest';
-      att.color = /^#[0-9a-f]{6}$/i.test(msg.color) ? msg.color : '#3b82f6';
+      if (!att.fixed) {
+        att.name = String(msg.name ?? '').slice(0, 40) || 'Guest';
+        att.color = /^#[0-9a-f]{6}$/i.test(msg.color) ? msg.color : '#3b82f6';
+      }
       att.ready = true;
       ws.serializeAttachment(att);
       const peers = this.ctx
@@ -162,6 +177,12 @@ export class ProjectRoom extends DurableObject<Env> {
       this.setMeta('seq', this.seq);
       this.broadcast({ t: 'ops', seq: this.seq, from: att.id, batch: msg.batch.slice(0, 64), ops: msg.ops });
       if (this.seq - this.snapSeq >= COMPACT_EVERY) this.writeSnapshot();
+      return;
+    }
+    if (msg.t === 'preview') {
+      // Relayed as it comes, never stored or numbered: only the finished change (ops) counts.
+      if (!isWireOps(msg.ops)) return;
+      this.broadcast({ t: 'preview', id: att.id, ops: msg.ops }, ws);
       return;
     }
     if (msg.t === 'presence') {

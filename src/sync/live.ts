@@ -1,29 +1,29 @@
 import { create } from 'zustand';
 import type { Project } from '@/domain/model/schema';
 import type { Op } from '@/domain/sync/ops';
-import { fromDoc, toDoc, viewedOption, type ProjectDoc } from '@/domain/sync/doc';
+import { diffProjects, fromDoc, toDoc, viewedOption, type ProjectDoc } from '@/domain/sync/doc';
 import { MAX_MESSAGE_BYTES, type ClientMessage, type Peer, type Presence, type ServerMessage, type WireOp } from '@/domain/sync/protocol';
 import { preferenceRepository } from '@/storage/indexeddb/db';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
+import { SYNC_URL, authHeaders, httpBase, useAuthStore, type SessionUser } from './auth';
+
+export { SYNC_URL };
 
 /**
  * Live editing (multi-user): a project can be shared to a room on the sync server (cloud/, Cloudflare Workers +
- * Durable Objects). Everyone with the link edits the same project; changes travel as document ops (domain/sync)
- * and the room's order decides. Everything else in Neest works without it: rooms exist only when a sync server
- * is configured (`VITE_NEEST_SYNC_URL`, or `/sync` proxied to `npm run cloud:dev` in development).
+ * Durable Objects) for the team's accounts (./auth). Everyone signed in sees the team's shared projects and edits
+ * them together; changes travel as document ops (domain/sync) and the room's order decides. Everything else in
+ * Neest works without it: rooms exist only when a sync server is configured (`VITE_NEEST_SYNC_URL`, or `/sync`
+ * proxied to `npm run cloud:dev` in development).
  */
-
-/** Where the sync server is, or null when this build has none. */
-export const SYNC_URL: string | null =
-  (import.meta.env.VITE_NEEST_SYNC_URL as string | undefined) || (import.meta.env.DEV ? '/sync' : null);
 
 export interface LiveRoom {
   room: string;
   key: string;
 }
 
-export type LiveStatus = 'off' | 'connecting' | 'live' | 'offline' | 'error';
+export type LiveStatus = 'off' | 'signin' | 'connecting' | 'live' | 'offline' | 'error';
 
 export interface LiveState {
   status: LiveStatus;
@@ -54,39 +54,27 @@ export async function rememberRoom(projectId: string, room: LiveRoom | null): Pr
   await preferenceRepository.set('liveRooms', all);
 }
 
-// ───────────── Who I am in rooms ─────────────
-
-const COLORS = ['#e8590c', '#1c7ed6', '#2f9e44', '#c2255c', '#7048e8', '#0c8599', '#e67700', '#5c940d'];
-export interface LiveIdentity {
-  name: string;
-  color: string;
-}
-export async function liveIdentity(): Promise<LiveIdentity | null> {
-  return (await preferenceRepository.get<LiveIdentity>('liveIdentity')) ?? null;
-}
-export async function setLiveIdentity(name: string): Promise<LiveIdentity> {
-  const prev = await liveIdentity();
-  const id = { name: name.trim().slice(0, 40) || 'Guest', color: prev?.color ?? COLORS[Math.floor(Math.random() * COLORS.length)] };
-  await preferenceRepository.set('liveIdentity', id);
-  return id;
-}
-
 // ───────────── Server calls ─────────────
-
-function httpBase(): string {
-  if (!SYNC_URL) throw new Error('Live editing is not set up in this build.');
-  return new URL(SYNC_URL, window.location.href).toString().replace(/\/$/, '');
-}
 
 /** The link others open to join (the key stays in the URL fragment, which browsers never send to a server). */
 export function liveLink(room: LiveRoom): string {
   return `${window.location.origin}${window.location.pathname}#/live/${room.room}/${room.key}`;
 }
 
-/** Shares a project: creates a room holding its current version. */
+/** A message for a failed server call. */
+async function failure(res: Response): Promise<Error> {
+  const body = (await res.json().catch(() => null)) as { error?: string } | null;
+  return new Error(res.status === 401 ? 'Please sign in again.' : (body?.error ?? `The sync server answered ${res.status}.`));
+}
+
+/** Shares a project with the team: creates a room holding its current version. */
 export async function createRoom(project: Project): Promise<LiveRoom> {
-  const res = await fetch(`${httpBase()}/rooms`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ doc: toDoc(project) }) });
-  if (!res.ok) throw new Error(`The sync server answered ${res.status}.`);
+  const res = await fetch(`${httpBase()}/rooms`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ doc: toDoc(project), name: project.name }),
+  });
+  if (!res.ok) throw await failure(res);
   const room = (await res.json()) as LiveRoom;
   await rememberRoom(project.id, room);
   return room;
@@ -95,11 +83,32 @@ export async function createRoom(project: Project): Promise<LiveRoom> {
 /** The room's current project, shown at option `show` (or its first option). */
 export async function fetchRoom(room: LiveRoom, show?: string, prev?: Project): Promise<{ seq: number; project: Project }> {
   // A server that does not answer must not keep the editor waiting.
-  const res = await fetch(`${httpBase()}/rooms/${room.room}/doc?key=${encodeURIComponent(room.key)}`, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+  const res = await fetch(`${httpBase()}/rooms/${room.room}/doc?key=${encodeURIComponent(room.key)}`, { cache: 'no-store', headers: authHeaders(), signal: AbortSignal.timeout(10000) });
   if (res.status === 403) throw new Error('This live link is not valid (unknown room or wrong key).');
-  if (!res.ok) throw new Error(`The sync server answered ${res.status}.`);
+  if (!res.ok) throw await failure(res);
   const { seq, doc } = (await res.json()) as { seq: number; doc: ProjectDoc };
   return { seq, project: fromDoc(doc, show ?? doc.optionOrder[0] ?? 'default', prev) };
+}
+
+/** A project shared with the team (from the server's list). */
+export interface SharedRoom extends LiveRoom {
+  name: string;
+  /** Login id and display name of whoever shared it. */
+  owner: string;
+  ownerName?: string;
+  createdAt: number;
+}
+
+export async function listRooms(): Promise<SharedRoom[]> {
+  const res = await fetch(`${httpBase()}/rooms`, { headers: authHeaders(), cache: 'no-store', signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw await failure(res);
+  return ((await res.json()) as { rooms: SharedRoom[] }).rooms;
+}
+
+/** Takes a project off the team's shared list (only whoever shared it). */
+export async function removeRoom(room: string): Promise<void> {
+  const res = await fetch(`${httpBase()}/rooms/${room}`, { method: 'DELETE', headers: authHeaders() });
+  if (!res.ok) throw await failure(res);
 }
 
 // ───────────── The session of the open project ─────────────
@@ -123,10 +132,19 @@ class LiveSession {
   private presenceTimer: ReturnType<typeof setTimeout> | null = null;
   private unsubs: (() => void)[] = [];
   private lastPresence = '';
+  private previewTimer: ReturnType<typeof setTimeout> | null = null;
+  /** A preview of my gesture in progress is showing on the others' screens. */
+  private previewShown = false;
+  /**
+   * Others' previews not shown yet: only the newest per person matters (each holds the whole change so far), so
+   * they are shown once per frame and older ones are dropped — a slow redraw never builds up a lag.
+   */
+  private incoming = new Map<string, WireOp[] | null>();
+  private incomingScheduled = false;
 
   constructor(
     private room: LiveRoom,
-    private identity: LiveIdentity,
+    private identity: SessionUser,
   ) {}
 
   async start(): Promise<void> {
@@ -146,13 +164,15 @@ class LiveSession {
     this.unsubs.push(useProjectStore.getState().onLocalOps((ops) => this.queue(ops)));
     this.unsubs.push(useEditorStore.subscribe(() => this.schedulePresence()));
     this.unsubs.push(useProjectStore.subscribe((s, prev) => s.project?.activeOptionId !== prev.project?.activeOptionId && this.schedulePresence()));
+    // A drag or slider in progress shows on the others' screens as it happens (previews, ~25 a second).
+    this.unsubs.push(
+      useProjectStore.subscribe((s, prev) => {
+        if (s.tx && s.project !== prev.project) this.schedulePreview();
+        // Gesture over: the finished change (if any) has just been queued, so the "cancelled" note goes after it.
+        else if (!s.tx && prev.tx) queueMicrotask(() => this.endPreview());
+      }),
+    );
     this.connect();
-  }
-
-  /** A new name or colour: reconnect so the others see it (the project and history stay). */
-  rename(identity: LiveIdentity): void {
-    this.identity = identity;
-    this.ws?.close(1000, 'renamed');
   }
 
   stop(): void {
@@ -160,6 +180,7 @@ class LiveSession {
     for (const u of this.unsubs) u();
     if (this.retryTimer) clearTimeout(this.retryTimer);
     if (this.presenceTimer) clearTimeout(this.presenceTimer);
+    if (this.previewTimer) clearTimeout(this.previewTimer);
     this.ws?.close(1000, 'closed');
     this.ws = null;
     useLiveStore.setState({ status: 'off', room: null, you: null, peers: {}, error: null, pending: 0 });
@@ -170,6 +191,7 @@ class LiveSession {
     const url = new URL(`${httpBase()}/rooms/${this.room.room}/ws`);
     url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     url.searchParams.set('key', this.room.key);
+    url.searchParams.set('token', useAuthStore.getState().token ?? '');
     const ws = new WebSocket(url);
     this.ws = ws;
     ws.onopen = () => {
@@ -231,6 +253,8 @@ class LiveSession {
       case 'welcome': {
         const peers = Object.fromEntries(msg.peers.map((p) => [p.id, p]));
         useLiveStore.setState({ status: 'live', you: msg.you, peers, error: null });
+        // Previews from before a reconnect may be stale; the senders' next ones (or finished changes) follow.
+        useProjectStore.getState().clearRemotePreviews();
         this.lastPresence = '';
         this.schedulePresence();
         // Backlog (changes missed while away) arrives next, then unconfirmed own changes go out again.
@@ -254,15 +278,23 @@ class LiveSession {
         // comes later in the room's order and wins, so theirs is skipped here.
         const mine = this.batches.flatMap((b) => b.ops.map((o) => o.path));
         const apply = msg.ops.filter((o) => !mine.some((p) => covers(p, o.path)));
-        useProjectStore.getState().applyRemote(apply);
+        // Their finished change supersedes any preview of theirs still waiting to be shown.
+        this.incoming.delete(msg.from);
+        useProjectStore.getState().applyRemote(apply, msg.from);
         return;
       }
+      case 'preview':
+        this.incoming.set(msg.id, msg.ops.length ? msg.ops : null);
+        this.scheduleIncoming();
+        return;
       case 'presence': {
         const { t: _t, ...peer } = msg;
         useLiveStore.setState((s) => ({ peers: { ...s.peers, [peer.id]: peer } }));
         return;
       }
       case 'leave':
+        this.incoming.delete(msg.id);
+        useProjectStore.getState().previewRemote(msg.id, null);
         useLiveStore.setState((s) => {
           const peers = { ...s.peers };
           delete peers[msg.id];
@@ -284,6 +316,53 @@ class LiveSession {
         useLiveStore.setState({ error: msg.message });
         return;
     }
+  }
+
+  private scheduleIncoming(): void {
+    if (this.incomingScheduled) return;
+    this.incomingScheduled = true;
+    const run = () => {
+      this.incomingScheduled = false;
+      if (this.stopped) return;
+      const mine = this.batches.flatMap((b) => b.ops.map((o) => o.path));
+      const store = useProjectStore.getState();
+      for (const [id, ops] of this.incoming) {
+        const show = ops ? ops.filter((o) => !mine.some((p) => covers(p, o.path))) : [];
+        store.previewRemote(id, show.length ? show : null);
+      }
+      this.incoming.clear();
+    };
+    // Once per frame while the page draws; a hidden or covered window draws no frames, so a timer stands in.
+    let done = false;
+    const once = () => {
+      if (done) return;
+      done = true;
+      run();
+    };
+    if (typeof requestAnimationFrame === 'function' && document.visibilityState === 'visible') requestAnimationFrame(once);
+    setTimeout(once, 50);
+  }
+
+  /** My gesture in progress, as the change from its start, at most every 40 ms. */
+  private schedulePreview(): void {
+    if (this.previewTimer || this.stopped) return;
+    this.previewTimer = setTimeout(() => {
+      this.previewTimer = null;
+      const { tx, project } = useProjectStore.getState();
+      if (!tx || !project) return;
+      const ops: WireOp[] = diffProjects(tx.base, project).map((o) => (o.value === undefined ? { path: o.path } : { path: o.path, value: o.value }));
+      if (JSON.stringify(ops).length > MAX_MESSAGE_BYTES) return; // too big to preview: the finished change still goes
+      if (this.send({ t: 'preview', ops })) this.previewShown = true;
+    }, 40);
+  }
+
+  /** The gesture ended: a cancelled one is taken off the others' screens (a finished one is replaced by its change). */
+  private endPreview(): void {
+    if (this.previewTimer) {
+      clearTimeout(this.previewTimer);
+      this.previewTimer = null;
+    }
+    if (this.previewShown && this.send({ t: 'preview', ops: [] })) this.previewShown = false;
   }
 
   /** Pointer, selection and shown option, at most every 50 ms and only when changed. */
@@ -312,18 +391,18 @@ export async function startLive(projectId: string): Promise<() => void> {
   stopLive();
   const room = SYNC_URL ? await roomFor(projectId) : null;
   if (!room) return () => undefined;
-  const identity = (await liveIdentity()) ?? (await setLiveIdentity('Guest'));
-  const s = new LiveSession(room, identity);
+  const user = useAuthStore.getState().user;
+  if (!user) {
+    // Shared, but not signed in here: the project opens as it is in this browser until someone signs in.
+    useLiveStore.setState({ status: 'signin', room, you: null, peers: {}, error: null, pending: 0 });
+    return () => useLiveStore.setState({ status: 'off', room: null });
+  }
+  const s = new LiveSession(room, user);
   session = s;
   await s.start();
   return () => {
     if (session === s) stopLive();
   };
-}
-
-/** Applies a new name to the open live session. */
-export function renameLive(identity: LiveIdentity): void {
-  session?.rename(identity);
 }
 
 export function stopLive(): void {

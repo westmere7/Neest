@@ -1,11 +1,28 @@
-# Neest live rooms (multi-user editing)
+# Neest live editing (multi-user, team accounts)
 
-A Cloudflare Worker with one Durable Object per shared project (`ProjectRoom`, SQLite storage). It keeps the
-shared project, puts everyone's changes in one order and relays pointers and selections. The app works without
-it; live editing appears only when a sync server is configured.
+Two Cloudflare Workers, both on the **Workers Free** plan:
 
-Everything fits the **Workers Free** plan (SQLite-backed Durable Objects are included). Nothing here costs money
-unless the account is upgraded.
+- **`neest-sync`** (`wrangler.jsonc`, `src/`) — sign-in for the team's accounts, the list of shared projects
+  (`Directory` Durable Object) and one `ProjectRoom` Durable Object per shared project (SQLite storage): it keeps
+  the project, puts everyone's changes in one order and relays pointers, selections and changes in progress.
+  `https://neest-sync.nguyentuandanh-7.workers.dev`
+- **`neest`** (`app.wrangler.jsonc`) — the built app (`dist/`) as static files.
+  `https://neest.nguyentuandanh-7.workers.dev`
+
+The app works without either: live editing appears only when a sync server is configured.
+
+## Accounts
+
+Danh (`danh`), Ngân (`ngan`) and Linh (`linh`). `npm run cloud:accounts` (tools/make-accounts.mjs) keeps their
+passwords in `cloud/accounts.local.json` and writes the password hashes and the session-signing key to
+`cloud/.secrets.json` (uploaded by `npm run cloud:deploy`) and `cloud/.dev.vars` (used by `npm run cloud:dev`).
+All three files stay on the machine (git ignores them). To give someone a new password: delete their entry in
+`accounts.local.json`, run `npm run cloud:accounts`, then `npm run cloud:deploy`. To add a person: add them to
+`PEOPLE` in tools/make-accounts.mjs and do the same.
+
+Sign-in: name (any case) + password → a session token for 30 days, kept in the browser. Ten wrong passwords for an
+account lock it for 15 minutes. The deployed site asks to sign in before anything else; local development opens
+straight away and asks only when live editing is used.
 
 ## Run locally
 
@@ -13,35 +30,37 @@ unless the account is upgraded.
 npm run cloud:dev
 ```
 
-Starts the room server on http://127.0.0.1:8787 (data in `.wrangler/`, ignored by git). With `npm run dev`
-running too, the app reaches it through the Vite proxy at `/sync`; the Live button (people icon, top bar) shares a
-project and gives a link. Open the link in another browser (or another profile) to be a second person.
+Room server on http://127.0.0.1:8787 (data in `cloud/.wrangler/`, ignored by git); `npm run dev` reaches it through
+the Vite proxy at `/sync`. Open a second browser (or profile) to be a second person.
 
-## Deploy (only when you decide to)
+## Deploy
 
-Wrangler on the dev machine is signed in to the Cloudflare account (`npx wrangler whoami`). Two commands:
+Wrangler on the dev machine is signed in to the account (`npx wrangler whoami`).
 
-1. `npm run cloud:deploy` — the room server, at `https://neest-sync.nguyentuandanh-7.workers.dev`.
-2. `npm run deploy:app` — builds the app (`.env.production` points it at that server) and uploads `dist/` to
-   Cloudflare Pages as project `neest` (first run creates it; the site is `https://neest.pages.dev`).
+1. `npm run cloud:deploy` — the room server, with the account secrets.
+2. `npm run deploy:app` — builds the app (`.env.production` points it at the room server) and uploads `dist/`.
 
-Both are free-plan only. Another account: change `.env.production` to its `neest-sync.<subdomain>.workers.dev`.
-Without `VITE_NEEST_SYNC_URL` a production build hides live editing.
+After an app deploy, an open copy shows the previous version once (offline cache) and the new one on the next load.
 
 ## How it works
 
-- `POST /rooms {doc}` creates a room from the shared form of a project (`src/domain/sync/doc.ts`) and returns a
-  room id and a key. The link is `#/live/<room>/<key>`; the key stays in the URL fragment. Whoever has the link
-  can edit; the room stores only the key's SHA-256.
-- `GET /rooms/:room/doc?key=` returns the project and its change number; the WebSocket `/rooms/:room/ws?key=`
-  then carries only changes (`src/domain/sync/protocol.ts`): the room numbers each batch, applies it (last
-  writer wins per property) and sends it to everyone, the sender included. Batches resent after a reconnect are
-  recognised by id and not applied twice. Every 500 changes the room writes a snapshot.
+- `POST /auth/login` → token; every other route needs `Authorization: Bearer <token>` (the WebSocket: `?token=`).
+  The Worker stamps the account's name and colour on each live connection, so nobody can appear as someone else.
+- `POST /rooms {doc, name}` shares a project (shared form from `src/domain/sync/doc.ts`) and lists it for the team;
+  `GET /rooms` is the list; `DELETE /rooms/:room` takes it off the list (only whoever shared it). The link
+  `#/live/<room>/<key>` also opens it (after signing in); the room stores only the key's hash.
+- `GET /rooms/:room/doc?key=` returns the project and its change number; the WebSocket `/rooms/:room/ws` carries
+  changes (`src/domain/sync/protocol.ts`): the room numbers each batch, applies it (last writer wins per property)
+  and sends it to everyone, the sender included. Batches resent after a reconnect are recognised by id. Every 500
+  changes the room writes a snapshot.
+- **Changes in progress** (a drag, a slider, a colour picker): the sender sends a `preview` of the change so far
+  about 25 times a second; the room relays it without storing it; the others show the newest one per person once
+  per frame (not an undo step, not saved). The finished change replaces it; a cancelled one is taken away.
 - The client (`src/sync/live.ts`) applies others' changes except on properties it has unconfirmed changes to
   (those come later in the room's order and win), re-applies its own when they come back, and resends unconfirmed
   ones after reconnecting.
 
 ## Not yet
 
-Accounts and invitations (access is by link only), a list of shared projects on the server, offline edits
-surviving a page reload, version history, and imported 3D models (they stay in the sharer's browser).
+Offline edits surviving a page reload, version history, and imported 3D models for people who open a shared
+project (their files stay in the sharer's browser).

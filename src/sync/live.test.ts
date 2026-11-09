@@ -33,6 +33,10 @@ class FakeRoom {
       for (const e of this.log) if (e.seq > msg.since) ws.deliver({ t: 'ops', ...e });
       return;
     }
+    if (msg.t === 'preview') {
+      for (const s of this.sockets) if (s !== ws && s.ready) s.deliver({ t: 'preview', id: ws.id, ops: structuredClone(msg.ops) });
+      return;
+    }
     if (msg.t === 'ops') {
       if (this.log.some((e) => e.batch === msg.batch)) return;
       this.doc = applyOps(this.doc, msg.ops).doc;
@@ -95,7 +99,8 @@ async function person(name: string, projectId: string) {
   const { useProjectStore } = await import('@/state/projectStore');
   const project = buildDemoProject();
   useProjectStore.getState().load({ ...project, id: projectId });
-  await live.setLiveIdentity(name);
+  const auth = await import('./auth');
+  auth.useAuthStore.setState({ ready: true, user: { id: name.toLowerCase(), name, color: '#123456' }, token: 'token-' + name });
   await live.startLive(projectId);
   await Promise.resolve();
   /** This person's open socket (the newest, after reconnects). */
@@ -207,6 +212,57 @@ describe('live sessions: two people through a room', () => {
     expect(b.store.getState().project!.walls[w].height).toBe(2.95);
     expect(room.log.filter((e) => e.ops.some((o) => o.path.includes(w)))).toHaveLength(1);
     expect(a.live.useLiveStore.getState().pending).toBe(0);
+    expect(deepEqual(a.doc(), b.doc())).toBe(true);
+  });
+
+  it('a drag shows on the other screen while it happens, then its finished change replaces it', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'requestAnimationFrame', 'cancelAnimationFrame'] });
+    const a = await person('Alice', 'prj_live');
+    const b = await person('Bob', 'prj_live');
+    const flush = async () => {
+      for (let i = 0; i < 4; i++) {
+        a.pump();
+        b.pump();
+        await vi.advanceTimersByTimeAsync(50);
+      }
+    };
+    await flush();
+    const w = Object.keys(a.store.getState().project!.walls)[0];
+    const start = a.store.getState().project!.walls[w].height;
+    const bRevision = b.store.getState().revision;
+    a.store.getState().begin('Drag');
+    a.store.getState().preview((d) => void (d.walls[w].height = 2.9));
+    await flush();
+    expect(b.store.getState().project!.walls[w].height).toBe(2.9); // live, before Alice lets go
+    expect(b.store.getState().past).toHaveLength(0); // not Bob's undo step
+    expect(b.store.getState().revision).toBe(bRevision); // and not saved as Bob's change
+    a.store.getState().preview((d) => void (d.walls[w].height = 3.1));
+    await flush();
+    expect(b.store.getState().project!.walls[w].height).toBe(3.1);
+    a.store.getState().commit();
+    await flush();
+    expect(b.store.getState().project!.walls[w].height).toBe(3.1);
+    expect(deepEqual(a.doc(), b.doc())).toBe(true);
+
+    // A drag that ends where it started: no change is sent, and the preview goes away.
+    a.store.getState().begin('Drag back');
+    a.store.getState().preview((d) => void (d.walls[w].height = 2.5));
+    await flush();
+    expect(b.store.getState().project!.walls[w].height).toBe(2.5);
+    a.store.getState().preview((d) => void (d.walls[w].height = 3.1));
+    a.store.getState().commit();
+    await flush();
+    expect(b.store.getState().project!.walls[w].height).toBe(3.1);
+
+    // A cancelled drag disappears from the other screen.
+    a.store.getState().begin('Cancelled');
+    a.store.getState().preview((d) => void (d.walls[w].height = 2.2));
+    await flush();
+    expect(b.store.getState().project!.walls[w].height).toBe(2.2);
+    a.store.getState().cancel();
+    await flush();
+    expect(b.store.getState().project!.walls[w].height).toBe(3.1);
+    expect(start).not.toBe(3.1);
     expect(deepEqual(a.doc(), b.doc())).toBe(true);
   });
 

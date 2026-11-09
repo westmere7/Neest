@@ -92,3 +92,98 @@
   width: 100%;
   text-align: left;
 }
+/* Sign-in (gate, Live dialog, join page, launcher) and the team's shared projects. */
+.live-signin {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(320px, 86vw);
+  text-align: left;
+}
+.live-signin.compact {
+  width: 100%;
+  max-width: 360px;
+}
+.live-signin .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.live-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.live-gate strong {
+  font-size: 18px;
+}
+.live-shared {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 24px;
+}
+.live-shared h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.live-shared-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.live-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.live-room-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+.live-room-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface-solid);
+  padding-right: 4px;
+}
+.live-room {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  background: none;
+  border: 0;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.live-room strong {
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.live-room span {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.live-room:disabled {
+  cursor: progress;
+}

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { produce, setAutoFreeze, type Draft } from 'immer';
 import type { Project } from '@/domain/model/schema';
 import { reconcileRooms } from '@/domain/commands/entities';
-import { applyOps, invert, type Op } from '@/domain/sync/ops';
+import { applyOps, getAt, invert, type Op } from '@/domain/sync/ops';
 import { diffProjects, fromDoc, toDoc, touchesPlans, viewedOption } from '@/domain/sync/doc';
 
 // Projects are treated as immutable snapshots; freezing them costs time on
@@ -78,7 +78,15 @@ export interface ProjectState {
    * Applies document changes made by someone else (multi-user sync). Not an undo step; the server's order
    * wins, and this person's own undo then skips whatever these changed.
    */
-  applyRemote(ops: Op[]): void;
+  applyRemote(ops: Op[], from?: string): void;
+  /**
+   * Shows what someone else is changing right now (a drag, a slider) before they finish: not an undo step, not
+   * saved. `null` takes it away again (they cancelled or left). Their finished change (`applyRemote` with the same
+   * `from`) replaces it.
+   */
+  previewRemote(from: string, ops: Op[] | null): void;
+  /** Takes every shown preview away (after reconnecting). */
+  clearRemotePreviews(): void;
   /** Listens to the document changes this person makes (edits, undo, redo, reloaded files): the sync outbox. */
   onLocalOps(listener: (ops: Op[], label: string) => void): () => void;
 }
@@ -107,6 +115,16 @@ export function createProjectStore() {
   };
 
   return create<ProjectState>((set, get) => {
+    /** Others' changes in progress, per person, with what each property was before (to take them back). */
+    const previews = new Map<string, Op[]>();
+    /** The project without person `from`'s preview (only where it still shows their value). */
+    const withoutPreview = (project: Project, from: string): Project => {
+      const ops = previews.get(from);
+      if (!ops) return project;
+      previews.delete(from);
+      return applyToView(project, invert(ops), 'checked').project;
+    };
+
     /**
      * Records the change from `base` to `next` as one undo step. When only the shown option changed, it just
      * shows it: switching options is per person, not an edit.
@@ -152,10 +170,12 @@ export function createProjectStore() {
       revision: 0,
 
       load(project) {
+        previews.clear();
         set({ project, past: [], future: [], tx: null, revision: 0 });
       },
 
       close() {
+        previews.clear();
         set({ project: null, past: [], future: [], tx: null, revision: 0 });
       },
 
@@ -272,13 +292,41 @@ export function createProjectStore() {
         emit(ops, label);
       },
 
-      applyRemote(ops) {
-        const { project, tx } = get();
-        if (!project || !ops.length) return;
+      applyRemote(ops, from) {
+        const { project: current, tx } = get();
+        if (!current) return;
+        // Their finished change replaces their preview (taken back first, so a property they dragged back to
+        // where it was does not stay at a preview value).
+        const project = from ? withoutPreview(current, from) : current;
+        if (!ops.length) {
+          if (project !== current) set({ project });
+          return;
+        }
         const { project: next } = applyToView(project, ops, 'force');
         // A drag in progress keeps going on top; cancelling it returns to the base with these changes in.
         const base = tx ? applyToView(tx.base, ops, 'force').project : null;
         set((s) => ({ project: next, tx: tx && base ? { ...tx, base } : tx, revision: s.revision + 1 }));
+      },
+
+      previewRemote(from, ops) {
+        const current = get().project;
+        if (!current) return;
+        let project = withoutPreview(current, from);
+        if (ops?.length) {
+          const doc = toDoc(project);
+          const shown = ops.map((o) => ({ path: o.path, value: o.value, old: getAt(doc, o.path) }));
+          project = applyToView(project, shown, 'force').project;
+          previews.set(from, shown);
+        }
+        if (project !== current) set({ project });
+      },
+
+      clearRemotePreviews() {
+        let project = get().project;
+        if (!project) return;
+        const before = project;
+        for (const from of [...previews.keys()]) project = withoutPreview(project, from);
+        if (project !== before) set({ project });
       },
 
       onLocalOps(listener) {

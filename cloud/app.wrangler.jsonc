@@ -1,0 +1,9 @@
+// The Neest app itself, served as static files by a Worker (Cloudflare's successor to Pages; free plan).
+// Deployed by `npm run deploy:app` after `npm run build`. The live-editing rooms are the separate Worker in
+// wrangler.jsonc.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "neest",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "../dist", "not_found_handling": "single-page-application" }
+}

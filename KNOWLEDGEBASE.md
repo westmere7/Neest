@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-09 (live editing phase 1: Cloudflare room, Live button, cursors and selections, tested locally and not deployed; multi-user phase 0: history of document ops with own-change undo, per-person option view, sync hooks; project file written only on Save (Ctrl+S / Save button), browser autosave as you go; 60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-09 (live editing deployed with team accounts Danh / Ngân / Linh and live drag previews; live editing phase 1: Cloudflare room, Live button, cursors and selections, tested locally and not deployed; multi-user phase 0: history of document ops with own-change undo, per-person option view, sync hooks; project file written only on Save (Ctrl+S / Save button), browser autosave as you go; 60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -291,24 +291,27 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
   an open drag's base). A server must also send each client its own ops back in the global order (or clients must
   ignore remote values for properties with unacknowledged local changes) so last-writer-wins converges; the random
   three-person test in `domain/sync/sync.test.ts` relays that way.
-- **Live editing** (optional; `cloud/README.md`): a project shared from the Live button (people icon, top bar,
-  `src/sync/LiveUI.tsx`) goes to a room on the sync server — a Cloudflare Worker with one SQLite Durable Object per
-  room (`cloud/src/room.ts`). Link `#/live/<room>/<key>` (key in the fragment; the room keeps its hash); the join
-  page asks a name once (`liveIdentity` pref) and stores the project in the browser with its room (`liveRooms` pref,
-  never in the project or its file). `EditorPage` calls `startLive`: it loads the room's version (10 s timeout),
-  then the WebSocket carries only ops (`domain/sync/protocol.ts`) and presence (pointer in plan metres, selected
-  ids, shown option; 50 ms throttle). Client rules (`src/sync/live.ts`): own batches wait for the room's echo (by
-  batch id); others' ops on properties covered by an unconfirmed own op are skipped (mine comes later and wins); an
-  own echo is re-applied except where a later own op covers it (someone may have replaced the container); after a
-  reconnect unconfirmed batches are resent and the room drops ones it has (batch id). `reset` (more than 500
-  changes behind) reloads the room's version. Others' pointers and selections draw in `PeerLayer` (PlanCanvas) for
-  people on the same option; avatars sit by the Live button. SYNC_URL: `VITE_NEEST_SYNC_URL`, or `/sync` in dev
-  (Vite proxies it to `npm run cloud:dev`, port 8787); without one the button is hidden. Deploying is a manual step
-  (`npm run cloud:deploy`, then `npm run deploy:app` for the app on Cloudflare Pages; `.env.production` holds the
-  server address `https://neest-sync.nguyentuandanh-7.workers.dev`, committed on purpose: not a secret). Tests: `src/sync/live.test.ts` (two app instances via
-  `vi.resetModules` against an in-memory room: same-property race, edit vs delete, replace vs field edit,
-  disconnect/resend, random convergence over 5 seeds). Not yet: accounts, a server-side project list, offline edits
-  surviving a reload, version history, imported 3D models for joiners (their blobs stay in the sharer's browser).
+- **Live editing** (optional; `cloud/README.md`) for the team's **accounts** Danh / Ngân / Linh (`danh`, `ngan`,
+  `linh`): `cloud/src/auth.ts` (PBKDF2 10k rounds — fits the Workers Free CPU budget — and HMAC session tokens, 30
+  days), accounts and the signing key are Worker secrets made by `npm run cloud:accounts` (plain passwords only in the
+  git-ignored `cloud/accounts.local.json`), `Directory` Durable Object = the team's shared-project list + 10 wrong
+  passwords → 15-minute lock. App: `src/sync/auth.ts` (session in prefs `liveSession`, `loadSession` at start-up),
+  `SignInGate` (production builds with a sync server ask to sign in first; dev opens straight away), `SharedProjects`
+  on the launcher (open / remove-your-own), the Live button (people icon) shares the open project with the team. The
+  room uses the account's name and colour (Worker header `X-Neest-User`; the hello cannot override it). Joining:
+  shared list or link `#/live/<room>/<key>` (after signing in); the project is stored in the browser with its room
+  (`liveRooms` pref); a shared project opened while signed out stays local ("sign in to edit with the team").
+  `EditorPage` → `startLive`: loads the room's version (10 s timeout), then the WebSocket carries ops and presence
+  (pointer, selection, shown option; 50 ms) and **previews**: during a gesture (`tx`) the sender sends
+  `diffProjects(tx.base, project)` every 40 ms; receivers keep only the newest per person and show it once per frame
+  (rAF, 50 ms timer fallback for covered windows) through `projectStore.previewRemote` (no undo step, no revision);
+  `applyRemote(ops, from)` first takes that person's preview back (checked), so a drag ending where it started leaves
+  nothing; a cancel sends an empty preview. Client rules (`src/sync/live.ts`): own batches wait for the echo (batch
+  id); others' ops on properties covered by an unconfirmed own op are skipped; own echoes are re-applied unless a
+  later own op covers them; reconnect resends (the room drops known batch ids); `reset` reloads. Deployed: rooms
+  `https://neest-sync.nguyentuandanh-7.workers.dev` (`npm run cloud:deploy`, uploads `cloud/.secrets.json`), app
+  `https://neest.nguyentuandanh-7.workers.dev` (`npm run deploy:app`: static-files Worker `cloud/app.wrangler.jsonc`;
+  Pages is folded into Workers now). Tests: `src/sync/live.test.ts`, `cloud/src/auth.test.ts`.
 - **Live edits** (a colour picker or slider being dragged): `livePreview(label, recipe)` opens the gesture `label`
   unless it is the open one, then previews; `commit(recipe)` records one step (check `tx?.label` first and fall back
   to `execute`, as anything else that changes the project ends the gesture). Used by the material editor and the 3D
@@ -2545,3 +2548,14 @@ Known limitations (also in README):
      per-person undo, cursor + selection outline shown to the other, per-person option view, offline edit sent after
      the server restarted, identical documents at the end; unit tests above. Account checked: Workers Free includes
      SQLite Durable Objects. **Not deployed** (owner's call: `npm run cloud:deploy`) (done).
+210. "I'm only on remote phone control, so do it on your own" + "Go" + "Add 3 accounts with simple log in details.
+     Named Danh, Ngan and Linh" + "Test with them carefully" + "Make sure all changes reflects in real-time" → Wrangler
+     signed in (OAuth in Chrome), a project permission rule for the two deploy commands, both Workers deployed
+     (rooms + app; Pages now deploys as a Worker), accounts (§9 "Live editing"), shared-project list, sign-in gate on
+     the deployed site, live previews of gestures. Checked: 16 API checks on the local and the deployed server (sign-in
+     per account, wrong password / unknown account / forged token / no session refused, team list, owner-only removal,
+     account names on connections); lockout (local); browsers on localhost — wrong password message, Danh in the
+     in-app browser, Ngân in Chrome, Linh as a script: share, open from the list, edits all ways, Linh's pointer and
+     selection on the others' plans, per-person undo, sign-out (project stays local), sign-in from the Live dialog
+     reconnects; real-time: finished edits arrive in ~6–22 ms locally, drags show while they happen (bounded ~60–150 ms
+     behind in a covered window; newest preview per frame, older ones dropped) (done).

@@ -30,7 +30,13 @@ export type ClientMessage =
   | { t: 'hello'; since: number; name: string; color: string }
   /** My changes; the room gives them the next number and sends them to everyone, me included. */
   | { t: 'ops'; batch: string; ops: WireOp[] }
-  | { t: 'presence'; p: Presence };
+  | { t: 'presence'; p: Presence }
+  /**
+   * A change still being made (a drag, a slider): what it would change so far, relative to the last confirmed
+   * state. Shown to the others at once, not stored; empty = the gesture was cancelled. The finished change follows
+   * as an ordinary `ops` batch, which replaces the preview.
+   */
+  | { t: 'preview'; ops: WireOp[] };
 
 export type ServerMessage =
   | { t: 'welcome'; you: string; seq: number; peers: Peer[] }
@@ -38,6 +44,7 @@ export type ServerMessage =
   | { t: 'ops'; seq: number; from: string; batch: string; ops: WireOp[] }
   /** Joined, or moved the pointer, changed the selection or the shown option. */
   | ({ t: 'presence' } & Peer)
+  | { t: 'preview'; id: string; ops: WireOp[] }
   | { t: 'leave'; id: string }
   /** The changes since `since` are no longer kept: fetch the project again. */
   | { t: 'reset' }

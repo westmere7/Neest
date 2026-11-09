@@ -16,3 +16,6 @@ test-results
 .wrangler
 cloud/.wrangler
 !.env.production
+cloud/accounts.local.json
+cloud/.secrets.json
+cloud/.dev.vars

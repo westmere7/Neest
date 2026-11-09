@@ -3,6 +3,8 @@ import { ContextMenuHost } from '@/components/ContextMenu';
 import { ConfirmHost, ToastHost } from '@/components/Overlays';
 import { usePrefsStore } from '@/state/uiStores';
 import { Launcher } from '@/features/projects/Launcher';
+import { loadSession } from '@/sync/auth';
+import { SignInGate } from '@/sync/LiveUI';
 import './app.css';
 
 const EditorPage = lazy(() => import('@/features/editor/EditorPage'));
@@ -40,6 +42,7 @@ export function App() {
 
   useEffect(() => {
     void hydrate();
+    void loadSession();
     const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
     mq?.addEventListener?.('change', syncSystemTheme);
     return () => mq?.removeEventListener?.('change', syncSystemTheme);
@@ -68,12 +71,14 @@ export function App() {
 
   return (
     <>
+      <SignInGate>
       <Suspense fallback={<div className="app-loading">Loading Neest…</div>}>
         {route.name === 'home' && <Launcher />}
         {route.name === 'editor' && <EditorPage key={route.id} projectId={route.id} />}
         {route.name === 'guest' && <GuestPage key={route.id} projectId={route.id} />}
         {route.name === 'live' && <LiveJoinPage key={route.room} room={{ room: route.room, key: route.key }} />}
       </Suspense>
+      </SignInGate>
       <ContextMenuHost />
       <ConfirmHost />
       <ToastHost />
