@@ -4,7 +4,7 @@
 > Read this before changing code. Keep it current: when you add a feature, fix a non-obvious bug, or change a
 > convention, update the relevant section (and the "Status & roadmap" section) in the same change.
 
-Last updated: 2026-11-07 (project file written only on Save (Ctrl+S / Save button), browser autosave as you go; 60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
+Last updated: 2026-11-09 (multi-user phase 0: history of document ops with own-change undo, per-person option view, sync hooks; project file written only on Save (Ctrl+S / Save button), browser autosave as you go; 60LTN exterior walls 22 cm with inner faces kept; room outlines drop zero-width spikes; guest page: middle-drag pans as in the app; guest page: nest mark beside the title; notes: Off / Full / Icons, long notes cut with "…", picture badge, guests click a note to centre it; nest mark loader with Ripple, also on the guest page with the nest favicon; group isolation: double-click a group to edit inside it; undo audit: colour pickers and sliders one step, live edits on the store, held-arrow nudge merged, Ctrl+Z on focused controls; new nest logo in the theme accent, light and dark; note editor shows formatting live; Notes mode: click a note to edit it even with Show in workspace off; Export dialog columns scroll separately; notes show body text only, automatic target parameters retired; guest export: pick which layout options to show + default option, View drop-down in bottom bar with Overview/Top/2D plan and no custom views; guest HTML export is orbit-only, walkthrough mode removed; Sage shaker kitchen pack and ready-made L kitchen group from a reference photo; copy / cut / paste of items and groups across tabs and projects; Duplicate keeps shape edits of grouped items; interface drawn at 94 % (--ui-scale); 3D view: Top and saved views beside Snapping at the bottom right; guest Layout switcher is a drop-down; guest HTML export opens notes as icons by default, Note style setting; shape editor resizes components: sections with drag handles, settings with handles for radii, legs and soffits, corner portal settings; connected shape edits; opened notes above pins and clear of them; note display full / compact / icons; guest viewer panel buttons, phone and landscape layout, tap to hide; live link QR and Share; simpler guest export pane; live guest links on GitHub Pages; Logitech wheels on macOS: zoom only, Scrolling setting; shape editor for structure and built furniture; guest HTML export: layout options, Notes list with pictures, ceiling items hidden by default, Ghost walking; Mac mouse-wheel zoom; notes: body only, images, spot by default, notes mode auto-exit).
 
 ---
 
@@ -273,9 +273,24 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 ## 9. State, history, autosave
 
 - `projectStore`: `execute(label, recipe)` = one undo step. Gestures: `begin(label)` → many `preview(recipe)` (not
-  recorded, not autosaved) → `commit(finalRecipe?)` (one step) or `cancel()`. Undo/redo restore snapshots;
-  redo is cleared on new edits; history capped at 200 entries (structural sharing keeps it small, also on redo).
-  Undo or redo during an open gesture only cancels the gesture (the step before stays).
+  recorded, not autosaved) → `commit(finalRecipe?)` (one step) or `cancel()`. Redo is cleared on new edits;
+  history capped at 200 entries. Undo or redo during an open gesture only cancels the gesture (the step before stays).
+- **History is made of document changes, not snapshots** (multi-user groundwork, `domain/sync/`). A step stores the
+  property-level ops it made (`Op { path, value, old }`, from `diffProjects(before, after)`) plus the option shown
+  before / after. Undo applies the inverted ops to the **current** project in `'checked'` mode: a property changed
+  since by someone else (another person, a reloaded file) keeps their value, a record deleted since is skipped. Undo /
+  redo of a plan change shows the option it was made in again. Tests compare content after undo (`toEqual`), not
+  identity. `createProjectStore()` makes extra stores (tests play several people); `useProjectStore` is the app's.
+- **Document vs view** (`domain/sync/doc.ts`): the shared document is `plans.<optionId>.<walls|…>` ("default"
+  without options), `optionMeta`, `optionOrder` and every other project field. Which option is shown
+  (`activeOptionId`) is per person: switching options changes only the view — no undo step, no `updatedAt` (the
+  file stays "saved"), just a local autosave. `toDoc` / `fromDoc(doc, show, prev)` convert (cheap: records stay shared;
+  field order and unchanged `options` come from `prev`). Adding / deleting / renaming / reordering options are edits.
+- **Sync hooks**: `onLocalOps(listener)` reports every change this person makes (edits, undo, redo, reloaded files)
+  — the future outbox; `applyRemote(ops)` applies someone else's (server order wins, not an undo step; also applied to
+  an open drag's base). A server must also send each client its own ops back in the global order (or clients must
+  ignore remote values for properties with unacknowledged local changes) so last-writer-wins converges; the random
+  three-person test in `domain/sync/sync.test.ts` relays that way.
 - **Live edits** (a colour picker or slider being dragged): `livePreview(label, recipe)` opens the gesture `label`
   unless it is the open one, then previews; `commit(recipe)` records one step (check `tx?.label` first and fall back
   to `execute`, as anything else that changes the project ends the gesture). Used by the material editor and the 3D
@@ -302,9 +317,10 @@ All are immer recipes `(draft, …args)`; call them via `projectStore.execute(la
 - **Layout options** (phương án, `domain/commands/options.ts`, `OptionSwitcher` next to the project name): several
   versions of the plan in one project. `project.options[]` + `activeOptionId`; the active option's plan is the
   project's own `nodes/walls/openings/rooms/objects/groups` (its `plan` is null), the others store theirs in
-  `options[i].plan`. Settings, materials, imported models, cameras, render, layers and guest are shared. Switching,
-  duplicating (also "same walls, no furniture" and blank), renaming, reordering and deleting are ordinary undoable
-  commands; the selection is cleared on a switch (ids belong to one option). No `options` = one implicit "Option A".
+  `options[i].plan`. Settings, materials, imported models, cameras, render, layers and guest are shared. Switching
+  is per person (only the view changes: no undo step, file stays saved, see "Document vs view"); duplicating (also
+  "same walls, no furniture" and blank), renaming, reordering and deleting are ordinary undoable commands; the
+  selection is cleared on a switch (ids belong to one option). No `options` = one implicit "Option A".
   Anything that must reach every option (e.g. `deleteMaterial` reassigning a material) uses `inEveryOption`.
   Exports, the in-app Guest view and stats show the active option; the guest HTML export carries every option (or only
   the active one, `guest.options`) and guests switch between them (§14). `projectWithOption(p, id)` gives the project
@@ -2491,3 +2507,13 @@ Known limitations (also in README):
      dry-goods jars of oats/grains & coffee beans with bamboo lids, kraft dry-food pouch & ceramic tea caddy in the
      middle bay, rattan basket + cookbooks + bud vase on the top bay, tea tray in the bottom bay, and ceramic fruit bowl
      on the tabletop; `empty`: bare joinery only). Thumbnails and unit tests in `src/packs/packs.test.ts` (done).
+208. "Plan a multi-user collab system like Figma" → plan (Cloudflare: a Durable Object room per project, D1, R2;
+     server-ordered last-writer-wins per property; presence; per-person undo; per-person option view) + "Do it" →
+     phase 0, local groundwork with no server: `domain/sync/ops.ts` (diff / apply / invert property-level ops,
+     'checked' apply for undo), `domain/sync/doc.ts` (shared document vs per-person view of layout options), history
+     in `projectStore` stores ops (undo reverses only your own changes and keeps others'), option switching is no
+     longer an edit or undo step, `applyRemote` / `onLocalOps` for the sync layer, `createProjectStore` for tests.
+     Tests in domain/sync/sync.test.ts (round trip of every sample and 60LTN, two-person merge, undo skipping others'
+     values, per-person option view, random three-person convergence); stress tests compare content after undo.
+     60LTN in the browser: ~2 ms per edit, ~0.8 ms per undo; switching options leaves no undo step and the file saved
+     (done). Next: phase 1 (Cloudflare room + sign-in + presence).

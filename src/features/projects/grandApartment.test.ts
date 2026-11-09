@@ -123,7 +123,8 @@ describe('grand apartment stress sample', () => {
     useProjectStore.getState().undo();
     expect(Object.keys(useProjectStore.getState().project!.objects)).toHaveLength(count);
     useProjectStore.getState().undo();
-    expect(useProjectStore.getState().project).toBe(p);
+    // Undo reverses the recorded changes: the same content as before (not the same object).
+    expect(useProjectStore.getState().project).toEqual(p);
     useProjectStore.getState().redo();
     expect(Object.values(useProjectStore.getState().project!.rooms).map((r) => r.name).sort()).toEqual(ROOMS);
   });

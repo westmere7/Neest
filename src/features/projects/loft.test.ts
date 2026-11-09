@@ -101,7 +101,8 @@ describe('complex loft stress sample', () => {
     useProjectStore.getState().undo();
     expect(Object.keys(useProjectStore.getState().project!.objects)).toHaveLength(objectCount);
     useProjectStore.getState().undo();
-    expect(useProjectStore.getState().project).toBe(p);
+    // Undo reverses the recorded changes: the same content as before (not the same object).
+    expect(useProjectStore.getState().project).toEqual(p);
     useProjectStore.getState().redo();
     useProjectStore.getState().redo();
     expect(Object.keys(useProjectStore.getState().project!.objects)).toHaveLength(0);
