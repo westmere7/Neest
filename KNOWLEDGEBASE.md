@@ -2787,3 +2787,6 @@ Known limitations (also in README):
      → arch-groove shoe cabinet defaults: sides down to the floor (same size, no back rail), no oak fin (still a setting).
      Ready group `ready-arch-shoe-cabinet-shoes` (Entry & hallway): the cabinet with two pairs of sneakers and house slippers
      in the open bay. (done)
+237. "The cabinet doesn't show the shoes, only the new longer sides" → the shoes were only in a ready group; they are now part
+     of the arch-groove shoe cabinet itself (up to three pairs of sneakers in the open bay, uppers in the cabinet finish, soles
+     in the knob black), setting "Shoes in the bay" (on by default). The group `ready-arch-shoe-cabinet-shoes` is removed. (done)
