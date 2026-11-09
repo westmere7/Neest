@@ -45,6 +45,10 @@ Wrangler on the dev machine is signed in to the account (`npx wrangler whoami`).
 1. `npm run cloud:deploy` — the room server, with the account secrets.
 2. `npm run deploy:app` — builds the app (`.env.production` points it at the room server) and uploads `dist/`.
 
+Share a project file with the team from this machine: `npm run cloud:share -- projects/<file>.json` (as Danh;
+`--owner ngan` for someone else; `--again` to share a second copy of a name already on the list). It mints a session
+with the server's signing key from `cloud/.secrets.json`, so nobody signs in on the website for it.
+
 After an app deploy, an open copy shows the previous version once (offline cache) and the new one on the next load.
 
 ## How it works

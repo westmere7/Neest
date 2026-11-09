@@ -23,7 +23,8 @@
     "thumbs": "node tools/generate-thumbs.mjs",
     "people": "node tools/bake-people.mjs",
     "paintings": "node tools/fetch-paintings.mjs",
-    "cloud:accounts": "node tools/make-accounts.mjs"
+    "cloud:accounts": "node tools/make-accounts.mjs",
+    "cloud:share": "vite-node --config tools/vite.tools.config.ts tools/share-project.ts --"
   },
   "dependencies": {
     "@react-three/drei": "^10.5.0",

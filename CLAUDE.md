@@ -1,7 +1,8 @@
 # Neest — notes for Claude
 
-Read [KNOWLEDGEBASE.md](KNOWLEDGEBASE.md) first (architecture, conventions, pitfalls, recipes, status) and
-[AGENTS.md](AGENTS.md) for the ground rules. Product brief: `_Prompt/prompt.md`.
+Read [KNOWLEDGEBASE.md](KNOWLEDGEBASE.md) first (architecture, conventions, pitfalls, recipes, status),
+[AGENTS.md](AGENTS.md) for the ground rules and [DEVELOPING.md](DEVELOPING.md) for the team workflow (pull first,
+branches, live editing locally, which deploys run where). Product brief: `_Prompt/prompt.md`.
 
 Commands: `npm run dev` · `npm test` · `npm run typecheck` · `npm run lint` · `npm run build` · `npm run test:e2e`.
 On Windows, `start-neest.bat` installs dependencies if needed and starts the dev server.

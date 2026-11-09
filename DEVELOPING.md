@@ -1,0 +1,48 @@
+# Developing Neest
+
+For anyone changing the app itself (and their AI assistant). Read **KNOWLEDGEBASE.md** (architecture, conventions,
+pitfalls, history) and **AGENTS.md** (ground rules) first.
+
+## Every time
+
+1. **Pull first**: `git pull` on `main`, then merge `main` into your branch (`Danh`, `Ngan`). Work started on an old
+   copy is what causes merge conflicts. Merge `main` in again before pushing if it moved.
+2. `npm install` (after a pull that changed `package.json`), then `npm run dev`.
+3. Before pushing: `npm test`, `npm run typecheck`, `npm run lint`.
+4. Update KNOWLEDGEBASE.md when behaviour changes, and add a history entry **at the end** of the numbered list. Two
+   people adding entries at the same time clash in a merge: whoever merges renumbers the later ones (the base keeps its
+   numbers).
+5. `projects/`: a project file is written only when you Save (Ctrl+S) in the dev server. Don't leave test projects
+   there.
+
+## Where things are
+
+| Area | Code |
+| --- | --- |
+| Project model, commands, geometry | `src/domain/` (pure: no React or DOM) |
+| Undo history and the shared document form | `src/domain/sync/` (ops, document vs per-person view) and `src/state/projectStore.ts` |
+| Live editing in the app (session, sign-in, Live button, account panel) | `src/sync/` |
+| Live-editing server (Cloudflare Worker + Durable Objects) | `cloud/` — see `cloud/README.md` |
+| Library items and materials | `packs/` — see `packs/README.md` and KNOWLEDGEBASE §12 |
+| Dev and deploy scripts | `tools/` |
+
+## Live editing on your own machine
+
+The team's real passwords and the server's signing key live only on Danh's PC (git ignores them). To work on live
+editing locally:
+
+1. `npm run cloud:accounts` once — makes **local** test accounts and passwords on your machine
+   (`cloud/accounts.local.json`).
+2. `npm run cloud:dev` (room server on port 8787) next to `npm run dev`; sign in with a local account.
+3. A second browser (or profile) is a second person.
+
+## Deploying (Cloudflare)
+
+Needs access to the Cloudflare account (ask Danh for an invite under Manage account → Members), then
+`npx wrangler login` once.
+
+- `npm run deploy:app` — the app at https://neest.nguyentuandanh-7.workers.dev. Safe from any machine.
+- `npm run cloud:deploy` — the room server, **with the account secrets of the machine it runs on**. Run it only from
+  Danh's PC: from anywhere else it would replace everyone's passwords and sign everyone out.
+- `npm run cloud:share -- <project file>` — puts a project from `projects/` on the team's shared list (Danh's PC:
+  uses the server's signing key).
