@@ -4069,6 +4069,10 @@
    "file": "portal-frames_arched-wall-portal_model_flush.webp",
    "fp": "9416e3079a2c30f0"
   },
+  "portal-frames:arched-wall-portal@model:glass-blocks": {
+   "file": "portal-frames_arched-wall-portal_model_glass-blocks.webp",
+   "fp": "8c686f8e68139ebe"
+  },
   "portal-frames:arched-wall-portal@model:plain-flush": {
    "file": "portal-frames_arched-wall-portal_model_plain-flush.webp",
    "fp": "26f267da2ca33a66"

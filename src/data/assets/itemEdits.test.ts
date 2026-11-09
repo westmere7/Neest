@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import '@/packs/loader';
 import { ASSET_CATALOG, ASSETS_BY_ID } from './catalog';
-import { assetPlan, getAsset, getObjectAsset } from './registry';
+import { assetPlan, getAsset, getObjectAsset, resolveMaterial } from './registry';
 import { partBounds } from './plantParts';
 import {
   canEditShape,
@@ -15,7 +15,7 @@ import {
   sectionInfo,
   withEdits,
 } from './itemEdits';
-import { withModel } from './models';
+import { allModelSlots, withModel } from './models';
 import type { AssetDefinition, Part, Size3 } from './types';
 
 type V3 = [number, number, number];
@@ -362,12 +362,46 @@ describe('model settings (arched wall portal, short wall)', () => {
     }
   });
 
+  it('the glass block model fills the opening up to the soffit, cut along its curves', () => {
+    const a = withModel(byId(ID), 'glass-blocks');
+    for (const size of [a.defaultSize, { w: 1.2, d: 0.1, h: 1.9 }, { w: 7, d: 0.45, h: 3.6 }]) {
+      const parts = a.build(size);
+      const glass = parts.filter((p) => p.slot === 'wave' || p.slot === 'grid');
+      expect(glass.length).toBeGreaterThan(4);
+      expect(finite(parts)).toBe(true);
+      expect(inside(parts, size)).toBe(true);
+      // Blocks cut along the rounded corners (prisms) as well as whole ones (boxes), both kinds of glass.
+      expect(glass.some((p) => p.shape === 'prism')).toBe(true);
+      expect(new Set(glass.map((p) => p.slot)).size).toBe(2);
+      // The top course reaches the soffit: the lining's top inner edge.
+      const liningTop = Math.max(...parts.filter((p) => p.slot === 'lining').map((p) => partBounds(p).max[1]));
+      const glassTop = Math.max(...glass.map((p) => partBounds(p).max[1]));
+      expect(liningTop - glassTop).toBeLessThan(0.06);
+    }
+  });
+
+  it("every model's materials exist (a pack's own materials are named <pack>:<id> from other packs)", () => {
+    const base = byId(ID);
+    for (const m of [undefined, 'flush', 'plain-flush', 'sidelight', 'short-wall', 'glass-blocks']) {
+      for (const slot of withModel(base, m).slots) expect(resolveMaterial(null, slot.defaultMaterial).id, `${m ?? 'stepped'} ${slot.id}`).toBe(slot.defaultMaterial);
+    }
+  });
+
   it('has a handle on top of the wall that drags it up', () => {
     const a = shortWall();
     const h = paramHandles(a, a.defaultSize, { shortWall: 1.1 }).find((x) => x.param.id === 'shortWall')!;
     expect(h.handle.at[1]).toBeCloseTo(1.1, 6);
     expect(h.handle.dir).toEqual([0, 1, 0]);
     expect(h.value).toBe(1.1);
+  });
+});
+
+describe('materials of every item', () => {
+  it('every slot default of every item and model exists in the material catalogue', () => {
+    const missing: string[] = [];
+    for (const asset of all())
+      for (const slot of allModelSlots(asset)) if (resolveMaterial(null, slot.defaultMaterial).id !== slot.defaultMaterial) missing.push(`${asset.id} ${slot.id} → ${slot.defaultMaterial}`);
+    expect(missing).toEqual([]);
   });
 });
 

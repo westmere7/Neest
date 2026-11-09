@@ -1030,6 +1030,166 @@ function archedWallPortalSpec(p?: ParamValues): PortalSpec {
   };
 }
 
+// Glass block infill (gạch kính lấy sáng) for the arched wall portal's opening, matching the glass block
+// daylighting partition of the Modern Vietnamese pack (its 19 cm blocks and wave / checkered glass).
+
+/** Block size the glass-block textures are drawn for (one pattern per block face). */
+const GLASS_BLOCK = 0.19;
+/** Blocks plus their mortar joint: the grid pitch, stretched slightly so a whole number of blocks fits the width. */
+const GLASS_BLOCK_PITCH = 0.2;
+const GLASS_BLOCK_SLOTS = [
+  // The glass block materials live in the Modern Vietnamese pack (pack materials are named <pack>:<id>).
+  matSlot('wave', 'Wave glass blocks', 'modern-vietnamese:glass-block-wave'),
+  matSlot('grid', 'Checkered glass blocks', 'modern-vietnamese:glass-block-grid'),
+  matSlot('mortar', 'Mortar joints', 'paint-pure-white'),
+];
+
+/** Signed area of an outline (positive when its points run anticlockwise). */
+const signedArea = (poly: V2[]) => poly.reduce((a, [x, y], i) => {
+  const [nx, ny] = poly[(i + 1) % poly.length];
+  return a + x * ny - nx * y;
+}, 0) / 2;
+
+/**
+ * A polygon clipped to a convex outline (Sutherland–Hodgman). The opening of a portal is convex: straight jambs and
+ * a soffit joined by quarter curves.
+ */
+function clipToConvex(subject: V2[], clip: V2[]): V2[] {
+  const ccw = signedArea(clip) > 0;
+  const inside = (p: V2, a: V2, b: V2) => {
+    const c = (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+    return ccw ? c >= -1e-9 : c <= 1e-9;
+  };
+  const cross = (p: V2, q: V2, a: V2, b: V2): V2 => {
+    const [x1, y1] = p;
+    const [x2, y2] = q;
+    const [x3, y3] = a;
+    const [x4, y4] = b;
+    const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    if (Math.abs(den) < 1e-12) return q;
+    const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+    return [x1 + t * (x2 - x1), y1 + t * (y2 - y1)];
+  };
+  let out = subject;
+  for (let i = 0; i < clip.length && out.length; i++) {
+    const a = clip[i];
+    const b = clip[(i + 1) % clip.length];
+    const input = out;
+    out = [];
+    for (let k = 0; k < input.length; k++) {
+      const p = input[k];
+      const q = input[(k + 1) % input.length];
+      const pin = inside(p, a, b);
+      const qin = inside(q, a, b);
+      if (pin && qin) out.push(q);
+      else if (pin && !qin) out.push(cross(p, q, a, b));
+      else if (!pin && qin) out.push(cross(p, q, a, b), q);
+    }
+  }
+  return dedupe(out);
+}
+
+/**
+ * A glass block cut along the opening's edge: its outline (clipped) placed about the whole block's centre, so its
+ * glass pattern lines up with the whole blocks around it.
+ */
+function cutBlock(slot: string, pts: V2[], cx: number, cy: number, bz: number): Part {
+  return {
+    shape: 'prism',
+    outline: pts.map(([x, y]) => [x - cx, -(y - cy)] as V2),
+    height: 2 * bz,
+    position: [cx, cy, -bz],
+    rotation: [Math.PI / 2, 0, 0],
+    slot,
+    uv: [GLASS_BLOCK / 2, GLASS_BLOCK / 2],
+    plan: false,
+  };
+}
+
+/**
+ * The opening (inside its lining) filled with hollow glass blocks in recessed white mortar joints: square blocks on a
+ * grid that fits the opening's width exactly, courses alternating checkered and wave glass from the floor up to the
+ * soffit. Blocks crossing the rounded corners or the soffit are cut along them, so the glass covers the whole opening
+ * and follows its curves, like an arched glass-block infill.
+ */
+function glassBlockInfill(size: Size3, s: PortalSpec): Part[] {
+  const g = portalGeo(size, s);
+  const gi = insetGeo(g, s.liningIn ?? 0);
+  // The clear opening as a closed outline: up the left jamb, round the head, down the right jamb, along the floor.
+  const outline = dedupe(openingEdge(gi, 0));
+  const ow = gi.xr - gi.xl;
+  const oh = gi.yi - gi.yb;
+  if (ow < 0.15 || oh < 0.15 || outline.length < 3) return [];
+  // Hollow blocks are 8 cm deep at most; the joints sit a little deeper so the block faces stand out.
+  const bz = Math.max(0.012, Math.min(0.04, g.d / 2 - 0.012));
+  const mz = Math.max(0.008, bz - 0.006);
+  // Square cells fitting the width; coarser cells when the opening is huge (at most ~260 blocks).
+  let pitch = GLASS_BLOCK_PITCH;
+  let nx = Math.max(1, Math.round(ow / pitch));
+  while (nx * Math.ceil(oh / (ow / nx)) > 260) {
+    pitch *= 1.08;
+    nx = Math.max(1, Math.round(ow / pitch));
+  }
+  const cell = ow / nx;
+  const ny = Math.max(1, Math.ceil(oh / cell - 1e-6));
+  const joint = clamp(cell * 0.05, 0.006, 0.012);
+  // Joints: a full grid up to the soffit. Where they run past the curved edge they end inside the wall or its
+  // lining, out of sight.
+  const parts: Part[] = [];
+  for (let i = 1; i < nx; i++) {
+    const x = gi.xl + i * cell;
+    parts.push(span('mortar', [x - joint / 2, x + joint / 2], [gi.yb, gi.yi], [-mz, mz], o));
+  }
+  for (let j = 1; j < ny; j++) {
+    const y = gi.yb + j * cell;
+    parts.push(span('mortar', [gi.xl, gi.xr], [y - joint / 2, y + joint / 2], [-mz + 0.0005, mz - 0.0005], o));
+  }
+  for (let j = 0; j < ny; j++) {
+    const y0 = gi.yb + j * cell + (j === 0 ? 0 : joint / 2);
+    const y1 = Math.min(gi.yi, gi.yb + (j + 1) * cell - joint / 2);
+    if (y1 - y0 < 0.004) continue;
+    const slot = j % 2 === 0 ? 'grid' : 'wave';
+    const cy = gi.yb + (j + 0.5) * cell;
+    for (let i = 0; i < nx; i++) {
+      const x0 = gi.xl + i * cell + (i === 0 ? 0 : joint / 2);
+      const x1 = gi.xl + (i + 1) * cell - (i === nx - 1 ? 0 : joint / 2);
+      const cx = gi.xl + (i + 0.5) * cell;
+      const rect: V2[] = [
+        [x0, y0],
+        [x1, y0],
+        [x1, y1],
+        [x0, y1],
+      ];
+      if (rect.every((c) => insidePoly(c, outline)) && y1 < gi.yi - 1e-6) {
+        parts.push(
+          box(slot, [(x0 + x1) / 2, (y0 + y1) / 2, 0], [GLASS_BLOCK, GLASS_BLOCK, 2 * bz], {
+            scale: [(x1 - x0) / GLASS_BLOCK, (y1 - y0) / GLASS_BLOCK, 1],
+            uv: [GLASS_BLOCK / 2, GLASS_BLOCK / 2],
+            plan: false,
+          }),
+        );
+        continue;
+      }
+      // Cut along the curve (or the soffit); slivers too small to read as glass are left to the lining.
+      const piece = clipToConvex(rect, outline);
+      if (piece.length < 3 || Math.abs(signedArea(piece)) < 1e-4) continue;
+      parts.push(cutBlock(slot, piece, cx, cy, bz));
+    }
+  }
+  return parts;
+}
+
+/** Whether a point lies inside a closed outline (even–odd rule). */
+function insidePoly([x, y]: V2, poly: V2[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i];
+    const [xj, yj] = poly[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
 /** Default height of the arched wall portal's short wall: a knee wall you can sit a plant or books on. */
 const SHORT_WALL_DEFAULT = 0.9;
 const shortWallOf = (p?: ParamValues): number => (typeof p?.shortWall === 'number' ? p.shortWall : SHORT_WALL_DEFAULT);
@@ -1071,9 +1231,12 @@ const archedWallPortal = defineItem({
     'vách ngăn cong',
     'vách vòm phòng ngủ',
     'phòng ngủ',
+    'glass block',
+    'gạch kính lấy sáng',
+    'vách gạch kính',
   ],
   description:
-    'A single straight full-height wall with a wide curved-corner arched opening lined in warm oak, matching the front face of the arched corner bedroom enclosure. Independently resize the left side wall width, right side wall width, top header drop and left/right arch radii, or switch between a stepped bulkhead wall, flush wall, painted opening, glass side-light or a short wall with an oak sill across the bottom of the opening (its height is a shape setting).',
+    'A single straight full-height wall with a wide curved-corner arched opening lined in warm oak, matching the front face of the arched corner bedroom enclosure. Independently resize the left side wall width, right side wall width, top header drop and left/right arch radii, or switch between a stepped bulkhead wall, flush wall, painted opening, glass side-light, a short wall with an oak sill across the bottom of the opening (its height is a shape setting) or a glass block infill (gạch kính lấy sáng) of alternating wave and checkered blocks filling the opening.',
   defaultSize: { w: 3.0, d: WALL_T, h: CEILING },
   minSize: { w: 1.0, d: 0.08, h: 1.8 },
   maxSize: { w: 7.0, d: 0.45, h: 3.6 },
@@ -1120,6 +1283,13 @@ const archedWallPortal = defineItem({
       ],
       build: (size, p) => buildPortal(size, { ...archedWallPortalSpec(p), shortWall: shortWallOf(p) }),
       planDetail: (size, p) => shortWallPlan(size, { ...archedWallPortalSpec(p), shortWall: shortWallOf(p) }),
+    },
+    {
+      id: 'glass-blocks',
+      name: 'Glass block infill (gạch kính lấy sáng)',
+      slots: GLASS_BLOCK_SLOTS,
+      build: (size, p) => [...buildPortal(size, archedWallPortalSpec(p)), ...glassBlockInfill(size, archedWallPortalSpec(p))],
+      planDetail: (size, p) => shortWallPlan(size, archedWallPortalSpec(p)),
     },
   ],
 });
