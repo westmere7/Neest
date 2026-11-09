@@ -1,0 +1,94 @@
+/* Live editing: top-bar people, the Live dialog and the join page. */
+.live-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.live-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--surface-solid);
+  flex: none;
+}
+.live-button .live-avatar + .live-avatar {
+  margin-left: -6px;
+}
+.live-more {
+  font-size: 11px;
+  color: var(--text-3);
+  padding: 0 2px;
+}
+.live-icon.state-live {
+  color: var(--accent);
+}
+.live-icon.state-offline,
+.live-icon.state-error {
+  color: var(--warning, #e67700);
+}
+.live-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.live-dialog .field,
+.live-join .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.live-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.live-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.live-link .input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+}
+.live-people {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.live-person {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.live-state {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.live-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 12.5px;
+}
+.live-join,
+.live-join form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  max-width: 360px;
+  text-align: center;
+}
+.live-join form .field {
+  width: 100%;
+  text-align: left;
+}

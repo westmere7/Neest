@@ -74,6 +74,11 @@ export default defineConfig({
       // Project JSON is synced by the workspace plugin; it must not trigger page reloads.
       ignored: ['**/projects/**/*.tmp'],
     },
+    // Live rooms in development: `npm run cloud:dev` serves them on 8787 (the app uses /sync unless
+    // VITE_NEEST_SYNC_URL points elsewhere).
+    proxy: {
+      '/sync': { target: 'http://127.0.0.1:8787', ws: true, changeOrigin: true },
+    },
   },
   esbuild: {
     // The lazily loaded thumbnail renderer awaits its photo textures at module level.

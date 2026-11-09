@@ -10,6 +10,7 @@ import { loadProject, saveProject, startAutosave, markFileVersion } from '../pro
 import { migrateProject } from '@/storage/migrations';
 import { loadFromWorkspace, onWorkspaceChange, pullWorkspaceAssets, workspaceFolder } from '@/storage/workspace';
 import { EditorShell } from './EditorShell';
+import { startLive } from '@/sync/live';
 import { pruneSelection } from './actions';
 
 /** Loads a project from local storage, starts autosave, and renders the editor. */
@@ -36,10 +37,17 @@ export default function EditorPage({ projectId }: { projectId: string }) {
           toast.info(
             res.firstOpen ? 'Opened from the repo folder' : 'Loaded the newer copy from the repo',
             res.firstOpen
-              ? `It is now saved in this browser too, and your edits sync back to ${workspaceFolder()}/.`
+              ? `It is now kept in this browser too; Save (Ctrl+S) writes your changes back to ${workspaceFolder()}/.`
               : `${workspaceFolder()}/ had a more recent version of this project.`,
           );
-        stop = startAutosave();
+        const stopAutosave = startAutosave();
+        // A project shared for live editing joins its room (the room's version replaces this browser's).
+        const stopLive = await startLive(projectId);
+        stop = () => {
+          stopLive();
+          stopAutosave();
+        };
+        if (cancelled) return stop();
         setStatus('ready');
       } catch (e) {
         if (cancelled) return;

@@ -109,6 +109,8 @@ export function applyOps<T>(doc: T, ops: Op[], mode: ApplyMode = 'force'): Apply
         continue;
       }
       const key = op.path[op.path.length - 1];
+      // Already that value (an echo of one's own change, a repeat): nothing to do, nothing to report.
+      if (deepEqual(parent[key], op.value)) continue;
       if (mode === 'checked' && !deepEqual(parent[key], op.old)) {
         skipped.push(op);
         continue;
