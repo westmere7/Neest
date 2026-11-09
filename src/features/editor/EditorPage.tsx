@@ -10,7 +10,8 @@ import { loadProject, saveProject, startAutosave, markFileVersion } from '../pro
 import { migrateProject } from '@/storage/migrations';
 import { loadFromWorkspace, onWorkspaceChange, pullWorkspaceAssets, workspaceFolder } from '@/storage/workspace';
 import { EditorShell } from './EditorShell';
-import { startLive } from '@/sync/live';
+import { startLive, useLiveStore } from '@/sync/live';
+import { startFileMirror } from './fileMirror';
 import { pruneSelection } from './actions';
 
 /** Loads a project from local storage, starts autosave, and renders the editor. */
@@ -43,7 +44,10 @@ export default function EditorPage({ projectId }: { projectId: string }) {
         const stopAutosave = startAutosave();
         // A project shared for live editing joins its room (the room's version replaces this browser's).
         const stopLive = await startLive(projectId);
+        // A shared project's file mirrors the team's version both ways (dev server only).
+        const stopMirror = startFileMirror(projectId);
         stop = () => {
+          stopMirror();
           stopLive();
           stopAutosave();
         };
@@ -67,6 +71,7 @@ export default function EditorPage({ projectId }: { projectId: string }) {
     if (status !== 'ready') return;
     return onWorkspaceChange(async (e) => {
       if (e.id !== projectId) return;
+      if (useLiveStore.getState().room) return; // shared: the file mirror merges it (fileMirror.ts)
       if (e.kind === 'unlink') {
         toast.info('Removed from the repo folder', 'The project file was deleted on disk; this browser copy is kept and will be written back on the next save.');
         return;

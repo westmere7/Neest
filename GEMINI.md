@@ -10,3 +10,8 @@ Always `git pull` and merge `main` into your branch before starting. Add KNOWLED
 numbered list. Never run `npm run cloud:deploy` (it uploads this machine's account secrets); `npm run deploy:app` is
 fine with Cloudflare access. Pushing to `main` publishes the app automatically, so merge only finished, checked work
 into `main`.
+
+Layouts of projects shared with the team (e.g. 60LTN) live on the team server. To change one, edit its file in
+`projects/` while the project is open in `npm run dev`: read the file right before every change (the app keeps it at
+the team's latest version), change only what you mean to, and keep the JSON valid. The app sends your changes to the
+team. Never commit those files (they are git-ignored).

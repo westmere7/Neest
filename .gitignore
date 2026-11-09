@@ -20,3 +20,8 @@ cloud/.wrangler
 cloud/accounts.local.json
 cloud/.secrets.json
 cloud/.dev.vars
+
+# Projects shared with the team live on the team server; their files in projects/ are working copies the app keeps
+# in step while the project is open in `npm run dev` (for assistants to edit). Never commit them. Add a line here
+# when you share another project that has a file.
+projects/60ltn__prj_hj93rtum5n.json

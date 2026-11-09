@@ -1,6 +1,6 @@
 import type { LayoutOption, OptionPlan, Project } from '../model/schema';
 import { listOptions, PLAN_KEYS } from '../commands/options';
-import { diff, type Op } from './ops';
+import { applyOps, diff, type Op } from './ops';
 
 /**
  * The shared document of a project: what every collaborator edits, independent of which layout option each
@@ -127,3 +127,18 @@ export const diffProjects = (a: Project, b: Project): Op[] => diff(toDoc(a), toD
 
 /** True when the ops change any option's plan or the option list (not only shared fields). */
 export const touchesPlans = (ops: Op[]): boolean => ops.some((o) => o.path[0] === 'plans' || o.path[0] === 'optionOrder');
+
+/** Document fields a file edit never carries over (bookkeeping, not content). */
+const MERGE_SKIP = new Set(['updatedAt']);
+
+/**
+ * Three-way merge of an edited copy (a project file someone changed) into the current version: only what changed
+ * from `base` (the version that copy started from) to `edited` is applied, so newer changes in `current` that the
+ * copy never saw stay. The edit wins where both changed the same property. Null when the copy changed nothing.
+ */
+export function mergeEdits(base: Project, edited: Project, current: Project): Project | null {
+  const ops = diffProjects(base, edited).filter((o) => !MERGE_SKIP.has(o.path[0]));
+  if (!ops.length) return null;
+  const { doc } = applyOps(toDoc(current), ops, 'force');
+  return fromDoc(doc, viewedOption(current), current);
+}

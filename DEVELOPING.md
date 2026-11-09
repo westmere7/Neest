@@ -31,8 +31,17 @@ pitfalls, history) and **AGENTS.md** (ground rules) first.
 `npm run dev` uses the team's server (`.env.development`): sign in with your own account under "Shared with the
 team" and you see and edit the team's projects, as on the website. Your own projects stay in this browser.
 
-A shared project is saved on the team server as you edit (the top bar says "Saved to the team"); Save (Ctrl+S) writes
-no file for it. A copy of it in `projects/` is an old snapshot: don't commit changes to it.
+A shared project is saved on the team server as you edit (the top bar says "Saved to the team"); Save (Ctrl+S) does
+nothing more. While it is open in `npm run dev`, its file in `projects/` is a **two-way working copy**:
+
+- the app keeps the file at the team's current version (a moment after any change, anyone's);
+- when you or your assistant change the file, the app applies just those changes (an undo step, "Changes from the
+  project file") and sends them to the team. Changes others made meanwhile are kept.
+
+So to have Gemini or Claude change a shared layout: open the project in `npm run dev` (signed in), let the assistant
+edit the file (re-reading it right before each change), and watch it appear. Shared projects' files are git-ignored
+(see `.gitignore`): never commit them. With the project closed, edits to the file are picked up the next time it is
+opened on that computer.
 
 To work on the live-editing server itself, run a local copy with local test accounts (the team's real passwords
 and the server's signing key live only on Danh's PC; git ignores them):

@@ -7,7 +7,7 @@ import { SAMPLES, buildDemoProject } from '@/features/projects/demoProject';
 import { addOption, switchOption } from '../commands/options';
 import { createProjectStore } from '@/state/projectStore';
 import { applyOps, deepEqual, diff, invert } from './ops';
-import { diffProjects, fromDoc, toDoc, viewedOption } from './doc';
+import { diffProjects, fromDoc, mergeEdits, toDoc, viewedOption } from './doc';
 
 const sixty = (): Project =>
   migrateProject(JSON.parse(readFileSync(resolve(__dirname, '../../../projects/60ltn__prj_hj93rtum5n.json'), 'utf8'))).project;
@@ -176,5 +176,53 @@ describe('two people editing one project', () => {
     store.getState().undo();
     expect(store.getState().project!.options).toHaveLength(p.options!.length);
     expect(viewedOption(store.getState().project!)).toBe(viewedOption(p));
+  });
+});
+
+describe('merging an edited project file (file mirror)', () => {
+  const firstId = (rec: Record<string, unknown>) => Object.keys(rec)[0];
+  const edit = (p: Project, fn: (d: Project) => void): Project => {
+    const d = structuredClone(p);
+    fn(d);
+    return d;
+  };
+
+  it('applies only what the file changed, keeping newer changes by others', () => {
+    const base = sixty();
+    const wall = firstId(base.walls);
+    const item = firstId(base.objects);
+    // The assistant moved an item in the file; meanwhile a teammate renamed the project and thickened a wall.
+    const file = edit(base, (d) => {
+      d.objects[item].x += 0.5;
+      d.updatedAt = base.updatedAt + 1;
+    });
+    const current = edit(base, (d) => {
+      d.name = 'Renamed by a teammate';
+      d.walls[wall].thickness = 0.3;
+    });
+    const merged = mergeEdits(base, file, current)!;
+    expect(merged.objects[item].x).toBe(base.objects[item].x + 0.5);
+    expect(merged.name).toBe('Renamed by a teammate');
+    expect(merged.walls[wall].thickness).toBe(0.3);
+    expect(merged.updatedAt).toBe(current.updatedAt);
+    expect(viewedOption(merged)).toBe(viewedOption(current));
+  });
+
+  it('changes nothing when the file is what was written', () => {
+    const base = sixty();
+    expect(mergeEdits(base, structuredClone(base), edit(base, (d) => void (d.name = 'x')))).toBeNull();
+    expect(mergeEdits(base, edit(base, (d) => void (d.updatedAt += 5)), base)).toBeNull();
+  });
+
+  it('carries edits to another layout option than the one shown', () => {
+    const base = sixty();
+    const other = base.options!.find((o) => o.id !== viewedOption(base))!.id;
+    // The file was edited while it showed another option (its own fields hold that option's plan).
+    const shown = fromDoc(toDoc(base), other, base);
+    const item = firstId(shown.objects);
+    const file = edit(shown, (d) => void (d.objects[item].rotation = 1.25));
+    const merged = mergeEdits(shown, file, base)!;
+    expect(viewedOption(merged)).toBe(viewedOption(base));
+    expect((toDoc(merged).plans[other] as { objects: Project['objects'] }).objects[item].rotation).toBe(1.25);
   });
 });
