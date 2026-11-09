@@ -10,7 +10,7 @@ import { applyOps, deepEqual, diff, invert } from './ops';
 import { diffProjects, fromDoc, mergeEdits, toDoc, viewedOption } from './doc';
 
 const sixty = (): Project =>
-  migrateProject(JSON.parse(readFileSync(resolve(__dirname, '../../../projects/60ltn__prj_hj93rtum5n.json'), 'utf8'))).project;
+  migrateProject(JSON.parse(readFileSync(resolve(__dirname, 'fixtures/60ltn.json'), 'utf8'))).project;
 
 /** Two people on one project: each store's changes are relayed to the other, as a sync server would. */
 function pair(p: Project) {
