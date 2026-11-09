@@ -28,9 +28,13 @@ pitfalls, history) and **AGENTS.md** (ground rules) first.
 
 ## Live editing on your own machine
 
-The team's real passwords and the server's signing key live only on Danh's PC (git ignores them). To work on live
-editing locally:
+`npm run dev` uses the team's server (`.env.development`): sign in with your own account under "Shared with the
+team" and you see and edit the team's projects, as on the website. Your own projects stay in this browser.
 
+To work on the live-editing server itself, run a local copy with local test accounts (the team's real passwords
+and the server's signing key live only on Danh's PC; git ignores them):
+
+0. Put `VITE_NEEST_SYNC_URL=/sync` in `.env.development.local` (git-ignored) and restart `npm run dev`.
 1. `npm run cloud:accounts` once — makes **local** test accounts and passwords on your machine
    (`cloud/accounts.local.json`).
 2. `npm run cloud:dev` (room server on port 8787) next to `npm run dev`; sign in with a local account.

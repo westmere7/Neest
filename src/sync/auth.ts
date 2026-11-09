@@ -71,6 +71,7 @@ export async function signIn(name: string, password: string): Promise<SessionUse
   }).catch(() => null);
   if (!res) throw new Error('The server cannot be reached. Check the connection and try again.');
   const body = (await res.json().catch(() => ({}))) as { token?: string; user?: SessionUser; error?: string };
+  if (res.status >= 500 && !body.error) throw new Error('The team server is not answering. Try again in a moment.');
   if (!res.ok || !body.token || !body.user) throw new Error(body.error ?? `The server answered ${res.status}.`);
   useAuthStore.setState({ user: body.user, token: body.token });
   await preferenceRepository.set(PREF, { token: body.token, user: body.user });
