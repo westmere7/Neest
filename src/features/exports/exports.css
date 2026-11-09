@@ -112,6 +112,19 @@
   border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
+.export-summary .link-button {
+  font: inherit;
+  color: var(--accent-strong);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.export-summary .link-button:disabled {
+  color: var(--text-3, var(--text-2));
+  cursor: default;
+}
 .sheet-preview {
   display: grid;
   place-items: center;

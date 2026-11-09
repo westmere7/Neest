@@ -5,6 +5,7 @@ import { useProjectStore } from '@/state/projectStore';
 import { useDialogStore, toast } from '@/state/uiStores';
 import { Button, Segmented, Select, Toggle } from '@/components/ui';
 import { useIsMobile } from '@/components/hooks';
+import { holdReload, keepScreenOn } from '@/app/appUpdates';
 import type { PlanMode } from '@/state/editorStore';
 import { buildSheet, defaultSheetOptions, describeSheet, PAPER_MM, SCALE_PRESETS, type PaperSize, type SheetOptions } from './sheet';
 import { buildPlanImageSvg, rasterizeSvg, sheetPixelSize, sheetToPdf, svgBlob } from './planExports';
@@ -39,11 +40,16 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
   const formats = FORMATS.filter((f) => !isMobile || !f.desktop);
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
+    // No reload into a new version and no screen lock while this runs (a phone lost long publishes to both).
+    const release = holdReload();
+    const screen = await keepScreenOn();
     try {
       await fn();
     } catch (e) {
       toast.error('Export failed', e instanceof Error ? e.message : String(e));
     } finally {
+      screen();
+      release();
       setBusy(false);
     }
   };

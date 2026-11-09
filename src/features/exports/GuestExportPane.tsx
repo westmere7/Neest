@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
+import { useIsMobile } from '@/components/hooks';
 import type { GuestSettings, Project } from '@/domain/model/schema';
 import { GUEST_TIMES, guestLayers, guestOptions } from '@/domain/walkthrough/guest';
 import { useProjectStore } from '@/state/projectStore';
@@ -89,10 +90,20 @@ export function GuestExport({ project, busy, run }: PaneProps) {
     setGuest('Choose guest layout options', patch);
   };
 
-  // Estimated size: build the HTML a moment after the settings settle (the model is cached for the download).
+  // Estimated size: build the HTML a moment after the settings settle (the model is cached for the download). That
+  // builds the whole file (tens of MB), so never while a publish or download runs, and on a phone only when asked:
+  // rebuilt on every change (a shared project changes whenever someone edits it) it ran the phone out of memory and
+  // the browser reloaded the page in the middle of publishing.
+  const isMobile = useIsMobile();
   const [size, setSize] = useState<number | null>(null);
-  const [measuring, setMeasuring] = useState(true);
+  const [measuring, setMeasuring] = useState(false);
+  const [asked, setAsked] = useState(false);
+  const auto = !isMobile || asked;
   useEffect(() => {
+    if (!auto || busy) {
+      setMeasuring(false);
+      return;
+    }
     let live = true;
     setMeasuring(true);
     const t = window.setTimeout(() => {
@@ -100,13 +111,18 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         .then(({ buildGuestHtml }) => buildGuestHtml(project))
         .then((html) => live && setSize(new Blob([html]).size))
         .catch(() => live && setSize(null))
-        .finally(() => live && setMeasuring(false));
+        .finally(() => {
+          if (!live) return;
+          setMeasuring(false);
+          // On a phone, once: later changes don't rebuild it.
+          setAsked(false);
+        });
     }, 700);
     return () => {
       live = false;
       window.clearTimeout(t);
     };
-  }, [project]);
+  }, [project, auto, busy]);
 
   return (
     <div className="export-pane guest-export">
@@ -121,11 +137,17 @@ export function GuestExport({ project, busy, run }: PaneProps) {
         <div className="guest-file">
           <div className="export-summary" data-testid="guest-size">
             <strong>HTML</strong> ·{' '}
-            {measuring && size === null
-              ? 'estimating size…'
-              : size !== null
-                ? `about ${mb(size)}${measuring ? ' (updating…)' : ''}`
-                : 'size unknown'}{' '}
+            {measuring && size === null ? (
+              'estimating size…'
+            ) : size !== null ? (
+              `about ${mb(size)}${measuring ? ' (updating…)' : ''}`
+            ) : isMobile ? (
+              <button type="button" className="link-button" disabled={busy} onClick={() => setAsked(true)} data-testid="guest-size-estimate">
+                estimate size
+              </button>
+            ) : (
+              'size unknown'
+            )}{' '}
             · opens offline, nothing loaded from the internet
           </div>
           <div className="btn-row">

@@ -2814,3 +2814,11 @@ Known limitations (also in README):
      its curve at 45° that drags along the diagonal; two corners on one side never overlap (bottom radii are capped by the
      height left under the top curve). Items placed before keep their single top `radius` for both top corners. The team
      server fix of 241 is deployed (`npm run cloud:deploy`, version a979a871). (done)
+243. "It keeps refreshing on mobile when updating the link" → three causes on a phone: (1) the Guest walkthrough pane
+     rebuilt the whole offline HTML (≈ 39 MB for 60LTN) to show its size estimate on every project change — a shared
+     project changes on every edit by anyone — so the phone ran out of memory and the browser reloaded the tab; now it
+     never runs while an export/publish runs and on phones only when "estimate size" is tapped (once). (2) A new
+     deployed version reloaded a background tab at once, killing a publish when you switched apps: `holdReload()`
+     (src/app/appUpdates.ts) holds that while the Export dialog's `run` works. (3) `keepScreenOn()` (Screen Wake
+     Lock) keeps the phone from locking during it. Asked to sign in on the live site with a given password: not done
+     (Claude does not enter passwords on the live site); the user signs in. (done)
