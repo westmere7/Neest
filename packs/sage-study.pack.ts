@@ -1,6 +1,6 @@
 /**
- * Sage study desk — a soft, sage-and-white study corner (from a reference photo): a white desk on two
- * drawer units, a lit pegboard wall with its top shelf and accessories, a gingham desk set with a
+ * Sage study desk — a soft, sage-and-white study corner (from a reference photo): a white desk on a
+ * right-hand drawer unit and tubular left legs, a lit pegboard wall with its top shelf and accessories, a gingham desk set with a
  * tablet and a round-key keyboard, and the small things on the desk (a glass cup with a straw, a
  * sage tumbler, a mint instant camera, a desk organiser with books, a glowing egg lamp).
  *
@@ -118,31 +118,35 @@ const drawerDesk = defineItem({
   category: 'office',
   type: 'surfaces',
   group: 'Desks',
-  tags: ['desk', 'drawer desk', 'alex', 'white desk', 'study desk', 'bàn học', 'bàn làm việc', 'drawers'],
+  tags: ['desk', 'drawer desk', 'alex', 'adils', 'white desk', 'study desk', 'bàn học', 'bàn làm việc', 'drawers'],
   description:
-    'A white desk top on two drawer units: a wide three-drawer unit on the left and a six-drawer tower on the right, with finger-slot pulls. A favourite for a study or a home-office corner.',
+    'A white desk top supported by two slim cylindrical white legs on the left and a six-drawer tower with finger-slot pulls on the right. Leaves wide knee room for a study or home-office corner.',
   defaultSize: { w: 1.4, d: 0.6, h: 0.75 },
   minSize: { w: 1.0, d: 0.45, h: 0.68 },
   maxSize: { w: 2.2, d: 0.8, h: 0.8 },
-  slots: [matSlot('top', 'Desk top', 'paint-pure-white'), matSlot('body', 'Drawer units', 'paint-pure-white'), matSlot('pull', 'Finger slots', 'paint-greige')],
+  slots: [matSlot('top', 'Desk top', 'paint-pure-white'), matSlot('body', 'Drawer unit & legs', 'paint-pure-white'), matSlot('pull', 'Finger slots & feet', 'paint-greige')],
   build: ({ w, d, h }) => {
     const t = 0.03;
     const uh = h - t;
     const zb = -d / 2 + 0.02;
     const zf = d / 2 - 0.015;
-    const lw = clamp(w * 0.36, 0.36, 0.6);
     const rw = clamp(w * 0.26, 0.3, 0.42);
-    const lx: [number, number] = [-w / 2 + 0.01, -w / 2 + 0.01 + lw];
     const rx: [number, number] = [w / 2 - 0.01 - rw, w / 2 - 0.01];
+    const xLeg = -w / 2 + 0.05;
+    const zLeg = d / 2 - 0.055;
     const parts: Part[] = [
       span('top', [-w / 2, w / 2], [uh, h], [-d / 2, d / 2], { bevel: 0.003 }),
-      // Carcasses, a little narrower than the top, standing on the floor.
-      span('body', lx, [0, uh], [zb, zf - 0.016]),
+      // Right-hand drawer carcass, a little narrower than the top, standing on the floor.
       span('body', rx, [0, uh], [zb, zf - 0.016]),
     ];
-    // Left: a shallow top drawer and two deep ones.
-    const lSplits = [0, 0.42, 0.75, 1].map((f) => f * uh);
-    for (const i of range(3)) parts.push(...drawerFront(lx, [lSplits[i], lSplits[i + 1]], zf));
+    // Left: two cylindrical desk legs with top mounting plates and levelling feet.
+    for (const zl of [-zLeg, zLeg]) {
+      parts.push(
+        vcyl('body', xLeg, zl, uh - 0.004, uh, 0.032, NP),
+        vcyl('body', xLeg, zl, 0.006, uh - 0.004, 0.02, NP),
+        vcyl('pull', xLeg, zl, 0, 0.006, 0.018, NP),
+      );
+    }
     // Right: six equal drawers.
     for (const i of range(6)) parts.push(...drawerFront(rx, [(i * uh) / 6, ((i + 1) * uh) / 6], zf));
     return parts;
