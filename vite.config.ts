@@ -17,8 +17,9 @@ export default defineConfig({
     // Hot-loads content packs added to or removed from /packs (one .pack.ts file each).
     neestPacks(),
     VitePWA({
-      // A new version waits until the app reloads it (src/app/appUpdates.ts: checks, offers Reload).
-      registerType: 'prompt',
+      // A new version takes over as soon as it is installed; src/app/appUpdates.ts registers it, checks for new
+      // versions and offers Reload (never 'prompt': that waits for every tab to close, even across reloads).
+      registerType: 'autoUpdate',
       injectRegister: false,
       includeAssets: ['favicon.svg', 'favicon.png', 'logo.png'],
       manifest: {
@@ -34,6 +35,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Open tabs switch to a new version's worker at once (appUpdates.ts then offers Reload).
+        clientsClaim: true,
+        skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         navigateFallback: 'index.html',

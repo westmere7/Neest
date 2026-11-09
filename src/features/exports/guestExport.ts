@@ -312,22 +312,30 @@ async function gzip(buf: ArrayBuffer): Promise<{ data: ArrayBuffer; gzip: boolea
 
 type EmbeddedGlb = { b64: string; gzip: boolean };
 
-/** The last embedded model, so the size estimate and the download build it once. */
-let glbCache: { key: unknown[]; glb: Promise<EmbeddedGlb> } | null = null;
+/** The last model built, so the size estimate, the download and a live link build it once per version. */
+let modelCache: { key: unknown[]; raw: Promise<ArrayBuffer>; embedded?: Promise<EmbeddedGlb> } | null = null;
 
-function guestGlb(project: Project): Promise<EmbeddedGlb> {
+/** The guest model (one GLB, a group per shown layout option) of this version of the project. */
+export function guestModel(project: Project): Promise<ArrayBuffer> {
   const key = glbKey(project);
-  if (glbCache && glbCache.key.length === key.length && glbCache.key.every((k, i) => k === key[i])) return glbCache.glb;
+  if (modelCache && modelCache.key.length === key.length && modelCache.key.every((k, i) => k === key[i])) return modelCache.raw;
   const g = project.guest;
   const projects = guestOptions(project).options.map((o) => o.project);
-  const glb = exportOptionsGlb(projects, { ceilings: true, furniture: true, cutaway: g.cutawayHeight, textureSize: g.textureSize, surfaceDetail: g.surfaceDetail, hiddenLayers: g.hiddenItems })
-    .then(gzip)
-    .then((z) => ({ b64: bufferToBase64(z.data), gzip: z.gzip }));
-  glbCache = { key, glb };
-  glb.catch(() => {
-    if (glbCache?.glb === glb) glbCache = null;
+  const raw = exportOptionsGlb(projects, { ceilings: true, furniture: true, cutaway: g.cutawayHeight, textureSize: g.textureSize, surfaceDetail: g.surfaceDetail, hiddenLayers: g.hiddenItems });
+  const entry: NonNullable<typeof modelCache> = { key, raw };
+  modelCache = entry;
+  raw.catch(() => {
+    if (modelCache === entry) modelCache = null;
   });
-  return glb;
+  return raw;
+}
+
+/** The model as it goes inside a single-file walkthrough: gzipped, base64. */
+function guestGlb(project: Project): Promise<EmbeddedGlb> {
+  const raw = guestModel(project);
+  const entry = modelCache!;
+  entry.embedded ??= raw.then(gzip).then((z) => ({ b64: bufferToBase64(z.data), gzip: z.gzip }));
+  return entry.embedded;
 }
 
 /** One layout option's plan as viewer data: lamps, notes, labels, numbers and the plan drawing. */
@@ -367,12 +375,15 @@ function guestOption(name: string, source: Project): GuestOption {
   };
 }
 
-/** Everything the viewer needs, as plain data (no app code runs in the exported file). */
-export async function buildGuestData(source: Project): Promise<GuestData> {
+/**
+ * Everything the viewer needs, as plain data (no app code runs in the exported file). With `linked`, the model is
+ * not embedded: the page loads it in pieces from its live link (guestPieces.ts).
+ */
+export async function buildGuestData(source: Project, linked?: GuestData['model']): Promise<GuestData> {
   const project = guestSceneProject(source);
   const g = project.guest;
   const r = project.render;
-  const glb = await guestGlb(source);
+  const glb = linked ? null : await guestGlb(source);
   const sun = sunFromSettings(r);
   const budget = (q: GuestQuality) => {
     const b = LAMP_BUDGET[q === 'fast' ? 'draft' : q];
@@ -395,8 +406,7 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
     subtitle: guestSubtitle(project),
     intro: g.intro ? g.welcome.trim() : null,
     exportedAt: new Date().toISOString(),
-    glb: glb.b64,
-    ...(glb.gzip ? { glbEncoding: 'gzip' as const } : {}),
+    ...(glb ? { glb: glb.b64, ...(glb.gzip ? { glbEncoding: 'gzip' as const } : {}) } : { model: linked }),
     cameras,
     start,
     bounds,
@@ -427,8 +437,8 @@ export async function buildGuestData(source: Project): Promise<GuestData> {
  * their pictures), room labels, overview numbers and floor plan drawing. It references no external files, fonts, blob URLs
  * or browser storage.
  */
-export async function buildGuestHtml(project: Project): Promise<string> {
-  const data = await buildGuestData(project);
+export async function buildGuestHtml(project: Project, linked?: GuestData['model']): Promise<string> {
+  const data = await buildGuestData(project, linked);
   const { default: runtime } = await import('@/generated/guest-viewer.js?raw');
   return `<!doctype html>
 <html lang="en">

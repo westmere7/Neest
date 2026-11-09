@@ -62,11 +62,9 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
   const publish = () =>
     run(async () => {
       const slug = share?.slug ?? guestSlug(project);
-      setStage('Building the walkthrough…');
+      setStage('Building the 3D model…');
       try {
-        const { buildGuestHtml } = await import('./guestExport');
-        const html = await buildGuestHtml(project);
-        const url = await publishGuestLink(slug, html, setStage);
+        const url = await publishGuestLink(slug, project, setStage);
         setShare({ slug, url, at: Date.now() });
         toast.success(share?.url === url ? 'Updated: guests see it the next time they open the link.' : 'Published. The link works now.');
       } catch (e) {

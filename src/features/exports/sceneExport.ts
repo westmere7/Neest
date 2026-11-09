@@ -17,6 +17,8 @@ import { buildWallExtras } from '@/features/scene-3d/wallExtras';
 import { buildOpening } from '@/features/scene-3d/openingBuilder';
 import { MaterialRegistry } from '@/features/scene-3d/materialRegistry';
 import { loadProjectModels } from '@/features/scene-3d/customModels';
+import { preloadAssetModels } from '@/features/scene-3d/assetModels';
+import type { AssetDefinition } from '@/data/assets/types';
 import { isObjectHidden } from '@/domain/commands/itemLayers';
 import { guestLayerId } from '@/domain/walkthrough/guest';
 import { isCeilingItem } from '@/data/assets/catalog';
@@ -188,8 +190,23 @@ function indexGeometries(root: THREE.Object3D): () => void {
   };
 }
 
+/**
+ * Items drawn from model files (the people…) load on first use and show a simpler stand-in meanwhile: an export waits
+ * for them, so a file made right after opening the app holds the real shapes (and the same project gives the same file).
+ */
+async function loadItemModels(projects: Project[]): Promise<void> {
+  const assets = new Set<AssetDefinition>();
+  for (const p of projects)
+    for (const obj of Object.values(p.objects)) {
+      const a = getAsset(p, obj.assetId);
+      if (a) assets.add(a);
+    }
+  await preloadAssetModels(assets);
+}
+
 /** Binary glTF (GLB) of the project scene. */
 export async function exportGlb(project: Project, o: SceneExportOptions): Promise<ArrayBuffer> {
+  await loadItemModels([project]);
   const { root, registry } = await buildExportScene(project, o);
   return writeGlb([root], registry, o);
 }
@@ -200,6 +217,7 @@ export async function exportGlb(project: Project, o: SceneExportOptions): Promis
  * materials, textures and cached part geometry are stored once however many options use them.
  */
 export async function exportOptionsGlb(projects: Project[], o: SceneExportOptions): Promise<ArrayBuffer> {
+  await loadItemModels(projects);
   const registry = exportRegistry(o);
   const models = await loadProjectModels(projects[0]?.customAssets ?? {});
   const roots: THREE.Group[] = [];

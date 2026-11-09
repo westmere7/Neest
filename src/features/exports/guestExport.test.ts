@@ -227,7 +227,7 @@ describe('guest export data', () => {
     expect(opt.plan).toMatch(/^<svg[^>]+viewBox="/);
     // The model is gzipped and decodes back to the GLB.
     expect(data.glbEncoding).toBe('gzip');
-    const bytes = Uint8Array.from(atob(data.glb), (c) => c.charCodeAt(0));
+    const bytes = Uint8Array.from(atob(data.glb!), (c) => c.charCodeAt(0));
     const glb = new Uint8Array(
       await new Response(
         new Response(bytes).body!.pipeThrough(new DecompressionStream('gzip')),

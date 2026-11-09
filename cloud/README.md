@@ -59,9 +59,11 @@ After an app deploy, an open copy shows the previous version once (offline cache
 
 ## Guest links
 
-Export → Guest walkthrough → Publish live link sends the walkthrough (gzipped in the browser) to `PUT /guest/<slug>`
-with the signed-in session; the `GuestPage` Durable Object keeps it and serves it to anyone at `/g/<slug>/`. Update
-replaces it, Take down deletes it. Check the whole path from Danh's PC:
+Export → Guest walkthrough → Publish live link sends the 3D model in pieces named by their content (only pieces
+the link does not have yet: `POST /guest/<slug>/missing`, `PUT /guest/<slug>/p/<name>`), then the page (`PUT
+/guest/<slug>`, X-Neest-Pieces lists the pieces it uses) with the signed-in session. The `GuestPage` Durable Object
+keeps them and serves the page at `/g/<slug>/` and the pieces at `/g/<slug>/p/<name>` (cached by browsers for a
+year). Update sends what changed, Take down deletes it all. Check the whole path from Danh's PC:
 `npx vite-node --config tools/vite.tools.config.ts tools/check-guest-links.ts -- <guest html file> [server]`.
 
 ## How it works

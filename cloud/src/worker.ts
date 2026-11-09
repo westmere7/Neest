@@ -1,6 +1,6 @@
 import { ProjectRoom, sha256, type Env } from './room';
 import { Directory } from './directory';
-import { GUEST_SLUG, GuestPage } from './guest';
+import { GUEST_SLUG, GuestPage, MAX_PIECE_BYTES, PIECE_NAME } from './guest';
 import { MIN_PASSWORD, hashPassword, parseAccounts, readToken, sessionUser, signToken, verifyPassword, type SessionUser } from './auth';
 
 export { ProjectRoom, Directory, GuestPage };
@@ -17,10 +17,12 @@ export { ProjectRoom, Directory, GuestPage };
  *   DELETE /rooms/:room                               (only whoever shared it)
  *   GET    /rooms/:room/doc?key=                      → { seq, doc }
  *   GET    /rooms/:room/ws?key=&token=  (WebSocket)   live changes and presence
- *   PUT    /guest/:slug   body = gzipped guest HTML  → { url, at }   publishes or updates a guest link
+ *   POST   /guest/:slug/missing  { pieces }          → { missing }   model pieces the link does not have yet
+ *   PUT    /guest/:slug/p/:name   body = gzipped piece  → { ok }
+ *   PUT    /guest/:slug   body = gzipped guest HTML, X-Neest-Pieces: the pieces it uses → { url, at } (409 { missing })
  *   GET    /guest/:slug                       → { page }    who published it and when (null if none)
  *   DELETE /guest/:slug                       → { ok }      takes the link down
- *   GET    /g/:slug/                          the guest walkthrough itself, public (anyone with the link)
+ *   GET    /g/:slug/  and  /g/:slug/p/:name   the guest walkthrough and its model pieces, public (anyone with the link)
  *   GET    /health
  *
  * Every route but login, health and /g/ needs a session (Authorization: Bearer <token>, or ?token= for the
@@ -30,7 +32,7 @@ export { ProjectRoom, Directory, GuestPage };
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Neest-Pieces',
   'Access-Control-Max-Age': '86400',
 };
 const MAX_DOC_BYTES = 20 * 1024 * 1024;
@@ -76,6 +78,8 @@ export default {
       if (!url.pathname.endsWith('/')) return Response.redirect(`${url.origin}${url.pathname}/`, 301);
       return env.GUESTS.get(env.GUESTS.idFromName(parts[1])).fetch(request);
     }
+    if (parts[0] === 'g' && parts.length === 4 && GUEST_SLUG.test(parts[1]) && parts[2] === 'p' && PIECE_NAME.test(parts[3]) && (request.method === 'GET' || request.method === 'HEAD'))
+      return env.GUESTS.get(env.GUESTS.idFromName(parts[1])).fetch(request);
 
     if (parts.join('/') === 'auth/login' && request.method === 'POST') {
       let body: { user?: unknown; password?: unknown };
@@ -162,6 +166,25 @@ export default {
       }
     }
 
+    if (parts.length === 3 && parts[0] === 'guest' && GUEST_SLUG.test(parts[1]) && parts[2] === 'missing' && request.method === 'POST') {
+      let body: { pieces?: unknown };
+      try {
+        body = (await request.json()) as typeof body;
+      } catch {
+        return json({ error: 'Expected JSON' }, 400);
+      }
+      const names = Array.isArray(body.pieces) ? body.pieces.filter((n): n is string => typeof n === 'string' && PIECE_NAME.test(n)) : [];
+      if (names.length > 5000) return json({ error: 'Too many pieces' }, 413);
+      return json({ missing: await env.GUESTS.get(env.GUESTS.idFromName(parts[1])).missing(names) });
+    }
+
+    if (parts.length === 4 && parts[0] === 'guest' && GUEST_SLUG.test(parts[1]) && parts[2] === 'p' && PIECE_NAME.test(parts[3]) && request.method === 'PUT') {
+      if (Number(request.headers.get('Content-Length') ?? 0) > MAX_PIECE_BYTES) return json({ error: 'Piece too large' }, 413);
+      if (!request.body) return json({ error: 'Missing piece' }, 400);
+      const ok = await env.GUESTS.get(env.GUESTS.idFromName(parts[1])).putPiece(parts[3], request.body);
+      return ok ? json({ ok: true }) : json({ error: 'Expected a gzipped piece under 1.2 MB' }, 400);
+    }
+
     if (parts.length === 2 && parts[0] === 'guest' && GUEST_SLUG.test(parts[1])) {
       const page = env.GUESTS.get(env.GUESTS.idFromName(parts[1]));
       if (request.method === 'GET') return json({ page: await page.info() });
@@ -173,8 +196,10 @@ export default {
         const size = Number(request.headers.get('Content-Length') ?? 0);
         if (size > MAX_GUEST_BYTES) return json({ error: 'The walkthrough is too large to publish (over 95 MB compressed).' }, 413);
         if (!request.body) return json({ error: 'Missing page' }, 400);
-        const done = await page.put(request.body, user.id);
+        const pieces = (request.headers.get('X-Neest-Pieces') ?? '').split(',').filter((n) => PIECE_NAME.test(n));
+        const done = await page.put(request.body, user.id, pieces);
         if (!done) return json({ error: 'Expected a gzipped page' }, 400);
+        if ('missing' in done) return json({ error: 'Some model pieces have not been sent', missing: done.missing }, 409);
         return json({ url: `${url.origin}/g/${parts[1]}/`, at: done.at });
       }
     }

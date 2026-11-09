@@ -140,9 +140,11 @@ export interface GuestData {
   /** Welcome card text; the card is shown when this is set (may be empty: title only). */
   intro?: string | null;
   exportedAt: string;
-  /** The scene as base64 GLB, gzipped when `glbEncoding` says so. */
-  glb: string;
+  /** The scene as base64 GLB, gzipped when `glbEncoding` says so (single-file walkthroughs). */
+  glb?: string;
   glbEncoding?: 'gzip';
+  /** Live links: the scene's GLB in pieces, fetched from `p/<name>` beside the page and joined in order. */
+  model?: { size: number; pieces: string[] };
   /** Built-in views, in order (Overview, Top). */
   cameras: GuestCamera[];
   /** Index of the opening view in `cameras`. */
@@ -353,6 +355,10 @@ function loadingScreen(title: string) {
   };
   return {
     step,
+    /** Replaces the step's text (download progress). */
+    note: (msg: string) => {
+      if (text) text.textContent = msg;
+    },
     done: () => {
       box.classList.add('ng-done');
       setTimeout(() => box.remove(), 400);
@@ -495,8 +501,34 @@ function start(data: GuestData) {
   let model: THREE.Object3D | null = null;
   let ceilingCheck = null as HTMLElement | null;
   const loading = loadingScreen(data.title);
+  /** A live link's model: its pieces fetched (a few at a time, kept by the browser: they never change) and joined. */
+  const fetchModel = async (m: NonNullable<GuestData['model']>): Promise<ArrayBuffer> => {
+    const out = new Uint8Array(m.size);
+    const parts: Uint8Array[] = new Array(m.pieces.length);
+    let next = 0;
+    let loaded = 0;
+    const worker = async () => {
+      while (next < m.pieces.length) {
+        const i = next++;
+        const res = await fetch(`p/${m.pieces[i]}`);
+        if (!res.ok) throw new Error(`Missing part of the model (${res.status})`);
+        parts[i] = new Uint8Array(await res.arrayBuffer());
+        loaded += parts[i].byteLength;
+        loading.note(`Downloading the model… ${Math.min(99, Math.floor((100 * loaded) / m.size))} %`);
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(6, m.pieces.length) }, worker));
+    let at = 0;
+    for (const p of parts) {
+      out.set(p, at);
+      at += p.byteLength;
+    }
+    if (at !== m.size) throw new Error('The model arrived incomplete');
+    return out.buffer;
+  };
   const glbBytes = async (): Promise<ArrayBuffer> => {
-    const raw = b64ToBuffer(data.glb);
+    if (data.model) return fetchModel(data.model);
+    const raw = b64ToBuffer(data.glb ?? '');
     if (data.glbEncoding !== 'gzip') return raw;
     if (typeof DecompressionStream === 'undefined')
       throw new Error(
