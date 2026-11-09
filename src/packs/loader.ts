@@ -17,11 +17,22 @@ const modules = import.meta.glob(['/packs/*.pack.ts', '!/packs/_*'], { eager: tr
 applyPacks(modules);
 
 const mintCat = MATERIAL_CATALOG_BY_ID['sage-shaker-kitchen:mint-stack-tile'];
+const shieldCat = MATERIAL_CATALOG_BY_ID['sage-shaker-kitchen:tempered-glass'];
 const openProject = useProjectStore.getState().project;
 if (openProject) {
-  const staleMatIds = mintCat
+  const staleMintIds = mintCat
     ? Object.values(openProject.materials)
         .filter((m) => (m.id === mintCat.id || m.catalogId === mintCat.id) && m.color.toLowerCase() === '#d2e6c2')
+        .map((m) => m.id)
+    : [];
+  const staleShieldIds = shieldCat
+    ? Object.values(openProject.materials)
+        .filter(
+          (m) =>
+            (m.id === shieldCat.id || m.catalogId === shieldCat.id) &&
+            m.color.toLowerCase() === '#cfe4e2' &&
+            Math.abs(m.opacity - 0.36) < 1e-4,
+        )
         .map((m) => m.id)
     : [];
   const isOldKitchen = (o: { assetId: string; height: number }) =>
@@ -30,10 +41,20 @@ if (openProject) {
     Object.values(openProject.objects).some(isOldKitchen) ||
     (openProject.options ?? []).some((opt) => Object.values(opt.plan?.objects ?? {}).some(isOldKitchen));
 
-  if (staleMatIds.length || hasOldKitchen) {
+  if (staleMintIds.length || staleShieldIds.length || hasOldKitchen) {
     useProjectStore.getState().execute('Update kitchen pack defaults', (d) => {
       if (mintCat) {
-        for (const id of staleMatIds) updateMaterial(d, id, { color: mintCat.color, roughness: mintCat.roughness });
+        for (const id of staleMintIds) updateMaterial(d, id, { color: mintCat.color, roughness: mintCat.roughness });
+      }
+      if (shieldCat) {
+        for (const id of staleShieldIds) {
+          updateMaterial(d, id, {
+            name: shieldCat.name,
+            color: shieldCat.color,
+            roughness: shieldCat.roughness,
+            opacity: shieldCat.opacity,
+          });
+        }
       }
       if (hasOldKitchen) {
         inEveryOption(d, (p) => {

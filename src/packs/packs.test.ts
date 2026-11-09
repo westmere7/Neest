@@ -418,28 +418,46 @@ describe('pack models', () => {
       for (const c of mainCircles) if (c.kind === 'circle') expect(c.c[1]).toBeLessThan(-sz.d / 2 + 0.6);
       for (const c of sideCircles) if (c.kind === 'circle') expect(c.c[1]).toBeGreaterThan(-sz.d / 2 + 0.6);
 
-      // Both hob versions maintain a 20 cm margin from the hob to the outer counter edge and mount a 1-sided tempered glass splatter shield there.
+      // Both hob versions maintain a 20 cm margin from the hob to the outer counter edge and mount top-chamfered frosted glass splatter shields in white base shoes at BOTH open ends of the L-counter.
       for (const testSize of [sz, { w: 2.4, d: 1.2, h: 2.22 }]) {
+        const checkBothEndShields = (ps: ReturnType<typeof clean.build>, planStrokes: ReturnType<typeof assetPlan>['strokes']) => {
+          const shieldParts = ps.filter((p) => p.slot === 'shield');
+          const shieldBounds = shieldParts.map(worldBounds);
+          const baseBounds = ps.filter((p) => p.slot === 'shieldBase').map(worldBounds);
+          expect(shieldParts).toHaveLength(2);
+          expect(baseBounds).toHaveLength(2);
+          for (const sp of shieldParts) {
+            expect(sp.shape).toBe('prism');
+            if (sp.shape === 'prism') expect(sp.outline).toHaveLength(5);
+          }
+          // One shield sits at the open end of the return arm (+d/2), and the other at the open end of the main arm (±w/2).
+          expect(shieldBounds.some((b) => testSize.d / 2 - b.max[2] < 0.02)).toBe(true);
+          expect(baseBounds.some((b) => testSize.d / 2 - b.max[2] < 0.02 && b.min[1] > 0.88 && b.max[1] < 0.92)).toBe(true);
+          if (hand === 'left') {
+            expect(shieldBounds.some((b) => testSize.w / 2 - b.max[0] < 0.02)).toBe(true);
+            expect(baseBounds.some((b) => testSize.w / 2 - b.max[0] < 0.02 && b.min[1] > 0.88 && b.max[1] < 0.92)).toBe(true);
+          } else {
+            expect(shieldBounds.some((b) => b.min[0] - -testSize.w / 2 < 0.02)).toBe(true);
+            expect(baseBounds.some((b) => b.min[0] - -testSize.w / 2 < 0.02 && b.min[1] > 0.88 && b.max[1] < 0.92)).toBe(true);
+          }
+          expect(planStrokes.filter((s) => s.kind === 'line')).toHaveLength(2);
+        };
+
         for (const m of [clean, noUppers]) {
           const ps = m.build(testSize);
           const hb = worldBounds(ps.find((p) => p.slot === 'hob')!);
-          const shields = ps.filter((p) => p.slot === 'shield').map(worldBounds);
-          expect(shields).toHaveLength(1);
           if (hand === 'left') {
             expect(testSize.w / 2 - hb.max[0]).toBeCloseTo(0.2, 4);
-            expect(testSize.w / 2 - shields[0].max[0]).toBeLessThan(0.02);
           } else {
             expect(hb.min[0] - -testSize.w / 2).toBeCloseTo(0.2, 4);
-            expect(shields[0].min[0] - -testSize.w / 2).toBeLessThan(0.02);
           }
+          checkBothEndShields(ps, assetPlan(m, testSize).strokes);
         }
         for (const m of [sideHob, sideHobNoUppers]) {
           const ps = m.build(testSize);
           const hb = worldBounds(ps.find((p) => p.slot === 'hob')!);
-          const shields = ps.filter((p) => p.slot === 'shield').map(worldBounds);
-          expect(shields).toHaveLength(1);
           expect(testSize.d / 2 - hb.max[2]).toBeCloseTo(0.2, 4);
-          expect(testSize.d / 2 - shields[0].max[2]).toBeLessThan(0.02);
+          checkBothEndShields(ps, assetPlan(m, testSize).strokes);
         }
       }
     }
@@ -543,8 +561,17 @@ describe('pack models', () => {
     expect(g).toBeGreaterThan(b);
     expect(b - r).toBeGreaterThanOrEqual(24);
 
+    const shield = MATERIAL_CATALOG_BY_ID['sage-shaker-kitchen:tempered-glass'];
+    const shieldBase = MATERIAL_CATALOG_BY_ID['sage-shaker-kitchen:shield-base-white'];
+    expect(shield).toBeDefined();
+    expect(shield.opacity).toBeGreaterThanOrEqual(0.7);
+    expect(shield.roughness).toBeGreaterThanOrEqual(0.35);
+    expect(shieldBase).toBeDefined();
+    expect(shieldBase.color.toLowerCase()).toBe('#f7f7f4');
+
     const p = createEmptyProject();
     p.materials[mint.id] = { ...mint, color: '#d2e6c2', roughness: 0.16 };
+    p.materials[shield.id] = { ...shield, color: '#cfe4e2', roughness: 0.05, opacity: 0.36 };
     p.materials.mat_custom = { ...mint, id: 'mat_custom', catalogId: mint.id, color: '#a8d8cd', roughness: 0.2 };
     p.objects.obj_k1 = {
       id: 'obj_k1',
@@ -566,6 +593,9 @@ describe('pack models', () => {
     const repaired = repairProject(p).project;
     expect(repaired.materials[mint.id].color).toBe(mint.color);
     expect(repaired.materials[mint.id].roughness).toBe(mint.roughness);
+    expect(repaired.materials[shield.id].color).toBe(shield.color);
+    expect(repaired.materials[shield.id].opacity).toBe(shield.opacity);
+    expect(repaired.materials[shield.id].roughness).toBe(shield.roughness);
     // User-customised colours and heights are preserved; unedited 2.6 m ceiling-tier kitchens drop to 2.22 m.
     expect(repaired.materials.mat_custom.color).toBe('#a8d8cd');
     expect(repaired.objects.obj_k1.height).toBe(2.22);

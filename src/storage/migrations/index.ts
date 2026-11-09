@@ -146,11 +146,22 @@ export function repairProject(project: Project): MigrationResult {
   for (const opt of p.options ?? []) for (const o of Object.values(opt.plan?.objects ?? {})) lowerKitchenHeight(o);
   for (const [key, r] of Object.entries(p.rooms)) if (r.id !== key) r.id = key;
   const catMint = MATERIAL_CATALOG_BY_ID['sage-shaker-kitchen:mint-stack-tile'];
+  const catShield = MATERIAL_CATALOG_BY_ID['sage-shaker-kitchen:tempered-glass'];
   for (const [key, m] of Object.entries(p.materials)) {
     if (m.id !== key) m.id = key;
     if ((m.id === 'sage-shaker-kitchen:mint-stack-tile' || m.catalogId === 'sage-shaker-kitchen:mint-stack-tile') && m.color.toLowerCase() === '#d2e6c2') {
       m.color = catMint?.color ?? '#b6ded5';
       if (m.roughness === 0.16) m.roughness = catMint?.roughness ?? 0.14;
+    }
+    if (
+      (m.id === 'sage-shaker-kitchen:tempered-glass' || m.catalogId === 'sage-shaker-kitchen:tempered-glass') &&
+      m.color.toLowerCase() === '#cfe4e2' &&
+      Math.abs(m.opacity - 0.36) < 1e-4
+    ) {
+      m.color = catShield?.color ?? '#eef3f4';
+      m.roughness = catShield?.roughness ?? 0.42;
+      m.opacity = catShield?.opacity ?? 0.76;
+      if (catShield?.name) m.name = catShield.name;
     }
   }
   // Callouts pinned to items or rooms that no longer exist have nothing to point at.
