@@ -366,8 +366,9 @@ function buildPortal(size: Size3, s: PortalSpec): Part[] {
     const L = Math.min(openW * 0.85, clamp(openW * 0.55, 0.5, 1.6));
     const x0 = g.xr - L;
     const r = Math.min(d / 2 - 0.01, 0.3);
+    const wallInset = d > 0.2 ? 0.02 : 0.002;
     parts.push(
-      prism('frame', roundEnd(x0 + 0.02, w / 2, -d / 2 + 0.02, d / 2 - 0.02, r - 0.02), 0, H),
+      prism('frame', roundEnd(x0 + wallInset, w / 2, -d / 2 + wallInset, d / 2 - wallInset, r - wallInset), 0, H),
       prism('shelf', roundEnd(x0, w / 2, -d / 2, d / 2, r), H, 0.04),
     );
   }
@@ -691,7 +692,7 @@ function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1, opts: LedgeOpt
   const openW = Math.max(0.12, g.xr - g.xl);
   const x0 = g.xr - Math.min(openW * 0.85, clamp(openW * 0.55, 0.5, 1.6));
   const rf = 0.22;
-  const rEnd = opts.raisedRim ? Math.min(d * 0.7, (d + LEDGE) / 2 - 0.02, 0.18) : Math.min(d / 2 - 0.01, 0.3);
+  const rEnd = opts.raisedRim ? Math.min(0.14, (d + LEDGE) / 2 - 0.02) : Math.min(d / 2 - 0.01, 0.3);
   const z0 = -d / 2;
   const z1 = d / 2 + LEDGE;
   const flipZ = (pts: V2[]): V2[] => {
@@ -721,7 +722,7 @@ function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1, opts: LedgeOpt
   const a = x0 + Math.min(0.25, spanW * 0.35);
   const b = Math.max(a, w / 2 - Math.min(0.35, spanW * 0.35));
   const n = b - a > 0.1 ? Math.max(2, Math.round((b - a) / 0.8) + 1) : 1;
-  const face = (d / 2 - 0.02) * side;
+  const face = (d / 2 - (d > 0.2 ? 0.02 : 0.002)) * side;
   const t = 0.012;
   const len = Math.hypot(BRACKET_ARM, BRACKET_DROP);
   // A box long in z turned about x to run from the wall (low) up to the arm's tip.
@@ -1341,8 +1342,8 @@ const cornerRoom = defineItem({
 // their soffits joined round a curved corner
 // ---------------------------------------------------------------------------
 
-/** Wall thickness of both runs. */
-const CORNER_T = 0.2;
+/** Wall thickness of both runs (10 cm interior wall). */
+const CORNER_T = 0.1;
 /** Radius of the corner in plan, on the soffit's centre line (as a rounded 10 cm wall corner, 0.28 m). */
 const CORNER_R = 0.28;
 const CORNER_LINE = 0.04;

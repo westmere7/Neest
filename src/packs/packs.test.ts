@@ -197,9 +197,11 @@ describe('pack models', () => {
       const parts = open.build(size, { legA, legB });
       // Floor-standing vertical leg boxes (plan !== false, touching y = 0).
       const legs = parts.filter((p) => p.slot === 'frame' && p.plan !== false).map(worldBounds).filter((b) => b.min[1] < 0.01);
-      // Run A leg sits at +w/2 (+1.0), Run B leg sits at +d/2 (+0.95).
+      // Run A leg sits at +w/2 (+1.0), Run B leg sits at +d/2 (+0.95); both runs match 10 cm internal wall thickness.
       const wallA = legs.find((b) => Math.abs(b.max[0] - size.w / 2) < 1e-4)!;
       const wallB = legs.find((b) => Math.abs(b.max[2] - size.d / 2) < 1e-4)!;
+      expect(wallA.max[2] - wallA.min[2]).toBeCloseTo(0.1, 4);
+      expect(wallB.max[0] - wallB.min[0]).toBeCloseTo(0.1, 4);
       return { a: wallA.max[0] - wallA.min[0], b: wallB.max[2] - wallB.min[2] };
     };
 
