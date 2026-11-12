@@ -248,7 +248,9 @@ export function Launcher() {
 
         <section aria-labelledby="projects-title">
           <div className="section-title-row">
-            <h2 id="projects-title">Your projects</h2>
+            <h2 id="projects-title">
+              Local projects <span className="section-hint">only in this browser</span>
+            </h2>
             {!empty && (
               <Button
                 variant="subtle"

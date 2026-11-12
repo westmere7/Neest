@@ -2846,3 +2846,9 @@ Known limitations (also in README):
      currently" → the eye buttons are gone; opening an existing project goes to `#/p/<id>/view`: the project card, its
      More menu "Open" (plus "Open for editing" → `#/p/<id>`), a shared project (`openShared` defaults to view-only) and
      a live link. New projects and samples still open for editing; the top bar's Edit switches as before. (done)
+248. "Make the share with the team section more prominent than the local projects, and call it Cloud projects" → the
+     start page's shared list (`SharedProjects`, src/sync/LiveUI.tsx) is now "Cloud projects": an accent-tinted panel
+     with a 20 px heading and a line on what it is, its projects as full-size cards like local ones (`project-card
+     cloud`, 180 px plan preview, who is working on it as avatars and a line, owner's remove button). The local list
+     below is "Local projects · only in this browser". Messages that named the old section updated. Checked at desktop
+     and phone width with a pretend sign-in in the dev browser (nothing sent to the server). (done)

@@ -50,7 +50,7 @@ export function GuestLiveLink({ project, busy, run }: { project: Project; busy: 
     return (
       <p className="field-hint" data-testid="live-link-off">
         {canPublishLinks()
-          ? 'Sign in (Shared with the team, on the start page) to publish live links.'
+          ? 'Sign in (Cloud projects, on the start page) to publish live links.'
           : 'Live links need the team server, which this copy of Neest is not set up for.'}
       </p>
     );
