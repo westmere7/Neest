@@ -35,7 +35,16 @@ const isMobileLayout = () => window.matchMedia?.('(max-width: 820px), (pointer: 
 /** Layers listed by name in the right-click menu; with more, the menu opens the Layers panel. */
 const MENU_LAYERS = 6;
 
+/** Menu entries that change nothing: all a view-only project offers. */
+const VIEW_ONLY_MENU = new Set(['Copy', 'Select all', 'Fit plan to view']);
+
 export function planContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
+  const items = allPlanContextMenuItems(hit, world);
+  if (!useProjectStore.getState().readOnly) return items;
+  return items.filter((i) => !i.separator && VIEW_ONLY_MENU.has(i.label));
+}
+
+function allPlanContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
   const project = useProjectStore.getState().project;
   if (!project) return [];
   const ed = useEditorStore.getState();

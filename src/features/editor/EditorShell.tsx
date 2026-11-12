@@ -86,6 +86,7 @@ export function EditorShell() {
   const libraryOpen = useEditorStore((s) => s.libraryOpen);
   const libraryWidth = useEditorStore((s) => s.libraryWidth);
   const layersOpen = useEditorStore((s) => s.layersPanelOpen);
+  const readOnly = useProjectStore((s) => s.readOnly);
   const servicesMode = useEditorStore((s) => s.servicesMode);
   const notesMode = useEditorStore((s) => s.notesMode);
   const shaping = useEditorStore((s) => !!s.shapeEdit);
@@ -163,11 +164,12 @@ export function EditorShell() {
           ) : notesMode && !isMobile && workspace !== 'walk' ? (
             <NotesPanel />
           ) : (
-            <>
+            // View only: the panels show everything, their fields and buttons are off.
+            <fieldset className="view-only-lock" disabled={readOnly}>
               <Inspector isMobile={isMobile} />
               {workspace !== 'walk' && !isMobile && <MaterialPanel />}
               {layersOpen && !isMobile && <LayersPanel />}
-            </>
+            </fieldset>
           )}
           {/* Bottom right: zoom, grid and snapping in the plan; views and snapping in the 3D view (desktop). */}
           {!shaping && (showPlan || (workspace === '3d' && !isMobile)) && <CanvasControls in3d={workspace === '3d'} />}
@@ -552,6 +554,7 @@ const ACTION_TOOLS: { id: ToolId; label: string; key: string; icon: React.ReactN
 const TOOLS = [...NAV_TOOLS, ...ACTION_TOOLS];
 
 function ToolRail({ in3d }: { in3d: boolean }) {
+  const readOnly = useProjectStore((s) => s.readOnly);
   const tool = useEditorStore((s) => s.tool);
   const setTool = useEditorStore((s) => s.setTool);
   const libraryOpen = useEditorStore((s) => s.libraryOpen);
@@ -569,7 +572,8 @@ function ToolRail({ in3d }: { in3d: boolean }) {
 
   return (
     <nav className="tool-rail" aria-label="Tools" data-testid="tool-rail">
-      {/* Top hero: Library (Furniture & Materials) */}
+      {/* Top hero: Library (Furniture & Materials); not in view-only (it places items) */}
+      {!readOnly && (
       <div className="tool-rail-group floating tool-rail-hero" role="group" aria-label="Library">
         <IconButton
           label="Library"
@@ -588,6 +592,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           <Sofa size={19} />
         </IconButton>
       </div>
+      )}
 
       {/* Group 2: Select & Pan */}
       <div className="tool-rail-group floating" role="group" aria-label="Selection and navigation">
@@ -610,7 +615,26 @@ function ToolRail({ in3d }: { in3d: boolean }) {
         ))}
       </div>
 
+      {/* View only: of the action tools, only Measure */}
+      {readOnly && (
+        <div className="tool-rail-group floating" role="group" aria-label="Measure">
+          <IconButton
+            label="Measure"
+            shortcut="M"
+            active={tool === 'measure'}
+            tooltipSide="right"
+            className="rail-labeled-btn"
+            onClick={() => setTool('measure')}
+            data-testid="tool-measure"
+          >
+            <Ruler size={18} />
+            <span className="rail-btn-label">Measure</span>
+          </IconButton>
+        </div>
+      )}
+
       {/* Group 3: Build groups & Action tools */}
+      {!readOnly && (
       <div className="tool-rail-group floating" role="group" aria-label="Build and action tools">
         <IconButton
           label="Walls"
@@ -721,8 +745,10 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           <span className="rail-btn-label">Notes</span>
         </IconButton>
       </div>
+      )}
 
       {/* Connections: power & plumbing reference in an X-ray view ("services" in code and data) */}
+      {!readOnly && (
       <div className="tool-rail-group floating" role="group" aria-label="Connections">
         <IconButton
           label="Connections (power & plumbing)"
@@ -737,6 +763,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
           <span className="rail-btn-label">Connect</span>
         </IconButton>
       </div>
+      )}
 
       {/* 3D only: shows or stashes the 3D view settings panel */}
       {in3d && (
@@ -1041,6 +1068,7 @@ function StatusBar() {
 }
 
 function MobileBar() {
+  const readOnly = useProjectStore((s) => s.readOnly);
   const workspace = useEditorStore((s) => s.workspace);
   const tool = useEditorStore((s) => s.tool);
   const set = useEditorStore((s) => s.set);
@@ -1070,6 +1098,7 @@ function MobileBar() {
         <Footprints size={18} />
         <span>Walk</span>
       </button>
+      {!readOnly && (
       <button
         type="button"
         onClick={() =>
@@ -1083,6 +1112,7 @@ function MobileBar() {
         <LibraryBig size={18} />
         <span>Add</span>
       </button>
+      )}
       <button type="button" onClick={() => useDialogStore.getState().open('mobile-info')}>
         <Columns2 size={18} />
         <span>Drafting</span>

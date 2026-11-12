@@ -96,7 +96,8 @@ export default function EditorPage({ projectId, viewOnly = false }: { projectId:
   // View only (#/p/<id>/view): the project store refuses edits; switching to Edit only changes the address.
   useEffect(() => {
     useProjectStore.getState().setReadOnly(viewOnly);
-    if (viewOnly) useEditorStore.getState().set({ tool: 'select' });
+    if (viewOnly)
+      useEditorStore.setState({ tool: 'select', libraryOpen: false, notesMode: false, servicesMode: false, shapeEdit: null, isolatedGroupId: null });
     return () => useProjectStore.getState().setReadOnly(false);
   }, [viewOnly]);
 

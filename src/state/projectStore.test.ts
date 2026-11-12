@@ -192,3 +192,25 @@ describe('view only', () => {
     expect(g0).not.toBe(0.3);
   });
 });
+
+describe('view only: editing tools', () => {
+  afterEach(() => store().setReadOnly(false));
+
+  it('offers only the tools that look, and no library, notes, connections or shape editor', async () => {
+    const { useEditorStore, VIEW_ONLY_TOOLS } = await import('./editorStore');
+    const ed = () => useEditorStore.getState();
+    ed().set({ tool: 'select', libraryOpen: false, notesMode: false, servicesMode: false });
+    store().setReadOnly(true);
+    ed().setTool('wall');
+    expect(ed().tool).toBe('select');
+    ed().set({ tool: 'place', libraryOpen: true, notesMode: true, servicesMode: true });
+    expect([ed().tool, ed().libraryOpen, ed().notesMode, ed().servicesMode]).toEqual(['select', false, false, false]);
+    ed().setTool('measure');
+    expect(ed().tool).toBe('measure');
+    expect(VIEW_ONLY_TOOLS).toEqual(['select', 'pan', 'measure']);
+    store().setReadOnly(false);
+    ed().setTool('wall');
+    expect(ed().tool).toBe('wall');
+    ed().setTool('select');
+  });
+});

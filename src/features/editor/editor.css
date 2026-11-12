@@ -109,6 +109,14 @@
   width: 220px;
   height: 28px;
 }
+/* View only: the side panels sit in a disabled fieldset that adds no box of its own. */
+.view-only-lock {
+  display: contents;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
 /* Opened view-only: a badge with Edit next to the project name. */
 .view-only-badge {
   display: inline-flex;

@@ -2835,3 +2835,10 @@ Known limitations (also in README):
      on wide screens, Edit → `#/p/<id>` without reloading). Opened from an eye button on each shared project (start
      page, `openShared(room, true)`) and on each local project card (and its More menu). Tests: projectStore view
      only, src/app/routes.test.ts; checked in the app (badge, refused rename + note, Edit, card button). (done)
+246. "Just disable the edit features in view only, so not even allowing to place/draw stuff" → view-only now also hides
+     and blocks the editing tools: `VIEW_ONLY_TOOLS` (select, pan, measure) in editorStore — `setTool` and `set` drop
+     any other tool and opening the library, Comments & notes, Connections or the shape editor (`withoutEditing`);
+     entering view-only closes them. Tool rail: Select, Pan, Measure (and the 3D view button) only; mobile bar: no Add.
+     Library drops and `enterShapeEdit` do nothing; right-click menus keep Copy, Select all, Fit plan to view; the
+     Inspector, material and layers panels sit in a disabled `fieldset.view-only-lock` (display: contents). Checked in
+     the app: drag on an item and W do nothing, Edit brings every tool back. Test: projectStore view only: editing tools. (done)
