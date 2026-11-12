@@ -11,6 +11,7 @@ import {
   Columns2,
   DoorOpen,
   Download,
+  Eye,
   EyeOff,
   Footprints,
   Grid2x2,
@@ -50,7 +51,7 @@ import { useProjectStore } from '@/state/projectStore';
 import { ViewButtons } from '@/features/scene-3d/ViewsRail';
 import { useEditorStore, type PlanMode, type ToolId, type Workspace } from '@/state/editorStore';
 import { IsolationBanner } from './IsolationBanner';
-import { useDialogStore } from '@/state/uiStores';
+import { toast, useDialogStore } from '@/state/uiStores';
 import { derivePlan } from '@/domain/geometry/derive';
 import { formatLength } from '@/domain/model/units';
 import { Button, IconButton, Segmented, Toggle } from '@/components/ui';
@@ -266,6 +267,28 @@ function FileSaveIndicator() {
   );
 }
 
+/**
+ * View only (opened with "Open view-only"): a badge with Edit, which reopens the project for editing; a note when
+ * something tries to change it.
+ */
+function ViewOnlyBadge() {
+  const readOnly = useProjectStore((s) => s.readOnly);
+  const refusedAt = useProjectStore((s) => s.refusedAt);
+  const id = useProjectStore((s) => s.project?.id);
+  useEffect(() => {
+    if (refusedAt) toast.info('View only', 'This project is open view-only. Press Edit at the top to change it.');
+  }, [refusedAt]);
+  if (!readOnly || !id) return null;
+  return (
+    <span className="view-only-badge" data-testid="view-only" title="Opened view-only: nothing can be changed until you press Edit">
+      <Eye size={13} aria-label="View only" /> <span className="view-only-label">View only</span>
+      <Button size="sm" onClick={() => navigate(`/p/${id}`)} data-testid="view-only-edit">
+        Edit
+      </Button>
+    </span>
+  );
+}
+
 /** Save: writes the project file (work is kept in this browser as you go). A dot marks unsaved changes. */
 function SaveButton() {
   const repo = useSaveStore((s) => s.repo);
@@ -370,6 +393,7 @@ function TopBar({ isMobile }: { isMobile: boolean }) {
           </IconButton>
           {!isMobile && <Logo size={22} />}
           <ProjectName />
+          <ViewOnlyBadge />
           {!shaping && <OptionSwitcher />}
           <SaveIndicator />
         </div>

@@ -1,7 +1,7 @@
 import { SharedProjects } from '@/sync/LiveUI';
 import { sharedProjectIds } from '@/sync/live';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Cloud, Copy, Download, FolderGit2, FolderOpen, HardDrive, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
+import { Cloud, Copy, Download, Eye, FolderGit2, FolderOpen, HardDrive, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
 import type { LengthUnit } from '@/domain/model/schema';
 import { formatArea, parseLength } from '@/domain/model/units';
 import { projectRepository } from '@/storage/indexeddb/db';
@@ -165,6 +165,7 @@ export function Launcher() {
   const menuFor = (p: ProjectSummary, x: number, y: number) =>
     openContextMenu(x, y, [
       { label: 'Open', run: () => navigate(`/p/${p.id}`) },
+      { label: 'Open view-only', run: () => navigate(`/p/${p.id}/view`) },
       { label: 'Rename…', run: () => setRenaming(p) },
       { label: 'Duplicate', run: () => void onDuplicate(p) },
       { label: 'Export .neest file', run: () => void onExport(p) },
@@ -321,6 +322,9 @@ export function Launcher() {
                   </div>
                 </button>
                 <div className="card-tools">
+                  <IconButton label="Open view-only" onClick={() => navigate(`/p/${p.id}/view`)} tooltipSide="top" data-testid="open-view-only">
+                    <Eye size={14} />
+                  </IconButton>
                   <IconButton label="Rename" onClick={() => setRenaming(p)} tooltipSide="top">
                     <Pencil size={14} />
                   </IconButton>

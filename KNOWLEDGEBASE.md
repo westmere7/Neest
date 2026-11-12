@@ -2822,3 +2822,11 @@ Known limitations (also in README):
      (src/app/appUpdates.ts) holds that while the Export dialog's `run` works. (3) `keepScreenOn()` (Screen Wake
      Lock) keeps the phone from locking during it. Asked to sign in on the live site with a given password: not done
      (Claude does not enter passwords on the live site); the user signs in. (done)
+244. "Allow opening a project as view-only (logged in user)" → `#/p/<id>/view` (`parseRoute` → `view: true`) opens the
+     editor view-only: `projectStore.readOnly` (`setReadOnly`, set by EditorPage) refuses execute/commit of real changes,
+     gestures (begin, livePreview), undo and redo, and notes the refusal in `refusedAt` (the top bar shows "View only
+     — press Edit"); showing another layout option still works (not an edit), and others' changes (applyRemote) and
+     reloaded files still arrive, so a shared project keeps updating live. Top bar: `ViewOnlyBadge` (eye, "View only"
+     on wide screens, Edit → `#/p/<id>` without reloading). Opened from an eye button on each shared project (start
+     page, `openShared(room, true)`) and on each local project card (and its More menu). Tests: projectStore view
+     only, src/app/routes.test.ts; checked in the app (badge, refused rename + note, Edit, card button). (done)
