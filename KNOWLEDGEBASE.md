@@ -2852,3 +2852,10 @@ Known limitations (also in README):
      cloud`, 180 px plan preview, who is working on it as avatars and a line, owner's remove button). The local list
      below is "Local projects · only in this browser". Messages that named the old section updated. Checked at desktop
      and phone width with a pretend sign-in in the dev browser (nothing sent to the server). (done)
+249. "Allow selecting objects but hide the controls (like dragging/resizing handles) in view mode. Basically don't hint
+     users of anything that mislead them to think that they're editable" → view-only keeps selection (outline in 2D and
+     3D, the Inspector with its values) and drops every editing hint: no 2D handles (SelectionLayer and the select
+     tool skip `selectionHandles`, so no move/resize/rotate cursors, no note-anchor drag), no 3D TransformGizmo,
+     double-click only selects (no note editor, no room rename), the Inspector header keeps only Focus and Clear
+     (no note, duplicate, lock, delete), no Edit shape; its body fields stay visible but disabled. Checked: 9 handles
+     on a selected sofa when editing, 0 in view-only; Edit brings them back. (done)

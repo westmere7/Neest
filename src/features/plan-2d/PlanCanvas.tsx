@@ -597,6 +597,7 @@ function NumericBadge({ overlay, camera, size }: { overlay: ToolOverlay; camera:
 
 function SelectionLayer({ px, hoverId }: { px: number; hoverId: string | null }) {
   const project = useProjectStore((s) => s.project)!;
+  const readOnly = useProjectStore((s) => s.readOnly);
   const derived = useMemo(() => derivePlan(project), [project]);
   const selection = useEditorStore((s) => s.selection);
   const hover = useEditorStore((s) => s.hover);
@@ -650,7 +651,8 @@ function SelectionLayer({ px, hoverId }: { px: number; hoverId: string | null })
   if (hover && hoverId && !selection.some((s) => s.id === hoverId)) draw(hover, false);
   for (const s of selection) draw(s, true);
 
-  const handles = selectionHandles(project, derived, selection, px);
+  // View only: the selection shows, its handles do not.
+  const handles = readOnly ? [] : selectionHandles(project, derived, selection, px);
   const handleLines: ReactNode[] = [];
   for (const { handle, p } of handles) {
     if (handle.type !== 'curve' || handle.end === 'mid') continue;

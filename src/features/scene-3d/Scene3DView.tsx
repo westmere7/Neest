@@ -502,6 +502,8 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
   const houseLighting = useEditorStore((s) => s.houseLighting);
   const shapeObject = shapeEditId && mode !== 'walk' ? project.objects[shapeEditId] : undefined;
   const shaping = !!shapeObject;
+  // View only: no handles on the selection.
+  const readOnly = useProjectStore((s) => s.readOnly);
   // Group isolation: the group's items stay solid and pickable, the rest is X-ray (see editor/isolation.ts).
   const isolatedGroupId = useEditorStore((s) => s.isolatedGroupId);
   const isolateIds = useMemo(() => (isolatedGroupId ? groupMembers(project, isolatedGroupId) : undefined), [isolatedGroupId, project]);
@@ -851,7 +853,7 @@ export default function Scene3DView({ mode, active = true }: { mode: 'orbit' | '
         {/* Captures and renders need the scene on screen (a hidden one may show an older project). */}
         {active && <LiveBridge helpersRef={helpersRef} />}
         {!walk && <ToolBridge3D enabled={!shaping && (workspace === '3d' || (workspace === 'split' && tool === 'callout'))} />}
-        {!walk && !shaping && (!drawing || tool === 'callout') && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
+        {!walk && !shaping && !readOnly && (!drawing || tool === 'callout') && showHelpers && <TransformGizmo controlsRef={drag.controlsRef} />}
       </Canvas>
       {/* Note labels and leaders, laid out on screen over the canvas; hidden while loading and in walk mode. */}
       <NotesOverlay

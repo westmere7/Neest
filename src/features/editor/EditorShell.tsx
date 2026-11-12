@@ -164,12 +164,14 @@ export function EditorShell() {
           ) : notesMode && !isMobile && workspace !== 'walk' ? (
             <NotesPanel />
           ) : (
-            // View only: the panels show everything, their fields and buttons are off.
-            <fieldset className="view-only-lock" disabled={readOnly}>
+            <>
               <Inspector isMobile={isMobile} />
-              {workspace !== 'walk' && !isMobile && <MaterialPanel />}
-              {layersOpen && !isMobile && <LayersPanel />}
-            </fieldset>
+              {/* View only: these panels show everything, their fields and buttons are off. */}
+              <fieldset className="view-only-lock" disabled={readOnly}>
+                {workspace !== 'walk' && !isMobile && <MaterialPanel />}
+                {layersOpen && !isMobile && <LayersPanel />}
+              </fieldset>
+            </>
           )}
           {/* Bottom right: zoom, grid and snapping in the plan; views and snapping in the 3D view (desktop). */}
           {!shaping && (showPlan || (workspace === '3d' && !isMobile)) && <CanvasControls in3d={workspace === '3d'} />}
