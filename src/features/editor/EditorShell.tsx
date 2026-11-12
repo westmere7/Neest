@@ -270,7 +270,7 @@ function FileSaveIndicator() {
 }
 
 /**
- * View only (opened with "Open view-only"): a badge with Edit, which reopens the project for editing; a note when
+ * View only (how projects open; new ones open for editing): a badge with Edit, which reopens the project for editing; a note when
  * something tries to change it.
  */
 function ViewOnlyBadge() {

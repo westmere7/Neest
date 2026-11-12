@@ -2842,3 +2842,7 @@ Known limitations (also in README):
      Library drops and `enterShapeEdit` do nothing; right-click menus keep Copy, Select all, Fit plan to view; the
      Inspector, material and layers panels sit in a disabled `fieldset.view-only-lock` (display: contents). Checked in
      the app: drag on an item and W do nothing, Edit brings every tool back. Test: projectStore view only: editing tools. (done)
+247. "Actually, disable the view mode icon and just open it view-only by default, showing the edit button like
+     currently" → the eye buttons are gone; opening an existing project goes to `#/p/<id>/view`: the project card, its
+     More menu "Open" (plus "Open for editing" → `#/p/<id>`), a shared project (`openShared` defaults to view-only) and
+     a live link. New projects and samples still open for editing; the top bar's Edit switches as before. (done)

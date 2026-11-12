@@ -53,7 +53,7 @@ export interface ProjectState {
   /** Increments on every committed change (execute/commit/undo/redo); drives autosave. */
   revision: number;
   /**
-   * View only (opened with "Open view-only"): edits, gestures, undo and redo are refused; showing another layout
+   * View only (how existing projects open, until Edit): edits, gestures, undo and redo are refused; showing another layout
    * option still works, and others' changes (live editing) and reloaded files still arrive.
    */
   readOnly: boolean;

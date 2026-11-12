@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Cloud, Copy, Eye, Link2, LogOut, RefreshCw, Settings, Trash2, Users, WifiOff } from 'lucide-react';
+import { Cloud, Copy, Link2, LogOut, RefreshCw, Settings, Trash2, Users, WifiOff } from 'lucide-react';
 import { Dialog } from '@/components/Overlays';
 import { Button, IconButton } from '@/components/ui';
 import { Logo } from '@/components/Logo';
@@ -486,10 +486,10 @@ export function AccountDialog({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * Opens a shared project: brings the team's copy into this browser and opens it. `viewOnly`: opened for looking
- * (others' changes still arrive live; nothing can be changed until Edit).
+ * Opens a shared project: brings the team's copy into this browser and opens it, view-only (others' changes still
+ * arrive live; Edit in the top bar opens it for editing).
  */
-async function openShared(room: LiveRoom, viewOnly = false): Promise<void> {
+async function openShared(room: LiveRoom, viewOnly = true): Promise<void> {
   const project = await joinFromLink(room);
   await saveProject(project);
   navigate(`/p/${project.id}${viewOnly ? '/view' : ''}`);
@@ -642,20 +642,6 @@ export function SharedProjects() {
                 </span>
               </span>
             </button>
-            <IconButton
-              label="Open view-only"
-              disabled={!!opening}
-              data-testid="room-view-only"
-              onClick={() => {
-                setOpening(r.room);
-                openShared(r, true).catch((e) => {
-                  toast.error('Could not open the shared project', e instanceof Error ? e.message : undefined);
-                  setOpening(null);
-                });
-              }}
-            >
-              <Eye size={15} />
-            </IconButton>
             {r.owner === user.id && (
               <IconButton
                 label="Remove from the shared list"

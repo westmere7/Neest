@@ -204,7 +204,7 @@ export interface EditorState {
   requestCamera(view: string): void;
 }
 
-/** Tools that only look: all that view-only mode (a project opened with "Open view-only") offers. */
+/** Tools that only look: all that view-only mode (how projects open) offers. */
 export const VIEW_ONLY_TOOLS: ToolId[] = ['select', 'pan', 'measure'];
 
 const viewOnly = () => useProjectStore.getState().readOnly;
