@@ -69,8 +69,10 @@ import {
   sphere,
   torus,
   vcyl,
+  type AssetParam,
   type MaterialSlot,
   type PackItem,
+  type ParamValues,
   type Part,
   type PartOpts,
   type Size3,
@@ -1719,7 +1721,225 @@ const ironCabinetOpen = defineItem({
   },
 });
 
-// ───────────────────────── 28. Swivel TV floor stand ─────────────────────────
+// ───────────────────────── 28. Rolling TV floor stand with 55″ TV ─────────────────────────
+
+const numParam = (p: ParamValues | undefined, k: string, v: number) =>
+  typeof p?.[k] === 'number' && Number.isFinite(p[k]) ? (p[k] as number) : v;
+
+function tvStandGeo({ w, d, h }: Size3, p?: ParamValues) {
+  const xCol = clamp(w * 0.25, 0.24, 0.34);
+  const rCol = 0.0165;
+  const rBase = 0.02;
+  const rW = 0.027;
+  const yBase = 0.086;
+  const zRear = -d / 2 + 0.035;
+  const zFront = d / 2 - 0.035;
+  const zCol = -d * 0.07;
+  const tvH = clamp(h * 0.477, 0.52, 0.72);
+  const tvY1 = h;
+  const tvY0 = h - tvH;
+  const yShelf = clamp(numParam(p, 'shelfHeight', 0.45), 0.28, Math.min(0.56, tvY0 - 0.08));
+  const shelfW = 2 * (xCol - rCol * 0.25);
+  const shelfD = clamp(d * 0.3, 0.13, 0.16);
+  const shelfR = shelfD * 0.48;
+  const zShelf = zCol + 0.012;
+  const yColTop = h - 0.085;
+  const yBarTop = yColTop - 0.024;
+  const yBarBot = yColTop - 0.195;
+  const yVesa0 = yBarBot - 0.068;
+  const yVesa1 = yBarTop + 0.078;
+  const xVesa = xCol * 0.74;
+  const zVesa0 = zCol + rCol;
+  const zVesa1 = zVesa0 + 0.014;
+  const zHousing0 = zVesa1 + 0.002;
+  const zF = zHousing0 + 0.037;
+  return {
+    w,
+    d,
+    h,
+    xCol,
+    rCol,
+    rBase,
+    rW,
+    yBase,
+    zRear,
+    zFront,
+    zCol,
+    tvH,
+    tvY0,
+    tvY1,
+    yShelf,
+    shelfW,
+    shelfD,
+    shelfR,
+    zShelf,
+    yColTop,
+    yBarTop,
+    yBarBot,
+    yVesa0,
+    yVesa1,
+    xVesa,
+    zVesa0,
+    zVesa1,
+    zHousing0,
+    zF,
+  };
+}
+
+function buildTvStand(size: Size3, p?: ParamValues): Part[] {
+  const g = tvStandGeo(size, p);
+  const P: Part[] = [
+    // Lower horizontal crossbar tying the two vertical columns just above the base tubes.
+    rodX('stand', -g.xCol, g.xCol, g.yBase + 0.018, g.zCol, 0.014, { segments: 18, plan: true }),
+    // Two upper horizontal mounting tubes for the VESA brackets.
+    rodX('stand', -g.xCol, g.xCol, g.yBarTop, g.zCol, 0.013, { segments: 18, plan: false }),
+    rodX('stand', -g.xCol, g.xCol, g.yBarBot, g.zCol, 0.013, { segments: 18, plan: false }),
+    // Pill-shaped light oak middle shelf between the two columns.
+    prism('shelf', roundRectPoints(0, g.zShelf, g.shelfW, g.shelfD, g.shelfR, 8), g.yShelf - 0.016, 0.016),
+  ];
+
+  for (const s of [-1, 1] as const) {
+    const x = s * g.xCol;
+    const yMid = (g.yBase + g.yColTop) * 0.52;
+    const yBraceTop = Math.max(g.yBase + 0.14, g.yShelf - 0.055);
+    P.push(
+      // Horizontal front-to-back tubular base leg with flat end caps.
+      rodZ('stand', x, g.yBase, g.zRear, g.zFront, g.rBase, { segments: 20, plan: true }),
+      discZ('stand', [x, g.yBase, g.zRear], g.rBase * 0.96, 0.003, { segments: 18, plan: false }),
+      discZ('stand', [x, g.yBase, g.zFront], g.rBase * 0.96, 0.003, { segments: 18, plan: false }),
+      // Vertical tubular column with mid-height telescopic joint collar and top cap.
+      vcyl('stand', x, g.zCol, g.yBase, g.yColTop, g.rCol, { segments: 20, plan: false }),
+      vcyl('stand', x, g.zCol, yMid - 0.008, yMid + 0.008, g.rCol + 0.001, { segments: 20, plan: false }),
+      vcyl('stand', x, g.zCol, g.yColTop, g.yColTop + 0.004, g.rCol * 0.95, { segments: 18, plan: false }),
+      // Rear diagonal brace from the rear base leg up to the back of the column, with mounting lugs.
+      rod('stand', [x, g.yBase + g.rBase - 0.002, g.zRear + 0.048], [x, yBraceTop, g.zCol - g.rCol + 0.002], 0.006, NP),
+      span('stand', [x - 0.008, x + 0.008], [g.yBase + g.rBase - 0.004, g.yBase + g.rBase + 0.01], [g.zRear + 0.038, g.zRear + 0.058], NP),
+      span('stand', [x - 0.008, x + 0.008], [yBraceTop - 0.012, yBraceTop + 0.012], [g.zCol - g.rCol - 0.01, g.zCol - g.rCol + 0.002], NP),
+      // Under-shelf angled support bracket and inner column mounting tab.
+      rod(
+        'stand',
+        [s * (g.xCol - g.rCol * 0.7), g.yShelf - 0.105, g.zCol],
+        [s * (g.xCol - 0.068), g.yShelf - 0.018, g.zShelf],
+        0.005,
+        NP,
+      ),
+      span(
+        'stand',
+        [s > 0 ? g.xCol - g.rCol - 0.008 : -g.xCol + g.rCol - 0.002, s > 0 ? g.xCol - g.rCol + 0.002 : -g.xCol + g.rCol + 0.008],
+        [g.yShelf - 0.12, g.yShelf - 0.088],
+        [g.zCol - 0.008, g.zCol + 0.008],
+        NP,
+      ),
+    );
+
+    // Caster swivel hoods, swivel collars and white outer wheel hub caps at rear and front of each base leg.
+    for (const cz of [g.zRear + 0.022, g.zFront - 0.022]) {
+      P.push(
+        vcyl('stand', x, cz, g.rW + 0.012, g.rW + 0.024, 0.011, { segments: 14, plan: false }),
+        span('stand', [x - 0.017, x + 0.017], [g.rW + 0.004, g.rW + 0.024], [cz - 0.018, cz + 0.014], { bevel: 0.005, plan: false }),
+        cyl('stand', [x - 0.0155, g.rW, cz], g.rW * 0.65, 0.002, { rotation: [0, 0, Math.PI / 2], segments: 18, plan: false }),
+        cyl('stand', [x + 0.0155, g.rW, cz], g.rW * 0.65, 0.002, { rotation: [0, 0, Math.PI / 2], segments: 18, plan: false }),
+      );
+    }
+
+    // Vertical VESA mounting rail with hook ears over the two upper crossbars.
+    const vx = s * g.xVesa;
+    P.push(
+      span('stand', [vx - 0.016, vx + 0.016], [g.yVesa0, g.yVesa1], [g.zVesa0, g.zVesa1], { bevel: 0.006, plan: false }),
+      span('stand', [vx - 0.014, vx + 0.014], [g.yBarTop - 0.016, g.yBarTop + 0.018], [g.zCol - 0.016, g.zVesa0], { bevel: 0.004, plan: false }),
+      span('stand', [vx - 0.014, vx + 0.014], [g.yBarBot - 0.016, g.yBarBot + 0.018], [g.zCol - 0.016, g.zVesa0], { bevel: 0.004, plan: false }),
+    );
+  }
+
+  // Two white C-shaped cable management clips snapped onto the lower half of the left column.
+  for (const yc of [g.yBase + 0.08, g.yShelf + 0.028]) {
+    P.push(
+      span('stand', [-g.xCol - g.rCol - 0.016, -g.xCol - g.rCol + 0.004], [yc - 0.012, yc + 0.012], [g.zCol - 0.014, g.zCol + 0.014], {
+        bevel: 0.003,
+        plan: false,
+      }),
+    );
+  }
+
+  // 55-inch slim OLED/QLED TV mounted on the VESA brackets (matching branded-tvs:sony-k-55xr80 panel).
+  const bz = 0.006;
+  P.push(
+    span('tv', [-g.w * 0.4, g.w * 0.4], [g.tvY0 + 0.02, g.tvY0 + g.tvH * 0.58], [g.zHousing0, g.zF - 0.012], { bevel: 0.008, plan: false }),
+    span('tv', [-g.w / 2, g.w / 2], [g.tvY0, g.tvY1], [g.zF - 0.012, g.zF - 0.001], { bevel: 0.002 }),
+    span('screen', [-g.w / 2 + bz, g.w / 2 - bz], [g.tvY0 + bz, g.tvY1 - bz], [g.zF - 0.002, g.zF], NP),
+  );
+
+  return P;
+}
+
+function tvStandDetails(size: Size3, p: ParamValues | undefined, withTv: boolean): Part[] {
+  const g = tvStandGeo(size, p);
+  const P: Part[] = [];
+  for (const s of [-1, 1] as const) {
+    const x = s * g.xCol;
+    const yBraceTop = Math.max(g.yBase + 0.14, g.yShelf - 0.055);
+    // Twin dark-grey rubber caster wheels, metal swivel stems and rear brake tabs.
+    for (const cz of [g.zRear + 0.022, g.zFront - 0.022]) {
+      P.push(
+        cyl('wheel', [x - 0.011, g.rW, cz], g.rW, 0.009, { rotation: [0, 0, Math.PI / 2], segments: 20, plan: false }),
+        cyl('wheel', [x + 0.011, g.rW, cz], g.rW, 0.009, { rotation: [0, 0, Math.PI / 2], segments: 20, plan: false }),
+        vcyl('hardware', x, cz, g.rW + 0.022, g.yBase - g.rBase + 0.004, 0.006, { segments: 12, plan: false }),
+        span('hardware', [x - 0.005, x + 0.005], [g.rW - 0.002, g.rW + 0.008], [cz - 0.026, cz - 0.016], NP),
+      );
+    }
+    // Bolt heads on the rear diagonal brace lugs and outer upper column crossbars.
+    P.push(
+      cyl('hardware', [x + s * 0.009, g.yBase + g.rBase + 0.003, g.zRear + 0.048], 0.0035, 0.003, {
+        rotation: [0, 0, Math.PI / 2],
+        segments: 10,
+        plan: false,
+      }),
+      cyl('hardware', [x + s * 0.009, yBraceTop, g.zCol - g.rCol - 0.004], 0.0035, 0.003, {
+        rotation: [0, 0, Math.PI / 2],
+        segments: 10,
+        plan: false,
+      }),
+      cyl('hardware', [x + s * (g.rCol + 0.001), g.yBarTop, g.zCol], 0.004, 0.003, { rotation: [0, 0, Math.PI / 2], segments: 10, plan: false }),
+      cyl('hardware', [x + s * (g.rCol + 0.001), g.yBarBot, g.zCol], 0.004, 0.003, { rotation: [0, 0, Math.PI / 2], segments: 10, plan: false }),
+    );
+    // Perforated mounting slot holes along each vertical VESA bracket.
+    const vx = s * g.xVesa;
+    for (const k of range(6)) {
+      const yh = g.yVesa0 + 0.028 + ((g.yVesa1 - g.yVesa0 - 0.056) * k) / 5;
+      P.push(span('hardware', [vx - 0.003, vx + 0.003], [yh - 0.009, yh + 0.009], [g.zVesa1 - 0.002, g.zVesa1 + 0.001], NP));
+    }
+  }
+  if (withTv) {
+    const hy = g.tvY0 + g.tvH * 0.58;
+    P.push(
+      span('hardware', [-g.w * 0.3, g.w * 0.3], [hy - 0.05, hy - 0.035], [g.zHousing0 - 0.001, g.zHousing0 + 0.002], NP),
+      span('hardware', [g.w * 0.2, g.w * 0.36], [g.tvY0 + 0.08, g.tvY0 + 0.2], [g.zHousing0 - 0.001, g.zHousing0 + 0.002], NP),
+      span('hardware', [0.05, 0.058], [g.tvY0 + 0.0015, g.tvY0 + 0.0035], [g.zF - 0.002, g.zF + 0.0005], NP),
+    );
+  }
+  return P;
+}
+
+const tvStandParams: AssetParam[] = [
+  {
+    id: 'shelfHeight',
+    label: 'Shelf height',
+    kind: 'length',
+    default: 0.45,
+    min: 0.28,
+    max: 0.56,
+    step: 0.01,
+    handle: (size, p) => {
+      const g = tvStandGeo(size, p);
+      return { at: [0, g.yShelf, g.zShelf + g.shelfD / 2 + 0.006], dir: [0, 1, 0] };
+    },
+  },
+];
+
+const tvStandExtraSlots: MaterialSlot[] = [
+  matSlot('wheel', 'Caster wheels', 'wheel-grey'),
+  matSlot('hardware', 'Bolts & trim', 'branded-tvs:tv-graphite'),
+];
 
 const tvStand = defineItem({
   id: 'swivel-tv-stand',
@@ -1727,42 +1947,54 @@ const tvStand = defineItem({
   category: 'living',
   type: 'storage',
   group: 'Media units',
-  tags: ['tv stand', 'swivel tv stand', 'tv floor stand', 'tv mount', 'studio', 'giá treo tivi di động', 'chân tivi xoay', 'kệ tivi'],
-  description:
-    'A black steel TV stand on a low rounded base with a swivel column, a bracket holding a 43-inch TV and a walnut shelf for a set-top box: it turns the screen between sofa and bed.',
-  defaultSize: S3(0.98, 0.45, 1.45),
-  minSize: S3(0.75, 0.4, 1.2),
-  maxSize: S3(1.45, 0.55, 1.75),
-  slots: [
-    matSlot('stand', 'Stand', 'metal-black-matte'),
-    matSlot('shelf', 'Shelf', 'wood-walnut'),
-    matSlot('tv', 'TV frame', 'plastic-black'),
-    matSlot('screen', 'Screen', 'screen-black'),
+  tags: [
+    'tv stand',
+    'swivel tv stand',
+    'rolling tv stand',
+    'mobile tv cart',
+    'tv floor stand',
+    'tv mount',
+    '55 inch',
+    'netflix',
+    'studio',
+    'giá treo tivi di động',
+    'kệ tivi có bánh xe',
+    'chân tivi xoay',
+    'kệ tivi',
   ],
-  build: ({ w, d, h }) => {
-    const bw = clamp(w * 0.6, 0.5, 0.7);
-    const bt = 0.025;
-    const zc = -d / 2 + 0.13;
-    const cd = 0.05;
-    const tvH = Math.min(w * 0.58, h * 0.55);
-    const tvB = h - tvH;
-    const colTop = h - tvH * 0.2;
-    const zt = zc + cd / 2 + 0.012;
-    const P: Part[] = [
-      prism('stand', roundRectPoints(0, 0, bw, d, 0.06, 5), 0, bt),
-      cyl('stand', [0, bt + 0.006, zc], 0.07, 0.012, { segments: 28, plan: false }),
-      span('stand', [-0.045, 0.045], [bt + 0.012, colTop], [zc - cd / 2, zc + cd / 2], { bevel: 0.006, plan: false }),
-      span('stand', [-0.15, 0.15], [tvB + tvH * 0.3, tvB + tvH * 0.65], [zc + cd / 2, zt], NP),
-      span('tv', [-w * 0.36, w * 0.36], [tvB + tvH * 0.12, h - tvH * 0.15], [zt, zt + 0.035], { bevel: 0.01, plan: false }),
-      span('tv', [-w / 2, w / 2], [tvB, h], [zt + 0.035, zt + 0.055], { bevel: 0.003 }),
-      span('screen', [-w / 2 + 0.008, w / 2 - 0.008], [tvB + 0.014, h - 0.008], [zt + 0.055, zt + 0.0565], NP),
-    ];
-    const ys = clamp(tvB - 0.26, 0.35, 0.7);
-    const sd = Math.min(0.26, d / 2 - (zc + cd / 2) - 0.02);
-    P.push(span('shelf', [-0.22, 0.22], [ys, ys + 0.016], [zc + cd / 2, zc + cd / 2 + sd], { bevel: 0.003, plan: false }));
-    P.push(span('stand', [-0.03, 0.03], [ys - 0.04, ys], [zc + cd / 2, zc + cd / 2 + sd * 0.6], NP));
-    return P;
-  },
+  description:
+    'A white tubular steel rolling TV floor stand on four twin-wheel swivel casters with rear diagonal braces, a pill-shaped light oak shelf on angled brackets and perforated VESA rails holding a 55-inch TV showing the Netflix splash screen.',
+  defaultSize: S3(1.22, 0.5, 1.48),
+  minSize: S3(0.85, 0.4, 1.2),
+  maxSize: S3(1.55, 0.6, 1.75),
+  slots: [
+    matSlot('stand', 'Stand', 'metal-white-powder'),
+    matSlot('shelf', 'Shelf', 'wood-oak-light'),
+    matSlot('tv', 'TV frame', 'branded-tvs:tv-black'),
+    matSlot('screen', 'Screen', 'branded-tvs:screen-netflix-mat'),
+  ],
+  variants: [
+    { id: 'black-walnut', name: 'Black & walnut', materials: { stand: 'metal-black-matte', shelf: 'wood-walnut' } },
+    { id: 'aurora-screen', name: 'Aurora screen', materials: { screen: 'branded-tvs:screen-aurora-mat' } },
+    { id: 'screen-off', name: 'Screen off', materials: { screen: 'screen-black' } },
+  ],
+  params: tvStandParams,
+  models: [
+    {
+      id: 'with-tv',
+      name: 'With 55″ TV',
+      slots: tvStandExtraSlots,
+      props: (s, p) => tvStandDetails(s, p, true),
+    },
+    {
+      id: 'stand-only',
+      name: 'Stand only',
+      hide: ['tv', 'screen'],
+      slots: tvStandExtraSlots,
+      props: (s, p) => tvStandDetails(s, p, false),
+    },
+  ],
+  build: (s, p) => buildTvStand(s, p),
 });
 
 // ───────────────────────── 29–30. Floating media unit with fold-down desk ─────────────────────────
@@ -2027,5 +2259,6 @@ export default definePack({
   materials: [
     { id: 'knit-oat', name: 'Oat chunky knit', category: 'fabric', color: '#d8cbb3', roughness: 0.98, pattern: { id: 'weave', scale: 0.3, contrast: 0.9 } },
     { id: 'ticking-blue', name: 'Blue ticking stripe cotton', category: 'fabric', color: '#c9d6e4', roughness: 0.9, pattern: { id: 'wallpaper-stripes', scale: 0.12, contrast: 0.8 } },
+    { id: 'wheel-grey', name: 'Caster wheel grey', category: 'solid', color: '#585b61', roughness: 0.65 },
   ],
 });

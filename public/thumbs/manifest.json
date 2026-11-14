@@ -1595,7 +1595,15 @@
   },
   "compact-living:swivel-tv-stand": {
    "file": "compact-living_swivel-tv-stand.webp",
-   "fp": "bdd71fc14d776b27"
+   "fp": "b3aa7a0015561b1b"
+  },
+  "compact-living:swivel-tv-stand@model:stand-only": {
+   "file": "compact-living_swivel-tv-stand_model_stand-only.webp",
+   "fp": "e94b3b950735be0a"
+  },
+  "compact-living:swivel-tv-stand@model:with-tv": {
+   "file": "compact-living_swivel-tv-stand_model_with-tv.webp",
+   "fp": "8f59257e81666fea"
   },
   "compact-living:tension-pole-shelf": {
    "file": "compact-living_tension-pole-shelf.webp",
@@ -2867,7 +2875,15 @@
   },
   "kitchen-counters:run-240-sink-hob": {
    "file": "kitchen-counters_run-240-sink-hob.webp",
-   "fp": "654510f77048ab8f"
+   "fp": "cee53febba3de1d2"
+  },
+  "kitchen-counters:run-240-sink-hob@model:clean": {
+   "file": "kitchen-counters_run-240-sink-hob_model_clean.webp",
+   "fp": "20bb09bfb051e628"
+  },
+  "kitchen-counters:run-240-sink-hob@model:no-uppers": {
+   "file": "kitchen-counters_run-240-sink-hob_model_no-uppers.webp",
+   "fp": "e1c879c415dfecd6"
   },
   "kitchen-counters:run-300-full": {
    "file": "kitchen-counters_run-300-full.webp",
@@ -5616,6 +5632,22 @@
   "wardrobe": {
    "file": "wardrobe.webp",
    "fp": "c558794bd025a6e1"
+  },
+  "wardrobe-study:l-corner-wardrobe-shelf-tower": {
+   "file": "wardrobe-study_l-corner-wardrobe-shelf-tower.webp",
+   "fp": "72daa7b41e2097bd"
+  },
+  "wardrobe-study:l-corner-wardrobe-shelf-tower@model:cream-shaker-empty": {
+   "file": "wardrobe-study_l-corner-wardrobe-shelf-tower_model_cream-shaker-empty.webp",
+   "fp": "686ee008bb464cdc"
+  },
+  "wardrobe-study:l-corner-wardrobe-shelf-tower@model:cream-shaker-styled": {
+   "file": "wardrobe-study_l-corner-wardrobe-shelf-tower_model_cream-shaker-styled.webp",
+   "fp": "ee3496dea3b8d587"
+  },
+  "wardrobe-study:l-corner-wardrobe-shelf-tower@model:styled": {
+   "file": "wardrobe-study_l-corner-wardrobe-shelf-tower_model_styled.webp",
+   "fp": "e951fba21b57294c"
   },
   "wardrobe-study:modular-waterfall-cabinet-desk": {
    "file": "wardrobe-study_modular-waterfall-cabinet-desk.webp",

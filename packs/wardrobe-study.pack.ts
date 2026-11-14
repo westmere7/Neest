@@ -1250,6 +1250,620 @@ const waterfallBarHutchTable = defineItem({
   ],
 });
 
+// ── L-shaped corner wardrobe with open LED shelf tower & 3-drawer unit ──────────
+
+type LCornerDoorStyle = 'oak-slab' | 'cream-shaker' | 'cream-slab';
+
+function lCornerWardrobeGeo({ w, d, h }: Size3, params?: ParamValues) {
+  const x0 = -w / 2;
+  const x1 = w / 2;
+  const z0 = -d / 2;
+  const z1 = d / 2;
+  const t = 0.018;
+  const doorT = 0.018;
+  const endT = 0.022;
+  const plinth = 0.06;
+  const scribe = 0.024;
+  const gap = 0.003;
+  const cornerFill = 0.036;
+
+  // Carcass + front depth on both L-wings (leaves 26 mm room inside the bounding box for brass bar pulls).
+  const rawCd = typeof params?.carcassDepth === 'number' ? params.carcassDepth : 0.58;
+  const cd = clamp(rawCd, 0.42, Math.min(0.68, w * 0.46, d * 0.48));
+  const xLeftFront = x0 + cd;
+  const xLeftCarcass = xLeftFront - doorT;
+  const zBackFront = z0 + cd;
+  const zBackCarcass = zBackFront - doorT;
+
+  // Height zones: upper cream cabinets, tall hanging doors, lower cream drawer row, and 3-drawer tower.
+  const rawTopH = typeof params?.topBoxHeight === 'number' ? params.topBoxHeight : 0.44;
+  const topH = clamp(rawTopH, 0.26, h * 0.32);
+  const yU = h - topH;
+
+  const rawBotDrawerH = typeof params?.bottomDrawerHeight === 'number' ? params.bottomDrawerHeight : 0.32;
+  const botDrawerH = clamp(rawBotDrawerH, 0.18, Math.min(0.48, (yU - plinth) * 0.3));
+  const yBotDrawer = plinth + botDrawerH;
+
+  const rawTowerDrawerH = typeof params?.drawerUnitHeight === 'number' ? params.drawerUnitHeight : 0.68;
+  const towerDrawerH = clamp(rawTowerDrawerH, 0.44, Math.min(0.92, yU - plinth - 0.58));
+  const yTowerDeck = plinth + towerDrawerH;
+
+  // Left-wing horizontal zones along Z: interior corner at zBackFront, wardrobe bay, then front LED shelf + 3-drawer tower.
+  const zCorner = zBackFront;
+  const leftAvail = Math.max(0.56, z1 - zCorner);
+  const rawTowerW = typeof params?.towerWidth === 'number' ? params.towerWidth : 0.44;
+  const tw = clamp(rawTowerW, 0.3, Math.max(0.32, leftAvail - 0.32));
+  const zTower0 = z1 - tw;
+
+  // Back-wing horizontal zones along X: interior corner at xLeftFront, corner bay, and main right double-door bay.
+  const xCorner = xLeftFront;
+  const backStart = xCorner + cornerFill;
+  const backEnd = x1 - endT;
+  const backAvail = Math.max(0.56, backEnd - backStart);
+  const rawBackLeftW = typeof params?.backLeftBayWidth === 'number' ? params.backLeftBayWidth : 0.44;
+  const backLeftW = clamp(rawBackLeftW, 0.24, Math.max(0.28, backAvail - 0.42));
+  const xSplit = backStart + backLeftW;
+
+  const rawStyle = params?.doorStyle;
+  const doorStyle: LCornerDoorStyle =
+    rawStyle === 'cream-shaker' || rawStyle === 'cream-slab' ? rawStyle : 'oak-slab';
+
+  return {
+    w,
+    d,
+    h,
+    x0,
+    x1,
+    z0,
+    z1,
+    t,
+    doorT,
+    plinth,
+    scribe,
+    gap,
+    cornerFill,
+    cd,
+    xLeftFront,
+    xLeftCarcass,
+    zBackFront,
+    zBackCarcass,
+    yU,
+    yBotDrawer,
+    yTowerDeck,
+    zCorner,
+    tw,
+    zTower0,
+    xCorner,
+    backStart,
+    backEnd,
+    xSplit,
+    doorStyle,
+  };
+}
+
+const L_CORNER_WARDROBE_PARAMS: AssetParam[] = [
+  {
+    id: 'towerWidth',
+    label: 'Shelf & drawer tower width',
+    kind: 'length',
+    default: 0.44,
+    min: 0.32,
+    max: 0.65,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = lCornerWardrobeGeo(s, p);
+      return { at: [g.xLeftFront + 0.008, g.yTowerDeck, g.zTower0], dir: [0, 0, -1] };
+    },
+  },
+  {
+    id: 'backLeftBayWidth',
+    label: 'Corner bay width (back run)',
+    kind: 'length',
+    default: 0.44,
+    min: 0.28,
+    max: 0.72,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = lCornerWardrobeGeo(s, p);
+      return { at: [g.xSplit, (g.yBotDrawer + g.yU) / 2, g.zBackFront + 0.008], dir: [1, 0, 0] };
+    },
+  },
+  {
+    id: 'carcassDepth',
+    label: 'Wardrobe depth',
+    kind: 'length',
+    default: 0.58,
+    min: 0.45,
+    max: 0.68,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = lCornerWardrobeGeo(s, p);
+      return { at: [(g.xSplit + g.backEnd) / 2, g.yBotDrawer, g.zBackFront + 0.008], dir: [0, 0, 1] };
+    },
+  },
+  {
+    id: 'topBoxHeight',
+    label: 'Top cabinet height',
+    kind: 'length',
+    default: 0.44,
+    min: 0.28,
+    max: 0.62,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = lCornerWardrobeGeo(s, p);
+      return { at: [(g.xSplit + g.backEnd) / 2, g.yU, g.zBackFront + 0.008], dir: [0, -1, 0] };
+    },
+  },
+  {
+    id: 'bottomDrawerHeight',
+    label: 'Bottom drawer height',
+    kind: 'length',
+    default: 0.32,
+    min: 0.2,
+    max: 0.46,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = lCornerWardrobeGeo(s, p);
+      return { at: [g.xLeftFront + 0.008, g.yBotDrawer, (g.zCorner + g.zTower0) / 2], dir: [0, 1, 0] };
+    },
+  },
+  {
+    id: 'drawerUnitHeight',
+    label: 'Tower 3-drawer height',
+    kind: 'length',
+    default: 0.68,
+    min: 0.48,
+    max: 0.88,
+    step: 0.01,
+    handle: (s, p) => {
+      const g = lCornerWardrobeGeo(s, p);
+      return { at: [(g.x0 + g.xLeftFront) / 2, g.yTowerDeck, g.z1 - 0.004], dir: [0, 1, 0] };
+    },
+  },
+];
+
+/** Vertical brass bar pull on a door facing +x (front face at `xFace`). */
+function barPullFacingX(slot: string, xFace: number, yCenter: number, z: number, len = 0.42): Part[] {
+  const stand = 0.022;
+  const r = 0.0045;
+  const x0 = xFace + 0.001;
+  const x1 = xFace + stand;
+  return [
+    rod(slot, [x1, yCenter - len / 2, z], [x1, yCenter + len / 2, z], r, { segments: 12, plan: false }),
+    rod(slot, [x0, yCenter - len / 2 + 0.018, z], [x1, yCenter - len / 2 + 0.018, z], r * 0.82, { segments: 10, plan: false }),
+    rod(slot, [x0, yCenter + len / 2 - 0.018, z], [x1, yCenter + len / 2 - 0.018, z], r * 0.82, { segments: 10, plan: false }),
+  ];
+}
+
+/** Shaker door facing +x (back at `xBack`, thickness `t`). */
+function shakerFrontX(slot: string, zRange: V2, yRange: V2, xBack: number, t: number, rail = 0.065): Part[] {
+  const [z0, z1] = [zRange[0] + 0.002, zRange[1] - 0.002];
+  const [y0, y1] = [yRange[0] + 0.002, yRange[1] - 0.002];
+  const rl = Math.min(rail, (z1 - z0) * 0.28, (y1 - y0) * 0.28);
+  const xf = xBack + t;
+  return [
+    sp(slot, [xBack, xf - 0.006], [y0 + rl - 0.002, y1 - rl + 0.002], [z0 + rl - 0.002, z1 - rl + 0.002]),
+    sp(slot, [xBack, xf], [y0, y1], [z0, z0 + rl], 0.0015),
+    sp(slot, [xBack, xf], [y0, y1], [z1 - rl, z1], 0.0015),
+    sp(slot, [xBack, xf], [y1 - rl, y1], [z0 + rl, z1 - rl], 0.0015),
+    sp(slot, [xBack, xf], [y0, y0 + rl], [z0 + rl, z1 - rl], 0.0015),
+  ];
+}
+
+function buildLCornerWardrobe(size: Size3, params?: ParamValues, styleOverride?: LCornerDoorStyle): Part[] {
+  const g = lCornerWardrobeGeo(size, params);
+  const {
+    h,
+    x0,
+    x1,
+    z0,
+    z1,
+    t,
+    doorT,
+    plinth,
+    scribe,
+    gap,
+    cornerFill,
+    xLeftFront,
+    xLeftCarcass,
+    zBackFront,
+    zBackCarcass,
+    yU,
+    yBotDrawer,
+    yTowerDeck,
+    zCorner,
+    zTower0,
+    xCorner,
+    backStart,
+    backEnd,
+    xSplit,
+  } = g;
+  const doorStyle = styleOverride ?? g.doorStyle;
+  const tallSlot = doorStyle === 'oak-slab' ? 'oak' : 'white';
+  const parts: Part[] = [];
+
+  // ── 1. Left-front open-corner LED shelf & 3-drawer tower (zTower0 .. z1, x0 .. xLeftFront) ──
+  // Lower 3-drawer unit: solid oak +z end gable, oak carcass, recessed plinth, and 3 cream finger-pull drawers facing +x.
+  parts.push(
+    span('oak', [x0, xLeftFront], [0, yTowerDeck - t], [z1 - t, z1]),
+    span('oak', [x0, xLeftCarcass], [plinth, yTowerDeck - t], [zTower0 + t, z1 - t]),
+    sp('oak', [x0 + 0.004, xLeftFront - 0.032], [0, plinth], [zTower0, z1 - t]),
+    // Oak deck board topping the 3-drawer unit (floor of the bottom open shelf bay).
+    span('oak', [x0, xLeftFront], [yTowerDeck - t, yTowerDeck], [zTower0, z1], { bevel: 0.002 }),
+  );
+
+  // 3 stacked horizontal cream drawer fronts facing +x with routed top finger-pull shadow gaps.
+  const dZ0 = zTower0 + gap;
+  const dZ1 = z1 - t - gap;
+  const dTotalH = yTowerDeck - t - plinth - gap;
+  const fingerGap = 0.014;
+  const cellH = (dTotalH - 2 * fingerGap) / 3;
+  for (const k of range(3)) {
+    const dy0 = plinth + gap + k * (cellH + fingerGap);
+    const dy1 = dy0 + cellH;
+    parts.push(sp('white', [xLeftCarcass + 0.001, xLeftFront], [dy0, dy1], [dZ0, dZ1], 0.002));
+  }
+
+  // Middle 3-tier open-corner display niche (yTowerDeck .. yU):
+  // Open on BOTH the front (+z) and room (+x) faces; backed by the left oak wall panel (x0 .. x0 + t)
+  // and the oak divider panel against the wardrobe bay (zTower0 .. zTower0 + t).
+  const nicheY0 = yTowerDeck;
+  const nicheY1 = yU - t;
+  const shelfY1 = nicheY0 + (nicheY1 - nicheY0) / 3;
+  const shelfY2 = nicheY0 + ((nicheY1 - nicheY0) * 2) / 3;
+  parts.push(
+    sp('oak', [x0, x0 + t], [nicheY0, nicheY1], [zTower0 + t, z1]),
+    sp('oak', [x0, xLeftFront], [nicheY0, nicheY1], [zTower0, zTower0 + t], 0.0015),
+    sp('oak', [x0 + t, xLeftFront - 0.002], [shelfY1 - t, shelfY1], [zTower0 + t, z1 - 0.002], 0.002),
+    sp('oak', [x0 + t, xLeftFront - 0.002], [shelfY2 - t, shelfY2], [zTower0 + t, z1 - 0.002], 0.002),
+    span('oak', [x0, xLeftFront], [yU - t, yU], [zTower0, z1], { bevel: 0.002 }),
+  );
+
+  // 3 warm LED strips recessed under the top of each open shelf bay along the left wall panel.
+  for (const yCeil of [shelfY1 - t, shelfY2 - t, yU - t]) {
+    parts.push(
+      sp('light', [x0 + t + 0.022, x0 + t + 0.036], [yCeil - 0.005, yCeil - 0.001], [zTower0 + t + 0.012, z1 - 0.014]),
+    );
+  }
+
+  // Upper cabinet above the open shelf niche (yU .. h): solid oak +z end gable, oak carcass & scribe, and 1 cream door facing +x.
+  parts.push(
+    span('oak', [x0, xLeftFront], [yU, h], [z1 - t, z1]),
+    span('oak', [x0, xLeftCarcass], [yU, h - scribe], [zTower0, z1 - t]),
+    sp('oak', [x0, xLeftFront - 0.006], [h - scribe, h], [zTower0, z1 - t]),
+    sp('white', [xLeftCarcass + 0.001, xLeftFront], [yU + gap, h - scribe - gap], [dZ0, dZ1], 0.002),
+  );
+
+  // ── 2. Left-wing wardrobe bay (zCorner .. zTower0, facing +x) & interior corner ──
+  const zLeftStart = zCorner + cornerFill;
+  const zLeftEnd = zTower0;
+  parts.push(
+    span('oak', [x0, xLeftCarcass], [plinth, h - scribe], [z0, zTower0]),
+    sp('oak', [x0 + 0.004, xLeftFront - 0.032], [0, plinth], [zCorner - 0.02, zTower0]),
+    sp('oak', [x0, xLeftFront - 0.006], [h - scribe, h], [z0, zTower0]),
+    // Interior 90° corner filler post on the left-wing face.
+    sp('oak', [xLeftCarcass, xLeftFront], [plinth, h - scribe], [zCorner - 0.002, zLeftStart]),
+  );
+
+  const leftSpan = Math.max(0.24, zLeftEnd - zLeftStart);
+  const nLeft = leftSpan >= 0.54 ? 2 : 1;
+  const leftDoorStep = leftSpan / nLeft;
+  const yTall0 = yBotDrawer + gap;
+  const yTall1 = yU - gap;
+  const yTop0 = yU + gap;
+  const yTop1 = h - scribe - gap;
+  const yBot0 = plinth + gap;
+  const yBot1 = yBotDrawer - gap;
+  const pullY = clamp(yBotDrawer + (yU - yBotDrawer) * 0.42, yTall0 + 0.28, yTall1 - 0.28);
+  const pullLen = clamp((yTall1 - yTall0) * 0.32, 0.26, 0.44);
+
+  // Bottom cream drawer front spanning the left-wing wardrobe bay.
+  parts.push(sp('white', [xLeftCarcass + 0.001, xLeftFront], [yBot0, yBot1], [zLeftStart + gap, zLeftEnd - gap], 0.002));
+
+  for (const i of range(nLeft)) {
+    const za = zLeftStart + i * leftDoorStep + gap;
+    const zb = zLeftStart + (i + 1) * leftDoorStep - gap;
+    // Upper cream door.
+    parts.push(sp('white', [xLeftCarcass + 0.001, xLeftFront], [yTop0, yTop1], [za, zb], 0.002));
+    // Tall middle wardrobe door.
+    if (doorStyle === 'cream-shaker') {
+      parts.push(...shakerFrontX('white', [za, zb], [yTall0, yTall1], xLeftCarcass + 0.001, doorT - 0.001));
+    } else {
+      parts.push(sp(tallSlot, [xLeftCarcass + 0.001, xLeftFront], [yTall0, yTall1], [za, zb], 0.002));
+    }
+  }
+  // Vertical brass bar pull on the front-most door of the left-wing bay (matching the reference photo).
+  const zLeftPull = nLeft === 2 ? zLeftStart + leftDoorStep + 0.042 : zLeftEnd - 0.045;
+  parts.push(...barPullFacingX('metal', xLeftFront, pullY, zLeftPull, pullLen));
+
+  // ── 3. Back-wing wardrobe run (xCorner .. x1, facing +z) ──────────────────────
+  parts.push(
+    // Full-height right outer oak end gable.
+    span('oak', [backEnd, x1], [0, h], [z0, zBackFront]),
+    // Back-wing carcass, recessed oak plinth, top ceiling scribe, and interior corner filler post.
+    span('oak', [xCorner, backEnd], [plinth, h - scribe], [z0, zBackCarcass]),
+    sp('oak', [xCorner - 0.02, backEnd], [0, plinth], [z0 + 0.004, zBackFront - 0.032]),
+    sp('oak', [xCorner, backEnd], [h - scribe, h], [z0, zBackFront - 0.006]),
+    sp('oak', [xCorner - 0.002, backStart], [plinth, h - scribe], [zBackCarcass, zBackFront]),
+  );
+
+  // 3a. Inner corner bay on the back wing (backStart .. xSplit).
+  const bx0 = backStart + gap;
+  const bx1 = xSplit - gap / 2;
+  parts.push(
+    sp('white', [bx0, bx1], [yBot0, yBot1], [zBackCarcass + 0.001, zBackFront], 0.002),
+    sp('white', [bx0, bx1], [yTop0, yTop1], [zBackCarcass + 0.001, zBackFront], 0.002),
+  );
+  if (doorStyle === 'cream-shaker') {
+    parts.push(...shakerFront('white', [bx0, bx1], [yTall0, yTall1], zBackCarcass + 0.001, doorT - 0.001, { rail: 0.065 }));
+  } else {
+    parts.push(sp(tallSlot, [bx0, bx1], [yTall0, yTall1], [zBackCarcass + 0.001, zBackFront], 0.002));
+  }
+
+  // 3b. Main right double-door bay on the back wing (xSplit .. backEnd).
+  const rx0 = xSplit + gap / 2;
+  const rx1 = backEnd - gap;
+  const rightSpan = Math.max(0.32, rx1 - rx0);
+  const nRight = rightSpan >= 0.56 ? 2 : 1;
+  const rightStep = rightSpan / nRight;
+
+  // Wide lower cream drawer front and upper cream cabinet front across the right bay.
+  parts.push(
+    sp('white', [rx0, rx1], [yBot0, yBot1], [zBackCarcass + 0.001, zBackFront], 0.002),
+    sp('white', [rx0, rx1], [yTop0, yTop1], [zBackCarcass + 0.001, zBackFront], 0.002),
+  );
+
+  for (const i of range(nRight)) {
+    const xa = rx0 + i * rightStep + (i > 0 ? gap / 2 : 0);
+    const xb = rx0 + (i + 1) * rightStep - (i < nRight - 1 ? gap / 2 : 0);
+    if (doorStyle === 'cream-shaker') {
+      parts.push(...shakerFront('white', [xa, xb], [yTall0, yTall1], zBackCarcass + 0.001, doorT - 0.001, { rail: 0.065 }));
+    } else {
+      parts.push(sp(tallSlot, [xa, xb], [yTall0, yTall1], [zBackCarcass + 0.001, zBackFront], 0.002));
+    }
+    const px = nRight === 2 ? (i === 0 ? xb - 0.038 : xa + 0.038) : xb - 0.042;
+    parts.push(...barPull('metal', [px, pullY, zBackFront + 0.001], pullLen, { vertical: true, r: 0.0045, stand: 0.021 }));
+  }
+
+  return parts;
+}
+
+function lCornerWardrobePlan(size: Size3, params?: ParamValues): PlanStroke[] {
+  const g = lCornerWardrobeGeo(size, params);
+  const { x0, z1, t, backEnd, xLeftFront, zBackFront, zTower0, xSplit } = g;
+  return [
+    // Inner L-front outline of both wings.
+    line([xLeftFront, zBackFront], [backEnd, zBackFront]),
+    line([xLeftFront, zBackFront], [xLeftFront, z1]),
+    // Bay & shelf-tower division ticks.
+    line([x0 + t, zTower0], [xLeftFront, zTower0]),
+    line([xSplit, zBackFront - 0.04], [xSplit, zBackFront]),
+  ];
+}
+
+const L_CORNER_PROP_SLOTS = [
+  matSlot('ceramic', 'Vase, round box & art mat', 'ceramic-cream'),
+  matSlot('linen', 'Folded towels & books', 'fabric-boucle-oat'),
+  matSlot('bottle', 'Perfume & diffuser bottles', 'leather-chocolate'),
+];
+
+function buildLCornerWardrobeProps(size: Size3, params?: ParamValues): Part[] {
+  const g = lCornerWardrobeGeo(size, params);
+  const { x0, z1, t, xLeftFront, zTower0, yTowerDeck, yU } = g;
+  const nicheY0 = yTowerDeck;
+  const nicheY1 = yU - t;
+  const bayH = (nicheY1 - nicheY0) / 3;
+  const shelfY1 = nicheY0 + bayH;
+  const shelfY2 = nicheY0 + bayH * 2;
+  const clearH = Math.max(0.14, bayH - t);
+
+  const xIn0 = x0 + t + 0.012;
+  const xIn1 = xLeftFront - 0.016;
+  const zIn0 = zTower0 + t + 0.012;
+  const zIn1 = z1 - 0.016;
+  const spanX = Math.max(0.18, xIn1 - xIn0);
+  const spanZ = Math.max(0.18, zIn1 - zIn0);
+  const cx = (xIn0 + xIn1) / 2;
+  const cz = (zIn0 + zIn1) / 2;
+  const parts: Part[] = [];
+
+  // ── 1. Bottom shelf bay: stack of 2 large coffee-table books + 2 neatly folded towels ──
+  const yBot0 = nicheY0 + 0.001;
+  const bkW = clamp(spanX * 0.56, 0.14, 0.25);
+  const bkD = clamp(spanZ * 0.58, 0.14, 0.24);
+  const bkH = clamp(clearH * 0.095, 0.016, 0.028);
+  const yBk1 = yBot0 + bkH;
+  const yBk2 = yBk1 + 0.001 + bkH * 0.92;
+  const twW = bkW * 0.78;
+  const twD = bkD * 0.76;
+  const twH = clamp(clearH * 0.11, 0.02, 0.034);
+  const yTw1 = yBk2 + 0.001 + twH;
+  const yTw2 = yTw1 + 0.001 + twH * 0.88;
+  parts.push(
+    sp('ceramic', [cx - bkW / 2, cx + bkW / 2], [yBot0, yBk1], [cz - bkD / 2, cz + bkD / 2], 0.003),
+    sp('white', [cx - bkW * 0.47, cx + bkW * 0.47], [yBk1 + 0.001, yBk2], [cz - bkD * 0.47, cz + bkD * 0.47], 0.003),
+    sp('linen', [cx - twW / 2, cx + twW / 2], [yBk2 + 0.001, yTw1], [cz - twD / 2, cz + twD / 2], 0.008),
+    sp('linen', [cx - twW * 0.44, cx + twW * 0.44], [yTw1 + 0.001, yTw2], [cz - twD * 0.44, cz + twD * 0.44], 0.007),
+  );
+
+  // ── 2. Middle shelf bay: tray with 3 perfume/diffuser bottles + reed sticks & round lidded box ──
+  const yMid0 = shelfY1 + 0.001;
+  const trayW = clamp(spanX * 0.42, 0.11, 0.18);
+  const trayD = clamp(spanZ * 0.46, 0.11, 0.17);
+  const trayH = 0.012;
+  const tx = xIn0 + trayW / 2 + 0.016;
+  const tz = cz + spanZ * 0.08;
+  const yOnTray = yMid0 + trayH + 0.001;
+  const b1H = clamp(clearH * 0.34, 0.055, 0.095);
+  const b2H = clamp(clearH * 0.26, 0.044, 0.075);
+  const b3H = clamp(clearH * 0.3, 0.048, 0.085);
+  const br = clamp(trayW * 0.11, 0.012, 0.019);
+  const diffX = tx + trayW * 0.22;
+  const diffZ = tz - trayD * 0.14;
+  parts.push(
+    sp('ceramic', [tx - trayW / 2, tx + trayW / 2], [yMid0, yMid0 + trayH], [tz - trayD / 2, tz + trayD / 2], 0.003),
+    // Tall amber bottle + brass cap.
+    sp('bottle', [tx - trayW * 0.26 - br, tx - trayW * 0.26 + br], [yOnTray, yOnTray + b1H], [tz - br, tz + br], 0.003),
+    vcyl('metal', tx - trayW * 0.26, tz, yOnTray + b1H + 0.001, yOnTray + b1H + 0.014, br * 0.48, { segments: 12, plan: false }),
+    // Medium bottle + brass cap.
+    sp('bottle', [tx - 0.004 - br * 0.9, tx - 0.004 + br * 0.9], [yOnTray, yOnTray + b2H], [tz + trayD * 0.16 - br * 0.9, tz + trayD * 0.16 + br * 0.9], 0.003),
+    vcyl('metal', tx - 0.004, tz + trayD * 0.16, yOnTray + b2H + 0.001, yOnTray + b2H + 0.012, br * 0.44, { segments: 12, plan: false }),
+    // Reed diffuser bottle + brass collar + 3 fanned reed sticks.
+    vcyl('bottle', diffX, diffZ, yOnTray, yOnTray + b3H, br * 1.05, { segments: 16, plan: false }),
+    vcyl('metal', diffX, diffZ, yOnTray + b3H + 0.001, yOnTray + b3H + 0.011, br * 0.56, { segments: 14, plan: false }),
+    rod('oak', [diffX - 0.003, yOnTray + b3H * 0.5, diffZ - 0.002], [diffX - 0.018, yOnTray + Math.min(clearH * 0.72, b3H + 0.095), diffZ - 0.012], 0.0014, { segments: 6, plan: false }),
+    rod('oak', [diffX + 0.002, yOnTray + b3H * 0.5, diffZ + 0.002], [diffX + 0.016, yOnTray + Math.min(clearH * 0.74, b3H + 0.1), diffZ + 0.014], 0.0014, { segments: 6, plan: false }),
+    rod('oak', [diffX, yOnTray + b3H * 0.5, diffZ + 0.003], [diffX + 0.005, yOnTray + Math.min(clearH * 0.76, b3H + 0.105), diffZ - 0.016], 0.0014, { segments: 6, plan: false }),
+  );
+
+  // Round lidded ceramic keepsake box on the inner side of the middle shelf.
+  const boxR = clamp(Math.min(spanX, spanZ) * 0.14, 0.032, 0.054);
+  const boxH = clamp(clearH * 0.24, 0.042, 0.068);
+  const bxX = xIn1 - boxR - 0.022;
+  const bxZ = zIn0 + boxR + 0.028;
+  parts.push(
+    vcyl('ceramic', bxX, bxZ, yMid0, yMid0 + boxH * 0.82, boxR, { segments: 20, plan: false }),
+    vcyl('ceramic', bxX, bxZ, yMid0 + boxH * 0.82 + 0.001, yMid0 + boxH, boxR + 0.0015, { segments: 20, plan: false }),
+  );
+
+  // ── 3. Top shelf bay: framed minimalist picture, 2 stacked books & round ceramic bud vase ──
+  const yTop0 = shelfY2 + 0.001;
+  const topBkW = clamp(spanX * 0.44, 0.11, 0.19);
+  const topBkD = clamp(spanZ * 0.46, 0.11, 0.18);
+  const topBkH = clamp(clearH * 0.075, 0.013, 0.022);
+  const tbx = xIn0 + topBkW / 2 + 0.018;
+  const tbz = cz + spanZ * 0.08;
+  const yTopBk1 = yTop0 + topBkH;
+  const yTopBk2 = yTopBk1 + 0.001 + topBkH * 0.9;
+  parts.push(
+    sp('ceramic', [tbx - topBkW / 2, tbx + topBkW / 2], [yTop0, yTopBk1], [tbz - topBkD / 2, tbz + topBkD / 2], 0.0025),
+    sp('linen', [tbx - topBkW * 0.45, tbx + topBkW * 0.45], [yTopBk1 + 0.001, yTopBk2], [tbz - topBkD * 0.45, tbz + topBkD * 0.45], 0.0025),
+  );
+
+  // Framed art print standing behind the books against the left oak wall.
+  const frW = clamp(spanZ * 0.44, 0.11, 0.175);
+  const frH = clamp(clearH * 0.56, 0.11, 0.195);
+  const frB = 0.009;
+  const fx0 = xIn0 + 0.004;
+  const fx1 = fx0 + 0.012;
+  const fz0 = tbz - frW / 2;
+  const fz1 = tbz + frW / 2;
+  const fy0 = yTopBk2 + 0.001;
+  const fy1 = Math.min(nicheY1 - 0.012, fy0 + frH);
+  if (fy1 - fy0 > 0.06) {
+    parts.push(
+      sp('oak', [fx0, fx1], [fy0, fy1], [fz0, fz0 + frB], 0.0015),
+      sp('oak', [fx0, fx1], [fy0, fy1], [fz1 - frB, fz1], 0.0015),
+      sp('oak', [fx0, fx1], [fy1 - frB, fy1], [fz0 + frB, fz1 - frB], 0.0015),
+      sp('oak', [fx0, fx1], [fy0, fy0 + frB], [fz0 + frB, fz1 - frB], 0.0015),
+      sp('ceramic', [fx0 + 0.002, fx1 - 0.003], [fy0 + frB, fy1 - frB], [fz0 + frB, fz1 - frB]),
+      sp('linen', [fx1 - 0.002, fx1 - 0.001], [fy0 + (fy1 - fy0) * 0.26, fy1 - (fy1 - fy0) * 0.26], [fz0 + (fz1 - fz0) * 0.28, fz1 - (fz1 - fz0) * 0.28]),
+    );
+  }
+
+  // Globular ceramic bud vase on the right side of the top shelf.
+  const vr = clamp(Math.min(spanX, spanZ) * 0.1, 0.024, 0.042);
+  const vh = clamp(clearH * 0.34, 0.055, 0.098);
+  const vx = xIn1 - vr - 0.026;
+  const vz = zIn0 + vr + 0.032;
+  parts.push(
+    lathe(
+      'ceramic',
+      [vx, yTop0, vz],
+      [
+        [0, 0],
+        [vr * 0.58, 0],
+        [vr * 0.96, vh * 0.36],
+        [vr, vh * 0.58],
+        [vr * 0.72, vh * 0.84],
+        [vr * 0.36, vh * 0.94],
+        [vr * 0.42, vh],
+        [Math.max(0.004, vr * 0.28), vh],
+      ],
+      { segments: 20, plan: false },
+    ),
+  );
+
+  return parts;
+}
+
+const lCornerWardrobeShelfTower = defineItem({
+  id: 'l-corner-wardrobe-shelf-tower',
+  name: 'L-shaped corner wardrobe with LED shelf tower & drawers',
+  category: 'bedroom',
+  type: 'storage',
+  group: 'Wardrobes',
+  description:
+    'A floor-to-ceiling L-shaped corner wardrobe in the warm oak and cream palette: an open-corner 3-tier LED-lit oak display shelf niche over three cream finger-pull drawers and under a top cupboard at the front end, paired with two perpendicular runs of tall doors with vertical brass bar pulls, cream upper cabinets and lower drawers.',
+  tags: [
+    'wardrobe',
+    'corner wardrobe',
+    'l-shaped wardrobe',
+    'built-in wardrobe',
+    'shelf tower',
+    'open shelves',
+    'led',
+    'drawers',
+    'oak',
+    'shaker cream',
+    'tủ quần áo',
+    'tủ áo góc chữ l',
+    'tủ góc chữ l',
+    'tủ quần áo chữ l',
+    'kệ trang trí có đèn',
+    'vietnamese',
+    'apartment',
+  ],
+  defaultSize: { w: 2.1, d: 1.65, h: 2.4 },
+  minSize: { w: 1.45, d: 1.25, h: 2.0 },
+  maxSize: { w: 3.4, d: 2.8, h: 2.8 },
+  resizable: { w: true, d: true, h: true },
+  wallSnap: true,
+  price: { vnd: 28_500_000, estimate: true },
+  slots: [
+    matSlot('oak', 'Oak carcass, shelves & tall doors', 'laminate-oak'),
+    matSlot('white', 'Cream top cupboards & drawers', 'shaker-cream'),
+    matSlot('metal', 'Brass pulls', 'metal-brass'),
+    matSlot('light', 'Shelf LEDs', 'led-warm-strip'),
+  ],
+  light: { color: '#ffcf8a', intensity: 0.4, distance: 2.2, y: 1.35, x: -0.78, z: 0.6 },
+  params: L_CORNER_WARDROBE_PARAMS,
+  build: (s, p) => buildLCornerWardrobe(s, p),
+  planDetail: lCornerWardrobePlan,
+  models: [
+    {
+      id: 'styled',
+      name: 'Styled shelves (books, diffuser & towels)',
+      slots: L_CORNER_PROP_SLOTS,
+      props: buildLCornerWardrobeProps,
+    },
+    {
+      id: 'empty',
+      name: 'Empty shelves',
+    },
+    {
+      id: 'cream-shaker-styled',
+      name: 'Cream shaker tall doors (styled)',
+      slots: L_CORNER_PROP_SLOTS,
+      build: (s, p) => buildLCornerWardrobe(s, p, 'cream-shaker'),
+      props: buildLCornerWardrobeProps,
+    },
+    {
+      id: 'cream-shaker-empty',
+      name: 'Cream shaker tall doors (empty)',
+      build: (s, p) => buildLCornerWardrobe(s, p, 'cream-shaker'),
+    },
+  ],
+  variants: [
+    { id: 'walnut-cream', name: 'Walnut & cream', materials: { oak: 'laminate-walnut', white: 'shaker-cream' } },
+    { id: 'light-oak-cream', name: 'Light oak & cream', materials: { oak: 'wood-oak-light', white: 'shaker-cream' } },
+    { id: 'oak-white', name: 'Oak & matte white', materials: { oak: 'laminate-oak', white: 'laminate-white-matte' } },
+    { id: 'oak-sage', name: 'Oak & sage', materials: { oak: 'laminate-oak', white: 'laminate-sage' } },
+    { id: 'smoked-oak-cream', name: 'Smoked oak & cream', materials: { oak: 'wood-smoked-oak', white: 'shaker-cream' } },
+    { id: 'all-oak', name: 'All oak', materials: { oak: 'laminate-oak', white: 'laminate-oak' } },
+  ],
+});
+
 const TAU = Math.PI * 2;
 
 function paint(ctx: CanvasRenderingContext2D, size: number, value: (u: number, v: number, x: number, y: number) => number): void {
@@ -1267,12 +1881,12 @@ function paint(ctx: CanvasRenderingContext2D, size: number, value: (u: number, v
 
 export default definePack({
   name: 'Wardrobe & study wall',
-  version: '1.3.0',
+  version: '1.4.0',
   author: 'Neest team',
   description:
-    'Built-in bedroom wall: oak shelf tower and study desk, white shaker wardrobe, rounded corner niche, standalone modular waterfall add-on desk and curved-waterfall bar table with 3-tier shelf hutch.',
+    'Built-in bedroom wall: oak shelf tower and study desk, white shaker wardrobe, rounded corner niche, standalone modular waterfall add-on desk, curved-waterfall bar table with 3-tier shelf hutch, and L-shaped corner wardrobe with LED shelf tower & drawers.',
   license: 'CC0 (made for Neest)',
-  items: [studyWall, towerWall, modularDesk, waterfallBarHutchTable],
+  items: [studyWall, towerWall, modularDesk, waterfallBarHutchTable, lCornerWardrobeShelfTower],
   patterns: [
     {
       id: 'satin-lacquer',

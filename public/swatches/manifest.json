@@ -725,6 +725,10 @@
    "file": "3709765efc702427.webp",
    "tile": true
   },
+  "37147c3c819f5e90": {
+   "file": "37147c3c819f5e90.webp",
+   "tile": true
+  },
   "372874a0be6800f7": {
    "file": "372874a0be6800f7.webp",
    "tile": true
@@ -3846,6 +3850,7 @@
   "branded-tvs:frame-art-mat": "3e211331f18f73e9",
   "branded-tvs:screen-aurora-mat": "0c0a965a60caac80",
   "branded-tvs:screen-dusk-mat": "5bce018b3bea108f",
+  "branded-tvs:screen-netflix-mat": "37147c3c819f5e90",
   "branded-tvs:tv-titan-silver": "081361aecd94cd5e",
   "branded-vehicles-vn:tn-basket": "ea3a4a9cc313331d",
   "brick-red": "ff1c91fb2cb93a1c",

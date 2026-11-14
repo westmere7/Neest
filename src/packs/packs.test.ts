@@ -729,6 +729,98 @@ describe('pack models', () => {
       expect(worldBounds(foot).min[1]).toBeCloseTo(0, 4);
     }
   });
+
+  it('builds kitchen-counters:run-240-sink-hob in sage & cream shaker style with splashback tiles, upper cabinets and end splatter shields', () => {
+    const run = ASSETS_BY_ID['kitchen-counters:run-240-sink-hob'];
+    expect(run).toBeDefined();
+    expect(run.defaultSize).toEqual({ w: 2.8, d: 0.6, h: 2.22 });
+    expect(run.slots.map((s) => [s.id, s.defaultMaterial])).toEqual([
+      ['front', 'sage-shaker-kitchen:sage-lacquer'],
+      ['upper', 'sage-shaker-kitchen:cream-lacquer'],
+      ['worktop', 'sage-shaker-kitchen:terrazzo-white'],
+      ['tile', 'sage-shaker-kitchen:mint-stack-tile'],
+    ]);
+
+    const clean = withModel(run, 'clean');
+    const parts = clean.build(run.defaultSize);
+    expect(parts.some((p) => p.slot === 'tile')).toBe(true);
+    expect(parts.some((p) => p.slot === 'upper')).toBe(true);
+    expect(parts.some((p) => p.slot === 'glass')).toBe(true);
+
+    const shields = parts.filter((p) => p.slot === 'shield');
+    const shieldBases = parts.filter((p) => p.slot === 'shieldBase');
+    expect(shields).toHaveLength(2);
+    expect(shieldBases).toHaveLength(2);
+    for (const s of shields) {
+      expect(s.shape).toBe('prism');
+      if (s.shape === 'prism') expect(s.outline).toHaveLength(5);
+      expect(worldBounds(s).max[1]).toBeCloseTo(1.449, 3);
+    }
+
+    const noUppers = withModel(run, 'no-uppers').build(run.defaultSize);
+    expect(noUppers.some((p) => p.slot === 'upper')).toBe(false);
+    expect(noUppers.filter((p) => p.slot === 'shield')).toHaveLength(2);
+  });
+
+  it('builds compact-living:swivel-tv-stand as a white rolling TV cart with light oak shelf and 55-inch Netflix TV', () => {
+    const stand = ASSETS_BY_ID['compact-living:swivel-tv-stand'];
+    expect(stand).toBeDefined();
+    expect(stand.defaultSize).toEqual({ w: 1.22, d: 0.5, h: 1.48 });
+    expect(stand.slots.map((s) => [s.id, s.defaultMaterial])).toEqual([
+      ['stand', 'metal-white-powder'],
+      ['shelf', 'wood-oak-light'],
+      ['tv', 'branded-tvs:tv-black'],
+      ['screen', 'branded-tvs:screen-netflix-mat'],
+    ]);
+    expect(patternInfo('branded-tvs:screen-netflix')?.colored).toBe(true);
+
+    const withTv = withModel(stand, 'with-tv').build(stand.defaultSize);
+    expect(withTv.some((p) => p.slot === 'screen')).toBe(true);
+    expect(withTv.some((p) => p.slot === 'shelf' && p.shape === 'prism')).toBe(true);
+    expect(withTv.filter((p) => p.slot === 'wheel')).toHaveLength(8);
+
+    const standOnly = withModel(stand, 'stand-only').build(stand.defaultSize);
+    expect(standOnly.some((p) => p.slot === 'tv' || p.slot === 'screen')).toBe(false);
+    expect(standOnly.filter((p) => p.slot === 'wheel')).toHaveLength(8);
+  });
+
+  it('builds wardrobe-study:l-corner-wardrobe-shelf-tower with open-corner LED shelf niche, 3-drawer tower and shape-editor params', () => {
+    const w = ASSETS_BY_ID['wardrobe-study:l-corner-wardrobe-shelf-tower'];
+    expect(w).toBeDefined();
+    expect(w.defaultSize).toEqual({ w: 2.1, d: 1.65, h: 2.4 });
+    expect(w.slots.map((s) => [s.id, s.defaultMaterial])).toEqual([
+      ['oak', 'laminate-oak'],
+      ['white', 'wardrobe-study:shaker-cream'],
+      ['metal', 'metal-brass'],
+      ['light', 'wardrobe-study:led-warm-strip'],
+    ]);
+    expect(w.params?.map((p) => p.id)).toEqual([
+      'towerWidth',
+      'backLeftBayWidth',
+      'carcassDepth',
+      'topBoxHeight',
+      'bottomDrawerHeight',
+      'drawerUnitHeight',
+    ]);
+    expect(assetModels(w).map((m) => m.id)).toEqual([
+      'styled',
+      'empty',
+      'cream-shaker-styled',
+      'cream-shaker-empty',
+    ]);
+
+    const styled = withModel(w, 'styled').build(w.defaultSize);
+    expect(styled.filter((p) => p.slot === 'light')).toHaveLength(3);
+    expect(styled.some((p) => p.slot === 'ceramic')).toBe(true);
+    expect(styled.some((p) => p.slot === 'linen')).toBe(true);
+    expect(styled.some((p) => p.slot === 'bottle')).toBe(true);
+
+    const empty = withModel(w, 'empty').build(w.defaultSize);
+    expect(empty.some((p) => p.slot === 'ceramic' || p.slot === 'linen' || p.slot === 'bottle')).toBe(false);
+
+    const creamShaker = withModel(w, 'cream-shaker-empty').build(w.defaultSize);
+    expect(creamShaker.length).toBeGreaterThan(empty.length);
+  });
 });
 
 describeAssetChecks(packItems);

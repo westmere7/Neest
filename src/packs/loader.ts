@@ -35,8 +35,10 @@ if (openProject) {
         )
         .map((m) => m.id)
     : [];
-  const isOldKitchen = (o: { assetId: string; height: number }) =>
-    (o.assetId === 'sage-shaker-kitchen:l-kitchen' || o.assetId === 'sage-shaker-kitchen:l-kitchen-right') && Math.abs(o.height - 2.6) < 1e-4;
+  const isOldKitchen = (o: { assetId: string; width: number; height: number }) =>
+    ((o.assetId === 'sage-shaker-kitchen:l-kitchen' || o.assetId === 'sage-shaker-kitchen:l-kitchen-right') && Math.abs(o.height - 2.6) < 1e-4) ||
+    (o.assetId === 'kitchen-counters:run-240-sink-hob' && o.height < 1.8) ||
+    (o.assetId === 'compact-living:swivel-tv-stand' && o.width < 1.15);
   const hasOldKitchen =
     Object.values(openProject.objects).some(isOldKitchen) ||
     (openProject.options ?? []).some((opt) => Object.values(opt.plan?.objects ?? {}).some(isOldKitchen));
@@ -58,10 +60,16 @@ if (openProject) {
       }
       if (hasOldKitchen) {
         inEveryOption(d, (p) => {
-          const ids = Object.values(p.objects)
-            .filter(isOldKitchen)
-            .map((o) => o.id);
-          if (ids.length) updateObjects(p, ids, { height: 2.22 });
+          for (const o of Object.values(p.objects)) {
+            if (!isOldKitchen(o)) continue;
+            if (o.assetId === 'kitchen-counters:run-240-sink-hob') {
+              updateObjects(p, [o.id], { height: 2.22, materials: {} });
+            } else if (o.assetId === 'compact-living:swivel-tv-stand') {
+              updateObjects(p, [o.id], { width: 1.22, depth: 0.5, height: 1.48, materials: {} });
+            } else {
+              updateObjects(p, [o.id], { height: 2.22 });
+            }
+          }
         });
       }
     });

@@ -8,6 +8,8 @@
  * built-in sink unit does). Slots: fronts, worktop, handles & taps, and the sink or appliance.
  */
 import {
+  box,
+  clamp,
   cyl,
   defineItem,
   definePack,
@@ -15,11 +17,19 @@ import {
   range,
   rod,
   span,
+  sphere,
+  torus,
+  type AssetModelVariant,
+  type AssetParam,
+  type AssetPresetVariant,
   type PackItem,
   type PackMaterial,
+  type ParamValues,
   type Part,
   type PlanStroke,
   type Size3,
+  type V2,
+  type V3,
 } from '@/packs/kit';
 
 type BayKind = 'door' | 'doors' | 'drawers3' | 'drawers2' | 'drawer-door' | 'open' | 'pullout' | 'oven' | 'dishwasher' | 'sink' | 'sink2' | 'sink-drainer' | 'hob' | 'blank';
@@ -371,6 +381,682 @@ const VN_MASONRY: Fin[] = [
   ['Terrazzo & white doors', 'laminate-white-gloss', 'tile-terrazzo', 'metal-chrome'],
 ];
 
+// ───────────── Straight Sage & Cream Shaker Kitchen Run (run-240-sink-hob) ─────────────
+
+const SHAKER_TOP_T = 0.03;
+const SHAKER_FRONT_T = 0.02;
+const SHAKER_TAB_ROOM = 0.012;
+const SHAKER_KNOB_ROOM = 0.03;
+const HOB_OUTER_MARGIN = 0.2;
+
+const RUN_FRONT = matSlot('front', 'Base cabinets', 'sage-shaker-kitchen:sage-lacquer');
+const RUN_UPPER = matSlot('upper', 'Upper cabinets', 'sage-shaker-kitchen:cream-lacquer');
+const RUN_WORKTOP = matSlot('worktop', 'Worktop & waterfall ends', 'sage-shaker-kitchen:terrazzo-white');
+const RUN_TILE = matSlot('tile', 'Splashback tiles', 'sage-shaker-kitchen:mint-stack-tile');
+
+const RUN_BASE_FIXTURE_SLOTS = [
+  matSlot('pull', 'Leather tab pulls', 'sage-shaker-kitchen:leather-tab'),
+  matSlot('appliance', 'Sink & slim hood', 'metal-black-matte'),
+  matSlot('hob', 'Induction hob glass', 'screen-black'),
+  matSlot('shield', 'Splatter guard frosted glass', 'sage-shaker-kitchen:tempered-glass'),
+  matSlot('shieldBase', 'Splatter guard white mount', 'sage-shaker-kitchen:shield-base-white'),
+  matSlot('steel', 'Spring tap & trim', 'metal-brushed-steel'),
+  matSlot('brass', 'Knobs & rivets', 'metal-brass'),
+];
+
+const RUN_UPPER_CLEAN_SLOTS = [
+  ...RUN_BASE_FIXTURE_SLOTS,
+  matSlot('glass', 'Reeded glass', 'sage-shaker-kitchen:reeded-glass'),
+  matSlot('glow', 'Under-cabinet & hood LED', 'sage-shaker-kitchen:shelf-led'),
+];
+
+const RUN_VARIANTS: AssetPresetVariant[] = [
+  {
+    id: 'warm-cream',
+    name: 'All warm cream & subway tile',
+    materials: {
+      front: 'sage-shaker-kitchen:cream-lacquer',
+      upper: 'sage-shaker-kitchen:cream-lacquer',
+      worktop: 'sage-shaker-kitchen:terrazzo-white',
+      tile: 'tile-subway-white',
+    },
+  },
+  {
+    id: 'forest-marble',
+    name: 'Forest green & Carrara marble',
+    materials: {
+      front: 'paint-forest',
+      upper: 'sage-shaker-kitchen:cream-lacquer',
+      worktop: 'stone-marble-carrara',
+      tile: 'tile-subway-white',
+    },
+  },
+  {
+    id: 'dusty-blue',
+    name: 'Dusty blue & cream',
+    materials: {
+      front: 'paint-dusty-blue',
+      upper: 'sage-shaker-kitchen:cream-lacquer',
+      worktop: 'sage-shaker-kitchen:terrazzo-white',
+      tile: 'tile-white-square',
+    },
+  },
+  {
+    id: 'oak-cream',
+    name: 'Warm oak & cream',
+    materials: {
+      front: 'sage-shaker-kitchen:bar-oak',
+      upper: 'sage-shaker-kitchen:cream-lacquer',
+      worktop: 'sage-shaker-kitchen:terrazzo-white',
+      tile: 'sage-shaker-kitchen:mint-stack-tile',
+    },
+  },
+];
+
+const numParam = (v: unknown, fallback: number): number =>
+  typeof v === 'number' && Number.isFinite(v) ? v : fallback;
+
+interface Run240Geo {
+  w: number;
+  d: number;
+  h: number;
+  yw: number;
+  uDrop: number;
+  upperD: number;
+  yUpper0: number;
+  yUpperTop: number;
+  xStart: number;
+  xEnd: number;
+  prep: V2;
+  sink: V2;
+  hob: V2;
+  hobGlassX: V2;
+  holeX: V2;
+  holeZ: V2;
+}
+
+function run240Geo({ w, d, h }: Size3, params?: ParamValues): Run240Geo {
+  const yw = clamp(numParam(params?.worktopHeight, 0.89), Math.min(0.8, h * 0.45), Math.min(0.96, h - 0.55));
+  const uDrop = clamp(
+    numParam(params?.upperDrop, 0.56),
+    Math.min(0.45, Math.max(0.18, (h - yw) * 0.45)),
+    Math.min(0.72, Math.max(0.2, h - yw - 0.35)),
+  );
+  const endPier = params?.endPier === true;
+  const endW = endPier ? Math.min(0.36, Math.max(0.18, w * 0.12)) : 0.035;
+  const upperD = Math.min(0.35, d - 0.12);
+
+  const yUpper0 = yw + uDrop;
+  const yUpperTop = h;
+
+  const xStart = -w / 2 + 0.035;
+  const xEnd = w / 2 - endW;
+  const runLen = Math.max(0.9, xEnd - xStart);
+
+  const hobW = clamp(runLen * 0.34, 0.64, 0.9);
+  const sinkW = clamp((runLen - hobW) * 0.54, 0.58, 0.94);
+  const prepW = Math.max(0.24, runLen - hobW - sinkW);
+  const prep: V2 = [xStart, xStart + prepW];
+  const sink: V2 = [prep[1], xEnd - hobW];
+  const hob: V2 = [xEnd - hobW, xEnd];
+
+  const hobX1 = Math.min(w / 2 - HOB_OUTER_MARGIN, xEnd - 0.03);
+  const rightPad = hob[1] - hobX1;
+  const hobSpan = hob[1] - hob[0];
+  const maxAvailX = Math.max(0.28, hobX1 - (hob[0] + 0.03));
+  const hobLenX = clamp(Math.max(hobSpan - 2 * rightPad, 0.42), 0.28, Math.min(0.62, maxAvailX));
+  const hobGlassX: V2 = [hobX1 - hobLenX, hobX1];
+
+  const sinkSpan = sink[1] - sink[0];
+  const sinkHoleW = clamp(sinkSpan - 0.14, 0.44, 0.78);
+  const sinkCenter = (sink[0] + sink[1]) / 2;
+  const holeX: V2 = [sinkCenter - sinkHoleW / 2, sinkCenter + sinkHoleW / 2];
+  const holeZ: V2 = [-d / 2 + 0.125, d / 2 - 0.075];
+
+  return {
+    w,
+    d,
+    h,
+    yw,
+    uDrop,
+    upperD,
+    yUpper0,
+    yUpperTop,
+    xStart,
+    xEnd,
+    prep,
+    sink,
+    hob,
+    hobGlassX,
+    holeX,
+    holeZ,
+  };
+}
+
+function run240Params(): AssetParam[] {
+  return [
+    {
+      id: 'worktopHeight',
+      label: 'Worktop height',
+      kind: 'length',
+      default: 0.89,
+      min: 0.8,
+      max: 0.96,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = run240Geo(size, p);
+        return { at: [0, g.yw, size.d / 2 + 0.01], dir: [0, 1, 0] };
+      },
+    },
+    {
+      id: 'upperDrop',
+      label: 'Splashback height',
+      kind: 'length',
+      default: 0.56,
+      min: 0.45,
+      max: 0.72,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = run240Geo(size, p);
+        return { at: [(g.sink[0] + g.sink[1]) / 2, g.yUpper0, -size.d / 2 + g.upperD + 0.01], dir: [0, 1, 0] };
+      },
+    },
+    {
+      id: 'endPier',
+      label: 'Thick terrazzo end pier',
+      kind: 'toggle',
+      default: false,
+    },
+  ];
+}
+
+function splitDoors(a: number, b: number, count: number): V2[] {
+  const n = Math.max(1, count);
+  const step = (b - a) / n;
+  const gap = 0.002;
+  return range(n).map((i) => [a + i * step + gap, a + (i + 1) * step - gap] as V2);
+}
+
+function drawerRows([y0, y1]: V2): V2[] {
+  const gap = 0.006;
+  const total = y1 - y0;
+  const topH = clamp(total * 0.22, 0.135, 0.175);
+  const deepH = (total - topH - 2 * gap) / 2;
+  return [
+    [y0, y0 + deepH],
+    [y0 + deepH + gap, y1 - topH - gap],
+    [y1 - topH, y1],
+  ];
+}
+
+function shakerFramesOnlyZ(slot: string, doors: V2[], yRange: V2, zFace: number): Part[] {
+  const out: Part[] = [];
+  for (const [x0, x1] of doors) {
+    const r = clamp(Math.min(x1 - x0, yRange[1] - yRange[0]) * 0.15, 0.036, 0.06);
+    out.push(
+      span(slot, [x0, x1], [yRange[1] - r, yRange[1]], [zFace - 0.006, zFace], o),
+      span(slot, [x0, x1], [yRange[0], yRange[0] + r], [zFace - 0.006, zFace], o),
+      span(slot, [x0, x0 + r], [yRange[0] + r, yRange[1] - r], [zFace - 0.006, zFace], o),
+      span(slot, [x1 - r, x1], [yRange[0] + r, yRange[1] - r], [zFace - 0.006, zFace], o),
+    );
+  }
+  return out;
+}
+
+function shakerDrawersZ(slot: string, xRange: V2, yRange: V2, zFace: number): Part[] {
+  const x0 = xRange[0] + 0.002;
+  const x1 = xRange[1] - 0.002;
+  const out: Part[] = [];
+  for (const [ry0, ry1] of drawerRows(yRange)) {
+    const r = clamp(Math.min(x1 - x0, ry1 - ry0) * 0.24, 0.032, 0.052);
+    out.push(
+      span(slot, [x0 + r, x1 - r], [ry0 + r, ry1 - r], [zFace - SHAKER_FRONT_T, zFace - 0.006], o),
+      span(slot, [x0, x1], [ry1 - r, ry1], [zFace - SHAKER_FRONT_T, zFace], o),
+      span(slot, [x0, x1], [ry0, ry0 + r], [zFace - SHAKER_FRONT_T, zFace], o),
+      span(slot, [x0, x0 + r], [ry0 + r, ry1 - r], [zFace - SHAKER_FRONT_T, zFace], o),
+      span(slot, [x1 - r, x1], [ry0 + r, ry1 - r], [zFace - SHAKER_FRONT_T, zFace], o),
+    );
+  }
+  return out;
+}
+
+function leatherTabZ(x: number, yTop: number, zFace: number, len = 0.072): Part[] {
+  const t = 0.005;
+  return [
+    span('pull', [x - 0.012, x + 0.012], [yTop - len, yTop], [zFace + 0.0005, zFace + 0.0005 + t], { ...o, bevel: 0.002 }),
+    sphere('brass', [x, yTop - 0.012, zFace + 0.0005 + t + 0.0025], 0.0035, o),
+  ];
+}
+
+function drawerPullZ(xCenter: number, yTop: number, zFace: number, halfLen = 0.042): Part[] {
+  const t = 0.005;
+  const yc = yTop - 0.026;
+  return [
+    span('pull', [xCenter - halfLen, xCenter + halfLen], [yc - 0.01, yc + 0.01], [zFace + 0.0005, zFace + 0.0005 + t], {
+      ...o,
+      bevel: 0.002,
+    }),
+    sphere('brass', [xCenter - halfLen + 0.011, yc, zFace + 0.0005 + t + 0.0025], 0.0035, o),
+    sphere('brass', [xCenter + halfLen - 0.011, yc, zFace + 0.0005 + t + 0.0025], 0.0035, o),
+  ];
+}
+
+const brassKnobZ = (x: number, y: number, zFace: number): Part => sphere('brass', [x, y, zFace + 0.011], 0.01, o);
+
+function panelZY(slot: string, pts: V2[], xc: number, t: number): Part {
+  const zs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const cz = (Math.min(...zs) + Math.max(...zs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return {
+    shape: 'prism',
+    outline: pts.map(([z, y]) => [z - cz, -(y - cy)] as V2),
+    height: t,
+    position: [xc + t / 2, cy, cz],
+    rotation: [Math.PI / 2, 0, Math.PI / 2],
+    slot,
+    plan: false,
+  };
+}
+
+function buildRun240Shell(size: Size3, params?: ParamValues): Part[] {
+  const g = run240Geo(size, params);
+  const { w, d, yw, yUpper0, yUpperTop, upperD, xStart, xEnd, prep, sink, hob, holeX, holeZ } = g;
+  const parts: Part[] = [];
+
+  const yBaseTop = yw - SHAKER_TOP_T;
+  const yFrontRange: V2 = [PLINTH + 0.004, yBaseTop - 0.004];
+  const zFrontFace = d / 2 - SHAKER_TAB_ROOM;
+  const zUFace = -d / 2 + upperD - SHAKER_KNOB_ROOM;
+  const underSink = yw - 0.22;
+
+  // 1. Base carcasses (stopping below sink bowls in the sink bay), recessed plinth & Shaker fronts.
+  parts.push(
+    span('front', [xStart + 0.001, sink[0]], [PLINTH, yBaseTop - 0.001], [-d / 2 + 0.002, zFrontFace - SHAKER_FRONT_T]),
+    span('front', [sink[0], sink[1]], [PLINTH, underSink], [-d / 2 + 0.002, zFrontFace - SHAKER_FRONT_T], o),
+    span('front', [sink[1], xEnd - 0.001], [PLINTH, yBaseTop - 0.001], [-d / 2 + 0.002, zFrontFace - SHAKER_FRONT_T]),
+    span('front', [xStart + 0.002, xEnd - 0.002], [0.001, PLINTH - 0.001], [-d / 2 + 0.002, zFrontFace - SHAKER_FRONT_T - 0.045], o),
+  );
+
+  const prepDoorCount = clamp(Math.round((prep[1] - prep[0]) / 0.52), 1, 3);
+  const preHobDoors: V2[] = [
+    ...splitDoors(prep[0], prep[1], prepDoorCount),
+    ...splitDoors(sink[0], sink[1], sink[1] - sink[0] >= 0.56 ? 2 : 1),
+  ];
+  parts.push(
+    span(
+      'front',
+      [xStart + 0.003, hob[0] - 0.003],
+      [PLINTH + 0.006, yBaseTop - 0.006],
+      [zFrontFace - SHAKER_FRONT_T, zFrontFace - 0.006],
+      o,
+    ),
+    ...shakerFramesOnlyZ('front', preHobDoors, yFrontRange, zFrontFace),
+    ...shakerDrawersZ('front', hob, yFrontRange, zFrontFace),
+  );
+
+  // 2. White terrazzo worktop (with double-sink cut-out) and waterfall ends.
+  parts.push(
+    span('worktop', [-w / 2, holeX[0]], [yBaseTop, yw], [-d / 2, d / 2], { bevel: 0.002 }),
+    span('worktop', [holeX[1], w / 2], [yBaseTop, yw], [-d / 2, d / 2], { bevel: 0.002 }),
+    span('worktop', holeX, [yBaseTop, yw], [-d / 2, holeZ[0]], { bevel: 0.002 }),
+    span('worktop', holeX, [yBaseTop, yw], [holeZ[1], d / 2], { bevel: 0.002 }),
+    span('worktop', [-w / 2, xStart], [0, yBaseTop], [-d / 2, d / 2], { bevel: 0.002, plan: false }),
+    span('worktop', [xEnd, w / 2], [0, yBaseTop], [-d / 2, d / 2], { bevel: 0.002, plan: false }),
+  );
+
+  // 3. Pale mint vertical stack-bond splashback along the back wall.
+  parts.push(span('tile', [-w / 2, w / 2], [yw + 0.001, yUpper0 - 0.001], [-d / 2, -d / 2 + 0.012], o));
+
+  // 4. Warm cream shaker upper cabinets: left solid bay, central reeded-glass sink bay, right raised hood bay.
+  const leftUpperCount = clamp(Math.round((sink[0] - -w / 2) / 0.52), 1, 3);
+  const hobUpperCount = w / 2 - hob[0] >= 0.56 ? 2 : 1;
+  const leftUpperDoors = splitDoors(-w / 2 + 0.002, sink[0], leftUpperCount);
+  parts.push(
+    span('upper', [-w / 2 + 0.001, sink[0]], [yUpper0, yUpperTop], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
+    span(
+      'upper',
+      [-w / 2 + 0.005, sink[0] - 0.004],
+      [yUpper0 + 0.005, yUpperTop - 0.005],
+      [zUFace - SHAKER_FRONT_T, zUFace - 0.006],
+      o,
+    ),
+    ...shakerFramesOnlyZ('upper', leftUpperDoors, [yUpper0 + 0.004, yUpperTop - 0.004], zUFace),
+  );
+
+  const tBox = 0.018;
+  const yGlassMid = (yUpper0 + yUpperTop) / 2;
+  const gRail = clamp((yUpperTop - yUpper0) * 0.075, 0.036, 0.052);
+  const sx0 = sink[0] + 0.002;
+  const sx1 = sink[1] - 0.002;
+  parts.push(
+    span('upper', [sink[0], sink[1]], [yUpper0, yUpper0 + tBox], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
+    span('upper', [sink[0], sink[1]], [yUpperTop - tBox, yUpperTop], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
+    span('upper', [sink[0] + tBox, sink[1] - tBox], [yGlassMid - tBox / 2, yGlassMid + tBox / 2], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
+    span('upper', [sink[0], sink[0] + tBox], [yUpper0 + tBox, yUpperTop - tBox], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
+    span('upper', [sink[1] - tBox, sink[1]], [yUpper0 + tBox, yUpperTop - tBox], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
+    span('upper', [sink[0] + tBox, sink[1] - tBox], [yUpper0 + tBox, yUpperTop - tBox], [-d / 2 + 0.001, -d / 2 + 0.011], o),
+  );
+  for (const [gy0, gy1] of [
+    [yUpper0 + 0.004, yGlassMid - 0.002],
+    [yGlassMid + 0.002, yUpperTop - 0.004],
+  ] as V2[]) {
+    parts.push(
+      span('upper', [sx0, sx1], [gy1 - gRail, gy1], [zUFace - SHAKER_FRONT_T, zUFace], o),
+      span('upper', [sx0, sx1], [gy0, gy0 + gRail], [zUFace - SHAKER_FRONT_T, zUFace], o),
+      span('upper', [sx0, sx0 + gRail], [gy0 + gRail, gy1 - gRail], [zUFace - SHAKER_FRONT_T, zUFace], o),
+      span('upper', [sx1 - gRail, sx1], [gy0 + gRail, gy1 - gRail], [zUFace - SHAKER_FRONT_T, zUFace], o),
+    );
+  }
+
+  const yHobUpper0 = yUpper0 + 0.048;
+  const hobUpperDoors = splitDoors(hob[0], w / 2 - 0.002, hobUpperCount);
+  parts.push(
+    span('upper', [hob[0], w / 2 - 0.001], [yHobUpper0, yUpperTop], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
+    span(
+      'upper',
+      [hob[0] + 0.004, w / 2 - 0.005],
+      [yHobUpper0 + 0.005, yUpperTop - 0.005],
+      [zUFace - SHAKER_FRONT_T, zUFace - 0.006],
+      o,
+    ),
+    ...shakerFramesOnlyZ('upper', hobUpperDoors, [yHobUpper0 + 0.004, yUpperTop - 0.004], zUFace),
+  );
+
+  return parts;
+}
+
+function buildRun240Fixtures(size: Size3, params: ParamValues | undefined, opts: { withUppers: boolean }): Part[] {
+  const g = run240Geo(size, params);
+  const { w, d, yw, yUpper0, yUpperTop, upperD, prep, sink, hob, hobGlassX, holeX, holeZ } = g;
+  const out: Part[] = [];
+
+  const yBaseTop = yw - SHAKER_TOP_T;
+  const yFrontRange: V2 = [PLINTH + 0.004, yBaseTop - 0.004];
+  const zFrontFace = d / 2 - SHAKER_TAB_ROOM;
+  const zUFace = -d / 2 + upperD - SHAKER_KNOB_ROOM;
+
+  // 1. Leather tab pulls on hinged doors and centred horizontal leather strap pulls on the 3-drawer hob unit.
+  const tabY = yBaseTop - 0.036;
+  const addBaseTabs = (rangeX: V2, count: number) => {
+    const ds = splitDoors(rangeX[0], rangeX[1], count);
+    ds.forEach(([x0, x1], i) => {
+      const tx = ds.length > 1 && i % 2 === 0 && i + 1 < ds.length ? x1 - 0.035 : x0 + 0.035;
+      out.push(...leatherTabZ(tx, tabY, zFrontFace));
+    });
+  };
+  addBaseTabs(prep, clamp(Math.round((prep[1] - prep[0]) / 0.52), 1, 3));
+  addBaseTabs(sink, sink[1] - sink[0] >= 0.56 ? 2 : 1);
+  const hobCenterX = (hob[0] + hob[1]) / 2;
+  for (const [, ry1] of drawerRows(yFrontRange)) {
+    out.push(...drawerPullZ(hobCenterX, ry1, zFrontFace));
+  }
+
+  // 2. Upper cabinet brass knobs, reeded glass panes & under-cabinet LED strip.
+  if (opts.withUppers) {
+    const leftUpperCount = clamp(Math.round((sink[0] - -w / 2) / 0.52), 1, 3);
+    const hobUpperCount = w / 2 - hob[0] >= 0.56 ? 2 : 1;
+    const addKnobsZ = (rangeX: V2, count: number, ky: number) => {
+      const ds = splitDoors(rangeX[0], rangeX[1], count);
+      ds.forEach(([x0, x1], i) => {
+        const kx = ds.length > 1 && i % 2 === 0 && i + 1 < ds.length ? x1 - 0.035 : x0 + 0.035;
+        out.push(brassKnobZ(kx, ky, zUFace));
+      });
+    };
+    addKnobsZ([-w / 2 + 0.002, sink[0]], leftUpperCount, yUpper0 + 0.065);
+    addKnobsZ([hob[0], w / 2 - 0.002], hobUpperCount, yUpper0 + 0.11);
+
+    const yGlassMid = (yUpper0 + yUpperTop) / 2;
+    const gRail = clamp((yUpperTop - yUpper0) * 0.075, 0.036, 0.052);
+    for (const [gy0, gy1] of [
+      [yUpper0 + 0.004, yGlassMid - 0.002],
+      [yGlassMid + 0.002, yUpperTop - 0.004],
+    ] as V2[]) {
+      out.push(
+        span(
+          'glass',
+          [sink[0] + gRail - 0.002, sink[1] - gRail + 0.002],
+          [gy0 + gRail - 0.003, gy1 - gRail + 0.003],
+          [zUFace - SHAKER_FRONT_T + 0.007, zUFace - SHAKER_FRONT_T + 0.013],
+          o,
+        ),
+        brassKnobZ((sink[0] + sink[1]) / 2, gy0 + gRail * 0.5, zUFace),
+      );
+    }
+
+    out.push(
+      span('glow', [-w / 2 + 0.04, hob[0] - 0.02], [yUpper0 - 0.005, yUpper0 - 0.001], [-d / 2 + upperD - 0.07, -d / 2 + upperD - 0.05], o),
+    );
+  }
+
+  // 3. Undermount matte-black double sink + brushed-steel pull-down spring faucet.
+  const xBowlMid = (holeX[0] + holeX[1]) / 2;
+  const sinkFloor = yw - 0.195;
+  const sinkTop = yBaseTop - 0.001;
+  out.push(
+    span('appliance', [xBowlMid - 0.014, xBowlMid + 0.014], [sinkFloor, sinkTop], [holeZ[0] - 0.004, holeZ[1] + 0.004], o),
+  );
+  for (const [bx0, bx1] of [
+    [holeX[0], xBowlMid - 0.014],
+    [xBowlMid + 0.014, holeX[1]],
+  ] as V2[]) {
+    out.push(
+      span('appliance', [bx0 - 0.004, bx1 + 0.004], [sinkFloor, sinkFloor + 0.006], [holeZ[0] - 0.004, holeZ[1] + 0.004], o),
+      span('appliance', [bx0 - 0.005, bx0 + 0.001], [sinkFloor, sinkTop], holeZ, o),
+      span('appliance', [bx1 - 0.001, bx1 + 0.005], [sinkFloor, sinkTop], holeZ, o),
+      span('appliance', [bx0, bx1], [sinkFloor, sinkTop], [holeZ[0] - 0.005, holeZ[0] + 0.001], o),
+      span('appliance', [bx0, bx1], [sinkFloor, sinkTop], [holeZ[1] - 0.001, holeZ[1] + 0.005], o),
+      cyl('steel', [(bx0 + bx1) / 2, sinkFloor + 0.009, (holeZ[0] + holeZ[1]) / 2], 0.032, 0.004, o),
+    );
+  }
+
+  const tapX = xBowlMid + 0.03;
+  const tapZ = (-d / 2 + holeZ[0]) / 2;
+  const tapY0 = yw + 0.001;
+  const tapTop = Math.min(yw + 0.4, yUpper0 - 0.075);
+  const reach = Math.min(0.19, (holeZ[0] + holeZ[1]) / 2 - tapZ);
+  out.push(
+    cyl('steel', [tapX, tapY0 + 0.014, tapZ], 0.026, 0.028, o),
+    rod('steel', [tapX, tapY0 + 0.024, tapZ], [tapX, tapY0 + 0.1, tapZ], 0.015, o),
+    rod('steel', [tapX + 0.01, tapY0 + 0.08, tapZ], [tapX + 0.06, tapY0 + 0.11, tapZ], 0.005, o),
+    rod('steel', [tapX, tapY0 + 0.1, tapZ], [tapX, tapTop, tapZ], 0.0065, o),
+  );
+  const springCount = 9;
+  const springStep = Math.max(0.012, (tapTop - (tapY0 + 0.13)) / (springCount + 1));
+  for (const i of range(springCount)) {
+    out.push(torus('steel', [tapX, tapY0 + 0.13 + i * springStep, tapZ], 0.015, 0.0028, { ...o, rotation: [Math.PI / 2, 0, 0] }));
+  }
+  const tapArc: V3[] = range(6).map((i) => {
+    const a = (i / 5) * Math.PI;
+    return [tapX, tapTop + Math.sin(a) * 0.045, tapZ + (1 - Math.cos(a)) * (reach / 2)];
+  });
+  for (let i = 0; i < tapArc.length - 1; i++) out.push(rod('steel', tapArc[i], tapArc[i + 1], 0.0065, o));
+  const spoutEnd = tapArc[tapArc.length - 1];
+  out.push(
+    rod('steel', spoutEnd, [spoutEnd[0], spoutEnd[1] - 0.11, spoutEnd[2]], 0.01, o),
+    cyl('steel', [spoutEnd[0], spoutEnd[1] - 0.125, spoutEnd[2]], 0.016, 0.028, o),
+  );
+
+  // 4. Black glass induction hob + slim matte-black under-cabinet extractor hood.
+  const hobLenX = hobGlassX[1] - hobGlassX[0];
+  const hobMidX = (hobGlassX[0] + hobGlassX[1]) / 2;
+  const hz0 = -d / 2 + 0.07;
+  const hz1 = d / 2 - 0.07;
+  const hzc = (hz0 + hz1) / 2;
+  const rSmall = Math.min(0.085, hobLenX * 0.19, (hz1 - hz0) * 0.26);
+  const rLarge = Math.min(0.095, hobLenX * 0.21, (hz1 - hz0) * 0.28);
+  const ctrlHalf = Math.min(0.07, hobLenX * 0.25);
+  out.push(
+    span('hob', hobGlassX, [yw + 0.001, yw + 0.006], [hz0, hz1], o),
+    torus('steel', [hobMidX - hobLenX * 0.24, yw + 0.0072, hzc - 0.015], rSmall, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
+    torus('steel', [hobMidX + hobLenX * 0.24, yw + 0.0072, hzc + 0.015], rLarge, 0.0015, { ...o, rotation: [Math.PI / 2, 0, 0] }),
+    span('steel', [hobMidX - ctrlHalf, hobMidX + ctrlHalf], [yw + 0.0065, yw + 0.0078], [hz1 - 0.036, hz1 - 0.03], o),
+  );
+
+  if (opts.withUppers) {
+    const hoodZ0 = -d / 2 + 0.002;
+    const hoodZ1 = -d / 2 + Math.min(0.49, d - 0.05);
+    const hoodY0 = yUpper0 - 0.052;
+    const hoodY1 = yUpper0 + 0.045;
+    const hoodX: V2 = [hob[0] + 0.003, w / 2 - 0.003];
+    const hoodMidX = (hoodX[0] + hoodX[1]) / 2;
+    const visorRun = 0.085;
+    const visorLip = hoodY0 + 0.034;
+    const visorSlope = Math.atan2(visorRun, hoodY1 - visorLip);
+    const visorLen = Math.hypot(visorRun, hoodY1 - visorLip);
+    out.push(
+      span('appliance', hoodX, [visorLip, hoodY1], [hoodZ0, hoodZ1 - visorRun], o),
+      span('appliance', hoodX, [hoodY0, visorLip], [hoodZ1 - 0.095, hoodZ1], o),
+      box('appliance', [hoodMidX, (visorLip + hoodY1) / 2, hoodZ1 - visorRun / 2], [hoodX[1] - hoodX[0], visorLen, 0.012], {
+        ...o,
+        rotation: [-visorSlope, 0, 0],
+      }),
+      span('steel', [hoodX[0] + 0.05, hoodX[1] - 0.05], [visorLip - 0.004, visorLip - 0.001], [hoodZ0 + 0.03, hoodZ1 - 0.12], o),
+      span('glow', [hoodX[0] + 0.09, hoodX[1] - 0.09], [visorLip - 0.005, visorLip - 0.0015], [hoodZ1 - 0.115, hoodZ1 - 0.095], o),
+    );
+  }
+
+  // 5. Top-chamfered frosted glass splatter shields in white base shoes at BOTH open ends of the counter,
+  // rising flush to the top of the splashback tiles / underside of the upper cabinets (yUpper0 - 1 mm).
+  const yGlass0 = yw + 0.007;
+  const yShieldTop = yUpper0 - 0.001;
+  const shieldH = yShieldTop - yw;
+  const rzWall = -d / 2 + 0.014;
+  const rzFront = d / 2 - 0.014;
+  const glassW = rzFront - rzWall;
+  const chamfer = clamp(Math.min(glassW - Math.max(0, upperD - 0.014), glassW * 0.28, shieldH * 0.3), 0.09, 0.165);
+  const shieldOutline: V2[] = [
+    [rzWall, yGlass0],
+    [rzFront, yGlass0],
+    [rzFront, yShieldTop - chamfer],
+    [rzFront - chamfer, yShieldTop],
+    [rzWall, yShieldTop],
+  ];
+
+  out.push(
+    // Left open end (-w/2): white base shoe + 8 mm frosted glass chamfered on the top-front corner.
+    span('shieldBase', [-w / 2 + 0.004, -w / 2 + 0.018], [yw + 0.001, yw + 0.015], [rzWall - 0.001, rzFront + 0.003], {
+      ...o,
+      bevel: 0.002,
+    }),
+    panelZY('shield', shieldOutline, -w / 2 + 0.011, 0.008),
+    // Right open end (+w/2): matching white base shoe + 8 mm frosted glass chamfered on the top-front corner.
+    span('shieldBase', [w / 2 - 0.018, w / 2 - 0.004], [yw + 0.001, yw + 0.015], [rzWall - 0.001, rzFront + 0.003], {
+      ...o,
+      bevel: 0.002,
+    }),
+    panelZY('shield', shieldOutline, w / 2 - 0.019, 0.008),
+  );
+
+  return out;
+}
+
+function run240PlanDetail(size: Size3, params?: ParamValues): PlanStroke[] {
+  const g = run240Geo(size, params);
+  const { w, d, holeX, holeZ, hobGlassX } = g;
+  const xBowlMid = (holeX[0] + holeX[1]) / 2;
+  const hobLenX = hobGlassX[1] - hobGlassX[0];
+  const hobMidX = (hobGlassX[0] + hobGlassX[1]) / 2;
+  const hz0 = -d / 2 + 0.07;
+  const hz1 = d / 2 - 0.07;
+  const hzc = (hz0 + hz1) / 2;
+  const rSmall = Math.min(0.08, hobLenX * 0.18, (hz1 - hz0) * 0.24);
+  const rLarge = Math.min(0.09, hobLenX * 0.2, (hz1 - hz0) * 0.26);
+
+  return [
+    // Double sink bowls & drains.
+    {
+      kind: 'poly',
+      closed: true,
+      points: [
+        [holeX[0], holeZ[0]],
+        [xBowlMid - 0.014, holeZ[0]],
+        [xBowlMid - 0.014, holeZ[1]],
+        [holeX[0], holeZ[1]],
+      ],
+    },
+    {
+      kind: 'poly',
+      closed: true,
+      points: [
+        [xBowlMid + 0.014, holeZ[0]],
+        [holeX[1], holeZ[0]],
+        [holeX[1], holeZ[1]],
+        [xBowlMid + 0.014, holeZ[1]],
+      ],
+    },
+    { kind: 'circle', c: [(holeX[0] + xBowlMid - 0.014) / 2, (holeZ[0] + holeZ[1]) / 2], r: 0.028 },
+    { kind: 'circle', c: [(xBowlMid + 0.014 + holeX[1]) / 2, (holeZ[0] + holeZ[1]) / 2], r: 0.028 },
+    // Induction hob & cooking zones.
+    {
+      kind: 'poly',
+      closed: true,
+      points: [
+        [hobGlassX[0], hz0],
+        [hobGlassX[1], hz0],
+        [hobGlassX[1], hz1],
+        [hobGlassX[0], hz1],
+      ],
+    },
+    { kind: 'circle', c: [hobMidX - hobLenX * 0.24, hzc - 0.015], r: rSmall },
+    { kind: 'circle', c: [hobMidX + hobLenX * 0.24, hzc + 0.015], r: rLarge },
+    // Frosted glass splatter shields on both open ends of the counter in plan.
+    { kind: 'line', a: [-w / 2 + 0.011, -d / 2 + 0.014], b: [-w / 2 + 0.011, d / 2 - 0.014] },
+    { kind: 'line', a: [w / 2 - 0.011, -d / 2 + 0.014], b: [w / 2 - 0.011, d / 2 - 0.014] },
+  ];
+}
+
+const run240Models: AssetModelVariant[] = [
+  {
+    id: 'clean',
+    name: 'With upper cabinets',
+    slots: RUN_UPPER_CLEAN_SLOTS,
+    props: (size, params) => buildRun240Fixtures(size, params, { withUppers: true }),
+  },
+  {
+    id: 'no-uppers',
+    name: 'No upper cabinets',
+    hide: ['upper'],
+    slots: RUN_BASE_FIXTURE_SLOTS,
+    props: (size, params) => buildRun240Fixtures(size, params, { withUppers: false }),
+  },
+];
+
+const run240SinkHob: PackItem = defineItem({
+  id: 'run-240-sink-hob',
+  name: 'Counter run 2.4 m with sink & hob',
+  category: 'kitchen',
+  type: 'surfaces',
+  group: 'Counters & cabinets',
+  tags: [
+    'kitchen',
+    'counter',
+    'cabinet',
+    'worktop',
+    'tủ bếp',
+    'counter run',
+    'sink',
+    'hob',
+    'kitchen line',
+    'sage',
+    'shaker',
+    'reeded glass',
+    'splashback',
+  ],
+  description:
+    'A straight sage & warm-cream shaker kitchen run with pale mint vertical stack-tile splashback, top-chamfered frosted glass splatter shields in white base shoes at both ends, an undermount double sink with pull-down spring tap, a 3-drawer induction hob bay, and cream shaker & reeded-glass upper cabinets with a slim black hood and LED strip.',
+  defaultSize: S(2.8, 0.6, 2.22),
+  minSize: S(1.8, 0.5, 1.95),
+  maxSize: S(3.6, 0.72, 2.6),
+  wallSnap: true,
+  slots: [RUN_FRONT, RUN_UPPER, RUN_WORKTOP, RUN_TILE],
+  variants: RUN_VARIANTS,
+  models: run240Models,
+  params: run240Params(),
+  build: (size, params) => buildRun240Shell(size, params),
+  planDetail: (size, params) => run240PlanDetail(size, params),
+});
+
 const items: PackItem[] = [
   // Single base units.
   counter({ id: 'base-doors-90', name: 'Base unit, two doors', style: { bays: [{ kind: 'doors', w: 1 }] }, ...unit(0.9, 0.6, 1.2), tags: ['base unit', 'double door', '90 cm'], description: 'A wide kitchen base unit with a pair of doors, 60–120 cm.' }),
@@ -392,15 +1078,7 @@ const items: PackItem[] = [
     description: 'A compact 1.8 m counter for an apartment: drawers, an inset sink with a mixer tap, and a door unit.',
     fourth: SINK,
   }),
-  counter({
-    id: 'run-240-sink-hob',
-    name: 'Counter run 2.4 m with sink & hob',
-    style: { bays: [{ kind: 'drawers3', w: 0.6 }, { kind: 'sink', w: 0.8 }, { kind: 'dishwasher', w: 0.6 }, { kind: 'hob', w: 0.8 }], tap: true, applianceSlot: 'sink' },
-    ...sinkUnit(2.8, 2.2, 3.4),
-    tags: ['counter run', 'sink', 'hob', 'dishwasher', 'kitchen line'],
-    description: 'A 2.8 m kitchen line: drawers, an inset sink with tap, an integrated dishwasher and a stainless hob over pan drawers.',
-    fourth: ['sink', 'Sink & hob', 'stainless-sink'],
-  }),
+  run240SinkHob,
   counter({
     id: 'run-300-full',
     name: 'Counter run 3.0 m with oven, hob & sink',

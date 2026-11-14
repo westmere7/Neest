@@ -255,6 +255,85 @@ const frameArtPattern: PackPattern = {
   },
 };
 
+/** Samples the arched NETFLIX wordmark in screen coordinates (s, t) around (0, 0). */
+function netflixGlyph(s: number, t: number): number {
+  const hw = 0.21;
+  const tTop = 0.056;
+  const tBot = -0.058 + 0.011 * (1 - Math.min(1, (s / hw) ** 2));
+  if (s < -hw || s > hw || t < tBot || t > tTop) return 0;
+  const v = (t - tBot) / (tTop - tBot);
+  const X = ((s + hw) / (2 * hw)) * 7.4;
+  const sw = 0.305;
+  const sh = 0.155;
+  if (X <= 1.05) {
+    const u = X / 1.05;
+    const wU = sw / 1.05;
+    if (Math.abs(u - (wU * 0.46 + (1 - wU * 0.92) * (1 - v))) <= wU * 0.52) return 1.12;
+    if (u <= wU || u >= 1 - wU) return 0.84;
+  } else if (X >= 1.3 && X <= 2.18) {
+    const u = (X - 1.3) / 0.88;
+    const wU = sw / 0.88;
+    if (u <= wU || v >= 1 - sh || v <= sh || (Math.abs(v - 0.51) <= sh * 0.47 && u <= 0.87)) return 1;
+  } else if (X >= 2.43 && X <= 3.33) {
+    const u = (X - 2.43) / 0.9;
+    const wU = sw / 0.9;
+    if (v >= 1 - sh || Math.abs(u - 0.5) <= wU * 0.5) return 1;
+  } else if (X >= 3.58 && X <= 4.44) {
+    const u = (X - 3.58) / 0.86;
+    const wU = sw / 0.86;
+    if (u <= wU || v >= 1 - sh || (Math.abs(v - 0.51) <= sh * 0.47 && u <= 0.85)) return 1;
+  } else if (X >= 4.69 && X <= 5.53) {
+    const u = (X - 4.69) / 0.84;
+    const wU = sw / 0.84;
+    if (u <= wU || v <= sh) return 1;
+  } else if (X >= 5.78 && X <= 6.1) {
+    return 1;
+  } else if (X >= 6.35 && X <= 7.4) {
+    const u = (X - 6.35) / 1.05;
+    const wU = sw / 1.05;
+    if (
+      Math.min(
+        Math.abs(u - (wU * 0.44 + (1 - wU * 0.88) * (1 - v))),
+        Math.abs(u - (wU * 0.44 + (1 - wU * 0.88) * v)),
+      ) <=
+      wU * 0.52
+    )
+      return 1;
+  }
+  return 0;
+}
+
+/** Netflix splash screen: cinema-black backdrop with a subtle crimson glow and the red wordmark. */
+const netflixPattern: PackPattern = {
+  id: 'screen-netflix',
+  name: 'TV picture: Netflix',
+  colored: true,
+  normalStrength: 0,
+  draw: (ctx, N) =>
+    paint(ctx, N, (s, t) => {
+      const r2 = (s / 0.28) ** 2 + (t / 0.14) ** 2;
+      const glow = Math.exp(-r2);
+      const bg = [0.032 + 0.09 * glow, 0.03 + 0.008 * glow, 0.042 + 0.012 * glow];
+      if (Math.abs(s) > 0.22 || Math.abs(t) > 0.066) return bg;
+      const d = 0.25 / N;
+      let cov = 0;
+      let shade = 0;
+      for (const ds of [-d, d]) {
+        for (const dt of [-d, d]) {
+          const g = netflixGlyph(s + ds, t + dt);
+          if (g > 0) {
+            cov += 0.25;
+            shade += g * 0.25;
+          }
+        }
+      }
+      if (cov === 0) return bg;
+      const k = shade / cov;
+      const red = [Math.min(1, 0.9 * k), 0.035 * k, 0.078 * k];
+      return mix(bg, red, cov);
+    }),
+};
+
 // ---------------------------------------------------------------------------
 // 1. Samsung QE65S95D — 65″ OLED S95D on its pedestal stand
 // ---------------------------------------------------------------------------
@@ -488,11 +567,12 @@ export default definePack({
     'Six real TVs built to their published dimensions: Samsung S95D 65″ and LG C4 65″ OLEDs on pedestals, Sony BRAVIA 8 55″ and BRAVIA 9 75″ on feet, and Samsung The Frame 55″ and LG G4 77″ flush on the wall. Brand and spec data is in each item’s info card; no logos are drawn.',
   license: 'CC0 geometry (made for Neest); Samsung, LG and Sony are trademarks of their owners',
   items: [s95d, c4, bravia8, bravia9, frame55, g4],
-  patterns: [auroraPattern, duskPattern, frameArtPattern],
+  patterns: [auroraPattern, duskPattern, frameArtPattern, netflixPattern],
   materials: [
     { id: 'screen-aurora-mat', name: 'TV screen: aurora picture', color: '#ffffff', roughness: 0.12, pattern: { id: 'screen-aurora', scale: 1.6 } },
     { id: 'screen-dusk-mat', name: 'TV screen: dusk picture', color: '#ffffff', roughness: 0.12, pattern: { id: 'screen-dusk', scale: 1.6 } },
     { id: 'frame-art-mat', name: 'TV screen: Art Mode print', color: '#ffffff', roughness: 0.6, pattern: { id: 'frame-art', scale: 1.206 } },
+    { id: 'screen-netflix-mat', name: 'TV screen: Netflix', color: '#ffffff', roughness: 0.12, pattern: { id: 'screen-netflix', scale: 1.6 } },
     { id: 'tv-black', name: 'TV black', color: '#121315', roughness: 0.35, metalness: 0.2 },
     { id: 'tv-graphite', name: 'TV graphite', color: '#2b2d31', roughness: 0.4, metalness: 0.5 },
     { id: 'tv-titan-silver', name: 'Titan silver metal', category: 'metal', color: '#9a9ca0', roughness: 0.32, metalness: 0.85, pattern: { id: 'brushed', scale: 0.4, contrast: 0.4 } },
