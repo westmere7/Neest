@@ -196,7 +196,7 @@ export function LiveDialog({ onClose }: { onClose: () => void }) {
     try {
       await createRoom(project);
       await startLive(project.id);
-      toast.success('Shared with the team', 'Your team finds it under Shared projects, or opens the link.');
+      toast.success('Shared with the team', 'Your team finds it under Cloud projects on the start page, or opens the link.');
     } catch (e) {
       toast.error('Could not share the project', e instanceof Error ? e.message : undefined);
     } finally {
@@ -485,11 +485,14 @@ export function AccountDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Opens a shared project: brings the team's copy into this browser and opens it. */
-async function openShared(room: LiveRoom): Promise<void> {
+/**
+ * Opens a shared project: brings the team's copy into this browser and opens it, view-only (others' changes still
+ * arrive live; Edit in the top bar opens it for editing).
+ */
+async function openShared(room: LiveRoom, viewOnly = true): Promise<void> {
   const project = await joinFromLink(room);
   await saveProject(project);
-  navigate(`/p/${project.id}`);
+  navigate(`/p/${project.id}${viewOnly ? '/view' : ''}`);
 }
 
 /** Opening a live link (#/live/<room>/<key>): sign in if needed, then open the shared project. */
@@ -569,18 +572,33 @@ export function SharedProjects() {
     return () => clearInterval(poll);
   }, [refresh]);
   if (!SYNC_URL) return null;
+  const title = (
+    <div className="cloud-title">
+      <h2>
+        <Cloud size={19} className="cloud-mark" aria-hidden /> Cloud projects
+      </h2>
+      <p>Shared with the team on its server: everyone signed in opens the same copy and sees changes live.</p>
+    </div>
+  );
   if (!user)
     return (
       <section className="live-shared" data-testid="shared-projects">
-        <h2>Shared with the team</h2>
+        {title}
         <p className="live-note">Sign in to see and edit the projects your team shares.</p>
         <SignInForm compact />
       </section>
     );
+  const open = (r: SharedRoom) => {
+    setOpening(r.room);
+    openShared(r).catch((e) => {
+      toast.error('Could not open the shared project', e instanceof Error ? e.message : undefined);
+      setOpening(null);
+    });
+  };
   return (
     <section className="live-shared" data-testid="shared-projects">
       <div className="live-shared-head">
-        <h2>Shared with the team</h2>
+        {title}
         <span className="live-account">
           <Avatar name={user.name} color={user.color} />
           {user.name}
@@ -598,72 +616,62 @@ export function SharedProjects() {
       {account && <AccountDialog onClose={() => setAccount(false)} />}
       {error && <p className="live-error">{error}</p>}
       {rooms && !rooms.length && <p className="live-note">Nothing shared yet. Open a project and use the people button at the top to share it.</p>}
-      <ul className="live-room-list">
-        {rooms?.map((r) => (
-          <li key={r.room}>
-            <button
-              className="live-room"
-              disabled={!!opening}
-              onClick={() => {
-                setOpening(r.room);
-                openShared(r).catch((e) => {
-                  toast.error('Could not open the shared project', e instanceof Error ? e.message : undefined);
-                  setOpening(null);
-                });
-              }}
-            >
-              <span className="live-room-thumb">
-                <ProjectThumb stored={thumbs[r.room] ?? null} source={loadedAt ? thumbSource(r) : null} empty={<Cloud size={20} />} />
-                {!!r.here?.length && (
-                  <span
-                    className="live-room-here"
-                    data-testid="room-here"
-                    aria-label={`Working on it now: ${r.here.map((p) => peerName(p, user)).join(', ')}`}
-                    title={`Working on it now: ${r.here.map((p) => peerName(p, user)).join(', ')}`}
+      <div className="project-grid cloud-grid">
+        {rooms?.map((r) => {
+          const here = r.here?.map((p) => peerName(p, user)).join(', ');
+          return (
+            <article key={r.room} className="project-card cloud" data-testid="cloud-card">
+              <button type="button" className="card-open" disabled={!!opening} onClick={() => open(r)} aria-label={`Open ${r.name}`}>
+                <div className="cloud-thumb">
+                  <ProjectThumb stored={thumbs[r.room] ?? null} source={loadedAt ? thumbSource(r) : null} empty={<Cloud size={22} />} />
+                  {!!r.here?.length && (
+                    <span className="live-room-here" data-testid="room-here" aria-label={`Working on it now: ${here}`} title={`Working on it now: ${here}`}>
+                      {r.here.slice(0, 3).map((p) => (
+                        <Avatar key={p.name + p.color} name={p.name} color={p.color} small title={peerName(p, user)} />
+                      ))}
+                      {r.here.length > 3 && <span className="live-more">+{r.here.length - 3}</span>}
+                    </span>
+                  )}
+                </div>
+                <div className="card-meta">
+                  <h3 title={r.name}>
+                    <Cloud size={14} className="cloud-mark" aria-label="On the team server" />
+                    {r.name}
+                  </h3>
+                  <p>Shared by {r.owner === user.id ? 'you' : (r.ownerName ?? r.owner)} · {new Date(r.createdAt).toLocaleDateString()}</p>
+                  <p className="card-time">{opening === r.room ? 'Opening…' : here ? `Working on it now: ${here}` : 'On the team server'}</p>
+                </div>
+              </button>
+              {r.owner === user.id && (
+                <div className="card-tools">
+                  <IconButton
+                    label="Remove from the shared list"
+                    tooltipSide="top"
+                    className="danger-hover"
+                    onClick={async () => {
+                      const ok = await confirmAction({
+                        title: `Stop sharing “${r.name}”?`,
+                        message: 'It leaves the team list. Copies already in people’s browsers stay there.',
+                        confirmLabel: 'Remove',
+                        danger: true,
+                      });
+                      if (!ok) return;
+                      try {
+                        await removeRoom(r.room);
+                        await refresh();
+                      } catch (e) {
+                        toast.error('Could not remove it', e instanceof Error ? e.message : undefined);
+                      }
+                    }}
                   >
-                    {r.here.slice(0, 3).map((p) => (
-                      <Avatar key={p.name + p.color} name={p.name} color={p.color} small title={peerName(p, user)} />
-                    ))}
-                    {r.here.length > 3 && <span className="live-more">+{r.here.length - 3}</span>}
-                  </span>
-                )}
-              </span>
-              <span className="live-room-text">
-                <strong>
-                  <Cloud size={14} className="cloud-mark" aria-label="On the team server" />
-                  {r.name}
-                </strong>
-                <span>
-                  Shared by {r.owner === user.id ? 'you' : (r.ownerName ?? r.owner)} · {new Date(r.createdAt).toLocaleDateString()}
-                  {opening === r.room ? ' · opening…' : ''}
-                </span>
-              </span>
-            </button>
-            {r.owner === user.id && (
-              <IconButton
-                label="Remove from the shared list"
-                onClick={async () => {
-                  const ok = await confirmAction({
-                    title: `Stop sharing “${r.name}”?`,
-                    message: 'It leaves the team list. Copies already in people’s browsers stay there.',
-                    confirmLabel: 'Remove',
-                    danger: true,
-                  });
-                  if (!ok) return;
-                  try {
-                    await removeRoom(r.room);
-                    await refresh();
-                  } catch (e) {
-                    toast.error('Could not remove it', e instanceof Error ? e.message : undefined);
-                  }
-                }}
-              >
-                <Trash2 size={15} />
-              </IconButton>
-            )}
-          </li>
-        ))}
-      </ul>
+                    <Trash2 size={14} />
+                  </IconButton>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
     </section>
   );
 }

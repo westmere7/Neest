@@ -15,6 +15,8 @@ import { isolationGroupFor } from '@/features/editor/isolation';
 export function useDropAsset() {
   useEffect(() => {
     const onDrop = (e: Event) => {
+      // View only: nothing is placed.
+      if (useProjectStore.getState().readOnly) return;
       const { assetId, x, y } = (e as CustomEvent<{ assetId: string; x: number; y: number }>).detail;
       const project = useProjectStore.getState().project;
       if (!project) return;

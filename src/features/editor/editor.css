@@ -109,6 +109,32 @@
   width: 220px;
   height: 28px;
 }
+/* View only: the side panels sit in a disabled fieldset that adds no box of its own. */
+.view-only-lock {
+  display: contents;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+/* Opened view-only: a badge with Edit next to the project name. */
+.view-only-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 2px 3px 2px 9px;
+  white-space: nowrap;
+}
+@media (max-width: 1280px) {
+  .view-only-label {
+    display: none;
+  }
+}
 .save-indicator {
   display: inline-flex;
   align-items: center;

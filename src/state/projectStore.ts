@@ -52,6 +52,14 @@ export interface ProjectState {
   tx: Transaction | null;
   /** Increments on every committed change (execute/commit/undo/redo); drives autosave. */
   revision: number;
+  /**
+   * View only (how existing projects open, until Edit): edits, gestures, undo and redo are refused; showing another layout
+   * option still works, and others' changes (live editing) and reloaded files still arrive.
+   */
+  readOnly: boolean;
+  /** When an edit was last refused in view-only mode (the editor shows a note), or 0. */
+  refusedAt: number;
+  setReadOnly(readOnly: boolean): void;
   load(project: Project): void;
   close(): void;
   /** Applies a model edit as one undoable step. Returns the recipe's result. */
@@ -129,6 +137,12 @@ export function createProjectStore() {
      * Records the change from `base` to `next` as one undo step. When only the shown option changed, it just
      * shows it: switching options is per person, not an edit.
      */
+    /** An edit refused in view-only mode: noted for the editor (several in a row, e.g. a drag, count once). */
+    const refuse = (): void => {
+      const now = Date.now();
+      if (now - get().refusedAt > 1500) set({ refusedAt: now });
+    };
+
     const record = (base: Project, next: Project, label: string, key?: string): void => {
       if (!diffProjects(base, next).length) {
         // Only the view changed: remembered in this browser (autosave), not an undo step or an edit.
@@ -168,6 +182,13 @@ export function createProjectStore() {
       future: [],
       tx: null,
       revision: 0,
+      readOnly: false,
+      refusedAt: 0,
+
+      setReadOnly(readOnly) {
+        if (readOnly && get().tx) get().cancel();
+        set({ readOnly });
+      },
 
       load(project) {
         previews.clear();
@@ -189,6 +210,11 @@ export function createProjectStore() {
           result = recipe(d);
         });
         if (next === base) return result;
+        // View only: showing another option is fine, anything else is refused.
+        if (get().readOnly && diffProjects(base, next).length) {
+          refuse();
+          return undefined;
+        }
         record(base, next, label, opts?.coalesce);
         return result;
       },
@@ -196,13 +222,14 @@ export function createProjectStore() {
       begin(label) {
         const { project, tx } = get();
         if (!project) return;
+        if (get().readOnly) return refuse();
         if (tx) get().commit();
         set({ tx: { base: get().project!, label } });
       },
 
       preview(recipe) {
         const { project, tx } = get();
-        if (!project || !tx) return;
+        if (!project || !tx || get().readOnly) return;
         const next = produce(project, (d) => {
           recipe(d);
         });
@@ -212,6 +239,7 @@ export function createProjectStore() {
       livePreview(label, recipe) {
         const { project, tx } = get();
         if (!project) return;
+        if (get().readOnly) return refuse();
         if (!tx || tx.label !== label) get().begin(label);
         get().preview(recipe);
       },
@@ -245,6 +273,7 @@ export function createProjectStore() {
         // Undo during a drag or live edit only cancels it (the step before stays).
         if (tx) return get().cancel();
         if (!project || past.length === 0) return;
+        if (get().readOnly) return refuse();
         const entry = past[past.length - 1];
         // Back to the option where the change was made, when it changed a plan.
         const show = touchesPlans(entry.ops) ? entry.viewBefore : viewedOption(project);
@@ -263,6 +292,7 @@ export function createProjectStore() {
         // Redo during a drag or live edit only cancels it.
         if (tx) return get().cancel();
         if (!project || future.length === 0) return;
+        if (get().readOnly) return refuse();
         const entry = future[0];
         const show = touchesPlans(entry.ops) ? entry.viewAfter : viewedOption(project);
         const { project: next, applied } = applyToView(project, entry.ops, 'checked', show);

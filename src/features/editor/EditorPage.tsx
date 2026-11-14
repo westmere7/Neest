@@ -15,7 +15,7 @@ import { startFileMirror } from './fileMirror';
 import { pruneSelection } from './actions';
 
 /** Loads a project from local storage, starts autosave, and renders the editor. */
-export default function EditorPage({ projectId }: { projectId: string }) {
+export default function EditorPage({ projectId, viewOnly = false }: { projectId: string; viewOnly?: boolean }) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const project = useProjectStore((s) => s.project);
@@ -92,6 +92,14 @@ export default function EditorPage({ projectId }: { projectId: string }) {
       }
     });
   }, [status, projectId]);
+
+  // View only (#/p/<id>/view): the project store refuses edits; switching to Edit only changes the address.
+  useEffect(() => {
+    useProjectStore.getState().setReadOnly(viewOnly);
+    if (viewOnly)
+      useEditorStore.setState({ tool: 'select', libraryOpen: false, notesMode: false, servicesMode: false, shapeEdit: null, isolatedGroupId: null });
+    return () => useProjectStore.getState().setReadOnly(false);
+  }, [viewOnly]);
 
   // Keep the selection valid across undo/redo/deletes.
   useEffect(() => {

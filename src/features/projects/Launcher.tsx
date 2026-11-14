@@ -164,7 +164,9 @@ export function Launcher() {
 
   const menuFor = (p: ProjectSummary, x: number, y: number) =>
     openContextMenu(x, y, [
-      { label: 'Open', run: () => navigate(`/p/${p.id}`) },
+      // Projects open view-only (Edit in the top bar); this skips that step.
+      { label: 'Open', run: () => navigate(`/p/${p.id}/view`) },
+      { label: 'Open for editing', run: () => navigate(`/p/${p.id}`) },
       { label: 'Rename…', run: () => setRenaming(p) },
       { label: 'Duplicate', run: () => void onDuplicate(p) },
       { label: 'Export .neest file', run: () => void onExport(p) },
@@ -246,7 +248,9 @@ export function Launcher() {
 
         <section aria-labelledby="projects-title">
           <div className="section-title-row">
-            <h2 id="projects-title">Your projects</h2>
+            <h2 id="projects-title">
+              Local projects <span className="section-hint">only in this browser</span>
+            </h2>
             {!empty && (
               <Button
                 variant="subtle"
@@ -285,7 +289,7 @@ export function Launcher() {
                   menuFor(p, e.clientX, e.clientY);
                 }}
               >
-                <button type="button" className="card-open" onClick={() => navigate(`/p/${p.id}`)} aria-label={`Open ${p.name}`} data-testid="project-card">
+                <button type="button" className="card-open" onClick={() => navigate(`/p/${p.id}/view`)} aria-label={`Open ${p.name}`} data-testid="project-card">
                   <ProjectThumb
                     stored={p.thumbnail}
                     source={thumbSource(p, repo.entries.find((e) => e.id === p.id))}

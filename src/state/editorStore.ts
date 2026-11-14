@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Opening, OpeningDesign, OpeningKind, PlacedObject, Vec2, WallRole } from '@/domain/model/schema';
 import type { MaterialTarget } from '@/domain/commands/entities';
 import type { ServiceHost, ServicePointKind, ServiceSystem } from '@/domain/model/services';
+import { useProjectStore } from './projectStore';
 
 export type ToolId = 'select' | 'pan' | 'wall' | 'curve' | 'room' | 'opening' | 'place' | 'measure' | 'split' | 'extend' | 'callout' | 'service' | 'run';
 /** Which line of a new wall follows the drawn points: its centreline or one of its faces. */
@@ -203,6 +204,25 @@ export interface EditorState {
   requestCamera(view: string): void;
 }
 
+/** Tools that only look: all that view-only mode (how projects open) offers. */
+export const VIEW_ONLY_TOOLS: ToolId[] = ['select', 'pan', 'measure'];
+
+const viewOnly = () => useProjectStore.getState().readOnly;
+
+/**
+ * A request without what view-only mode does not allow: drawing and placing tools, the library (where items are
+ * placed from), Comments & notes, Connections and the shape editor.
+ */
+function withoutEditing(partial: Partial<EditorState>): Partial<EditorState> {
+  const p = { ...partial };
+  if (p.tool && !VIEW_ONLY_TOOLS.includes(p.tool)) delete p.tool;
+  if (p.libraryOpen) delete p.libraryOpen;
+  if (p.notesMode) delete p.notesMode;
+  if (p.servicesMode) delete p.servicesMode;
+  if (p.shapeEdit) delete p.shapeEdit;
+  return p;
+}
+
 export const useEditorStore = create<EditorState>((set) => ({
   tool: 'select',
   wallRole: 'interior',
@@ -262,8 +282,11 @@ export const useEditorStore = create<EditorState>((set) => ({
   houseLighting: 'light',
 
   // Picking another tool in Comments & notes mode leaves the mode (see the subscription below).
-  // The shape editor allows no other tool.
-  setTool: (tool) => set((s) => (s.shapeEdit && tool !== 'select' ? s : { tool, hint: null, snapLabel: null })),
+  // The shape editor allows no other tool; view-only allows only the tools that look (VIEW_ONLY_TOOLS).
+  setTool: (tool) =>
+    set((s) =>
+      (s.shapeEdit && tool !== 'select') || (viewOnly() && !VIEW_ONLY_TOOLS.includes(tool)) ? s : { tool, hint: null, snapLabel: null },
+    ),
   setSelection: (selection) =>
     set((s) => ({
       selection: s.notesMode ? selection.filter((x) => x.kind === 'callout') : expandSelection(selection),
@@ -282,7 +305,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   // Picking another item, door or window to place drops a Duplicate's template.
   set: (partial) =>
     set((s) => {
-      const p = s.shapeEdit && !('shapeEdit' in partial) ? withoutOtherModes(partial) : partial;
+      const asked = viewOnly() ? withoutEditing(partial) : partial;
+      const p = s.shapeEdit && !('shapeEdit' in asked) ? withoutOtherModes(asked) : asked;
       return {
         ...p,
         ...('placeAssetId' in p && !('placeTemplate' in p) ? { placeTemplate: null } : {}),

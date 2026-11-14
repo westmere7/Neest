@@ -193,14 +193,15 @@ export function createSelectTool(): Tool {
   const updateHover = (e: PointerInfo, env: ToolEnv) => {
     const project = env.project();
     const derived = env.derived();
-    const handles = selectionHandles(project, derived, editor().selection, env.px());
+    // View only: no handles to grab (nothing hints at moving or resizing).
+    const handles = store().readOnly ? [] : selectionHandles(project, derived, editor().selection, env.px());
     const h = hitHandle(handles, e.world, env.tol() * 1.2);
     if (h) {
       env.setCursor(h.type === 'object-rotate' ? 'grab' : h.type === 'object-resize' ? 'nwse-resize' : 'move');
       editor().setHover(null);
       return;
     }
-    const anchorHit = editor().isolatedGroupId ? null : hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
+    const anchorHit = editor().isolatedGroupId || store().readOnly ? null : hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
     if (anchorHit) {
       env.setCursor('move');
       editor().setHover({ kind: 'callout', id: anchorHit.id });
@@ -224,7 +225,7 @@ export function createSelectTool(): Tool {
       const project = env.project();
       const derived = env.derived();
       const sel = editor().selection;
-      const handles = selectionHandles(project, derived, sel, env.px());
+      const handles = store().readOnly ? [] : selectionHandles(project, derived, sel, env.px());
       const h: Handle | null = hitHandle(handles, e.world, env.tol() * 1.2);
       if (h) {
         if (h.type === 'node') {
@@ -266,7 +267,7 @@ export function createSelectTool(): Tool {
         }
         return;
       }
-      const anchorHit = editor().isolatedGroupId ? null : hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
+      const anchorHit = editor().isolatedGroupId || store().readOnly ? null : hitCalloutAnchor(project, derived, e.world, env.px(), env.tol());
       if (anchorHit && !project.layers.callouts?.locked) {
         const a = calloutAnchor(project, derived, anchorHit.target);
         if (a) {
@@ -693,7 +694,8 @@ export function createSelectTool(): Tool {
       const call = hitTest(env.project(), env.derived(), e.world, env.tol(), { callouts: true, px: env.px() });
       if (call) {
         editor().setSelection([call]);
-        useDialogStore.getState().open('callout', { id: call.id });
+        // View only: selecting it is all (its editor would offer changes).
+        if (!store().readOnly) useDialogStore.getState().open('callout', { id: call.id });
         return;
       }
       if (editor().notesMode) return;
@@ -711,7 +713,7 @@ export function createSelectTool(): Tool {
       const hit = hitTest(env.project(), env.derived(), e.world, env.tol(), { rooms: true, walls: false, objects: false, openings: false });
       if (hit) {
         editor().setSelection([hit]);
-        window.dispatchEvent(new CustomEvent('neest:focus-name'));
+        if (!store().readOnly) window.dispatchEvent(new CustomEvent('neest:focus-name'));
       }
     },
 

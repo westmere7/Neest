@@ -13,15 +13,16 @@ const LiveJoinPage = lazy(() => import('@/sync/LiveUI').then((m) => ({ default: 
 
 export type Route =
   | { name: 'home' }
-  | { name: 'editor'; id: string }
+  /** `view`: opened view-only (`#/p/<id>/view`). */
+  | { name: 'editor'; id: string; view?: boolean }
   | { name: 'guest'; id: string }
   | { name: 'live'; room: string; key: string };
 
 export function parseRoute(hash: string): Route {
   const live = hash.match(/^#\/live\/([a-z0-9]{8,32})\/([a-z0-9]{8,64})/);
   if (live) return { name: 'live', room: live[1], key: live[2] };
-  const m = hash.match(/^#\/(p|guest)\/([\w-]+)/);
-  if (m) return m[1] === 'p' ? { name: 'editor', id: m[2] } : { name: 'guest', id: m[2] };
+  const m = hash.match(/^#\/(p|guest)\/([\w-]+)(\/view)?/);
+  if (m) return m[1] === 'p' ? { name: 'editor', id: m[2], ...(m[3] ? { view: true } : {}) } : { name: 'guest', id: m[2] };
   return { name: 'home' };
 }
 
@@ -74,7 +75,7 @@ export function App() {
       <SignInGate>
       <Suspense fallback={<div className="app-loading">Loading Neest…</div>}>
         {route.name === 'home' && <Launcher />}
-        {route.name === 'editor' && <EditorPage key={route.id} projectId={route.id} />}
+        {route.name === 'editor' && <EditorPage key={route.id} projectId={route.id} viewOnly={!!route.view} />}
         {route.name === 'guest' && <GuestPage key={route.id} projectId={route.id} />}
         {route.name === 'live' && <LiveJoinPage key={route.room} room={{ room: route.room, key: route.key }} />}
       </Suspense>

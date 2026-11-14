@@ -149,3 +149,68 @@ describe('controls that record undo steps', () => {
     }
   });
 });
+
+describe('view only', () => {
+  beforeEach(() => store().load(createEmptyProject({ name: 'View only test' })));
+  afterEach(() => store().setReadOnly(false));
+
+  it('refuses edits, gestures, undo and redo but still shows another option and takes others’ changes', async () => {
+    const { addOption, switchOption } = await import('@/domain/commands/options');
+    const g0 = gridSize();
+    setGrid(0.5);
+    const optionB = store().execute('Add option', (d) => addOption(d, 'duplicate'))!;
+    const optionA = store().project!.options!.find((o) => o.id !== optionB)!.id;
+    store().setReadOnly(true);
+    const before = store().project;
+    const pastBefore = store().past.length;
+
+    setGrid(0.25);
+    expect(gridSize()).toBe(0.5);
+    expect(store().refusedAt).toBeGreaterThan(0);
+    store().begin('Drag');
+    expect(store().tx).toBeNull();
+    store().livePreview('Slider', (d) => void (d.settings.gridSize = 2));
+    expect(gridSize()).toBe(0.5);
+    store().undo();
+    expect(gridSize()).toBe(0.5);
+    expect(store().past.length).toBe(pastBefore);
+
+    // Showing the other layout option is not an edit.
+    store().execute('Show option', (d) => void switchOption(d, optionA));
+    expect(store().project!.activeOptionId).toBe(optionA);
+    expect(store().project).not.toBe(before);
+
+    // Someone else's change still arrives.
+    store().applyRemote([{ path: ['settings', 'gridSize'], value: 0.1, old: 0.5 }]);
+    expect(gridSize()).toBe(0.1);
+
+    store().setReadOnly(false);
+    setGrid(0.3);
+    expect(gridSize()).toBe(0.3);
+    store().undo();
+    expect(gridSize()).toBe(0.1);
+    expect(g0).not.toBe(0.3);
+  });
+});
+
+describe('view only: editing tools', () => {
+  afterEach(() => store().setReadOnly(false));
+
+  it('offers only the tools that look, and no library, notes, connections or shape editor', async () => {
+    const { useEditorStore, VIEW_ONLY_TOOLS } = await import('./editorStore');
+    const ed = () => useEditorStore.getState();
+    ed().set({ tool: 'select', libraryOpen: false, notesMode: false, servicesMode: false });
+    store().setReadOnly(true);
+    ed().setTool('wall');
+    expect(ed().tool).toBe('select');
+    ed().set({ tool: 'place', libraryOpen: true, notesMode: true, servicesMode: true });
+    expect([ed().tool, ed().libraryOpen, ed().notesMode, ed().servicesMode]).toEqual(['select', false, false, false]);
+    ed().setTool('measure');
+    expect(ed().tool).toBe('measure');
+    expect(VIEW_ONLY_TOOLS).toEqual(['select', 'pan', 'measure']);
+    store().setReadOnly(false);
+    ed().setTool('wall');
+    expect(ed().tool).toBe('wall');
+    ed().setTool('select');
+  });
+});

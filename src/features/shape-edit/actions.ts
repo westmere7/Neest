@@ -31,7 +31,7 @@ export const shapeEditAvailable = (): boolean => useEditorStore.getState().works
 /** Opens the shape editor on an item (3D view only): the item with everything else in X-ray, no other tool. */
 export function enterShapeEdit(objectId: string): void {
   const project = useProjectStore.getState().project;
-  if (!project || !canEditItem(project, objectId) || !shapeEditAvailable()) return;
+  if (!project || !canEditItem(project, objectId) || !shapeEditAvailable() || useProjectStore.getState().readOnly) return;
   const o = project.objects[objectId];
   if (o.locked || project.layers.furniture.locked) {
     toast.info('Unlock the item to edit its shape.');

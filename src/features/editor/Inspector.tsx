@@ -60,6 +60,7 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
   const tool = useEditorStore((s) => s.tool);
   const workspace = useEditorStore((s) => s.workspace);
   const projectOpen = useEditorStore((s) => s.projectPanelOpen);
+  const readOnly = useProjectStore((s) => s.readOnly);
   const derived = useMemo(() => derivePlan(project), [project]);
 
   let title = describeSelection(project, selection);
@@ -198,8 +199,8 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
               <Focus size={15} />
             </IconButton>
           )}
-          {noteTarget && <NoteButton project={project} target={noteTarget} />}
-          {actions}
+          {!readOnly && noteTarget && <NoteButton project={project} target={noteTarget} />}
+          {!readOnly && actions}
           {isProject ? (
             <IconButton label="Hide project panel" onClick={() => useEditorStore.getState().set({ projectPanelOpen: false })} data-testid="stash-project-panel">
               <PanelRightClose size={15} />
@@ -217,7 +218,12 @@ export function Inspector({ isMobile }: { isMobile: boolean }) {
           </h2>
         )}
       </header>
-      <div className="inspector-body">{body}</div>
+      <div className="inspector-body">
+        {/* View only: every field and button in the body is off (the header keeps Focus and Clear). */}
+        <fieldset className="view-only-lock" disabled={readOnly}>
+          {body}
+        </fieldset>
+      </div>
     </aside>
   );
 }
@@ -605,7 +611,7 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
         <ItemLayerField project={project} ids={[objectId]} />
         {asset && <ObjectModels project={project} objectId={objectId} asset={asset} />}
         {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
-        {!isMobile && workspace === '3d' && canEditItem(project, objectId) && (
+        {!isMobile && workspace === '3d' && !useProjectStore.getState().readOnly && canEditItem(project, objectId) && (
           <div className="shape-entry">
             <Button size="sm" variant="subtle" disabled={locked} onClick={() => enterShapeEdit(objectId)} data-testid="edit-shape">
               <Shapes size={14} /> Edit shape
