@@ -913,6 +913,10 @@ describe('pack models', () => {
       'sideArmInset',
       'backArmDepth',
       'sideArmWidth',
+      'backEndRadius',
+      'innerRadius',
+      'sideFrontRadius',
+      'sideOuterRadius',
     ]);
     expect(assetModels(ledge).map((m) => m.id)).toEqual(['with-rim', 'no-rim', 'full-rim']);
 

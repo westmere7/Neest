@@ -2928,3 +2928,8 @@ Known limitations (also in README):
      and `bare` models), a round front-lit LED mirror with black rim and touch-sensor icons on the back wall (no side
      walls), and shape-editor parameters (`counterHeight`, `cabinetHeight`, `mirrorSize`). Rendered thumbnails and added unit
      tests in `src/packs/packs.test.ts` (done).
+259. "L-shaped wall-mounted dining ledge: cái bàn này cho cái góc gần cửa sổ sát tường kia là góc vuông, có thể chỉnh được
+     radius các góc còn lại" → updated `soft-curve-furniture:l-shaped-wall-dining-ledge` in `packs/soft-curve-furniture.pack.ts`
+     so the wall-facing corners (`(x0, z0)` and `(x1, z0)`) are crisp 90° square corners flush against the wall, and added 4
+     shape-editor radius parameters with 3D handles (`backEndRadius`, `innerRadius`, `sideFrontRadius`, `sideOuterRadius`)
+     for the remaining corners. Rendered thumbnails and updated unit tests in `src/packs/packs.test.ts` (done).

@@ -1167,8 +1167,6 @@ interface LWallLedgeGeo {
   z1: number;
   xIn: number;
   zIn: number;
-  r00: number;
-  rBackX: number;
   rFrontX: number;
   rLeftZ: number;
   rRightZ: number;
