@@ -1543,42 +1543,47 @@ interface HalfWallPierGeo {
 
 function halfWallPierGeo({ w, d, h }: Size3, params?: ParamValues): HalfWallPierGeo {
   const num = (k: string, v: number) => (typeof params?.[k] === 'number' && Number.isFinite(params[k]) ? (params[k] as number) : v);
-  const maxPier = Math.max(0.08, Math.min(1.8, w - 0.2));
-  const pierW = clamp(num('pierWidth', 0.3), Math.min(0.08, maxPier), maxPier);
+  const pierW = clamp(num('pierWidth', 0.3), 0.08, 2.2);
   const halfWall = clamp(num('halfWall', CORNER_HALF_WALL), 0.45, Math.min(1.35, h - 0.3));
   const H = halfWall - 0.04;
   const xPier1 = w / 2;
   const xPier0 = xPier1 - pierW;
-  const maxInset = Math.max(0, xPier0 - (-w / 2) - 0.16);
-  const inset = clamp(num('halfWallInset', 0), 0, maxInset);
-  const x0 = -w / 2 + inset;
+  const rawExtend =
+    typeof params?.halfWallExtend === 'number' && Number.isFinite(params.halfWallExtend)
+      ? params.halfWallExtend
+      : typeof params?.halfWallInset === 'number' && Number.isFinite(params.halfWallInset)
+        ? -params.halfWallInset
+        : 0;
+  const halfWallW = clamp(w + rawExtend, 0.2, 2.5);
+  const x0 = xPier1 - halfWallW;
   const cove = params?.cove !== false;
   return { w, d, h, pierW, halfWall, H, x0, xPier0, xPier1, cove };
 }
 
 function halfWallPierParams(): AssetParam[] {
   return [
-    lengthParam('pierWidth', 'Wall pier width', 0.3, 0.08, 1.8, (size, p) => {
+    lengthParam('pierWidth', 'Wall pier width', 0.3, 0.08, 2.2, (size, p) => {
       const g = halfWallPierGeo(size, p);
       return { at: [g.xPier0, (g.halfWall + g.h) / 2, g.d / 2 + 0.01], dir: [-1, 0, 0] };
     }),
     lengthParam('halfWall', 'Half wall height', CORNER_HALF_WALL, 0.45, 1.35, (size, p) => {
       const g = halfWallPierGeo(size, p);
-      return { at: [(g.x0 + g.xPier0) / 2, g.halfWall, g.d / 2 + 0.01], dir: [0, 1, 0] };
+      const xHalfEnd = g.x0 <= g.xPier0 - 0.16 ? g.xPier0 : g.xPier1;
+      return { at: [(g.x0 + xHalfEnd) / 2, g.halfWall, g.d / 2 + 0.01], dir: [0, 1, 0] };
     }),
     {
-      id: 'halfWallInset',
-      label: 'Half wall inset',
+      id: 'halfWallExtend',
+      label: 'Half wall extension',
       kind: 'length',
       default: 0,
-      min: 0,
-      max: 1.5,
+      min: -1.1,
+      max: 1.8,
       step: 0.01,
       handle: (size, p) => {
         const g = halfWallPierGeo(size, p);
         return {
           at: [g.x0, g.halfWall / 2, g.d / 2 + 0.01],
-          dir: [1, 0, 0],
+          dir: [-1, 0, 0],
           label: 'Half wall width',
           value: g.xPier1 - g.x0,
         };
@@ -1595,30 +1600,33 @@ function halfWallPierParams(): AssetParam[] {
 
 function buildHalfWallPier(size: Size3, params?: ParamValues): Part[] {
   const g = halfWallPierGeo(size, params);
-  const { d, h, H, x0, xPier0, xPier1, cove } = g;
+  const { d, h, halfWall, H, x0, xPier0, xPier1, cove } = g;
+  const stepped = x0 <= xPier0 - 0.16;
+  const yPier0 = stepped ? 0 : halfWall;
+  const xHalfEnd = stepped ? xPier0 : xPier1;
   const parts: Part[] = [];
 
-  // 1. Full-height vertical wall pier (uninterrupted from floor to ceiling; oak cap stops at xPier0).
+  // 1. Vertical wall pier (floor-to-ceiling when stepped; sits on the half wall when upper pier extends past it).
   if (cove) {
     const rv = Math.min(0.018, d * 0.16);
     const gap = 0.05;
     parts.push(
-      span('frame', [xPier0, xPier1], [0, h - gap], [d / 2 - rv, d / 2]),
-      span('frame', [xPier0, xPier1], [0, h], [-d / 2 + rv, d / 2 - rv]),
-      span('frame', [xPier0, xPier1], [0, h - gap], [-d / 2, -d / 2 + rv]),
+      span('frame', [xPier0, xPier1], [yPier0, h - gap], [d / 2 - rv, d / 2]),
+      span('frame', [xPier0, xPier1], [yPier0, h], [-d / 2 + rv, d / 2 - rv]),
+      span('frame', [xPier0, xPier1], [yPier0, h - gap], [-d / 2, -d / 2 + rv]),
       span('glow', [xPier0, xPier1], [h - gap + 0.004, h - 0.004], [d / 2 - rv + 0.001, d / 2 - rv + 0.006], o),
       span('glow', [xPier0, xPier1], [h - gap + 0.004, h - 0.004], [-d / 2 + rv - 0.006, -d / 2 + rv - 0.001], o),
     );
   } else {
-    parts.push(span('frame', [xPier0, xPier1], [0, h], [-d / 2, d / 2]));
+    parts.push(span('frame', [xPier0, xPier1], [yPier0, h], [-d / 2, d / 2]));
   }
 
-  // 2. Rounded-end half wall extending from xPier0 out to x0, and oak cap stopping flush at xPier0.
+  // 2. Rounded-end half wall extending out to x0, and oak cap stopping flush at xPier0 when stepped.
   const r = Math.min(d / 2 - 0.006, 0.3);
   const wallInset = d > 0.2 ? 0.02 : 0.002;
   parts.push(
-    prism('frame', roundEnd(x0 + wallInset, xPier0, -d / 2 + wallInset, d / 2 - wallInset, Math.max(0.005, r - wallInset)), 0, H),
-    prism('shelf', roundEnd(x0, xPier0, -d / 2, d / 2, r), H, 0.04),
+    prism('frame', roundEnd(x0 + wallInset, xHalfEnd, -d / 2 + wallInset, d / 2 - wallInset, Math.max(0.005, r - wallInset)), 0, H),
+    prism('shelf', roundEnd(x0, xHalfEnd, -d / 2, d / 2, r), H, 0.04),
   );
 
   return parts;
@@ -1626,7 +1634,8 @@ function buildHalfWallPier(size: Size3, params?: ParamValues): Part[] {
 
 function buildHalfWallPierLedge(size: Size3, params: ParamValues | undefined, side: 1 | -1, raisedRim: boolean): Part[] {
   const g = halfWallPierGeo(size, params);
-  const { d, halfWall, H, x0, xPier0 } = g;
+  const { d, halfWall, H, x0, xPier0, xPier1 } = g;
+  const xHalfEnd = x0 <= xPier0 - 0.16 ? xPier0 : xPier1;
   const rf = 0.22;
   const rEnd = raisedRim ? Math.min(0.14, (d + LEDGE) / 2 - 0.02) : Math.min(d / 2 - 0.006, 0.3);
   const z0 = -d / 2;
@@ -1635,16 +1644,16 @@ function buildHalfWallPierLedge(size: Size3, params: ParamValues | undefined, si
     const mapped = pts.map(([x, z]) => [x, z * side] as V2);
     return side === 1 ? mapped : mapped.reverse();
   };
-  // Tabletop stops at xPier0 so it touches the full-height pier without penetrating through it.
-  const parts: Part[] = [prism('shelf', flipZ(twoCorners(x0, xPier0, z0, z1, rf, rEnd)), H, 0.04)];
+  // Tabletop stops at xHalfEnd (flush at xPier0 when stepped) so it does not penetrate through the pier.
+  const parts: Part[] = [prism('shelf', flipZ(twoCorners(x0, xHalfEnd, z0, z1, rf, rEnd)), H, 0.04)];
 
   if (raisedRim) {
-    const f = Math.max(0.005, Math.min(rf, (z1 - z0) / 2 - 0.001, xPier0 - x0 - 0.001));
-    const b = Math.max(0.005, Math.min(rEnd, (z1 - z0) / 2 - 0.001, xPier0 - x0 - 0.001));
+    const f = Math.max(0.005, Math.min(rf, (z1 - z0) / 2 - 0.001, xHalfEnd - x0 - 0.001));
+    const b = Math.max(0.005, Math.min(rEnd, (z1 - z0) / 2 - 0.001, xHalfEnd - x0 - 0.001));
     const tRim = Math.min(0.024, b * 0.45);
     const rimH = 0.095;
     const capH = 0.004;
-    const xEnd = xPier0 - 0.002;
+    const xEnd = xHalfEnd - 0.002;
     const zNose = Math.max(z0 + b + 0.02, z1 - f);
     if (xEnd - x0 > b + 0.05) {
       parts.push(
@@ -1654,9 +1663,9 @@ function buildHalfWallPierLedge(size: Size3, params: ParamValues | undefined, si
     }
   }
 
-  const spanW = xPier0 - x0;
+  const spanW = xHalfEnd - x0;
   const a = x0 + Math.min(0.22, spanW * 0.32);
-  const b = Math.max(a, xPier0 - Math.min(0.22, spanW * 0.32));
+  const b = Math.max(a, xHalfEnd - Math.min(0.22, spanW * 0.32));
   const n = b - a > 0.14 ? Math.max(2, Math.round((b - a) / 0.7) + 1) : 1;
   const face = (d / 2 - (d > 0.2 ? 0.02 : 0.002)) * side;
   const t = 0.012;

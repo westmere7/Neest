@@ -182,8 +182,8 @@ const floatingUndermountVanityMirror = defineItem({
   id: 'floating-undermount-vanity-mirror',
   name: 'Floating single-drawer undermount vanity with round LED mirror',
   category: 'bathroom',
-  type: 'plumbing',
-  group: 'Sinks',
+  type: 'storage',
+  group: 'Bathroom & laundry storage',
   price: { vnd: 6_500_000, estimate: true },
   tags: tags(
     'vanity',

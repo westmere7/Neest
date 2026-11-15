@@ -815,6 +815,19 @@ describe('pack models', () => {
     const h28 = fridgeWidthParam?.handle?.({ w: 2.8, d: 0.6, h: 2.22 }, { fridgeWidth: 0.68 });
     expect(h28?.label).toBe('Counter length');
     expect(h28?.value).toBeCloseTo(2.8 - 0.024 - 0.68, 4);
+
+    // At 1.8 m minimum counter length, the prep bay is >= 0.62 m (fits a 60 cm dishwasher/washer) and the hob sits close to the wall.
+    const minParts = clean.build({ w: 1.8, d: 0.6, h: 2.22 });
+    const hobGlass = minParts.find((p) => p.slot === 'hob')!;
+    expect(worldBounds(hobGlass).max[0]).toBeCloseTo(0.9 - 0.06, 3);
+    const underSinkCarcass = minParts
+      .filter((p) => p.slot === 'front')
+      .map(worldBounds)
+      .find((b) => b.min[1] > 0.05 && b.max[1] < 0.72)!;
+    const prepBayWidth = underSinkCarcass.min[0] - (-0.9 + 0.035);
+    const sinkBayWidth = underSinkCarcass.max[0] - underSinkCarcass.min[0];
+    expect(prepBayWidth).toBeGreaterThanOrEqual(0.62);
+    expect(sinkBayWidth).toBeGreaterThanOrEqual(0.62);
   });
 
   it('builds compact-living:swivel-tv-stand as a white rolling TV cart with light oak shelf and 55-inch Netflix TV', () => {
@@ -941,7 +954,7 @@ describe('pack models', () => {
     const pier = ASSETS_BY_ID['portal-frames:half-wall-pier'];
     expect(pier).toBeDefined();
     expect(pier.defaultSize).toEqual({ w: 1.3, d: 0.1, h: 2.7 });
-    expect(pier.params?.map((p) => p.id)).toEqual(['pierWidth', 'halfWall', 'halfWallInset', 'cove']);
+    expect(pier.params?.map((p) => p.id)).toEqual(['pierWidth', 'halfWall', 'halfWallExtend', 'cove']);
     expect(assetModels(pier).map((m) => m.id)).toEqual(['half-wall', 'ledge', 'ledge-flat', 'ledge-back']);
 
     const defaultParts = pier.build(pier.defaultSize);
@@ -953,12 +966,19 @@ describe('pack models', () => {
     const highParts = defaultParts.map(worldBounds).filter((b) => b.max[1] > 1.0);
     expect(highParts.every((b) => b.min[0] >= 0.35 - 1e-4)).toBe(true);
 
-    // Editing pierWidth, halfWall and halfWallInset updates the pier and half wall independently.
-    const editedPartsList = pier.build(pier.defaultSize, { pierWidth: 0.4, halfWall: 0.9, halfWallInset: 0.15 });
+    // Editing pierWidth, halfWall and halfWallExtend updates the pier and half wall independently (both extending outward and shrinking inward).
+    const editedPartsList = pier.build(pier.defaultSize, { pierWidth: 0.4, halfWall: 0.9, halfWallExtend: 0.35 });
     const editedShelf = worldBounds(editedPartsList.find((p) => p.slot === 'shelf')!);
-    expect(editedShelf.min[0]).toBeCloseTo(-1.3 / 2 + 0.15, 4);
+    expect(editedShelf.min[0]).toBeCloseTo(-1.3 / 2 - 0.35, 4);
     expect(editedShelf.max[0]).toBeCloseTo(1.3 / 2 - 0.4, 4);
     expect(editedShelf.max[1]).toBeCloseTo(0.9, 4);
+
+    // Even on a narrow 0.5 m placement, both pierWidth and halfWallExtend can stretch far outward in Edit shape.
+    const narrowStretched = pier.build({ w: 0.5, d: 0.1, h: 2.7 }, { pierWidth: 0.55, halfWallExtend: 0.6, cove: false });
+    const upperBounds = worldBounds(narrowStretched[0]);
+    const lowerShelfBounds = worldBounds(narrowStretched.find((p) => p.slot === 'shelf')!);
+    expect(upperBounds.max[0] - upperBounds.min[0]).toBeCloseTo(0.55, 4);
+    expect(lowerShelfBounds.min[0]).toBeCloseTo(0.25 - 1.1, 4);
   });
 
   it('builds bathroom-collection:floating-undermount-vanity-mirror with open under-clearance, 1 drawer, undermount basin, and round LED mirror', () => {

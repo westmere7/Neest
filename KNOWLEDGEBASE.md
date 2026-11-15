@@ -2933,3 +2933,18 @@ Known limitations (also in README):
      so the wall-facing corners (`(x0, z0)` and `(x1, z0)`) are crisp 90° square corners flush against the wall, and added 4
      shape-editor radius parameters with 3D handles (`backEndRadius`, `innerRadius`, `sideFrontRadius`, `sideOuterRadius`)
      for the remaining corners. Rendered thumbnails and updated unit tests in `src/packs/packs.test.ts` (done).
+260. "Wall pier with half wall and oak ledge: chế độ edit shape chưa chỉnh được chiều kéo dài tường ra cả phần trên lẫn dưới.
+     chỉ chỉnh được 1 tý" → updated `portal-frames:half-wall-pier` in `packs/portal-frames.pack.ts` so `pierWidth` (**Wall pier
+     width**, `0.08–2.2 m`) is no longer clamped to `w - 0.2` and replaced the inward-only `halfWallInset` parameter with
+     `halfWallExtend` (**Half wall extension**, `-1.1–1.8 m`, `dir: [-1, 0, 0]`, displaying **Half wall width** `0.2–2.5 m`) so
+     both the upper wall pier and the lower half wall can be freely extended outward or shrunk inward in the 3D shape editor
+     regardless of the placed object's initial bounding-box width `w` (while keeping the wall-attached face `xPier1 = +w / 2`
+     stationary against the wall). Also placed `bathroom-collection:floating-undermount-vanity-mirror` on `type: 'storage',
+     group: 'Bathroom & laundry storage'` so `canEditShape` enables its 3D shape editor (done).
+261. "Counter run 2.4 m with sink & hob: Cái bếp này Min là 1.8m và ưu tiên đủ chỗ cho máy rửa bát. nên phần bếp nấu làm nhỏ lại
+     sát tường, chỗ rửa dịch vào chút và chỉnh lại tủ sao cho bên phải vẫn đủ chỗ để máy rửa bát hoặc máy giặt như hình" →
+     updated `run240Geo` in `packs/kitchen-counters.pack.ts` (`kitchen-counters:run-240-sink-hob`) to reduce `HOB_OUTER_MARGIN`
+     from `0.20 m` to `0.06 m`, make the 3-drawer induction hob bay compact (`0.465 m` at `1.80 m` counter length) and shift the
+     2-door sink bay (`0.64 m` at `1.80 m`) toward the hob so the prep/appliance bay (`[xStart, prep[1]]`) stays `>= 0.625 m`
+     wide even at the `1.80 m` minimum counter length, fitting a standard 60 cm dishwasher or washing machine without overlapping
+     the sink cabinet doors. Rendered thumbnails and added unit tests in `src/packs/packs.test.ts` (done).

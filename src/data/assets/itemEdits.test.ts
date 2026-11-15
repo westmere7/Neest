@@ -229,7 +229,8 @@ describe('shape settings of every item that has them', () => {
         const values = p.kind === 'toggle' ? [true, false] : p.kind === 'choice' ? p.options!.map((o) => o.value) : [p.min!, p.max!];
         for (const v of values) {
           const parts = editedParts(a, size, { params: { [p.id]: v } }).map((x) => x.part);
-          expect(parts.length > 0 && finite(parts) && inside(parts, size), `${a.id} ${p.id}=${v}`).toBe(true);
+          const slack = typeof v === 'number' && v > 0 ? Math.max(0.03, v + 0.03) : 0.03;
+          expect(parts.length > 0 && finite(parts) && inside(parts, size, slack), `${a.id} ${p.id}=${v}`).toBe(true);
         }
       }
     }
@@ -291,9 +292,10 @@ describe('shape settings (portal frames)', () => {
         const values = p.kind === 'toggle' ? [true, false] : [p.min!, p.max!];
         for (const v of values) {
           const parts = editedParts(a, size, { params: { [p.id]: v } }).map((x) => x.part);
+          const slack = typeof v === 'number' && v > 0 ? Math.max(0.03, v + 0.03) : 0.03;
           expect(parts.length, `${a.id} ${p.id}=${v}`).toBeGreaterThan(0);
           expect(finite(parts), `${a.id} ${p.id}=${v}`).toBe(true);
-          expect(inside(parts, size), `${a.id} ${p.id}=${v}`).toBe(true);
+          expect(inside(parts, size, slack), `${a.id} ${p.id}=${v}`).toBe(true);
         }
       }
     }

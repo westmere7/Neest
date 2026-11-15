@@ -387,7 +387,7 @@ const SHAKER_TOP_T = 0.03;
 const SHAKER_FRONT_T = 0.02;
 const SHAKER_TAB_ROOM = 0.012;
 const SHAKER_KNOB_ROOM = 0.03;
-const HOB_OUTER_MARGIN = 0.2;
+const HOB_OUTER_MARGIN = 0.06;
 
 const RUN_FRONT = matSlot('front', 'Base cabinets', 'sage-shaker-kitchen:sage-lacquer');
 const RUN_UPPER = matSlot('upper', 'Upper cabinets', 'sage-shaker-kitchen:cream-lacquer');
@@ -515,19 +515,21 @@ function run240Geo({ w, d, h }: Size3, params?: ParamValues, opts?: { withFridge
   const xEnd = w / 2 - endW;
   const runLen = Math.max(0.9, xEnd - xStart);
 
-  const hobW = clamp(runLen * 0.34, Math.min(0.64, runLen * 0.35), 0.9);
-  const sinkW = clamp((runLen - hobW) * 0.54, Math.min(0.58, (runLen - hobW) * 0.62), 0.94);
+  const hobW = clamp(0.465 + Math.max(0, runLen - 1.73) * 0.35, Math.min(0.46, runLen * 0.28), 0.84);
+  const targetPrepW = clamp(0.625 + Math.max(0, runLen - 1.73) * 0.28, Math.min(0.625, runLen * 0.36), 1.15);
+  const sinkW = clamp(runLen - hobW - targetPrepW, Math.min(0.58, runLen * 0.34), 0.94);
   const prepW = Math.max(Math.min(0.24, runLen * 0.18), runLen - hobW - sinkW);
   const prep: V2 = [xStart, xStart + prepW];
   const sink: V2 = [prep[1], xEnd - hobW];
   const hob: V2 = [xEnd - hobW, xEnd];
 
-  const hobX1 = Math.min(w / 2 - HOB_OUTER_MARGIN, xEnd - 0.03);
+  const hobX1 = Math.min(w / 2 - HOB_OUTER_MARGIN, xEnd - 0.025);
   const rightPad = hob[1] - hobX1;
   const hobSpan = hob[1] - hob[0];
-  const maxAvailX = Math.max(0.24, hobX1 - (hob[0] + 0.03));
-  const hobLenX = clamp(Math.max(hobSpan - 2 * rightPad, 0.42), Math.min(0.28, maxAvailX), Math.min(0.62, maxAvailX));
-  const hobGlassX: V2 = [hobX1 - hobLenX, hobX1];
+  const maxAvailX = Math.max(0.24, hobX1 - (hob[0] + 0.025));
+  const hobLenX = clamp(hobSpan - 2 * rightPad, Math.min(0.28, maxAvailX), Math.min(0.58, maxAvailX));
+  const hobMid = (hob[0] + hobX1 - rightPad) / 2;
+  const hobGlassX: V2 = [hobMid - hobLenX / 2, hobMid + hobLenX / 2];
 
   const sinkSpan = sink[1] - sink[0];
   const sinkHoleW = clamp(sinkSpan - 0.14, Math.min(0.44, Math.max(0.24, sinkSpan - 0.06)), 0.78);
@@ -775,7 +777,7 @@ function buildRun240Shell(size: Size3, params?: ParamValues, opts?: { withFridge
 
   // 4. Warm cream shaker upper cabinets: left solid bay, central reeded-glass sink bay, right raised hood bay.
   const leftUpperCount = clamp(Math.round((sink[0] - xRun0) / 0.52), 1, 3);
-  const hobUpperCount = w / 2 - hob[0] >= 0.56 ? 2 : 1;
+  const hobUpperCount = w / 2 - hob[0] >= 0.48 ? 2 : 1;
   const leftUpperDoors = splitDoors(xRun0 + 0.002, sink[0], leftUpperCount);
   parts.push(
     span('upper', [xRun0 + 0.001, sink[0]], [yUpper0, yUpperTop], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
@@ -882,7 +884,7 @@ function buildRun240Fixtures(
   // 2. Upper cabinet brass knobs, reeded glass panes & under-cabinet LED strip.
   if (opts.withUppers) {
     const leftUpperCount = clamp(Math.round((sink[0] - xRun0) / 0.52), 1, 3);
-    const hobUpperCount = w / 2 - hob[0] >= 0.56 ? 2 : 1;
+    const hobUpperCount = w / 2 - hob[0] >= 0.48 ? 2 : 1;
     const addKnobsZ = (rangeX: V2, count: number, ky: number, zFace = zUFace) => {
       const ds = splitDoors(rangeX[0], rangeX[1], count);
       ds.forEach(([x0, x1], i) => {
