@@ -528,7 +528,7 @@ function run240Geo({ w, d, h }: Size3, params?: ParamValues, opts?: { withFridge
   const hobSpan = hob[1] - hob[0];
   const maxAvailX = Math.max(0.24, hobX1 - (hob[0] + 0.025));
   const hobLenX = clamp(hobSpan - 2 * rightPad, Math.min(0.28, maxAvailX), Math.min(0.58, maxAvailX));
-  const hobMid = (hob[0] + hobX1 - rightPad) / 2;
+  const hobMid = (hob[0] + hob[1]) / 2;
   const hobGlassX: V2 = [hobMid - hobLenX / 2, hobMid + hobLenX / 2];
 
   const sinkSpan = sink[1] - sink[0];

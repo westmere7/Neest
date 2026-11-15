@@ -1121,6 +1121,367 @@ const columnRadiator = defineItem({
   },
 });
 
+/** Geometry of the standalone floor tile zone with independent 2D dimensions and 4 corner radii. */
+function floorTileZoneGeom(
+  w: number,
+  d: number,
+  p?: Record<string, number | boolean | string>,
+) {
+  const zoneW = typeof p?.zoneWidth === 'number' ? clamp(p.zoneWidth, 0.3, 3.5) : w;
+  const zoneD = typeof p?.zoneDepth === 'number' ? clamp(p.zoneDepth, 0.3, 3.5) : d;
+  const x0 = -w / 2;
+  const x1 = x0 + zoneW;
+  const z0 = -d / 2;
+  const z1 = z0 + zoneD;
+  const maxCorner = Math.max(0.002, Math.min(zoneW, zoneD) * 0.48);
+
+  let rBL = clamp(typeof p?.backLeftRadius === 'number' ? p.backLeftRadius : 0.06, 0.002, maxCorner);
+  let rBR = clamp(typeof p?.backRightRadius === 'number' ? p.backRightRadius : 0.06, 0.002, maxCorner);
+  let rFR = clamp(typeof p?.frontRightRadius === 'number' ? p.frontRightRadius : 0.06, 0.002, maxCorner);
+  let rFL = clamp(typeof p?.frontLeftRadius === 'number' ? p.frontLeftRadius : 0.06, 0.002, maxCorner);
+
+  const availX = Math.max(0.01, zoneW - 0.01);
+  const availZ = Math.max(0.01, zoneD - 0.01);
+  if (rBL + rBR > availX) {
+    const k = availX / (rBL + rBR);
+    rBL *= k;
+    rBR *= k;
+  }
+  if (rFL + rFR > availX) {
+    const k = availX / (rFL + rFR);
+    rFL *= k;
+    rFR *= k;
+  }
+  if (rBL + rFL > availZ) {
+    const k = availZ / (rBL + rFL);
+    rBL *= k;
+    rFL *= k;
+  }
+  if (rBR + rFR > availZ) {
+    const k = availZ / (rBR + rFR);
+    rBR *= k;
+    rFR *= k;
+  }
+
+  const outline: V2[] = [
+    ...arcPoints(x0 + rBL, z0 + rBL, rBL, Math.PI, Math.PI * 1.5, 8),
+    ...arcPoints(x1 - rBR, z0 + rBR, rBR, -Math.PI * 0.5, 0, 8),
+    ...arcPoints(x1 - rFR, z1 - rFR, rFR, 0, Math.PI * 0.5, 8),
+    ...arcPoints(x0 + rFL, z1 - rFL, rFL, Math.PI * 0.5, Math.PI, 8),
+  ];
+
+  return { zoneW, zoneD, x0, x1, z0, z1, rBL, rBR, rFR, rFL, outline };
+}
+
+const floorTileZone = defineItem({
+  id: 'floor-tile-zone',
+  name: 'Standalone floor tile zone',
+  category: 'bathroom',
+  type: 'structure',
+  group: 'Built-ins',
+  tags: tags(
+    'floor tile',
+    'tile zone',
+    'tile pad',
+    'wet zone',
+    'dry zone',
+    'rounded corners',
+    'lót sàn',
+    'miếng lót sàn',
+    'sàn gạch',
+    'gạch lát nền',
+  ),
+  description:
+    'Standalone low-profile tiled floor zone for open vanity or wet/dry areas without needing closed room walls, with independent width, depth and 4 corner radius controls and interchangeable floor tile finishes.',
+  defaultSize: { w: 1.0, d: 1.2, h: 0.008 },
+  minSize: { w: 0.3, d: 0.3, h: 0.004 },
+  maxSize: { w: 4.0, d: 4.0, h: 0.03 },
+  slots: [matSlot('tile', 'Floor tile', 'tile-terrazzo')],
+  variants: [
+    { id: 'grey-porcelain', name: 'Large grey porcelain', materials: { tile: 'tile-large-grey' } },
+    { id: 'cement-tile', name: 'Gạch bông cement tile', materials: { tile: 'tile-cement-classic' } },
+    { id: 'carrara-marble', name: 'Carrara marble', materials: { tile: 'stone-marble-carrara' } },
+    { id: 'cream-stone', name: 'Cream stone floor tile', materials: { tile: 'tile-stone-cream' } },
+    { id: 'terracotta-hex', name: 'Terracotta hex tile', materials: { tile: 'tile-hex-terracotta' } },
+    { id: 'checkerboard', name: 'Checkerboard tile', materials: { tile: 'tile-checker' } },
+    { id: 'dark-granite', name: 'Dark granite floor tile', materials: { tile: 'tile-granite-dark' } },
+  ],
+  params: [
+    {
+      id: 'zoneWidth',
+      label: 'Tile zone width',
+      kind: 'length',
+      default: 1.0,
+      min: 0.3,
+      max: 3.5,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = floorTileZoneGeom(w, d, p);
+        return { at: [g.x1, h + 0.004, (g.z0 + g.z1) / 2], dir: [1, 0, 0] };
+      },
+    },
+    {
+      id: 'zoneDepth',
+      label: 'Tile zone depth',
+      kind: 'length',
+      default: 1.2,
+      min: 0.3,
+      max: 3.5,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = floorTileZoneGeom(w, d, p);
+        return { at: [(g.x0 + g.x1) / 2, h + 0.004, g.z1], dir: [0, 0, 1] };
+      },
+    },
+    {
+      id: 'backLeftRadius',
+      label: 'Back-left corner radius',
+      kind: 'length',
+      default: 0.06,
+      min: 0,
+      max: 0.6,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = floorTileZoneGeom(w, d, p);
+        return {
+          at: [g.x0 + g.rBL * 0.55 + 0.015, h + 0.004, g.z0 + g.rBL * 0.55 + 0.015],
+          dir: [Math.SQRT1_2, 0, Math.SQRT1_2],
+        };
+      },
+    },
+    {
+      id: 'backRightRadius',
+      label: 'Back-right corner radius',
+      kind: 'length',
+      default: 0.06,
+      min: 0,
+      max: 0.6,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = floorTileZoneGeom(w, d, p);
+        return {
+          at: [g.x1 - g.rBR * 0.55 - 0.015, h + 0.004, g.z0 + g.rBR * 0.55 + 0.015],
+          dir: [-Math.SQRT1_2, 0, Math.SQRT1_2],
+        };
+      },
+    },
+    {
+      id: 'frontRightRadius',
+      label: 'Front-right corner radius',
+      kind: 'length',
+      default: 0.06,
+      min: 0,
+      max: 0.6,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = floorTileZoneGeom(w, d, p);
+        return {
+          at: [g.x1 - g.rFR * 0.55 - 0.015, h + 0.004, g.z1 - g.rFR * 0.55 - 0.015],
+          dir: [-Math.SQRT1_2, 0, -Math.SQRT1_2],
+        };
+      },
+    },
+    {
+      id: 'frontLeftRadius',
+      label: 'Front-left corner radius',
+      kind: 'length',
+      default: 0.06,
+      min: 0,
+      max: 0.6,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = floorTileZoneGeom(w, d, p);
+        return {
+          at: [g.x0 + g.rFL * 0.55 + 0.015, h + 0.004, g.z1 - g.rFL * 0.55 - 0.015],
+          dir: [Math.SQRT1_2, 0, -Math.SQRT1_2],
+        };
+      },
+    },
+  ],
+  build: ({ w, d, h }, params) => {
+    const g = floorTileZoneGeom(w, d, params);
+    return [prism('tile', g.outline, 0, h)];
+  },
+});
+
+/** Geometry of the L-shaped bathroom water curb with independent arm lengths down to 0 m (straight threshold). */
+function lWaterCurbGeom(
+  w: number,
+  d: number,
+  p?: Record<string, number | boolean | string>,
+) {
+  const maxCurbW = Math.max(0.03, Math.min(0.1, w * 0.45, d * 0.45));
+  const curbW = clamp(typeof p?.curbWidth === 'number' ? p.curbWidth : 0.05, 0.03, maxCurbW);
+  const rawFront = typeof p?.frontArmLength === 'number' ? clamp(p.frontArmLength, 0, 3.0) : w;
+  const rawSide = typeof p?.sideArmLength === 'number' ? clamp(p.sideArmLength, 0, 3.0) : d;
+  const cornerR = clamp(typeof p?.cornerRadius === 'number' ? p.cornerRadius : 0.08, 0.01, 0.35);
+
+  const x0 = -w / 2;
+  const z1 = d / 2;
+
+  const hasFront = rawFront > curbW + 0.01;
+  const hasSide = rawSide > curbW + 0.01;
+  const effFront = hasFront ? rawFront : !hasSide ? Math.max(curbW + 0.08, w) : 0;
+  const effSide = hasSide ? rawSide : 0;
+
+  const outlineFor = (inset: number): V2[] => {
+    if (!hasSide || effSide <= curbW + 0.01) {
+      // Straight curb along X at front (z = z1).
+      const xa = x0 + inset;
+      const xb = x0 + Math.max(curbW + 0.02, effFront) - inset;
+      const za = z1 - curbW + inset;
+      const zb = z1 - inset;
+      const r = Math.max(0.002, Math.min((xb - xa) * 0.25, (zb - za) * 0.45));
+      return [
+        ...arcPoints(xa + r, za + r, r, Math.PI, Math.PI * 1.5, 5),
+        ...arcPoints(xb - r, za + r, r, -Math.PI * 0.5, 0, 5),
+        ...arcPoints(xb - r, zb - r, r, 0, Math.PI * 0.5, 5),
+        ...arcPoints(xa + r, zb - r, r, Math.PI * 0.5, Math.PI, 5),
+      ];
+    }
+
+    if (!hasFront || effFront <= curbW + 0.01) {
+      // Straight curb along Z on left side (x = x0).
+      const xa = x0 + inset;
+      const xb = x0 + curbW - inset;
+      const za = z1 - Math.max(curbW + 0.02, effSide) + inset;
+      const zb = z1 - inset;
+      const r = Math.max(0.002, Math.min((xb - xa) * 0.45, (zb - za) * 0.25));
+      return [
+        ...arcPoints(xa + r, za + r, r, Math.PI, Math.PI * 1.5, 5),
+        ...arcPoints(xb - r, za + r, r, -Math.PI * 0.5, 0, 5),
+        ...arcPoints(xb - r, zb - r, r, 0, Math.PI * 0.5, 5),
+        ...arcPoints(xa + r, zb - r, r, Math.PI * 0.5, Math.PI, 5),
+      ];
+    }
+
+    // Full L-shaped curb meeting at front-left corner (x0, z1).
+    const xFront1 = x0 + effFront - inset;
+    const zSide0 = z1 - effSide + inset;
+    const xOuter = x0 + inset;
+    const zOuter = z1 - inset;
+    const xInner = x0 + curbW - inset;
+    const zInner = z1 - curbW + inset;
+    const band = Math.max(0.006, xInner - xOuter);
+
+    const rTip = Math.max(0.002, Math.min(band * 0.42, (xFront1 - xInner) * 0.25, (zInner - zSide0) * 0.25));
+    const maxROut = Math.max(0.006, Math.min(xFront1 - xOuter - rTip - 0.004, zOuter - zSide0 - rTip - 0.004));
+    const rOut = clamp(cornerR - inset, 0.006, maxROut);
+    const maxRIn = Math.max(0.003, Math.min(xFront1 - xInner - rTip - 0.004, zInner - zSide0 - rTip - 0.004));
+    const rIn = clamp(Math.max(0.003, cornerR - curbW * 0.65 + inset), 0.003, maxRIn);
+
+    return [
+      ...arcPoints(xOuter + rTip, zSide0 + rTip, rTip, Math.PI, Math.PI * 1.5, 4),
+      ...arcPoints(xInner - rTip, zSide0 + rTip, rTip, -Math.PI * 0.5, 0, 4),
+      ...arcPoints(xInner + rIn, zInner - rIn, rIn, Math.PI, Math.PI * 0.5, 6),
+      ...arcPoints(xFront1 - rTip, zInner + rTip, rTip, -Math.PI * 0.5, 0, 4),
+      ...arcPoints(xFront1 - rTip, zOuter - rTip, rTip, 0, Math.PI * 0.5, 4),
+      ...arcPoints(xOuter + rOut, zOuter - rOut, rOut, Math.PI * 0.5, Math.PI, 8),
+    ];
+  };
+
+  return { curbW, rawFront, rawSide, effFront, effSide, cornerR, x0, z1, outlineFor };
+}
+
+const lWaterCurb = defineItem({
+  id: 'l-water-curb',
+  name: 'L-shaped water curb',
+  category: 'bathroom',
+  type: 'structure',
+  group: 'Built-ins',
+  tags: tags(
+    'water curb',
+    'shower curb',
+    'threshold',
+    'water barrier',
+    'water dam',
+    'l-shaped',
+    'wet zone',
+    'gờ chắn nước',
+    'len chắn nước',
+    'chắn nước nhà tắm',
+  ),
+  description:
+    'Low-profile L-shaped bathroom water curb (gờ chắn nước) in stone or solid surface with a rounded outer corner and independent lengths for both arms down to 0 m so it can form either an L-curb or a straight threshold.',
+  defaultSize: { w: 1.0, d: 1.2, h: 0.045 },
+  minSize: { w: 0.12, d: 0.12, h: 0.02 },
+  maxSize: { w: 4.0, d: 4.0, h: 0.15 },
+  slots: [matSlot('curb', 'Water curb', 'stone-quartz-white')],
+  variants: [
+    { id: 'carrara-marble', name: 'Carrara marble', materials: { curb: 'stone-marble-carrara' } },
+    { id: 'cream-marble', name: 'Crema beige marble', materials: { curb: 'stone-marble-beige' } },
+    { id: 'terrazzo', name: 'White terrazzo', materials: { curb: 'tile-terrazzo' } },
+    { id: 'grey-marble', name: 'Bardiglio grey marble', materials: { curb: 'stone-marble-grey' } },
+    { id: 'black-granite', name: 'Absolute black granite', materials: { curb: 'stone-granite-black' } },
+  ],
+  params: [
+    {
+      id: 'frontArmLength',
+      label: 'Front arm length',
+      kind: 'length',
+      default: 1.0,
+      min: 0,
+      max: 3.0,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = lWaterCurbGeom(w, d, p);
+        return { at: [g.x0 + g.rawFront, h * 0.6, g.z1 - g.curbW / 2], dir: [1, 0, 0] };
+      },
+    },
+    {
+      id: 'sideArmLength',
+      label: 'Side arm length',
+      kind: 'length',
+      default: 1.2,
+      min: 0,
+      max: 3.0,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = lWaterCurbGeom(w, d, p);
+        return { at: [g.x0 + g.curbW / 2, h * 0.6, g.z1 - g.rawSide], dir: [0, 0, -1] };
+      },
+    },
+    {
+      id: 'curbWidth',
+      label: 'Curb thickness',
+      kind: 'length',
+      default: 0.05,
+      min: 0.03,
+      max: 0.1,
+      step: 0.005,
+      handle: ({ w, d, h }, p) => {
+        const g = lWaterCurbGeom(w, d, p);
+        return { at: [g.x0 + g.curbW, h * 0.6, g.z1 - Math.min(0.35, d * 0.35)], dir: [1, 0, 0] };
+      },
+    },
+    {
+      id: 'cornerRadius',
+      label: 'L-corner radius',
+      kind: 'length',
+      default: 0.08,
+      min: 0.01,
+      max: 0.35,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = lWaterCurbGeom(w, d, p);
+        return {
+          at: [g.x0 + g.cornerR * 0.5 + 0.01, h + 0.004, g.z1 - g.cornerR * 0.5 - 0.01],
+          dir: [Math.SQRT1_2, 0, -Math.SQRT1_2],
+        };
+      },
+    },
+  ],
+  build: ({ w, d, h }, params) => {
+    const g = lWaterCurbGeom(w, d, params);
+    const hCap0 = h * 0.76;
+    const inset = Math.min(0.004, g.curbW * 0.12);
+    return [
+      prism('curb', g.outlineFor(0), 0, hCap0),
+      prism('curb', g.outlineFor(inset), hCap0, h - hCap0, o),
+    ];
+  },
+});
+
 export default definePack({
   name: 'Bathroom collection',
   version: '1.0.0',
@@ -1131,6 +1492,8 @@ export default definePack({
   items: [
     vanityVessel,
     floatingUndermountVanityMirror,
+    floorTileZone,
+    lWaterCurb,
     openDoubleVanity,
     cornerBasin,
     ovalBath,

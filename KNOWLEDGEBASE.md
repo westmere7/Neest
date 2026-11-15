@@ -2948,3 +2948,20 @@ Known limitations (also in README):
      2-door sink bay (`0.64 m` at `1.80 m`) toward the hob so the prep/appliance bay (`[xStart, prep[1]]`) stays `>= 0.625 m`
      wide even at the `1.80 m` minimum counter length, fitting a standard 60 cm dishwasher or washing machine without overlapping
      the sink cabinet doors. Rendered thumbnails and added unit tests in `src/packs/packs.test.ts` (done).
+262. "Tôi muốn tạo 1 miếng lót sàn độc lập có thể thay gạch được không cần phải quây phòng kín. cho phép điều chỉnh 2 chiều và
+     độ bo 4 góc độc lập. Ngoài ra cũng cần tạo 1 gờ chắn nước hình chữ L có thể điều chỉnh được chiều dài 2 bên chữ L, min mỗi
+     bên bằng 0 để có thể tạo thành 1 đường thẳng. 2 cái này đều để trong thư mục phòng tắm, độc lập 2 cái" → added
+     `bathroom-collection:floor-tile-zone` (**Standalone floor tile zone**, `category: 'bathroom'`, `type: 'structure'`,
+     `group: 'Built-ins'`) with interchangeable floor tile finishes and 6 shape-editor handles (`zoneWidth`, `zoneDepth`,
+     `backLeftRadius`, `backRightRadius`, `frontRightRadius`, `frontLeftRadius`), and `bathroom-collection:l-water-curb`
+     (**L-shaped water curb**, `category: 'bathroom'`, `type: 'structure'`, `group: 'Built-ins'`) with independent arm length
+     handles (`frontArmLength` and `sideArmLength`, both `min: 0` so setting either arm to `0` produces a straight water curb),
+     `curbWidth`, and `cornerRadius`. Rendered thumbnails and added unit tests in `src/packs/packs.test.ts` (done).
+263. "Tạo 1 cửa sổ hình chữ nhật bằng kính khung trắng hoặc gỗ, cho phép kéo chiều ngang dọc độc lập và chỉnh bo 4 góc để tạo được
+     thành oval và tròn" → added `portal-frames:rounded-glass-window` (**Rounded-corner & oval glass window**,
+     `category: 'construction'`, `type: 'structure'`, `group: 'Partitions'`) in `packs/portal-frames.pack.ts` with satin-white and
+     solid-wood frame variants (`light-oak`, `warm-oak`, `walnut`, `teak`, `warm-cream`, `sage-green`, `matte-black`, frosted
+     glass), 3 glazing models (`clean`, `cross-mullions`, `vertical-mullion`), and 7 shape-editor handles (`windowWidth`,
+     `windowHeight`, `frameWidth`, `topLeftRadius`, `topRightRadius`, `bottomRightRadius`, `bottomLeftRadius`) that morph the
+     window smoothly between a crisp rectangle, rounded-corner rectangle, capsule, elliptical oval, and circle. Rendered
+     thumbnails and added unit tests in `src/packs/packs.test.ts` (done).

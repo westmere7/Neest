@@ -999,6 +999,102 @@ describe('pack models', () => {
     const bare = withModel(v, 'bare').build(v.defaultSize);
     expect(bare.some((p) => p.slot === 'decor')).toBe(false);
   });
+
+  it('builds bathroom-collection:floor-tile-zone and bathroom-collection:l-water-curb as standalone bathroom items with independent shape controls', () => {
+    const zone = ASSETS_BY_ID['bathroom-collection:floor-tile-zone'];
+    expect(zone).toBeDefined();
+    expect(zone.category).toBe('bathroom');
+    expect(zone.params?.map((p) => p.id)).toEqual([
+      'zoneWidth',
+      'zoneDepth',
+      'backLeftRadius',
+      'backRightRadius',
+      'frontRightRadius',
+      'frontLeftRadius',
+    ]);
+    const zoneParts = zone.build(zone.defaultSize, {
+      zoneWidth: 1.4,
+      zoneDepth: 1.6,
+      backLeftRadius: 0,
+      backRightRadius: 0.12,
+      frontRightRadius: 0.25,
+      frontLeftRadius: 0.18,
+    });
+    expect(zoneParts).toHaveLength(1);
+    const zb = worldBounds(zoneParts[0]);
+    expect(zb.max[0] - zb.min[0]).toBeCloseTo(1.4, 3);
+    expect(zb.max[2] - zb.min[2]).toBeCloseTo(1.6, 3);
+
+    const curb = ASSETS_BY_ID['bathroom-collection:l-water-curb'];
+    expect(curb).toBeDefined();
+    expect(curb.category).toBe('bathroom');
+    expect(curb.params?.map((p) => p.id)).toEqual([
+      'frontArmLength',
+      'sideArmLength',
+      'curbWidth',
+      'cornerRadius',
+    ]);
+    // Both arms have min = 0 so setting either arm to 0 produces a straight water curb along the other axis.
+    expect(curb.params?.find((p) => p.id === 'frontArmLength')?.min).toBe(0);
+    expect(curb.params?.find((p) => p.id === 'sideArmLength')?.min).toBe(0);
+
+    const straightZ = curb.build(curb.defaultSize, { frontArmLength: 0, sideArmLength: 1.2, curbWidth: 0.05 });
+    const szBounds = worldBounds(straightZ[0]);
+    expect(szBounds.max[0] - szBounds.min[0]).toBeCloseTo(0.05, 3);
+    expect(szBounds.max[2] - szBounds.min[2]).toBeCloseTo(1.2, 3);
+
+    const straightX = curb.build(curb.defaultSize, { frontArmLength: 1.0, sideArmLength: 0, curbWidth: 0.05 });
+    const sxBounds = worldBounds(straightX[0]);
+    expect(sxBounds.max[0] - sxBounds.min[0]).toBeCloseTo(1.0, 3);
+    expect(sxBounds.max[2] - sxBounds.min[2]).toBeCloseTo(0.05, 3);
+  });
+
+  it('builds portal-frames:rounded-glass-window with white & wood frame variants, independent width & height, and 4 corner radii that morph into oval and circular windows', () => {
+    const win = ASSETS_BY_ID['portal-frames:rounded-glass-window'];
+    expect(win).toBeDefined();
+    expect(win.slots.map((s) => [s.id, s.defaultMaterial])).toEqual([
+      ['frame', 'paint-satin-white'],
+      ['glass', 'glass-clear'],
+    ]);
+    expect(win.variants?.map((v) => v.id)).toContain('light-oak');
+    expect(win.params?.map((p) => p.id)).toEqual([
+      'windowWidth',
+      'windowHeight',
+      'frameWidth',
+      'topLeftRadius',
+      'topRightRadius',
+      'bottomRightRadius',
+      'bottomLeftRadius',
+    ]);
+
+    // Oval window (width 1.4 m x height 0.8 m with all 4 corner radii set to 0.9 m).
+    const ovalParts = win.build(win.defaultSize, {
+      windowWidth: 1.4,
+      windowHeight: 0.8,
+      topLeftRadius: 0.9,
+      topRightRadius: 0.9,
+      bottomRightRadius: 0.9,
+      bottomLeftRadius: 0.9,
+    });
+    const xs = ovalParts.flatMap((p) => [worldBounds(p).min[0], worldBounds(p).max[0]]);
+    const ys = ovalParts.flatMap((p) => [worldBounds(p).min[1], worldBounds(p).max[1]]);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(1.4, 3);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(0.8, 3);
+
+    // Circular window (width 0.9 m x height 0.9 m with all 4 corner radii set to 0.5 m).
+    const circleParts = win.build(win.defaultSize, {
+      windowWidth: 0.9,
+      windowHeight: 0.9,
+      topLeftRadius: 0.5,
+      topRightRadius: 0.5,
+      bottomRightRadius: 0.5,
+      bottomLeftRadius: 0.5,
+    });
+    const cxs = circleParts.flatMap((p) => [worldBounds(p).min[0], worldBounds(p).max[0]]);
+    const cys = circleParts.flatMap((p) => [worldBounds(p).min[1], worldBounds(p).max[1]]);
+    expect(Math.max(...cxs) - Math.min(...cxs)).toBeCloseTo(0.9, 3);
+    expect(Math.max(...cys) - Math.min(...cys)).toBeCloseTo(0.9, 3);
+  });
 });
 
 describeAssetChecks(packItems);

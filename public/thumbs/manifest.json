@@ -241,6 +241,10 @@
    "file": "bathroom-collection_floating-vanity-vessel.webp",
    "fp": "66af812794c2527f"
   },
+  "bathroom-collection:floor-tile-zone": {
+   "file": "bathroom-collection_floor-tile-zone.webp",
+   "fp": "0b733d46012473ac"
+  },
   "bathroom-collection:freestanding-bath-filler": {
    "file": "bathroom-collection_freestanding-bath-filler.webp",
    "fp": "cdebaea7e40d6fb9"
@@ -252,6 +256,10 @@
   "bathroom-collection:instant-water-heater": {
    "file": "bathroom-collection_instant-water-heater.webp",
    "fp": "a8c1a0996b5a6942"
+  },
+  "bathroom-collection:l-water-curb": {
+   "file": "bathroom-collection_l-water-curb.webp",
+   "fp": "f6731e0b8d9b0bc1"
   },
   "bathroom-collection:leaning-ladder-shelf": {
    "file": "bathroom-collection_leaning-ladder-shelf.webp",
@@ -2887,15 +2895,15 @@
   },
   "kitchen-counters:run-240-sink-hob@model:clean": {
    "file": "kitchen-counters_run-240-sink-hob_model_clean.webp",
-   "fp": "b6ee5bb56e9e17cc"
+   "fp": "7939fb36eba1946e"
   },
   "kitchen-counters:run-240-sink-hob@model:fridge-surround": {
    "file": "kitchen-counters_run-240-sink-hob_model_fridge-surround.webp",
-   "fp": "cc46152e1bdb604b"
+   "fp": "16b42c60cb7cbb4d"
   },
   "kitchen-counters:run-240-sink-hob@model:no-uppers": {
    "file": "kitchen-counters_run-240-sink-hob_model_no-uppers.webp",
-   "fp": "abe1e320148c8dd3"
+   "fp": "69cabb631f11f577"
   },
   "kitchen-counters:run-300-full": {
    "file": "kitchen-counters_run-300-full.webp",
@@ -4256,6 +4264,18 @@
   "portal-frames:round-top-portal": {
    "file": "portal-frames_round-top-portal.webp",
    "fp": "63db1513507c7a25"
+  },
+  "portal-frames:rounded-glass-window": {
+   "file": "portal-frames_rounded-glass-window.webp",
+   "fp": "9d8c45eb014f8bc9"
+  },
+  "portal-frames:rounded-glass-window@model:cross-mullions": {
+   "file": "portal-frames_rounded-glass-window_model_cross-mullions.webp",
+   "fp": "feb47dd5b3dace3d"
+  },
+  "portal-frames:rounded-glass-window@model:vertical-mullion": {
+   "file": "portal-frames_rounded-glass-window_model_vertical-mullion.webp",
+   "fp": "7a75f9f2b67c4b91"
   },
   "portal-frames:rounded-header": {
    "file": "portal-frames_rounded-header.webp",

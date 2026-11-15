@@ -1745,6 +1745,410 @@ const halfWallPier = defineItem({
   ],
 });
 
+// ---------------------------------------------------------------------------
+// Rounded-corner, oval & round glass window in white or wood frame
+// ---------------------------------------------------------------------------
+
+interface RoundedGlassWindowGeo {
+  w: number;
+  d: number;
+  h: number;
+  winW: number;
+  winH: number;
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+  frameW: number;
+  rTL: number;
+  rTR: number;
+  rBR: number;
+  rBL: number;
+  rxTL: number;
+  ryTL: number;
+  rxTR: number;
+  ryTR: number;
+  rxBR: number;
+  ryBR: number;
+  rxBL: number;
+  ryBL: number;
+  upperArc: (ins: number) => V2[];
+  lowerArc: (ins: number) => V2[];
+}
+
+function roundedGlassWindowGeo({ w, d, h }: Size3, p?: ParamValues): RoundedGlassWindowGeo {
+  const num = (k: string, v: number) => (typeof p?.[k] === 'number' && Number.isFinite(p[k] as number) ? (p[k] as number) : v);
+  const winW = typeof p?.windowWidth === 'number' ? clamp(num('windowWidth', w), 0.35, 3.2) : w;
+  const winH = typeof p?.windowHeight === 'number' ? clamp(num('windowHeight', h), 0.35, 2.6) : h;
+  const x0 = -w / 2;
+  const x1 = x0 + winW;
+  const y0 = 0;
+  const y1 = y0 + winH;
+  const maxFrameW = Math.max(0.025, Math.min(0.1, winW * 0.22, winH * 0.22));
+  const frameW = clamp(num('frameWidth', 0.045), 0.025, maxFrameW);
+
+  const rTL = clamp(num('topLeftRadius', 0.08), 0, 1.2);
+  const rTR = clamp(num('topRightRadius', 0.08), 0, 1.2);
+  const rBR = clamp(num('bottomRightRadius', 0.08), 0, 1.2);
+  const rBL = clamp(num('bottomLeftRadius', 0.08), 0, 1.2);
+
+  const radiiAt = (ins: number) => {
+    const xa = x0 + ins;
+    const xb = x1 - ins;
+    const ya = y0 + ins;
+    const yb = y1 - ins;
+    const spanX = Math.max(0.02, xb - xa);
+    const spanY = Math.max(0.02, yb - ya);
+    const availX = Math.max(0.008, spanX - 0.002);
+    const availY = Math.max(0.008, spanY - 0.002);
+
+    let xTL = clamp(rTL - ins, 0.002, availX * 0.5);
+    let xTR = clamp(rTR - ins, 0.002, availX * 0.5);
+    let xBR = clamp(rBR - ins, 0.002, availX * 0.5);
+    let xBL = clamp(rBL - ins, 0.002, availX * 0.5);
+    if (xTL + xTR > availX) {
+      const k = availX / (xTL + xTR);
+      xTL *= k;
+      xTR *= k;
+    }
+    if (xBL + xBR > availX) {
+      const k = availX / (xBL + xBR);
+      xBL *= k;
+      xBR *= k;
+    }
+
+    let yTL = clamp(rTL - ins, 0.002, availY * 0.5);
+    let yTR = clamp(rTR - ins, 0.002, availY * 0.5);
+    let yBR = clamp(rBR - ins, 0.002, availY * 0.5);
+    let yBL = clamp(rBL - ins, 0.002, availY * 0.5);
+    if (yTL + yBL > availY) {
+      const k = availY / (yTL + yBL);
+      yTL *= k;
+      yBL *= k;
+    }
+    if (yTR + yBR > availY) {
+      const k = availY / (yTR + yBR);
+      yTR *= k;
+      yBR *= k;
+    }
+
+    return { xa, xb, ya, yb, xTL, yTL, xTR, yTR, xBR, yBR, xBL, yBL };
+  };
+
+  const outer = radiiAt(0);
+
+  const upperArc = (ins: number): V2[] => {
+    const c = radiiAt(ins);
+    const yLeftMid = (c.ya + c.yBL + (c.yb - c.yTL)) / 2;
+    const yRightMid = (c.ya + c.yBR + (c.yb - c.yTR)) / 2;
+    return dedupe([
+      [c.xa, yLeftMid],
+      ...arc(c.xa + c.xTL, c.yb - c.yTL, c.xTL, c.yTL, Math.PI, Math.PI * 0.5, 14),
+      ...arc(c.xb - c.xTR, c.yb - c.yTR, c.xTR, c.yTR, Math.PI * 0.5, 0, 14),
+      [c.xb, yRightMid],
+    ]);
+  };
+
+  const lowerArc = (ins: number): V2[] => {
+    const c = radiiAt(ins);
+    const yLeftMid = (c.ya + c.yBL + (c.yb - c.yTL)) / 2;
+    const yRightMid = (c.ya + c.yBR + (c.yb - c.yTR)) / 2;
+    return dedupe([
+      [c.xb, yRightMid],
+      ...arc(c.xb - c.xBR, c.ya + c.yBR, c.xBR, c.yBR, 0, -Math.PI * 0.5, 14),
+      ...arc(c.xa + c.xBL, c.ya + c.yBL, c.xBL, c.yBL, Math.PI * 1.5, Math.PI, 14),
+      [c.xa, yLeftMid],
+    ]);
+  };
+
+  return {
+    w,
+    d,
+    h,
+    winW,
+    winH,
+    x0,
+    x1,
+    y0,
+    y1,
+    frameW,
+    rTL,
+    rTR,
+    rBR,
+    rBL,
+    rxTL: outer.xTL,
+    ryTL: outer.yTL,
+    rxTR: outer.xTR,
+    ryTR: outer.yTR,
+    rxBR: outer.xBR,
+    ryBR: outer.yBR,
+    rxBL: outer.xBL,
+    ryBL: outer.yBL,
+    upperArc,
+    lowerArc,
+  };
+}
+
+function roundedGlassWindowParams(): AssetParam[] {
+  return [
+    {
+      id: 'windowWidth',
+      label: 'Window width',
+      kind: 'length',
+      default: 1.1,
+      min: 0.35,
+      max: 3.2,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = roundedGlassWindowGeo(size, p);
+        return { at: [g.x1, (g.y0 + g.y1) / 2, size.d / 2 + 0.01], dir: [1, 0, 0] };
+      },
+    },
+    {
+      id: 'windowHeight',
+      label: 'Window height',
+      kind: 'length',
+      default: 1.0,
+      min: 0.35,
+      max: 2.6,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = roundedGlassWindowGeo(size, p);
+        return { at: [(g.x0 + g.x1) / 2, g.y1, size.d / 2 + 0.01], dir: [0, 1, 0] };
+      },
+    },
+    {
+      id: 'frameWidth',
+      label: 'Frame thickness',
+      kind: 'length',
+      default: 0.045,
+      min: 0.025,
+      max: 0.1,
+      step: 0.005,
+      handle: (size, p) => {
+        const g = roundedGlassWindowGeo(size, p);
+        return { at: [(g.x0 + g.x1) / 2, g.y0 + g.frameW, size.d / 2 + 0.01], dir: [0, 1, 0] };
+      },
+    },
+    {
+      id: 'topLeftRadius',
+      label: 'Top-left corner radius',
+      kind: 'length',
+      default: 0.08,
+      min: 0,
+      max: 1.2,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = roundedGlassWindowGeo(size, p);
+        return {
+          at: [g.x0 + g.rxTL * 0.55 + 0.02, g.y1 - g.ryTL * 0.55 - 0.02, size.d / 2 + 0.01],
+          dir: [Math.SQRT1_2, -Math.SQRT1_2, 0],
+        };
+      },
+    },
+    {
+      id: 'topRightRadius',
+      label: 'Top-right corner radius',
+      kind: 'length',
+      default: 0.08,
+      min: 0,
+      max: 1.2,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = roundedGlassWindowGeo(size, p);
+        return {
+          at: [g.x1 - g.rxTR * 0.55 - 0.02, g.y1 - g.ryTR * 0.55 - 0.02, size.d / 2 + 0.01],
+          dir: [-Math.SQRT1_2, -Math.SQRT1_2, 0],
+        };
+      },
+    },
+    {
+      id: 'bottomRightRadius',
+      label: 'Bottom-right corner radius',
+      kind: 'length',
+      default: 0.08,
+      min: 0,
+      max: 1.2,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = roundedGlassWindowGeo(size, p);
+        return {
+          at: [g.x1 - g.rxBR * 0.55 - 0.02, g.y0 + g.ryBR * 0.55 + 0.02, size.d / 2 + 0.01],
+          dir: [-Math.SQRT1_2, Math.SQRT1_2, 0],
+        };
+      },
+    },
+    {
+      id: 'bottomLeftRadius',
+      label: 'Bottom-left corner radius',
+      kind: 'length',
+      default: 0.08,
+      min: 0,
+      max: 1.2,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = roundedGlassWindowGeo(size, p);
+        return {
+          at: [g.x0 + g.rxBL * 0.55 + 0.02, g.y0 + g.ryBL * 0.55 + 0.02, size.d / 2 + 0.01],
+          dir: [Math.SQRT1_2, Math.SQRT1_2, 0],
+        };
+      },
+    },
+  ];
+}
+
+function buildRoundedGlassWindow(
+  size: Size3,
+  p?: ParamValues,
+  mullions: 'none' | 'cross' | 'vertical' = 'none',
+): Part[] {
+  const g = roundedGlassWindowGeo(size, p);
+  const { d, x0, x1, y0, y1, frameW, upperArc, lowerArc } = g;
+  const yMid = (y0 + y1) / 2;
+  const xMid = (x0 + x1) / 2;
+  const sashW = Math.min(0.018, frameW * 0.35);
+  const sashD = Math.max(0.02, d * 0.45);
+  const glassT = Math.min(0.01, sashD * 0.45);
+
+  const upperOuter = upperArc(0);
+  const upperInner = upperArc(frameW);
+  const lowerOuter = lowerArc(0);
+  const lowerInner = lowerArc(frameW);
+
+  const upperSashIn = upperArc(frameW + sashW);
+  const lowerSashIn = lowerArc(frameW + sashW);
+  const glassOutline = dedupe([...upperArc(frameW + sashW - 0.004), ...lowerArc(frameW + sashW - 0.004)]);
+
+  const parts: Part[] = [
+    // Plan-visible jamb cores at the horizontal equator (stay inside the frame at all corner radii, including oval/circle).
+    span('frame', [x0 + 0.003, x0 + frameW - 0.003], [yMid - 0.004, yMid + 0.004], [-d / 2 + 0.003, d / 2 - 0.003]),
+    span('frame', [x1 - frameW + 0.003, x1 - 0.003], [yMid - 0.004, yMid + 0.004], [-d / 2 + 0.003, d / 2 - 0.003]),
+    // Full-depth outer casing (split into upper and lower half-rings).
+    panelXY('frame', dedupe([...upperOuter, ...[...upperInner].reverse()]), -d / 2, d),
+    panelXY('frame', dedupe([...lowerOuter, ...[...lowerInner].reverse()]), -d / 2, d),
+    // Recessed inner sash bead holding the glass.
+    panelXY('frame', dedupe([...upperInner, ...[...upperSashIn].reverse()]), -sashD / 2, sashD),
+    panelXY('frame', dedupe([...lowerInner, ...[...lowerSashIn].reverse()]), -sashD / 2, sashD),
+    // Centered glass pane.
+    panelXY('glass', glassOutline, -glassT / 2, glassT),
+  ];
+
+  const barT = 0.022;
+  const barD = Math.min(d - 0.012, sashD + 0.008);
+  const innerClip = dedupe([...upperSashIn, ...lowerSashIn]);
+  if (mullions === 'vertical' || mullions === 'cross') {
+    const vBar = clipToConvex(
+      [
+        [xMid - barT / 2, y0],
+        [xMid + barT / 2, y0],
+        [xMid + barT / 2, y1],
+        [xMid - barT / 2, y1],
+      ],
+      innerClip,
+    );
+    if (vBar.length >= 3) parts.push(panelXY('frame', vBar, -barD / 2, barD));
+  }
+  if (mullions === 'cross') {
+    const hBar = clipToConvex(
+      [
+        [x0, yMid - barT / 2],
+        [x1, yMid - barT / 2],
+        [x1, yMid + barT / 2],
+        [x0, yMid + barT / 2],
+      ],
+      innerClip,
+    );
+    if (hBar.length >= 3) parts.push(panelXY('frame', hBar, -barD / 2, barD));
+  }
+
+  return parts;
+}
+
+function roundedGlassWindowPlan(size: Size3, p?: ParamValues): PlanStroke[] {
+  const g = roundedGlassWindowGeo(size, p);
+  const { d, x0, x1, frameW } = g;
+  const xg0 = Math.min((x0 + x1) / 2 - 0.01, x0 + frameW);
+  const xg1 = Math.max((x0 + x1) / 2 + 0.01, x1 - frameW);
+  return [
+    line([x0, -d / 2], [x1, -d / 2]),
+    line([x0, d / 2], [x1, d / 2]),
+    line([x0, -d / 2], [x0, d / 2]),
+    line([x1, -d / 2], [x1, d / 2]),
+    line([xg0, -0.006], [xg1, -0.006]),
+    line([xg0, 0.006], [xg1, 0.006]),
+  ];
+}
+
+const WINDOW_FRAME_SLOT = matSlot('frame', 'Window frame', 'paint-satin-white');
+const WINDOW_GLASS_SLOT = matSlot('glass', 'Window glass', 'glass-clear');
+
+const roundedGlassWindow = defineItem({
+  id: 'rounded-glass-window',
+  name: 'Rounded-corner & oval glass window',
+  category: 'construction',
+  type: 'structure',
+  group: 'Partitions',
+  mount: 'wall',
+  wallSnap: true,
+  defaultElevation: 0.9,
+  resizable: { w: true, d: true, h: true },
+  tags: [
+    'window',
+    'glass window',
+    'interior window',
+    'partition window',
+    'rounded window',
+    'oval window',
+    'round window',
+    'circular window',
+    'arched window',
+    'white frame',
+    'wood frame',
+    'oak window',
+    'cửa sổ',
+    'cửa sổ kính',
+    'cửa sổ bo góc',
+    'cửa sổ tròn',
+    'cửa sổ oval',
+    'ô kính',
+  ],
+  description:
+    'A rectangular glass window in a satin-white or solid-wood frame whose horizontal width, vertical height and four independent corner radii adjust in the shape editor so it can form a crisp rectangle, rounded-corner window, capsule, oval or circle.',
+  defaultSize: { w: 1.1, d: 0.1, h: 1.0 },
+  minSize: { w: 0.35, d: 0.05, h: 0.35 },
+  maxSize: { w: 3.2, d: 0.35, h: 2.6 },
+  slots: [WINDOW_FRAME_SLOT, WINDOW_GLASS_SLOT],
+  variants: [
+    { id: 'light-oak', name: 'Light oak frame', materials: { frame: 'wood-oak-light' } },
+    { id: 'warm-oak', name: 'Warm oak frame', materials: { frame: 'laminate-oak' } },
+    { id: 'walnut', name: 'Walnut wood frame', materials: { frame: 'wood-walnut' } },
+    { id: 'teak', name: 'Teak wood frame', materials: { frame: 'wood-teak' } },
+    { id: 'warm-cream', name: 'Warm cream frame', materials: { frame: 'laminate-cream' } },
+    { id: 'sage-green', name: 'Sage green frame', materials: { frame: 'laminate-sage' } },
+    { id: 'matte-black', name: 'Matte black frame', materials: { frame: 'metal-black-matte' } },
+    { id: 'white-frosted', name: 'White frame & frosted glass', materials: { frame: 'paint-satin-white', glass: 'glass-frosted' } },
+    { id: 'oak-frosted', name: 'Light oak & frosted glass', materials: { frame: 'wood-oak-light', glass: 'glass-frosted' } },
+  ],
+  models: [
+    { id: 'clean', name: 'Single clear pane' },
+    {
+      id: 'cross-mullions',
+      name: 'With cross mullions',
+      build: (s, p) => buildRoundedGlassWindow(s, p, 'cross'),
+      planDetail: (s, p) => roundedGlassWindowPlan(s, p),
+    },
+    {
+      id: 'vertical-mullion',
+      name: 'With vertical mullion',
+      build: (s, p) => buildRoundedGlassWindow(s, p, 'vertical'),
+      planDetail: (s, p) => roundedGlassWindowPlan(s, p),
+    },
+  ],
+  params: roundedGlassWindowParams(),
+  build: (s, p) => buildRoundedGlassWindow(s, p, 'none'),
+  planDetail: (s, p) => roundedGlassWindowPlan(s, p),
+});
+
 export default definePack({
   name: 'Portal frames',
   version: '1.4.0',
@@ -1752,5 +2156,5 @@ export default definePack({
   description:
     'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal, rounded ceiling headers, arched partition walls with editable side walls and top drop, and an arched corner bedroom enclosure. All resize freely; the curves are rebuilt for every size.',
   license: 'CC0 (made for Neest)',
-  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, halfWallPier, header, headerCove, archedWall, archedWallPortal, cornerRoom, cornerPortal],
+  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, halfWallPier, roundedGlassWindow, header, headerCove, archedWall, archedWallPortal, cornerRoom, cornerPortal],
 });
