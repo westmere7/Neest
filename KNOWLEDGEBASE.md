@@ -2891,3 +2891,22 @@ Known limitations (also in README):
      storing the underlying setting (`fridgeWidth`). Updated `run240FridgeParams()` in `packs/kitchen-counters.pack.ts`
      so hovering or dragging the divider handle between the counter run and fridge surround displays
      `Counter length: <m>` instead of `Fridge niche width` (done).
+254. "Tạo riêng 1 cái bàn hình chữ L giống phần bàn của Corner portal with half wall and dining ledge. chân gắn trên tường
+     như vậy nhưng màu trắng, sửa chiều dài 2 chữ L. Variant là có vách ngăn hoặc không có" → added
+     `soft-curve-furniture:l-shaped-wall-dining-ledge` (**L-shaped wall-mounted dining ledge**) in
+     `packs/soft-curve-furniture.pack.ts` with a `4 cm` light-oak L-shaped tabletop (`h = 0.75 m` default), white
+     powder-coated triangular wall brackets (`metal-white-powder`) under both arms, 3 model variants (`with-rim` with the
+     curved `9.5 cm` raised rim on the side arm, `no-rim` without rim, and `full-rim` wrapping both arms), and 4
+     shape-editor parameters (`backArmInset`, `sideArmInset`, `backArmDepth`, `sideArmWidth`) whose 3D handles let the user
+     drag and read out both L-arm lengths (`Back arm length`, `Side arm length`) and both L-arm widths (`Back arm width`,
+     `Side arm width`) independently. Rendered thumbnails and added unit tests in `src/packs/packs.test.ts` (done).
+255. "Portal on a half wall with LED cove: tạo 1 khối giống khối này nhưng độ dày chỉ bằng internal wall. Phần dính tường
+     chỉ giữ mặt sát tường, bỏ phần L tô màu blue. Sửa được shape chiều cao, chiều rộng như mũi tên đỏ. Phần bàn gỗ chỉ
+     chạm phần tường, không đâm xuyên qua như vậy" → added `portal-frames:half-wall-pier` (**Wall pier with half wall and
+     oak ledge**) in `packs/portal-frames.pack.ts` with a `10 cm` (`d = 0.1 m`) internal-wall thickness full-height
+     vertical wall pier and a rounded-end half wall (no overhead L-soffit overhang), whose oak cap (`half-wall` model) and
+     dining ledge (`ledge`, `ledge-flat`, `ledge-back` models) stop flush at the inner face of the vertical pier (`xPier0`)
+     without cutting through the pier. Added shape-editor parameters `pierWidth` (**Wall pier width**), `halfWall` (**Half
+     wall height**, `0.75 m` default), `halfWallInset` (with a 3D handle on the rounded nose displaying **Half wall
+     width**), and `cove` (**Ceiling LED cove**). Rendered thumbnails and added unit tests in `src/packs/packs.test.ts`
+     (done).

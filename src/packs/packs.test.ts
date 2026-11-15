@@ -899,6 +899,63 @@ describe('pack models', () => {
     expect(mainDrawerKnobZ).toBeCloseTo(-t.defaultSize.d / 2 + 0.5 - 0.012, 3);
     expect(retDrawerKnobX).toBeCloseTo(-t.defaultSize.w / 2 + 0.75 - 0.012, 3);
   });
+
+  it('builds soft-curve-furniture:l-shaped-wall-dining-ledge with white wall brackets, independent L-arm lengths & widths, and rim/no-rim variants', () => {
+    const ledge = ASSETS_BY_ID['soft-curve-furniture:l-shaped-wall-dining-ledge'];
+    expect(ledge).toBeDefined();
+    expect(ledge.defaultSize).toEqual({ w: 1.5, d: 1.35, h: 0.75 });
+    expect(ledge.slots.map((s) => [s.id, s.defaultMaterial])).toEqual([
+      ['top', 'wood-oak-light'],
+      ['bracket', 'metal-white-powder'],
+    ]);
+    expect(ledge.params?.map((p) => p.id)).toEqual([
+      'backArmInset',
+      'sideArmInset',
+      'backArmDepth',
+      'sideArmWidth',
+    ]);
+    expect(assetModels(ledge).map((m) => m.id)).toEqual(['with-rim', 'no-rim', 'full-rim']);
+
+    const withRim = withModel(ledge, 'with-rim').build(ledge.defaultSize);
+    const noRim = withModel(ledge, 'no-rim').build(ledge.defaultSize);
+    const fullRim = withModel(ledge, 'full-rim').build(ledge.defaultSize);
+    expect(Math.max(...withRim.map((p) => worldBounds(p).max[1]))).toBeCloseTo(0.845, 3);
+    expect(Math.max(...noRim.map((p) => worldBounds(p).max[1]))).toBeCloseTo(0.75, 3);
+    expect(Math.max(...fullRim.map((p) => worldBounds(p).max[1]))).toBeCloseTo(0.845, 3);
+    expect(noRim.some((p) => p.slot === 'bracket')).toBe(true);
+
+    // 3D shape-editor handles at the tips of both L arms report their lengths (Back arm length, Side arm length).
+    const backLenHandle = ledge.params?.find((p) => p.id === 'backArmInset')?.handle?.(ledge.defaultSize, { backArmInset: 0.25 });
+    const sideLenHandle = ledge.params?.find((p) => p.id === 'sideArmInset')?.handle?.(ledge.defaultSize, { sideArmInset: 0.2 });
+    expect(backLenHandle?.label).toBe('Back arm length');
+    expect(backLenHandle?.value).toBeCloseTo(1.25, 4);
+    expect(sideLenHandle?.label).toBe('Side arm length');
+    expect(sideLenHandle?.value).toBeCloseTo(1.15, 4);
+  });
+
+  it('builds portal-frames:half-wall-pier at 10 cm internal-wall thickness with no overhead soffit and an oak cap stopping at the vertical pier', () => {
+    const pier = ASSETS_BY_ID['portal-frames:half-wall-pier'];
+    expect(pier).toBeDefined();
+    expect(pier.defaultSize).toEqual({ w: 1.3, d: 0.1, h: 2.7 });
+    expect(pier.params?.map((p) => p.id)).toEqual(['pierWidth', 'halfWall', 'halfWallInset', 'cove']);
+    expect(assetModels(pier).map((m) => m.id)).toEqual(['half-wall', 'ledge', 'ledge-flat', 'ledge-back']);
+
+    const defaultParts = pier.build(pier.defaultSize);
+    const shelfBounds = worldBounds(defaultParts.find((p) => p.slot === 'shelf')!);
+    // Default pierWidth = 0.3 -> xPier0 = 1.3 / 2 - 0.3 = 0.35; oak cap stops right at xPier0 without penetrating into the vertical pier [0.35, 0.65].
+    expect(shelfBounds.max[0]).toBeCloseTo(0.35, 4);
+    expect(shelfBounds.max[1]).toBeCloseTo(0.75, 4);
+    // No overhead soffit across the half-wall side (only the vertical pier [0.35, 0.65] reaches above y = 0.75).
+    const highParts = defaultParts.map(worldBounds).filter((b) => b.max[1] > 1.0);
+    expect(highParts.every((b) => b.min[0] >= 0.35 - 1e-4)).toBe(true);
+
+    // Editing pierWidth, halfWall and halfWallInset updates the pier and half wall independently.
+    const editedPartsList = pier.build(pier.defaultSize, { pierWidth: 0.4, halfWall: 0.9, halfWallInset: 0.15 });
+    const editedShelf = worldBounds(editedPartsList.find((p) => p.slot === 'shelf')!);
+    expect(editedShelf.min[0]).toBeCloseTo(-1.3 / 2 + 0.15, 4);
+    expect(editedShelf.max[0]).toBeCloseTo(1.3 / 2 - 0.4, 4);
+    expect(editedShelf.max[1]).toBeCloseTo(0.9, 4);
+  });
 });
 
 describeAssetChecks(packItems);

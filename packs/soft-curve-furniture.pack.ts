@@ -10,6 +10,7 @@
  * Coordinates: x across (w), y up (h), z depth (d), front +z; wall items have their back at -z.
  */
 import {
+  box,
   cellSpans,
   clamp,
   containParts,
@@ -31,6 +32,7 @@ import {
   rod,
   rodX,
   roundRectPoints,
+  spaced,
   span,
   sphere,
   torus,
@@ -1149,6 +1151,347 @@ const lShapedBeadTable = defineItem({
   build: (size, params) => buildLShapedBeadTable(size, params, 'both'),
 });
 
+// ───────────── 12c. L-shaped wall-mounted dining ledge ─────────────
+
+interface LWallLedgeGeo {
+  w: number;
+  d: number;
+  h: number;
+  topT: number;
+  H: number;
+  armD: number;
+  armW: number;
+  x0: number;
+  x1: number;
+  z0: number;
+  z1: number;
+  xIn: number;
+  zIn: number;
+  r00: number;
+  rBackX: number;
+  rFrontX: number;
+  rLeftZ: number;
+  rRightZ: number;
+  rIn: number;
+}
+
+function lWallDiningLedgeGeo({ w, d, h }: Size3, params?: ParamValues): LWallLedgeGeo {
+  const topT = 0.04;
+  const H = h - topT;
+  const rawD = typeof params?.backArmDepth === 'number' && Number.isFinite(params.backArmDepth) ? params.backArmDepth : 0.45;
+  const rawW = typeof params?.sideArmWidth === 'number' && Number.isFinite(params.sideArmWidth) ? params.sideArmWidth : 0.45;
+  const minD = Math.min(0.28, d * 0.56);
+  const maxD = Math.max(minD, Math.min(0.85, d - 0.16));
+  const minW = Math.min(0.28, w * 0.56);
+  const maxW = Math.max(minW, Math.min(0.85, w - 0.16));
+  const armD = clamp(rawD, minD, maxD);
+  const armW = clamp(rawW, minW, maxW);
+
+  const rawBackInset = typeof params?.backArmInset === 'number' && Number.isFinite(params.backArmInset) ? params.backArmInset : 0;
+  const rawSideInset = typeof params?.sideArmInset === 'number' && Number.isFinite(params.sideArmInset) ? params.sideArmInset : 0;
+  const maxBackInset = Math.max(0, w - armW - 0.18);
+  const maxSideInset = Math.max(0, d - armD - 0.18);
+  const backInset = clamp(rawBackInset, 0, maxBackInset);
+  const sideInset = clamp(rawSideInset, 0, maxSideInset);
+
+  const x0 = -w / 2;
+  const x1 = w / 2 - backInset;
+  const z0 = -d / 2;
+  const z1 = d / 2 - sideInset;
+  const xIn = x0 + armW;
+  const zIn = z0 + armD;
+
+  const remX = Math.max(0.04, x1 - xIn);
+  const remZ = Math.max(0.04, z1 - zIn);
+  const rIn = Math.min(0.075, remX * 0.28, remZ * 0.28);
+  const r00 = Math.min(0.08, armW * 0.22, armD * 0.22);
+  const rBackX = Math.min(0.14, armD * 0.36, (x1 - x0 - r00) * 0.45);
+  const rFrontX = Math.min(0.18, armD * 0.46, Math.max(0.015, remX - rIn - 0.008));
+  const rLeftZ = Math.min(0.14, armW * 0.36, (z1 - z0 - r00) * 0.45);
+  const rRightZ = Math.min(0.18, armW * 0.46, Math.max(0.015, remZ - rIn - 0.008));
+
+  return {
+    w,
+    d,
+    h,
+    topT,
+    H,
+    armD,
+    armW,
+    x0,
+    x1,
+    z0,
+    z1,
+    xIn,
+    zIn,
+    r00,
+    rBackX,
+    rFrontX,
+    rLeftZ,
+    rRightZ,
+    rIn,
+  };
+}
+
+function lWallDiningLedgeParams(): AssetParam[] {
+  return [
+    {
+      id: 'backArmInset',
+      label: 'Back arm inset',
+      kind: 'length',
+      default: 0,
+      min: 0,
+      max: 0.8,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lWallDiningLedgeGeo(size, p);
+        return {
+          at: [g.x1, g.H + g.topT / 2, g.z0 + g.armD / 2],
+          dir: [-1, 0, 0],
+          label: 'Back arm length',
+          value: g.x1 - g.x0,
+        };
+      },
+    },
+    {
+      id: 'sideArmInset',
+      label: 'Side arm inset',
+      kind: 'length',
+      default: 0,
+      min: 0,
+      max: 0.8,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lWallDiningLedgeGeo(size, p);
+        return {
+          at: [g.x0 + g.armW / 2, g.H + g.topT / 2, g.z1],
+          dir: [0, 0, -1],
+          label: 'Side arm length',
+          value: g.z1 - g.z0,
+        };
+      },
+    },
+    {
+      id: 'backArmDepth',
+      label: 'Back arm width',
+      kind: 'length',
+      default: 0.45,
+      min: 0.28,
+      max: 0.85,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lWallDiningLedgeGeo(size, p);
+        return { at: [(g.xIn + g.x1) / 2, g.H + g.topT / 2, g.zIn], dir: [0, 0, 1] };
+      },
+    },
+    {
+      id: 'sideArmWidth',
+      label: 'Side arm width',
+      kind: 'length',
+      default: 0.45,
+      min: 0.28,
+      max: 0.85,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lWallDiningLedgeGeo(size, p);
+        return { at: [g.xIn, g.H + g.topT / 2, (g.zIn + g.z1) / 2], dir: [1, 0, 0] };
+      },
+    },
+  ];
+}
+
+function buildLWallDiningLedgeBase(size: Size3, params?: ParamValues): Part[] {
+  const g = lWallDiningLedgeGeo(size, params);
+  const { h, topT, H, armD, armW, x0, x1, z0, z1, xIn, zIn, r00, rBackX, rFrontX, rLeftZ, rRightZ, rIn } = g;
+
+  const lOutline = (inset: number): V2[] => {
+    const ox0 = x0 + inset;
+    const ox1 = x1 - inset;
+    const oz0 = z0 + inset;
+    const oz1 = z1 - inset;
+    const oxIn = xIn - inset;
+    const ozIn = zIn - inset;
+    const c00 = Math.max(0.004, r00 - inset);
+    const bX = Math.max(0.006, rBackX - inset);
+    const fX = Math.max(0.006, rFrontX - inset);
+    const lZ = Math.max(0.006, rLeftZ - inset);
+    const rZ = Math.max(0.006, rRightZ - inset);
+    const iR = Math.max(0.006, rIn + inset);
+    return dedupe([
+      ...arc(ox0 + c00, oz0 + c00, c00, c00, Math.PI, 1.5 * Math.PI, 8),
+      ...arc(ox1 - bX, oz0 + bX, bX, bX, -Math.PI / 2, 0, 10),
+      ...arc(ox1 - fX, ozIn - fX, fX, fX, 0, Math.PI / 2, 10),
+      ...arc(oxIn + iR, ozIn + iR, iR, iR, -Math.PI / 2, -Math.PI, 8),
+      ...arc(oxIn - rZ, oz1 - rZ, rZ, rZ, 0, Math.PI / 2, 10),
+      ...arc(ox0 + lZ, oz1 - lZ, lZ, lZ, Math.PI / 2, Math.PI, 10),
+    ]);
+  };
+
+  const parts: Part[] = easedSlab('top', lOutline, H, topT, 0.004);
+
+  // White powder-coated triangular wall brackets under both arms of the L (matching diningLedge on corner-portal-half-wall).
+  const drop = Math.min(0.2, Math.max(0.08, H - 0.04));
+  const t = 0.012;
+
+  // 1. Back wall brackets (at z = z0 + 0.002, reaching +z under the back arm).
+  const armLenBack = Math.min(0.26, armD - 0.07);
+  const diagBack = Math.hypot(armLenBack, drop);
+  const tiltBack = Math.atan2(-drop, armLenBack);
+  const zFace = z0 + 0.002;
+  const spanX = x1 - x0;
+  const aX = x0 + Math.min(0.26, spanX * 0.28);
+  const bX = Math.max(aX, x1 - Math.min(0.26, spanX * 0.25));
+  const nX = bX - aX > 0.18 ? Math.max(2, Math.round((bX - aX) / 0.65) + 1) : 1;
+  for (const x of spaced(nX, aX, bX)) {
+    parts.push(
+      span('bracket', [x - 0.015, x + 0.015], [H - t, H - 0.0005], [zFace, zFace + armLenBack], o),
+      span('bracket', [x - 0.015, x + 0.015], [H - drop, H - t], [zFace, zFace + t], o),
+      box('bracket', [x, H - drop / 2, zFace + armLenBack / 2], [0.02, t, diagBack], {
+        rotation: [tiltBack, 0, 0],
+        plan: false,
+      }),
+    );
+  }
+
+  // 2. Side wall / half-wall brackets (at x = x0 + 0.002, reaching +x under the side arm).
+  const armLenSide = Math.min(0.26, armW - 0.07);
+  const diagSide = Math.hypot(armLenSide, drop);
+  const tiltSide = Math.atan2(drop, armLenSide);
+  const xFace = x0 + 0.002;
+  const aZ = Math.min(z1 - 0.12, Math.max(zIn + 0.04, z0 + 0.28));
+  const bZ = Math.max(aZ, z1 - Math.min(0.24, (z1 - z0) * 0.22));
+  const nZ = bZ - aZ > 0.18 ? Math.max(2, Math.round((bZ - aZ) / 0.65) + 1) : 1;
+  for (const z of spaced(nZ, aZ, bZ)) {
+    parts.push(
+      span('bracket', [xFace, xFace + armLenSide], [H - t, H - 0.0005], [z - 0.015, z + 0.015], o),
+      span('bracket', [xFace, xFace + t], [H - drop, H - t], [z - 0.015, z + 0.015], o),
+      box('bracket', [xFace + armLenSide / 2, H - drop / 2, z], [diagSide, t, 0.02], {
+        rotation: [0, 0, tiltSide],
+        plan: false,
+      }),
+    );
+  }
+
+  return keep(parts, { w: size.w, d: size.d, h });
+}
+
+function buildLWallDiningLedgeRim(size: Size3, params?: ParamValues, mode: 'side' | 'both' = 'side'): Part[] {
+  const g = lWallDiningLedgeGeo(size, params);
+  const { h, x0, x1, z0, z1, xIn, zIn, r00, rBackX, rFrontX, rLeftZ, rRightZ } = g;
+  const tRim = Math.min(0.024, rLeftZ * 0.45, rBackX * 0.45, r00 * 0.6);
+  const rimH = 0.095;
+  const capH = 0.004;
+  const xNose = Math.max(x0 + rLeftZ + 0.02, xIn - rRightZ);
+
+  if (mode === 'side') {
+    const zStart = z0 + r00 + 0.006;
+    if (z1 - zStart < rLeftZ + 0.04) return [];
+    const band = (inset: number): V2[] => {
+      const rOut = Math.max(0.004, rLeftZ - inset);
+      const rIn = Math.max(0.003, rLeftZ - tRim + inset);
+      const rCap = Math.max(0.002, tRim / 2 - inset);
+      const pts: V2[] = [
+        ...arc(x0 + tRim / 2, zStart, rCap, rCap, 0, -Math.PI, 8),
+        ...arc(x0 + rLeftZ, z1 - rLeftZ, rOut, rOut, Math.PI, Math.PI / 2, 12),
+        ...arc(xNose, z1 - tRim / 2, rCap, rCap, Math.PI / 2, -Math.PI / 2, 8),
+        ...arc(x0 + rLeftZ, z1 - rLeftZ, rIn, rIn, Math.PI / 2, Math.PI, 12),
+      ];
+      return dedupe(pts.reverse());
+    };
+    return [
+      { ...prism('top', band(0), h - 0.002, rimH - capH + 0.002), plan: false },
+      { ...prism('top', band(0.0025), h + rimH - capH, capH), plan: false },
+    ];
+  }
+
+  // Full L-edge rim wrapping both outer walls and both rounded free ends.
+  const zNoseX = Math.max(z0 + rBackX + 0.02, zIn - rFrontX);
+  const fullBand = (inset: number): V2[] => {
+    const rCap = Math.max(0.002, tRim / 2 - inset);
+    const lOut = Math.max(0.004, rLeftZ - inset);
+    const lIn = Math.max(0.003, rLeftZ - tRim + inset);
+    const cOut = Math.max(0.004, r00 - inset);
+    const cIn = Math.max(0.003, r00 - tRim + inset);
+    const bOut = Math.max(0.004, rBackX - inset);
+    const bIn = Math.max(0.003, rBackX - tRim + inset);
+    const pts: V2[] = [
+      ...arc(x1 - tRim / 2, zNoseX, rCap, rCap, -Math.PI, 0, 8),
+      ...arc(x1 - rBackX, z0 + rBackX, bOut, bOut, 0, -Math.PI / 2, 12),
+      ...arc(x0 + r00, z0 + r00, cOut, cOut, 1.5 * Math.PI, Math.PI, 10),
+      ...arc(x0 + rLeftZ, z1 - rLeftZ, lOut, lOut, Math.PI, Math.PI / 2, 12),
+      ...arc(xNose, z1 - tRim / 2, rCap, rCap, Math.PI / 2, -Math.PI / 2, 8),
+      ...arc(x0 + rLeftZ, z1 - rLeftZ, lIn, lIn, Math.PI / 2, Math.PI, 12),
+      ...arc(x0 + r00, z0 + r00, cIn, cIn, Math.PI, 1.5 * Math.PI, 10),
+      ...arc(x1 - rBackX, z0 + rBackX, bIn, bIn, -Math.PI / 2, 0, 12),
+    ];
+    return dedupe(pts.reverse());
+  };
+  return [
+    { ...prism('top', fullBand(0), h - 0.002, rimH - capH + 0.002), plan: false },
+    { ...prism('top', fullBand(0.0025), h + rimH - capH, capH), plan: false },
+  ];
+}
+
+const lShapedWallDiningLedge = defineItem({
+  id: 'l-shaped-wall-dining-ledge',
+  name: 'L-shaped wall-mounted dining ledge',
+  category: 'dining',
+  type: 'surfaces',
+  group: 'Dining tables',
+  wallSnap: true,
+  resizable: { w: true, d: true, h: true },
+  tags: [
+    'dining ledge',
+    'breakfast bar',
+    'wall-mounted table',
+    'l-shaped table',
+    'l-shaped ledge',
+    'corner bar table',
+    'half wall ledge',
+    'white brackets',
+    'raised rim',
+    'bàn chữ L gắn tường',
+    'bàn bar chữ L',
+    'bàn ăn gắn tường',
+    'bàn vách lửng',
+  ],
+  description:
+    'A standalone L-shaped timber dining ledge matching the half-wall ledge of the corner portal, supported by white powder-coated triangular wall brackets along both arms; resize the length and width of both L arms independently and switch between a raised curved rim on the side arm, a full L-perimeter rim, or a flat top without rim.',
+  defaultSize: { w: 1.5, d: 1.35, h: 0.75 },
+  minSize: { w: 0.5, d: 0.5, h: 0.45 },
+  maxSize: { w: 3.2, d: 2.6, h: 1.15 },
+  price: { vnd: 4_200_000, estimate: true },
+  slots: [
+    matSlot('top', 'Tabletop & rim', 'wood-oak-light'),
+    matSlot('bracket', 'Wall brackets', 'metal-white-powder'),
+  ],
+  variants: [
+    { id: 'walnut-white', name: 'Walnut & white brackets', materials: { top: 'wood-walnut', bracket: 'metal-white-powder' } },
+    { id: 'white-oak-white', name: 'White oak & white brackets', materials: { top: 'wood-white-oak', bracket: 'metal-white-powder' } },
+    { id: 'sage-white', name: 'Sage lacquer & white brackets', materials: { top: 'laminate-sage', bracket: 'metal-white-powder' } },
+    { id: 'cream-white', name: 'Cream lacquer & white brackets', materials: { top: 'laminate-cream', bracket: 'metal-white-powder' } },
+    { id: 'oak-black', name: 'Light oak & black brackets', materials: { top: 'wood-oak-light', bracket: 'metal-black-matte' } },
+  ],
+  models: [
+    {
+      id: 'with-rim',
+      name: 'With raised rim (có vách ngăn)',
+      props: (size, params) => buildLWallDiningLedgeRim(size, params, 'side'),
+    },
+    {
+      id: 'no-rim',
+      name: 'Without rim (không vách ngăn)',
+    },
+    {
+      id: 'full-rim',
+      name: 'Rim on both arms (vách ngăn 2 cạnh)',
+      props: (size, params) => buildLWallDiningLedgeRim(size, params, 'both'),
+    },
+  ],
+  params: lWallDiningLedgeParams(),
+  build: (size, params) => buildLWallDiningLedgeBase(size, params),
+});
+
 // ───────────── 13. Rounded-corner full-length wall mirror ─────────────
 
 function buildRoundedWallMirror(size: Size3, rimStyle: 'slim' | 'wide' | 'micro' = 'slim'): Part[] {
@@ -2198,6 +2541,7 @@ export default definePack({
     spherePedestalTable,
     wallPeninsulaBeadTable,
     lShapedBeadTable,
+    lShapedWallDiningLedge,
     ovalBackChair,
     leafPendant,
     domeSconce,

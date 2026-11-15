@@ -1523,6 +1523,219 @@ const cornerPortal = defineItem({
   ],
 });
 
+// ---------------------------------------------------------------------------
+// Wall pier with half wall and oak ledge (10 cm internal wall thickness, no top soffit overhang,
+// oak top stopping flush at the full-height pier face without penetrating through it)
+// ---------------------------------------------------------------------------
+
+interface HalfWallPierGeo {
+  w: number;
+  d: number;
+  h: number;
+  pierW: number;
+  halfWall: number;
+  H: number;
+  x0: number;
+  xPier0: number;
+  xPier1: number;
+  cove: boolean;
+}
+
+function halfWallPierGeo({ w, d, h }: Size3, params?: ParamValues): HalfWallPierGeo {
+  const num = (k: string, v: number) => (typeof params?.[k] === 'number' && Number.isFinite(params[k]) ? (params[k] as number) : v);
+  const maxPier = Math.max(0.08, Math.min(1.8, w - 0.2));
+  const pierW = clamp(num('pierWidth', 0.3), Math.min(0.08, maxPier), maxPier);
+  const halfWall = clamp(num('halfWall', CORNER_HALF_WALL), 0.45, Math.min(1.35, h - 0.3));
+  const H = halfWall - 0.04;
+  const xPier1 = w / 2;
+  const xPier0 = xPier1 - pierW;
+  const maxInset = Math.max(0, xPier0 - (-w / 2) - 0.16);
+  const inset = clamp(num('halfWallInset', 0), 0, maxInset);
+  const x0 = -w / 2 + inset;
+  const cove = params?.cove !== false;
+  return { w, d, h, pierW, halfWall, H, x0, xPier0, xPier1, cove };
+}
+
+function halfWallPierParams(): AssetParam[] {
+  return [
+    lengthParam('pierWidth', 'Wall pier width', 0.3, 0.08, 1.8, (size, p) => {
+      const g = halfWallPierGeo(size, p);
+      return { at: [g.xPier0, (g.halfWall + g.h) / 2, g.d / 2 + 0.01], dir: [-1, 0, 0] };
+    }),
+    lengthParam('halfWall', 'Half wall height', CORNER_HALF_WALL, 0.45, 1.35, (size, p) => {
+      const g = halfWallPierGeo(size, p);
+      return { at: [(g.x0 + g.xPier0) / 2, g.halfWall, g.d / 2 + 0.01], dir: [0, 1, 0] };
+    }),
+    {
+      id: 'halfWallInset',
+      label: 'Half wall inset',
+      kind: 'length',
+      default: 0,
+      min: 0,
+      max: 1.5,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = halfWallPierGeo(size, p);
+        return {
+          at: [g.x0, g.halfWall / 2, g.d / 2 + 0.01],
+          dir: [1, 0, 0],
+          label: 'Half wall width',
+          value: g.xPier1 - g.x0,
+        };
+      },
+    },
+    {
+      id: 'cove',
+      label: 'Ceiling LED cove',
+      kind: 'toggle',
+      default: true,
+    },
+  ];
+}
+
+function buildHalfWallPier(size: Size3, params?: ParamValues): Part[] {
+  const g = halfWallPierGeo(size, params);
+  const { d, h, H, x0, xPier0, xPier1, cove } = g;
+  const parts: Part[] = [];
+
+  // 1. Full-height vertical wall pier (uninterrupted from floor to ceiling; oak cap stops at xPier0).
+  if (cove) {
+    const rv = Math.min(0.018, d * 0.16);
+    const gap = 0.05;
+    parts.push(
+      span('frame', [xPier0, xPier1], [0, h - gap], [d / 2 - rv, d / 2]),
+      span('frame', [xPier0, xPier1], [0, h], [-d / 2 + rv, d / 2 - rv]),
+      span('frame', [xPier0, xPier1], [0, h - gap], [-d / 2, -d / 2 + rv]),
+      span('glow', [xPier0, xPier1], [h - gap + 0.004, h - 0.004], [d / 2 - rv + 0.001, d / 2 - rv + 0.006], o),
+      span('glow', [xPier0, xPier1], [h - gap + 0.004, h - 0.004], [-d / 2 + rv - 0.006, -d / 2 + rv - 0.001], o),
+    );
+  } else {
+    parts.push(span('frame', [xPier0, xPier1], [0, h], [-d / 2, d / 2]));
+  }
+
+  // 2. Rounded-end half wall extending from xPier0 out to x0, and oak cap stopping flush at xPier0.
+  const r = Math.min(d / 2 - 0.006, 0.3);
+  const wallInset = d > 0.2 ? 0.02 : 0.002;
+  parts.push(
+    prism('frame', roundEnd(x0 + wallInset, xPier0, -d / 2 + wallInset, d / 2 - wallInset, Math.max(0.005, r - wallInset)), 0, H),
+    prism('shelf', roundEnd(x0, xPier0, -d / 2, d / 2, r), H, 0.04),
+  );
+
+  return parts;
+}
+
+function buildHalfWallPierLedge(size: Size3, params: ParamValues | undefined, side: 1 | -1, raisedRim: boolean): Part[] {
+  const g = halfWallPierGeo(size, params);
+  const { d, halfWall, H, x0, xPier0 } = g;
+  const rf = 0.22;
+  const rEnd = raisedRim ? Math.min(0.14, (d + LEDGE) / 2 - 0.02) : Math.min(d / 2 - 0.006, 0.3);
+  const z0 = -d / 2;
+  const z1 = d / 2 + LEDGE;
+  const flipZ = (pts: V2[]): V2[] => {
+    const mapped = pts.map(([x, z]) => [x, z * side] as V2);
+    return side === 1 ? mapped : mapped.reverse();
+  };
+  // Tabletop stops at xPier0 so it touches the full-height pier without penetrating through it.
+  const parts: Part[] = [prism('shelf', flipZ(twoCorners(x0, xPier0, z0, z1, rf, rEnd)), H, 0.04)];
+
+  if (raisedRim) {
+    const f = Math.max(0.005, Math.min(rf, (z1 - z0) / 2 - 0.001, xPier0 - x0 - 0.001));
+    const b = Math.max(0.005, Math.min(rEnd, (z1 - z0) / 2 - 0.001, xPier0 - x0 - 0.001));
+    const tRim = Math.min(0.024, b * 0.45);
+    const rimH = 0.095;
+    const capH = 0.004;
+    const xEnd = xPier0 - 0.002;
+    const zNose = Math.max(z0 + b + 0.02, z1 - f);
+    if (xEnd - x0 > b + 0.05) {
+      parts.push(
+        { ...prism('shelf', flipZ(ledgeRimBand(x0, xEnd, z0, zNose, b, tRim, 0)), halfWall - 0.002, rimH - capH + 0.002), plan: false },
+        { ...prism('shelf', flipZ(ledgeRimBand(x0, xEnd, z0, zNose, b, tRim, 0.0025)), halfWall + rimH - capH, capH), plan: false },
+      );
+    }
+  }
+
+  const spanW = xPier0 - x0;
+  const a = x0 + Math.min(0.22, spanW * 0.32);
+  const b = Math.max(a, xPier0 - Math.min(0.22, spanW * 0.32));
+  const n = b - a > 0.14 ? Math.max(2, Math.round((b - a) / 0.7) + 1) : 1;
+  const face = (d / 2 - (d > 0.2 ? 0.02 : 0.002)) * side;
+  const t = 0.012;
+  const len = Math.hypot(BRACKET_ARM, BRACKET_DROP);
+  const tilt = Math.atan2(-BRACKET_DROP, BRACKET_ARM * side);
+  for (const x of spaced(n, a, b)) {
+    const zArm: [number, number] = side === 1 ? [face, face + BRACKET_ARM] : [face - BRACKET_ARM, face];
+    const zPlate: [number, number] = side === 1 ? [face, face + t] : [face - t, face];
+    parts.push(
+      span('leg', [x - 0.015, x + 0.015], [H - t, H - 0.0005], zArm, { plan: false }),
+      span('leg', [x - 0.015, x + 0.015], [H - BRACKET_DROP, H - t], zPlate, { plan: false }),
+      box('leg', [x, H - BRACKET_DROP / 2, face + (BRACKET_ARM / 2) * side], [0.02, t, len], { rotation: [tilt, 0, 0], plan: false }),
+    );
+  }
+  return parts;
+}
+
+const halfWallPier = defineItem({
+  id: 'half-wall-pier',
+  name: 'Wall pier with half wall and oak ledge',
+  category: 'construction',
+  type: 'structure',
+  group: 'Portals & arches',
+  tags: [
+    'half wall',
+    'wall pier',
+    'partition',
+    'room divider',
+    'dining ledge',
+    'breakfast bar',
+    'LED cove',
+    'tường lửng',
+    'vách lửng',
+    'bàn ăn gắn tường',
+    ...TAGS,
+  ],
+  description:
+    'A 10 cm internal-wall thickness full-height wall pier paired with a rounded-end half wall (no overhead L-soffit), whose oak cap or dining ledge meets the vertical pier cleanly without cutting through it; resize the pier width, half-wall height and half-wall width independently.',
+  defaultSize: { w: 1.3, d: CORNER_T, h: CEILING },
+  minSize: { w: 0.5, d: 0.08, h: 1.8 },
+  maxSize: { w: 4.5, d: 0.4, h: 3.6 },
+  resizable: { w: true, d: true, h: true },
+  slots: [FRAME, SHELF, GLOW, LEDGE_LEG],
+  variants: [
+    ...PAINT_VARIANTS,
+    { id: 'walnut', name: 'Walnut cap & ledge', materials: { shelf: 'wood-walnut' } },
+    { id: 'white-brackets', name: 'Oak & white brackets', materials: { leg: 'metal-white-powder' } },
+  ],
+  params: halfWallPierParams(),
+  build: (s, p) => buildHalfWallPier(s, p),
+  models: [
+    { id: 'half-wall', name: 'Half wall with oak cap', hide: ['leg'] },
+    {
+      id: 'ledge',
+      name: 'Dining ledge (with rim)',
+      hide: ['shelf'],
+      slots: [SHELF, LEDGE_LEG],
+      reach: { front: LEDGE },
+      props: (s, p) => buildHalfWallPierLedge(s, p, 1, true),
+    },
+    {
+      id: 'ledge-flat',
+      name: 'Dining ledge (no rim)',
+      hide: ['shelf'],
+      slots: [SHELF, LEDGE_LEG],
+      reach: { front: LEDGE },
+      props: (s, p) => buildHalfWallPierLedge(s, p, 1, false),
+    },
+    {
+      id: 'ledge-back',
+      name: 'Dining ledge, other side',
+      hide: ['shelf'],
+      slots: [SHELF, LEDGE_LEG],
+      reach: { back: LEDGE },
+      props: (s, p) => buildHalfWallPierLedge(s, p, -1, true),
+    },
+  ],
+});
+
 export default definePack({
   name: 'Portal frames',
   version: '1.4.0',
@@ -1530,5 +1743,5 @@ export default definePack({
   description:
     'Rounded drywall portals that frame a zone: round-cornered, soft-square, round-top and basket-arch portals, L-shaped and asymmetric frames, a stepped double frame, oak-lined portals, LED-cove and kitchen downlight portals, legs with lit shelf niches, a desk nook, a half-wall portal, rounded ceiling headers, arched partition walls with editable side walls and top drop, and an arched corner bedroom enclosure. All resize freely; the curves are rebuilt for every size.',
   license: 'CC0 (made for Neest)',
-  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, header, headerCove, archedWall, archedWallPortal, cornerRoom, cornerPortal],
+  items: [rounded, softSquare, roundTop, basket, lPortal, asymmetric, stepped, oakLined, oakLinedL, cove, kitchen, niches, deskNook, halfWall, halfWallPier, header, headerCove, archedWall, archedWallPortal, cornerRoom, cornerPortal],
 });

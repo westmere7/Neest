@@ -4177,6 +4177,26 @@
    "file": "portal-frames_desk-nook-portal.webp",
    "fp": "f7b7249f8f0541f2"
   },
+  "portal-frames:half-wall-pier": {
+   "file": "portal-frames_half-wall-pier.webp",
+   "fp": "521026c04bf765f7"
+  },
+  "portal-frames:half-wall-pier@model:half-wall": {
+   "file": "portal-frames_half-wall-pier_model_half-wall.webp",
+   "fp": "e33e90d5aab0395c"
+  },
+  "portal-frames:half-wall-pier@model:ledge": {
+   "file": "portal-frames_half-wall-pier_model_ledge.webp",
+   "fp": "696bfc901412b4dc"
+  },
+  "portal-frames:half-wall-pier@model:ledge-back": {
+   "file": "portal-frames_half-wall-pier_model_ledge-back.webp",
+   "fp": "d085bec56a0d8237"
+  },
+  "portal-frames:half-wall-pier@model:ledge-flat": {
+   "file": "portal-frames_half-wall-pier_model_ledge-flat.webp",
+   "fp": "7d38bf76c6098ef9"
+  },
   "portal-frames:half-wall-portal": {
    "file": "portal-frames_half-wall-portal.webp",
    "fp": "570ac592333d8a7b"
@@ -4672,6 +4692,18 @@
   "soft-curve-furniture:l-shaped-bead-table@model:no-drawers": {
    "file": "soft-curve-furniture_l-shaped-bead-table_model_no-drawers.webp",
    "fp": "400ff4959c9b0f76"
+  },
+  "soft-curve-furniture:l-shaped-wall-dining-ledge": {
+   "file": "soft-curve-furniture_l-shaped-wall-dining-ledge.webp",
+   "fp": "9b53848e7d4bea4c"
+  },
+  "soft-curve-furniture:l-shaped-wall-dining-ledge@model:full-rim": {
+   "file": "soft-curve-furniture_l-shaped-wall-dining-ledge_model_full-rim.webp",
+   "fp": "e9c5898d9835ceed"
+  },
+  "soft-curve-furniture:l-shaped-wall-dining-ledge@model:with-rim": {
+   "file": "soft-curve-furniture_l-shaped-wall-dining-ledge_model_with-rim.webp",
+   "fp": "0d18648af718a061"
   },
   "soft-curve-furniture:leaf-pendant": {
    "file": "soft-curve-furniture_leaf-pendant.webp",
