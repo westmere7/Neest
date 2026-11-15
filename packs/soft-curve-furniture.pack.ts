@@ -1203,12 +1203,16 @@ function lWallDiningLedgeGeo({ w, d, h }: Size3, params?: ParamValues): LWallLed
 
   const remX = Math.max(0.04, x1 - xIn);
   const remZ = Math.max(0.04, z1 - zIn);
-  const rIn = Math.min(0.075, remX * 0.28, remZ * 0.28);
-  const r00 = Math.min(0.08, armW * 0.22, armD * 0.22);
-  const rBackX = Math.min(0.14, armD * 0.36, (x1 - x0 - r00) * 0.45);
-  const rFrontX = Math.min(0.18, armD * 0.46, Math.max(0.015, remX - rIn - 0.008));
-  const rLeftZ = Math.min(0.14, armW * 0.36, (z1 - z0 - r00) * 0.45);
-  const rRightZ = Math.min(0.18, armW * 0.46, Math.max(0.015, remZ - rIn - 0.008));
+
+  const rawInnerR = typeof params?.innerRadius === 'number' && Number.isFinite(params.innerRadius) ? params.innerRadius : 0.08;
+  const rawBackEndR = typeof params?.backEndRadius === 'number' && Number.isFinite(params.backEndRadius) ? params.backEndRadius : 0.16;
+  const rawSideOuterR = typeof params?.sideOuterRadius === 'number' && Number.isFinite(params.sideOuterRadius) ? params.sideOuterRadius : 0.14;
+  const rawSideFrontR = typeof params?.sideFrontRadius === 'number' && Number.isFinite(params.sideFrontRadius) ? params.sideFrontRadius : 0.16;
+
+  const rIn = clamp(rawInnerR, 0.008, Math.min(0.35, remX * 0.45, remZ * 0.45));
+  const rFrontX = clamp(rawBackEndR, 0.008, Math.max(0.008, Math.min(armD - 0.012, remX - rIn - 0.008)));
+  const rLeftZ = clamp(rawSideOuterR, 0.015, Math.max(0.015, Math.min(armW - 0.02, (z1 - z0) * 0.48)));
+  const rRightZ = clamp(rawSideFrontR, 0.008, Math.max(0.008, Math.min(armW - rLeftZ - 0.012, remZ - rIn - 0.008)));
 
   return {
     w,
@@ -1224,8 +1228,6 @@ function lWallDiningLedgeGeo({ w, d, h }: Size3, params?: ParamValues): LWallLed
     z1,
     xIn,
     zIn,
-    r00,
-    rBackX,
     rFrontX,
     rLeftZ,
     rRightZ,
@@ -1297,12 +1299,80 @@ function lWallDiningLedgeParams(): AssetParam[] {
         return { at: [g.xIn, g.H + g.topT / 2, (g.zIn + g.z1) / 2], dir: [1, 0, 0] };
       },
     },
+    {
+      id: 'backEndRadius',
+      label: 'Back arm corner radius',
+      kind: 'length',
+      default: 0.16,
+      min: 0.01,
+      max: 0.4,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lWallDiningLedgeGeo(size, p);
+        const k = 1 - Math.SQRT1_2;
+        return {
+          at: [g.x1 - g.rFrontX * k, g.H + g.topT, g.zIn - g.rFrontX * k],
+          dir: [-Math.SQRT1_2, 0, -Math.SQRT1_2],
+        };
+      },
+    },
+    {
+      id: 'innerRadius',
+      label: 'Inner L corner radius',
+      kind: 'length',
+      default: 0.08,
+      min: 0.01,
+      max: 0.3,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lWallDiningLedgeGeo(size, p);
+        const k = 1 - Math.SQRT1_2;
+        return {
+          at: [g.xIn + g.rIn * k, g.H + g.topT, g.zIn + g.rIn * k],
+          dir: [Math.SQRT1_2, 0, Math.SQRT1_2],
+        };
+      },
+    },
+    {
+      id: 'sideFrontRadius',
+      label: 'Side arm inner corner radius',
+      kind: 'length',
+      default: 0.16,
+      min: 0.01,
+      max: 0.4,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lWallDiningLedgeGeo(size, p);
+        const k = 1 - Math.SQRT1_2;
+        return {
+          at: [g.xIn - g.rRightZ * k, g.H + g.topT, g.z1 - g.rRightZ * k],
+          dir: [-Math.SQRT1_2, 0, -Math.SQRT1_2],
+        };
+      },
+    },
+    {
+      id: 'sideOuterRadius',
+      label: 'Side arm outer corner radius',
+      kind: 'length',
+      default: 0.14,
+      min: 0.02,
+      max: 0.4,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lWallDiningLedgeGeo(size, p);
+        const k = 1 - Math.SQRT1_2;
+        return {
+          at: [g.x0 + g.rLeftZ * k, g.H + g.topT, g.z1 - g.rLeftZ * k],
+          dir: [Math.SQRT1_2, 0, -Math.SQRT1_2],
+        };
+      },
+    },
   ];
 }
 
 function buildLWallDiningLedgeBase(size: Size3, params?: ParamValues): Part[] {
   const g = lWallDiningLedgeGeo(size, params);
-  const { h, topT, H, armD, armW, x0, x1, z0, z1, xIn, zIn, r00, rBackX, rFrontX, rLeftZ, rRightZ, rIn } = g;
+  const { h, topT, H, armD, armW, x0, x1, z0, z1, xIn, zIn, rFrontX, rLeftZ, rRightZ, rIn } = g;
 
   const lOutline = (inset: number): V2[] => {
     const ox0 = x0 + inset;
@@ -1311,15 +1381,15 @@ function buildLWallDiningLedgeBase(size: Size3, params?: ParamValues): Part[] {
     const oz1 = z1 - inset;
     const oxIn = xIn - inset;
     const ozIn = zIn - inset;
-    const c00 = Math.max(0.004, r00 - inset);
-    const bX = Math.max(0.006, rBackX - inset);
-    const fX = Math.max(0.006, rFrontX - inset);
-    const lZ = Math.max(0.006, rLeftZ - inset);
-    const rZ = Math.max(0.006, rRightZ - inset);
-    const iR = Math.max(0.006, rIn + inset);
+    const fX = Math.max(0.004, rFrontX - inset);
+    const lZ = Math.max(0.004, rLeftZ - inset);
+    const rZ = Math.max(0.004, rRightZ - inset);
+    const iR = Math.max(0.004, rIn + inset);
+    // Wall corners (ox0, oz0) and (ox1, oz0) are crisp 90° square corners against the wall;
+    // the remaining 4 corners use their configurable radii.
     return dedupe([
-      ...arc(ox0 + c00, oz0 + c00, c00, c00, Math.PI, 1.5 * Math.PI, 8),
-      ...arc(ox1 - bX, oz0 + bX, bX, bX, -Math.PI / 2, 0, 10),
+      [ox0, oz0],
+      [ox1, oz0],
       ...arc(ox1 - fX, ozIn - fX, fX, fX, 0, Math.PI / 2, 10),
       ...arc(oxIn + iR, ozIn + iR, iR, iR, -Math.PI / 2, -Math.PI, 8),
       ...arc(oxIn - rZ, oz1 - rZ, rZ, rZ, 0, Math.PI / 2, 10),
@@ -1377,14 +1447,14 @@ function buildLWallDiningLedgeBase(size: Size3, params?: ParamValues): Part[] {
 
 function buildLWallDiningLedgeRim(size: Size3, params?: ParamValues, mode: 'side' | 'both' = 'side'): Part[] {
   const g = lWallDiningLedgeGeo(size, params);
-  const { h, x0, x1, z0, z1, xIn, zIn, r00, rBackX, rFrontX, rLeftZ, rRightZ } = g;
-  const tRim = Math.min(0.024, rLeftZ * 0.45, rBackX * 0.45, r00 * 0.6);
+  const { h, x0, x1, z0, z1, xIn, rLeftZ, rRightZ } = g;
+  const tRim = Math.min(0.024, rLeftZ * 0.45);
   const rimH = 0.095;
   const capH = 0.004;
   const xNose = Math.max(x0 + rLeftZ + 0.02, xIn - rRightZ);
 
   if (mode === 'side') {
-    const zStart = z0 + r00 + 0.006;
+    const zStart = z0 + 0.016;
     if (z1 - zStart < rLeftZ + 0.04) return [];
     const band = (inset: number): V2[] => {
       const rOut = Math.max(0.004, rLeftZ - inset);
@@ -1404,27 +1474,21 @@ function buildLWallDiningLedgeRim(size: Size3, params?: ParamValues, mode: 'side
     ];
   }
 
-  // Full L-edge rim wrapping both outer walls and both rounded free ends.
-  const zNoseX = Math.max(z0 + rBackX + 0.02, zIn - rFrontX);
+  // Full L-edge rim wrapping the square back-wall edge and the curved side arm.
+  const xBackEnd = Math.max(x0 + tRim + 0.04, x1 - 0.012);
   const fullBand = (inset: number): V2[] => {
     const rCap = Math.max(0.002, tRim / 2 - inset);
     const lOut = Math.max(0.004, rLeftZ - inset);
     const lIn = Math.max(0.003, rLeftZ - tRim + inset);
-    const cOut = Math.max(0.004, r00 - inset);
-    const cIn = Math.max(0.003, r00 - tRim + inset);
-    const bOut = Math.max(0.004, rBackX - inset);
-    const bIn = Math.max(0.003, rBackX - tRim + inset);
     const pts: V2[] = [
-      ...arc(x1 - tRim / 2, zNoseX, rCap, rCap, -Math.PI, 0, 8),
-      ...arc(x1 - rBackX, z0 + rBackX, bOut, bOut, 0, -Math.PI / 2, 12),
-      ...arc(x0 + r00, z0 + r00, cOut, cOut, 1.5 * Math.PI, Math.PI, 10),
-      ...arc(x0 + rLeftZ, z1 - rLeftZ, lOut, lOut, Math.PI, Math.PI / 2, 12),
-      ...arc(xNose, z1 - tRim / 2, rCap, rCap, Math.PI / 2, -Math.PI / 2, 8),
-      ...arc(x0 + rLeftZ, z1 - rLeftZ, lIn, lIn, Math.PI / 2, Math.PI, 12),
-      ...arc(x0 + r00, z0 + r00, cIn, cIn, Math.PI, 1.5 * Math.PI, 10),
-      ...arc(x1 - rBackX, z0 + rBackX, bIn, bIn, -Math.PI / 2, 0, 12),
+      ...arc(xBackEnd, z0 + tRim / 2, rCap, rCap, -Math.PI / 2, Math.PI / 2, 8),
+      [x0 + tRim - inset, z0 + tRim - inset],
+      ...arc(x0 + rLeftZ, z1 - rLeftZ, lIn, lIn, Math.PI, Math.PI / 2, 12),
+      ...arc(xNose, z1 - tRim / 2, rCap, rCap, -Math.PI / 2, Math.PI / 2, 8),
+      ...arc(x0 + rLeftZ, z1 - rLeftZ, lOut, lOut, Math.PI / 2, Math.PI, 12),
+      [x0 + inset, z0 + inset],
     ];
-    return dedupe(pts.reverse());
+    return dedupe(pts);
   };
   return [
     { ...prism('top', fullBand(0), h - 0.002, rimH - capH + 0.002), plan: false },

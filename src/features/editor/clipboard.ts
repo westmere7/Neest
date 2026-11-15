@@ -3,6 +3,7 @@ import type { Vec2 } from '@/domain/model/schema';
 import { clipboardText, copyPayload, parseClipboard, pasteObjects, payloadCentre, type ClipboardPayload } from '@/domain/commands/clipboard';
 import { deleteEntities, pruneGroups } from '@/domain/commands/entities';
 import { isObjectLocked } from '@/domain/commands/itemLayers';
+import { inOption, listOptions } from '@/domain/commands/options';
 import { getAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
@@ -22,6 +23,7 @@ import { isolationGroupFor } from './isolation';
 
 const STORE_KEY = 'neest:clipboard';
 let lastPaste: { copiedAt: number; n: number } | null = null;
+let memoryPayload: ClipboardPayload | null = null;
 
 const es = () => useEditorStore.getState();
 const ps = () => useProjectStore.getState();
@@ -51,17 +53,32 @@ function selectionPayload(quiet = false): ClipboardPayload | null {
   return payload;
 }
 
-function remember(text: string): void {
+function remember(payload: ClipboardPayload, text: string): void {
+  memoryPayload = payload;
   try {
     localStorage.setItem(STORE_KEY, text);
   } catch {
-    // Storage full or blocked: the system clipboard still has it.
+    // Storage full or blocked: memoryPayload and the system clipboard still have it.
   }
+}
+
+function storedPayload(): ClipboardPayload | null {
+  if (memoryPayload) return memoryPayload;
+  try {
+    return parseClipboard(localStorage.getItem(STORE_KEY));
+  } catch {
+    return null;
+  }
+}
+
+/** Whether Neest has a copied item snapshot ready to paste in this browser. */
+export function hasClipboardPayload(): boolean {
+  return !!storedPayload();
 }
 
 function copied(payload: ClipboardPayload, cut: boolean): void {
   const n = payload.objects.length;
-  toast.success(`${cut ? 'Cut' : 'Copied'} ${n} item${n === 1 ? '' : 's'}`, 'Paste with Ctrl+V, here or in another tab or project.');
+  toast.success(`${cut ? 'Cut' : 'Copied'} ${n} item${n === 1 ? '' : 's'}`, 'Paste with Ctrl+V, here or in another option, tab or project.');
 }
 
 /** Removes the cut items (locked ones stay). */
@@ -79,7 +96,7 @@ export async function copySelection(cut = false): Promise<void> {
   const payload = selectionPayload();
   if (!payload) return;
   const text = clipboardText(payload);
-  remember(text);
+  remember(payload, text);
   try {
     await navigator.clipboard.writeText(text);
   } catch {
@@ -89,11 +106,38 @@ export async function copySelection(cut = false): Promise<void> {
   if (cut) removeCut(payload);
 }
 
+/** Copies the selected items directly into another layout option of the same project (in place). */
+export function copySelectionToOption(targetOptionId: string): string[] {
+  const p = ps().project;
+  if (!p) return [];
+  const { options, activeId } = listOptions(p);
+  const target = options.find((o) => o.id === targetOptionId);
+  if (!target || target.id === activeId) return [];
+  const payload = selectionPayload();
+  if (!payload) return [];
+  remember(payload, clipboardText(payload));
+  const result = ps().execute(
+    `Copy ${payload.objects.length} item${payload.objects.length === 1 ? '' : 's'} to ${target.name}`,
+    (d) => {
+      let r = { ids: [] as string[], skipped: 0 };
+      inOption(d, targetOptionId, (plan) => {
+        r = pasteObjects(plan, payload, { x: 0, y: 0 }, (id) => !!getAsset(p, id));
+      });
+      return r;
+    },
+  );
+  if (!result || !result.ids.length) return [];
+  const n = result.ids.length;
+  toast.success(`Copied ${n} item${n === 1 ? '' : 's'} to ${target.name}`, 'Placed at the same position.');
+  return result.ids;
+}
+
 /** Pastes a snapshot: stepped beside the originals back home, in place elsewhere, or centred on `at`. */
 export function pastePayload(payload: ClipboardPayload, at?: Vec2, inPlace = false): string[] {
   const p = ps().project;
   if (!p) return [];
-  const home = payload.projectId === p.id && payload.optionId === (p.activeOptionId ?? null);
+  const activeOptionId = p.options?.length ? listOptions(p).activeId : (p.activeOptionId ?? null);
+  const home = payload.projectId === p.id && payload.optionId === activeOptionId;
   let offset: Vec2 = { x: 0, y: 0 };
   if (at) {
     const c = payloadCentre(payload);
@@ -136,47 +180,62 @@ async function readPayload(): Promise<ClipboardPayload | null> {
   } catch {
     // Refused: fall back to this browser's copy.
   }
-  try {
-    return parseClipboard(localStorage.getItem(STORE_KEY));
-  } catch {
-    return null;
-  }
+  return storedPayload();
 }
 
 /** Pastes from the clipboard (menu commands); `at` centres the items on a point ("Paste here"). */
-export async function pasteFromClipboard(at?: Vec2): Promise<void> {
+export async function pasteFromClipboard(at?: Vec2, inPlace = false): Promise<void> {
   if (!editorReady()) return;
   const payload = await readPayload();
   if (!payload) {
     toast.info('Nothing to paste', 'Copy items first (Ctrl+C), in this or another Neest tab.');
     return;
   }
-  pastePayload(payload, at);
+  pastePayload(payload, at, inPlace);
 }
 
 /** Ctrl+C / Ctrl+X / Ctrl+V on the page while an editor is open (Ctrl+Shift+V pastes in place). */
 export function useItemClipboard(): void {
   useEffect(() => {
     let shiftHeld = false;
+    let lastCopyAt = -Infinity;
+    let lastPasteAt = -Infinity;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'v' && (e.ctrlKey || e.metaKey)) shiftHeld = e.shiftKey;
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === 'v') {
+        shiftHeld = e.shiftKey;
+        if (!editorReady(e)) return;
+        const shift = e.shiftKey;
+        window.setTimeout(() => {
+          if (performance.now() - lastPasteAt > 50) void pasteFromClipboard(undefined, shift);
+        }, 0);
+      } else if ((k === 'c' || k === 'x') && !e.shiftKey) {
+        if (!editorReady(e) || !es().selection.length) return;
+        const cut = k === 'x';
+        window.setTimeout(() => {
+          if (performance.now() - lastCopyAt > 50) void copySelection(cut);
+        }, 0);
+      }
     };
     const onCopy = (e: ClipboardEvent) => {
       if (!editorReady(e) || !es().selection.length) return;
       const payload = selectionPayload();
       if (!payload) return;
+      lastCopyAt = performance.now();
       const text = clipboardText(payload);
       e.clipboardData?.setData('text/plain', text);
       e.preventDefault();
-      remember(text);
+      remember(payload, text);
       const cut = e.type === 'cut';
       copied(payload, cut);
       if (cut) removeCut(payload);
     };
     const onPaste = (e: ClipboardEvent) => {
       if (!editorReady(e)) return;
-      const payload = parseClipboard(e.clipboardData?.getData('text/plain'));
+      const payload = parseClipboard(e.clipboardData?.getData('text/plain')) ?? storedPayload();
       if (!payload) return;
+      lastPasteAt = performance.now();
       e.preventDefault();
       pastePayload(payload, undefined, shiftHeld);
     };

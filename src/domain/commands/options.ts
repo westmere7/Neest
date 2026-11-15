@@ -158,6 +158,26 @@ export function moveOption(d: D, id: string, dir: -1 | 1): void {
 }
 
 /**
+ * Runs `fn` inside option `optionId`'s plan (directly when it is the active option, or by swapping
+ * its stored plan into the project's fields while `fn` runs). Returns false when the option is unknown.
+ */
+export function inOption(d: D, optionId: string, fn: (d: D) => void): boolean {
+  const { activeId } = listOptions(d);
+  if (optionId === activeId) {
+    fn(d);
+    return true;
+  }
+  const o = d.options?.find((x) => x.id === optionId);
+  if (!o) return false;
+  const active = takePlan(d);
+  putPlan(d, o.plan ?? emptyPlan());
+  fn(d);
+  o.plan = takePlan(d);
+  putPlan(d, active);
+  return true;
+}
+
+/**
  * Runs `fn` for the active plan and then for every stored option plan (swapped into the project's
  * fields while it runs), for edits that must reach all options, such as reassigning a deleted
  * material.

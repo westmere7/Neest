@@ -956,6 +956,25 @@ describe('pack models', () => {
     expect(editedShelf.max[0]).toBeCloseTo(1.3 / 2 - 0.4, 4);
     expect(editedShelf.max[1]).toBeCloseTo(0.9, 4);
   });
+
+  it('builds bathroom-collection:floating-undermount-vanity-mirror with open under-clearance, 1 drawer, undermount basin, and round LED mirror', () => {
+    const v = ASSETS_BY_ID['bathroom-collection:floating-undermount-vanity-mirror'];
+    expect(v).toBeDefined();
+    expect(v.defaultSize).toEqual({ w: 0.85, d: 0.5, h: 1.95 });
+    expect(v.params?.map((p) => p.id)).toEqual(['counterHeight', 'cabinetHeight', 'mirrorSize']);
+    expect(assetModels(v).map((m) => m.id)).toEqual(['styled', 'bare']);
+
+    const styled = withModel(v, 'styled').build(v.defaultSize);
+    // Open under-clearance ("gầm thoáng"): lowest cabinet part sits above y = 0.50 m.
+    const minY = Math.min(...styled.map((p) => worldBounds(p).min[1]));
+    expect(minY).toBeGreaterThan(0.5);
+    expect(styled.some((p) => p.slot === 'top')).toBe(true);
+    expect(styled.some((p) => p.slot === 'mirror')).toBe(true);
+    expect(styled.some((p) => p.slot === 'decor')).toBe(true);
+
+    const bare = withModel(v, 'bare').build(v.defaultSize);
+    expect(bare.some((p) => p.slot === 'decor')).toBe(false);
+  });
 });
 
 describeAssetChecks(packItems);

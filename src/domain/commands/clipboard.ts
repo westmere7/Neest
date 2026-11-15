@@ -16,6 +16,7 @@ import {
   type Vec2,
 } from '../model/schema';
 import type { D } from './walls';
+import { listOptions } from './options';
 
 /**
  * Copy and paste of placed items (Ctrl+C / Ctrl+X / Ctrl+V). The clipboard holds a self-contained
@@ -66,7 +67,7 @@ export function copyPayload(project: Project, ids: string[], copiedAt = Date.now
     kind: CLIPBOARD_KIND,
     v: 1,
     projectId: project.id,
-    optionId: project.activeOptionId ?? null,
+    optionId: project.options?.length ? listOptions(project).activeId : (project.activeOptionId ?? null),
     copiedAt,
     objects: objects.map((o) => structuredClone(plain(o))),
     groups,
@@ -110,7 +111,8 @@ export interface PasteResult {
  * unlocked and shown; services pins are dropped (they point at the source plan's points).
  */
 export function pasteObjects(d: D, p: ClipboardPayload, offset: Vec2, assetExists: (assetId: string) => boolean): PasteResult {
-  const sameProject = d.id === p.projectId;
+  const activeOptionId = d.options?.length ? listOptions(d).activeId : (d.activeOptionId ?? null);
+  const sameOption = d.id === p.projectId && activeOptionId === p.optionId;
   for (const [id, m] of Object.entries(p.materials)) if (!d.materials[id]) d.materials[id] = structuredClone(m);
   for (const [id, a] of Object.entries(p.customAssets)) if (!d.customAssets[id]) d.customAssets[id] = structuredClone(a);
   const layerFor = (layerId: string | undefined): string | undefined => {
@@ -141,7 +143,7 @@ export function pasteObjects(d: D, p: ClipboardPayload, offset: Vec2, assetExist
         regroup.set(src.groupId, g);
         const from = p.groups[src.groupId];
         d.groups ??= {};
-        d.groups[g] = { id: g, name: `${from?.name ?? 'Group'}${sameProject ? ' copy' : ''}`.slice(0, 80), ...(from?.description ? { description: from.description } : {}) };
+        d.groups[g] = { id: g, name: `${from?.name ?? 'Group'}${sameOption ? ' copy' : ''}`.slice(0, 80), ...(from?.description ? { description: from.description } : {}) };
       }
       o.groupId = g;
     }

@@ -19,9 +19,10 @@ import {
 import { groupSelection, groupState, saveSelectionToLibrary, ungroupSelection } from '@/features/editor/groups';
 import { createCalloutAt, spotOnItem } from './tools/calloutTool';
 import { isObjectLocked, itemLayerOf } from '@/domain/commands/itemLayers';
+import { listOptions } from '@/domain/commands/options';
 import { moveSelectionToLayer, newLayerFromSelection } from '@/features/editor/itemLayerActions';
 import { canEditItem, enterShapeEdit } from '@/features/shape-edit/actions';
-import { copySelection, pasteFromClipboard } from '@/features/editor/clipboard';
+import { copySelection, copySelectionToOption, hasClipboardPayload, pasteFromClipboard } from '@/features/editor/clipboard';
 import { enterIsolation, exitIsolation, groupExists } from '@/features/editor/isolation';
 
 /** Opens the library on an item's shelf and flashes its card (leaves Connections, which shares the panel's place). */
@@ -53,12 +54,22 @@ function allPlanContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
   // Inside an isolated group: leave it from the menu too.
   const isolated = ed.isolatedGroupId;
   const leaveGroup: MenuItem[] = isolated ? [{ label: 'Leave group', shortcut: 'Esc', run: () => exitIsolation() }, { separator: true, label: '' }] : [];
+  const hasPaste = hasClipboardPayload();
+  const pasteMenu: MenuItem[] = hasPaste
+    ? [
+        { label: 'Paste', shortcut: 'Ctrl+V', run: () => void pasteFromClipboard() },
+        { label: 'Paste here', run: () => void pasteFromClipboard({ x: world.x, y: world.y }) },
+      ]
+    : [];
+  const { options, activeId } = listOptions(project);
+  const otherOptions = options.filter((opt) => opt.id !== activeId);
   if (!hit) {
     return [
       ...leaveGroup,
       { label: 'Add note here', shortcut: 'K', run: () => void createCalloutAt({ kind: 'point', x: world.x, y: world.y, z: 0 }, px) },
       { separator: true, label: '' },
-      { label: 'Paste here', shortcut: 'Ctrl+V', run: () => void pasteFromClipboard({ x: world.x, y: world.y }) },
+      ...(hasPaste ? [{ label: 'Paste', shortcut: 'Ctrl+V', run: () => void pasteFromClipboard() }] : []),
+      { label: 'Paste here', shortcut: hasPaste ? undefined : 'Ctrl+V', run: () => void pasteFromClipboard({ x: world.x, y: world.y }) },
       { label: 'Select all', shortcut: 'Ctrl+A', run: selectAll },
       { label: 'Fit plan to view', shortcut: 'F', run: () => ed.requestFit() },
       { separator: true, label: '' },
@@ -101,7 +112,12 @@ function allPlanContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
         run: () => void copySelection(true),
         disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)),
       },
+      ...pasteMenu,
       { label: 'Duplicate', shortcut: 'Ctrl+D', run: duplicateSelection },
+      ...otherOptions.map((opt) => ({
+        label: `Copy to “${opt.name}”`,
+        run: () => void copySelectionToOption(opt.id),
+      })),
       { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },
       { label: 'Flip (mirror)', run: mirrorSelection, disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },
       { label: o?.locked ? 'Unlock' : 'Lock', shortcut: 'Ctrl+L', run: toggleLockSelection },
@@ -113,6 +129,7 @@ function allPlanContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
   } else if (hit.kind === 'wall') {
     const w = project.walls[hit.id];
     items.push(
+      ...(hasPaste ? [...pasteMenu, { separator: true, label: '' }] : []),
       {
         label: 'Split wall here',
         disabled: w?.locked,
@@ -143,6 +160,7 @@ function allPlanContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
     );
   } else if (hit.kind === 'room') {
     items.push(
+      ...(hasPaste ? [...pasteMenu, { separator: true, label: '' }] : []),
       { label: 'Rename room', run: () => window.dispatchEvent(new CustomEvent('neest:focus-name')) },
       { label: 'Add note to room', run: () => void createCalloutAt({ kind: 'room', roomId: hit.id }, px) },
       { label: 'Fit plan to view', shortcut: 'F', run: () => ed.requestFit() },

@@ -160,6 +160,239 @@ const vanityVessel = defineItem({
   planDetail: ({ w, d }) => [circle([0, 0.02], clamp(Math.min(w * 0.24, d * 0.42), 0.16, 0.22) * 0.9), line([-w / 2, d / 2 - 0.02], [w / 2, d / 2 - 0.02])],
 });
 
+/** Geometry of the floating single-drawer undermount vanity with round LED mirror. */
+function undermountVanityGeom(
+  w: number,
+  h: number,
+  p?: Record<string, number | boolean | string>,
+) {
+  const topT = 0.026;
+  const yTop = clamp(typeof p?.counterHeight === 'number' ? p.counterHeight : 0.82, 0.68, Math.min(0.95, h - 0.55));
+  const cabH = clamp(typeof p?.cabinetHeight === 'number' ? p.cabinetHeight : 0.26, 0.18, Math.min(0.42, yTop - topT - 0.25));
+  const yCab1 = yTop - topT;
+  const yCab0 = yCab1 - cabH;
+  const maxMirrorD = Math.max(0.4, Math.min(w - 0.04, h - yTop - 0.18, 1.05));
+  const mirrorD = clamp(typeof p?.mirrorSize === 'number' ? p.mirrorSize : 0.68, 0.4, maxMirrorD);
+  const rM = mirrorD / 2;
+  const my = h - rM - 0.01;
+  return { topT, yTop, cabH, yCab0, yCab1, mirrorD, rM, my };
+}
+
+const floatingUndermountVanityMirror = defineItem({
+  id: 'floating-undermount-vanity-mirror',
+  name: 'Floating single-drawer undermount vanity with round LED mirror',
+  category: 'bathroom',
+  type: 'plumbing',
+  group: 'Sinks',
+  price: { vnd: 6_500_000, estimate: true },
+  tags: tags(
+    'vanity',
+    'floating vanity',
+    'undermount basin',
+    'recessed sink',
+    'single drawer',
+    'round led mirror',
+    'dry vanity',
+    'kệ rửa mặt',
+    'tủ lavabo treo tường',
+    'chậu âm bàn',
+    'gương tròn led',
+  ),
+  description:
+    'Wall-hung single-drawer oak vanity with an open under-clearance, a white integrated countertop with a recessed undermount ceramic basin, a matte-black mixer tap and a round front-lit LED mirror.',
+  defaultSize: { w: 0.85, d: 0.5, h: 1.95 },
+  minSize: { w: 0.6, d: 0.42, h: 1.55 },
+  maxSize: { w: 1.4, d: 0.6, h: 2.3 },
+  wallSnap: true,
+  slots: [
+    matSlot('cabinet', 'Drawer cabinet', 'wood-oak-light'),
+    matSlot('top', 'Countertop & basin', 'ceramic-white'),
+    matSlot('tap', 'Tap, knob & mirror rim', 'metal-black-matte'),
+    matSlot('mirror', 'Mirror glass', 'glass-mirror'),
+  ],
+  models: [
+    {
+      id: 'styled',
+      name: 'With toiletries (styled)',
+      slots: [matSlot('decor', 'Soap dispensers', 'glass-amber')],
+      props: ({ w, d, h }, params) => {
+        const g = undermountVanityGeom(w, h, params);
+        const x1 = w / 2;
+        const zb = -d / 2;
+        const bw = clamp(w * 0.54, 0.34, Math.min(0.58, w - 0.18));
+        const bx1 = Math.min(x1 - 0.08, bw / 2 + 0.075);
+        const bx2 = Math.min(x1 - 0.035, bx1 + 0.052);
+        const bzBottle = zb + 0.085;
+        return [
+          vcyl('decor', bx1, bzBottle, g.yTop + 0.001, g.yTop + 0.115, 0.028, o),
+          vcyl('tap', bx1, bzBottle, g.yTop + 0.116, g.yTop + 0.142, 0.008, o),
+          rod('tap', [bx1, g.yTop + 0.138, bzBottle], [bx1, g.yTop + 0.135, bzBottle + 0.026], 0.004, o),
+          vcyl('decor', bx2, bzBottle + 0.025, g.yTop + 0.001, g.yTop + 0.105, 0.025, o),
+          vcyl('tap', bx2, bzBottle + 0.025, g.yTop + 0.106, g.yTop + 0.13, 0.007, o),
+          rod('tap', [bx2, g.yTop + 0.126, bzBottle + 0.025], [bx2, g.yTop + 0.123, bzBottle + 0.048], 0.004, o),
+        ];
+      },
+    },
+    { id: 'bare', name: 'Without toiletries' },
+  ],
+  variants: [
+    {
+      id: 'warm-oak-black',
+      name: 'Warm oak & matte black',
+      materials: {
+        cabinet: 'wood-oak-light',
+        top: 'ceramic-white',
+        tap: 'metal-black-matte',
+        mirror: 'glass-mirror',
+      },
+    },
+    {
+      id: 'natural-oak-marble',
+      name: 'Natural oak & Carrara marble',
+      materials: {
+        cabinet: 'wood-oak-natural',
+        top: 'stone-marble-carrara',
+        tap: 'metal-black-matte',
+        mirror: 'glass-mirror',
+      },
+    },
+    {
+      id: 'walnut-brass',
+      name: 'Walnut & brushed brass',
+      materials: {
+        cabinet: 'wood-walnut',
+        top: 'ceramic-white',
+        tap: 'metal-brass',
+        mirror: 'glass-mirror',
+      },
+    },
+    {
+      id: 'white-chrome',
+      name: 'Satin white & chrome',
+      materials: {
+        cabinet: 'wood-painted-white',
+        top: 'stone-marble-carrara',
+        tap: 'metal-chrome',
+        mirror: 'glass-mirror',
+      },
+    },
+  ],
+  params: [
+    {
+      id: 'counterHeight',
+      label: 'Countertop height',
+      kind: 'length',
+      min: 0.72,
+      max: 0.92,
+      step: 0.01,
+      default: 0.82,
+      handle: ({ w, d, h }, p) => {
+        const g = undermountVanityGeom(w, h, p);
+        return { at: [0, g.yTop, d / 2], dir: [0, 1, 0] };
+      },
+    },
+    {
+      id: 'cabinetHeight',
+      label: 'Drawer cabinet height',
+      kind: 'length',
+      min: 0.18,
+      max: 0.38,
+      step: 0.01,
+      default: 0.26,
+      handle: ({ w, d, h }, p) => {
+        const g = undermountVanityGeom(w, h, p);
+        return { at: [0, g.yCab0, d / 2 - 0.014], dir: [0, -1, 0] };
+      },
+    },
+    {
+      id: 'mirrorSize',
+      label: 'Round mirror diameter',
+      kind: 'length',
+      min: 0.45,
+      max: 1.0,
+      step: 0.01,
+      default: 0.68,
+      handle: ({ w, d, h }, p) => {
+        const g = undermountVanityGeom(w, h, p);
+        return { at: [g.rM, g.my, -d / 2 + 0.02], dir: [1, 0, 0], scale: 2 };
+      },
+    },
+  ],
+  build: ({ w, d, h }, params) => {
+    const g = undermountVanityGeom(w, h, params);
+    const x0 = -w / 2;
+    const x1 = w / 2;
+    const zb = -d / 2;
+    const zf = d / 2 - 0.012;
+    const ct = 0.018;
+
+    // Rectangular undermount basin cut-out in the countertop.
+    const bw = clamp(w * 0.54, 0.34, Math.min(0.58, w - 0.18));
+    const bd = clamp(d * 0.58, 0.24, Math.min(0.36, d - 0.16));
+    const bzCenter = zb + (d - bd) * 0.56 + bd / 2;
+    const hx: [number, number] = [-bw / 2, bw / 2];
+    const hz: [number, number] = [bzCenter - bd / 2, bzCenter + bd / 2];
+
+    const yBasin0 = Math.max(g.yCab0 + 0.03, g.yCab1 - 0.14);
+    const bt = 0.012;
+    const yDrawerMid = (g.yCab0 + g.yCab1) / 2;
+    const zTap = zb + 0.068;
+    const tapH = 0.145;
+    const reach = Math.max(0.08, hz[0] - zTap + 0.055);
+
+    return [
+      // 1. Floating single-drawer oak cabinet carcass (open underneath, open top around basin).
+      span('cabinet', [x0 + 0.002, x0 + 0.002 + ct], [g.yCab0, g.yCab1 - 0.002], [zb + 0.003, zf - 0.018]),
+      span('cabinet', [x1 - 0.002 - ct, x1 - 0.002], [g.yCab0, g.yCab1 - 0.002], [zb + 0.003, zf - 0.018]),
+      span('cabinet', [x0 + 0.002 + ct, x1 - 0.002 - ct], [g.yCab0, g.yCab0 + ct], [zb + 0.003, zf - 0.018]),
+      span('cabinet', [x0 + 0.002 + ct, x1 - 0.002 - ct], [g.yCab0 + ct, g.yCab1 - 0.002], [zb + 0.003, zb + 0.003 + ct], o),
+      // Single full-width drawer front with bevelled edges and centred round matte-black knob.
+      span('cabinet', [x0 + 0.004, x1 - 0.004], [g.yCab0 + 0.004, g.yCab1 - 0.004], [zf - 0.018, zf], { bevel: 0.003 }),
+      discZ('tap', [0, yDrawerMid, zf + 0.006], 0.006, 0.01, o),
+      discZ('tap', [0, yDrawerMid, zf + 0.015], 0.012, 0.008, o),
+
+      // 2. White stone/ceramic countertop around the recessed basin cut-out + rear splash lip.
+      span('top', [x0, hx[0]], [g.yCab1, g.yTop], [zb, d / 2], { bevel: 0.002 }),
+      span('top', [hx[1], x1], [g.yCab1, g.yTop], [zb, d / 2], { bevel: 0.002 }),
+      span('top', hx, [g.yCab1, g.yTop], [zb, hz[0]], { bevel: 0.002 }),
+      span('top', hx, [g.yCab1, g.yTop], [hz[1], d / 2], { bevel: 0.002 }),
+      span('top', [x0, x1], [g.yTop, g.yTop + 0.028], [zb + 0.002, zb + 0.016], { bevel: 0.002, plan: false }),
+
+      // 3. Recessed undermount ceramic basin + drain + overflow slot.
+      span('top', [hx[0] - bt, hx[1] + bt], [yBasin0, yBasin0 + bt], [hz[0] - bt, hz[1] + bt], o),
+      span('top', [hx[0] - bt, hx[0]], [yBasin0 + bt, g.yCab1], [hz[0] - bt, hz[1] + bt], o),
+      span('top', [hx[1], hx[1] + bt], [yBasin0 + bt, g.yCab1], [hz[0] - bt, hz[1] + bt], o),
+      span('top', hx, [yBasin0 + bt, g.yCab1], [hz[0] - bt, hz[0]], o),
+      span('top', hx, [yBasin0 + bt, g.yCab1], [hz[1], hz[1] + bt], o),
+      cyl('tap', [0, yBasin0 + bt + 0.003, bzCenter], 0.024, 0.004, o),
+      span('tap', [-0.018, 0.018], [g.yCab1 - 0.026, g.yCab1 - 0.018], [hz[0] + 0.001, hz[0] + 0.005], o),
+
+      // 4. Matte-black single-lever basin mixer tap on the rear deck.
+      vcyl('tap', 0, zTap, g.yTop + 0.001, g.yTop + 0.008, 0.024, o),
+      vcyl('tap', 0, zTap, g.yTop + 0.008, g.yTop + tapH, 0.017, o),
+      span('tap', [-0.014, 0.014], [g.yTop + tapH - 0.032, g.yTop + tapH - 0.014], [zTap, zTap + reach], { bevel: 0.004, plan: false }),
+      span('tap', [-0.013, 0.013], [g.yTop + tapH, g.yTop + tapH + 0.01], [zTap - 0.008, zTap + 0.065], { bevel: 0.003, plan: false }),
+
+      // 5. Round front-lit LED mirror on the back wall with black rim, white frosted LED ring and touch icons.
+      discZ('mirror', [0, g.my, zb + 0.019], g.rM - 0.005, 0.008, { segments: 48, plan: false }),
+      torus('tap', [0, g.my, zb + 0.015], g.rM, 0.007, { scale: [1, 1, 1.8], plan: false }),
+      torus('top', [0, g.my, zb + 0.024], Math.max(0.12, g.rM - 0.032), 0.012, { scale: [1, 1, 0.22], plan: false }),
+      span('top', [-0.026, -0.008], [g.my - g.rM * 0.64, g.my - g.rM * 0.64 + 0.016], [zb + 0.0235, zb + 0.026], o),
+      span('top', [0.008, 0.026], [g.my - g.rM * 0.64, g.my - g.rM * 0.64 + 0.016], [zb + 0.0235, zb + 0.026], o),
+    ];
+  },
+  planDetail: ({ w, d }) => {
+    const bw = clamp(w * 0.54, 0.34, Math.min(0.58, w - 0.18));
+    const bd = clamp(d * 0.58, 0.24, Math.min(0.36, d - 0.16));
+    const bzCenter = -d / 2 + (d - bd) * 0.56 + bd / 2;
+    return [
+      poly(roundRectPoints(0, bzCenter, bw, bd, 0.03, 4)),
+      circle([0, bzCenter], 0.022),
+      line([-w / 2, d / 2 - 0.012], [w / 2, d / 2 - 0.012]),
+    ];
+  },
+});
+
 const openDoubleVanity = defineItem({
   id: 'open-double-vanity',
   name: 'Teak double vanity with two basins',
@@ -897,6 +1130,7 @@ export default definePack({
   license: 'CC0 (made for Neest)',
   items: [
     vanityVessel,
+    floatingUndermountVanityMirror,
     openDoubleVanity,
     cornerBasin,
     ovalBath,

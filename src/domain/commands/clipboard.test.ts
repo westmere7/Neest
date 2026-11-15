@@ -6,6 +6,7 @@ import { getAsset } from '@/data/assets/registry';
 import type { Project } from '../model/schema';
 import { placeObject, groupObjects } from './entities';
 import { addItemLayer } from './itemLayers';
+import { addOption, inOption, listOptions } from './options';
 import { clipboardText, copyPayload, parseClipboard, pasteObjects, type ClipboardPayload } from './clipboard';
 
 const exists = (id: string) => !!getAsset(null, id);
@@ -95,5 +96,31 @@ describe('copy and paste of items', () => {
     expect(ids).toHaveLength(1);
     // Alone, it is no longer a group.
     expect(next.objects[ids[0]].groupId).toBeUndefined();
+  });
+
+  it('pastes into another option of the same project in place and keeps the original group name', () => {
+    const { p, pair, lone } = source();
+    const payload = copyPayload(p, [...pair, lone])!;
+    let optB = '';
+    const withB = produce(p, (d) => {
+      optB = addOption(d, 'shell', 'Option B');
+    });
+    expect(Object.keys(withB.objects)).toHaveLength(0);
+    const { next, ids } = paste(withB, payload);
+    expect(ids).toHaveLength(3);
+    expect([next.objects[ids[0]].x, next.objects[ids[0]].y]).toEqual([1, 2]);
+    expect(next.groups[next.objects[ids[0]].groupId!].name).toBe('Corner set');
+
+    // inOption can also paste directly into a non-active option without switching the view.
+    const optA = listOptions(withB).options.find((o) => o.id !== optB)!.id;
+    let copiedIds: string[] = [];
+    const direct = produce(withB, (d) => {
+      inOption(d, optA, (plan) => {
+        copiedIds = pasteObjects(plan, copyPayload(p, [lone])!, { x: 0, y: 0 }, exists).ids;
+      });
+    });
+    expect(copiedIds).toHaveLength(1);
+    const storedA = direct.options!.find((o) => o.id === optA)!.plan!;
+    expect(storedA.objects[copiedIds[0]].x).toBe(5);
   });
 });

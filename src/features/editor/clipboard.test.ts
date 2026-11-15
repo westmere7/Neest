@@ -3,10 +3,12 @@ import '@/packs/loader';
 import { createEmptyProject } from '@/domain/model/defaults';
 import { placeObject, groupObjects } from '@/domain/commands/entities';
 import { copyPayload } from '@/domain/commands/clipboard';
+import { addOption, switchOption } from '@/domain/commands/options';
 import { getAsset } from '@/data/assets/registry';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
-import { pastePayload } from './clipboard';
+import { planContextMenuItems } from '@/features/plan-2d/contextMenu';
+import { copySelection, copySelectionToOption, pasteFromClipboard, pastePayload } from './clipboard';
 import { groupFromSelection, placeSavedGroup } from './groups';
 
 const project = () => useProjectStore.getState().project!;
@@ -53,6 +55,43 @@ describe('paste in the editor', () => {
     const out = pastePayload(payload);
     expect(project().objects[out[0]].x).toBe(1);
     expect(project().objects[out[0]].edits).toEqual({ params: { rA: 0.2 } });
+  });
+
+  it('copies and pastes items across layout options in the same project (both via clipboard and Copy to option)', async () => {
+    const ids = setup();
+    await copySelection();
+    let optB = '';
+    useProjectStore.getState().execute('Add Option B', (d) => {
+      optB = addOption(d, 'shell', 'Option B');
+    });
+    expect(Object.keys(project().objects)).toHaveLength(0);
+    // Right-click menu inside a room in Option B offers Paste and Paste here.
+    const roomMenu = planContextMenuItems({ kind: 'room', id: 'room_1' }, { x: 2, y: 2 }).map((m) => m.label);
+    expect(roomMenu).toContain('Paste');
+    expect(roomMenu).toContain('Paste here');
+
+    await pasteFromClipboard();
+    const pastedIds = Object.keys(project().objects);
+    expect(pastedIds).toHaveLength(2);
+    const portal = Object.values(project().objects).find((o) => o.assetId === 'portal-frames:corner-portal-half-wall')!;
+    expect([portal.x, portal.y]).toEqual([1, 2]);
+    expect(portal.edits).toEqual({ params: { rA: 0.2 } });
+
+    // Direct Copy to another option from Option A into a third option C.
+    let optC = '';
+    useProjectStore.getState().execute('Add Option C', (d) => {
+      optC = addOption(d, 'shell', 'Option C');
+      const optA = d.options!.find((o) => o.id !== optB && o.id !== optC)!.id;
+      switchOption(d, optA);
+    });
+    useEditorStore.setState({ selection: [{ kind: 'object', id: ids[0] }] });
+    const objMenu = planContextMenuItems({ kind: 'object', id: ids[0] }, { x: 1, y: 2 }).map((m) => m.label);
+    expect(objMenu).toContain('Copy to “Option C”');
+    const copiedToC = copySelectionToOption(optC);
+    expect(copiedToC).toHaveLength(1);
+    const cPlan = project().options!.find((o) => o.id === optC)!.plan!;
+    expect(cPlan.objects[copiedToC[0]].x).toBe(1);
+    expect(cPlan.objects[copiedToC[0]].edits).toEqual({ params: { rA: 0.2 } });
   });
 });
 

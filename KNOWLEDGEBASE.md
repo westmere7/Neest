@@ -2914,3 +2914,17 @@ Known limitations (also in README):
      (`data-testid="edit-shape"`) in `src/features/editor/Inspector.tsx` from `variant="subtle"` to `variant="info"` so it
      renders with the solid blue `btn-info` style matching the `Update` button in `src/features/exports/GuestLiveLink.tsx`
      (done).
+257. "Cho phép copy paste 1 vật thể từ option qua option khác trong cùng 1 project" → resolved active option IDs via
+     `listOptions` in `copyPayload` and `pasteObjects` (`src/domain/commands/clipboard.ts`), added `inOption`
+     (`src/domain/commands/options.ts`) and `copySelectionToOption` (`src/features/editor/clipboard.ts`), added fallback
+     clipboard handling (`storedPayload` + `keydown` fallback when native `copy`/`cut`/`paste` events do not fire after
+     clicking option switcher buttons), and surfaced `Paste`, `Paste here`, and `Copy to “<Option>”` in the right-click
+     context menu (`src/features/plan-2d/contextMenu.ts`) across rooms, walls, objects, and empty space (done).
+258. "Tạo cho tôi kệ rửa mặt đặt ngoài, kệ âm vào bàn như này, không cần tường 2 bên, có cả gương tròn. gầm thoáng và chỉ để
+     1 ngăn tủ" → added `bathroom-collection:floating-undermount-vanity-mirror` (**Floating single-drawer undermount vanity
+     with round LED mirror**) in `packs/bathroom-collection.pack.ts` with a wall-hung single-drawer oak cabinet (`1 ngăn tủ`
+     with a centred matte-black knob and >50 cm open clearance underneath), a white stone/ceramic countertop with a rear
+     splash lip and recessed undermount ceramic basin, a matte-black single-lever mixer tap, amber soap dispensers (`styled`
+     and `bare` models), a round front-lit LED mirror with black rim and touch-sensor icons on the back wall (no side
+     walls), and shape-editor parameters (`counterHeight`, `cabinetHeight`, `mirrorSize`). Rendered thumbnails and added unit
+     tests in `src/packs/packs.test.ts` (done).
