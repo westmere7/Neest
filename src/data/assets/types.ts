@@ -117,6 +117,9 @@ export interface ParamHandle {
   at: [number, number, number];
   dir: [number, number, number];
   per?: number;
+  /** Optional label and value (metres) shown on the 3D handle instead of the setting's own label and value. */
+  label?: string;
+  value?: number;
 }
 
 /** Extra 2D plan detail drawn on top of the derived footprint, in local [x, z] coords. */

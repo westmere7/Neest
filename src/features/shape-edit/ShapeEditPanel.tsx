@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { RotateCcw, Shapes, X } from 'lucide-react';
-import { sectionInfo, sectionsOffered } from '@/data/assets/itemEdits';
+import { formatLength } from '@/domain/model/units';
+import { paramHandles, sectionInfo, sectionsOffered } from '@/data/assets/itemEdits';
 import type { AssetParam } from '@/data/assets/types';
 import { useProjectStore } from '@/state/projectStore';
 import { useEditorStore } from '@/state/editorStore';
@@ -25,6 +26,7 @@ export function ShapeEditPanel() {
   }, [o, asset]);
   const size = useMemo(() => (o ? { w: o.width, d: o.depth, h: o.height } : { w: 1, d: 1, h: 1 }), [o]);
   const sections = useMemo(() => (asset ? sectionInfo(asset, size, o?.edits) : null), [asset, size, o?.edits]);
+  const handles = useMemo(() => (asset ? paramHandles(asset, size, o?.edits?.params) : []), [asset, size, o?.edits?.params]);
   if (!o || !asset || !sections) return null;
   const u = project.settings;
   const e = o.edits;
@@ -71,11 +73,13 @@ export function ShapeEditPanel() {
       return <Select key={p.id} label={p.label} value={String(v)} options={p.options ?? []} onChange={(x) => setParam(p.id, p.label, x)} />;
     if (p.kind === 'count')
       return <NumberField key={p.id} label={p.label} value={Number(v)} min={p.min ?? 0} max={p.max ?? 99} step={1} decimals={0} onCommit={(x) => setParam(p.id, p.label, Math.round(x))} />;
+    const h = handles.find((x) => x.param.id === p.id)?.handle;
+    const hint = h?.label && h.value !== undefined ? `${h.label}: ${formatLength(h.value, u.units, u.precision)}` : p.hint;
     const field =
       p.max !== undefined && p.max <= 1 && p.hint?.startsWith('Share') ? (
         <NumberField label={p.label} value={Math.round(Number(v) * 100)} min={Math.round((p.min ?? 0) * 100)} max={100} step={5} decimals={0} suffix="%" onCommit={(x) => setParam(p.id, p.label, x / 100)} />
       ) : (
-        <LengthField label={p.label} hint={p.hint} value={Number(v)} unit={u.units} precision={u.precision} min={p.min ?? 0} max={p.max ?? 30} testId={`param-${p.id}`} onCommit={(x) => setParam(p.id, p.label, x)} />
+        <LengthField label={p.label} hint={hint} value={Number(v)} unit={u.units} precision={u.precision} min={p.min ?? 0} max={p.max ?? 30} testId={`param-${p.id}`} onCommit={(x) => setParam(p.id, p.label, x)} />
       );
     return (
       <div

@@ -688,7 +688,8 @@ function ledgeRimBand(x0: number, xEnd: number, z0: number, zNose: number, rb: n
 function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1, opts: LedgeOpts = {}): Part[] {
   const g = portalGeo(size, spec);
   const { w, d } = size;
-  const H = HALF_WALL - 0.04;
+  const hw = spec.halfWall ?? HALF_WALL;
+  const H = hw - 0.04;
   const openW = Math.max(0.12, g.xr - g.xl);
   const x0 = g.xr - Math.min(openW * 0.85, clamp(openW * 0.55, 0.5, 1.6));
   const rf = 0.22;
@@ -712,8 +713,8 @@ function diningLedge(size: Size3, spec: PortalSpec, side: 1 | -1, opts: LedgeOpt
     const zNose = Math.max(z0 + b + 0.02, z1 - f);
     if (xEnd - x0 > b + 0.05) {
       parts.push(
-        { ...prism('shelf', flipZ(ledgeRimBand(x0, xEnd, z0, zNose, b, tRim, 0)), HALF_WALL - 0.002, rimH - capH + 0.002), plan: false },
-        { ...prism('shelf', flipZ(ledgeRimBand(x0, xEnd, z0, zNose, b, tRim, 0.0025)), HALF_WALL + rimH - capH, capH), plan: false },
+        { ...prism('shelf', flipZ(ledgeRimBand(x0, xEnd, z0, zNose, b, tRim, 0)), hw - 0.002, rimH - capH + 0.002), plan: false },
+        { ...prism('shelf', flipZ(ledgeRimBand(x0, xEnd, z0, zNose, b, tRim, 0.0025)), hw + rimH - capH, capH), plan: false },
       );
     }
   }
@@ -1347,7 +1348,9 @@ const CORNER_T = 0.1;
 /** Radius of the corner in plan, on the soffit's centre line (as a rounded 10 cm wall corner, 0.28 m). */
 const CORNER_R = 0.28;
 const CORNER_LINE = 0.04;
-const RUN_A_SPEC: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: HALF_WALL, clear: 1.2, minOpen: 0.3 };
+/** Default height of the corner portal's half wall & dining ledge (75 cm dining table height). */
+const CORNER_HALF_WALL = 0.75;
+const RUN_A_SPEC: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, halfWall: CORNER_HALF_WALL, clear: 1.2, minOpen: 0.3 };
 const RUN_B_SPEC: PortalSpec = { legs: 'right', leg: 0.22, head: 0.42, rR: 0.5, clear: 1.2, liningIn: CORNER_LINE, minOpen: 0.3 };
 /** Run A as an open portal: no half wall, its leg down to the floor, lined all the way down. */
 const RUN_A_OPEN: PortalSpec = { legs: 'right', leg: 0.3, head: 0.42, rR: 0.55, clear: 1.2, liningIn: CORNER_LINE, minOpen: 0.3 };
@@ -1357,9 +1360,10 @@ function cornerSpecs(p?: ParamValues): { a: PortalSpec; b: PortalSpec; open: Por
   if (!p) return { a: RUN_A_SPEC, b: RUN_B_SPEC, open: RUN_A_OPEN };
   const num = (k: string, v: number) => (typeof p[k] === 'number' ? (p[k] as number) : v);
   const head = num('head', RUN_A_SPEC.head);
+  const halfWall = clamp(num('halfWall', CORNER_HALF_WALL), 0.45, 1.35);
   const runA = { leg: num('legA', RUN_A_SPEC.leg), rR: num('rA', RUN_A_SPEC.rR!), head };
   return {
-    a: { ...RUN_A_SPEC, ...runA },
+    a: { ...RUN_A_SPEC, ...runA, halfWall },
     b: { ...RUN_B_SPEC, leg: num('legB', RUN_B_SPEC.leg), rR: num('rB', RUN_B_SPEC.rR!), head },
     open: { ...RUN_A_OPEN, ...runA },
   };
@@ -1421,7 +1425,7 @@ function buildCornerPortal(size: Size3, open = false, params?: ParamValues): Par
     : [
         ...buildPortal(sizeA, RUN_A_SPEC).filter((p) => p.slot !== 'shelf'),
         ...diningLedge(sizeA, RUN_A_SPEC, 1, CORNER_LEDGE_OPTS),
-        liningInside({ ...portalGeo(sizeA, RUN_A_SPEC), yb: HALF_WALL }, CORNER_LINE, L.t),
+        liningInside({ ...portalGeo(sizeA, RUN_A_SPEC), yb: RUN_A_SPEC.halfWall ?? CORNER_HALF_WALL }, CORNER_LINE, L.t),
       ];
   // Run B: built along x with its leg at +x, then turned so the leg points to the front.
   const runB = quarterTurn(mirrorX(buildPortal(sizeB, RUN_B_SPEC)), L.xB, (L.cz + size.d / 2) / 2);
@@ -1438,8 +1442,8 @@ function buildCornerPortal(size: Size3, open = false, params?: ParamValues): Par
 }
 
 /**
- * Shape-editor settings of the corner portal: the soffit drop of both runs, and each run's leg width and
- * corner radius, with handles on the inside faces of the L (run A along the back, run B along the left).
+ * Shape-editor settings of the corner portal: the soffit drop of both runs, each run's leg width and
+ * corner radius, and the half-wall & dining-ledge height, with handles on the inside faces of the L.
  */
 function cornerPortalParams(): AssetParam[] {
   const runA = (size: Size3, p: ParamValues, at: HandleAt): ParamHandle => {
@@ -1456,13 +1460,23 @@ function cornerPortalParams(): AssetParam[] {
     const cz = (L.cz + size.d / 2) / 2;
     return { ...hd, at: [L.xB + hd.at[2], hd.at[1], cz + hd.at[0]], dir: [hd.dir[2], hd.dir[1], hd.dir[0]] };
   };
-  const pier: HandleAt = (g) => ({ at: [g.xr, (HALF_WALL + g.yi - g.cr[1]) / 2, g.d / 2 + 0.01], dir: [-1, 0, 0] });
+  const pier = (hw: number): HandleAt => (g) => ({ at: [g.xr, (hw + g.yi - g.cr[1]) / 2, g.d / 2 + 0.01], dir: [-1, 0, 0] });
+  const halfWallHandle = (hw: number): HandleAt => (g) => {
+    const openW = Math.max(0.12, g.xr - g.xl);
+    const x0 = g.xr - Math.min(openW * 0.85, clamp(openW * 0.55, 0.5, 1.6));
+    return { at: [(x0 + g.xr) / 2, hw, g.d / 2 + 0.01], dir: [0, 1, 0] };
+  };
   return [
-    lengthParam('legA', 'Side wall A (Width arm)', RUN_A_SPEC.leg, 0.04, 4.0, (s, p) => runA(s, p, pier)),
+    lengthParam('legA', 'Side wall A (Width arm)', RUN_A_SPEC.leg, 0.04, 4.0, (s, p) =>
+      runA(s, p, pier(cornerSpecs(p).a.halfWall ?? CORNER_HALF_WALL)),
+    ),
     lengthParam('legB', 'Side wall B (Depth arm)', RUN_B_SPEC.leg, 0.04, 4.0, (s, p) => runB(s, p, PORTAL_HANDLES.leg)),
     lengthParam('head', 'Soffit drop', RUN_A_SPEC.head, 0.08, 1.2, (s, p) => runA(s, p, PORTAL_HANDLES.head)),
     lengthParam('rA', 'Corner radius (Width arm)', RUN_A_SPEC.rR!, 0, 1.5, (s, p) => runA(s, p, PORTAL_HANDLES.rR)),
     lengthParam('rB', 'Corner radius (Depth arm)', RUN_B_SPEC.rR!, 0, 1.5, (s, p) => runB(s, p, PORTAL_HANDLES.rR)),
+    lengthParam('halfWall', 'Half wall & ledge height', CORNER_HALF_WALL, 0.45, 1.35, (s, p) =>
+      runA(s, p, halfWallHandle(cornerSpecs(p).a.halfWall ?? CORNER_HALF_WALL)),
+    ),
   ];
 }
 

@@ -465,6 +465,13 @@ interface Run240Geo {
   upperD: number;
   yUpper0: number;
   yUpperTop: number;
+  withFridge: boolean;
+  gableT: number;
+  xF0: number;
+  xF1: number;
+  fridgeW: number;
+  fridgeH: number;
+  xRun0: number;
   xStart: number;
   xEnd: number;
   prep: V2;
@@ -475,7 +482,7 @@ interface Run240Geo {
   holeZ: V2;
 }
 
-function run240Geo({ w, d, h }: Size3, params?: ParamValues): Run240Geo {
+function run240Geo({ w, d, h }: Size3, params?: ParamValues, opts?: { withFridge?: boolean }): Run240Geo {
   const yw = clamp(numParam(params?.worktopHeight, 0.89), Math.min(0.8, h * 0.45), Math.min(0.96, h - 0.55));
   const uDrop = clamp(
     numParam(params?.upperDrop, 0.56),
@@ -489,13 +496,28 @@ function run240Geo({ w, d, h }: Size3, params?: ParamValues): Run240Geo {
   const yUpper0 = yw + uDrop;
   const yUpperTop = h;
 
-  const xStart = -w / 2 + 0.035;
+  const withFridge = opts?.withFridge === true;
+  const gableT = 0.024;
+  const maxFridgeW = Math.max(0.5, w - gableT - 1.05);
+  const fridgeW = withFridge
+    ? clamp(numParam(params?.fridgeWidth, 0.64), Math.min(0.5, maxFridgeW), Math.min(0.95, maxFridgeW))
+    : 0;
+  const fridgeH = clamp(
+    numParam(params?.fridgeHeight, 1.78),
+    Math.min(1.45, Math.max(1.2, h - 0.5)),
+    Math.min(2.05, h - 0.17),
+  );
+  const xF0 = -w / 2;
+  const xF1 = withFridge ? -w / 2 + gableT : -w / 2;
+  const xRun0 = withFridge ? xF1 + fridgeW : -w / 2;
+
+  const xStart = xRun0 + 0.035;
   const xEnd = w / 2 - endW;
   const runLen = Math.max(0.9, xEnd - xStart);
 
-  const hobW = clamp(runLen * 0.34, 0.64, 0.9);
-  const sinkW = clamp((runLen - hobW) * 0.54, 0.58, 0.94);
-  const prepW = Math.max(0.24, runLen - hobW - sinkW);
+  const hobW = clamp(runLen * 0.34, Math.min(0.64, runLen * 0.35), 0.9);
+  const sinkW = clamp((runLen - hobW) * 0.54, Math.min(0.58, (runLen - hobW) * 0.62), 0.94);
+  const prepW = Math.max(Math.min(0.24, runLen * 0.18), runLen - hobW - sinkW);
   const prep: V2 = [xStart, xStart + prepW];
   const sink: V2 = [prep[1], xEnd - hobW];
   const hob: V2 = [xEnd - hobW, xEnd];
@@ -503,12 +525,12 @@ function run240Geo({ w, d, h }: Size3, params?: ParamValues): Run240Geo {
   const hobX1 = Math.min(w / 2 - HOB_OUTER_MARGIN, xEnd - 0.03);
   const rightPad = hob[1] - hobX1;
   const hobSpan = hob[1] - hob[0];
-  const maxAvailX = Math.max(0.28, hobX1 - (hob[0] + 0.03));
-  const hobLenX = clamp(Math.max(hobSpan - 2 * rightPad, 0.42), 0.28, Math.min(0.62, maxAvailX));
+  const maxAvailX = Math.max(0.24, hobX1 - (hob[0] + 0.03));
+  const hobLenX = clamp(Math.max(hobSpan - 2 * rightPad, 0.42), Math.min(0.28, maxAvailX), Math.min(0.62, maxAvailX));
   const hobGlassX: V2 = [hobX1 - hobLenX, hobX1];
 
   const sinkSpan = sink[1] - sink[0];
-  const sinkHoleW = clamp(sinkSpan - 0.14, 0.44, 0.78);
+  const sinkHoleW = clamp(sinkSpan - 0.14, Math.min(0.44, Math.max(0.24, sinkSpan - 0.06)), 0.78);
   const sinkCenter = (sink[0] + sink[1]) / 2;
   const holeX: V2 = [sinkCenter - sinkHoleW / 2, sinkCenter + sinkHoleW / 2];
   const holeZ: V2 = [-d / 2 + 0.125, d / 2 - 0.075];
@@ -522,6 +544,13 @@ function run240Geo({ w, d, h }: Size3, params?: ParamValues): Run240Geo {
     upperD,
     yUpper0,
     yUpperTop,
+    withFridge,
+    gableT,
+    xF0,
+    xF1,
+    fridgeW,
+    fridgeH,
+    xRun0,
     xStart,
     xEnd,
     prep,
@@ -566,6 +595,42 @@ function run240Params(): AssetParam[] {
       label: 'Thick terrazzo end pier',
       kind: 'toggle',
       default: false,
+    },
+  ];
+}
+
+function run240FridgeParams(): AssetParam[] {
+  return [
+    {
+      id: 'fridgeWidth',
+      label: 'Fridge niche width',
+      kind: 'length',
+      default: 0.64,
+      min: 0.5,
+      max: 0.95,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = run240Geo(size, p, { withFridge: true });
+        return {
+          at: [g.xRun0, g.yw, size.d / 2 + 0.01],
+          dir: [1, 0, 0],
+          label: 'Counter length',
+          value: g.w / 2 - g.xRun0,
+        };
+      },
+    },
+    {
+      id: 'fridgeHeight',
+      label: 'Fridge niche height',
+      kind: 'length',
+      default: 1.78,
+      min: 1.45,
+      max: 2.05,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = run240Geo(size, p, { withFridge: true });
+        return { at: [(g.xF1 + g.xRun0) / 2, g.fridgeH, size.d / 2 + 0.01], dir: [0, 1, 0] };
+      },
     },
   ];
 }
@@ -659,9 +724,9 @@ function panelZY(slot: string, pts: V2[], xc: number, t: number): Part {
   };
 }
 
-function buildRun240Shell(size: Size3, params?: ParamValues): Part[] {
-  const g = run240Geo(size, params);
-  const { w, d, yw, yUpper0, yUpperTop, upperD, xStart, xEnd, prep, sink, hob, holeX, holeZ } = g;
+function buildRun240Shell(size: Size3, params?: ParamValues, opts?: { withFridge?: boolean }): Part[] {
+  const g = run240Geo(size, params, opts);
+  const { w, d, yw, yUpper0, yUpperTop, upperD, withFridge, xF0, xF1, fridgeH, xRun0, xStart, xEnd, prep, sink, hob, holeX, holeZ } = g;
   const parts: Part[] = [];
 
   const yBaseTop = yw - SHAKER_TOP_T;
@@ -697,26 +762,26 @@ function buildRun240Shell(size: Size3, params?: ParamValues): Part[] {
 
   // 2. White terrazzo worktop (with double-sink cut-out) and waterfall ends.
   parts.push(
-    span('worktop', [-w / 2, holeX[0]], [yBaseTop, yw], [-d / 2, d / 2], { bevel: 0.002 }),
+    span('worktop', [xRun0, holeX[0]], [yBaseTop, yw], [-d / 2, d / 2], { bevel: 0.002 }),
     span('worktop', [holeX[1], w / 2], [yBaseTop, yw], [-d / 2, d / 2], { bevel: 0.002 }),
     span('worktop', holeX, [yBaseTop, yw], [-d / 2, holeZ[0]], { bevel: 0.002 }),
     span('worktop', holeX, [yBaseTop, yw], [holeZ[1], d / 2], { bevel: 0.002 }),
-    span('worktop', [-w / 2, xStart], [0, yBaseTop], [-d / 2, d / 2], { bevel: 0.002, plan: false }),
+    span('worktop', [xRun0, xStart], [0, yBaseTop], [-d / 2, d / 2], { bevel: 0.002, plan: false }),
     span('worktop', [xEnd, w / 2], [0, yBaseTop], [-d / 2, d / 2], { bevel: 0.002, plan: false }),
   );
 
   // 3. Pale mint vertical stack-bond splashback along the back wall.
-  parts.push(span('tile', [-w / 2, w / 2], [yw + 0.001, yUpper0 - 0.001], [-d / 2, -d / 2 + 0.012], o));
+  parts.push(span('tile', [xRun0, w / 2], [yw + 0.001, yUpper0 - 0.001], [-d / 2, -d / 2 + 0.012], o));
 
   // 4. Warm cream shaker upper cabinets: left solid bay, central reeded-glass sink bay, right raised hood bay.
-  const leftUpperCount = clamp(Math.round((sink[0] - -w / 2) / 0.52), 1, 3);
+  const leftUpperCount = clamp(Math.round((sink[0] - xRun0) / 0.52), 1, 3);
   const hobUpperCount = w / 2 - hob[0] >= 0.56 ? 2 : 1;
-  const leftUpperDoors = splitDoors(-w / 2 + 0.002, sink[0], leftUpperCount);
+  const leftUpperDoors = splitDoors(xRun0 + 0.002, sink[0], leftUpperCount);
   parts.push(
-    span('upper', [-w / 2 + 0.001, sink[0]], [yUpper0, yUpperTop], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
+    span('upper', [xRun0 + 0.001, sink[0]], [yUpper0, yUpperTop], [-d / 2 + 0.001, zUFace - SHAKER_FRONT_T], o),
     span(
       'upper',
-      [-w / 2 + 0.005, sink[0] - 0.004],
+      [xRun0 + 0.005, sink[0] - 0.004],
       [yUpper0 + 0.005, yUpperTop - 0.005],
       [zUFace - SHAKER_FRONT_T, zUFace - 0.006],
       o,
@@ -763,12 +828,34 @@ function buildRun240Shell(size: Size3, params?: ParamValues): Part[] {
     ...shakerFramesOnlyZ('upper', hobUpperDoors, [yHobUpper0 + 0.004, yUpperTop - 0.004], zUFace),
   );
 
+  // 5. Optional single-fridge surround at the -x (prep) end: full-height outer gable panel + over-fridge Shaker bridge cabinet.
+  if (withFridge) {
+    const zBridgeFace = d / 2 - SHAKER_KNOB_ROOM;
+    const fridgeDoors = splitDoors(xF1 + 0.002, xRun0 - 0.002, 2);
+    parts.push(
+      span('upper', [xF0, xF1], [0, yUpperTop], [-d / 2, d / 2], { bevel: 0.002 }),
+      span('upper', [xF1 + 0.001, xRun0 - 0.001], [fridgeH, yUpperTop], [-d / 2 + 0.001, zBridgeFace - SHAKER_FRONT_T], { bevel: 0.002 }),
+      span(
+        'upper',
+        [xF1 + 0.005, xRun0 - 0.005],
+        [fridgeH + 0.005, yUpperTop - 0.005],
+        [zBridgeFace - SHAKER_FRONT_T, zBridgeFace - 0.006],
+        o,
+      ),
+      ...shakerFramesOnlyZ('upper', fridgeDoors, [fridgeH + 0.004, yUpperTop - 0.004], zBridgeFace),
+    );
+  }
+
   return parts;
 }
 
-function buildRun240Fixtures(size: Size3, params: ParamValues | undefined, opts: { withUppers: boolean }): Part[] {
-  const g = run240Geo(size, params);
-  const { w, d, yw, yUpper0, yUpperTop, upperD, prep, sink, hob, hobGlassX, holeX, holeZ } = g;
+function buildRun240Fixtures(
+  size: Size3,
+  params: ParamValues | undefined,
+  opts: { withUppers: boolean; withFridge?: boolean },
+): Part[] {
+  const g = run240Geo(size, params, { withFridge: opts.withFridge });
+  const { w, d, yw, yUpper0, yUpperTop, upperD, withFridge, xF1, fridgeH, xRun0, prep, sink, hob, hobGlassX, holeX, holeZ } = g;
   const out: Part[] = [];
 
   const yBaseTop = yw - SHAKER_TOP_T;
@@ -794,17 +881,22 @@ function buildRun240Fixtures(size: Size3, params: ParamValues | undefined, opts:
 
   // 2. Upper cabinet brass knobs, reeded glass panes & under-cabinet LED strip.
   if (opts.withUppers) {
-    const leftUpperCount = clamp(Math.round((sink[0] - -w / 2) / 0.52), 1, 3);
+    const leftUpperCount = clamp(Math.round((sink[0] - xRun0) / 0.52), 1, 3);
     const hobUpperCount = w / 2 - hob[0] >= 0.56 ? 2 : 1;
-    const addKnobsZ = (rangeX: V2, count: number, ky: number) => {
+    const addKnobsZ = (rangeX: V2, count: number, ky: number, zFace = zUFace) => {
       const ds = splitDoors(rangeX[0], rangeX[1], count);
       ds.forEach(([x0, x1], i) => {
         const kx = ds.length > 1 && i % 2 === 0 && i + 1 < ds.length ? x1 - 0.035 : x0 + 0.035;
-        out.push(brassKnobZ(kx, ky, zUFace));
+        out.push(brassKnobZ(kx, ky, zFace));
       });
     };
-    addKnobsZ([-w / 2 + 0.002, sink[0]], leftUpperCount, yUpper0 + 0.065);
+    addKnobsZ([xRun0 + 0.002, sink[0]], leftUpperCount, yUpper0 + 0.065);
     addKnobsZ([hob[0], w / 2 - 0.002], hobUpperCount, yUpper0 + 0.11);
+
+    if (withFridge) {
+      const zBridgeFace = d / 2 - SHAKER_KNOB_ROOM;
+      addKnobsZ([xF1 + 0.002, xRun0 - 0.002], 2, Math.min(fridgeH + 0.055, yUpperTop - 0.045), zBridgeFace);
+    }
 
     const yGlassMid = (yUpper0 + yUpperTop) / 2;
     const gRail = clamp((yUpperTop - yUpper0) * 0.075, 0.036, 0.052);
@@ -825,7 +917,7 @@ function buildRun240Fixtures(size: Size3, params: ParamValues | undefined, opts:
     }
 
     out.push(
-      span('glow', [-w / 2 + 0.04, hob[0] - 0.02], [yUpper0 - 0.005, yUpper0 - 0.001], [-d / 2 + upperD - 0.07, -d / 2 + upperD - 0.05], o),
+      span('glow', [xRun0 + 0.04, hob[0] - 0.02], [yUpper0 - 0.005, yUpper0 - 0.001], [-d / 2 + upperD - 0.07, -d / 2 + upperD - 0.05], o),
     );
   }
 
@@ -916,7 +1008,7 @@ function buildRun240Fixtures(size: Size3, params: ParamValues | undefined, opts:
     );
   }
 
-  // 5. Top-chamfered frosted glass splatter shields in white base shoes at BOTH open ends of the counter,
+  // 5. Top-chamfered frosted glass splatter shields in white base shoes at BOTH ends of the counter,
   // rising flush to the top of the splashback tiles / underside of the upper cabinets (yUpper0 - 1 mm).
   const yGlass0 = yw + 0.007;
   const yShieldTop = yUpper0 - 0.001;
@@ -934,12 +1026,12 @@ function buildRun240Fixtures(size: Size3, params: ParamValues | undefined, opts:
   ];
 
   out.push(
-    // Left open end (-w/2): white base shoe + 8 mm frosted glass chamfered on the top-front corner.
-    span('shieldBase', [-w / 2 + 0.004, -w / 2 + 0.018], [yw + 0.001, yw + 0.015], [rzWall - 0.001, rzFront + 0.003], {
+    // Left counter end (xRun0): white base shoe + 8 mm frosted glass chamfered on the top-front corner.
+    span('shieldBase', [xRun0 + 0.004, xRun0 + 0.018], [yw + 0.001, yw + 0.015], [rzWall - 0.001, rzFront + 0.003], {
       ...o,
       bevel: 0.002,
     }),
-    panelZY('shield', shieldOutline, -w / 2 + 0.011, 0.008),
+    panelZY('shield', shieldOutline, xRun0 + 0.011, 0.008),
     // Right open end (+w/2): matching white base shoe + 8 mm frosted glass chamfered on the top-front corner.
     span('shieldBase', [w / 2 - 0.018, w / 2 - 0.004], [yw + 0.001, yw + 0.015], [rzWall - 0.001, rzFront + 0.003], {
       ...o,
@@ -951,9 +1043,9 @@ function buildRun240Fixtures(size: Size3, params: ParamValues | undefined, opts:
   return out;
 }
 
-function run240PlanDetail(size: Size3, params?: ParamValues): PlanStroke[] {
-  const g = run240Geo(size, params);
-  const { w, d, holeX, holeZ, hobGlassX } = g;
+function run240PlanDetail(size: Size3, params?: ParamValues, opts?: { withFridge?: boolean }): PlanStroke[] {
+  const g = run240Geo(size, params, opts);
+  const { w, d, withFridge, xF1, xRun0, holeX, holeZ, hobGlassX } = g;
   const xBowlMid = (holeX[0] + holeX[1]) / 2;
   const hobLenX = hobGlassX[1] - hobGlassX[0];
   const hobMidX = (hobGlassX[0] + hobGlassX[1]) / 2;
@@ -963,7 +1055,7 @@ function run240PlanDetail(size: Size3, params?: ParamValues): PlanStroke[] {
   const rSmall = Math.min(0.08, hobLenX * 0.18, (hz1 - hz0) * 0.24);
   const rLarge = Math.min(0.09, hobLenX * 0.2, (hz1 - hz0) * 0.26);
 
-  return [
+  const strokes: PlanStroke[] = [
     // Double sink bowls & drains.
     {
       kind: 'poly',
@@ -1000,10 +1092,19 @@ function run240PlanDetail(size: Size3, params?: ParamValues): PlanStroke[] {
     },
     { kind: 'circle', c: [hobMidX - hobLenX * 0.24, hzc - 0.015], r: rSmall },
     { kind: 'circle', c: [hobMidX + hobLenX * 0.24, hzc + 0.015], r: rLarge },
-    // Frosted glass splatter shields on both open ends of the counter in plan.
-    { kind: 'line', a: [-w / 2 + 0.011, -d / 2 + 0.014], b: [-w / 2 + 0.011, d / 2 - 0.014] },
+    // Frosted glass splatter shields on both ends of the counter in plan.
+    { kind: 'line', a: [xRun0 + 0.011, -d / 2 + 0.014], b: [xRun0 + 0.011, d / 2 - 0.014] },
     { kind: 'line', a: [w / 2 - 0.011, -d / 2 + 0.014], b: [w / 2 - 0.011, d / 2 - 0.014] },
   ];
+
+  if (withFridge) {
+    strokes.push(
+      { kind: 'line', a: [xF1, -d / 2], b: [xF1, d / 2] },
+      { kind: 'line', a: [xRun0, -d / 2], b: [xRun0, d / 2] },
+    );
+  }
+
+  return strokes;
 }
 
 const run240Models: AssetModelVariant[] = [
@@ -1012,6 +1113,15 @@ const run240Models: AssetModelVariant[] = [
     name: 'With upper cabinets',
     slots: RUN_UPPER_CLEAN_SLOTS,
     props: (size, params) => buildRun240Fixtures(size, params, { withUppers: true }),
+  },
+  {
+    id: 'fridge-surround',
+    name: 'With single-fridge surround',
+    slots: RUN_UPPER_CLEAN_SLOTS,
+    params: run240FridgeParams(),
+    build: (size, params) => buildRun240Shell(size, params, { withFridge: true }),
+    planDetail: (size, params) => run240PlanDetail(size, params, { withFridge: true }),
+    props: (size, params) => buildRun240Fixtures(size, params, { withUppers: true, withFridge: true }),
   },
   {
     id: 'no-uppers',
@@ -1042,12 +1152,14 @@ const run240SinkHob: PackItem = defineItem({
     'shaker',
     'reeded glass',
     'splashback',
+    'fridge surround',
+    'hộc tủ lạnh',
   ],
   description:
-    'A straight sage & warm-cream shaker kitchen run with pale mint vertical stack-tile splashback, top-chamfered frosted glass splatter shields in white base shoes at both ends, an undermount double sink with pull-down spring tap, a 3-drawer induction hob bay, and cream shaker & reeded-glass upper cabinets with a slim black hood and LED strip.',
+    'A straight sage & warm-cream shaker kitchen run with pale mint vertical stack-tile splashback, top-chamfered frosted glass splatter shields in white base shoes at both ends, an undermount double sink with pull-down spring tap, a 3-drawer induction hob bay, cream shaker & reeded-glass upper cabinets with a slim black hood and LED strip, and an optional single-fridge surround with independent niche width and height.',
   defaultSize: S(2.8, 0.6, 2.22),
   minSize: S(1.8, 0.5, 1.95),
-  maxSize: S(3.6, 0.72, 2.6),
+  maxSize: S(4.2, 0.72, 2.6),
   wallSnap: true,
   slots: [RUN_FRONT, RUN_UPPER, RUN_WORKTOP, RUN_TILE],
   variants: RUN_VARIANTS,

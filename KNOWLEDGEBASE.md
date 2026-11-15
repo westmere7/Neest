@@ -2859,3 +2859,35 @@ Known limitations (also in README):
      double-click only selects (no note editor, no room rename), the Inspector header keeps only Focus and Clear
      (no note, duplicate, lock, delete), no Edit shape; its body fields stay visible but disabled. Checked: 9 handles
      on a selected sofa when editing, 0 in view-only; Edit brings them back. (done)
+250. "Counter run 2.4 m with sink & hob: thêm 1 variant có option bao tủ lạnh đơn, có thể sửa được size tủ lạnh riêng, khi
+     kéo bếp chiều ngang chỉ thay đổi phần bếp bên trong không thay đổi chiều dài tủ lạnh" → added model variant
+     `fridge-surround` (**With single-fridge surround**) on `kitchen-counters:run-240-sink-hob` in
+     `packs/kitchen-counters.pack.ts` with a full-height `24 mm` outer gable panel and a 2-door Shaker bridge cabinet
+     with brass knobs framing an open single-fridge niche at the `-x` (`prep`) end (`maxSize.w = 4.2 m`). Added
+     model-specific shape-editor parameters `fridgeWidth` (`0.64 m` default, `0.50–0.95 m`) and `fridgeHeight` (`1.78 m`
+     default, `1.45–2.05 m`) with 3D drag handles; because `fridgeWidth` is an absolute length in metres rather than a
+     fraction of `w`, resizing the overall kitchen width `w` keeps the fridge cavity width constant and only stretches or
+     shrinks the inner counter bays (`prep`, `sink`, `hob`). Rendered thumbnail and added unit tests in
+     `src/packs/packs.test.ts` (done).
+251. "Corner portal with half wall and dining ledge: cho phép chỉnh shape chiều cao của chỗ bàn và tường này, mặc định là
+     75cm" → set `CORNER_HALF_WALL = 0.75` (`75 cm` default dining-table height) on
+     `portal-frames:corner-portal-half-wall` in `packs/portal-frames.pack.ts`, parameterized `diningLedge` and
+     `buildCornerPortal`'s opening lining on `spec.halfWall`, and added the `halfWall` (**Half wall & ledge height**,
+     `0.75 m` default, `0.45–1.35 m`) shape-editor setting with a 3D vertical drag handle on top of the half wall &
+     dining ledge. Re-rendered thumbnails and updated unit tests in `src/packs/packs.test.ts` (done).
+252. "Wall-backed peninsula dining table on turned bead leg: tạo 1 bàn giống bàn này, 4 chân L shape có ngăn kéo, cho phép
+     chỉnh 2 chiều chữ L độc lập, chiều rộng bàn min 50cm" → added `soft-curve-furniture:l-shaped-bead-table`
+     (**L-shaped table on turned bead legs with drawers**) in `packs/soft-curve-furniture.pack.ts` with an eased L-shaped
+     tabletop (`laminate-sage` default, matching `wall-peninsula-bead-table`'s finishes and colour variants), 4 sculptural
+     white turned bead legs, under-top pull-out drawers with brass knobs (`both-drawers`, `main-drawers`, `no-drawers`
+     models), `minSize: { w: 0.5, d: 0.5, h: 0.7 }`, and independent shape-editor parameters `mainArmDepth` (**Main arm
+     width**, `0.50–0.95 m`, `0.60 m` default) and `returnArmWidth` (**Return arm width**, `0.50–0.95 m`, `0.60 m`
+     default) with 3D drag handles so both L-arm lengths (`w`, `d`) and both L-arm widths resize independently down to
+     `50 cm`. Rendered thumbnails and added unit tests in `src/packs/packs.test.ts` (done).
+253. "Cái bếp lúc sửa shape hiện chiều dài bếp cho dễ căn, thay vì hiện chiều dài cái tủ lạnh" → added optional `label`
+     and `value` fields on `ParamHandle` (`src/data/assets/types.ts`, `src/data/assets/itemEdits.ts`) so a 3D shape-editor
+     handle (`src/features/shape-edit/ShapeEdit3D.tsx`) and its panel field hint (`src/features/shape-edit/ShapeEditPanel.tsx`)
+     can display a derived geometric measurement (such as the complementary counter length `g.w / 2 - g.xRun0`) while
+     storing the underlying setting (`fridgeWidth`). Updated `run240FridgeParams()` in `packs/kitchen-counters.pack.ts`
+     so hovering or dragging the divider handle between the counter run and fridge surround displays
+     `Counter length: <m>` instead of `Fridge niche width` (done).

@@ -2881,6 +2881,10 @@
    "file": "kitchen-counters_run-240-sink-hob_model_clean.webp",
    "fp": "20bb09bfb051e628"
   },
+  "kitchen-counters:run-240-sink-hob@model:fridge-surround": {
+   "file": "kitchen-counters_run-240-sink-hob_model_fridge-surround.webp",
+   "fp": "84ec8a008a4adf5f"
+  },
   "kitchen-counters:run-240-sink-hob@model:no-uppers": {
    "file": "kitchen-counters_run-240-sink-hob_model_no-uppers.webp",
    "fp": "e1c879c415dfecd6"
@@ -4155,15 +4159,15 @@
   },
   "portal-frames:corner-portal-half-wall": {
    "file": "portal-frames_corner-portal-half-wall.webp",
-   "fp": "b2ee29a3979a55fb"
+   "fp": "72b4619e873e8967"
   },
   "portal-frames:corner-portal-half-wall@model:half-wall": {
    "file": "portal-frames_corner-portal-half-wall_model_half-wall.webp",
-   "fp": "49b2dcb8f8cfebfa"
+   "fp": "24ba47cbacbe7d8d"
   },
   "portal-frames:corner-portal-half-wall@model:ledge-outside": {
    "file": "portal-frames_corner-portal-half-wall_model_ledge-outside.webp",
-   "fp": "39670c248f9d749f"
+   "fp": "dd3b897740b82446"
   },
   "portal-frames:corner-portal-half-wall@model:open": {
    "file": "portal-frames_corner-portal-half-wall_model_open.webp",
@@ -4656,6 +4660,18 @@
   "soft-curve-furniture:fluted-oval-coffee-table": {
    "file": "soft-curve-furniture_fluted-oval-coffee-table.webp",
    "fp": "b4bb86ea7f5cae7d"
+  },
+  "soft-curve-furniture:l-shaped-bead-table": {
+   "file": "soft-curve-furniture_l-shaped-bead-table.webp",
+   "fp": "c535384586dae114"
+  },
+  "soft-curve-furniture:l-shaped-bead-table@model:main-drawers": {
+   "file": "soft-curve-furniture_l-shaped-bead-table_model_main-drawers.webp",
+   "fp": "4851733f072a64f5"
+  },
+  "soft-curve-furniture:l-shaped-bead-table@model:no-drawers": {
+   "file": "soft-curve-furniture_l-shaped-bead-table_model_no-drawers.webp",
+   "fp": "400ff4959c9b0f76"
   },
   "soft-curve-furniture:leaf-pendant": {
    "file": "soft-curve-furniture_leaf-pendant.webp",

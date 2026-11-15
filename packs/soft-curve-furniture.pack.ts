@@ -35,8 +35,10 @@ import {
   sphere,
   torus,
   turnedLeg,
+  type AssetParam,
   type PackMaterial,
   type PackPattern,
+  type ParamValues,
   type Part,
   type PlanStroke,
   type Size3,
@@ -908,6 +910,243 @@ const wallPeninsulaBeadTable = defineItem({
 
     return keep(parts, size);
   },
+});
+
+// ───────────── 12b. L-shaped table on 4 turned bead legs with drawers ─────────────
+
+function turnedBeadLegAt(x: number, z: number, H: number, rFoot: number): Part {
+  const rNeck = rFoot * 0.39;
+  const yW1 = H * 0.52;
+  const yW2 = H * 0.685;
+  const yOrb = (yW1 + yW2) / 2;
+  const halfBand = (yW2 - yW1) / 2;
+  const rSphere = Math.hypot(rNeck, halfBand);
+  const thMax = Math.asin(clamp(halfBand / rSphere, -0.98, 0.98));
+  const orbProfile: V2[] = range(17).map((i) => {
+    const th = -thMax + (2 * thMax * i) / 16;
+    return [rSphere * Math.cos(th), yOrb + rSphere * Math.sin(th)] as V2;
+  });
+  const rTopCone = rFoot * 0.9;
+  const rPlate = rFoot * 1.1;
+  const profile: V2[] = [
+    [0, 0],
+    [rFoot - 0.003, 0],
+    [rFoot, 0.005],
+    ...orbProfile,
+    [rTopCone, H - 0.013],
+    [rPlate, H - 0.011],
+    [rPlate, H - 0.002],
+    [rPlate - 0.004, H + 0.003],
+    [0, H + 0.003],
+  ];
+  return lathe('base', [x, 0, z], profile, { segments: 32, plan: false });
+}
+
+interface LTableGeo {
+  w: number;
+  d: number;
+  h: number;
+  topT: number;
+  H: number;
+  armD: number;
+  armW: number;
+}
+
+function lShapedBeadTableGeo({ w, d, h }: Size3, params?: ParamValues): LTableGeo {
+  const topT = 0.036;
+  const H = h - topT;
+  const rawD = typeof params?.mainArmDepth === 'number' && Number.isFinite(params.mainArmDepth) ? params.mainArmDepth : 0.6;
+  const rawW = typeof params?.returnArmWidth === 'number' && Number.isFinite(params.returnArmWidth) ? params.returnArmWidth : 0.6;
+  const minD = Math.min(0.5, d * 0.56);
+  const maxD = Math.max(minD, Math.min(0.95, d - 0.16));
+  const minW = Math.min(0.5, w * 0.56);
+  const maxW = Math.max(minW, Math.min(0.95, w - 0.16));
+  const armD = clamp(rawD, minD, maxD);
+  const armW = clamp(rawW, minW, maxW);
+  return { w, d, h, topT, H, armD, armW };
+}
+
+function lShapedBeadTableParams(): AssetParam[] {
+  return [
+    {
+      id: 'mainArmDepth',
+      label: 'Main arm width',
+      kind: 'length',
+      default: 0.6,
+      min: 0.5,
+      max: 0.95,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lShapedBeadTableGeo(size, p);
+        const xMid = (-size.w / 2 + g.armW + size.w / 2) / 2;
+        return { at: [xMid, g.H + g.topT / 2, -size.d / 2 + g.armD], dir: [0, 0, 1] };
+      },
+    },
+    {
+      id: 'returnArmWidth',
+      label: 'Return arm width',
+      kind: 'length',
+      default: 0.6,
+      min: 0.5,
+      max: 0.95,
+      step: 0.01,
+      handle: (size, p) => {
+        const g = lShapedBeadTableGeo(size, p);
+        const zMid = (-size.d / 2 + g.armD + size.d / 2) / 2;
+        return { at: [-size.w / 2 + g.armW, g.H + g.topT / 2, zMid], dir: [1, 0, 0] };
+      },
+    },
+  ];
+}
+
+function buildLShapedBeadTable(size: Size3, params?: ParamValues, drawers: 'both' | 'main' | 'none' = 'both'): Part[] {
+  const g = lShapedBeadTableGeo(size, params);
+  const { w, d, h, topT, H, armD, armW } = g;
+
+  const rEndXBase = Math.min(0.145, armD * 0.24, Math.max(0.02, (w - armW) * 0.42));
+  const rEndZBase = Math.min(0.145, armW * 0.24, Math.max(0.02, (d - armD) * 0.42));
+  const rInnerBase = Math.min(0.075, Math.max(0.012, (w - armW) * 0.28), Math.max(0.012, (d - armD) * 0.28));
+
+  const lOutline = (inset: number): V2[] => {
+    const x0 = -w / 2 + inset;
+    const x1 = w / 2 - inset;
+    const z0 = -d / 2 + inset;
+    const z1 = d / 2 - inset;
+    const xIn = -w / 2 + armW - inset;
+    const zIn = -d / 2 + armD - inset;
+    const rb = Math.max(0.002, 0.008 - inset);
+    const rx = Math.max(0.01, rEndXBase - inset);
+    const rz = Math.max(0.01, rEndZBase - inset);
+    const ri = Math.max(0.008, rInnerBase + inset);
+    return dedupe([
+      ...arc(x0 + rb, z0 + rb, rb, rb, Math.PI, Math.PI * 1.5, 3),
+      ...arc(x1 - rx, z0 + rx, rx, rx, -Math.PI / 2, 0, 8),
+      ...arc(x1 - rx, zIn - rx, rx, rx, 0, Math.PI / 2, 8),
+      ...arc(xIn + ri, zIn + ri, ri, ri, -Math.PI / 2, -Math.PI, 8),
+      ...arc(xIn - rz, z1 - rz, rz, rz, 0, Math.PI / 2, 8),
+      ...arc(x0 + rz, z1 - rz, rz, rz, Math.PI / 2, Math.PI, 8),
+    ]);
+  };
+
+  const parts: Part[] = easedSlab('top', lOutline, H, topT, 0.006);
+
+  // 4 sculptural turned bead legs: outer corner, inner L-junction, right end of main arm, front end of return arm.
+  const rFoot = clamp(Math.min(armW, armD) * 0.125, 0.036, 0.092);
+  const rPlate = rFoot * 1.1;
+  const cornerInset = clamp(Math.max(rPlate + 0.018, Math.min(armW, armD) * 0.22), 0.055, Math.min(armW, armD) * 0.32);
+
+  const xL1 = -w / 2 + cornerInset;
+  const zL1 = -d / 2 + cornerInset;
+  const xL2 = -w / 2 + armW - cornerInset;
+  const zL2 = -d / 2 + armD - cornerInset;
+  const xL3 = w / 2 - cornerInset;
+  const zL3 = -d / 2 + armD * 0.5;
+  const xL4 = -w / 2 + armW * 0.5;
+  const zL4 = d / 2 - cornerInset;
+
+  parts.push(
+    turnedBeadLegAt(xL1, zL1, H, rFoot),
+    turnedBeadLegAt(xL2, zL2, H, rFoot),
+    turnedBeadLegAt(xL3, zL3, H, rFoot),
+    turnedBeadLegAt(xL4, zL4, H, rFoot),
+  );
+
+  // Under-top drawer apron boxes & drawers along the seating sides of the L.
+  const apronH = clamp(h * 0.135, 0.082, 0.106);
+  const yA0 = H - apronH;
+
+  if (drawers === 'both' || drawers === 'main') {
+    const xD0 = Math.min(xL2 + rPlate + 0.012, (xL2 + xL3) / 2 - 0.045);
+    const xD1 = Math.max(xD0 + 0.09, xL3 - rPlate - 0.012);
+    const zD0 = -d / 2 + 0.022;
+    const zD1 = -d / 2 + armD - 0.022;
+    parts.push(span('top', [xD0, xD1], [yA0, H + 0.001], [zD0, zD1 - 0.014], o));
+    for (const [dx0, dx1] of cellSpans(2, xD0 + 0.006, xD1 - 0.006)) {
+      parts.push(
+        span('base', [dx0, dx1], [yA0 + 0.006, H - 0.006], [zD1 - 0.013, zD1], { bevel: 0.004, plan: false }),
+        sphere('knob', [(dx0 + dx1) / 2, (yA0 + H) / 2, zD1 + 0.01], 0.009, o),
+      );
+    }
+  }
+
+  if (drawers === 'both') {
+    const zR0 = Math.min(zL2 + rPlate + 0.012, (zL2 + zL4) / 2 - 0.035);
+    const zR1 = Math.max(zR0 + 0.07, zL4 - rPlate - 0.012);
+    const xR0 = -w / 2 + 0.022;
+    const xR1 = -w / 2 + armW - 0.022;
+    parts.push(span('top', [xR0, xR1 - 0.014], [yA0, H + 0.001], [zR0, zR1], o));
+    parts.push(
+      span('base', [xR1 - 0.013, xR1], [yA0 + 0.006, H - 0.006], [zR0 + 0.006, zR1 - 0.006], {
+        bevel: 0.004,
+        plan: false,
+      }),
+      sphere('knob', [xR1 + 0.01, (yA0 + H) / 2, (zR0 + zR1) / 2], 0.009, o),
+    );
+  }
+
+  return keep(parts, size);
+}
+
+const lShapedBeadTable = defineItem({
+  id: 'l-shaped-bead-table',
+  name: 'L-shaped table on turned bead legs with drawers',
+  category: 'dining',
+  type: 'surfaces',
+  group: 'Dining tables',
+  wallSnap: true,
+  resizable: { w: true, d: true, h: true },
+  tags: [
+    'dining table',
+    'l-shaped table',
+    'l-shaped desk',
+    'corner table',
+    'corner desk',
+    'breakfast table',
+    'drawers',
+    'sage green',
+    'pastel',
+    'turned leg',
+    'bead leg',
+    'bàn chữ L',
+    'bàn ăn chữ L',
+    'bàn làm việc chữ L',
+    'bàn có ngăn kéo',
+  ],
+  description:
+    'An L-shaped dining and study table with softly rounded peninsula ends, under-top pull-out drawers with brass knobs, and four sculptural white turned bead legs; resize both arms of the L independently down to a 50 cm minimum tabletop width.',
+  defaultSize: { w: 1.5, d: 1.35, h: 0.76 },
+  minSize: { w: 0.5, d: 0.5, h: 0.7 },
+  maxSize: { w: 2.6, d: 2.4, h: 0.92 },
+  price: { vnd: 6_800_000, estimate: true },
+  slots: [
+    matSlot('top', 'Top & apron', 'laminate-sage'),
+    matSlot('base', 'Turned legs & drawer fronts', 'paint-satin-white'),
+    matSlot('knob', 'Drawer knobs', 'metal-brass'),
+  ],
+  variants: [
+    { id: 'cream-white', name: 'Cream lacquer & white', materials: { top: 'laminate-cream', base: 'paint-satin-white', knob: 'metal-brass' } },
+    { id: 'butter-white', name: 'Butter yellow & white', materials: { top: 'paint-butter', base: 'paint-satin-white', knob: 'metal-brass' } },
+    { id: 'pink-white', name: 'Dusty pink & white', materials: { top: 'laminate-pink', base: 'paint-satin-white', knob: 'metal-brass' } },
+    { id: 'oak-white', name: 'Light oak & warm white', materials: { top: 'wood-oak-light', base: 'paint-warm-white', knob: 'metal-brass' } },
+    { id: 'walnut-cream', name: 'Walnut & cream plaster', materials: { top: 'wood-walnut', base: 'venetian-white', knob: 'metal-brass' } },
+    { id: 'marble-white', name: 'Beige marble & white', materials: { top: 'stone-marble-beige', base: 'paint-satin-white', knob: 'metal-brass' } },
+  ],
+  models: [
+    { id: 'both-drawers', name: 'Drawers on both arms' },
+    {
+      id: 'main-drawers',
+      name: 'Drawers on main arm only',
+      build: (size, params) => buildLShapedBeadTable(size, params, 'main'),
+    },
+    {
+      id: 'no-drawers',
+      name: 'No drawers',
+      hide: ['knob'],
+      build: (size, params) => buildLShapedBeadTable(size, params, 'none'),
+    },
+  ],
+  params: lShapedBeadTableParams(),
+  build: (size, params) => buildLShapedBeadTable(size, params, 'both'),
 });
 
 // ───────────── 13. Rounded-corner full-length wall mirror ─────────────
@@ -1958,6 +2197,7 @@ export default definePack({
   items: [
     spherePedestalTable,
     wallPeninsulaBeadTable,
+    lShapedBeadTable,
     ovalBackChair,
     leafPendant,
     domeSconce,

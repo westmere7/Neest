@@ -295,7 +295,8 @@ export function paramHandles(asset: AssetDefinition, size: Size3, values: ParamV
     if (!param.handle || param.kind !== 'length') continue;
     try {
       const handle = param.handle(size, all);
-      if (handle && [...handle.at, ...handle.dir].every(Number.isFinite)) out.push({ param, value: Number(all[param.id]), handle });
+      if (handle && [...handle.at, ...handle.dir].every(Number.isFinite) && (handle.value === undefined || Number.isFinite(handle.value)))
+        out.push({ param, value: Number(all[param.id]), handle });
     } catch {
       // A handle that cannot be placed is left out.
     }

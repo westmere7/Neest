@@ -355,11 +355,12 @@ export function ShapeEditObject({ project, obj, registry }: { project: Project; 
         (() => {
           const h = dragging ?? handles.find((x) => x.param.id === shapeEdit.param);
           if (!h) return null;
-          const v = drag?.kind === 'param' ? drag.value : h.value;
+          const v = h.handle.value ?? (drag?.kind === 'param' ? drag.value : h.value);
+          const label = h.handle.label ?? h.param.label;
           return (
             <Html position={h.handle.at} center style={{ pointerEvents: 'none' }} zIndexRange={[30, 0]}>
               <div className="shape-handle-label">
-                {h.param.label}: <strong>{h.handle.per && h.handle.per !== 1 ? `${Math.round(v * 100)} %` : fmt(v)}</strong>
+                {label}: <strong>{h.handle.per && h.handle.per !== 1 && h.handle.value === undefined ? `${Math.round(v * 100)} %` : fmt(v)}</strong>
               </div>
             </Html>
           );

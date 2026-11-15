@@ -170,20 +170,26 @@ describe('pack models', () => {
     expect(parts.some((p) => p.slot === 'clothes2')).toBe(true);
   });
 
-  it('adds a raised curved rim on the dining ledge of corner-portal-half-wall', () => {
+  it('adds a raised curved rim on the dining ledge of corner-portal-half-wall and supports editing the half-wall & ledge height (75 cm default)', () => {
     const portal = ASSETS_BY_ID['portal-frames:corner-portal-half-wall'];
     const size = portal.defaultSize;
-    const shelfMaxY = (modelId: string) =>
+    expect(portal.params?.find((p) => p.id === 'halfWall')?.default).toBe(0.75);
+    const shelfMaxY = (modelId: string, params?: Record<string, number>) =>
       Math.max(
         ...withModel(portal, modelId)
-          .build(size)
+          .build(size, params)
           .filter((p) => p.slot === 'shelf')
           .map((p) => worldBounds(p).max[1]),
       );
-    // Dining ledge inside & outside rise ~9.5 cm above the 1.0 m tabletop; plain half-wall cap stays at 1.0 m.
-    expect(shelfMaxY('ledge-inside')).toBeCloseTo(1.095, 3);
-    expect(shelfMaxY('ledge-outside')).toBeCloseTo(1.095, 3);
-    expect(shelfMaxY('half-wall')).toBeCloseTo(1.0, 3);
+    // Default 75 cm (0.75 m) tabletop: dining ledge inside & outside rise ~9.5 cm above the 0.75 m tabletop; plain half-wall cap stays at 0.75 m.
+    expect(shelfMaxY('ledge-inside')).toBeCloseTo(0.845, 3);
+    expect(shelfMaxY('ledge-outside')).toBeCloseTo(0.845, 3);
+    expect(shelfMaxY('half-wall')).toBeCloseTo(0.75, 3);
+
+    // Editing halfWall to 1.0 m raises the half wall, cap, dining ledge and raised rim accordingly across all models.
+    expect(shelfMaxY('ledge-inside', { halfWall: 1.0 })).toBeCloseTo(1.095, 3);
+    expect(shelfMaxY('ledge-outside', { halfWall: 1.0 })).toBeCloseTo(1.095, 3);
+    expect(shelfMaxY('half-wall', { halfWall: 1.0 })).toBeCloseTo(1.0, 3);
   });
 
   it('lets corner-portal-half-wall shrink below 2 m and resize both outer side walls freely', () => {
@@ -730,7 +736,7 @@ describe('pack models', () => {
     }
   });
 
-  it('builds kitchen-counters:run-240-sink-hob in sage & cream shaker style with splashback tiles, upper cabinets and end splatter shields', () => {
+  it('builds kitchen-counters:run-240-sink-hob in sage & cream shaker style with splashback tiles, upper cabinets, end splatter shields and an optional single-fridge surround', () => {
     const run = ASSETS_BY_ID['kitchen-counters:run-240-sink-hob'];
     expect(run).toBeDefined();
     expect(run.defaultSize).toEqual({ w: 2.8, d: 0.6, h: 2.22 });
@@ -740,6 +746,7 @@ describe('pack models', () => {
       ['worktop', 'sage-shaker-kitchen:terrazzo-white'],
       ['tile', 'sage-shaker-kitchen:mint-stack-tile'],
     ]);
+    expect(assetModels(run).map((m) => m.id)).toEqual(['clean', 'fridge-surround', 'no-uppers']);
 
     const clean = withModel(run, 'clean');
     const parts = clean.build(run.defaultSize);
@@ -760,6 +767,54 @@ describe('pack models', () => {
     const noUppers = withModel(run, 'no-uppers').build(run.defaultSize);
     expect(noUppers.some((p) => p.slot === 'upper')).toBe(false);
     expect(noUppers.filter((p) => p.slot === 'shield')).toHaveLength(2);
+
+    // Single-fridge surround model exposes fridgeWidth & fridgeHeight with 3D handles and keeps fridge niche width constant when resizing w.
+    const fridgeModel = withModel(run, 'fridge-surround');
+    expect(fridgeModel.params?.map((p) => p.id)).toEqual([
+      'worktopHeight',
+      'upperDrop',
+      'endPier',
+      'fridgeWidth',
+      'fridgeHeight',
+    ]);
+    const measureFridgeAndCounter = (w: number, params?: Record<string, number>) => {
+      const ps = fridgeModel.build({ w, d: 0.6, h: 2.22 }, params);
+      const worktopBounds = ps.filter((p) => p.slot === 'worktop').map(worldBounds);
+      const xRun0 = Math.min(...worktopBounds.map((b) => b.min[0]));
+      const xRun1 = Math.max(...worktopBounds.map((b) => b.max[0]));
+      const outerGable = ps
+        .filter((p) => p.slot === 'upper')
+        .map(worldBounds)
+        .find((b) => b.min[1] < 0.01 && b.max[1] > 2.2)!;
+      const bridgeCarcass = ps
+        .filter((p) => p.slot === 'upper')
+        .map(worldBounds)
+        .find((b) => b.min[0] > outerGable.max[0] - 0.002 && b.max[0] < xRun0 + 0.002 && b.max[2] > 0.2)!;
+      return {
+        nicheWidth: xRun0 - outerGable.max[0],
+        nicheHeight: bridgeCarcass.min[1],
+        counterWidth: xRun1 - xRun0,
+      };
+    };
+
+    const m28 = measureFridgeAndCounter(2.8);
+    const m36 = measureFridgeAndCounter(3.6);
+    expect(m28.nicheWidth).toBeCloseTo(0.64, 4);
+    expect(m28.nicheHeight).toBeCloseTo(1.78, 4);
+    // Stretching the kitchen width from 2.8 m to 3.6 m keeps the fridge niche width at 0.64 m and adds all 0.8 m to the inner counter.
+    expect(m36.nicheWidth).toBeCloseTo(0.64, 4);
+    expect(m36.counterWidth - m28.counterWidth).toBeCloseTo(0.8, 4);
+
+    // Editing fridgeWidth and fridgeHeight resizes the fridge niche independently.
+    const mCustomFridge = measureFridgeAndCounter(2.8, { fridgeWidth: 0.78, fridgeHeight: 1.86 });
+    expect(mCustomFridge.nicheWidth).toBeCloseTo(0.78, 4);
+    expect(mCustomFridge.nicheHeight).toBeCloseTo(1.86, 4);
+
+    // Shape-editor handle at the fridge/counter boundary displays Counter length instead of Fridge niche width.
+    const fridgeWidthParam = fridgeModel.params?.find((p) => p.id === 'fridgeWidth');
+    const h28 = fridgeWidthParam?.handle?.({ w: 2.8, d: 0.6, h: 2.22 }, { fridgeWidth: 0.68 });
+    expect(h28?.label).toBe('Counter length');
+    expect(h28?.value).toBeCloseTo(2.8 - 0.024 - 0.68, 4);
   });
 
   it('builds compact-living:swivel-tv-stand as a white rolling TV cart with light oak shelf and 55-inch Netflix TV', () => {
@@ -820,6 +875,29 @@ describe('pack models', () => {
 
     const creamShaker = withModel(w, 'cream-shaker-empty').build(w.defaultSize);
     expect(creamShaker.length).toBeGreaterThan(empty.length);
+  });
+
+  it('builds soft-curve-furniture:l-shaped-bead-table with 4 turned bead legs, under-top drawers, 50 cm minimum width and independent L-arm dimensions', () => {
+    const t = ASSETS_BY_ID['soft-curve-furniture:l-shaped-bead-table'];
+    expect(t).toBeDefined();
+    expect(t.minSize).toEqual({ w: 0.5, d: 0.5, h: 0.7 });
+    expect(t.params?.map((p) => [p.id, p.min, p.default])).toEqual([
+      ['mainArmDepth', 0.5, 0.6],
+      ['returnArmWidth', 0.5, 0.6],
+    ]);
+    expect(assetModels(t).map((m) => m.id)).toEqual(['both-drawers', 'main-drawers', 'no-drawers']);
+
+    const defaultParts = t.build(t.defaultSize);
+    // 4 turned bead legs (lathe parts in 'base' slot) and 3 drawer knobs (2 on main arm + 1 on return arm).
+    expect(defaultParts.filter((p) => p.slot === 'base' && p.shape === 'lathe')).toHaveLength(4);
+    expect(defaultParts.filter((p) => p.slot === 'knob')).toHaveLength(3);
+
+    // Editing mainArmDepth and returnArmWidth independently down to 50 cm (0.5 m).
+    const p50Main = t.build(t.defaultSize, { mainArmDepth: 0.5, returnArmWidth: 0.75 });
+    const mainDrawerKnobZ = Math.max(...p50Main.filter((p) => p.slot === 'knob' && p.position[2] < 0).map((p) => p.position[2]));
+    const retDrawerKnobX = Math.max(...p50Main.filter((p) => p.slot === 'knob' && p.position[2] > 0).map((p) => p.position[0]));
+    expect(mainDrawerKnobZ).toBeCloseTo(-t.defaultSize.d / 2 + 0.5 - 0.012, 3);
+    expect(retDrawerKnobX).toBeCloseTo(-t.defaultSize.w / 2 + 0.75 - 0.012, 3);
   });
 });
 
