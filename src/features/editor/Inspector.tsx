@@ -613,7 +613,7 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
         {asset && <ObjectVariants project={project} objectId={objectId} asset={asset} />}
         {!isMobile && workspace === '3d' && !useProjectStore.getState().readOnly && canEditItem(project, objectId) && (
           <div className="shape-entry">
-            <Button size="sm" variant="subtle" disabled={locked} onClick={() => enterShapeEdit(objectId)} data-testid="edit-shape">
+            <Button size="sm" variant="info" disabled={locked} onClick={() => enterShapeEdit(objectId)} data-testid="edit-shape">
               <Shapes size={14} /> Edit shape
             </Button>
             {o.edits && (

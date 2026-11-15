@@ -2910,3 +2910,7 @@ Known limitations (also in README):
      wall height**, `0.75 m` default), `halfWallInset` (with a 3D handle on the rounded nose displaying **Half wall
      width**), and `cove` (**Ceiling LED cove**). Rendered thumbnails and added unit tests in `src/packs/packs.test.ts`
      (done).
+256. "khi bấm 1 vật thể, nút edit shape để màu xanh blue giống nút update trong export" → changed the `Edit shape` button
+     (`data-testid="edit-shape"`) in `src/features/editor/Inspector.tsx` from `variant="subtle"` to `variant="info"` so it
+     renders with the solid blue `btn-info` style matching the `Update` button in `src/features/exports/GuestLiveLink.tsx`
+     (done).
