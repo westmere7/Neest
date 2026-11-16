@@ -76,7 +76,7 @@ export const OPENING_DESIGNS: OpeningDesignInfo[] = [
   }),
   D('alu-patio', 'Patio aluminium', 'Sturdy aluminium frame, deep bottom rail', 'glazed', {
     material: 'metal-anthracite',
-    only: ['door-sliding', 'door-single', 'door-double', 'door-french', 'door-pocket'],
+    only: ['door-sliding', 'door-single', 'door-arched', 'door-double', 'door-french', 'door-pocket'],
   }),
   D('steel-slim', 'Slim black frame', 'Thin black steel, one clear pane', 'glazed', { material: 'metal-black-matte' }),
   D('steel-fluted', 'Black fluted', 'Thin black steel, fluted glass', 'glazed', { material: 'metal-black-matte' }),

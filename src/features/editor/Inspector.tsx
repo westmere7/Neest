@@ -460,7 +460,7 @@ function WallInspector({ project, wallId }: { project: Project; wallId: string }
 const OPENING_KINDS = Object.values(OPENING_PRESETS).map((p) => ({ value: p.kind, label: p.label }));
 
 /** Door kinds whose hinge (or slide/pivot direction) can be flipped. */
-const HINGED_KINDS = new Set<OpeningKind>(['door-single', 'door-pocket', 'door-bifold', 'door-barn', 'door-pivot']);
+const HINGED_KINDS = new Set<OpeningKind>(['door-single', 'door-arched', 'door-pocket', 'door-bifold', 'door-barn', 'door-pivot']);
 
 function OpeningInspector({ project, openingId }: { project: Project; openingId: string }) {
   const o = project.openings[openingId];
@@ -483,6 +483,7 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
           onChange={(kind) => {
             const p = OPENING_PRESETS[kind];
             const switchingFamily = isWindowKind(kind) !== win;
+            const toArchedDoor = kind === 'door-arched' && (switchingFamily || (o.frameMaterialId === DEFAULT_MATERIALS.doorFrame && o.panelMaterialId === DEFAULT_MATERIALS.doorPanel));
             // Keep the design when it suits the new kind; otherwise fall back to the kind's default look.
             const keep = o.design && designFitsKind(o.design, kind) ? o.design : undefined;
             upd('Change opening type', {
@@ -491,10 +492,15 @@ function OpeningInspector({ project, openingId }: { project: Project; openingId:
                 ? {
                     sillHeight: p.sill,
                     height: p.height,
-                    panelMaterialId: isWindowKind(kind) ? DEFAULT_MATERIALS.glass : DEFAULT_MATERIALS.doorPanel,
-                    frameMaterialId: isWindowKind(kind) ? DEFAULT_MATERIALS.windowFrame : DEFAULT_MATERIALS.doorFrame,
+                    panelMaterialId: isWindowKind(kind) ? DEFAULT_MATERIALS.glass : toArchedDoor ? 'wood-oak-light' : DEFAULT_MATERIALS.doorPanel,
+                    frameMaterialId: isWindowKind(kind) ? DEFAULT_MATERIALS.windowFrame : toArchedDoor ? 'wood-oak-light' : DEFAULT_MATERIALS.doorFrame,
                   }
-                : {}),
+                : toArchedDoor
+                  ? {
+                      panelMaterialId: 'wood-oak-light',
+                      frameMaterialId: 'wood-oak-light',
+                    }
+                  : {}),
               style: keep ? OPENING_DESIGNS_BY_ID[keep].style : p.style,
               design: keep,
             });
@@ -751,6 +757,14 @@ function ObjectInspector({ project, objectId, isMobile }: { project: Project; ob
             onCommit={(deg) => upd('Rotate object', { rotation: normalizeRotation((deg * Math.PI) / 180) })}
           />
         </div>
+        <div className="btn-row">
+          <Button size="sm" disabled={locked} onClick={() => rotateSelection(Math.PI / 2)}>
+            <RotateCw size={13} /> Rotate 90°
+          </Button>
+          <Button size="sm" disabled={locked} onClick={() => rotateSelection(Math.PI)}>
+            <RotateCw size={13} /> Rotate 180°
+          </Button>
+        </div>
         {!isMobile && <Toggle label="Mirrored" checked={o.mirrored} onChange={(v) => upd(v ? 'Mirror object' : 'Unmirror object', { mirrored: v })} />}
       </Section>
       {shown && shown.slots.length > 0 && (
@@ -876,8 +890,11 @@ function MultiInspector({ project }: { project: Project }) {
               <Button size="sm" onClick={duplicateSelection}>
                 <Copy size={13} /> Duplicate
               </Button>
-              <Button size="sm" onClick={() => rotateSelection()}>
-                <RotateCw size={13} /> Rotate group
+              <Button size="sm" onClick={() => rotateSelection(Math.PI / 2)}>
+                <RotateCw size={13} /> Rotate 90°
+              </Button>
+              <Button size="sm" onClick={() => rotateSelection(Math.PI)}>
+                <RotateCw size={13} /> Rotate 180°
               </Button>
               <Button size="sm" onClick={mirrorSelection}>
                 <FlipHorizontal2 size={13} /> Flip

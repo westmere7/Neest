@@ -7,6 +7,7 @@ import { useEditorStore } from '@/state/editorStore';
 
 export const DOOR_KINDS: OpeningKind[] = [
   'door-single',
+  'door-arched',
   'door-double',
   'door-french',
   'door-sliding',
@@ -30,6 +31,14 @@ export function extraOpeningIcon(kind: OpeningKind): ReactNode | null {
     </svg>
   );
   switch (kind) {
+    case 'door-arched':
+      return (
+        <svg viewBox="0 0 40 40" aria-hidden fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M10 35V17a10 10 0 0 1 20 0v18z" />
+          <path d="M24.5 23h2.8" strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="26.5" cy="26" r="0.9" fill="currentColor" stroke="none" />
+        </svg>
+      );
     case 'door-pocket':
       return svg(<path d="M10 24h-7" strokeWidth="2.2" strokeDasharray="2 1.5" />);
     case 'door-bifold':

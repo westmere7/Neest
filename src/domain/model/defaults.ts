@@ -110,6 +110,7 @@ export interface OpeningPreset {
 
 export const OPENING_PRESETS: Record<OpeningKind, OpeningPreset> = {
   'door-single': { kind: 'door-single', label: 'Single door', width: 0.9, height: 2.1, sill: 0, style: 'flush' },
+  'door-arched': { kind: 'door-arched', label: 'Arched door', width: 0.9, height: 2.15, sill: 0, style: 'flush' },
   'door-double': { kind: 'door-double', label: 'Double door', width: 1.4, height: 2.1, sill: 0, style: 'panel' },
   'door-sliding': { kind: 'door-sliding', label: 'Sliding door', width: 1.6, height: 2.1, sill: 0, style: 'glazed' },
   'door-pocket': { kind: 'door-pocket', label: 'Pocket door', width: 0.8, height: 2.1, sill: 0, style: 'flush' },

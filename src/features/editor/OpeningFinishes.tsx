@@ -96,7 +96,8 @@ export function OpeningToolFinish({ kind }: { kind: OpeningKind }) {
   const chosen = useEditorStore((s) => (family === 'door' ? s.doorFinish : s.windowFinish));
   if (!family) return null;
   const options = finishOptions(family, saved);
-  const selected = options.find((v) => v.id === chosen)?.id ?? options[0].id;
+  const defaultId = kind === 'door-arched' ? 'light-oak' : options[0].id;
+  const selected = options.find((v) => v.id === chosen)?.id ?? defaultId;
   return (
     <div className="object-variants">
       <VariantSwatches

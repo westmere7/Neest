@@ -86,7 +86,8 @@ export function openingSymbol(opening: Opening, geom: WallGeometry, span: Openin
   const toStart = opening.hinge === 'start';
 
   switch (opening.kind) {
-    case 'door-single': {
+    case 'door-single':
+    case 'door-arched': {
       if (opening.hinge === 'start') leaf(span.s0, 1, width);
       else leaf(span.s1, -1, width);
       break;

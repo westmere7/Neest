@@ -251,8 +251,27 @@ function DoorElevation({
     leaves.push(<DoorLeaf key="a" design={design} w={W + 0.1} h={H + 0.03} x={-0.05} brace hardware="barn" />);
   } else
     leaves.push(
-      <DoorLeaf key="a" design={design} w={iw} h={lh} x={f} hardware={kind === 'door-single' ? 'swing' : kind === 'door-pivot' ? 'pivot' : 'none'} />,
+      <DoorLeaf key="a" design={design} w={iw} h={lh} x={f} hardware={kind === 'door-single' || kind === 'door-arched' ? 'swing' : kind === 'door-pivot' ? 'pivot' : 'none'} />,
     );
+  if (kind === 'door-arched') {
+    const b = Math.min(W / 2, H * 0.6);
+    const ys = H - b;
+    const clipId = `od-arch-${design}-${Math.round(W * 100)}-${Math.round(H * 100)}`;
+    return (
+      <>
+        <defs>
+          <clipPath id={clipId}>
+            <path d={`M${f} 0 V${ys} A${W / 2 - f} ${b - f} 0 0 0 ${W - f} ${ys} V0 Z`} />
+          </clipPath>
+        </defs>
+        <path
+          className="od-frame"
+          d={`M0 0 V${ys} A${W / 2} ${b} 0 0 0 ${W} ${ys} V0 H${W - f} V${ys} A${W / 2 - f} ${b - f} 0 0 1 ${f} ${ys} V0 Z`}
+        />
+        <g clipPath={`url(#${clipId})`}>{leaves}</g>
+      </>
+    );
+  }
   return (
     <>
       <path className="od-frame" d={`M0 0 V${H} H${W} V0 H${W - f} V${H - f} H${f} V0 Z`} />

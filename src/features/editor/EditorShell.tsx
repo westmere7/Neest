@@ -568,7 +568,7 @@ function ToolRail({ in3d }: { in3d: boolean }) {
   const notesMode = useEditorStore((s) => s.notesMode);
   const set = useEditorStore((s) => s.set);
 
-  const inFurnitureLib = !notesMode && libraryOpen && (libraryTab === 'furniture' || libraryTab === 'materials');
+  const inFurnitureLib = !notesMode && libraryOpen && (libraryTab === 'furniture' || libraryTab === 'structure' || libraryTab === 'materials');
   const inBuildGroup = (g: 'walls' | 'doors' | 'windows') =>
     !notesMode && libraryOpen && libraryTab === 'build' && buildGroup === g;
 

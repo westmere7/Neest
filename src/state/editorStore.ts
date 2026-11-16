@@ -10,7 +10,7 @@ export type WallReference = 'center' | 'left' | 'right';
 export type Workspace = 'plan' | '3d' | 'split' | 'walk';
 export type PlanMode = 'draft' | 'furnished' | 'presentation';
 export type SelKind = 'wall' | 'node' | 'opening' | 'object' | 'room' | 'callout' | 'service' | 'run';
-export type LibraryTab = 'build' | 'furniture' | 'materials';
+export type LibraryTab = 'build' | 'furniture' | 'structure' | 'materials';
 /** Structural tools in the Build tab. (Columns, beams and similar pieces are furniture-library items.) */
 export type BuildGroup = 'walls' | 'doors' | 'windows';
 

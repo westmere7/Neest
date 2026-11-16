@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import '@/packs/loader';
 import { createEmptyProject } from '@/domain/model/defaults';
 import { useProjectStore } from '@/state/projectStore';
@@ -54,5 +54,27 @@ describe('LibraryPanel furniture left category sidebar', { timeout: 20_000 }, ()
     // Select Sofas & chairs (By item) -> Daybeds & sofa beds ALSO appears
     fireEvent.click(screen.getByTestId('lib-cat-item:seating'));
     expect(within(grid).getByText('Daybeds & sofa beds')).toBeInTheDocument();
+  });
+
+  it('places Structure as a top-level tab between Furniture and Materials and shows shape windows in the Windows build tab', () => {
+    render(<LibraryPanel isMobile={false} />);
+    const furnitureTab = screen.getByTestId('lib-tab-furniture');
+    const structureTab = screen.getByTestId('lib-tab-structure');
+    const materialsTab = screen.getByTestId('lib-tab-materials');
+
+    expect(furnitureTab.compareDocumentPosition(structureTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(structureTab.compareDocumentPosition(materialsTab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByTestId('lib-cat-item:structure')).toBeNull();
+
+    fireEvent.click(structureTab);
+    expect(screen.getByTestId('structure-tab')).toBeInTheDocument();
+    expect(screen.getByTestId('lib-struct-windows')).toBeInTheDocument();
+    expect(screen.getByTestId('lib-struct-Partitions')).toBeInTheDocument();
+
+    act(() => {
+      useEditorStore.setState({ libraryTab: 'build', buildGroup: 'windows' });
+    });
+    const shapeWindowsGrid = screen.getByTestId('shape-windows-grid');
+    expect(within(shapeWindowsGrid).getByTestId('asset-portal-frames:rounded-glass-window')).toBeInTheDocument();
   });
 });

@@ -52,6 +52,8 @@ export function addOpening(d: D, args: AddOpeningArgs): string | null {
   if (!wall || isDividerWall(wall)) return null;
   const preset = OPENING_PRESETS[args.kind];
   const isWindow = args.kind.startsWith('window');
+  const isArchedDoor = args.kind === 'door-arched';
+  if (isArchedDoor) ensureMaterial(d, 'wood-oak-light');
   const id = newId(isWindow ? 'win' : 'door');
   const opening: Opening = {
     id,
@@ -65,8 +67,8 @@ export function addOpening(d: D, args: AddOpeningArgs): string | null {
     hinge: args.hinge ?? 'start',
     openAngle: 0,
     style: preset.style,
-    frameMaterialId: isWindow ? DEFAULT_MATERIALS.windowFrame : DEFAULT_MATERIALS.doorFrame,
-    panelMaterialId: isWindow ? DEFAULT_MATERIALS.glass : DEFAULT_MATERIALS.doorPanel,
+    frameMaterialId: isWindow ? DEFAULT_MATERIALS.windowFrame : isArchedDoor ? 'wood-oak-light' : DEFAULT_MATERIALS.doorFrame,
+    panelMaterialId: isWindow ? DEFAULT_MATERIALS.glass : isArchedDoor ? 'wood-oak-light' : DEFAULT_MATERIALS.doorPanel,
   };
   if (args.design && designFitsKind(args.design, args.kind)) applyDesign(d, opening, args.design);
   d.openings[id] = opening;
@@ -131,6 +133,8 @@ export function setOpeningDesign(d: D, ids: string[], design: OpeningDesign): vo
 export function updateOpening(d: D, id: string, patch: Partial<Omit<Opening, 'id'>>): void {
   const o = d.openings[id];
   if (!o) return;
+  if (patch.frameMaterialId) ensureMaterial(d, patch.frameMaterialId);
+  if (patch.panelMaterialId) ensureMaterial(d, patch.panelMaterialId);
   Object.assign(o, patch);
   clampOpening(d, id);
 }

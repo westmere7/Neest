@@ -53,6 +53,7 @@ import { formatLength } from '@/domain/model/units';
 import {
   ASSET_CATALOG,
   ASSET_CATEGORY_LABELS,
+  ASSET_GROUPS,
   ASSET_TYPE_LABELS,
   ASSET_TYPE_ORDER,
   groupRank,
@@ -145,6 +146,7 @@ export const LibraryPanel = memo(function LibraryPanel({ isMobile }: { isMobile:
   const resizing = useRef<{ x: number; w: number } | null>(null);
   const tabs: { value: LibraryTab; label: string }[] = [
     { value: 'furniture', label: 'Furniture' },
+    { value: 'structure', label: 'Structure' },
     { value: 'materials', label: 'Materials' },
   ];
   const current = isMobile && tab === 'build' ? 'furniture' : tab;
@@ -176,8 +178,9 @@ export const LibraryPanel = memo(function LibraryPanel({ isMobile }: { isMobile:
         </div>
       </header>
       <div className="library-body">
-        {current === 'build' && <BuildTab />}
+        {current === 'build' && <BuildTab isMobile={isMobile} />}
         {current === 'furniture' && <FurnitureTab isMobile={isMobile} />}
+        {current === 'structure' && <StructureTab isMobile={isMobile} />}
         {current === 'materials' && <MaterialLibrary />}
       </div>
       {!isMobile && (
@@ -250,7 +253,47 @@ function OpeningIcon({ kind }: { kind: OpeningKind }) {
   );
 }
 
-function BuildTab() {
+const SHAPE_WINDOW_IDS = [
+  'portal-frames:rounded-glass-window',
+  'curtain-collection:balcony-window-double-curtains',
+  'soft-modern-home:glass-block-window-panel',
+  'soft-modern-home:oak-framed-glass-partition',
+  'modern-vietnamese:window-security-grille',
+  'structures:window-seat-with-bookcases',
+  'structures:storage-window-seat',
+] as const;
+
+export function isShapeWindowAsset(a: AssetDefinition): boolean {
+  if ((SHAPE_WINDOW_IDS as readonly string[]).includes(a.id)) return true;
+  if (a.type === 'structure' && /\bwindow\b/i.test(`${a.id} ${a.name}`)) return true;
+  return false;
+}
+
+function ShapeWindowsSection({ isMobile }: { isMobile: boolean }) {
+  const packs = usePackVersion();
+  const info = useMemo(() => (isMobile ? null : new InfoCardControl()), [isMobile]);
+  const items = useMemo(() => {
+    const order = new Map<string, number>(SHAPE_WINDOW_IDS.map((id, i) => [id, i]));
+    return ASSET_CATALOG.filter(isShapeWindowAsset).sort(
+      (a, b) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999) || a.name.localeCompare(b.name),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packs]);
+  if (items.length === 0) return null;
+  return (
+    <>
+      <h3 className="lib-h">Shape & custom windows</h3>
+      <div className="asset-grid pad-x" data-testid="shape-windows-grid">
+        {items.map((a) => (
+          <AssetCard key={a.id} asset={a} info={info} />
+        ))}
+      </div>
+      {info && <AssetInfoCard control={info} />}
+    </>
+  );
+}
+
+function BuildTab({ isMobile }: { isMobile: boolean }) {
   const tool = useEditorStore((s) => s.tool);
   const role = useEditorStore((s) => s.wallRole);
   const kind = useEditorStore((s) => s.openingKind);
@@ -356,6 +399,7 @@ function BuildTab() {
             ))}
           </div>
           <OpeningBuildOptions kinds={WINDOW_KINDS} />
+          <ShapeWindowsSection isMobile={isMobile} />
         </>
       )}
     </div>
@@ -710,7 +754,7 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
 
           <div className="lib-cat-group" data-testid="library-cat-items">
             <CategoryHeading>By item</CategoryHeading>
-            {ITEM_CATEGORIES.map((c) =>
+            {ITEM_CATEGORIES.filter((c) => c.id !== 'item:structure').map((c) =>
               renderCatBtn(c.id, c.label, CATEGORY_ICONS[c.id], catCounts.get(c.id) ?? 0, `${c.label} · ${c.vn}`),
             )}
           </div>
@@ -796,6 +840,207 @@ function FurnitureTab({ isMobile }: { isMobile: boolean }) {
               <Upload size={14} /> Import GLB / glTF model
             </button>
           )}
+        </div>
+      </div>
+
+      {info && <AssetInfoCard control={info} />}
+    </div>
+  );
+}
+
+// ───────────── Structure tab ─────────────
+
+type StructureFilter = 'all' | 'recent' | 'windows' | string;
+
+const STRUCTURE_GROUP_ICONS: Record<string, typeof Columns2> = {
+  Partitions: Columns2,
+  'Portals & arches': Columns2,
+  'Built-ins': Archive,
+  Columns: Columns2,
+  'Beams & ceilings': LayoutGrid,
+  'Stairs & steps': Component,
+  Heating: Sun,
+};
+
+function StructureTab({ isMobile }: { isMobile: boolean }) {
+  const favourites = usePrefsStore((s) => s.favouriteAssets);
+  const recents = usePrefsStore((s) => s.recentAssets);
+  const packs = usePackVersion();
+  const [query, setQuery] = useState('');
+  const [favOnly, setFavOnly] = useState(false);
+  const [cat, setCat] = useState<StructureFilter>('all');
+  const railCollapsed = useRailCollapsed();
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const info = useMemo(() => (isMobile ? null : new InfoCardControl()), [isMobile]);
+
+  const chooseCat = (next: StructureFilter) => {
+    setCat(next);
+    resultsRef.current?.scrollTo({ top: 0 });
+  };
+
+  const reveal = useEditorStore((s) => s.libraryReveal);
+  const [revealedId, setRevealedId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!reveal) return;
+    const asset = ASSET_CATALOG.find((a) => a.id === reveal.assetId);
+    if (!asset || !furnitureCategoriesOf(asset).all.has('item:structure')) return;
+    setQuery('');
+    setFavOnly(false);
+    setCat(asset.group);
+    let tries = 0;
+    const t = window.setInterval(() => {
+      const el = document
+        .querySelector<HTMLElement>(`[data-testid="asset-${CSS.escape(reveal.assetId)}"]`)
+        ?.closest<HTMLElement>('.asset-card');
+      if (!el && ++tries < 25) return;
+      window.clearInterval(t);
+      if (!el) return;
+      el.scrollIntoView({ block: 'center' });
+      setRevealedId(reveal.assetId);
+    }, 80);
+    const off = window.setTimeout(() => setRevealedId(null), 2600);
+    return () => {
+      window.clearInterval(t);
+      window.clearTimeout(off);
+    };
+  }, [reveal]);
+
+  const structureAll = useMemo(
+    () => ASSET_CATALOG.filter((a) => furnitureCategoriesOf(a).all.has('item:structure')),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [packs],
+  );
+  const q = query.trim().toLowerCase();
+  const baseList = useMemo(
+    () =>
+      structureAll.filter((a) => {
+        if (q) {
+          const hay = `${a.name} ${a.tags.join(' ')} ${ASSET_CATEGORY_LABELS[a.category]} ${ASSET_TYPE_LABELS[a.type]} ${a.group} ${a.pack?.name ?? ''} ${furnitureCategorySearchText(a)}`;
+          if (!hay.toLowerCase().includes(q)) return false;
+        }
+        if (favOnly && !favourites.includes(a.id)) return false;
+        return true;
+      }),
+    [structureAll, q, favOnly, favourites],
+  );
+
+  const recentSet = useMemo(() => new Set(recents), [recents]);
+  const recentCount = useMemo(
+    () => baseList.reduce((n, a) => n + (recentSet.has(a.id) ? 1 : 0), 0),
+    [baseList, recentSet],
+  );
+  const windowsCount = useMemo(() => baseList.filter(isShapeWindowAsset).length, [baseList]);
+  const groupCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of baseList) m.set(a.group, (m.get(a.group) ?? 0) + 1);
+    return m;
+  }, [baseList]);
+
+  const list = useMemo(() => {
+    if (cat === 'all') return baseList;
+    if (cat === 'recent') {
+      return baseList
+        .filter((a) => recentSet.has(a.id))
+        .sort((a, b) => recents.indexOf(a.id) - recents.indexOf(b.id));
+    }
+    if (cat === 'windows') return baseList.filter(isShapeWindowAsset);
+    return baseList.filter((a) => a.group === cat);
+  }, [baseList, cat, recentSet, recents]);
+
+  const structureShelves = useMemo(() => {
+    if (cat === 'recent') return [{ key: 'recent', title: '', items: list }];
+    if (cat === 'windows') return [{ key: 'windows', title: 'Windows & glazing', items: besideBase(list) }];
+    return shelves(list, 'item:structure');
+  }, [list, cat]);
+
+  const renderBtn = (value: StructureFilter, label: string, Icon: typeof Sofa, count: number, tooltip?: string) => {
+    const active = cat === value;
+    const empty = !!(q || favOnly) && count === 0 && !active;
+    return (
+      <CategoryButton
+        key={value}
+        active={active}
+        empty={empty}
+        onClick={() => chooseCat(value)}
+        icon={Icon}
+        label={label}
+        count={count}
+        tooltip={tooltip}
+        testId={`lib-struct-${value}`}
+      />
+    );
+  };
+
+  return (
+    <div className="furniture-tab" data-testid="structure-tab">
+      <div className="lib-filters">
+        <div className="lib-browse-row">
+          <div className="search-box">
+            <Search size={13} aria-hidden />
+            <input
+              className="input"
+              placeholder={`Search ${structureAll.length} structure items…`}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={searchKeyDown(query, setQuery)}
+              aria-label="Search structure"
+              data-testid="structure-search"
+            />
+            <SearchClear query={query} onClear={() => setQuery('')} testId="structure-search-clear" />
+          </div>
+          <IconButton
+            label="Favourites"
+            active={favOnly}
+            onClick={() => setFavOnly(!favOnly)}
+            className="fav-filter-btn"
+            data-testid="structure-filter-favourites"
+          >
+            <Star size={16} />
+          </IconButton>
+        </div>
+      </div>
+
+      <div className={`furniture-split${railCollapsed ? ' rail-collapsed' : ''}`}>
+        <CategoryRail label="Structure categories" testId="structure-categories">
+          <div className="lib-cat-group">
+            {renderBtn('all', 'All structure', LayoutGrid, baseList.length, 'All structure · Tất cả kết cấu')}
+            {renderBtn('recent', 'Recent', Clock, recentCount, 'Recently placed · Gần đây')}
+          </div>
+          <div className="lib-cat-group" data-testid="structure-cat-groups">
+            <CategoryHeading>By type</CategoryHeading>
+            {renderBtn('windows', 'Windows & glazing', Frame, windowsCount, 'Shape & partition windows · Cửa sổ & ô kính')}
+            {ASSET_GROUPS.structure.map((g) =>
+              renderBtn(g, g, STRUCTURE_GROUP_ICONS[g] ?? Columns2, groupCounts.get(g) ?? 0, g),
+            )}
+          </div>
+        </CategoryRail>
+
+        <div className="furniture-results" ref={resultsRef}>
+          <div className="asset-shelves" data-testid="structure-asset-grid">
+            {structureShelves.map((g) => (
+              <section key={g.key} className="asset-shelf" aria-label={g.title || undefined}>
+                {g.title && (
+                  <h3 className="lib-h shelf-h">
+                    {g.title} <span className="shelf-count">{g.items.length}</span>
+                  </h3>
+                )}
+                <div className="asset-grid">
+                  {g.items.map((a) => (
+                    <AssetCard key={a.id} asset={a} info={info} revealed={a.id === revealedId} />
+                  ))}
+                </div>
+              </section>
+            ))}
+            {list.length === 0 && (
+              <p className="field-hint pad">
+                {favOnly
+                  ? 'Star items to collect them here.'
+                  : cat === 'recent'
+                    ? 'Items you place appear here.'
+                    : 'No items match your search.'}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -905,7 +1150,11 @@ function AssetCard({
             : [
                 {
                   label: `Show in ${FURNITURE_CATEGORY_BY_ID.get(primaryItemCategoryOf(asset))?.label ?? ASSET_TYPE_LABELS[asset.type]} › ${asset.group}`,
-                  run: () => useEditorStore.getState().set({ libraryReveal: { assetId: asset.id, nonce: Date.now() } }),
+                  run: () =>
+                    useEditorStore.getState().set({
+                      libraryTab: primaryItemCategoryOf(asset) === 'item:structure' ? 'structure' : 'furniture',
+                      libraryReveal: { assetId: asset.id, nonce: Date.now() },
+                    }),
                 },
               ]),
           ...(ready

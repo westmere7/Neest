@@ -114,7 +114,7 @@ describe('buildOpening', () => {
   });
 
   it('gives arched kinds two spandrels and rectangular kinds none', () => {
-    for (const kind of ['passage-arched', 'window-arched'] as const) {
+    for (const kind of ['door-arched', 'passage-arched', 'window-arched'] as const) {
       const { project, o, g, span } = setup(kind);
       expect(meshes(build(project, o, g, span), (m) => m.name === 'opening-infill')).toHaveLength(2);
     }
@@ -124,6 +124,18 @@ describe('buildOpening', () => {
     }
     const { project, o, g, span } = setup('window-round');
     expect(meshes(build(project, o, g, span), (m) => m.name === 'opening-infill')).toHaveLength(4);
+  });
+
+  it('defaults door-arched to light oak wood for both frame and leaf', () => {
+    let id = '';
+    const project = produce(createEmptyProject(), (d) => {
+      const [wallId] = addWallChain(d, [{ x: 0, y: 0 }, { x: 8, y: 0 }], { thickness: T, height: 2.7, role: 'interior' });
+      id = addOpening(d, { wallId, kind: 'door-arched', offset: 4 })!;
+    });
+    const o = project.openings[id];
+    expect(o.frameMaterialId).toBe('wood-oak-light');
+    expect(o.panelMaterialId).toBe('wood-oak-light');
+    expect(project.materials['wood-oak-light']).toBeDefined();
   });
 
   it('hides a fully open pocket door inside the wall', () => {

@@ -24,10 +24,15 @@ import { moveSelectionToLayer, newLayerFromSelection } from '@/features/editor/i
 import { canEditItem, enterShapeEdit } from '@/features/shape-edit/actions';
 import { copySelection, copySelectionToOption, hasClipboardPayload, pasteFromClipboard } from '@/features/editor/clipboard';
 import { enterIsolation, exitIsolation, groupExists } from '@/features/editor/isolation';
+import { getAsset } from '@/data/assets/registry';
+import { primaryItemCategoryOf } from '@/data/assets/furnitureCategories';
 
 /** Opens the library on an item's shelf and flashes its card (leaves Connections, which shares the panel's place). */
 export function showInLibrary(assetId: string): void {
-  useEditorStore.getState().set({ servicesMode: false, libraryOpen: true, libraryTab: 'furniture', libraryReveal: { assetId, nonce: Date.now() } });
+  const proj = useProjectStore.getState().project;
+  const asset = proj ? getAsset(proj, assetId) : null;
+  const libraryTab = asset && primaryItemCategoryOf(asset) === 'item:structure' ? 'structure' : 'furniture';
+  useEditorStore.getState().set({ servicesMode: false, libraryOpen: true, libraryTab, libraryReveal: { assetId, nonce: Date.now() } });
 }
 
 /** Phones and small tablets (the editor's mobile layout): no shape editor there. */
@@ -119,6 +124,7 @@ function allPlanContextMenuItems(hit: SelItem | null, world: Vec2): MenuItem[] {
         run: () => void copySelectionToOption(opt.id),
       })),
       { label: 'Rotate 90°', shortcut: 'Q', run: () => rotateSelection(Math.PI / 2), disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },
+      { label: 'Rotate 180°', run: () => rotateSelection(Math.PI), disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },
       { label: 'Flip (mirror)', run: mirrorSelection, disabled: Boolean(o && (isObjectLocked(project, o) || project.layers.furniture.locked)) },
       { label: o?.locked ? 'Unlock' : 'Lock', shortcut: 'Ctrl+L', run: toggleLockSelection },
       { separator: true, label: '' },

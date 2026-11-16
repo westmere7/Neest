@@ -2975,3 +2975,23 @@ Known limitations (also in README):
      wall clamps and floor channel, finish variants (`frosted-chrome`, `clear-chrome`, `reeded-black`, `reeded-brass`,
      `smoked-black`), and 4 shape-editor handles (`screenWidth`, `screenHeight`, `outerTopRadius`, `wallTopRadius`). Rendered
      thumbnails and added unit tests in `src/packs/packs.test.ts` (done).
+265. "Tách Structure ra thành 1 tab độc lập nằm giữa furniture và material. Ngoài ra những cái shape window đồng thời cũng phải
+     xuất hiện trong mục window" → updated `LibraryTab` (`src/state/editorStore.ts`), `LibraryPanel`
+     (`src/features/library/LibraryPanel.tsx`), `EditorShell` (`src/features/editor/EditorShell.tsx`), and `showInLibrary`
+     (`src/features/plan-2d/contextMenu.ts`) to promote **Structure** (`lib-tab-structure`) to a standalone top-level tab between
+     **Furniture** and **Materials** with its own left category rail (`All structure`, `Recent`, `Windows & glazing`, `Partitions`,
+     `Portals & arches`, `Built-ins`, `Columns`, `Beams & ceilings`, `Stairs & steps`, `Heating`), removed `item:structure` from
+     `FurnitureTab`'s `By item` list, and added `ShapeWindowsSection` (`shape-windows-grid`) inside `BuildTab` when
+     `buildGroup === 'windows'` so shape/custom windows (`portal-frames:rounded-glass-window`,
+     `curtain-collection:balcony-window-double-curtains`, `soft-modern-home:glass-block-window-panel`, etc.) also appear directly
+     in the **Windows** tool panel (done).
+266. "Thêm tính năng rotate 180 độ" → added **Rotate 180°** (`rotateSelection(Math.PI)`) to the right-click context menu
+     (`src/features/plan-2d/contextMenu.ts`, right below **Rotate 90°**) and to the single-object and multi-object Inspector panels
+     (`src/features/editor/Inspector.tsx`), with unit tests in `src/features/plan-2d/contextMenu.test.ts` (done).
+267. "TẠO trong mục door option cửa tròn 1 đầu như vậy, default là cửa gỗ" → added `'door-arched'` (**Arched door**, `0.9 × 2.15 m`)
+     to `OpeningKindSchema` (`src/domain/model/schema.ts`), `OPENING_PRESETS` (`src/domain/model/defaults.ts`), `DOOR_KINDS`
+     (`src/features/library/BuildExtras.tsx`), `openingSymbol` (`src/features/plan-2d/symbols.ts`), `OpeningDesignPicker`
+     (`src/features/editor/OpeningDesignPicker.tsx`), and `buildOpening` (`src/features/scene-3d/openingBuilder.ts`), with
+     light-oak wood (`wood-oak-light`) as the default frame and door leaf finish (`addOpening` in
+     `src/domain/commands/entities.ts`, `OpeningToolFinish` in `src/features/editor/OpeningFinishes.tsx`, and `Inspector.tsx`) and a
+     matte-black lever handle and keyhole escutcheon, plus unit tests in `src/features/scene-3d/openings.test.ts` (done).

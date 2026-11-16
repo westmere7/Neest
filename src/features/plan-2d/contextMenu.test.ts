@@ -16,14 +16,20 @@ describe('planContextMenuItems for objects', () => {
     useEditorStore.getState().setSelection([{ kind: 'object', id: objId }]);
   });
 
-  it('places Flip (mirror) immediately after Rotate 90° and toggles mirrored on click', () => {
+  it('places Rotate 180° and Flip (mirror) immediately after Rotate 90° and runs them on click', () => {
     const items = planContextMenuItems({ kind: 'object', id: objId }, { x: 1, y: 1 });
     const labels = items.map((m) => m.label);
     const rotIdx = labels.indexOf('Rotate 90°');
     expect(rotIdx).toBeGreaterThanOrEqual(0);
-    expect(labels[rotIdx + 1]).toBe('Flip (mirror)');
+    expect(labels[rotIdx + 1]).toBe('Rotate 180°');
+    expect(labels[rotIdx + 2]).toBe('Flip (mirror)');
 
-    const flipItem = items[rotIdx + 1];
+    const rot180Item = items[rotIdx + 1];
+    expect(rot180Item.disabled).toBe(false);
+    rot180Item.run?.();
+    expect(Math.abs(useProjectStore.getState().project?.objects[objId]?.rotation ?? 0)).toBeCloseTo(Math.PI, 4);
+
+    const flipItem = items[rotIdx + 2];
     expect(flipItem.disabled).toBe(false);
     expect(flipItem.checked).toBeUndefined();
 

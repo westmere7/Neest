@@ -111,6 +111,7 @@ export const WallSegmentSchema = z.object({
 
 export const OpeningKindSchema = z.enum([
   'door-single',
+  'door-arched',
   'door-double',
   'door-sliding',
   'door-pocket',
