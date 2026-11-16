@@ -1047,16 +1047,41 @@ describe('pack models', () => {
     const sxBounds = worldBounds(straightX[0]);
     expect(sxBounds.max[0] - sxBounds.min[0]).toBeCloseTo(1.0, 3);
     expect(sxBounds.max[2] - sxBounds.min[2]).toBeCloseTo(0.05, 3);
+
+    const wcScreen = ASSETS_BY_ID['bathroom-collection:reeded-glass-wc-partition'];
+    expect(wcScreen).toBeDefined();
+    expect(wcScreen.category).toBe('bathroom');
+    expect(wcScreen.params?.map((p) => p.id)).toEqual([
+      'screenWidth',
+      'screenHeight',
+      'outerTopRadius',
+      'wallTopRadius',
+    ]);
+    const screenParts = wcScreen.build(wcScreen.defaultSize, {
+      screenWidth: 0.7,
+      screenHeight: 2.05,
+      outerTopRadius: 0.18,
+      wallTopRadius: 0.01,
+    });
+    const screenXs = screenParts.flatMap((p) => [worldBounds(p).min[0], worldBounds(p).max[0]]);
+    const screenYs = screenParts.flatMap((p) => [worldBounds(p).min[1], worldBounds(p).max[1]]);
+    expect(Math.max(...screenXs) - Math.min(...screenXs)).toBeCloseTo(0.7, 3);
+    expect(Math.max(...screenYs)).toBeCloseTo(2.05, 3);
   });
 
-  it('builds portal-frames:rounded-glass-window with white & wood frame variants, independent width & height, and 4 corner radii that morph into oval and circular windows', () => {
+  it('builds portal-frames:rounded-glass-window with white & wood frame variants, open curtains model, independent width & height, and 4 corner radii that morph into oval and circular windows', () => {
     const win = ASSETS_BY_ID['portal-frames:rounded-glass-window'];
     expect(win).toBeDefined();
     expect(win.slots.map((s) => [s.id, s.defaultMaterial])).toEqual([
-      ['frame', 'paint-satin-white'],
+      ['frame', 'wood-walnut'],
       ['glass', 'glass-clear'],
+      ['wall', 'plaster-white'],
     ]);
+    expect(win.variants?.map((v) => v.id)).toContain('satin-white');
     expect(win.variants?.map((v) => v.id)).toContain('light-oak');
+    expect(assetModels(win).map((m) => m.id)).toEqual(['clean', 'with-curtains', 'cross-mullions', 'vertical-mullion']);
+    const withCurtains = withModel(win, 'with-curtains').build(win.defaultSize);
+    expect(withCurtains.some((p) => p.slot === 'curtain')).toBe(true);
     expect(win.params?.map((p) => p.id)).toEqual([
       'windowWidth',
       'windowHeight',

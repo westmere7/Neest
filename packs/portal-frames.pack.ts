@@ -1787,10 +1787,10 @@ function roundedGlassWindowGeo({ w, d, h }: Size3, p?: ParamValues): RoundedGlas
   const maxFrameW = Math.max(0.025, Math.min(0.1, winW * 0.22, winH * 0.22));
   const frameW = clamp(num('frameWidth', 0.045), 0.025, maxFrameW);
 
-  const rTL = clamp(num('topLeftRadius', 0.08), 0, 1.2);
-  const rTR = clamp(num('topRightRadius', 0.08), 0, 1.2);
-  const rBR = clamp(num('bottomRightRadius', 0.08), 0, 1.2);
-  const rBL = clamp(num('bottomLeftRadius', 0.08), 0, 1.2);
+  const rTL = clamp(num('topLeftRadius', 0.26), 0, 1.2);
+  const rTR = clamp(num('topRightRadius', 0.26), 0, 1.2);
+  const rBR = clamp(num('bottomRightRadius', 0.02), 0, 1.2);
+  const rBL = clamp(num('bottomLeftRadius', 0.02), 0, 1.2);
 
   const radiiAt = (ins: number) => {
     const xa = x0 + ins;
@@ -1934,7 +1934,7 @@ function roundedGlassWindowParams(): AssetParam[] {
       id: 'topLeftRadius',
       label: 'Top-left corner radius',
       kind: 'length',
-      default: 0.08,
+      default: 0.26,
       min: 0,
       max: 1.2,
       step: 0.01,
@@ -1950,7 +1950,7 @@ function roundedGlassWindowParams(): AssetParam[] {
       id: 'topRightRadius',
       label: 'Top-right corner radius',
       kind: 'length',
-      default: 0.08,
+      default: 0.26,
       min: 0,
       max: 1.2,
       step: 0.01,
@@ -1966,7 +1966,7 @@ function roundedGlassWindowParams(): AssetParam[] {
       id: 'bottomRightRadius',
       label: 'Bottom-right corner radius',
       kind: 'length',
-      default: 0.08,
+      default: 0.02,
       min: 0,
       max: 1.2,
       step: 0.01,
@@ -1982,7 +1982,7 @@ function roundedGlassWindowParams(): AssetParam[] {
       id: 'bottomLeftRadius',
       label: 'Bottom-left corner radius',
       kind: 'length',
-      default: 0.08,
+      default: 0.02,
       min: 0,
       max: 1.2,
       step: 0.01,
@@ -2000,43 +2000,64 @@ function roundedGlassWindowParams(): AssetParam[] {
 function buildRoundedGlassWindow(
   size: Size3,
   p?: ParamValues,
-  mullions: 'none' | 'cross' | 'vertical' = 'none',
+  style: 'none' | 'curtains' | 'cross' | 'vertical' = 'none',
 ): Part[] {
   const g = roundedGlassWindowGeo(size, p);
   const { d, x0, x1, y0, y1, frameW, upperArc, lowerArc } = g;
   const yMid = (y0 + y1) / 2;
   const xMid = (x0 + x1) / 2;
   const sashW = Math.min(0.018, frameW * 0.35);
-  const sashD = Math.max(0.02, d * 0.45);
-  const glassT = Math.min(0.01, sashD * 0.45);
+  const frameD = Math.max(0.024, d - 0.004);
+  const sashD = Math.max(0.016, d * 0.42);
+  const glassT = Math.min(0.008, sashD * 0.4);
 
-  const upperOuter = upperArc(0);
+  const upperOuter = upperArc(0.0015);
   const upperInner = upperArc(frameW);
-  const lowerOuter = lowerArc(0);
+  const lowerOuter = lowerArc(0.0015);
   const lowerInner = lowerArc(frameW);
 
   const upperSashIn = upperArc(frameW + sashW);
   const lowerSashIn = lowerArc(frameW + sashW);
   const glassOutline = dedupe([...upperArc(frameW + sashW - 0.004), ...lowerArc(frameW + sashW - 0.004)]);
 
+  const yLeftSplit = upperOuter[0][1];
+  const yRightSplit = upperOuter[upperOuter.length - 1][1];
+  const upperWallSpandrel = dedupe([
+    [x0, yLeftSplit],
+    [x0, y1],
+    [x1, y1],
+    [x1, yRightSplit],
+    ...[...upperArc(0.0025)].reverse(),
+  ]);
+  const lowerWallSpandrel = dedupe([
+    [x1, yRightSplit],
+    [x1, y0],
+    [x0, y0],
+    [x0, yLeftSplit],
+    ...[...lowerArc(0.0025)].reverse(),
+  ]);
+
   const parts: Part[] = [
     // Plan-visible jamb cores at the horizontal equator (stay inside the frame at all corner radii, including oval/circle).
-    span('frame', [x0 + 0.003, x0 + frameW - 0.003], [yMid - 0.004, yMid + 0.004], [-d / 2 + 0.003, d / 2 - 0.003]),
-    span('frame', [x1 - frameW + 0.003, x1 - 0.003], [yMid - 0.004, yMid + 0.004], [-d / 2 + 0.003, d / 2 - 0.003]),
-    // Full-depth outer casing (split into upper and lower half-rings).
-    panelXY('frame', dedupe([...upperOuter, ...[...upperInner].reverse()]), -d / 2, d),
-    panelXY('frame', dedupe([...lowerOuter, ...[...lowerInner].reverse()]), -d / 2, d),
+    span('frame', [x0 + 0.003, x0 + frameW - 0.003], [yMid - 0.004, yMid + 0.004], [-frameD / 2, frameD / 2]),
+    span('frame', [x1 - frameW + 0.003, x1 - 0.003], [yMid - 0.004, yMid + 0.004], [-frameD / 2, frameD / 2]),
+    // Corner wall spandrels filling the space between the rectangular wall hole and the curved window frame.
+    panelXY('wall', upperWallSpandrel, -d / 2, d),
+    panelXY('wall', lowerWallSpandrel, -d / 2, d),
+    // Timber/painted outer window casing (split into upper and lower half-rings).
+    panelXY('frame', dedupe([...upperOuter, ...[...upperInner].reverse()]), -frameD / 2, frameD),
+    panelXY('frame', dedupe([...lowerOuter, ...[...lowerInner].reverse()]), -frameD / 2, frameD),
     // Recessed inner sash bead holding the glass.
     panelXY('frame', dedupe([...upperInner, ...[...upperSashIn].reverse()]), -sashD / 2, sashD),
     panelXY('frame', dedupe([...lowerInner, ...[...lowerSashIn].reverse()]), -sashD / 2, sashD),
-    // Centered glass pane.
+    // Centered transparent glass pane.
     panelXY('glass', glassOutline, -glassT / 2, glassT),
   ];
 
   const barT = 0.022;
-  const barD = Math.min(d - 0.012, sashD + 0.008);
+  const barD = Math.min(frameD - 0.006, sashD + 0.008);
   const innerClip = dedupe([...upperSashIn, ...lowerSashIn]);
-  if (mullions === 'vertical' || mullions === 'cross') {
+  if (style === 'vertical' || style === 'cross') {
     const vBar = clipToConvex(
       [
         [xMid - barT / 2, y0],
@@ -2048,7 +2069,7 @@ function buildRoundedGlassWindow(
     );
     if (vBar.length >= 3) parts.push(panelXY('frame', vBar, -barD / 2, barD));
   }
-  if (mullions === 'cross') {
+  if (style === 'cross') {
     const hBar = clipToConvex(
       [
         [x0, yMid - barT / 2],
@@ -2059,6 +2080,46 @@ function buildRoundedGlassWindow(
       innerClip,
     );
     if (hBar.length >= 3) parts.push(panelXY('frame', hBar, -barD / 2, barD));
+  }
+  if (style === 'curtains') {
+    const innerW = Math.max(0.16, x1 - x0 - 2 * (frameW + sashW));
+    const stackW = clamp(innerW * 0.27, 0.08, 0.36);
+    const folds = 5;
+    const foldW = stackW / folds;
+    const zCurtain0 = Math.min(d / 2 - 0.014, glassT / 2 + 0.003);
+    const zCurtain1 = Math.min(d / 2 - 0.006, zCurtain0 + 0.007);
+    const yTie = y0 + (y1 - y0) * 0.36;
+
+    for (const side of [-1, 1] as const) {
+      const xStart = side === -1 ? x0 + frameW + sashW : x1 - frameW - sashW - stackW;
+      for (let i = 0; i < folds; i++) {
+        const fx0 = xStart + i * foldW + 0.001;
+        const fx1 = xStart + (i + 1) * foldW - 0.001;
+        const strip = clipToConvex(
+          [
+            [fx0, y0],
+            [fx1, y0],
+            [fx1, y1],
+            [fx0, y1],
+          ],
+          innerClip,
+        );
+        if (strip.length >= 3) {
+          const zf = i % 2 === 0 ? zCurtain0 : (zCurtain0 + zCurtain1) / 2;
+          parts.push(panelXY('curtain', strip, zf, 0.0055));
+        }
+      }
+      const tieBand = clipToConvex(
+        [
+          [xStart, yTie - 0.014],
+          [xStart + stackW, yTie - 0.014],
+          [xStart + stackW, yTie + 0.014],
+          [xStart, yTie + 0.014],
+        ],
+        innerClip,
+      );
+      if (tieBand.length >= 3) parts.push(panelXY('curtain', tieBand, zCurtain1, 0.005));
+    }
   }
 
   return parts;
@@ -2079,8 +2140,10 @@ function roundedGlassWindowPlan(size: Size3, p?: ParamValues): PlanStroke[] {
   ];
 }
 
-const WINDOW_FRAME_SLOT = matSlot('frame', 'Window frame', 'paint-satin-white');
+const WINDOW_FRAME_SLOT = matSlot('frame', 'Window frame', 'wood-walnut');
 const WINDOW_GLASS_SLOT = matSlot('glass', 'Window glass', 'glass-clear');
+const WINDOW_WALL_SLOT = matSlot('wall', 'Corner wall spandrel', 'plaster-white');
+const WINDOW_CURTAIN_SLOT = matSlot('curtain', 'Open curtains', 'fabric-white-cotton');
 
 const roundedGlassWindow = defineItem({
   id: 'rounded-glass-window',
@@ -2105,23 +2168,25 @@ const roundedGlassWindow = defineItem({
     'white frame',
     'wood frame',
     'oak window',
+    'curtain window',
     'cửa sổ',
     'cửa sổ kính',
     'cửa sổ bo góc',
     'cửa sổ tròn',
     'cửa sổ oval',
+    'cửa sổ có rèm',
     'ô kính',
   ],
   description:
-    'A rectangular glass window in a satin-white or solid-wood frame whose horizontal width, vertical height and four independent corner radii adjust in the shape editor so it can form a crisp rectangle, rounded-corner window, capsule, oval or circle.',
+    'A recessed see-through glass window in a walnut, oak or satin-white frame that cuts into the wall it is placed on, with independent horizontal width, vertical height and four corner radii (rectangle, arched top, capsule, oval or circle) and an optional model with parted curtains open on both sides.',
   defaultSize: { w: 1.1, d: 0.1, h: 1.0 },
   minSize: { w: 0.35, d: 0.05, h: 0.35 },
   maxSize: { w: 3.2, d: 0.35, h: 2.6 },
-  slots: [WINDOW_FRAME_SLOT, WINDOW_GLASS_SLOT],
+  slots: [WINDOW_FRAME_SLOT, WINDOW_GLASS_SLOT, WINDOW_WALL_SLOT],
   variants: [
+    { id: 'satin-white', name: 'Satin white frame', materials: { frame: 'paint-satin-white' } },
     { id: 'light-oak', name: 'Light oak frame', materials: { frame: 'wood-oak-light' } },
     { id: 'warm-oak', name: 'Warm oak frame', materials: { frame: 'laminate-oak' } },
-    { id: 'walnut', name: 'Walnut wood frame', materials: { frame: 'wood-walnut' } },
     { id: 'teak', name: 'Teak wood frame', materials: { frame: 'wood-teak' } },
     { id: 'warm-cream', name: 'Warm cream frame', materials: { frame: 'laminate-cream' } },
     { id: 'sage-green', name: 'Sage green frame', materials: { frame: 'laminate-sage' } },
@@ -2130,7 +2195,14 @@ const roundedGlassWindow = defineItem({
     { id: 'oak-frosted', name: 'Light oak & frosted glass', materials: { frame: 'wood-oak-light', glass: 'glass-frosted' } },
   ],
   models: [
-    { id: 'clean', name: 'Single clear pane' },
+    { id: 'clean', name: 'Clear glass window' },
+    {
+      id: 'with-curtains',
+      name: 'With open curtains (both sides)',
+      slots: [WINDOW_CURTAIN_SLOT],
+      build: (s, p) => buildRoundedGlassWindow(s, p, 'curtains'),
+      planDetail: (s, p) => roundedGlassWindowPlan(s, p),
+    },
     {
       id: 'cross-mullions',
       name: 'With cross mullions',

@@ -285,6 +285,14 @@
    "file": "bathroom-collection_quadrant-shower.webp",
    "fp": "a8e76a2b11046db4"
   },
+  "bathroom-collection:reeded-glass-wc-partition": {
+   "file": "bathroom-collection_reeded-glass-wc-partition.webp",
+   "fp": "973cfbdcf4a973a6"
+  },
+  "bathroom-collection:reeded-glass-wc-partition@model:smooth": {
+   "file": "bathroom-collection_reeded-glass-wc-partition_model_smooth.webp",
+   "fp": "a55d81ccdd61a09f"
+  },
   "bathroom-collection:round-led-mirror": {
    "file": "bathroom-collection_round-led-mirror.webp",
    "fp": "4b17ba506aa34405"
@@ -4267,15 +4275,19 @@
   },
   "portal-frames:rounded-glass-window": {
    "file": "portal-frames_rounded-glass-window.webp",
-   "fp": "9d8c45eb014f8bc9"
+   "fp": "1bb1f995c4f92a95"
   },
   "portal-frames:rounded-glass-window@model:cross-mullions": {
    "file": "portal-frames_rounded-glass-window_model_cross-mullions.webp",
-   "fp": "feb47dd5b3dace3d"
+   "fp": "09172f121baa6466"
   },
   "portal-frames:rounded-glass-window@model:vertical-mullion": {
    "file": "portal-frames_rounded-glass-window_model_vertical-mullion.webp",
-   "fp": "7a75f9f2b67c4b91"
+   "fp": "224d9b7b867c0a1a"
+  },
+  "portal-frames:rounded-glass-window@model:with-curtains": {
+   "file": "portal-frames_rounded-glass-window_model_with-curtains.webp",
+   "fp": "a6b8379ac6c3fbde"
   },
   "portal-frames:rounded-header": {
    "file": "portal-frames_rounded-header.webp",

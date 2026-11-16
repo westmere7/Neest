@@ -1482,6 +1482,222 @@ const lWaterCurb = defineItem({
   },
 });
 
+/** Flat panel in the X/Y plane extruded from z0 to z0 + t. */
+function panelXYBath(slot: string, pts: V2[], z0: number, t: number): Part {
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return {
+    shape: 'prism',
+    outline: pts.map(([x, y]) => [x - cx, -(y - cy)] as V2),
+    height: t,
+    position: [cx, cy, z0],
+    rotation: [Math.PI / 2, 0, 0],
+    slot,
+    plan: false,
+  };
+}
+
+function reededGlassWcPartitionGeom(
+  w: number,
+  h: number,
+  p?: Record<string, number | boolean | string>,
+) {
+  const screenW = typeof p?.screenWidth === 'number' ? clamp(p.screenWidth, 0.25, 1.6) : w;
+  const screenH = typeof p?.screenHeight === 'number' ? clamp(p.screenHeight, 1.2, 2.5) : h;
+  const x1 = w / 2;
+  const x0 = x1 - screenW;
+  const y0 = 0.013;
+  const y1 = screenH;
+  const maxR = Math.max(0.004, Math.min(screenW * 0.85, (y1 - y0) * 0.45));
+  const rL = clamp(typeof p?.outerTopRadius === 'number' ? p.outerTopRadius : 0.14, 0.004, maxR);
+  const rR = clamp(
+    typeof p?.wallTopRadius === 'number' ? p.wallTopRadius : 0.008,
+    0.004,
+    Math.max(0.004, Math.min(screenW - rL - 0.004, (y1 - y0) * 0.45)),
+  );
+  const xG1 = x1 - 0.001;
+  const outline: V2[] = [
+    [x0, y0],
+    ...arcPoints(x0 + rL, y1 - rL, rL, Math.PI, Math.PI * 0.5, 12),
+    ...arcPoints(xG1 - rR, y1 - rR, rR, Math.PI * 0.5, 0, 8),
+    [xG1, y0],
+  ];
+  const yTopAt = (x: number): number => {
+    if (x < x0 + rL) {
+      const dx = clamp(x0 + rL - x, 0, rL);
+      return y1 - rL + Math.sqrt(Math.max(0, rL * rL - dx * dx));
+    }
+    if (x > xG1 - rR) {
+      const dx = clamp(x - (xG1 - rR), 0, rR);
+      return y1 - rR + Math.sqrt(Math.max(0, rR * rR - dx * dx));
+    }
+    return y1;
+  };
+  return { screenW, screenH, x0, x1, xG1, y0, y1, rL, rR, outline, yTopAt };
+}
+
+function buildReededGlassWcPartition(
+  w: number,
+  d: number,
+  h: number,
+  params?: Record<string, number | boolean | string>,
+  fluted = true,
+): Part[] {
+  const g = reededGlassWcPartitionGeom(w, h, params);
+  const { screenH, x0, x1, xG1, y0, outline, yTopAt } = g;
+  const clampD = Math.max(0.018, d - 0.002);
+  const glassT = Math.min(0.008, clampD * 0.45);
+  const ribT = Math.min(0.013, clampD * 0.72);
+
+  const parts: Part[] = [
+    // Slim bottom floor channel and two wall-side U-clamps.
+    span('clamp', [x0 + 0.01, x1], [0, 0.012], [-clampD / 2, clampD / 2], { bevel: 0.002 }),
+    span('clamp', [x1 - 0.032, x1], [screenH * 0.46 - 0.02, screenH * 0.46 + 0.02], [-clampD / 2, clampD / 2], {
+      bevel: 0.003,
+      plan: false,
+    }),
+    span('clamp', [x1 - 0.032, x1], [screenH * 0.84 - 0.02, screenH * 0.84 + 0.02], [-clampD / 2, clampD / 2], {
+      bevel: 0.003,
+      plan: false,
+    }),
+    // Main rounded-top glass sheet.
+    panelXYBath('glass', outline, -glassT / 2, glassT),
+  ];
+
+  if (fluted) {
+    const ribs = 16;
+    const xStart = x0 + 0.006;
+    const xEnd = xG1 - 0.006;
+    const step = (xEnd - xStart) / ribs;
+    const ribW = step * 0.56;
+    for (let i = 0; i < ribs; i++) {
+      const rx0 = xStart + i * step + (step - ribW) / 2;
+      const rx1 = rx0 + ribW;
+      const ry1 = Math.min(yTopAt(rx0), yTopAt(rx1)) - 0.003;
+      if (ry1 > y0 + 0.04) {
+        parts.push(
+          span('glass', [rx0, rx1], [y0 + 0.002, ry1], [-ribT / 2, ribT / 2], {
+            bevel: Math.min(0.002, ribW * 0.35),
+            plan: false,
+          }),
+        );
+      }
+    }
+  }
+
+  return parts;
+}
+
+const reededGlassWcPartition = defineItem({
+  id: 'reeded-glass-wc-partition',
+  name: 'Fluted glass WC partition screen',
+  category: 'bathroom',
+  type: 'structure',
+  group: 'Partitions',
+  wallSnap: true,
+  tags: tags(
+    'glass partition',
+    'reeded glass',
+    'fluted glass',
+    'shower screen',
+    'wc partition',
+    'toilet divider',
+    'rounded corner',
+    'vách kính',
+    'vách kính sóng',
+    'vách kính sọc',
+    'vách ngăn wc',
+    'vách ngăn nhà tắm',
+  ),
+  description:
+    'Standalone frameless vertical fluted/reeded glass WC and shower partition screen with a rounded top outer corner and compact brushed-steel wall clamps; resize its width, height and top corner radii independently in the shape editor.',
+  defaultSize: { w: 0.55, d: 0.036, h: 1.95 },
+  minSize: { w: 0.25, d: 0.02, h: 1.2 },
+  maxSize: { w: 1.6, d: 0.08, h: 2.5 },
+  slots: [
+    matSlot('glass', 'Fluted glass panel', 'glass-reeded'),
+    matSlot('clamp', 'Wall clamps & shoe', 'metal-brushed-steel'),
+  ],
+  variants: [
+    { id: 'frosted-chrome', name: 'Frosted glass & chrome', materials: { glass: 'glass-frosted', clamp: 'metal-chrome' } },
+    { id: 'clear-chrome', name: 'Clear glass & chrome', materials: { glass: 'glass-clear', clamp: 'metal-chrome' } },
+    { id: 'reeded-black', name: 'Reeded glass & matte black', materials: { glass: 'glass-reeded', clamp: 'metal-black-matte' } },
+    { id: 'reeded-brass', name: 'Reeded glass & brushed brass', materials: { glass: 'glass-reeded', clamp: 'metal-brass' } },
+    { id: 'smoked-black', name: 'Smoked glass & matte black', materials: { glass: 'glass-tinted', clamp: 'metal-black-matte' } },
+  ],
+  models: [
+    { id: 'reeded', name: 'Fluted / reeded glass (kính sóng)' },
+    {
+      id: 'smooth',
+      name: 'Smooth glass panel (kính phẳng)',
+      build: ({ w, d, h }, params) => buildReededGlassWcPartition(w, d, h, params, false),
+    },
+  ],
+  params: [
+    {
+      id: 'screenWidth',
+      label: 'Screen width',
+      kind: 'length',
+      default: 0.55,
+      min: 0.25,
+      max: 1.6,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = reededGlassWcPartitionGeom(w, h, p);
+        return { at: [g.x0, g.screenH * 0.5, d / 2 + 0.008], dir: [-1, 0, 0] };
+      },
+    },
+    {
+      id: 'screenHeight',
+      label: 'Screen height',
+      kind: 'length',
+      default: 1.95,
+      min: 1.2,
+      max: 2.5,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = reededGlassWcPartitionGeom(w, h, p);
+        return { at: [(g.x0 + g.x1) / 2, g.y1, d / 2 + 0.008], dir: [0, 1, 0] };
+      },
+    },
+    {
+      id: 'outerTopRadius',
+      label: 'Outer top corner radius',
+      kind: 'length',
+      default: 0.14,
+      min: 0,
+      max: 0.6,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = reededGlassWcPartitionGeom(w, h, p);
+        return {
+          at: [g.x0 + g.rL * 0.55 + 0.015, g.y1 - g.rL * 0.55 - 0.015, d / 2 + 0.008],
+          dir: [Math.SQRT1_2, -Math.SQRT1_2, 0],
+        };
+      },
+    },
+    {
+      id: 'wallTopRadius',
+      label: 'Wall-side top corner radius',
+      kind: 'length',
+      default: 0.008,
+      min: 0,
+      max: 0.6,
+      step: 0.01,
+      handle: ({ w, d, h }, p) => {
+        const g = reededGlassWcPartitionGeom(w, h, p);
+        return {
+          at: [g.x1 - g.rR * 0.55 - 0.015, g.y1 - g.rR * 0.55 - 0.015, d / 2 + 0.008],
+          dir: [-Math.SQRT1_2, -Math.SQRT1_2, 0],
+        };
+      },
+    },
+  ],
+  build: ({ w, d, h }, params) => buildReededGlassWcPartition(w, d, h, params, true),
+});
+
 export default definePack({
   name: 'Bathroom collection',
   version: '1.0.0',
@@ -1494,6 +1710,7 @@ export default definePack({
     floatingUndermountVanityMirror,
     floorTileZone,
     lWaterCurb,
+    reededGlassWcPartition,
     openDoubleVanity,
     cornerBasin,
     ovalBath,

@@ -2958,10 +2958,20 @@ Known limitations (also in README):
      handles (`frontArmLength` and `sideArmLength`, both `min: 0` so setting either arm to `0` produces a straight water curb),
      `curbWidth`, and `cornerRadius`. Rendered thumbnails and added unit tests in `src/packs/packs.test.ts` (done).
 263. "Tạo 1 cửa sổ hình chữ nhật bằng kính khung trắng hoặc gỗ, cho phép kéo chiều ngang dọc độc lập và chỉnh bo 4 góc để tạo được
-     thành oval và tròn" → added `portal-frames:rounded-glass-window` (**Rounded-corner & oval glass window**,
-     `category: 'construction'`, `type: 'structure'`, `group: 'Partitions'`) in `packs/portal-frames.pack.ts` with satin-white and
-     solid-wood frame variants (`light-oak`, `warm-oak`, `walnut`, `teak`, `warm-cream`, `sage-green`, `matte-black`, frosted
-     glass), 3 glazing models (`clean`, `cross-mullions`, `vertical-mullion`), and 7 shape-editor handles (`windowWidth`,
-     `windowHeight`, `frameWidth`, `topLeftRadius`, `topRightRadius`, `bottomRightRadius`, `bottomLeftRadius`) that morph the
-     window smoothly between a crisp rectangle, rounded-corner rectangle, capsule, elliptical oval, and circle. Rendered
+     thành oval và tròn" / "Tạo 1 cửa sổ như hình, có thể điều chỉnh radius 4 góc, mặc định là kính. - 1 variant có kèm rèm đang ở
+     trạng thái mở 2 bên" / "Sửa cái cửa sổ này mặc định là kính trong suốt nhìn thấy bên trong kiểu ăn được vào tường" → added
+     `portal-frames:rounded-glass-window` (**Rounded-corner & oval glass window**, `category: 'construction'`, `type: 'structure'`,
+     `group: 'Partitions'`) in `packs/portal-frames.pack.ts` with walnut, oak and satin-white frame variants, corner wall spandrels
+     (`wall` slot), 4 glazing models (`clean` default clear glass, `with-curtains` with pleated curtains parted open on both sides,
+     `cross-mullions`, `vertical-mullion`), and 7 shape-editor handles (`windowWidth`, `windowHeight`, `frameWidth`,
+     `topLeftRadius`, `topRightRadius`, `bottomRightRadius`, `bottomLeftRadius`). Also added `findWallCutoutForObject` in
+     `src/domain/geometry/walls.ts` (used by `computeWallNetwork`, `buildObject`, `ShapeEditObject`, and `hugWall`) so placing
+     `portal-frames:rounded-glass-window` on a wall automatically cuts a 3D opening through the wall and embeds the window flush
+     with the wall's finish, making the glass see-through into the room behind. Rendered thumbnails and added unit tests in
+     `src/packs/packs.test.ts` (done).
+264. "Làm 1 vách kính như vậy để tôi đặt được độc lập trong wc" → added `bathroom-collection:reeded-glass-wc-partition`
+     (**Fluted glass WC partition screen**, `category: 'bathroom'`, `type: 'structure'`, `group: 'Partitions'`) in
+     `packs/bathroom-collection.pack.ts` with vertical fluted/reeded glass (`reeded` and `smooth` models), compact brushed-steel
+     wall clamps and floor channel, finish variants (`frosted-chrome`, `clear-chrome`, `reeded-black`, `reeded-brass`,
+     `smoked-black`), and 4 shape-editor handles (`screenWidth`, `screenHeight`, `outerTopRadius`, `wallTopRadius`). Rendered
      thumbnails and added unit tests in `src/packs/packs.test.ts` (done).

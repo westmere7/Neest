@@ -1,11 +1,73 @@
-import { isDividerWall, type Opening, type Project, type Vec2, type WallNode, type WallSegment } from '../model/schema';
+import { isDividerWall, type Opening, type PlacedObject, type Project, type Vec2, type WallNode, type WallSegment } from '../model/schema';
 import type { Polygon } from './polygon';
 import { signedArea } from './polygon';
-import { buildWallPath, pointAt, slicePath, type WallPath } from './wallPath';
+import { buildWallPath, pointAt, projectOnPath, slicePath, type WallPath } from './wallPath';
 import { add, angleDelta, angleOf, dist, dot, leftNormal, lineIntersection, scale, sub } from './vec';
 
 /** Minimum distance between an opening and a wall end/junction corner. */
 export const OPENING_END_MARGIN = 0.02;
+
+/** Library items that recess into and cut a 3D hole through the wall they are snapped to. */
+export const WALL_CUTOUT_ASSET_IDS = new Set<string>(['portal-frames:rounded-glass-window']);
+
+export interface ObjectWallCutout {
+  wallId: string;
+  offset: number;
+  width: number;
+  height: number;
+  sillHeight: number;
+  x: number;
+  y: number;
+  depth: number;
+  wallMaterialId: string;
+}
+
+export function findWallCutoutForObject(
+  obj: PlacedObject,
+  walls: Record<string, WallSegment>,
+  nodes: Record<string, WallNode>,
+  paths?: Map<string, WallPath>,
+): ObjectWallCutout | null {
+  if (obj.hidden || !WALL_CUTOUT_ASSET_IDS.has(obj.assetId)) return null;
+  const rawW = obj.edits?.params?.windowWidth;
+  const rawH = obj.edits?.params?.windowHeight;
+  const winW = typeof rawW === 'number' && Number.isFinite(rawW) ? Math.min(3.2, Math.max(0.35, rawW)) : obj.width;
+  const winH = typeof rawH === 'number' && Number.isFinite(rawH) ? Math.min(2.6, Math.max(0.35, rawH)) : obj.height;
+  const sign = obj.mirrored ? -1 : 1;
+  const lx = sign * ((-obj.width + winW) / 2);
+  const cos = Math.cos(obj.rotation);
+  const sin = Math.sin(obj.rotation);
+  const wx = obj.x + lx * cos;
+  const wy = obj.y + lx * sin;
+
+  let best: { wall: WallSegment; s: number; d: number; point: Vec2; tangent: Vec2 } | null = null;
+  for (const w of Object.values(walls)) {
+    if (w.hidden || isDividerWall(w)) continue;
+    const path = paths ? paths.get(w.id) : wallPathFor(w, nodes);
+    if (!path || path.length <= 1e-6) continue;
+    const proj = projectOnPath(path, { x: wx, y: wy });
+    if (proj.s <= 0.01 || proj.s >= path.length - 0.01) continue;
+    if (proj.dist > w.thickness / 2 + obj.depth / 2 + 0.12) continue;
+    if (Math.abs(cos * proj.tangent.x + sin * proj.tangent.y) < 0.7) continue;
+    if (!best || proj.dist < best.d) {
+      best = { wall: w, s: proj.s, d: proj.dist, point: proj.point, tangent: proj.tangent };
+    }
+  }
+  if (!best) return null;
+  const n0 = leftNormal(best.tangent);
+  const perp = (wx - best.point.x) * n0.x + (wy - best.point.y) * n0.y;
+  return {
+    wallId: best.wall.id,
+    offset: best.s,
+    width: winW,
+    height: winH,
+    sillHeight: obj.elevation,
+    x: obj.x - perp * n0.x,
+    y: obj.y - perp * n0.y,
+    depth: best.wall.thickness,
+    wallMaterialId: best.wall.materials.left,
+  };
+}
 
 export interface OpeningSpan {
   id: string;
@@ -117,7 +179,9 @@ export function buildNodeWalls(project: Pick<Project, 'walls'>): Map<string, str
 }
 
 /** Computes mitred/joined wall outlines, opening spans, and junction hubs. */
-export function computeWallNetwork(project: Pick<Project, 'walls' | 'nodes' | 'openings'>): WallNetwork {
+export function computeWallNetwork(
+  project: Pick<Project, 'walls' | 'nodes' | 'openings'> & { objects?: Record<string, PlacedObject> },
+): WallNetwork {
   const paths = new Map<string, WallPath>();
   for (const w of Object.values(project.walls)) {
     const p = wallPathFor(w, project.nodes);
@@ -244,6 +308,30 @@ export function computeWallNetwork(project: Pick<Project, 'walls' | 'nodes' | 'o
     openingsByWall.get(o.wallId)!.push(o);
   }
 
+  const cutoutsByWall = new Map<string, Opening[]>();
+  if (project.objects) {
+    for (const obj of Object.values(project.objects)) {
+      const cut = findWallCutoutForObject(obj, project.walls, project.nodes, paths);
+      if (!cut) continue;
+      if (!cutoutsByWall.has(cut.wallId)) cutoutsByWall.set(cut.wallId, []);
+      cutoutsByWall.get(cut.wallId)!.push({
+        id: `winobj_${obj.id}`,
+        wallId: cut.wallId,
+        kind: 'window-single',
+        offset: cut.offset,
+        width: cut.width,
+        height: cut.height,
+        sillHeight: cut.sillHeight,
+        swingSide: 'left',
+        hinge: 'start',
+        openAngle: 0,
+        style: 'flush',
+        frameMaterialId: 'paint-satin-white',
+        panelMaterialId: 'glass-clear',
+      });
+    }
+  }
+
   const walls = new Map<string, WallGeometry>();
   for (const w of Object.values(project.walls)) {
     const path = paths.get(w.id);
@@ -251,7 +339,7 @@ export function computeWallNetwork(project: Pick<Project, 'walls' | 'nodes' | 'o
     const cs = corners.get(`${w.id}:s`);
     const ce = corners.get(`${w.id}:e`);
     if (!cs || !ce) continue;
-    walls.set(w.id, buildWallGeometry(w, path, cs, ce, openingsByWall.get(w.id) ?? []));
+    walls.set(w.id, buildWallGeometry(w, path, cs, ce, openingsByWall.get(w.id) ?? [], cutoutsByWall.get(w.id) ?? []));
   }
   return { walls, hubs, nodeWalls };
 }
@@ -262,6 +350,7 @@ function buildWallGeometry(
   cs: { left: Vec2; right: Vec2; free: boolean },
   ce: { left: Vec2; right: Vec2; free: boolean },
   openings: Opening[],
+  cutouts: Opening[] = [],
 ): WallGeometry {
   const h = wall.thickness / 2;
   const L = path.length;
@@ -279,6 +368,9 @@ function buildWallGeometry(
   const topAt = (s: number) => (sloped ? z1 + ((zEnd - z1) * Math.min(Math.max(s, 0), L)) / L : z1);
 
   const spans = computeOpeningSpans(openings, clearStart, clearEnd, z0, z1, sloped ? topAt : undefined);
+  const cutSpans = cutouts.length
+    ? computeOpeningSpans([...openings, ...cutouts], clearStart, clearEnd, z0, z1, sloped ? topAt : undefined)
+    : spans;
 
   const edgeAt = (s: number, side: 1 | -1): Vec2 => {
     if (s <= 1e-9) return side === 1 ? cs.left : cs.right;
@@ -304,29 +396,55 @@ function buildWallGeometry(
     atEnd: s1 >= L - 1e-9,
   });
 
-  // Breakpoints along the wall; each interval is either solid or an opening gap.
-  const breaks = new Set<number>([0, L]);
+  // Plan pieces split only on formal Opening entities.
+  const planBreaks = new Set<number>([0, L]);
   for (const sp of spans) {
+    planBreaks.add(sp.s0);
+    planBreaks.add(sp.s1);
+  }
+  const planSorted = [...planBreaks].sort((x, y) => x - y);
+  const planPieces: WallPiece[] = [];
+  let planSolidStart: number | null = null;
+  for (let i = 0; i < planSorted.length - 1; i++) {
+    const s0 = planSorted[i];
+    const s1 = planSorted[i + 1];
+    if (s1 - s0 < 1e-6) continue;
+    const m = (s0 + s1) / 2;
+    const covering = spans.filter((sp) => sp.s0 <= m && sp.s1 >= m);
+    if (covering.length === 0) {
+      if (planSolidStart === null) planSolidStart = s0;
+      continue;
+    }
+    if (planSolidStart !== null) {
+      planPieces.push(makePiece(planSolidStart, s0, z0, z1, 'solid'));
+      planSolidStart = null;
+    }
+  }
+  if (planSolidStart !== null) {
+    planPieces.push(makePiece(planSolidStart, L, z0, z1, 'solid'));
+  }
+
+  // 3D pieces split on both formal openings and recessed window objects.
+  const breaks = new Set<number>([0, L]);
+  for (const sp of cutSpans) {
     breaks.add(sp.s0);
     breaks.add(sp.s1);
   }
   const sorted = [...breaks].sort((x, y) => x - y);
   const pieces: WallPiece[] = [];
-  const planPieces: WallPiece[] = [];
   let solidStart: number | null = null;
   for (let i = 0; i < sorted.length - 1; i++) {
     const s0 = sorted[i];
     const s1 = sorted[i + 1];
     if (s1 - s0 < 1e-6) continue;
     const m = (s0 + s1) / 2;
-    const covering = spans.filter((sp) => sp.s0 <= m && sp.s1 >= m);
+    const covering = cutSpans.filter((sp) => sp.s0 <= m && sp.s1 >= m);
     if (covering.length === 0) {
       if (solidStart === null) solidStart = s0;
       continue;
     }
     if (solidStart !== null) {
       pieces.push(makePiece(solidStart, s0, z0, z1, 'solid'));
-      planPieces.push(makePiece(solidStart, s0, z0, z1, 'solid'));
       solidStart = null;
     }
     const gapBottom = Math.min(...covering.map((c) => c.sill));
@@ -336,7 +454,6 @@ function buildWallGeometry(
   }
   if (solidStart !== null) {
     pieces.push(makePiece(solidStart, L, z0, z1, 'solid'));
-    planPieces.push(makePiece(solidStart, L, z0, z1, 'solid'));
   }
 
   const left = edgeSlice(0, L, 1);

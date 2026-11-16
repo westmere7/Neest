@@ -4,7 +4,7 @@ import { assetModelSlots } from './assetModels';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { PlacedObject, Project, Room, Vec2 } from '@/domain/model/schema';
 import type { RoomFace } from '@/domain/geometry/rooms';
-import type { JunctionHub, WallGeometry, WallPiece } from '@/domain/geometry/walls';
+import { findWallCutoutForObject, type JunctionHub, type WallGeometry, type WallPiece } from '@/domain/geometry/walls';
 import { triangulate } from '@/domain/geometry/polygon';
 import { pointAt } from '@/domain/geometry/wallPath';
 import { dist, leftNormal, normalize, sub } from '@/domain/geometry/vec';
@@ -618,9 +618,10 @@ export interface BuildContext {
 
 /** Group for a placed object: procedural parts, or an imported model normalised to the object's size. */
 export function buildObject(obj: PlacedObject, ctx: BuildContext): THREE.Group {
+  const cut = findWallCutoutForObject(obj, ctx.project.walls, ctx.project.nodes);
   const group = new THREE.Group();
   group.name = obj.name ?? obj.assetId;
-  group.position.set(obj.x, obj.elevation, obj.y);
+  group.position.set(cut ? cut.x : obj.x, obj.elevation, cut ? cut.y : obj.y);
   group.rotation.y = -obj.rotation;
   if (obj.mirrored) group.scale.x = -1;
   group.userData = { kind: 'object', id: obj.id };
@@ -657,9 +658,12 @@ export function buildObject(obj: PlacedObject, ctx: BuildContext): THREE.Group {
     group.add(holder);
     return group;
   }
-  const meshes = assetSlotGeometries(asset, { w: obj.width, d: obj.depth, h: obj.height }).map(
-    ({ slot, geometry }) =>
-      slotMesh(geometry, ctx.registry.get(ctx.project, objectSlotMaterialId(obj, asset, slot)), shadows),
+  const meshes = assetSlotGeometries(asset, { w: obj.width, d: cut ? cut.depth : obj.depth, h: obj.height }).map(
+    ({ slot, geometry }) => {
+      const matId =
+        slot === 'wall' && cut && !obj.materials.wall ? cut.wallMaterialId : objectSlotMaterialId(obj, asset, slot);
+      return slotMesh(geometry, ctx.registry.get(ctx.project, matId), shadows);
+    },
   );
   biasSlotsBySize(meshes);
   meshes.forEach((m) => group.add(m));

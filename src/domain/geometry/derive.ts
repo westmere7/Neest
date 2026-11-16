@@ -1,7 +1,7 @@
 import { isDividerWall, type Project, type Room, type Vec2 } from '../model/schema';
 import { computeDiagnostics, type Diagnostic } from '../validation/diagnostics';
 import { detectRoomFaces, matchFacesToRooms, type RoomFace } from './rooms';
-import { computeWallNetwork, type JunctionHub, type WallNetwork } from './walls';
+import { computeWallNetwork, WALL_CUTOUT_ASSET_IDS, type JunctionHub, type WallNetwork } from './walls';
 import { add, boundsOf, leftNormal, scale, unionBounds, type Bounds } from './vec';
 import { pointInPolygon, rectPolygon } from './polygon';
 import { pointAt } from './wallPath';
@@ -20,20 +20,31 @@ export interface DerivedPlan {
 // Memoise on the identity of the structural sub-trees. Immer keeps unchanged
 // sub-trees referentially stable, so object or material edits never trigger
 // wall/room recomputation.
-let netCache: { walls: unknown; nodes: unknown; openings: unknown; value: WallNetwork } | null = null;
+let netCache: { walls: unknown; nodes: unknown; openings: unknown; cutoutsKey: string; value: WallNetwork } | null = null;
 let faceCache: { walls: unknown; nodes: unknown; value: RoomFace[] } | null = null;
 let derivedCache: { project: Project; value: DerivedPlan } | null = null;
 
+function objectCutoutsKey(project: Project): string {
+  let k = '';
+  for (const o of Object.values(project.objects)) {
+    if (!WALL_CUTOUT_ASSET_IDS.has(o.assetId)) continue;
+    k += `${o.id}:${o.x}:${o.y}:${o.elevation}:${o.width}:${o.depth}:${o.height}:${o.rotation}:${o.mirrored}:${o.hidden}:${o.edits?.params?.windowWidth ?? ''}:${o.edits?.params?.windowHeight ?? ''}|`;
+  }
+  return k;
+}
+
 export function getWallNetwork(project: Project): WallNetwork {
+  const cutoutsKey = objectCutoutsKey(project);
   if (
     netCache &&
     netCache.walls === project.walls &&
     netCache.nodes === project.nodes &&
-    netCache.openings === project.openings
+    netCache.openings === project.openings &&
+    netCache.cutoutsKey === cutoutsKey
   )
     return netCache.value;
   const value = computeWallNetwork(project);
-  netCache = { walls: project.walls, nodes: project.nodes, openings: project.openings, value };
+  netCache = { walls: project.walls, nodes: project.nodes, openings: project.openings, cutoutsKey, value };
   return value;
 }
 

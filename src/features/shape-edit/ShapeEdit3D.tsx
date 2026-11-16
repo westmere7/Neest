@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { useThree, type ThreeEvent } from '@react-three/fiber';
 import type { ItemEdits, PlacedObject, Project } from '@/domain/model/schema';
+import { findWallCutoutForObject } from '@/domain/geometry/walls';
 import { formatLength } from '@/domain/model/units';
 import { objectSlotMaterialId } from '@/data/assets/registry';
 import { MIN_SECTION, editedParts, paramHandles, sectionInfo, sectionsOffered, type EditedPart } from '@/data/assets/itemEdits';
@@ -174,7 +175,8 @@ function sectionBox(sec: ShapeSection, s: { edges: number[]; lo: number; hi: num
 export function ShapeEditObject({ project, obj, registry }: { project: Project; obj: PlacedObject; registry: MaterialRegistry }) {
   const shapeEdit = useEditorStore((s) => s.shapeEdit);
   const asset = editBase(project, obj);
-  const size = useMemo(() => ({ w: obj.width, d: obj.depth, h: obj.height }), [obj.width, obj.depth, obj.height]);
+  const cut = useMemo(() => findWallCutoutForObject(obj, project.walls, project.nodes), [obj, project.walls, project.nodes]);
+  const size = useMemo(() => ({ w: obj.width, d: cut ? cut.depth : obj.depth, h: obj.height }), [obj.width, obj.depth, obj.height, cut]);
   const [drag, setDrag] = useState<Drag | null>(null);
   const dragRef = useRef<Drag | null>(null);
   const group = useRef<THREE.Group>(null);
@@ -272,7 +274,7 @@ export function ShapeEditObject({ project, obj, registry }: { project: Project; 
   const edgeDrag = drag?.kind === 'edge' ? drag : null;
 
   return (
-    <group ref={group} name="shape-edit" position={[obj.x, obj.elevation, obj.y]} rotation={[0, -obj.rotation, 0]} scale={[obj.mirrored ? -1 : 1, 1, 1]}>
+    <group ref={group} name="shape-edit" position={[cut ? cut.x : obj.x, obj.elevation, cut ? cut.y : obj.y]} rotation={[0, -obj.rotation, 0]} scale={[obj.mirrored ? -1 : 1, 1, 1]}>
       <group
         onPointerMove={(e) => {
           if (dragRef.current || !sections) return;
@@ -288,9 +290,11 @@ export function ShapeEditObject({ project, obj, registry }: { project: Project; 
       >
         {parts
           .filter((p) => !p.hidden)
-          .map((p) => (
-            <PartMesh key={p.index} p={p} material={registry.get(project, objectSlotMaterialId(obj, asset, p.part.slot))} />
-          ))}
+          .map((p) => {
+            const matId =
+              p.part.slot === 'wall' && cut && !obj.materials.wall ? cut.wallMaterialId : objectSlotMaterialId(obj, asset, p.part.slot);
+            return <PartMesh key={p.index} p={p} material={registry.get(project, matId)} />;
+          })}
       </group>
       {hoverBox && (
         <mesh position={hoverBox.pos} material={SECTION_HOVER} raycast={() => null} renderOrder={4}>

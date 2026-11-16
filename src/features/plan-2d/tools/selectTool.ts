@@ -3,6 +3,7 @@ import type { PlacedObject, Vec2 } from '@/domain/model/schema';
 import { clampOpenings, insertJunctions, joinTangent, setNodePositions, settleNode, updateWalls } from '@/domain/commands/walls';
 import { clampOpening, normalizeRotation, updateObjects, updateOpening } from '@/domain/commands/entities';
 import { calloutAnchor, setCalloutAnchorPoint } from '@/domain/geometry/callouts';
+import { WALL_CUTOUT_ASSET_IDS } from '@/domain/geometry/walls';
 import { projectOnPath } from '@/domain/geometry/wallPath';
 import { add, angleOf, dist, dot, leftNormal, rotate, round, scale, sub } from '@/domain/geometry/vec';
 import { formatAngle, formatLength } from '@/domain/model/units';
@@ -328,7 +329,7 @@ export function createSelectTool(): Tool {
             let target = add(base, delta);
             if (snapOn) target = snapOnAxis(target, base, axis, grid / 2);
             if (asset && o && (asset.wallSnap || asset.mount === 'wall') && !e.alt) {
-              hugged = hugWall(env.derived(), add(base, delta), o.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE);
+              hugged = hugWall(env.derived(), add(base, delta), o.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE, WALL_CUTOUT_ASSET_IDS.has(o.assetId));
               // While locked, only a wall the item meets on its line counts.
               if (hugged && !onAxis(hugged, base, axis)) hugged = null;
               if (hugged) target = { x: hugged.x, y: hugged.y };

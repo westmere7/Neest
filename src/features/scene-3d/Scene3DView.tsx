@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { PlacedObject, Project, RenderSettings, WallDisplay } from '@/domain/model/schema';
 import { derivePlan, type DerivedPlan } from '@/domain/geometry/derive';
+import { WALL_CUTOUT_ASSET_IDS } from '@/domain/geometry/walls';
 import {
   addCameraPreset,
   deleteCameraPreset,
@@ -425,7 +426,7 @@ function useObjectDrag(project: Project, derived: DerivedPlan, enabled: boolean)
         let rotation = obj.rotation;
         let hugged = false;
         if (asset && mates.length < 2 && (asset.wallSnap || asset.mount === 'wall') && !ev.altKey) {
-          const h = hugWall(dv, { x, y }, obj.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE);
+          const h = hugWall(dv, { x, y }, obj.depth, asset.mount === 'wall' ? 0.6 : WALL_HUG_MOVE, WALL_CUTOUT_ASSET_IDS.has(obj.assetId));
           // While locked, only a wall the item meets on its line counts.
           if (h && onAxis(h, obj, lock.axis)) {
             x = h.x;

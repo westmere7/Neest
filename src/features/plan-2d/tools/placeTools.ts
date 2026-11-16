@@ -4,7 +4,7 @@ import { OPENING_PRESETS } from '@/domain/model/defaults';
 import { addOpening, clampOpening, placeObject } from '@/domain/commands/entities';
 import { chosenOpeningFinish } from '@/features/editor/openingFinishChoice';
 import { placeSavedGroup, savedGroupFromDragId } from '@/features/editor/groups';
-import { openingOffsetRange } from '@/domain/geometry/walls';
+import { openingOffsetRange, WALL_CUTOUT_ASSET_IDS } from '@/domain/geometry/walls';
 import { pointAt, projectOnPath } from '@/domain/geometry/wallPath';
 import type { DerivedPlan } from '@/domain/geometry/derive';
 import { add, dot, leftNormal, round, scale, sub } from '@/domain/geometry/vec';
@@ -35,6 +35,7 @@ export function hugWall(
   center: Vec2,
   depth: number,
   range: number,
+  embedInWall = false,
 ): { x: number; y: number; rotation: number; wallId: string } | null {
   let best: { x: number; y: number; rotation: number; wallId: string; d: number } | null = null;
   for (const g of derived.network.walls.values()) {
@@ -47,7 +48,7 @@ export function hugWall(
     const n0 = leftNormal(proj.tangent);
     const side = dot(sub(center, proj.point), n0) >= 0 ? 1 : -1;
     const n = scale(n0, side);
-    const pos = add(proj.point, scale(n, g.h + depth / 2 + 0.003));
+    const pos = embedInWall ? proj.point : add(proj.point, scale(n, g.h + depth / 2 + 0.003));
     const rotation = Math.atan2(-n.x, n.y);
     if (!best || proj.dist < best.d) best = { x: pos.x, y: pos.y, rotation, wallId: g.wall.id, d: proj.dist };
   }
@@ -211,7 +212,7 @@ export function placementFor(
   }
   let hugged = false;
   if ((asset.wallSnap || asset.mount === 'wall') && !free) {
-    const h = hugWall(env.derived(), world, size.d, asset.mount === 'wall' ? 0.6 : 0.3);
+    const h = hugWall(env.derived(), world, size.d, asset.mount === 'wall' ? 0.6 : 0.3, WALL_CUTOUT_ASSET_IDS.has(asset.id));
     if (h) {
       x = h.x;
       y = h.y;
